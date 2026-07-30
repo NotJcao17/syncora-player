@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+    <title>Music App - Now Playing</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/tailwind-config.js"></script>
+    <link href="css/styles.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="flex h-screen overflow-hidden bg-background text-primary antialiased relative">
+
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="hidden lg:flex flex-col w-64 h-full bg-background border-r border-surface p-4 flex-shrink-0 z-10 relative">
+        <div class="flex items-center gap-3 mb-8 px-2">
+            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                <i data-lucide="music" class="w-4 h-4 text-background"></i>
+            </div>
+            <span class="font-bold text-lg tracking-tight">Syncora</span>
+        </div>
+
+        <nav class="flex flex-col gap-2 mb-8">
+            <a href="index.html" class="flex items-center gap-4 px-3 py-2 rounded-lg text-muted hover:text-primary hover:bg-surface-hover transition-colors font-medium">
+                <i data-lucide="home" class="w-5 h-5"></i> Home
+            </a>
+            <a href="search.html" class="flex items-center gap-4 px-3 py-2 rounded-lg text-muted hover:text-primary hover:bg-surface-hover transition-colors font-medium">
+                <i data-lucide="search" class="w-5 h-5"></i> Browse
+            </a>
+            <a href="library.html" class="flex items-center gap-4 px-3 py-2 rounded-lg text-muted hover:text-primary hover:bg-surface-hover transition-colors font-medium">
+                <i data-lucide="library" class="w-5 h-5"></i> Library
+            </a>
+        </nav>
+    </aside>
+
+    <!-- MOBILE PLAYER BACKGROUND (Blurred) -->
+    <div class="lg:hidden absolute inset-0 z-0">
+        <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600" class="w-full h-full object-cover opacity-40 blur-3xl scale-110" alt="Bg">
+        <div class="absolute inset-0 bg-gradient-to-b from-background/40 via-background/80 to-background"></div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col h-full relative z-10 lg:flex-row pb-0 lg:pb-24">
+        
+        <!-- PLAYER (Mobile Center / Desktop Center) -->
+        <div class="flex-1 flex flex-col h-full lg:px-8 py-safe overflow-hidden relative">
+            
+            <!-- Mobile Header -->
+            <header class="lg:hidden w-full px-6 py-4 flex items-center justify-between">
+                <a href="index.html" class="w-10 h-10 flex items-center justify-center text-primary"><i data-lucide="chevron-down" class="w-6 h-6"></i></a>
+                <div class="flex flex-col items-center">
+                    <span class="text-xs text-secondary uppercase tracking-widest font-bold">Now Playing</span>
+                    <span class="text-sm font-semibold truncate max-w-[200px]">From playlist Neon Shadows</span>
+                </div>
+                <button class="w-10 h-10 flex items-center justify-center text-primary"><i data-lucide="more-horizontal" class="w-6 h-6"></i></button>
+            </header>
+
+            <!-- Desktop Header (Minimal) -->
+            <header class="hidden lg:flex w-full py-4 items-center justify-between">
+                <button class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-secondary hover:text-primary"><i data-lucide="expand" class="w-4 h-4"></i></button>
+            </header>
+
+            <div class="flex-1 flex flex-col items-center justify-center px-8 max-w-lg mx-auto w-full lg:max-w-2xl">
+                
+                <!-- Album Art -->
+                <div class="w-full aspect-square rounded-3xl overflow-hidden mb-8 shadow-glow-high relative bg-surface">
+                    <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" alt="Cover">
+                </div>
+
+                <!-- Track Info (Mobile View) -->
+                <div class="w-full flex items-center justify-between mb-8 lg:hidden">
+                    <div class="flex flex-col overflow-hidden mr-4">
+                        <h2 class="text-2xl font-bold truncate mb-1">Los Angeles</h2>
+                        <p class="text-secondary text-lg truncate">The Midnight</p>
+                    </div>
+                    <button class="text-primary"><i data-lucide="heart" class="w-7 h-7"></i></button>
+                </div>
+
+                <!-- Waveform Scrubber (Mobile View) -->
+                <div class="w-full mb-8 lg:hidden">
+                    <div class="flex items-center justify-center gap-[2px] h-10 mb-2 cursor-pointer w-full overflow-hidden px-2">
+                        <!-- Faked audio visualizer / waveform -->
+                        <div class="w-1 h-2 bg-primary rounded-full"></div>
+                        <div class="w-1 h-3 bg-primary rounded-full"></div>
+                        <div class="w-1 h-5 bg-primary rounded-full"></div>
+                        <div class="w-1 h-8 bg-primary rounded-full"></div>
+                        <div class="w-1 h-4 bg-primary rounded-full"></div>
+                        <div class="w-1 h-7 bg-primary rounded-full"></div>
+                        <div class="w-1 h-9 bg-primary rounded-full"></div>
+                        <div class="w-1 h-5 bg-primary rounded-full"></div>
+                        <div class="w-1 h-10 bg-primary rounded-full"></div>
+                        <div class="w-1 h-8 bg-primary rounded-full"></div>
+                        <div class="w-1 h-4 bg-primary rounded-full"></div>
+                        <div class="w-1 h-6 bg-primary rounded-full"></div>
+                        <div class="w-1 h-9 bg-primary rounded-full"></div>
+                        <div class="w-1 h-7 bg-primary rounded-full"></div>
+                        <div class="w-1 h-5 bg-primary rounded-full"></div>
+                        <div class="w-1 h-8 bg-primary rounded-full"></div>
+                        <!-- Current position indicator / color split -->
+                        <div class="w-1 h-7 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-9 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-4 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-8 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-6 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-5 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-10 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-7 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-4 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-8 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-5 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-6 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-3 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-5 bg-surface-hover rounded-full"></div>
+                        <div class="w-1 h-2 bg-surface-hover rounded-full"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-secondary font-medium px-1">
+                        <span>1:04</span>
+                        <span>2:52</span>
+                    </div>
+                </div>
+
+                <!-- Controls (Mobile View) -->
+                <div class="w-full flex justify-between items-center mb-8 lg:hidden px-2">
+                    <button class="text-secondary hover:text-primary"><i data-lucide="shuffle" class="w-6 h-6"></i></button>
+                    <button class="text-primary"><i data-lucide="skip-back" class="w-10 h-10 fill-current"></i></button>
+                    <button class="w-20 h-20 bg-primary text-background rounded-full flex items-center justify-center shadow-glow active:scale-95 transition-transform">
+                        <i data-lucide="play" class="w-10 h-10 ml-2 fill-current"></i>
+                    </button>
+                    <button class="text-primary"><i data-lucide="skip-forward" class="w-10 h-10 fill-current"></i></button>
+                    <button class="text-secondary hover:text-primary"><i data-lucide="repeat" class="w-6 h-6"></i></button>
+                </div>
+
+                <!-- Bottom Actions (Mobile View) -->
+                <div class="w-full flex justify-between items-center text-secondary lg:hidden px-4">
+                    <button class="hover:text-primary flex flex-col items-center gap-1"><i data-lucide="monitor-speaker" class="w-5 h-5"></i></button>
+                    <button class="hover:text-primary flex flex-col items-center gap-1"><i data-lucide="download" class="w-5 h-5"></i></button>
+                    <button class="hover:text-primary flex flex-col items-center gap-1"><i data-lucide="mic-2" class="w-5 h-5"></i></button>
+                    <button onclick="document.getElementById('queue-sheet').classList.toggle('translate-y-full')" class="hover:text-primary flex flex-col items-center gap-1"><i data-lucide="list-music" class="w-5 h-5"></i></button>
+                </div>
+
+                <!-- Desktop Only: Lyrics Placeholder -->
+                <div class="hidden lg:flex flex-col items-center text-center mt-8">
+                    <h2 class="text-4xl font-bold mb-2">Los Angeles</h2>
+                    <p class="text-xl text-secondary mb-12">The Midnight</p>
+                    <div class="text-2xl font-bold leading-loose text-primary/40">
+                        <p class="text-primary scale-110 origin-center transition-all">I'm Los Angeles</p>
+                        <p>I'm not able</p>
+                        <p>To tell you how I feel</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DESKTOP QUEUE SIDEBAR -->
+        <aside class="hidden lg:flex flex-col w-80 bg-surface/30 border-l border-surface h-full">
+            <div class="p-4 flex items-center justify-between border-b border-surface">
+                <h3 class="font-bold">Next In Queue</h3>
+                <button class="text-secondary hover:text-primary text-xs font-semibold">Clear</button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+                <!-- Now Playing in Queue -->
+                <div class="flex items-center gap-3 p-2 rounded-lg bg-surface group relative">
+                    <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></div>
+                    <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=150" class="w-10 h-10 rounded object-cover ml-2">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-semibold text-sm truncate text-primary">Los Angeles</h4>
+                        <p class="text-xs text-secondary truncate">The Midnight</p>
+                    </div>
+                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-primary"></i>
+                </div>
+                
+                <!-- Queue Items -->
+                <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface group cursor-pointer">
+                    <i data-lucide="grip-vertical" class="w-4 h-4 text-secondary opacity-0 group-hover:opacity-100 cursor-grab"></i>
+                    <img src="https://images.unsplash.com/photo-1493225457124-a1a2a5f529a8?q=80&w=150" class="w-10 h-10 rounded object-cover">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-semibold text-sm truncate group-hover:text-primary">Shadows</h4>
+                        <p class="text-xs text-secondary truncate">The Midnight</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface group cursor-pointer">
+                    <i data-lucide="grip-vertical" class="w-4 h-4 text-secondary opacity-0 group-hover:opacity-100 cursor-grab"></i>
+                    <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=150" class="w-10 h-10 rounded object-cover">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-semibold text-sm truncate group-hover:text-primary">Awakening</h4>
+                        <p class="text-xs text-secondary truncate">The Midnight</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MOBILE QUEUE SHEET (Hidden by default) -->
+        <div id="queue-sheet" class="lg:hidden fixed inset-x-0 bottom-0 h-[70vh] bg-surface rounded-t-3xl z-50 transform translate-y-full transition-transform duration-300 shadow-surface-up flex flex-col">
+            <div class="p-4 flex items-center justify-between border-b border-surface-hover">
+                <h3 class="font-bold">Next In Queue</h3>
+                <button onclick="document.getElementById('queue-sheet').classList.add('translate-y-full')" class="w-8 h-8 flex items-center justify-center rounded-full bg-surface-hover"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+                <div class="flex items-center gap-3 p-2 rounded-lg bg-surface-hover group relative">
+                    <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=150" class="w-12 h-12 rounded object-cover">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-semibold text-sm truncate text-primary">Los Angeles</h4>
+                        <p class="text-xs text-secondary truncate">The Midnight</p>
+                    </div>
+                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-primary"></i>
+                </div>
+                
+                <div class="flex items-center gap-3 p-2 rounded-lg group cursor-pointer">
+                    <img src="https://images.unsplash.com/photo-1493225457124-a1a2a5f529a8?q=80&w=150" class="w-12 h-12 rounded object-cover">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-semibold text-sm truncate">Shadows</h4>
+                        <p class="text-xs text-secondary truncate">The Midnight</p>
+                    </div>
+                    <i data-lucide="menu" class="w-5 h-5 text-secondary"></i>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- DESKTOP PLAYER BAR -->
+    <div class="hidden lg:flex fixed bottom-0 inset-x-0 h-24 bg-surface-hover border-t border-surface z-50 px-6 items-center justify-between">
+        <div class="flex items-center gap-4 w-1/3 min-w-[200px]">
+            <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=150&auto=format&fit=crop" class="w-14 h-14 rounded-md shadow-lg" alt="Cover">
+            <div class="flex flex-col overflow-hidden">
+                <a href="#" class="font-semibold text-sm hover:underline truncate">Los Angeles</a>
+                <a href="#" class="text-xs text-secondary hover:underline truncate">The Midnight</a>
+            </div>
+            <button class="text-secondary hover:text-primary ml-2"><i data-lucide="heart" class="w-4 h-4"></i></button>
+        </div>
+        
+        <div class="flex flex-col items-center justify-center w-1/3 max-w-[500px]">
+            <div class="flex items-center gap-6 mb-2">
+                <button class="text-secondary hover:text-primary"><i data-lucide="shuffle" class="w-4 h-4"></i></button>
+                <button class="text-primary hover:text-secondary"><i data-lucide="skip-back" class="w-5 h-5 fill-current"></i></button>
+                <button class="w-10 h-10 bg-primary text-background rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-glow">
+                    <i data-lucide="play" class="w-5 h-5 ml-1 fill-current"></i>
+                </button>
+                <button class="text-primary hover:text-secondary"><i data-lucide="skip-forward" class="w-5 h-5 fill-current"></i></button>
+                <button class="text-secondary hover:text-primary"><i data-lucide="repeat" class="w-4 h-4"></i></button>
+            </div>
+            <div class="flex items-center gap-2 w-full text-xs text-secondary font-medium">
+                <span>1:04</span>
+                <div class="flex-1 h-1.5 bg-surface rounded-full overflow-hidden group cursor-pointer flex items-center">
+                    <div class="h-full bg-primary rounded-full relative group-hover:bg-accent w-1/3"></div>
+                </div>
+                <span>2:52</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center justify-end gap-4 w-1/3 min-w-[200px] text-secondary">
+            <button class="hover:text-primary"><i data-lucide="mic-2" class="w-4 h-4 text-primary"></i></button>
+            <button class="hover:text-primary"><i data-lucide="list-music" class="w-4 h-4 text-primary"></i></button>
+            <button class="hover:text-primary"><i data-lucide="speaker" class="w-4 h-4"></i></button>
+            <div class="flex items-center gap-2 w-24 group cursor-pointer">
+                <i data-lucide="volume-2" class="w-4 h-4"></i>
+                <div class="flex-1 h-1.5 bg-surface rounded-full overflow-hidden flex items-center">
+                    <div class="h-full bg-primary rounded-full group-hover:bg-accent w-2/3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+    <title>Music App - Library</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/tailwind-config.js"></script>
+    <link href="css/styles.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="flex h-screen overflow-hidden bg-background text-primary antialiased">
+
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="hidden lg:flex flex-col w-64 h-full bg-background border-r border-surface p-4 flex-shrink-0 z-10 relative">
+        <div class="flex items-center gap-3 mb-8 px-2">
+            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                <i data-lucide="music" class="w-4 h-4 text-background"></i>
+            </div>
+            <span class="font-bold text-lg tracking-tight">Syncora</span>
+        </div>
+
+        <nav class="flex flex-col gap-2 mb-8">
+            <a href="index.html" class="flex items-center gap-4 px-3 py-2 rounded-lg text-muted hover:text-primary hover:bg-surface-hover transition-colors font-medium">
+                <i data-lucide="home" class="w-5 h-5"></i> Home
+            </a>
+            <a href="search.html" class="flex items-center gap-4 px-3 py-2 rounded-lg text-muted hover:text-primary hover:bg-surface-hover transition-colors font-medium">
+                <i data-lucide="search" class="w-5 h-5"></i> Browse
+            </a>
+            <a href="library.html" class="flex items-center gap-4 px-3 py-2 rounded-lg bg-surface text-primary font-medium transition-colors">
+                <i data-lucide="library" class="w-5 h-5"></i> Library
+            </a>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col h-full relative overflow-y-auto pb-48 lg:pb-32 scroll-smooth">
+        
+        <!-- HEADER -->
+        <header class="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-surface px-4 lg:px-8 py-3 lg:py-4 flex items-center justify-between pt-safe lg:pt-4">
+            <div class="flex items-center gap-4">
+                <img src="https://i.pravatar.cc/150?img=11" alt="Profile" class="w-8 h-8 rounded-full border border-surface lg:hidden">
+                <h1 class="font-bold text-2xl tracking-tight">Your Library</h1>
+            </div>
+            <div class="flex gap-2">
+                <button class="w-10 h-10 rounded-full hover:bg-surface flex items-center justify-center text-primary transition-colors"><i data-lucide="search" class="w-5 h-5"></i></button>
+                <button class="w-10 h-10 rounded-full hover:bg-surface flex items-center justify-center text-primary transition-colors"><i data-lucide="plus" class="w-6 h-6"></i></button>
+            </div>
+        </header>
+
+        <!-- CONTENT -->
+        <div class="p-4 lg:p-8 flex flex-col gap-6 max-w-7xl mx-auto w-full h-full">
+            
+            <!-- Filters -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                <button class="w-8 h-8 rounded-full bg-surface hover:bg-surface-hover flex items-center justify-center flex-shrink-0 transition-colors border border-surface-hover"><i data-lucide="search" class="w-4 h-4 text-secondary"></i></button>
+                <button class="px-4 py-1.5 rounded-full bg-primary text-background text-sm font-semibold flex-shrink-0 whitespace-nowrap">Playlists</button>
+                <button class="px-4 py-1.5 rounded-full bg-surface hover:bg-surface-hover border border-surface-hover text-sm font-semibold flex-shrink-0 transition-colors whitespace-nowrap">Albums</button>
+                <button class="px-4 py-1.5 rounded-full bg-surface hover:bg-surface-hover border border-surface-hover text-sm font-semibold flex-shrink-0 transition-colors whitespace-nowrap">Artists</button>
+                <button class="px-4 py-1.5 rounded-full bg-surface hover:bg-surface-hover border border-surface-hover text-sm font-semibold flex-shrink-0 transition-colors whitespace-nowrap">Downloaded</button>
+                <!-- Toggle State Button for Demo -->
+                <button onclick="toggleEmptyState()" class="px-4 py-1.5 bg-error/20 text-error rounded-full text-sm font-semibold ml-auto border border-error/30 whitespace-nowrap">Toggle Empty State</button>
+            </div>
+
+            <!-- EMPTY STATE -->
+            <div id="empty-state" class="hidden flex-1 flex flex-col items-center justify-center text-center max-w-md mx-auto py-12">
+                <div class="w-32 h-32 mb-6 bg-surface rounded-full flex items-center justify-center shadow-surface">
+                    <i data-lucide="music-4" class="w-12 h-12 text-secondary"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-2">Build your library</h2>
+                <p class="text-secondary mb-8">Save your favorite songs, playlists, and artists here so they're always just a tap away.</p>
+                <a href="search.html" class="px-8 py-3 bg-primary text-background rounded-full font-bold hover:scale-105 transition-transform shadow-glow">Explore Music</a>
+            </div>
+
+            <!-- POPULATED STATE -->
+            <div id="populated-state" class="flex flex-col gap-2">
+                <div class="flex justify-between items-center px-2 py-1 mb-2 text-sm font-medium text-secondary">
+                    <button class="flex items-center gap-1 hover:text-primary"><i data-lucide="arrow-up-down" class="w-4 h-4"></i> Recents</button>
+                    <button class="hover:text-primary"><i data-lucide="layout-grid" class="w-4 h-4"></i></button>
+                </div>
+
+                <!-- Liked Songs -->
+                <a href="playlist.html" class="flex items-center gap-4 p-2 rounded-xl hover:bg-surface transition-colors cursor-pointer group">
+                    <div class="w-16 h-16 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+                        <i data-lucide="heart" class="w-6 h-6 text-white fill-current"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-lg mb-0.5 truncate group-hover:text-primary">Liked Songs</h3>
+                        <p class="text-sm text-secondary truncate flex items-center gap-1"><i data-lucide="pin" class="w-3 h-3 text-primary"></i> Playlist • 142 songs</p>
+                    </div>
+                </a>
+                
+                <!-- Folders / Playlists -->
+                <a href="playlist.html" class="flex items-center gap-4 p-2 rounded-xl hover:bg-surface transition-colors cursor-pointer group">
+                    <div class="w-16 h-16 rounded-lg overflow-hidden grid grid-cols-2 grid-rows-2 gap-[1px] bg-background shadow-md">
+                        <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=150" class="w-full h-full object-cover">
+                        <img src="https://images.unsplash.com/photo-1493225457124-a1a2a5f529a8?q=80&w=150" class="w-full h-full object-cover">
+                        <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=150" class="w-full h-full object-cover">
+                        <img src="https://images.unsplash.com/photo-1518609878373-06d740f60d8b?q=80&w=150" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-lg mb-0.5 truncate group-hover:text-primary">Neon Shadows</h3>
+                        <p class="text-sm text-secondary truncate">Playlist • Aether</p>
+                    </div>
+                </a>
+
+                <a href="playlist.html" class="flex items-center gap-4 p-2 rounded-xl hover:bg-surface transition-colors cursor-pointer group">
+                    <div class="w-16 h-16 rounded-lg overflow-hidden shadow-md">
+                        <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=150" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-lg mb-0.5 truncate group-hover:text-primary">Deep Focus</h3>
+                        <p class="text-sm text-secondary truncate flex items-center gap-1"><i data-lucide="download" class="w-3 h-3 text-primary"></i> Playlist • Syncora</p>
+                    </div>
+                </a>
+
+                <div class="flex items-center gap-4 p-2 rounded-xl hover:bg-surface transition-colors cursor-pointer group">
+                    <div class="w-16 h-16 rounded-full overflow-hidden shadow-md">
+                        <img src="https://images.unsplash.com/photo-1549834125-82d3c48159a3?q=80&w=150" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-lg mb-0.5 truncate group-hover:text-primary">Lorn</h3>
+                        <p class="text-sm text-secondary truncate">Artist</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- DESKTOP PLAYER BAR & MOBILE MINI-PLAYER & BOTTOM NAV -->
+    <!-- (Include here for consistency, I will use simplified versions for brevity in other screens, but for full implementation they should be present) -->
+    
+    <!-- MOBILE MINI-PLAYER & BOTTOM NAV CONTAINER -->
+    <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 flex flex-col">
+        <!-- Mini Player -->
+        <a href="player.html" class="bg-primary text-background rounded-t-[24px] px-4 pt-3 pb-8 flex items-center gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-10 relative -mb-6">
+            <div class="w-12 h-12 rounded-lg overflow-hidden bg-surface flex-shrink-0">
+                <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=150&auto=format&fit=crop" class="w-full h-full object-cover" alt="Cover">
+            </div>
+            <div class="flex-1 overflow-hidden flex flex-col justify-center">
+                <h4 class="font-bold text-sm truncate leading-tight">Los Angeles</h4>
+                <p class="text-xs text-background/70 truncate mt-0.5">The Midnight</p>
+            </div>
+            <div class="flex items-center gap-4 pr-1">
+                <button class="p-1 text-background hover:scale-110 transition-transform"><i data-lucide="heart" class="w-6 h-6"></i></button>
+                <button class="p-2 bg-background text-primary rounded-full flex items-center justify-center hover:scale-110 transition-transform"><i data-lucide="pause" class="w-5 h-5 fill-current"></i></button>
+            </div>
+        </a>
+
+        <!-- Bottom Nav -->
+        <nav class="bg-surface pb-8 pt-4 px-12 flex justify-between items-center rounded-t-xl shadow-[0_-8px_20px_rgba(0,0,0,0.3)] z-20 relative">
+            <a href="index.html" class="flex flex-col items-center gap-1 text-muted hover:text-primary transition-colors">
+                <i data-lucide="home" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Home</span>
+            </a>
+            <a href="search.html" class="flex flex-col items-center gap-1 text-muted hover:text-primary transition-colors">
+                <i data-lucide="search" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Search</span>
+            </a>
+            <a href="library.html" class="flex flex-col items-center gap-1 text-primary">
+                <i data-lucide="library" class="w-6 h-6 fill-current"></i>
+                <span class="text-[10px] font-semibold">Library</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        function toggleEmptyState() {
+            const empty = document.getElementById('empty-state');
+            const populated = document.getElementById('populated-state');
+            
+            if(empty.classList.contains('hidden')) {
+                empty.classList.remove('hidden');
+                populated.classList.add('hidden');
+            } else {
+                empty.classList.add('hidden');
+                populated.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
+

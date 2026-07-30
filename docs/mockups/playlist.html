@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+    <title>Music App - Playlist</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/tailwind-config.js"></script>
+    <link href="css/styles.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="flex h-screen overflow-hidden bg-background text-primary antialiased relative">
+
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="hidden lg:flex flex-col w-64 h-full bg-background border-r border-surface p-4 flex-shrink-0 z-10 relative">
+        <div class="flex items-center gap-3 mb-8 px-2">
+            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                <i data-lucide="music" class="w-4 h-4 text-background"></i>
+            </div>
+            <span class="font-bold text-lg tracking-tight">Syncora</span>
+        </div>
+
+        <nav class="flex flex-col gap-2 mb-8">
+            <a href="index.html" class="flex items-center gap-4 px-3 py-2 rounded-lg text-muted hover:text-primary hover:bg-surface-hover transition-colors font-medium">
+                <i data-lucide="home" class="w-5 h-5"></i> Home
+            </a>
+            <a href="search.html" class="flex items-center gap-4 px-3 py-2 rounded-lg text-muted hover:text-primary hover:bg-surface-hover transition-colors font-medium">
+                <i data-lucide="search" class="w-5 h-5"></i> Browse
+            </a>
+            <a href="library.html" class="flex items-center gap-4 px-3 py-2 rounded-lg bg-surface-hover text-primary font-medium transition-colors">
+                <i data-lucide="library" class="w-5 h-5"></i> Library
+            </a>
+        </nav>
+
+        <div class="text-xs font-bold text-muted uppercase tracking-wider mb-4 px-3">Saved Playlists</div>
+        <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-1">
+            <a href="playlist.html" class="px-3 py-2 text-sm text-secondary hover:text-primary rounded-md bg-surface truncate transition-colors">Neon Shadows</a>
+            <a href="playlist.html" class="px-3 py-2 text-sm text-secondary hover:text-primary rounded-md hover:bg-surface-hover truncate transition-colors">Liked Songs</a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col h-full relative overflow-y-auto pb-48 lg:pb-32 scroll-smooth" id="main-scroll">
+        
+        <!-- DYNAMIC BACKGROUND -->
+        <div class="absolute inset-0 z-0 h-[500px] pointer-events-none opacity-40">
+            <div class="absolute inset-0 bg-gradient-to-b from-surface via-surface to-background"></div>
+            <!-- Glow effect based on album cover -->
+            <div class="absolute inset-x-0 -top-40 h-[600px] bg-primary/20 blur-[100px] rounded-full mx-20"></div>
+        </div>
+
+        <!-- TOP BAR (Sticky) -->
+        <header id="top-bar" class="sticky top-0 z-40 px-4 py-3 lg:px-8 lg:py-4 flex items-center justify-between pt-safe lg:pt-4 transition-colors duration-300">
+            <div class="flex items-center gap-4">
+                <a href="library.html" class="w-10 h-10 rounded-full bg-background/50 backdrop-blur-md flex items-center justify-center text-primary hover:bg-surface"><i data-lucide="chevron-left" class="w-6 h-6"></i></a>
+                <!-- Hidden by default, shows on scroll -->
+                <h1 id="top-title" class="font-bold text-xl tracking-tight opacity-0 transition-opacity">Neon Shadows</h1>
+            </div>
+            <div class="flex gap-2">
+                <button class="w-10 h-10 rounded-full bg-background/50 backdrop-blur-md flex items-center justify-center text-primary hover:bg-surface"><i data-lucide="search" class="w-5 h-5"></i></button>
+            </div>
+        </header>
+
+        <!-- CONTENT -->
+        <div class="p-4 lg:p-8 flex flex-col gap-8 max-w-7xl mx-auto w-full relative z-10">
+            
+            <!-- HEADER INFO -->
+            <section class="flex flex-col md:flex-row gap-6 md:gap-8 items-end mt-4">
+                <!-- Cover -->
+                <div class="w-48 h-48 md:w-64 md:h-64 rounded-xl md:rounded-2xl shadow-glow overflow-hidden flex-shrink-0 bg-background self-center md:self-auto">
+                    <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover">
+                </div>
+                
+                <!-- Details -->
+                <div class="flex flex-col flex-1 items-center md:items-start text-center md:text-left">
+                    <span class="text-sm font-bold uppercase tracking-widest text-secondary hidden md:block mb-2">Playlist</span>
+                    <h1 class="text-4xl md:text-6xl font-bold tracking-tight mb-2 md:mb-4">Neon Shadows</h1>
+                    <p class="text-secondary text-sm md:text-base mb-2">A conceptual electronic playlist with deep bass and ethereal vocals. Perfect for late night drives.</p>
+                    <div class="flex items-center gap-2 text-xs md:text-sm text-secondary font-medium mt-1">
+                        <img src="https://i.pravatar.cc/150?img=11" class="w-6 h-6 rounded-full">
+                        <span class="text-primary font-bold">Alex Doe</span>
+                        <span>•</span>
+                        <span>17 songs</span>
+                        <span>•</span>
+                        <span>1 hr 24 min</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ACTIONS -->
+            <section class="flex items-center justify-between md:justify-start gap-4 md:gap-6 mt-4">
+                <div class="flex items-center gap-4">
+                    <button class="w-14 h-14 md:w-16 md:h-16 bg-primary text-background rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-glow">
+                        <i data-lucide="play" class="w-6 h-6 md:w-8 md:h-8 ml-1 fill-current"></i>
+                    </button>
+                    <button class="text-primary hover:text-secondary"><i data-lucide="shuffle" class="w-6 h-6 md:w-8 md:h-8"></i></button>
+                </div>
+                <div class="flex items-center gap-4 md:ml-6 text-secondary">
+                    <button class="w-10 h-10 border border-surface rounded-full flex items-center justify-center hover:bg-surface hover:text-primary transition-colors"><i data-lucide="arrow-down-to-line" class="w-5 h-5"></i></button>
+                    <button class="w-10 h-10 border border-surface rounded-full flex items-center justify-center hover:bg-surface hover:text-primary transition-colors"><i data-lucide="heart" class="w-5 h-5"></i></button>
+                    <button class="w-10 h-10 flex items-center justify-center hover:text-primary transition-colors"><i data-lucide="more-horizontal" class="w-6 h-6"></i></button>
+                </div>
+            </section>
+
+            <!-- TRACK LIST -->
+            <section class="flex flex-col mt-4">
+                <!-- Table Header -->
+                <div class="hidden md:flex items-center px-4 py-2 border-b border-surface text-secondary text-sm font-semibold mb-4">
+                    <div class="w-8 text-center">#</div>
+                    <div class="flex-1">Title</div>
+                    <div class="flex-1 hidden lg:block">Album</div>
+                    <div class="w-32 hidden lg:block text-right">Date Added</div>
+                    <div class="w-16 text-right"><i data-lucide="clock" class="w-4 h-4 ml-auto"></i></div>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <!-- Track Item (Active) -->
+                    <div class="flex items-center p-2 md:px-4 md:py-3 rounded-lg bg-surface group cursor-pointer">
+                        <div class="w-8 text-center text-primary hidden md:block">
+                            <i data-lucide="bar-chart-2" class="w-4 h-4 mx-auto text-primary"></i>
+                        </div>
+                        <div class="flex-1 flex items-center gap-3 md:gap-4 min-w-0">
+                            <div class="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded bg-surface-hover overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=150" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/40 flex md:hidden items-center justify-center"><i data-lucide="bar-chart-2" class="w-4 h-4 text-white"></i></div>
+                            </div>
+                            <div class="flex flex-col min-w-0">
+                                <h4 class="font-semibold text-sm md:text-base truncate text-primary">Deep Blue</h4>
+                                <p class="text-xs md:text-sm text-secondary truncate hover:underline">The Midnight</p>
+                            </div>
+                        </div>
+                        <div class="flex-1 hidden lg:flex items-center text-sm text-secondary truncate">
+                            <a href="#" class="hover:underline hover:text-primary">Neon Shadows</a>
+                        </div>
+                        <div class="w-32 hidden lg:flex items-center text-sm text-secondary text-right justify-end">
+                            11/07/2022
+                        </div>
+                        <div class="w-16 flex items-center justify-end text-sm text-secondary gap-2 md:gap-4">
+                            <button class="opacity-0 group-hover:opacity-100 hover:text-primary"><i data-lucide="heart" class="w-4 h-4"></i></button>
+                            <span class="w-10 text-right">3:56</span>
+                            <button class="md:hidden hover:text-primary ml-2"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                        </div>
+                        <div class="w-8 hidden md:flex items-center justify-end">
+                             <button class="opacity-0 group-hover:opacity-100 text-secondary hover:text-primary"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Track Item -->
+                    <div class="flex items-center p-2 md:px-4 md:py-3 rounded-lg hover:bg-surface group cursor-pointer transition-colors">
+                        <div class="w-8 text-center text-secondary hidden md:block group-hover:hidden">2</div>
+                        <div class="w-8 text-center text-primary hidden md:group-hover:block">
+                            <i data-lucide="play" class="w-4 h-4 mx-auto fill-current"></i>
+                        </div>
+                        <div class="flex-1 flex items-center gap-3 md:gap-4 min-w-0">
+                            <div class="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded bg-surface-hover overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=150" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/40 hidden group-hover:flex md:hidden items-center justify-center"><i data-lucide="play" class="w-4 h-4 text-white fill-current"></i></div>
+                            </div>
+                            <div class="flex flex-col min-w-0">
+                                <h4 class="font-semibold text-sm md:text-base truncate group-hover:text-primary">Sunset</h4>
+                                <p class="text-xs md:text-sm text-secondary truncate hover:underline">The Midnight</p>
+                            </div>
+                        </div>
+                        <div class="flex-1 hidden lg:flex items-center text-sm text-secondary truncate">
+                            <a href="#" class="hover:underline hover:text-primary">Neon Shadows</a>
+                        </div>
+                        <div class="w-32 hidden lg:flex items-center text-sm text-secondary text-right justify-end">
+                            11/07/2022
+                        </div>
+                        <div class="w-16 flex items-center justify-end text-sm text-secondary gap-2 md:gap-4">
+                            <button class="opacity-0 group-hover:opacity-100 hover:text-primary"><i data-lucide="heart" class="w-4 h-4"></i></button>
+                            <span class="w-10 text-right">4:43</span>
+                            <button class="md:hidden hover:text-primary ml-2"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                        </div>
+                        <div class="w-8 hidden md:flex items-center justify-end">
+                             <button class="opacity-0 group-hover:opacity-100 text-secondary hover:text-primary"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Track Item -->
+                    <div class="flex items-center p-2 md:px-4 md:py-3 rounded-lg hover:bg-surface group cursor-pointer transition-colors">
+                        <div class="w-8 text-center text-secondary hidden md:block group-hover:hidden">3</div>
+                        <div class="w-8 text-center text-primary hidden md:group-hover:block">
+                            <i data-lucide="play" class="w-4 h-4 mx-auto fill-current"></i>
+                        </div>
+                        <div class="flex-1 flex items-center gap-3 md:gap-4 min-w-0">
+                            <div class="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded bg-surface-hover overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=150" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/40 hidden group-hover:flex md:hidden items-center justify-center"><i data-lucide="play" class="w-4 h-4 text-white fill-current"></i></div>
+                            </div>
+                            <div class="flex flex-col min-w-0">
+                                <h4 class="font-semibold text-sm md:text-base truncate group-hover:text-primary">Los Angeles</h4>
+                                <p class="text-xs md:text-sm text-secondary truncate hover:underline">The Midnight</p>
+                            </div>
+                        </div>
+                        <div class="flex-1 hidden lg:flex items-center text-sm text-secondary truncate">
+                            <a href="#" class="hover:underline hover:text-primary">Los Angeles EP</a>
+                        </div>
+                        <div class="w-32 hidden lg:flex items-center text-sm text-secondary text-right justify-end">
+                            11/07/2022
+                        </div>
+                        <div class="w-16 flex items-center justify-end text-sm text-secondary gap-2 md:gap-4">
+                            <button class="opacity-0 group-hover:opacity-100 text-primary"><i data-lucide="heart" class="w-4 h-4 fill-current"></i></button>
+                            <span class="w-10 text-right">2:52</span>
+                            <button class="md:hidden hover:text-primary ml-2"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                        </div>
+                        <div class="w-8 hidden md:flex items-center justify-end">
+                             <button class="opacity-0 group-hover:opacity-100 text-secondary hover:text-primary"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- DESKTOP PLAYER BAR -->
+    <div class="hidden lg:flex fixed bottom-0 inset-x-0 h-24 bg-surface-hover border-t border-surface z-50 px-6 items-center justify-between">
+        <div class="flex items-center gap-4 w-1/3 min-w-[200px]">
+            <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=150&auto=format&fit=crop" class="w-14 h-14 rounded-md shadow-lg" alt="Cover">
+            <div class="flex flex-col overflow-hidden">
+                <a href="playlist.html" class="font-semibold text-sm hover:underline truncate">Los Angeles</a>
+                <a href="artist.html" class="text-xs text-secondary hover:underline truncate">The Midnight</a>
+            </div>
+            <button class="text-secondary hover:text-primary ml-2"><i data-lucide="heart" class="w-4 h-4"></i></button>
+        </div>
+        
+        <div class="flex flex-col items-center justify-center w-1/3 max-w-[500px]">
+            <div class="flex items-center gap-6 mb-2">
+                <button class="text-secondary hover:text-primary"><i data-lucide="shuffle" class="w-4 h-4"></i></button>
+                <button class="text-primary hover:text-secondary"><i data-lucide="skip-back" class="w-5 h-5 fill-current"></i></button>
+                <button class="w-10 h-10 bg-primary text-background rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-glow">
+                    <i data-lucide="play" class="w-5 h-5 ml-1 fill-current"></i>
+                </button>
+                <button class="text-primary hover:text-secondary"><i data-lucide="skip-forward" class="w-5 h-5 fill-current"></i></button>
+                <button class="text-secondary hover:text-primary"><i data-lucide="repeat" class="w-4 h-4"></i></button>
+            </div>
+            <div class="flex items-center gap-2 w-full text-xs text-secondary font-medium">
+                <span>1:04</span>
+                <div class="flex-1 h-1.5 bg-surface rounded-full overflow-hidden group cursor-pointer flex items-center">
+                    <div class="h-full bg-primary rounded-full relative group-hover:bg-accent w-1/3"></div>
+                </div>
+                <span>3:56</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center justify-end gap-4 w-1/3 min-w-[200px] text-secondary">
+            <button class="hover:text-primary"><i data-lucide="mic-2" class="w-4 h-4"></i></button>
+            <button class="hover:text-primary"><i data-lucide="list-music" class="w-4 h-4"></i></button>
+            <button class="hover:text-primary"><i data-lucide="speaker" class="w-4 h-4"></i></button>
+            <div class="flex items-center gap-2 w-24 group cursor-pointer">
+                <i data-lucide="volume-2" class="w-4 h-4"></i>
+                <div class="flex-1 h-1.5 bg-surface rounded-full overflow-hidden flex items-center">
+                    <div class="h-full bg-primary rounded-full group-hover:bg-accent w-2/3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOBILE MINI-PLAYER & BOTTOM NAV CONTAINER -->
+    <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 flex flex-col">
+        <!-- Mini Player -->
+        <a href="player.html" class="bg-primary text-background rounded-t-[24px] px-4 pt-3 pb-8 flex items-center gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-10 relative -mb-6">
+            <div class="w-12 h-12 rounded-lg overflow-hidden bg-surface flex-shrink-0">
+                <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=150&auto=format&fit=crop" class="w-full h-full object-cover" alt="Cover">
+            </div>
+            <div class="flex-1 overflow-hidden flex flex-col justify-center">
+                <h4 class="font-bold text-sm truncate leading-tight">Los Angeles</h4>
+                <p class="text-xs text-background/70 truncate mt-0.5">The Midnight</p>
+            </div>
+            <div class="flex items-center gap-4 pr-1">
+                <button class="p-1 text-background hover:scale-110 transition-transform"><i data-lucide="heart" class="w-6 h-6"></i></button>
+                <button class="p-2 bg-background text-primary rounded-full flex items-center justify-center hover:scale-110 transition-transform"><i data-lucide="pause" class="w-5 h-5 fill-current"></i></button>
+            </div>
+        </a>
+
+        <!-- Bottom Nav -->
+        <nav class="bg-surface pb-8 pt-4 px-12 flex justify-between items-center rounded-t-xl shadow-[0_-8px_20px_rgba(0,0,0,0.3)] z-20 relative">
+            <a href="index.html" class="flex flex-col items-center gap-1 text-muted hover:text-primary transition-colors">
+                <i data-lucide="home" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Home</span>
+            </a>
+            <a href="search.html" class="flex flex-col items-center gap-1 text-muted hover:text-primary transition-colors">
+                <i data-lucide="search" class="w-6 h-6"></i>
+                <span class="text-[10px] font-semibold">Search</span>
+            </a>
+            <a href="library.html" class="flex flex-col items-center gap-1 text-primary">
+                <i data-lucide="library" class="w-6 h-6 fill-current"></i>
+                <span class="text-[10px] font-semibold">Library</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Simple scroll effect for header
+        const scrollContainer = document.getElementById('main-scroll');
+        const topBar = document.getElementById('top-bar');
+        const topTitle = document.getElementById('top-title');
+
+        scrollContainer.addEventListener('scroll', () => {
+            if (scrollContainer.scrollTop > 200) {
+                topBar.classList.add('bg-background');
+                topBar.classList.add('border-b');
+                topTitle.classList.remove('opacity-0');
+            } else {
+                topBar.classList.remove('bg-background');
+                topBar.classList.remove('border-b');
+                topTitle.classList.add('opacity-0');
+            }
+        });
+    </script>
+</body>
+</html>
+
