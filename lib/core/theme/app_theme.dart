@@ -22,11 +22,9 @@ class AppTheme {
       scaffoldBackgroundColor: background,
       primaryColor: primary,
       colorScheme: const ColorScheme.dark(
-        background: background,
         surface: surface,
         primary: primary,
         secondary: secondary,
-        onBackground: primary,
         onSurface: primary,
         onPrimary: background,
         onSecondary: background,

@@ -12,8 +12,8 @@
 *   **El Agente (IA):**
     *   Genera arquitectura, código (Flutter, Dart, SQL) y pruebas automatizadas (unitarias para lógica).
     *   Configura el proyecto, realiza migraciones de BD y escribe documentación técnica.
-    *   Ejecuta comandos Git. **Reglas estrictas:** Commits sin descripción, solo mensaje. No usar `Co-authored-by`.
-    *   Actualiza este documento y el plan de implementación. Al inicio de cada fase de desarrollo, el agente indicará explícitamente al desarrollador humano todas las tareas manuales necesarias. Al finalizar cada fase, **el Agente indicará explícitamente qué pruebas de la `matriz_de_pruebas.md` corresponden ejecutar**, guiando al humano sobre cómo realizarlas.
+    *   Ejecuta comandos Git. **Reglas estrictas:** Commits sin descripción, solo mensaje. No usar `Co-authored-by`. Al finalizar y validar cada fase, el Agente realizará `git push` al repositorio remoto.
+    *   Actualiza este documento y el plan de implementación. Al finalizar cada fase, el Agente creará un documento de contexto resumido dentro de la carpeta `docs/fases/fase_X.md` registrando todo lo logrado y decisiones de arquitectura de la fase. Asimismo, indicará explícitamente qué pruebas de la `matriz_de_pruebas.md` corresponden ejecutar, guiando al humano sobre cómo realizarlas.
     *   **Pruebas Locales (Ojos de la IA):** Prueba de UI en Chrome con seguridad web desactivada (`flutter run -d chrome --web-browser-flag "--disable-web-security"`). *Nota Técnica:* Para evitar fallos en web (ya que `media_kit` y SQLite son binarios nativos), se implementará un bypass usando `kIsWeb` en la inicialización, cargando bases de datos en memoria (Mocks) solo para validar la interfaz visual sin errores.
 *   **El Desarrollador (Humano):**
     *   Prueba el audio y el comportamiento nativo en Windows (máquina de desarrollo) y Android (dispositivo físico conectado por USB con Depuración USB activada).

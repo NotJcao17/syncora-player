@@ -40,12 +40,12 @@ void main() async {
 
   await Supabase.initialize(
     url: validUrl,
-    anonKey: validKey,
+    publishableKey: validKey,
   );
 
-  // Bypass web: si kIsWeb, no inicializar media_kit ni Drift real
-  if (!kIsWeb) {
-    MediaKit.ensureInitialized(); // solo Windows y Android
+  // MediaKit solo se inicializa en Windows (en Android se usa just_audio)
+  if (!kIsWeb && Platform.isWindows) {
+    MediaKit.ensureInitialized();
   }
 
   runApp(
