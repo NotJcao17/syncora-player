@@ -67,3 +67,24 @@ Este documento contiene el registro de desarrollo y contexto técnico de la **Fa
 - **Windows:** `flutter build windows --debug` ➔ Compilación exitosa (`syncora_player.exe`).
 - **Android:** `flutter build apk --debug` ➔ Compilación exitosa (`app-debug.apk`).
 - **Flutter Analyze:** 0 errores y 0 advertencias de analisis.
+
+---
+
+## 📌 Handover para la Fase 1 (Spike Técnico)
+
+Si se inicia un nuevo chat de desarrollo para la **Fase 1**, el nuevo agente debe tomar en cuenta:
+
+1. **Estado del Repositorio:**
+   - La rama `master` está sincronizada con GitHub (`https://github.com/NotJcao17/syncora-player.git`).
+   - Todos los paquetes de `pubspec.yaml` están instalados y resueltos sin advertencias (`flutter analyze` limpio).
+   - `.env` local configurado con la URL real y anon key de Supabase (`njkfudsyfzdkdvwizdag`).
+
+2. **Detalles Críticos de Arquitectura Establecidos en Fase 0:**
+   - `MediaKit.ensureInitialized()` solo se invoca en Windows (`if (!kIsWeb && Platform.isWindows)`). En Android la reproducción de audio se maneja con `just_audio`.
+   - `sqflite_common_ffi` está inicializado en `main.dart` para Windows.
+   - El linter está configurado sin miembros deprecados (`publishableKey`, `onSurface`, etc.).
+
+3. **Objetivo Siguiente (Fase 1 - Spike Técnico):**
+   - Implementar el motor resiliente de extracción end-to-end (QuickJS con `flutter_js` en un `Isolate.spawn` dedicado, inyección de polyfills JS, puente `dartFetch`, clientes exentos de PoToken como `tv`/`android_vr`).
+   - Implementar la política de **Máximo 1 Reintento** ante Error 403 (baneo/BotGuard).
+   - Prueba aislada de reproducción de audio.
