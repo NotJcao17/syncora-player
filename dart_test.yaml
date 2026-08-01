@@ -1,0 +1,7 @@
+# Configuración del test runner de Dart.
+# Docs: https://github.com/dart-lang/test/blob/master/pkgs/test/doc/configuration.md
+tags:
+  # Tests de integración que requieren binarios nativos (QuickJS) o red real.
+  # Se excluyen de la ejecución por defecto (`flutter test`) y solo corren
+  # explícitamente con: flutter test --tags integration
+  integration:

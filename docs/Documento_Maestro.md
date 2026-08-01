@@ -95,7 +95,8 @@ Para que el reproductor no se rompa si YouTube cambia sus firmas, se usará un e
 
 1.  **Primario (Android + Windows, un solo código):** `youtubei.js` compilado a bundle único para navegador + **Paquete de Polyfills JS** (`fast-text-encoding`, `URL`, etc.) + QuickJS (`flutter_js`) corriendo en un **`Isolate.spawn` dedicado** (separado del Main Isolate de la UI) + puente `dartFetch` a Dart.
     *   **Inyección de Polyfills:** QuickJS carece de APIs Web nativas. Se concatenará un bundle de polyfills puros en JS para resolver `TextEncoder`, `TextDecoder` y `URL` antes de cargar `youtubei.js`. `setTimeout` se puenteará a `Future.delayed` en Dart vía canal síncrono.
-    *   **Evitar BotGuard:** Se usarán clientes **estrictamente exentos de PoToken** (como `TV`, `tv_downgraded` o `android_vr`), evitando las variantes `WEB`, `ANDROID_MUSIC` e `IOS` (las cuales pasaron a exigir PoToken obligatorio recientemente). BotGuard necesita un DOM real para computarse, algo que ni los polyfills pueden simular.
+    *   **Evitar BotGuard:** Se usarán clientes **estrictamente exentos de PoToken**, evitando las variantes `WEB`, `ANDROID_MUSIC` e `IOS` (las cuales pasaron a exigir PoToken obligatorio recientemente). BotGuard necesita un DOM real para computarse, algo que ni los polyfills pueden simular.
+        *   **Jerarquía validada en Fase 1 (lección aprendida):** la lista teórica original (`tv` / `android_vr` / `tv_downgraded`) **quedó obsoleta** cuando YouTube endureció las políticas de firma/PoToken en `/player` para esos clientes en pistas protegidas (VEVO, música oficial). En la práctica, el cliente **`ANDROID`** (≠ `ANDROID_MUSIC`) resultó ser el único que entrega URLs directas pre-firmadas (`c=ANDROID`) que reproducen el 100% del catálogo, incluido VEVO. Por eso la jerarquía actual en producción es **`['ANDROID', 'ANDROID_VR', 'WEB']`** (definida en `extraction_isolate.dart`). `android_vr`/`tv` se conservan como fallback de respaldo. ⚠️ YouTube rota estas políticas con frecuencia: si `ANDROID` deja de funcionar, este es el primer lugar a revisar.
     *   **Optimización de Sesión:** Mantener el contexto de sesión de Innertube (visitorData, PoToken si aplica) vivo y reutilizado dentro del isolate en vez de reinicializar por cada canción. El PoToken se mina una vez y se reutiliza.
     *   **Riesgo del Puente:** El puente `dartFetch` en Dart debe manejar perfectamente redirecciones, cookies/sesión persistente y decodificación gzip/br para evitar fallos silenciosos entre Dart y JS.
     *   **Validación OTA (Seguridad):** El bundle JS se firmará en CI (Ed25519). La app validará la firma contra una llave pública local antes de ejecutarlo en QuickJS, previniendo ejecución de código remoto (RCE) si el bucket de Supabase es comprometido.
@@ -103,6 +104,23 @@ Para que el reproductor no se rompa si YouTube cambia sus firmas, se usará un e
 3.  **Terciario / Emergencia (Ambas plataformas):** Lista de instancias públicas de Piped (no self-host) con health-check y rotación automática. Estrictamente de uso exclusivo si los métodos Client-Side fallan masivamente (para darle tiempo al desarrollador de subir un parche OTA sin que la app muera por completo).
 
 *(Descartado: NewPipeExtractor vía platform channel en Android porque obliga a recompilar el APK; la simbiosis Dart+JSON original porque no sobrevive a cambios estructurales de respuesta de YT; WebView headless por el riesgo de morir al apagar la pantalla y alto consumo).*
+
+#### Análisis de Impacto de Cambios de YouTube y Matriz de Responsabilidades
+
+> ⚠️ **Nota de estado (post-Fase 1):** La columna "¿Se soluciona con OTA?" describe el
+> **objetivo final** de la arquitectura, que se cumple **una vez implementado el
+> mecanismo OTA real** (firma Ed25519 + bucket de Supabase + validación en runtime —
+> pendiente en la fase de Mantenimiento). Mientras tanto, el bundle JS viaja como asset
+> bundled en el APK, por lo que *actualizar el bundle* equivale hoy a recompilar y
+> republishear la app. Las filas marcadas OTA son válidas como **capacidad de diseño**.
+
+| Evento de YouTube | ¿Se soluciona con actualización OTA de `youtubei.js`? | ¿Requiere cambios en el código de Flutter/Dart? |
+| :--- | :---: | :---: |
+| **Cambios en algoritmos de firma (`n-sig` / decipher)** | **SÍ (100%)** — Sin actualizar APK (objetivo OTA) | No requiere cambios en la app |
+| **Nuevas restricciones PoToken (BotGuard)** | **SÍ (Mayoría)** — Actualizando el bundle JS | **SÍ (hoy)** — La jerarquía de clientes (`['ANDROID','ANDROID_VR','WEB']`) vive actualmente *hardcoded en Dart* (`extraction_isolate.dart`), así que ajustarla requiere recompilar el APK. **Mejora pendiente:** mover la jerarquía de clientes a un config dentro del bundle JS para que sea actualizable por OTA cuando el mecanismo de firma+bucket exista. |
+| **Formato de Manifiestos (DASH / HLS)** | **SÍ (Extracción)** | Configurar el player nativo para recibir la URL del manifiesto |
+| **Nuevas Web APIs usadas por la librería JS** | No | **SÍ** — Añadir el polyfill faltante en `JsBundleLoader` |
+| **Políticas de Red / Headers en ExoPlayer (Android)** | No | **SÍ** — Ajustar la inyección de headers en `AudioSource.uri` o manifest nativo |
 
 ### Diseño de Datos (Supabase + Drift)
 *   **Filtrado Rápido y Desnormalización:** Para evitar lentitud extrema causada por sentencias SQL `JOIN` masivas al abrir playlists grandes (500+ canciones), la tabla `playlist_tracks` en SQLite estará **desnormalizada**. Se guardarán campos redundantes como `artist_name`, `album_name` y `cover_url` en la misma fila de cada pista. Esto prioriza la velocidad de cálculo del CPU sobre el espacio de almacenamiento.
@@ -138,6 +156,7 @@ Para que el reproductor no se rompa si YouTube cambia sus firmas, se usará un e
         *   La llave nunca toca la base de datos ni logs de Supabase; solo transita en memoria de la Edge Function y sale hacia Gemini.
         *   ⚠️ Consecuencia: en modo BYOK el límite de Rate Limit interno (punto 1) se omite o eleva, ya que el usuario paga su propio consumo.
 *   **Mantenimiento (GitHub Actions):** Flujo CI/CD para compilar el bundle de `youtubei.js` + polyfills en cada parche, subirlo a Supabase Storage, y forzar la actualización OTA.
+*   **🔧 Deuda de Seguridad — Cleartext Traffic en Android (a revisar):** En `network_security_config.xml` el `<base-config cleartextTrafficPermitted="true">` está habilitado de forma *global* (todos los dominios), y `usesCleartextTraffic="true"` también está en el `<application>` del manifest. Esto se introdujo en Fase 1 como workaround para que el proxy HTTP local de `just_audio` (`127.0.0.1`) funcione en ExoPlayer. Es más permisivo de lo necesario: lo correcto es limitar `cleartextTrafficPermitted="true"` **únicamente** a los `<domain-config>` de `127.0.0.1`, `localhost` y los CDN de YouTube (`googlevideo.com`), dejando el `<base-config>` en `false`. Pendiente de ajustar y validar en dispositivo real (no se modificó en el cierre de Fase 1 para no arriesgar el audio ya funcional).
 
 ---
 

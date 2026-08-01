@@ -1,7 +1,9 @@
 // TODO: Eliminar en Fase 3
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart' as ja;
@@ -28,6 +30,7 @@ class _ExtractionDebugScreenState
 
   ja.AudioPlayer? _justAudioPlayer;
   mk.Player? _mediaKitPlayer;
+  StreamSubscription<String>? _logSubscription;
 
   @override
   void initState() {
@@ -42,11 +45,28 @@ class _ExtractionDebugScreenState
       _justAudioPlayer!.playerStateStream.listen((state) {
         if (mounted) setState(() => _isPlaying = state.playing);
       });
+      // Escuchar errores de just_audio para diagnóstico
+      _justAudioPlayer!.playbackEventStream.listen(
+        (_) {},
+        onError: (Object e, StackTrace st) {
+          if (mounted) _log('[JA Error] $e');
+        },
+      );
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final service = ref.read(extractionServiceProvider);
+      _logSubscription = service.onLogMessage.listen((msg) {
+        if (mounted) {
+          _log(msg);
+        }
+      });
+    });
   }
 
   @override
   void dispose() {
+    _logSubscription?.cancel();
     _videoIdController.dispose();
     _justAudioPlayer?.dispose();
     _mediaKitPlayer?.dispose();
@@ -56,7 +76,7 @@ class _ExtractionDebugScreenState
   void _log(String message) {
     setState(() {
       _logs.insert(
-          0, '[${DateTime.now().toString().split('.').first}] $message');
+          0, '[${DateTime.now().toString().split('.').first.split(' ').last}] $message');
     });
   }
 
@@ -86,10 +106,16 @@ class _ExtractionDebugScreenState
               mk.Media(streamUrl, httpHeaders: headers),
             );
           } else {
-            await _justAudioPlayer?.setUrl(
-              streamUrl,
+            // En Android, ExoPlayer requiere los headers exactos que usó
+            // el cliente ANDROID para firmar la petición.
+            // Usar AudioSource.uri con los headers permite que ExoPlayer
+            // los envíe correctamente sin duplicarlos.
+            _log('URL (primeros 80 chars): ${streamUrl.substring(0, streamUrl.length > 80 ? 80 : streamUrl.length)}...');
+            final audioSource = ja.AudioSource.uri(
+              Uri.parse(streamUrl),
               headers: headers,
             );
+            await _justAudioPlayer?.setAudioSource(audioSource);
             await _justAudioPlayer?.play();
           }
           _log('Reproduciendo audio correctamente.');
@@ -101,8 +127,13 @@ class _ExtractionDebugScreenState
           _log('Reproductor pausado por seguridad (Guard 403).');
           break;
       }
-    } catch (e) {
+    } catch (e, st) {
+      if (e is PlatformException) {
+        _log('Error nativo Android: code=${e.code}, msg=${e.message}');
+        if (e.details != null) _log('Detalles: ${e.details}');
+      }
       _log('Excepción inesperada: $e');
+      if (kDebugMode) debugPrint('StackTrace: $st');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -130,6 +161,16 @@ class _ExtractionDebugScreenState
           'Debug Extractor (Fase 1)',
           style: GoogleFonts.plusJakartaSans(color: AppTheme.primary),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Reiniciar Isolate / Motor JS',
+            icon: const Icon(Icons.refresh, color: Colors.orangeAccent),
+            onPressed: () {
+              ref.read(extractionServiceProvider).resetEngine();
+              _log('Solicitado reinicio del motor JS...');
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -147,6 +188,20 @@ class _ExtractionDebugScreenState
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  const Text('Pruebas: ', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  _buildPresetChip('Viva La Vida', 'dvgZkm1xWPE'),
+                  _buildPresetChip('Dembow', 'kQKGI24aydk'),
+                  _buildPresetChip('Uptown Funk', 'OPf0YbXqDm0'),
+                  _buildPresetChip('Vienna', '3jL4S4X97sQ'),
+                  _buildPresetChip('Rick Astley', 'dQw4w9WgXcQ'),
+                ],
               ),
             ),
             const SizedBox(height: 12),
@@ -184,7 +239,7 @@ class _ExtractionDebugScreenState
             ),
             const SizedBox(height: 16),
             Text(
-              'Logs de Extracción y Reproducción:',
+              'Logs de Extracción y Reproducción (en vivo):',
               style: GoogleFonts.plusJakartaSans(
                 color: AppTheme.secondary,
                 fontWeight: FontWeight.bold,
@@ -208,7 +263,7 @@ class _ExtractionDebugScreenState
                         style: const TextStyle(
                           color: Colors.greenAccent,
                           fontFamily: 'monospace',
-                          fontSize: 12,
+                          fontSize: 11,
                         ),
                       ),
                     );
@@ -218,6 +273,23 @@ class _ExtractionDebugScreenState
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPresetChip(String label, String videoId) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6.0),
+      child: ActionChip(
+        label: Text(label, style: const TextStyle(fontSize: 11, color: Colors.white)),
+        backgroundColor: AppTheme.surface,
+        side: BorderSide(color: AppTheme.secondary.withValues(alpha: 0.3)),
+        onPressed: () {
+          setState(() {
+            _videoIdController.text = videoId;
+          });
+          _extractAndPlay();
+        },
       ),
     );
   }

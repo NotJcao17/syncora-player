@@ -9,8 +9,11 @@
 .buildlog/
 .history
 .svn/
-.swiftpm/
+.swiftp/
 migrate_working_dir/
+
+# ZCode agent internal state (sessions, plans, cache)
+.zcode/
 
 # IntelliJ related
 *.iml
@@ -21,7 +24,7 @@ migrate_working_dir/
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.
-#.vscode/
+.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/

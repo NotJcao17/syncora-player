@@ -23,6 +23,13 @@ class _IsolateInitMessage {
   });
 }
 
+class ExtractionLogMessage {
+  final String message;
+  ExtractionLogMessage(this.message);
+}
+
+final Map<String, Completer<Map<String, dynamic>>> _jsExtractCompleters = {};
+
 /// Isolate de extracción que vive durante toda la sesión de la app.
 /// Ejecuta QuickJS (flutter_js) en background sin congelar la UI (Pitfall #8).
 class ExtractionIsolate {
@@ -30,19 +37,40 @@ class ExtractionIsolate {
   SendPort? _isolateSendPort;
   final Map<String, Completer<ExtractionResult>> _pendingRequests = {};
   ReceivePort? _mainReceivePort;
+  Completer<void>? _spawnCompleter;
+  final StreamController<String> _logController = StreamController<String>.broadcast();
 
+  Stream<String> get onLogMessage => _logController.stream;
   bool get isInitialized => _isolateSendPort != null;
 
   Future<void> spawn() async {
     if (isInitialized) return;
+    if (_spawnCompleter != null) return _spawnCompleter!.future;
+
+    _spawnCompleter = Completer<void>();
 
     final token = RootIsolateToken.instance;
     if (token == null) {
+      _spawnCompleter = null;
       throw StateError('RootIsolateToken no está disponible.');
     }
 
     final jsBundle = await JsBundleLoader.loadCompleteBundle();
     _mainReceivePort = ReceivePort();
+
+    _mainReceivePort!.listen((message) {
+      if (message is SendPort) {
+        _isolateSendPort = message;
+        if (!(_spawnCompleter?.isCompleted ?? true)) {
+          _spawnCompleter?.complete();
+        }
+      } else if (message is ExtractionResult) {
+        final completer = _pendingRequests.remove(message.requestId);
+        completer?.complete(message);
+      } else if (message is ExtractionLogMessage) {
+        _logController.add(message.message);
+      }
+    });
 
     _isolate = await Isolate.spawn(
       _isolateEntryPoint,
@@ -53,14 +81,7 @@ class ExtractionIsolate {
       ),
     );
 
-    _mainReceivePort!.listen((message) {
-      if (message is SendPort) {
-        _isolateSendPort = message;
-      } else if (message is ExtractionResult) {
-        final completer = _pendingRequests.remove(message.requestId);
-        completer?.complete(message);
-      }
-    });
+    return _spawnCompleter!.future;
   }
 
   Future<ExtractionResult> request(ExtractionRequest request) async {
@@ -76,11 +97,17 @@ class ExtractionIsolate {
     return completer.future;
   }
 
+  void resetEngine() {
+    _isolateSendPort?.send('RESET_ENGINE');
+  }
+
   void dispose() {
+    _logController.close();
     _mainReceivePort?.close();
     _isolate?.kill(priority: Isolate.immediate);
     _isolate = null;
     _isolateSendPort = null;
+    _spawnCompleter = null;
   }
 
   /// Punto de entrada del Isolate secundario
@@ -90,42 +117,55 @@ class ExtractionIsolate {
     final childReceivePort = ReceivePort();
     initMessage.mainSendPort.send(childReceivePort.sendPort);
 
+    void sendLog(String msg) {
+      dev.log(msg);
+      initMessage.mainSendPort.send(ExtractionLogMessage(msg));
+    }
+
     final fetchBridge = DartFetchBridge();
     final retryPolicy = RetryPolicy();
 
     JavascriptRuntime? jsRuntime;
+    Timer? pendingJobTimer;
 
     try {
-      jsRuntime = getJavascriptRuntime();
+      jsRuntime = getJavascriptRuntime(xhr: false);
 
       // Canal consoleLog
       jsRuntime.onMessage('consoleLog', (dynamic args) {
         try {
-          final data = jsonDecode(args.toString());
-          dev.log('[IsolateJS:${data['type']}] ${data['message']}');
+          final Map<String, dynamic> data = args is Map
+              ? Map<String, dynamic>.from(args)
+              : jsonDecode(args.toString());
+          sendLog('[IsolateJS:${data['type']}] ${data['message']}');
         } catch (_) {
-          dev.log('[IsolateJS] $args');
+          sendLog('[IsolateJS:log] $args');
         }
       });
 
       // Canal setTimeout
       jsRuntime.onMessage('setTimeout', (dynamic args) {
         try {
-          final data = jsonDecode(args.toString());
+          final Map<String, dynamic> data = args is Map
+              ? Map<String, dynamic>.from(args)
+              : jsonDecode(args.toString());
           final int id = data['id'];
           final int delay = data['delay'] ?? 0;
           Future.delayed(Duration(milliseconds: delay), () {
             jsRuntime?.evaluate('globalThis.__fireTimeout($id);');
+            jsRuntime?.executePendingJob();
           });
         } catch (e) {
-          dev.log('[IsolateJS] Error en setTimeout: $e');
+          sendLog('[IsolateJS] Error en setTimeout: $e');
         }
       });
 
       // Canal dartFetch
       jsRuntime.onMessage('dartFetch', (dynamic args) async {
         try {
-          final data = jsonDecode(args.toString());
+          final Map<String, dynamic> data = args is Map
+              ? Map<String, dynamic>.from(args)
+              : jsonDecode(args.toString());
           final int id = data['id'];
           final String url = data['url'];
           final String method = data['method'] ?? 'GET';
@@ -134,6 +174,8 @@ class ExtractionIsolate {
               : null;
           final dynamic body = data['body'];
 
+          sendLog('[dartFetch] req: $method $url');
+
           final res = await fetchBridge.fetch(
             url: url,
             method: method,
@@ -141,27 +183,62 @@ class ExtractionIsolate {
             body: body,
           );
 
+          sendLog('[dartFetch] res: ${res.statusCode} ${res.statusText} para $url');
+
           final headersJson = jsonEncode(res.headers);
           final escapedBody = jsonEncode(res.bodyText);
 
           final script =
               'globalThis.__dartFetchResponse($id, ${res.statusCode}, ${jsonEncode(res.statusText)}, $headersJson, $escapedBody, null);';
-          jsRuntime?.evaluate(script);
+          final evalRes = jsRuntime?.evaluate(script);
+          if (evalRes?.isError == true) {
+             sendLog('[dartFetch] JS ERROR evaluating __dartFetchResponse: ${evalRes?.stringResult}');
+          }
+          jsRuntime?.executePendingJob();
         } catch (err) {
+          sendLog('[dartFetch ERROR] $err');
           try {
             final data = jsonDecode(args.toString());
             final int id = data['id'];
             final script =
                 'globalThis.__dartFetchResponse($id, 500, "Error", "{}", "", ${jsonEncode(err.toString())});';
             jsRuntime?.evaluate(script);
+            jsRuntime?.executePendingJob();
           } catch (_) {}
         }
       });
 
+      // Canal extractionResult
+      jsRuntime.onMessage('extractionResult', (dynamic args) {
+        try {
+          final Map<String, dynamic> data = args is Map
+              ? Map<String, dynamic>.from(args)
+              : jsonDecode(args.toString());
+          final String? jsRequestId = data['requestId'];
+          if (jsRequestId != null) {
+            final completer = _jsExtractCompleters.remove(jsRequestId);
+            completer?.complete(data);
+          }
+        } catch (e) {
+          sendLog('[IsolateJS] Error al parsear extractionResult: $e\nDatos originales: $args');
+        }
+      });
+
+      // Asegurar que el microtask queue se procese constantemente
+      pendingJobTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
+        jsRuntime?.executePendingJob();
+      });
+
       // Evaluar bundle de polyfills + youtubei.js
-      jsRuntime.evaluate(initMessage.jsBundle);
+      sendLog('[IsolateJS] Cargando bundle QuickJS...');
+      final bundleRes = jsRuntime.evaluate(initMessage.jsBundle);
+      if (bundleRes.isError) {
+        sendLog('[IsolateJS ERROR CRÍTICO] Falló compilación del bundle JS: ${bundleRes.stringResult}');
+      } else {
+        sendLog('[IsolateJS] Bundle QuickJS cargado con éxito.');
+      }
     } catch (e) {
-      dev.log('[IsolateJS] Error al inicializar QuickJS: $e');
+      sendLog('[IsolateJS] Error al inicializar QuickJS: $e');
     }
 
     // Escuchar peticiones enviadas desde el Main Isolate
@@ -171,105 +248,164 @@ class ExtractionIsolate {
           request: message,
           jsRuntime: jsRuntime,
           retryPolicy: retryPolicy,
-          fetchBridge: fetchBridge,
+          sendLog: sendLog,
         );
         initMessage.mainSendPort.send(result);
+      } else if (message == 'RESET_ENGINE') {
+        sendLog('[IsolateJS] Reiniciando motor JS...');
+        jsRuntime?.evaluate('globalThis.resetJsEngine();');
+        retryPolicy.reset('');
+        sendLog('[IsolateJS] Motor JS reiniciado.');
       }
     }
+
+    pendingJobTimer?.cancel();
   }
 
-  /// Intenta extracción probando clientes exentos de PoToken en orden (Pitfall #18)
   static Future<ExtractionResult> _processExtraction({
     required ExtractionRequest request,
     required JavascriptRuntime? jsRuntime,
     required RetryPolicy retryPolicy,
-    required DartFetchBridge fetchBridge,
+    required void Function(String) sendLog,
   }) async {
-    final clients = ['tv', 'tv_downgraded', 'android_vr'];
+    final clients = ['ANDROID', 'ANDROID_VR', 'WEB'];
+    String lastJsError = '';
 
     for (final client in clients) {
+      sendLog('[IsolateJS] Probando cliente Innertube: $client para videoId: ${request.videoId}...');
       try {
         final evalResult = await _tryExtractWithClient(
           videoId: request.videoId,
           client: client,
           jsRuntime: jsRuntime,
+          sendLog: sendLog,
         );
 
-        if (evalResult != null && evalResult['url'] != null) {
-          retryPolicy.reset(request.videoId);
-          return ExtractionSuccess(
-            requestId: request.requestId,
-            streamUrl: evalResult['url'] as String,
-            headers: Map<String, String>.from(evalResult['headers'] ?? {}),
-          );
+        if (evalResult != null) {
+          if (evalResult['url'] != null) {
+            sendLog('[IsolateJS] Extracción exitosa con cliente: $client!');
+            retryPolicy.reset(request.videoId);
+            final rawUrl = evalResult['url'];
+            final String streamUrl = rawUrl is Map ? (rawUrl['url']?.toString() ?? rawUrl.toString()) : rawUrl.toString();
+            return ExtractionSuccess(
+              requestId: request.requestId,
+              streamUrl: streamUrl,
+              headers: Map<String, String>.from(evalResult['headers'] ?? {}),
+            );
+          } else if (evalResult['error'] != null) {
+            lastJsError = evalResult['error'].toString();
+            sendLog('[IsolateJS] Cliente $client falló de forma controlada: $lastJsError');
+          }
         }
       } catch (e) {
-        dev.log('[IsolateJS] Fallo de cliente $client para ${request.videoId}: $e');
+        lastJsError = e.toString();
+        sendLog('[IsolateJS] Excepción en cliente $client: $e');
       }
     }
 
-    // Fallback o reintento ante 403 / error de red
-    const errorType = ExtractionError.rateLimited;
+    // Clasificar la causa real del fallo para aplicar el guard correctamente
+    // (Pitfalls #11 y #14). Antes esto se forzaba a `rateLimited`, lo que
+    // provocaba que errores lógicos (metadata ausente) se reintentaran.
+    final errorType = _classifyExtractionError(lastJsError);
 
-    if (retryPolicy.canRetry(request.videoId, errorType)) {
-      await Future.delayed(const Duration(seconds: 2));
-      return _processExtraction(
-        request: request,
-        jsRuntime: jsRuntime,
-        retryPolicy: retryPolicy,
-        fetchBridge: fetchBridge,
-      );
+    // Solo 403/red pueden reintentarse (máx. 1 vez). Los errores lógicos y
+    // desconocidos fallan de inmediato (fail fast / auto-skip).
+    if (errorType == ExtractionError.rateLimited ||
+        errorType == ExtractionError.networkError) {
+      if (retryPolicy.canRetry(request.videoId, errorType)) {
+        sendLog('[IsolateJS] Guard 403: Reintentando extracción (1 reintento permitido)...');
+        await Future.delayed(const Duration(seconds: 2));
+        return _processExtraction(
+          request: request,
+          jsRuntime: jsRuntime,
+          retryPolicy: retryPolicy,
+          sendLog: sendLog,
+        );
+      }
+      sendLog('[IsolateJS] Guard 403: Pausando reproductor. No se pudo extraer la URL.');
+    } else {
+      sendLog('[IsolateJS] Fallo lógico ($errorType): abortando sin reintento.');
     }
 
     return ExtractionFailure(
       requestId: request.requestId,
       error: errorType,
-      message: 'No se pudo extraer la URL con clientes exentos de PoToken ($clients).',
+      message: 'No se pudo extraer la URL con clientes ($clients). Detalle: $lastJsError',
     );
+  }
+
+  /// Clasifica el texto de error devuelto por QuickJS en un [ExtractionError].
+  ///
+  /// - [notFound]: errores lógicos (metadata ausente, video privado/no
+  ///   disponible). Candidatos a auto-skip; NO se reintentan.
+  /// - [rateLimited]: errores 403 / Forbidden / baneo de BotGuard.
+  /// - [networkError]: problemas de red (timeout, SocketException).
+  /// - [unknownError]: cualquier otra causa.
+  static ExtractionError _classifyExtractionError(String errorText) {
+    final e = errorText.toLowerCase();
+
+    // Errores lógicos: la canción existe pero no hay streaming utilizable,
+    // o el video no existe / es privado. Reintentar no sirve de nada.
+    const notFoundMarkers = [
+      'streaming data not available',
+      'no se encontró ningún formato',
+      'no se encontró un formato',
+      'no se pudo determinar la url',
+      'no se pudo obtener url',
+      'ningún formato',
+      'video unavailable',
+      'private video',
+      'not available',
+      'no longer available',
+    ];
+    for (final marker in notFoundMarkers) {
+      if (e.contains(marker)) return ExtractionError.notFound;
+    }
+
+    // Baneo / BotGuard: YouTube bloqueó la petición (403).
+    const rateLimitedMarkers = ['403', 'forbidden', 'botguard', 'rate limit', 'rate-limit'];
+    for (final marker in rateLimitedMarkers) {
+      if (e.contains(marker)) return ExtractionError.rateLimited;
+    }
+
+    // Red: timeout o problemas de conectividad.
+    const networkMarkers = ['timeout', 'socketexception', 'connection refused', 'connection reset', 'failed host lookup'];
+    for (final marker in networkMarkers) {
+      if (e.contains(marker)) return ExtractionError.networkError;
+    }
+
+    return ExtractionError.unknownError;
   }
 
   static Future<Map<String, dynamic>?> _tryExtractWithClient({
     required String videoId,
     required String client,
     required JavascriptRuntime? jsRuntime,
+    required void Function(String) sendLog,
   }) async {
     if (jsRuntime == null) return null;
 
-    final code = '''
-    (async function() {
-      if (typeof Innertube !== 'undefined') {
-        try {
-          const yt = await Innertube.create({ client_type: '$client' });
-          const info = await yt.getBasicInfo('$videoId');
-          const format = info.chooseFormat({ quality: 'best', type: 'audio' });
-          const url = format.decipher(yt.session.player);
-          return JSON.stringify({
-            url: url,
-            headers: {
-              'User-Agent': (yt.session && yt.session.player && yt.session.player.userAgent) || 'Mozilla/5.0',
-              'Referer': 'https://www.youtube.com/'
-            }
-          });
-        } catch(e) {
-          return JSON.stringify({ error: e.message });
-        }
-      } else {
-        return JSON.stringify({ error: 'Innertube bundle not loaded' });
-      }
-    })()
-    ''';
+    final jsRequestId = 'js_${DateTime.now().microsecondsSinceEpoch}_${videoId}_$client';
+    final completer = Completer<Map<String, dynamic>>();
+    _jsExtractCompleters[jsRequestId] = completer;
 
-    final jsRes = jsRuntime.evaluate(code);
-    final String stringResult = jsRes.stringResult;
-
-    if (stringResult.isNotEmpty && stringResult != 'null' && stringResult != 'undefined') {
-      try {
-        final map = jsonDecode(stringResult);
-        if (map is Map<String, dynamic> && map.containsKey('url')) {
-          return map;
-        }
-      } catch (_) {}
+    final code = "globalThis.extractVideo('$videoId', '$client', '$jsRequestId');";
+    final evalRes = jsRuntime.evaluate(code);
+    
+    if (evalRes.isError) {
+      sendLog('[IsolateJS ERROR AL EJECUTAR EXTRACTVIDEO] ${evalRes.stringResult}');
+      _jsExtractCompleters.remove(jsRequestId);
+      return {'error': 'Error sintáctico en extractVideo: ${evalRes.stringResult}'};
     }
-    return null;
+
+    jsRuntime.executePendingJob();
+
+    try {
+      return await completer.future.timeout(const Duration(seconds: 25));
+    } catch (e) {
+      _jsExtractCompleters.remove(jsRequestId);
+      sendLog('[IsolateJS] Timeout en extractVideo para $client');
+      return {'error': 'Timeout o error esperando respuesta de QuickJS: $e'};
+    }
   }
 }
