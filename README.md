@@ -2,14 +2,14 @@
 
 # 🎵 Syncora Player
 
-**A free, private, and premium-quality music player for Windows and Android.**
+**A free, open-source, and premium-quality music player for Windows and Android.**
 
-*Stream from YouTube. Own your library. No subscriptions.*
+*Stream public audio. Own your library. No subscriptions.*
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white)](https://dart.dev)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows-brightgreen)](https://flutter.dev)
-[![License](https://img.shields.io/badge/License-Private-lightgrey)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 > **Download**: *(coming soon)*
 
@@ -19,17 +19,17 @@
 
 ## What is Syncora Player?
 
-Syncora Player is a native music player for **Windows and Android** that lets users build and manage personal music libraries for free, without ads or subscriptions. Audio is streamed directly from YouTube using a resilient extraction engine, and playlists are synced to the cloud via Supabase.
+Syncora Player is an open-source, native music player for **Windows and Android** that allows users to build and manage personal music libraries without ads or subscriptions. Audio is streamed client-side from public sources using a resilient extraction engine, and playlists are synced to the cloud via Supabase.
 
-The core philosophy: **privacy-first, premium design, zero cost to the user.**
+The core philosophy: **privacy-first, open source, premium design, zero cost to the user.**
 
 ---
 
 ## ✨ Features
 
 ### Core
-- 🎵 **Stream any song** from YouTube — no account, no ads
-- 📚 **Personal playlists** with full cloud sync across devices
+- 🎵 **Stream public audio** — no account required, no ads
+- 📚 **Personal playlists** with cloud sync across devices
 - 📥 **Download for offline playback** (selectable audio quality)
 - ❤️ Liked songs playlist and offline mode
 - 🔀 Normal, Shuffle, and Repeat modes
@@ -38,10 +38,11 @@ The core philosophy: **privacy-first, premium design, zero cost to the user.**
 - 🗂️ Import playlists from Spotify/Apple Music (CSV/text via TuneMyMusic, Soundiiz)
 - 📤 Export any playlist to CSV for full data portability
 
-### AI-Powered (Gemini)
+### AI-Powered (Gemini API)
 - 💬 Generate playlists or playback queues from a text prompt
 - 🔍 Find a song by typing a lyric fragment
 - ✏️ Edit playlists with natural language ("remove all songs by this artist")
+- 🔑 **BYOK (Bring Your Own Key) Support**: The initial version comes with default AI integration, while also allowing users to supply their own Google AI Studio key (BYOK) for unlimited usage as the app scales.
 
 ### Premium Experience
 - 🎨 Waveform visualizer, fullscreen player, animated mini-player
@@ -69,7 +70,7 @@ The core philosophy: **privacy-first, premium design, zero cost to the user.**
 
 ## 🔩 Extraction Engine Architecture
 
-The extraction engine is the most critical subsystem of Syncora Player. It is responsible for obtaining a playable audio URL from YouTube without requiring API keys, accounts, or maintaining brittle scrapers.
+The extraction engine is a critical subsystem of Syncora Player. It is responsible for obtaining a playable audio stream URL from public web clients without requiring maintainers to release new application builds for minor upstream changes.
 
 ### How it works
 
@@ -107,23 +108,23 @@ The extraction engine is the most critical subsystem of Syncora Player. It is re
 
 | File | Role |
 | :--- | :--- |
-| `assets/js/youtubei.bundle.js` | The compiled `youtubei.js` library. Knows YouTube's Innertube protocol and handles signature deciphering. **This is the only file that changes when YouTube updates.** |
+| `assets/js/youtubei.bundle.js` | The compiled `youtubei.js` library. Handles the public Innertube protocol and signature deciphering. **This is the main file updated during upstream engine updates.** |
 | `lib/core/extraction/js_bundle_loader.dart` | Loads the bundle and injects pure-JS polyfills for Web APIs that QuickJS doesn't include natively (`URL`, `fetch`, `TextEncoder`, `setTimeout`, etc.). |
 | `lib/core/extraction/extraction_isolate.dart` | Runs QuickJS inside a dedicated `Isolate` (secondary Dart thread) to keep the UI at 60 FPS. Manages the client fallback hierarchy (`ANDROID → ANDROID_VR → WEB`). |
 | `lib/core/extraction/dart_fetch_bridge.dart` | The network bridge. Intercepts `fetch()` calls from JavaScript and executes them natively in Dart via `Dio`, handling redirects, session cookies, and decompression. |
-| `lib/core/extraction/retry_policy.dart` | Guard against 403 loops. Allows exactly **1 retry** on network/rate-limit errors, then pauses immediately to protect the user's IP from being banned. |
+| `lib/core/extraction/retry_policy.dart` | Guard against 403 loops. Allows exactly **1 retry** on network/rate-limit errors, then pauses immediately to protect the user's IP from rate limits. |
 
-### Resilience and OTA Updates
+### Resilience and Maintenance Matrix
 
-The extraction engine is designed for **zero-APK-update maintenance** when YouTube changes its internals. The only file that ever needs to change in response to YouTube updates is `assets/js/youtubei.bundle.js`. This file can be served and updated remotely from the Supabase Storage bucket — the app downloads it at runtime, without requiring a new release on any app store.
+The extraction engine is designed for **zero-APK-update maintenance** when upstream signature scripts change. The bundle file (`assets/js/youtubei.bundle.js`) can be updated over-the-air (OTA) from a public Storage bucket without releasing a new application build.
 
-| Possible YouTube change | Solved by OTA `youtubei.js` update? | Dart/Flutter code change needed? |
+| Event / Upstream Change | Solved by OTA `youtubei.js` update? | Code Change Required in App? |
 | :--- | :---: | :---: |
 | **Signature algorithm change** (`n-sig` / `s` decipher) | ✅ Yes — no APK update needed | None |
-| **PoToken / BotGuard extended to new clients** | ✅ Mostly — bundle tracks exempt clients | Minor: update client list in `extraction_isolate.dart` |
-| **Switch to DASH / HLS manifest format** | ✅ Extraction side | Configure player to receive manifest URL |
-| **New Web APIs required by `youtubei.js`** | ❌ No | Add missing polyfill to `js_bundle_loader.dart` |
-| **CDN / HTTP header policy change (ExoPlayer)** | ❌ No | Adjust header injection in the native player layer |
+| **BotGuard / PoToken policy changes** | ✅ Mostly — bundle tracks exempt clients | Minor: update client hierarchy in `extraction_isolate.dart` if needed |
+| **Manifest format updates (DASH / HLS)** | ✅ Extraction side | Configure native player layer for manifest URLs |
+| **New Web APIs required by JS engine** | ❌ No | Add missing polyfill to `js_bundle_loader.dart` |
+| **ExoPlayer / Native HTTP header policies** | ❌ No | Adjust native audio layer / manifest headers |
 
 ---
 
@@ -191,7 +192,6 @@ flutter pub get
 
 # 3. Copy and fill in environment variables
 cp .env.example .env
-# Edit .env with your Supabase credentials
 
 # 4. Run on Android
 flutter run --device-id <your-device-id>
@@ -213,35 +213,30 @@ flutter test test/core/extraction/multi_song_extraction_test.dart --timeout 4m
 
 ---
 
-## 🔐 Security & API Keys
+## ⚠️ Security Notice & False Positive Alert
 
-> **Note on GitHub Secret Scanning:** The `assets/js/youtubei.bundle.js` file contains the string `AIzaSyAO_...` which GitHub flags as a "Google API Key". This is a **false positive**. It is YouTube's own public client API key, embedded in all YouTube clients (web and mobile). It is not a private credential and does not belong to this project.
-
-Secrets used by Syncora Player (Supabase URL, anon key, Gemini key) are **never committed**. They are loaded from a `.env` file at runtime (excluded via `.gitignore`).
+> **Note on GitHub Secret Scanning:** The `assets/js/youtubei.bundle.js` file contains the public string `AIzaSyAO_...` which automated tools may flag as a "Google API Key". This is a **false positive**. It is YouTube's public web client API key embedded in open-source YouTube client libraries. It is not a private credential and does not grant access to any private cloud resources or personal accounts.
 
 ---
 
-## 🗺️ Development Roadmap
+## ⚖️ Legal Disclaimer
 
-| Phase | Description | Status |
-| :--- | :--- | :---: |
-| **Phase 0** | Project setup, dependencies, architecture | ✅ Done |
-| **Phase 1** | Resilient extraction engine (YouTube → audio URL) | ✅ Done |
-| **Phase 2** | Audio state management + OS controls integration | 🔜 Next |
-| **Phase 3** | Core UI and navigation | ⬜ |
-| **Phase 4** | Data layer — Deezer metadata + local DB (Drift/SQLite) | ⬜ |
-| **Phase 5** | Cloud sync, auth, and online-first architecture (Supabase) | ⬜ |
-| **Phase 6** | Offline mode and batch downloads | ⬜ |
-| **Phase 7** | Premium experience — AI features, crossfade, Wrapped stats | ⬜ |
+**Syncora Player** is developed by **Juan Carlos Orozco Nieto** for educational, personal, and research purposes only.
+
+- Syncora Player **does not host, store, upload, or distribute** any audio or video files or copyrighted material.
+- All media streaming requests are performed client-side by the end-user using public web protocols.
+- The author and contributors are **not responsible** for how end-users choose to use this application, nor for any potential violations of third-party terms of service or copyright laws caused by individual usage.
 
 ---
 
 ## 📄 License
 
-This project is private and not licensed for public distribution at this time. A license will be added upon public release.
+Copyright (c) 2026 **Juan Carlos Orozco Nieto**.
+
+This project is licensed under the **MIT License**. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, subject to the condition that the above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 ---
 
 <div align="center">
-  Built with ❤️ using Flutter · Powered by <a href="https://github.com/LuanRT/YouTube.js">youtubei.js</a>
+  Built with ❤️ using Flutter · Created by <b>Juan Carlos Orozco Nieto</b> · Powered by <a href="https://github.com/LuanRT/YouTube.js">youtubei.js</a>
 </div>
