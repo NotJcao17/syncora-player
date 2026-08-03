@@ -31,13 +31,20 @@ final syncoraPlayerControllerProvider =
   controller.init();
 
   if (!kIsWeb && Platform.isWindows) {
-    final winControls = WindowsMediaControls(controller);
-    ref.onDispose(winControls.dispose);
+    try {
+      final winControls = WindowsMediaControls(controller);
+      ref.onDispose(winControls.dispose);
+    } catch (e) {
+      debugPrint('WindowsMediaControls no disponible en este entorno: $e');
+    }
   } else if (!kIsWeb && Platform.isAndroid) {
-    _initAndroidAudioService(controller);
+    try {
+      _initAndroidAudioService(controller);
+    } catch (e) {
+      debugPrint('AndroidAudioService no disponible en este entorno: $e');
+    }
   }
 
-  ref.onDispose(controller.dispose);
   return controller;
 });
 

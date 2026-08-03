@@ -21,6 +21,9 @@ class SyncoraPlayerState {
   final bool shuffle;
   final bool skipSilence;
 
+  bool get isShuffle => shuffle;
+  bool get isSkipSilence => skipSilence;
+
   /// Pista activa (null si la cola está vacía).
   SyncoraTrack? get currentTrack =>
       (currentIndex >= 0 && currentIndex < queue.length)
@@ -225,9 +228,27 @@ class SyncoraPlayerController extends ChangeNotifier {
     setRepeatMode(next);
   }
 
+  /// Agrega una pista a la cola actual.
+  void addToQueue(SyncoraTrack track) {
+    final updatedQueue = List<SyncoraTrack>.from(_state.queue)..add(track);
+    final newIndex = _state.currentIndex < 0 ? 0 : _state.currentIndex;
+    _state = _state.copyWith(
+      queue: List.unmodifiable(updatedQueue),
+      currentIndex: newIndex,
+    );
+    _notify();
+  }
+
+  /// Alias de playIndex para saltar a un índice de la cola.
+  Future<void> skipToQueueIndex(int index) => playIndex(index);
+
   void setShuffle(bool enabled) {
     _state = _state.copyWith(shuffle: enabled);
     _notify();
+  }
+
+  void toggleShuffle() {
+    setShuffle(!_state.shuffle);
   }
 
   Future<void> setSkipSilence(bool enabled) async {

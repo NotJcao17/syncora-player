@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   AppTheme._();
 
-  // Color Palette
+  // Color Palette (calcada de docs/mockups/js/tailwind-config.js)
   static const Color background = Color(0xFF181C27);
   static const Color surface = Color(0xFF1E2633);
   static const Color surfaceHover = Color(0xFF252E3D);
@@ -12,6 +12,51 @@ class AppTheme {
   static const Color primary = Color(0xFFFFFFFF);
   static const Color secondary = Color(0xFFA0ABBA);
   static const Color muted = Color(0xFF7F8C9D);
+  static const Color error = Color(0xFFB4ABFF); // #ffb4ab (mockup "error")
+
+  // Colores de géneros para "Explorar todo" (search.html mockup)
+  static const Color genrePop = Color(0xFF4F46E5); // indigo-600
+  static const Color genreHipHop = Color(0xFF047857); // emerald-700
+  static const Color genreRock = Color(0xFFBE123C); // rose-700
+  static const Color genreElectronic = Color(0xFF1D4ED8); // blue-700
+
+  // Gradiente de "Me Gusta" / Liked Songs (library.html mockup: from-indigo-500 to-purple-600)
+  static const LinearGradient gradientLiked = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF6366F1), Color(0xFF9333EA)],
+  );
+
+  // --- Sombras (calcadas de tailwind-config.js boxShadow) ---
+  /// shadow-glow: 0 0 20px rgba(255,255,255,0.15) — botones play, portadas destacadas.
+  static const List<BoxShadow> glowShadow = [
+    BoxShadow(color: Color(0x26FFFFFF), blurRadius: 20, spreadRadius: 0),
+  ];
+
+  /// shadow-glow-high: 0 0 40px rgba(255,255,255,0.3) — portada del reproductor fullscreen.
+  static const List<BoxShadow> glowHighShadow = [
+    BoxShadow(color: 0x4DFFFFFF, blurRadius: 40, spreadRadius: 0),
+  ];
+
+  /// shadow-surface: 0 8px 30px rgba(0,0,0,0.12) — tarjetas elevadas.
+  static const List<BoxShadow> surfaceShadow = [
+    BoxShadow(color: 0x1F000000, blurRadius: 30, offset: Offset(0, 8)),
+  ];
+
+  /// shadow-surface-up: 0 -8px 30px rgba(0,0,0,0.12) — hojas inferiores.
+  static const List<BoxShadow> surfaceUpShadow = [
+    BoxShadow(color: 0x1F000000, blurRadius: 30, offset: Offset(0, -8)),
+  ];
+
+  /// Mini player móvil: shadow-[0_-4px_20px_rgba(0,0,0,0.3)].
+  static const List<BoxShadow> miniPlayerShadow = [
+    BoxShadow(color: 0x4D000000, blurRadius: 20, offset: Offset(0, -4)),
+  ];
+
+  /// Bottom nav móvil: shadow-[0_-8px_20px_rgba(0,0,0,0.3)].
+  static const List<BoxShadow> bottomNavShadow = [
+    BoxShadow(color: 0x4D000000, blurRadius: 20, offset: Offset(0, -8)),
+  ];
 
   static ThemeData get darkTheme {
     final baseTextTheme = GoogleFonts.plusJakartaSansTextTheme(

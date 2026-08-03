@@ -1,26 +1,24 @@
 import 'package:flutter/foundation.dart';
 
 /// Pista del dominio de Syncora, independiente de `audio_service`.
-///
-/// `audio_service` (Android) no soporta Windows, por lo que no podemos usar
-/// `MediaItem` como modelo compartido. En su lugar usamos [SyncoraTrack] en
-/// toda la lógica, y cada adaptador de controles del SO lo traduce a su tipo
-/// nativo (`MediaItem` en Android, `MusicMetadata` en Windows).
 @immutable
 class SyncoraTrack {
-  /// ID lógico de la pista. Para esta fase (Fase 2) es el `videoId` de YouTube.
+  /// ID lógico de la pista. Para esta fase es el `videoId` de YouTube o ID de Deezer.
   final String id;
 
   final String title;
   final String artist;
   final String? album;
   final Duration? duration;
+  final String? youtubeVideoId;
 
   /// URL de la portada (red). Se reenvía a la notificación / SMTC.
   final Uri? artUri;
 
-  /// Indica si la pista es spoken-word/podcast (habilita Skip Silence agresivo
-  /// en Android, Pitfall #7).
+  /// Helper de conveniencia para obtener la URL de portada como String.
+  String get coverUrl => artUri?.toString() ?? '';
+
+  /// Indica si la pista es spoken-word/podcast (habilita Skip Silence agresivo en Android).
   final bool isSpokenWord;
 
   const SyncoraTrack({
@@ -29,6 +27,7 @@ class SyncoraTrack {
     this.artist = '',
     this.album,
     this.duration,
+    this.youtubeVideoId,
     this.artUri,
     this.isSpokenWord = false,
   });
@@ -40,6 +39,7 @@ class SyncoraTrack {
   }) {
     return SyncoraTrack(
       id: videoId,
+      youtubeVideoId: videoId,
       title: title ?? 'Video $videoId',
       artist: artist ?? 'YouTube',
     );
@@ -51,7 +51,9 @@ class SyncoraTrack {
     String? artist,
     String? album,
     Duration? duration,
+    String? youtubeVideoId,
     Uri? artUri,
+    String? coverUrl,
     bool? isSpokenWord,
   }) {
     return SyncoraTrack(
@@ -60,7 +62,8 @@ class SyncoraTrack {
       artist: artist ?? this.artist,
       album: album ?? this.album,
       duration: duration ?? this.duration,
-      artUri: artUri ?? this.artUri,
+      youtubeVideoId: youtubeVideoId ?? this.youtubeVideoId,
+      artUri: artUri ?? (coverUrl != null ? Uri.tryParse(coverUrl) : this.artUri),
       isSpokenWord: isSpokenWord ?? this.isSpokenWord,
     );
   }

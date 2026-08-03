@@ -156,7 +156,7 @@ Para que el reproductor no se rompa si YouTube cambia sus firmas, se usará un e
         *   La llave nunca toca la base de datos ni logs de Supabase; solo transita en memoria de la Edge Function y sale hacia Gemini.
         *   ⚠️ Consecuencia: en modo BYOK el límite de Rate Limit interno (punto 1) se omite o eleva, ya que el usuario paga su propio consumo.
 *   **Mantenimiento (GitHub Actions):** Flujo CI/CD para compilar el bundle de `youtubei.js` + polyfills en cada parche, subirlo a Supabase Storage, y forzar la actualización OTA.
-*   **🔧 Deuda de Seguridad — Cleartext Traffic en Android (a revisar):** En `network_security_config.xml` el `<base-config cleartextTrafficPermitted="true">` está habilitado de forma *global* (todos los dominios), y `usesCleartextTraffic="true"` también está en el `<application>` del manifest. Esto se introdujo en Fase 1 como workaround para que el proxy HTTP local de `just_audio` (`127.0.0.1`) funcione en ExoPlayer. Es más permisivo de lo necesario: lo correcto es limitar `cleartextTrafficPermitted="true"` **únicamente** a los `<domain-config>` de `127.0.0.1`, `localhost` y los CDN de YouTube (`googlevideo.com`), dejando el `<base-config>` en `false`. Pendiente de ajustar y validar en dispositivo real (no se modificó en el cierre de Fase 1 para no arriesgar el audio ya funcional).
+*   **✅ Cleartext Traffic en Android (resuelto en Fase 2):** `network_security_config.xml` tiene `<base-config cleartextTrafficPermitted="false"/>` global y `cleartextTrafficPermitted="true"` limitado únicamente a `127.0.0.1` y `localhost` (proxy interno de `just_audio`).
 
 ---
 

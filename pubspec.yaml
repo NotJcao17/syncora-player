@@ -55,6 +55,10 @@ dependencies:
   google_fonts: ^8.2.0
   flutter_secure_storage: ^10.3.1
   flutter_dotenv: ^6.0.1
+  flutter_animate: ^4.5.2
+  palette_generator: ^0.3.3+6
+  sliver_tools: ^0.2.12
+  modal_bottom_sheet: ^3.0.0
   freezed_annotation: ^3.1.0
   json_annotation: ^4.12.0
 
@@ -91,6 +95,7 @@ flutter:
   assets:
     - .env
     - assets/js/youtubei.bundle.js
+    - assets/icon/
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
