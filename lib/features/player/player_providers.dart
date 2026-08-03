@@ -1,0 +1,75 @@
+import 'dart:io';
+import 'package:audio_service/audio_service.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
+
+import '../../core/extraction/extraction_provider.dart';
+import 'audio_engine/audio_engine_factory.dart';
+import 'os_controls/syncora_audio_handler.dart';
+import 'os_controls/windows_media_controls.dart';
+import 'player_models.dart';
+import 'syncora_player_controller.dart';
+
+AudioHandler? _globalAndroidAudioHandler;
+
+/// Provider principal del controlador de reproducción.
+///
+/// Gestiona la única fuente de la verdad del reproductor ([SyncoraPlayerController])
+/// y acopla los adaptadores del sistema operativo (`audio_service` en Android,
+/// `smtc_windows` en Windows).
+final syncoraPlayerControllerProvider =
+    ChangeNotifierProvider<SyncoraPlayerController>((ref) {
+  final engine = createAudioEngine();
+  final extractionService = ref.watch(extractionServiceProvider);
+
+  final controller = SyncoraPlayerController(
+    engine: engine,
+    extractionService: extractionService,
+  );
+
+  controller.init();
+
+  if (!kIsWeb && Platform.isWindows) {
+    final winControls = WindowsMediaControls(controller);
+    ref.onDispose(winControls.dispose);
+  } else if (!kIsWeb && Platform.isAndroid) {
+    _initAndroidAudioService(controller);
+  }
+
+  ref.onDispose(controller.dispose);
+  return controller;
+});
+
+void _initAndroidAudioService(SyncoraPlayerController controller) {
+  final currentHandler = _globalAndroidAudioHandler;
+  if (currentHandler != null) {
+    if (currentHandler is SyncoraAudioHandler) {
+      currentHandler.updateController(controller);
+    }
+    return;
+  }
+  AudioService.init(
+    builder: () => SyncoraAudioHandler(controller),
+    config: const AudioServiceConfig(
+      androidNotificationChannelId: 'com.syncora.player',
+      androidNotificationChannelName: 'Syncora Player',
+      androidNotificationOngoing: true,
+      androidNotificationIcon: 'mipmap/ic_launcher',
+    ),
+  ).then((handler) {
+    _globalAndroidAudioHandler = handler;
+  });
+}
+
+/// Selector reactivo: ¿se está reproduciendo audio?
+final isPlayingProvider = Provider<bool>((ref) =>
+    ref.watch(syncoraPlayerControllerProvider).state.engine.playing);
+
+/// Selector reactivo: pista actual en reproducción.
+final currentTrackProvider = Provider<SyncoraTrack?>((ref) =>
+    ref.watch(syncoraPlayerControllerProvider).state.currentTrack);
+
+/// Selector reactivo: snapshot completo del estado del reproductor.
+final playerStateProvider = Provider<SyncoraPlayerState>((ref) =>
+    ref.watch(syncoraPlayerControllerProvider).state);

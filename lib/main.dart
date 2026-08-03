@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:smtc_windows/smtc_windows.dart';
 import 'app.dart';
 
 void main() async {
@@ -43,9 +44,10 @@ void main() async {
     publishableKey: validKey,
   );
 
-  // MediaKit solo se inicializa en Windows (en Android se usa just_audio)
+  // MediaKit y SMTCWindows solo se inicializan en Windows
   if (!kIsWeb && Platform.isWindows) {
     MediaKit.ensureInitialized();
+    await SMTCWindows.initialize();
   }
 
   runApp(

@@ -1,16 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <base-config cleartextTrafficPermitted="true">
-        <trust-anchors>
-            <certificates src="system" />
-        </trust-anchors>
-    </base-config>
-
+    <!-- Solo el proxy local de just_audio necesita cleartext -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">127.0.0.1</domain>
-        <domain includeSubdomains="true">googlevideo.com</domain>
-        <domain includeSubdomains="true">youtube.com</domain>
-        <domain includeSubdomains="true">ytimg.com</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
     </domain-config>
+    <!-- Todo el resto (YouTube, Deezer, Supabase) usa HTTPS por defecto -->
+    <base-config cleartextTrafficPermitted="false"/>
 </network-security-config>
