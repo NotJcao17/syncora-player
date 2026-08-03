@@ -35,27 +35,27 @@ class AppTheme {
 
   /// shadow-glow-high: 0 0 40px rgba(255,255,255,0.3) — portada del reproductor fullscreen.
   static const List<BoxShadow> glowHighShadow = [
-    BoxShadow(color: 0x4DFFFFFF, blurRadius: 40, spreadRadius: 0),
+    BoxShadow(color: Color(0x4DFFFFFF), blurRadius: 40, spreadRadius: 0),
   ];
 
   /// shadow-surface: 0 8px 30px rgba(0,0,0,0.12) — tarjetas elevadas.
   static const List<BoxShadow> surfaceShadow = [
-    BoxShadow(color: 0x1F000000, blurRadius: 30, offset: Offset(0, 8)),
+    BoxShadow(color: Color(0x1F000000), blurRadius: 30, offset: Offset(0, 8)),
   ];
 
   /// shadow-surface-up: 0 -8px 30px rgba(0,0,0,0.12) — hojas inferiores.
   static const List<BoxShadow> surfaceUpShadow = [
-    BoxShadow(color: 0x1F000000, blurRadius: 30, offset: Offset(0, -8)),
+    BoxShadow(color: Color(0x1F000000), blurRadius: 30, offset: Offset(0, -8)),
   ];
 
   /// Mini player móvil: shadow-[0_-4px_20px_rgba(0,0,0,0.3)].
   static const List<BoxShadow> miniPlayerShadow = [
-    BoxShadow(color: 0x4D000000, blurRadius: 20, offset: Offset(0, -4)),
+    BoxShadow(color: Color(0x4D000000), blurRadius: 20, offset: Offset(0, -4)),
   ];
 
   /// Bottom nav móvil: shadow-[0_-8px_20px_rgba(0,0,0,0.3)].
   static const List<BoxShadow> bottomNavShadow = [
-    BoxShadow(color: 0x4D000000, blurRadius: 20, offset: Offset(0, -8)),
+    BoxShadow(color: Color(0x4D000000), blurRadius: 20, offset: Offset(0, -8)),
   ];
 
   static ThemeData get darkTheme {

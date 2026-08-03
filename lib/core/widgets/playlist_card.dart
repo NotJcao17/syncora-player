@@ -54,56 +54,47 @@ class _PlaylistCardState extends State<PlaylistCard> {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
             children: [
               // Contenedor de Portada con Play button flotante
-              Stack(
-                children: [
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final width = constraints.maxWidth.isFinite && constraints.maxWidth > 0
-                          ? constraints.maxWidth
-                          : (isLarge ? 160.0 : 120.0);
-                      return SizedBox(
-                        width: width,
-                        height: width,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: _buildCoverImage(),
-                        ),
-                      );
-                    },
-                  ),
-                  // Botón Play Flotante en hover
-                  Positioned(
-                    right: 8,
-                    bottom: 8,
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 150),
-                      opacity: _isHovered ? 1.0 : 0.0,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppTheme.primary,
-                          boxShadow: AppTheme.glowShadow,
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            LucideIcons.play,
-                            color: AppTheme.background,
-                            size: 18,
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: _buildCoverImage(),
+                    ),
+                    // Botón Play Flotante en hover
+                    Positioned(
+                      right: 8,
+                      bottom: 8,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 150),
+                        opacity: _isHovered ? 1.0 : 0.0,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppTheme.primary,
+                            boxShadow: AppTheme.glowShadow,
                           ),
-                          onPressed: widget.onPlayTap ?? widget.onTap,
-                          padding: EdgeInsets.zero,
+                          child: IconButton(
+                            icon: const Icon(
+                              LucideIcons.play,
+                              color: AppTheme.background,
+                              size: 18,
+                            ),
+                            onPressed: widget.onPlayTap ?? widget.onTap,
+                            padding: EdgeInsets.zero,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 widget.title,
                 maxLines: 1,

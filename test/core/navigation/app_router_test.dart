@@ -12,6 +12,11 @@ void main() {
 
   group('AppRouter Widget Tests', () {
     testWidgets('navegar a / muestra HomeScreen', (tester) async {
+      tester.view.physicalSize = const Size(1280, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       await tester.pumpWidget(
         const ProviderScope(
           child: SyncoraApp(),
@@ -24,6 +29,11 @@ void main() {
     });
 
     testWidgets('navegar a /search muestra SearchScreen', (tester) async {
+      tester.view.physicalSize = const Size(1280, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       final container = ProviderContainer();
       final router = container.read(appRouterProvider);
 
@@ -45,6 +55,11 @@ void main() {
     });
 
     testWidgets('navegar a /library muestra LibraryScreen', (tester) async {
+      tester.view.physicalSize = const Size(1280, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       final container = ProviderContainer();
       final router = container.read(appRouterProvider);
 

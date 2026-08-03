@@ -286,7 +286,7 @@ class SettingsScreen extends ConsumerWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppTheme.background,
+          activeThumbColor: AppTheme.background,
           activeTrackColor: AppTheme.primary,
           inactiveThumbColor: AppTheme.secondary,
           inactiveTrackColor: AppTheme.surfaceHover,
