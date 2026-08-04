@@ -95,20 +95,26 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   /// Layout Móvil (Android / pantallas < 768px)
   Widget _buildMobileLayout(BuildContext context, int selectedIndex) {
+    final currentTrack = ref.watch(currentTrackProvider);
+    final hasTrack = currentTrack != null;
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: widget.child,
       bottomNavigationBar: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const MiniPlayer(),
-            _MobileNavBar(
-              selectedIndex: selectedIndex,
-              onItemTapped: _onItemTapped,
-            ),
-          ],
+        child: Container(
+          color: hasTrack ? AppTheme.primary : Colors.transparent,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const MiniPlayer(),
+              _MobileNavBar(
+                selectedIndex: selectedIndex,
+                onItemTapped: _onItemTapped,
+              ),
+            ],
+          ),
         ),
       ),
     );

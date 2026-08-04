@@ -90,23 +90,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       backgroundColor: AppTheme.background,
       body: Stack(
         children: [
-          // Fondo con resplandor ambiental brillante en la parte superior
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF38234C),
-                    Color(0xFF1E283C),
-                    AppTheme.background,
-                  ],
-                  stops: [0.0, 0.35, 0.75],
-                ),
-              ),
-            ),
-          ),
+
 
           // ScrollView ocupando toda la pantalla desde arriba
           Positioned.fill(
