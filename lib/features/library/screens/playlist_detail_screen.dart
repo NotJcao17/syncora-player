@@ -90,19 +90,19 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       backgroundColor: AppTheme.background,
       body: Stack(
         children: [
-          // Fondo con resplandor ambiental blanco sutil (como en los mockups)
+          // Fondo con resplandor ambiental brillante en la parte superior
           Positioned.fill(
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.white.withValues(alpha: 0.10),
-                    Colors.white.withValues(alpha: 0.03),
+                    Color(0xFF38234C),
+                    Color(0xFF1E283C),
                     AppTheme.background,
                   ],
-                  stops: const [0.0, 0.30, 0.65],
+                  stops: [0.0, 0.35, 0.75],
                 ),
               ),
             ),
@@ -316,7 +316,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     ],
                   ),
 
-                  SizedBox(height: isDesktop ? 24 : 2),
+                  SizedBox(height: isDesktop ? 24 : 8),
 
                   // Cabecera de Tabla en Desktop (Imagen 2)
                   if (isDesktop) ...[
