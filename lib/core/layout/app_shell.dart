@@ -103,18 +103,16 @@ class _AppShellState extends ConsumerState<AppShell> {
       body: widget.child,
       bottomNavigationBar: SafeArea(
         top: false,
-        child: Container(
-          color: hasTrack ? AppTheme.primary : Colors.transparent,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const MiniPlayer(),
-              _MobileNavBar(
-                selectedIndex: selectedIndex,
-                onItemTapped: _onItemTapped,
-              ),
-            ],
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const MiniPlayer(),
+            _MobileNavBar(
+              selectedIndex: selectedIndex,
+              onItemTapped: _onItemTapped,
+              hasTrack: hasTrack,
+            ),
+          ],
         ),
       ),
     );
@@ -521,19 +519,26 @@ class _WindowCaptionButtonState extends State<_WindowCaptionButton> {
 class _MobileNavBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemTapped;
+  final bool hasTrack;
 
-  const _MobileNavBar({required this.selectedIndex, required this.onItemTapped});
+  const _MobileNavBar({
+    required this.selectedIndex,
+    required this.onItemTapped,
+    this.hasTrack = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        boxShadow: AppTheme.bottomNavShadow,
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
+      color: hasTrack ? AppTheme.primary : Colors.transparent,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          boxShadow: AppTheme.bottomNavShadow,
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
         children: [
           Expanded(
             child: _NavDestination(
@@ -561,8 +566,9 @@ class _MobileNavBar extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 /// Destino individual centrado horizontal y verticalmente.
