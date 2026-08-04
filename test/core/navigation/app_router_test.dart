@@ -23,9 +23,9 @@ void main() {
         ),
       );
       await tester.pump(const Duration(milliseconds: 1000));
-      await tester.pumpAndSettle();
 
       expect(find.byType(HomeScreen), findsOneWidget);
+      await tester.pump(const Duration(seconds: 10));
     });
 
     testWidgets('navegar a /search muestra SearchScreen', (tester) async {
@@ -46,12 +46,13 @@ void main() {
         ),
       );
       await tester.pump(const Duration(milliseconds: 1000));
-      await tester.pumpAndSettle();
 
       router.go('/search');
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(SearchScreen), findsOneWidget);
+      await tester.pump(const Duration(seconds: 10));
+      container.dispose();
     });
 
     testWidgets('navegar a /library muestra LibraryScreen', (tester) async {
@@ -72,12 +73,13 @@ void main() {
         ),
       );
       await tester.pump(const Duration(milliseconds: 1000));
-      await tester.pumpAndSettle();
 
       router.go('/library');
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(LibraryScreen), findsOneWidget);
+      await tester.pump(const Duration(seconds: 10));
+      container.dispose();
     });
   });
 }

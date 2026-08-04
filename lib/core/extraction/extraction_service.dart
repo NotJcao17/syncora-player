@@ -34,6 +34,15 @@ class ExtractionServiceReal implements ExtractionService {
   }) async {
     final requestId =
         'req_${++_requestIdCounter}_${DateTime.now().millisecondsSinceEpoch}';
+
+    if (videoId.startsWith('http://') || videoId.startsWith('https://')) {
+      return ExtractionSuccess(
+        requestId: requestId,
+        streamUrl: videoId,
+        headers: const {},
+      );
+    }
+
     final request = ExtractionRequest(
       videoId: videoId,
       requestId: requestId,

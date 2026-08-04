@@ -417,7 +417,23 @@ class MiniPlayer extends ConsumerWidget {
                     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(LucideIcons.volume2, size: 16, color: AppTheme.secondary),
+                  IconButton(
+                    icon: Icon(
+                      state.engine.volume > 0 ? LucideIcons.volume2 : LucideIcons.volumeX,
+                      size: 18,
+                      color: state.engine.volume > 0 ? AppTheme.secondary : AppTheme.muted,
+                    ),
+                    onPressed: () {
+                      if (state.engine.volume > 0) {
+                        controller.setVolume(0.0);
+                      } else {
+                        controller.setVolume(1.0);
+                      }
+                    },
+                    tooltip: state.engine.volume > 0 ? 'Silenciar' : 'Activar sonido',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  ),
                   const SizedBox(width: 4),
                   SizedBox(
                     width: 96,
@@ -429,7 +445,7 @@ class MiniPlayer extends ConsumerWidget {
                         inactiveTrackColor: AppTheme.surface,
                       ),
                       child: Slider(
-                        value: state.engine.volume,
+                        value: state.engine.volume.clamp(0.0, 1.0),
                         onChanged: (val) => controller.setVolume(val),
                       ),
                     ),

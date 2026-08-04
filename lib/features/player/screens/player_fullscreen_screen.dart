@@ -8,11 +8,13 @@ import 'package:palette_generator/palette_generator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/track_tile.dart';
+import '../../../data/local_db/database_provider.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
 import '../syncora_player_controller.dart';
+import '../widgets/lyrics_sheet.dart';
 
-/// Reproductor Fullscreen Inmersivo.
+/// Reproductor Fullscreen Inmersivo con soporte para Karaoke sincronizado y Me Gusta persistente.
 class PlayerFullscreenScreen extends ConsumerStatefulWidget {
   const PlayerFullscreenScreen({super.key});
 
@@ -28,6 +30,16 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
   void initState() {
     super.initState();
     _extractPalette();
+    _checkIsLiked();
+  }
+
+  Future<void> _checkIsLiked() async {
+    final track = ref.read(currentTrackProvider);
+    if (track == null) return;
+    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
+    final dao = ref.read(playlistDaoProvider);
+    final liked = await dao.isTrackLiked(trackIdInt);
+    if (mounted) setState(() => _isLiked = liked);
   }
 
   void _extractPalette() async {
@@ -44,9 +56,41 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
           _dominantColor = palette.dominantColor!.color;
         });
       }
-    } catch (_) {
-      // Ignorar si falla la extracción
+    } catch (_) {}
+  }
+
+  Future<void> _toggleLike(SyncoraTrack track) async {
+    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
+    final dao = ref.read(playlistDaoProvider);
+    final isLikedNow = await dao.toggleLikeTrack(
+      trackId: trackIdInt,
+      artistId: 0,
+      albumId: 0,
+      title: track.title,
+      artistName: track.artist,
+      albumName: track.album ?? '',
+      coverUrl: track.coverUrl,
+      durationMs: (track.duration ?? Duration.zero).inMilliseconds,
+    );
+
+    if (mounted) {
+      setState(() => _isLiked = isLikedNow);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isLikedNow ? 'Añadido a Tus me gusta' : 'Eliminado de Tus me gusta'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
     }
+  }
+
+  void _showLyricsSheet(BuildContext context, SyncoraTrack track) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => LyricsSheet(track: track),
+    );
   }
 
   @override
@@ -141,18 +185,19 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
 
                   const SizedBox(height: 24),
 
-                  // Portada Centrada (rounded-3xl = 24px) con glowHighShadow
+                  // Portada Centrada (260x260px)
                   Hero(
                     tag: 'player_cover_hero',
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: AppTheme.glowHighShadow,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: AspectRatio(
-                          aspectRatio: 1.0,
+                    child: Center(
+                      child: Container(
+                        width: 260,
+                        height: 260,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: AppTheme.glowHighShadow,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
                           child: currentTrack.coverUrl.isNotEmpty
                               ? CachedNetworkImage(
                                   imageUrl: currentTrack.coverUrl,
@@ -201,39 +246,27 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                       ),
                       IconButton(
                         icon: Icon(
-                          _isLiked ? LucideIcons.heart : LucideIcons.heart,
-                          color: _isLiked ? AppTheme.primary : AppTheme.secondary,
-                          size: 26,
+                          LucideIcons.heart,
+                          color: _isLiked ? Colors.white : AppTheme.secondary,
+                          fill: _isLiked ? 1.0 : 0.0,
+                          size: 28,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _isLiked = !_isLiked;
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(_isLiked
-                                  ? 'Añadido a Me Gusta'
-                                  : 'Eliminado de Me Gusta'),
-                              duration: const Duration(seconds: 1),
-                            ),
-                          );
-                        },
+                        onPressed: () => _toggleLike(currentTrack),
                       ),
                     ],
                   ),
 
                   const SizedBox(height: 24),
 
-                  // Waveform Procedural Decorativo
+                  // Barra de reproducción interactiva
                   _buildProceduralWaveform(context, state, currentTrack, controller),
 
                   const SizedBox(height: 24),
 
-                  // Controles Multimedia Principales (Play 80x80, Skips 40x40)
+                  // Controles Multimedia Principales
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Toggle Shuffle
                       IconButton(
                         icon: Icon(
                           LucideIcons.shuffle,
@@ -243,15 +276,11 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                         onPressed: () => controller.toggleShuffle(),
                         tooltip: 'Aleatorio',
                       ),
-
-                      // Previous (w-10 h-10 = 40x40)
                       IconButton(
                         icon: const Icon(LucideIcons.skipBack, color: AppTheme.primary, size: 36),
                         onPressed: () => controller.skipToPrevious(),
                         tooltip: 'Anterior',
                       ),
-
-                      // Play/Pause circular 80x80 con shadow-glow-high
                       Container(
                         width: 80,
                         height: 80,
@@ -276,15 +305,11 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                           tooltip: isPlaying ? 'Pausar' : 'Reproducir',
                         ),
                       ),
-
-                      // Next (w-10 h-10 = 40x40)
                       IconButton(
                         icon: const Icon(LucideIcons.skipForward, color: AppTheme.primary, size: 36),
                         onPressed: () => controller.skipToNext(),
                         tooltip: 'Siguiente',
                       ),
-
-                      // Repeat Mode
                       IconButton(
                         icon: Icon(
                           state.repeatMode == SyncoraRepeatMode.one
@@ -301,16 +326,12 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
 
                   const SizedBox(height: 24),
 
-                  // Botones Inferiores Secundarios: Letras & Cola
+                  // Botones Inferiores: Letras (LRCLib real) & Cola
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       TextButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Letras próximamente (LRCLib)')),
-                          );
-                        },
+                        onPressed: () => _showLyricsSheet(context, currentTrack),
                         icon: const Icon(LucideIcons.alignLeft, size: 18, color: AppTheme.secondary),
                         label: const Text('Letras', style: TextStyle(color: AppTheme.secondary)),
                       ),
@@ -332,7 +353,6 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     );
   }
 
-  /// Waveform procedural interactivo (reemplaza barra de progreso lisa)
   Widget _buildProceduralWaveform(
     BuildContext context,
     SyncoraPlayerState state,
@@ -345,68 +365,45 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
         ? state.engine.duration
         : (trackDuration != null && trackDuration.inSeconds > 0 ? trackDuration : const Duration(seconds: 180));
 
-    final progressRatio = duration.inMilliseconds > 0
-        ? (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0)
-        : 0.0;
-
-    const barCount = 36;
-    final seed = currentTrack.id.hashCode;
+    final currentMs = position.inMilliseconds.toDouble().clamp(0.0, duration.inMilliseconds.toDouble());
+    final totalMs = duration.inMilliseconds > 0 ? duration.inMilliseconds.toDouble() : 180000.0;
 
     return Column(
       children: [
-        GestureDetector(
-          onTapDown: (details) {
-            final width = context.size?.width ?? 300;
-            final dx = details.localPosition.dx.clamp(0.0, width);
-            final ratio = dx / width;
-            final targetMs = (ratio * duration.inMilliseconds).toInt();
-            controller.seek(Duration(milliseconds: targetMs));
-          },
-          onHorizontalDragUpdate: (details) {
-            final width = context.size?.width ?? 300;
-            final dx = details.localPosition.dx.clamp(0.0, width);
-            final ratio = dx / width;
-            final targetMs = (ratio * duration.inMilliseconds).toInt();
-            controller.seek(Duration(milliseconds: targetMs));
-          },
-          child: Container(
-            height: 48,
-            color: Colors.transparent,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: List.generate(barCount, (i) {
-                final barRatio = i / barCount;
-                final isFilled = barRatio <= progressRatio;
-                // Generar altura pseudoaleatoria pero consistente por canción
-                final heightFactor = 0.2 + (((seed * (i + 1) * 31) % 80) / 100.0);
-                final barHeight = 48.0 * heightFactor;
-
-                return Container(
-                  width: 4,
-                  height: barHeight,
-                  decoration: BoxDecoration(
-                    color: isFilled ? AppTheme.primary : AppTheme.secondary.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                );
-              }),
-            ),
+        SliderTheme(
+          data: SliderThemeData(
+            trackHeight: 4,
+            activeTrackColor: AppTheme.primary,
+            inactiveTrackColor: AppTheme.surfaceHover,
+            thumbColor: AppTheme.primary,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            overlayColor: AppTheme.primary.withValues(alpha: 0.2),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+          ),
+          child: Slider(
+            value: currentMs,
+            min: 0.0,
+            max: totalMs,
+            onChanged: (val) {
+              controller.seek(Duration(milliseconds: val.toInt()));
+            },
           ),
         ),
-        const SizedBox(height: 6),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              _formatDuration(position),
-              style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-            ),
-            Text(
-              _formatDuration(duration),
-              style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-            ),
-          ],
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _formatDuration(position),
+                style: const TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+              Text(
+                _formatDuration(duration),
+                style: const TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -476,39 +473,6 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
               title: const Text('Agregar a playlist'),
               onTap: () {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Próximamente')),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(LucideIcons.disc, color: AppTheme.primary),
-              title: const Text('Ver álbum'),
-              onTap: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Próximamente')),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(LucideIcons.user, color: AppTheme.primary),
-              title: const Text('Ver artista'),
-              onTap: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Próximamente')),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(LucideIcons.wrench, color: AppTheme.primary),
-              title: const Text('Corregir coincidencia de YT (Fix Match)'),
-              onTap: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Próximamente')),
-                );
               },
             ),
           ],

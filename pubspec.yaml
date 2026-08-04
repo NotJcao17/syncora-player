@@ -53,7 +53,6 @@ dependencies:
   cached_network_image: ^3.4.1
   lucide_icons_flutter: ^3.1.15
   google_fonts: ^8.2.0
-  flutter_secure_storage: ^10.3.1
   flutter_dotenv: ^6.0.1
   flutter_animate: ^4.5.2
   palette_generator: ^0.3.3+6
@@ -62,6 +61,9 @@ dependencies:
   freezed_annotation: ^3.1.0
   json_annotation: ^4.12.0
   window_manager: ^0.4.3
+  file_picker: ^8.1.4
+  csv: ^8.0.0
+  share_plus: ^10.1.4
 
 dev_dependencies:
   flutter_test:

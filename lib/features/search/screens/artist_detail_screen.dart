@@ -5,13 +5,17 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/track_tile.dart';
-import '../../player/player_models.dart';
+import '../../../data/apis/deezer_provider.dart';
+import '../../../data/models/deezer/deezer_album.dart';
+import '../../../data/models/deezer/deezer_artist.dart';
+import '../../../data/models/deezer/deezer_track.dart';
 import '../../player/player_providers.dart';
 
-/// Pantalla de Detalle de Artista (`/artist/:id`).
-class ArtistDetailScreen extends ConsumerWidget {
+/// Pantalla de Detalle de Artista (`/artist/:id`) conectada a Deezer real.
+class ArtistDetailScreen extends ConsumerStatefulWidget {
   final String artistId;
 
   const ArtistDetailScreen({
@@ -19,53 +23,95 @@ class ArtistDetailScreen extends ConsumerWidget {
     required this.artistId,
   });
 
-  final List<SyncoraTrack> _mockTopTracks = const [
-    SyncoraTrack(
-      id: 'artist_t1',
-      title: 'Blinding Lights',
-      artist: 'The Weeknd',
-      album: 'After Hours',
-      duration: Duration(seconds: 200),
-      youtubeVideoId: '4NRXx6U8ABQ',
-      artUri: null,
-    ),
-    SyncoraTrack(
-      id: 'artist_t2',
-      title: 'Starboy (feat. Daft Punk)',
-      artist: 'The Weeknd',
-      album: 'Starboy',
-      duration: Duration(seconds: 230),
-      youtubeVideoId: '34Na4j8AVgA',
-      artUri: null,
-    ),
-  ];
+  @override
+  ConsumerState<ArtistDetailScreen> createState() => _ArtistDetailScreenState();
+}
 
-  final List<Map<String, String>> _mockAlbums = const [
-    {
-      'id': 'album_1',
-      'title': 'After Hours',
-      'subtitle': 'Álbum • 2020',
-      'cover': 'https://e-cdns-images.dzcdn.net/images/cover/1db2694b292e85a49806b72a6b2909f8/500x500-000000-80-0-0.jpg',
-    },
-    {
-      'id': 'album_2',
-      'title': 'Starboy',
-      'subtitle': 'Álbum • 2016',
-      'cover': 'https://e-cdns-images.dzcdn.net/images/cover/2e018122cb56986277102d2041a592c8/500x500-000000-80-0-0.jpg',
-    },
-  ];
+class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
+  bool _isLoading = true;
+  String? _errorMessage;
+  DeezerArtist? _artist;
+  List<DeezerTrack> _topTracks = [];
+  List<DeezerAlbum> _albums = [];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    _loadArtistData();
+  }
+
+  Future<void> _loadArtistData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final id = int.tryParse(widget.artistId) ?? 0;
+    if (id == 0) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'ID de artista inválido';
+      });
+      return;
+    }
+
+    try {
+      final api = ref.read(deezerApiProvider);
+      final results = await Future.wait([
+        api.getArtist(id),
+        api.getArtistTopTracks(id),
+        api.getArtistAlbums(id),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _artist = results[0] as DeezerArtist;
+          _topTracks = results[1] as List<DeezerTrack>;
+          _albums = results[2] as List<DeezerAlbum>;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Error al cargar los datos del artista.';
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final currentTrack = ref.watch(currentTrackProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 768;
+
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppTheme.background,
+        body: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+      );
+    }
+
+    if (_errorMessage != null || _artist == null) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        body: ErrorStateWidget(
+          message: _errorMessage ?? 'No se encontró el artista',
+          onRetry: _loadArtistData,
+        ),
+      );
+    }
+
+    final artist = _artist!;
+    final syncoraTracks = _topTracks.map((t) => t.toSyncoraTrack()).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: CustomScrollView(
         slivers: [
-          // Header con foto grande y gradiente
+          // Header con foto del artista
           SliverAppBar(
             backgroundColor: AppTheme.surface,
             expandedHeight: isDesktop ? 340 : 280,
@@ -86,9 +132,10 @@ class ArtistDetailScreen extends ConsumerWidget {
                 fit: StackFit.expand,
                 children: [
                   CachedNetworkImage(
-                    imageUrl: 'https://images.unsplash.com/photo-1549834125-82d3c48159a3?q=80&w=800&auto=format&fit=crop',
+                    imageUrl: artist.pictureUrl,
                     memCacheWidth: 600,
                     fit: BoxFit.cover,
+                    errorWidget: (_, _, _) => Container(color: AppTheme.surface),
                   ),
                   Container(
                     decoration: BoxDecoration(
@@ -110,11 +157,11 @@ class ArtistDetailScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        const Row(
                           children: [
-                            const Icon(LucideIcons.checkCircle2, color: AppTheme.primary, size: 16),
-                            const SizedBox(width: 6),
-                            const Text(
+                            Icon(LucideIcons.checkCircle2, color: AppTheme.primary, size: 16),
+                            SizedBox(width: 6),
+                            Text(
                               'ARTISTA VERIFICADO',
                               style: TextStyle(
                                 color: AppTheme.primary,
@@ -127,7 +174,7 @@ class ArtistDetailScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'The Weeknd',
+                          artist.name,
                           style: TextStyle(
                             color: AppTheme.primary,
                             fontSize: isDesktop ? 44 : 32,
@@ -135,9 +182,9 @@ class ArtistDetailScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          '85,420,100 oyentes mensuales',
-                          style: TextStyle(color: AppTheme.secondary, fontSize: 14),
+                        Text(
+                          '${artist.nbFan} fans en Deezer',
+                          style: const TextStyle(color: AppTheme.secondary, fontSize: 14),
                         ),
                       ],
                     ),
@@ -147,7 +194,7 @@ class ArtistDetailScreen extends ConsumerWidget {
             ),
           ),
 
-          // Botones de acción principales
+          // Botón Reproducir
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.symmetric(
@@ -156,45 +203,33 @@ class ArtistDetailScreen extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppTheme.primary,
-                      boxShadow: AppTheme.glowShadow,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(
-                        LucideIcons.play,
-                        color: AppTheme.background,
-                        size: 26,
+                  if (syncoraTracks.isNotEmpty)
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.primary,
+                        boxShadow: AppTheme.glowShadow,
                       ),
-                      onPressed: () {
-                        controller.setQueue(_mockTopTracks, startIndex: 0);
-                        controller.play();
-                      },
+                      child: IconButton(
+                        icon: const Icon(
+                          LucideIcons.play,
+                          color: AppTheme.background,
+                          size: 26,
+                        ),
+                        onPressed: () {
+                          controller.setQueue(syncoraTracks, startIndex: 0);
+                          controller.play();
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppTheme.surfaceHover),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    ),
-                    child: const Text(
-                      'Siguiendo',
-                      style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
 
-          // Sección Top Canciones
+          // Top Canciones
           SliverPadding(
             padding: EdgeInsets.symmetric(
               horizontal: isDesktop ? 32 : 20,
@@ -215,64 +250,65 @@ class ArtistDetailScreen extends ConsumerWidget {
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (ctx, i) {
-                  final track = _mockTopTracks[i];
+                  final track = syncoraTracks[i];
                   return TrackTile(
                     track: track,
                     index: i,
                     isPlaying: currentTrack?.id == track.id,
                     onTap: () {
-                      controller.setQueue(_mockTopTracks, startIndex: i);
+                      controller.setQueue(syncoraTracks, startIndex: i);
                       controller.play();
                     },
                     onAddToQueue: () => controller.addToQueue(track),
                   );
                 },
-                childCount: _mockTopTracks.length,
+                childCount: syncoraTracks.length,
               ),
             ),
           ),
 
-          // Sección Discografía (Carrusel horizontal)
-          SliverPadding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 32 : 20,
-              vertical: 20,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Discografía',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 220,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _mockAlbums.length,
-                      separatorBuilder: (ctx, index) => const SizedBox(width: 16),
-                      itemBuilder: (ctx, i) {
-                        final album = _mockAlbums[i];
-                        return SizedBox(
-                          width: isDesktop ? 192 : 144,
-                          child: PlaylistCard(
-                            title: album['title']!,
-                            subtitle: album['subtitle']!,
-                            coverUrl: album['cover'],
-                            onTap: () => context.push('/album/${album['id']}'),
+          // Discografía
+          if (_albums.isNotEmpty)
+            SliverPadding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 32 : 20,
+                vertical: 20,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Discografía',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
                           ),
-                        );
-                      },
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 220,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _albums.length,
+                        separatorBuilder: (ctx, index) => const SizedBox(width: 16),
+                        itemBuilder: (ctx, i) {
+                          final album = _albums[i];
+                          return SizedBox(
+                            width: isDesktop ? 192 : 144,
+                            child: PlaylistCard(
+                              title: album.title,
+                              subtitle: '${album.trackCount} canciones',
+                              coverUrl: album.coverUrl,
+                              onTap: () => context.push('/album/${album.id}'),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],

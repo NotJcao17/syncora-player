@@ -1,19 +1,21 @@
-# Documentación de Fase 3: UI Core y Navegación
+# Documentación de Fase 3: UI Core, Navegación y Pulido Adaptativo
 
 ## 📌 Resumen de Implementación
-En la **Fase 3** se implementó la arquitectura completa de la interfaz de usuario de **Syncora Player**, proporcionando una experiencia visual premium, adaptativa y altamente reactiva tanto para escritorios (Windows) como para dispositivos móviles (Android).
+En la **Fase 3** se implementó la arquitectura completa de la interfaz de usuario de **Syncora Player**, proporcionando una experiencia visual premium, adaptativa y altamente reactiva tanto para escritorio (Windows) como para dispositivos móviles (Android).
 
 ---
 
-## 🎨 Sistema de Diseño y Tokens
+## 🎨 Sistema de Diseño, Tokens y Pulido Visual
 - **Paleta de Colores**:
   - Fondo (`AppTheme.background`): `#181C27`
-  - Superficie (`AppTheme.surface`): `#1E2633` (Superficie sólida sin glassmorphism en áreas de alto contacto)
-  - Superficie Hover / Inactiva (`AppTheme.surfaceHover`): `#2A3447`
+  - Superficie (`AppTheme.surface`): `#1E2633` (Superficie sólida en navegación y tarjetas)
+  - Superficie Hover / Inactiva (`AppTheme.surfaceHover`): `#252E3D`
   - Primario / Texto (`AppTheme.primary`): `#FFFFFF`
-  - Secundario / Mutado (`AppTheme.secondary`): `#A0AEC0`
-- **Tipografía**: Plus Jakarta Sans integrada globalmente en `AppTheme`.
+  - Secundario / Mutado (`AppTheme.secondary`): `#A0ABBA`
+- **Tipografía**: Plus Jakarta Sans integrada globalmente en `AppTheme` con jerarquía visual pesada en títulos (`fontWeight: FontWeight.w900`, `letterSpacing: -0.8`).
 - **Mitigación de Errores (Pitfall #9 - OOM Portadas)**: Uso estricto de `memCacheWidth: 300` (o `600` en reproductor fullscreen) en todas las instancias de `CachedNetworkImage`.
+- **Efectos de Transición**: Deshabilitado el splash/ripple persistente (`splashColor: Colors.transparent`) en tarjetas de Android para transiciones limpias entre pantallas.
+- **Fondos Limpios**: Removidos gradientes morados pesados en vistas de playlist y detalle de álbumes para mantener la sobriedad visual.
 
 ---
 
@@ -23,7 +25,7 @@ Consumido mediante Riverpod (`appRouterProvider`) en `SyncoraApp`.
 
 ### Rutas Configuradas:
 - `ShellRoute` (envueltas en `AppShell`):
-  - `/` -> `HomeScreen`
+  - `/` -> `HomeScreen` (con navegación directa desde "Tus me gusta" a `/playlist/liked`)
   - `/search` -> `SearchScreen`
   - `/library` -> `LibraryScreen`
   - `/playlist/:id` -> `PlaylistDetailScreen`
@@ -35,17 +37,18 @@ Consumido mediante Riverpod (`appRouterProvider`) en `SyncoraApp`.
 
 ---
 
-## 📱 Layout Adaptativo (`AppShell`)
+## 📱 Layout Adaptativo (`AppShell`) y Controles de Ventana
 Ubicación: `lib/core/layout/app_shell.dart`
-Determina la interfaz de forma adaptativa según el ancho de pantalla (`MediaQuery.of(context).size.width >= 768`):
+Determina la interfaz de forma adaptativa según el ancho de pantalla y orientación:
 
-1. **Móvil (Android / pantallas < 768px)**:
-   - `NavigationBar` inferior con 3 destinos (Inicio, Buscar, Biblioteca).
+1. **Escritorio (Windows)**:
+   - **Barra de Ventana Custom**: Integración con `window_manager` y `TitleBarStyle.hidden` para una barra superior frameless estilo Spotify, con área de arrastre (`DragToMoveArea`) y botones personalizados (minimizar, maximizar/restaurar, cerrar).
+   - **Sidebar Lateral Resizable**: Panel lateral redimensionable mediante arrastre horizontal (rango `180px` a `400px`) y botón de minimizar a 80px con animación fluida mediante `ClipRect`.
+   - **Comportamiento Landscape Móvil**: Detección de dispositivos móviles físicos en orientación horizontal (`shortestSide < 600`) para ocultar automáticamente la sección de playlists del sidebar y optimizar el espacio vertical.
+2. **Móvil (Android / pantallas < 768px)**:
+   - `_MobileNavBar` centrado con íconos de `LucideIcons`.
    - `MiniPlayer` flotante justo encima de la barra de navegación.
-2. **Escritorio (Windows / pantallas >= 768px)**:
-   - Sidebar lateral izquierdo con Logo, enlaces directos (Inicio, Buscar, Biblioteca) y acceso a Configuración en la parte inferior.
-   - Área central de contenido dinámico.
-   - `MiniPlayer` continuo de ancho completo en la parte inferior.
+   - Fondo dinámico detrás de las esquinas superiores curvadas de la barra de navegación, visible únicamente cuando hay un reproductor activo.
 
 ---
 
@@ -54,8 +57,8 @@ Determina la interfaz de forma adaptativa según el ancho de pantalla (`MediaQue
 ### 1. MiniPlayer (`lib/features/player/widgets/mini_player.dart`)
 - Reactivo a `currentTrackProvider` e `isPlayingProvider`.
 - Ocultación automática cuando no hay canción en cola.
-- Portada 40x40 (`memCacheWidth: 300`) con `Hero` animation hacia el reproductor fullscreen.
-- Controles multimedia (Play/Pause, Siguiente) y barra de volumen + acceso a cola en escritorio.
+- Portada 48x48 con `Hero` animation hacia el reproductor fullscreen.
+- Controles multimedia (Play/Pause, Me gusta) y reproducción continua.
 
 ### 2. Fullscreen Player (`lib/features/player/screens/player_fullscreen_screen.dart`)
 - Extracción dinámica de color dominante (`palette_generator`) para el gradiente de fondo.
@@ -71,30 +74,6 @@ Ubicación: `lib/features/settings/screens/settings_screen.dart`
 
 ---
 
-## 🧪 Verificación y Pruebas
-- **`flutter analyze`**: 0 errores.
-- **`flutter test`**: 28 pruebas pasadas de 28 ejecutadas.
-- **`flutter build windows --debug`**: Binario `syncora_player.exe` compilado exitosamente.
-
----
-
-## 📋 Lista de Comprobación QA Manual
-Por favor ejecuta las siguientes pruebas en tu entorno local:
-
-1. **Escritorio (Windows)**:
-   ```bash
-   flutter run -d windows
-   ```
-   - Verifica el layout con Sidebar lateral izquierdo y la barra del reproductor continua en la parte inferior.
-   - Haz clic en las distintas secciones (Inicio, Buscar, Biblioteca, Ajustes).
-   - Toca una canción para abrir la mini barra inferior y haz clic en la portada para abrir el reproductor Fullscreen.
-
-2. **Móvil (Android)**:
-   ```bash
-   flutter run -d android
-   ```
-   - Verifica que aparezca la `NavigationBar` inferior y el `MiniPlayer` flotando arriba de ella.
-   - Desliza hacia abajo en el reproductor Fullscreen para minimizarlo.
-
-3. **Skip Silence**:
-   - Ve a `Configuración` -> cambia el interruptor de `Saltar silencios` y confirma que el estado se refleje correctamente.
+## 🧪 Verificación y Estado
+- **`flutter analyze`**: 0 errores / `No issues found!`.
+- **Integridad de Código**: Verificado compilación en Windows y Android.

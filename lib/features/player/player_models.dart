@@ -19,6 +19,7 @@ class SyncoraTrack {
   String get coverUrl => artUri?.toString() ?? '';
 
   /// Indica si la pista es spoken-word/podcast (habilita Skip Silence agresivo en Android).
+  final String? previewUrl;
   final bool isSpokenWord;
 
   const SyncoraTrack({
@@ -29,6 +30,7 @@ class SyncoraTrack {
     this.duration,
     this.youtubeVideoId,
     this.artUri,
+    this.previewUrl,
     this.isSpokenWord = false,
   });
 
@@ -54,6 +56,7 @@ class SyncoraTrack {
     String? youtubeVideoId,
     Uri? artUri,
     String? coverUrl,
+    String? previewUrl,
     bool? isSpokenWord,
   }) {
     return SyncoraTrack(
@@ -64,6 +67,7 @@ class SyncoraTrack {
       duration: duration ?? this.duration,
       youtubeVideoId: youtubeVideoId ?? this.youtubeVideoId,
       artUri: artUri ?? (coverUrl != null ? Uri.tryParse(coverUrl) : this.artUri),
+      previewUrl: previewUrl ?? this.previewUrl,
       isSpokenWord: isSpokenWord ?? this.isSpokenWord,
     );
   }

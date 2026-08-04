@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,12 +5,18 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/skeleton_box.dart';
 import '../../../core/widgets/track_tile.dart';
-import '../../player/player_models.dart';
+import '../../../data/apis/deezer_api.dart';
+import '../../../data/models/deezer/deezer_album.dart';
+import '../../../data/models/deezer/deezer_artist.dart';
+import '../../../data/models/deezer/deezer_track.dart';
 import '../../player/player_providers.dart';
+import '../search_provider.dart';
 
-/// Pantalla de Búsqueda (SearchScreen calcada del mockup search.html / image5.png).
+/// Pantalla de Búsqueda conectada a Deezer real con Debounce 500ms y filtros.
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
@@ -21,11 +26,13 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  Timer? _debounceTimer;
-  bool _isSearching = false;
-  String _selectedFilter = 'Todo';
 
-  final List<String> _filters = const ['Todo', 'Canciones', 'Artistas', 'Playlists', 'Álbumes', 'Podcasts'];
+  final List<Map<String, dynamic>> _filters = const [
+    {'name': 'Todo', 'type': DeezerSearchType.all},
+    {'name': 'Canciones', 'type': DeezerSearchType.track},
+    {'name': 'Artistas', 'type': DeezerSearchType.artist},
+    {'name': 'Álbumes', 'type': DeezerSearchType.album},
+  ];
 
   final List<Map<String, dynamic>> _categories = const [
     {'name': 'Pop', 'color': AppTheme.genrePop},
@@ -36,67 +43,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     {'name': 'Lofi & Chill', 'color': Color(0xFF0369A1)},
   ];
 
-  final List<SyncoraTrack> _mockSearchResults = [
-    SyncoraTrack(
-      id: 'search_1',
-      title: 'Los Angeles',
-      artist: 'The Midnight',
-      album: 'Los Angeles',
-      duration: const Duration(seconds: 292),
-      youtubeVideoId: 'dQw4w9WgXcQ',
-      artUri: Uri.parse('https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop'),
-    ),
-    SyncoraTrack(
-      id: 'search_2',
-      title: 'Neon Shadows',
-      artist: 'The Midnight',
-      album: 'Endless Summer',
-      duration: const Duration(seconds: 236),
-      youtubeVideoId: 'dvgZkm1xWPE',
-      artUri: Uri.parse('https://images.unsplash.com/photo-1493225457124-a1a2a5f529a8?q=80&w=300&auto=format&fit=crop'),
-    ),
-  ];
-
   @override
   void dispose() {
     _searchController.dispose();
-    _debounceTimer?.cancel();
     super.dispose();
-  }
-
-  void _onSearchChanged(String text) {
-    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-
-    if (text.isEmpty) {
-      setState(() {
-        _isSearching = false;
-      });
-      return;
-    }
-
-    setState(() {
-      _isSearching = true;
-    });
-
-    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
-      if (mounted) {
-        setState(() {
-          _isSearching = false;
-        });
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final query = _searchController.text.trim();
+    final searchState = ref.watch(searchProvider);
+    final searchNotifier = ref.read(searchProvider.notifier);
     final isDesktop = MediaQuery.of(context).size.width >= 768;
 
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Search Header
+          // Header de Búsqueda
           Padding(
             padding: EdgeInsets.fromLTRB(
               isDesktop ? 32 : 20,
@@ -107,7 +70,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Buscar',
                   style: TextStyle(
                     fontSize: 28,
@@ -119,18 +82,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: _searchController,
-                  onChanged: _onSearchChanged,
+                  onChanged: (val) => searchNotifier.setQuery(val),
                   style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600),
                   decoration: InputDecoration(
                     hintText: '¿Qué quieres escuchar?',
-                    hintStyle: TextStyle(color: AppTheme.secondary.withValues(alpha: 0.7), fontWeight: FontWeight.w500),
+                    hintStyle: TextStyle(
+                      color: AppTheme.secondary.withValues(alpha: 0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
                     prefixIcon: const Icon(LucideIcons.search, color: AppTheme.secondary, size: 20),
-                    suffixIcon: query.isNotEmpty
+                    suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(LucideIcons.x, color: AppTheme.secondary, size: 18),
                             onPressed: () {
                               _searchController.clear();
-                              _onSearchChanged('');
+                              searchNotifier.setQuery('');
                             },
                           )
                         : null,
@@ -151,249 +117,314 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
           ),
 
-          // Píldoras de Filtro
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20, vertical: 4),
-            child: Row(
-              children: _filters.map((filter) {
-                final isSelected = _selectedFilter == filter;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(filter),
-                    selected: isSelected,
-                    onSelected: (val) {
-                      if (val) setState(() => _selectedFilter = filter);
-                    },
-                    selectedColor: AppTheme.primary,
-                    backgroundColor: AppTheme.surface,
-                    labelStyle: TextStyle(
-                      color: isSelected ? AppTheme.background : AppTheme.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                    shape: StadiumBorder(
-                      side: BorderSide(
-                        color: isSelected ? AppTheme.primary : AppTheme.surfaceHover,
+          // Píldoras de Filtro (Solo visibles al buscar algo)
+          if (_searchController.text.trim().isNotEmpty)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20, vertical: 4),
+              child: Row(
+                children: _filters.map((filter) {
+                  final filterType = filter['type'] as DeezerSearchType;
+                  final isSelected = searchState.searchType == filterType;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ChoiceChip(
+                      label: Text(filter['name'] as String),
+                      selected: isSelected,
+                      onSelected: (val) {
+                        if (val) searchNotifier.setSearchType(filterType);
+                      },
+                      selectedColor: AppTheme.primary,
+                      backgroundColor: AppTheme.surface,
+                      labelStyle: TextStyle(
+                        color: isSelected ? AppTheme.background : AppTheme.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
                       ),
+                      shape: StadiumBorder(
+                        side: BorderSide(
+                          color: isSelected ? AppTheme.primary : AppTheme.surfaceHover,
+                        ),
+                      ),
+                      showCheckmark: false,
                     ),
-                    showCheckmark: false,
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
 
           const SizedBox(height: 16),
 
-          // Contenido dinámico
+          // Cuerpo dinámico
           Expanded(
-            child: _isSearching
+            child: searchState.isLoading
                 ? _buildSkeletonResults()
-                : SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Solo mostrar resultados cuando hay un texto ingresado
-                        if (query.isNotEmpty) ...[
-                          if (isDesktop)
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 4,
-                                  child: _buildTopResultCard(),
-                                ),
-                                const SizedBox(width: 24),
-                                Expanded(
-                                  flex: 6,
-                                  child: _buildSongsListSection(),
-                                ),
-                              ],
-                            )
-                          else ...[
-                            _buildTopResultCard(),
-                            const SizedBox(height: 24),
-                            _buildSongsListSection(),
-                          ],
-                          const SizedBox(height: 32),
-                        ],
-
-                        // Sección "Explorar todo" (Siempre visible al entrar a la pantalla)
-                        Text(
-                          'Explorar todo',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w900,
-                                color: AppTheme.primary,
-                              ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: isDesktop ? 5 : 2,
-                            childAspectRatio: 1.6,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                          ),
-                          itemCount: _categories.length,
-                          itemBuilder: (ctx, i) {
-                            final cat = _categories[i];
-                            return Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: cat['color'] as Color,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                cat['name'] as String,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 40),
-                      ],
-                    ),
-                  ),
+                : searchState.errorMessage != null
+                    ? ErrorStateWidget(
+                        message: searchState.errorMessage!,
+                        onRetry: () => searchNotifier.retry(),
+                      )
+                    : _searchController.text.trim().isEmpty
+                        ? _buildExploreCategories(isDesktop)
+                        : _buildSearchResults(searchState, isDesktop),
           ),
         ],
       ),
     );
   }
 
-  /// Tarjeta "Mejor resultado" del artista principal
-  Widget _buildTopResultCard() {
+  Widget _buildExploreCategories(bool isDesktop) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Explorar todo',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primary,
+                ),
+          ),
+          const SizedBox(height: 16),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: isDesktop ? 5 : 2,
+              childAspectRatio: 1.6,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            itemCount: _categories.length,
+            itemBuilder: (ctx, i) {
+              final cat = _categories[i];
+              return InkWell(
+                onTap: () {
+                  _searchController.text = cat['name'] as String;
+                  ref.read(searchProvider.notifier).setQuery(cat['name'] as String);
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cat['color'] as Color,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    cat['name'] as String,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchResults(SearchState state, bool isDesktop) {
+    final result = state.result;
+
+    if (result.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.searchX, size: 48, color: AppTheme.secondary),
+            SizedBox(height: 12),
+            Text(
+              'No se encontraron resultados',
+              style: TextStyle(color: AppTheme.secondary, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Artistas destacados si existen
+          if (result.artists.isNotEmpty) ...[
+            _buildArtistSection(result.artists, isDesktop),
+            const SizedBox(height: 24),
+          ],
+
+          // Lista de canciones
+          if (result.tracks.isNotEmpty) ...[
+            _buildSongsSection(result.tracks),
+            const SizedBox(height: 24),
+          ],
+
+          // Álbumes
+          if (result.albums.isNotEmpty) ...[
+            _buildAlbumsSection(result.albums, isDesktop),
+            const SizedBox(height: 24),
+          ],
+
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildArtistSection(List<DeezerArtist> artists, bool isDesktop) {
+    final displayArtists = artists.length > 5 ? artists.sublist(0, 5) : artists;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Mejor resultado',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          'Artistas',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
-        const SizedBox(height: 16),
-        GestureDetector(
-          onTap: () => context.push('/artist/a1'),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: AppTheme.surfaceShadow,
-            ),
-            child: Stack(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(50),
-                      child: SizedBox(
-                        width: 96,
-                        height: 96,
-                        child: CachedNetworkImage(
-                          imageUrl: 'https://images.unsplash.com/photo-1549834125-82d3c48159a3?q=80&w=300&auto=format&fit=crop',
-                          fit: BoxFit.cover,
-                          errorWidget: (_, _, _) => Container(
-                            color: AppTheme.surfaceHover,
-                            child: const Icon(LucideIcons.user, color: AppTheme.muted, size: 40),
+        const SizedBox(height: 12),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: displayArtists.length,
+          itemBuilder: (ctx, i) {
+            final artist = displayArtists[i];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: GestureDetector(
+                onTap: () => context.push('/artist/${artist.id}'),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: AppTheme.surfaceShadow,
+                  ),
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(32),
+                        child: SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: CachedNetworkImage(
+                            imageUrl: artist.pictureUrl,
+                            memCacheWidth: 300,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, _, _) => Container(
+                              color: AppTheme.surfaceHover,
+                              child: const Icon(LucideIcons.user, color: AppTheme.muted, size: 28),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'The Midnight',
-                      style: TextStyle(
-                        color: AppTheme.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 24,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppTheme.background.withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'ARTISTA',
-                        style: TextStyle(
-                          color: AppTheme.secondary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              artist.name,
+                              style: const TextStyle(
+                                color: AppTheme.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 17,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'ARTISTA',
+                              style: TextStyle(
+                                color: AppTheme.secondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppTheme.primary,
-                      boxShadow: AppTheme.glowShadow,
-                    ),
-                    child: const Icon(LucideIcons.play, color: AppTheme.background, size: 24),
+                      const Icon(LucideIcons.chevronRight, color: AppTheme.secondary),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ],
     );
   }
 
-  /// Lista de "Canciones" asociadas
-  Widget _buildSongsListSection() {
+  Widget _buildSongsSection(List<DeezerTrack> tracks) {
     final currentTrack = ref.watch(currentTrackProvider);
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
+    final syncoraTracks = tracks.map((t) => t.toSyncoraTrack()).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Canciones',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: _mockSearchResults.length,
+          itemCount: tracks.length,
           itemBuilder: (ctx, i) {
-            final track = _mockSearchResults[i];
+            final track = syncoraTracks[i];
             final isPlaying = currentTrack?.id == track.id;
 
             return TrackTile(
               track: track,
               isPlaying: isPlaying,
               onTap: () {
-                controller.setQueue([track], startIndex: 0);
+                controller.setQueue(syncoraTracks, startIndex: i);
                 controller.play();
               },
               onAddToQueue: () => controller.addToQueue(track),
             );
           },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAlbumsSection(List<DeezerAlbum> albums, bool isDesktop) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Álbumes',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 200,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: albums.length,
+            separatorBuilder: (ctx, index) => const SizedBox(width: 16),
+            itemBuilder: (ctx, i) {
+              final album = albums[i];
+              return SizedBox(
+                width: isDesktop ? 180 : 140,
+                child: PlaylistCard(
+                  title: album.title,
+                  subtitle: album.artistName,
+                  coverUrl: album.coverUrl,
+                  onTap: () => context.push('/album/${album.id}'),
+                ),
+              );
+            },
+          ),
         ),
       ],
     );

@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../data/local_db/database_provider.dart';
+import '../../data/local_db/syncora_database.dart';
 import '../../features/player/player_providers.dart';
 import '../../features/player/widgets/mini_player.dart';
 import '../theme/app_theme.dart';
@@ -49,33 +51,6 @@ class _AppShellState extends ConsumerState<AppShell> {
         break;
     }
   }
-
-  final List<Map<String, String>> _mockPlaylists = const [
-    {
-      'id': 'p1',
-      'title': '2026',
-      'subtitle': 'Playlist • Syncora',
-      'cover': 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop',
-    },
-    {
-      'id': 'p2',
-      'title': 'ACÚSTICAS',
-      'subtitle': 'Playlist • Syncora',
-      'cover': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=200&auto=format&fit=crop',
-    },
-    {
-      'id': 'p3',
-      'title': 'CHILL',
-      'subtitle': 'Playlist • Syncora',
-      'cover': 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=200&auto=format&fit=crop',
-    },
-    {
-      'id': 'p4',
-      'title': 'COVERS',
-      'subtitle': 'Playlist • Syncora',
-      'cover': 'https://images.unsplash.com/photo-1493225457124-a1a2a5f529a8?q=80&w=200&auto=format&fit=crop',
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -244,22 +219,44 @@ class _AppShellState extends ConsumerState<AppShell> {
                           ),
                         const SizedBox(height: 8),
 
-                        // Lista de playlists: ocultar en celular landscape
+                        // Lista de playlists real desde Drift DB
                         if (!isMobileLandscape)
                           Expanded(
-                            child: ListView.builder(
-                              itemCount: _mockPlaylists.length,
-                              itemBuilder: (ctx, i) {
-                                final pl = _mockPlaylists[i];
-                                final isPlaying = widget.location.endsWith(pl['id']!);
+                            child: Consumer(
+                              builder: (ctx, ref, _) {
+                                final playlistDao = ref.watch(playlistDaoProvider);
+                                return StreamBuilder<List<Playlist>>(
+                                  stream: playlistDao.watchAllPlaylists(),
+                                  builder: (ctx, snapshot) {
+                                    final playlists = snapshot.data ?? [];
+                                    if (playlists.isEmpty) {
+                                      return const Center(
+                                        child: Text(
+                                          'Sin playlists',
+                                          style: TextStyle(color: AppTheme.secondary, fontSize: 12),
+                                        ),
+                                      );
+                                    }
 
-                                return _DesktopPlaylistItem(
-                                  title: pl['title']!,
-                                  subtitle: pl['subtitle']!,
-                                  coverUrl: pl['cover']!,
-                                  isSelected: isPlaying,
-                                  isCollapsed: _isSidebarCollapsed,
-                                  onTap: () => context.push('/playlist/${pl['id']}'),
+                                    return ListView.builder(
+                                      itemCount: playlists.length,
+                                      itemBuilder: (ctx, i) {
+                                        final pl = playlists[i];
+                                        final isSelected = widget.location.endsWith('/playlist/${pl.id}') ||
+                                            (pl.isLiked && widget.location.endsWith('/playlist/liked'));
+
+                                        return _DesktopPlaylistItem(
+                                          title: pl.title,
+                                          subtitle: pl.isLiked ? 'Playlist especial' : (pl.description ?? 'Playlist'),
+                                          coverUrl: pl.coverUrl ?? '',
+                                          isLiked: pl.isLiked,
+                                          isSelected: isSelected,
+                                          isCollapsed: _isSidebarCollapsed,
+                                          onTap: () => context.push('/playlist/${pl.isLiked ? 'liked' : pl.id}'),
+                                        );
+                                      },
+                                    );
+                                  },
                                 );
                               },
                             ),
@@ -693,6 +690,7 @@ class _DesktopPlaylistItem extends StatelessWidget {
   final String title;
   final String subtitle;
   final String coverUrl;
+  final bool isLiked;
   final bool isSelected;
   final bool isCollapsed;
   final VoidCallback onTap;
@@ -701,6 +699,7 @@ class _DesktopPlaylistItem extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.coverUrl,
+    this.isLiked = false,
     required this.isSelected,
     required this.isCollapsed,
     required this.onTap,
@@ -721,11 +720,21 @@ class _DesktopPlaylistItem extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: coverUrl,
+                child: SizedBox(
                   width: 48,
                   height: 48,
-                  fit: BoxFit.cover,
+                  child: isLiked
+                      ? Container(
+                          decoration: const BoxDecoration(gradient: AppTheme.gradientLiked),
+                          child: const Icon(LucideIcons.heart, color: Colors.white, size: 22),
+                        )
+                      : (coverUrl.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: coverUrl,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, _, _) => Container(color: AppTheme.surfaceHover, child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 20)),
+                            )
+                          : Container(color: AppTheme.surfaceHover, child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 20))),
                 ),
               ),
               if (!isCollapsed) ...[

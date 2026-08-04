@@ -21,8 +21,22 @@ subprojects {
 }
 
 subprojects {
+    fun overrideCompileSdk() {
+        if (plugins.hasPlugin("com.android.library")) {
+            val android = extensions.findByType(com.android.build.gradle.LibraryExtension::class.java)
+            android?.compileSdk = 36
+        }
+    }
+    if (state.executed) {
+        overrideCompileSdk()
+    } else {
+        afterEvaluate {
+            overrideCompileSdk()
+        }
+    }
     plugins.withId("com.android.library") {
         configure<com.android.build.gradle.LibraryExtension> {
+            compileSdk = 36
             compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_17
                 targetCompatibility = JavaVersion.VERSION_17

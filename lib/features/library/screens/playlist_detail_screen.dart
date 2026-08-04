@@ -1,15 +1,26 @@
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/skeleton_box.dart';
+import '../../../core/widgets/error_state.dart';
+import '../../../data/apis/deezer_api.dart';
+import '../../../data/apis/deezer_provider.dart';
+import '../../../data/local_db/database_provider.dart';
+import '../../../data/local_db/syncora_database.dart';
+import '../../../data/models/deezer/deezer_track.dart';
 import '../../player/player_models.dart';
 import '../../player/player_providers.dart';
+import '../import_export/playlist_import_export_service.dart';
 
-/// Pantalla de Detalle de Playlist (`/playlist/:id`).
+/// Pantalla de Detalle de Playlist (`/playlist/:id`) conectada a la base de datos Drift.
 class PlaylistDetailScreen extends ConsumerStatefulWidget {
   final String playlistId;
 
@@ -23,338 +34,493 @@ class PlaylistDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
-  bool _isLoading = true;
+  Playlist? _playlist;
+  bool _isLoadingHeader = true;
+  bool _showAddSongsSearch = false;
+  final TextEditingController _addSongsController = TextEditingController();
+  List<DeezerTrack> _searchResults = [];
+  bool _isSearchingSongs = false;
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) setState(() => _isLoading = false);
-    });
+    _loadPlaylistHeader();
   }
 
-  final List<SyncoraTrack> _mockTracks = [
-    SyncoraTrack(
-      id: 'pl_track_1',
-      title: 'Rick Astley - Never Gonna Give You Up',
-      artist: 'Rick Astley',
-      album: 'Whenever You Need Somebody',
-      duration: const Duration(seconds: 213),
-      youtubeVideoId: 'dQw4w9WgXcQ',
-      artUri: Uri.parse('https://e-cdns-images.dzcdn.net/images/cover/2e018122cb56986277102d2041a592c8/500x500-000000-80-0-0.jpg'),
-    ),
-    SyncoraTrack(
-      id: 'pl_track_2',
-      title: 'Coldplay - Viva La Vida',
-      artist: 'Coldplay',
-      album: 'Viva La Vida',
-      duration: const Duration(seconds: 242),
-      youtubeVideoId: 'dvgZkm1xWPE',
-      artUri: Uri.parse('https://e-cdns-images.dzcdn.net/images/cover/1db2694b292e85a49806b72a6b2909f8/500x500-000000-80-0-0.jpg'),
-    ),
-    SyncoraTrack(
-      id: 'pl_track_3',
-      title: 'Danny Ocean - Dembow',
-      artist: 'Danny Ocean',
-      album: '54+1',
-      duration: const Duration(seconds: 217),
-      youtubeVideoId: 'aFt64QY_sK0',
-      artUri: Uri.parse('https://e-cdns-images.dzcdn.net/images/cover/6c2057bb081b29a28c2c19e7cf23927d/500x500-000000-80-0-0.jpg'),
-    ),
-    SyncoraTrack(
-      id: 'pl_track_4',
-      title: 'Track No Disponible en tu Región',
-      artist: 'Artista Desconocido',
-      album: 'Álbum Bloqueado',
-      duration: const Duration(seconds: 195),
-      youtubeVideoId: 'blocked_id',
-      artUri: null,
-    ),
-  ];
+  @override
+  void dispose() {
+    _addSongsController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _performAddSongsSearch(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
+      setState(() {
+        _searchResults = [];
+        _isSearchingSongs = false;
+      });
+      return;
+    }
+
+    setState(() => _isSearchingSongs = true);
+    try {
+      final deezerApi = ref.read(deezerApiProvider);
+      final res = await deezerApi.search(trimmed, type: DeezerSearchType.track);
+      if (mounted) {
+        setState(() {
+          _searchResults = res.tracks;
+          _isSearchingSongs = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isSearchingSongs = false);
+    }
+  }
+
+  Future<void> _loadPlaylistHeader() async {
+    final dao = ref.read(playlistDaoProvider);
+    if (widget.playlistId == 'liked') {
+      final liked = await dao.getLikedPlaylist();
+      if (mounted) {
+        setState(() {
+          _playlist = liked;
+          _isLoadingHeader = false;
+        });
+      }
+    } else {
+      final id = int.tryParse(widget.playlistId) ?? 0;
+      final pl = await dao.getPlaylistById(id);
+      if (mounted) {
+        setState(() {
+          _playlist = pl;
+          _isLoadingHeader = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _exportPlaylist(List<PlaylistTrack> tracks) async {
+    if (_playlist == null || tracks.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay canciones para exportar.')),
+      );
+      return;
+    }
+
+    final deezerApi = ref.read(deezerApiProvider);
+    final service = PlaylistImportExportService(deezerApi);
+    final tracksData = tracks
+        .map((t) => {
+              'title': t.title,
+              'artist': t.artistName,
+              'album': t.albumName,
+              'duration_ms': t.durationMs,
+            })
+        .toList();
+
+    final csvContent = service.exportToCsv(tracksData);
+    final fileName = '${_playlist!.title.replaceAll(RegExp(r'[^\w\s\-]'), '')}.csv';
+
+    try {
+      if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+        final downloadsDir = await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+        final file = File('${downloadsDir.path}/$fileName');
+        await file.writeAsString(csvContent);
+        await Clipboard.setData(ClipboardData(text: csvContent));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Playlist exportada a: ${file.path} (Copiada al portapapeles)'),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      } else {
+        // ignore: deprecated_member_use
+        await Share.shareXFiles([
+          XFile.fromData(
+            Uint8List.fromList(csvContent.codeUnits),
+            name: fileName,
+            mimeType: 'text/csv',
+          ),
+        ]);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Playlist exportada con éxito')),
+          );
+        }
+      }
+    } catch (e) {
+      await Clipboard.setData(ClipboardData(text: csvContent));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Exportación copiada al portapapeles (${tracks.length} canciones)')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final currentTrack = ref.watch(currentTrackProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final playlistDao = ref.watch(playlistDaoProvider);
 
-    final title = widget.playlistId == 'liked' ? 'Canciones que me gustan' : 'Neon Shadows';
-    final description = widget.playlistId == 'liked'
-        ? 'Tus canciones favoritas guardadas en la biblioteca.'
-        : 'Una playlist electrónica conceptual con bajos profundos y voces etéreas. Perfecta para viajes nocturnos.';
-    final coverUrl = widget.playlistId == 'liked'
-        ? 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=800&auto=format&fit=crop'
-        : 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=800&auto=format&fit=crop';
+    if (_isLoadingHeader) {
+      return const Scaffold(
+        backgroundColor: AppTheme.background,
+        body: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+      );
+    }
+
+    if (_playlist == null) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        body: ErrorStateWidget(
+          message: 'No se encontró la playlist',
+          onRetry: _loadPlaylistHeader,
+        ),
+      );
+    }
+
+    final playlist = _playlist!;
+    final isLiked = playlist.isLiked;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: Stack(
-        children: [
+      body: StreamBuilder<List<PlaylistTrack>>(
+        stream: playlistDao.watchTracksOrdered(playlist.id),
+        builder: (ctx, snapshot) {
+          final tracks = snapshot.data ?? [];
+          final syncoraTracks = tracks
+              .map((t) => SyncoraTrack(
+                    id: t.trackId.toString(),
+                    title: t.title,
+                    artist: t.artistName,
+                    album: t.albumName,
+                    duration: Duration(milliseconds: t.durationMs),
+                    artUri: t.coverUrl.isNotEmpty ? Uri.tryParse(t.coverUrl) : null,
+                  ))
+              .toList();
 
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 56,
+                    left: isDesktop ? 32 : 20,
+                    right: isDesktop ? 32 : 20,
+                    bottom: 40,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
 
-          // ScrollView ocupando toda la pantalla desde arriba
-          Positioned.fill(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 56,
-                left: isDesktop ? 32 : 20,
-                right: isDesktop ? 32 : 20,
-                bottom: 40,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 8),
-
-                  // Header Info (Desktop horizontal / Móvil centrado)
-                  if (isDesktop)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Container(
-                          width: 220,
-                          height: 220,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: AppTheme.glowShadow,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: CachedNetworkImage(
-                              imageUrl: coverUrl,
-                              fit: BoxFit.cover,
+                      if (isDesktop)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Container(
+                              width: 220,
+                              height: 220,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: AppTheme.glowShadow,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: isLiked
+                                    ? Container(
+                                        decoration: const BoxDecoration(gradient: AppTheme.gradientLiked),
+                                        child: const Icon(LucideIcons.heart, color: Colors.white, size: 64),
+                                      )
+                                    : (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty)
+                                        ? CachedNetworkImage(imageUrl: playlist.coverUrl!, fit: BoxFit.cover)
+                                        : Container(
+                                            color: AppTheme.surfaceHover,
+                                            child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 64),
+                                          ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 28),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'PLAYLIST',
+                                    style: TextStyle(
+                                      color: AppTheme.secondary,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 1.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    playlist.title,
+                                    style: const TextStyle(
+                                      color: AppTheme.primary,
+                                      fontSize: 44,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -1,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    playlist.description ?? 'Sin descripción',
+                                    style: const TextStyle(color: AppTheme.secondary, fontSize: 14),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Text(
+                                    '${tracks.length} canciones',
+                                    style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Column(
+                          children: [
+                            Container(
+                              width: 180,
+                              height: 180,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: AppTheme.glowHighShadow,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: isLiked
+                                    ? Container(
+                                        decoration: const BoxDecoration(gradient: AppTheme.gradientLiked),
+                                        child: const Icon(LucideIcons.heart, color: Colors.white, size: 56),
+                                      )
+                                    : (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty)
+                                        ? CachedNetworkImage(imageUrl: playlist.coverUrl!, fit: BoxFit.cover)
+                                        : Container(
+                                            color: AppTheme.surfaceHover,
+                                            child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 56),
+                                          ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              playlist.title,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: AppTheme.primary,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              playlist.description ?? 'Sin descripción',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              '${tracks.length} canciones',
+                              style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 28),
-                        Expanded(
+
+                      const SizedBox(height: 24),
+
+                      // Actions row
+                      Row(
+                        children: [
+                          if (syncoraTracks.isNotEmpty) ...[
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppTheme.primary,
+                                boxShadow: AppTheme.glowShadow,
+                              ),
+                              child: IconButton(
+                                icon: const Icon(LucideIcons.play, color: AppTheme.background, size: 26),
+                                onPressed: () {
+                                  controller.setQueue(syncoraTracks, startIndex: 0);
+                                  controller.play();
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                          ],
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _showAddSongsSearch ? AppTheme.surfaceHover : AppTheme.surface,
+                              foregroundColor: AppTheme.primary,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            ),
+                            onPressed: () {
+                              setState(() => _showAddSongsSearch = !_showAddSongsSearch);
+                            },
+                            icon: Icon(_showAddSongsSearch ? LucideIcons.x : LucideIcons.plus, size: 18),
+                            label: Text(_showAddSongsSearch ? 'Cerrar buscador' : 'Agregar canciones', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(LucideIcons.fileOutput, color: AppTheme.secondary, size: 22),
+                            onPressed: () => _exportPlaylist(tracks),
+                            tooltip: 'Exportar playlist (CSV)',
+                          ),
+                          const SizedBox(width: 8),
+                          if (!isLiked)
+                            IconButton(
+                              icon: const Icon(LucideIcons.trash2, color: AppTheme.secondary, size: 20),
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    backgroundColor: AppTheme.surface,
+                                    title: const Text('¿Eliminar playlist?', style: TextStyle(color: AppTheme.primary)),
+                                    content: const Text('Esta acción no se puede deshacer.', style: TextStyle(color: AppTheme.secondary)),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                        onPressed: () => Navigator.pop(ctx, true),
+                                        child: const Text('Eliminar'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  await playlistDao.deletePlaylist(playlist.id);
+                                  if (context.mounted) context.pop();
+                                }
+                              },
+                              tooltip: 'Eliminar playlist',
+                            ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Buscador inline de canciones para agregar a esta playlist
+                      if (_showAddSongsSearch || tracks.isEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppTheme.surfaceHover),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'PLAYLIST',
-                                style: TextStyle(
-                                  color: AppTheme.secondary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.5,
+                                'Buscar canciones para agregar',
+                                style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: _addSongsController,
+                                onChanged: (val) => _performAddSongsSearch(val),
+                                style: const TextStyle(color: AppTheme.primary),
+                                decoration: InputDecoration(
+                                  hintText: 'Escribe nombre de canción o artista...',
+                                  hintStyle: TextStyle(color: AppTheme.secondary.withValues(alpha: 0.7)),
+                                  prefixIcon: const Icon(LucideIcons.search, color: AppTheme.secondary, size: 18),
+                                  suffixIcon: _isSearchingSongs
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(12),
+                                          child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary)),
+                                        )
+                                      : (_addSongsController.text.isNotEmpty
+                                          ? IconButton(
+                                              icon: const Icon(LucideIcons.x, color: AppTheme.secondary, size: 18),
+                                              onPressed: () {
+                                                _addSongsController.clear();
+                                                _performAddSongsSearch('');
+                                              },
+                                            )
+                                          : null),
+                                  filled: true,
+                                  fillColor: AppTheme.background,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                                 ),
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                title,
-                                style: const TextStyle(
-                                  color: AppTheme.primary,
-                                  fontSize: 44,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -1,
+                              if (_searchResults.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: _searchResults.length > 8 ? 8 : _searchResults.length,
+                                  itemBuilder: (ctx, i) {
+                                    final track = _searchResults[i];
+                                    return ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: ClipRRect(
+                                        borderRadius: BorderRadius.circular(6),
+                                        child: CachedNetworkImage(imageUrl: track.coverUrl, width: 40, height: 40, fit: BoxFit.cover),
+                                      ),
+                                      title: Text(track.title, style: const TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      subtitle: Text(track.artistName, style: const TextStyle(color: AppTheme.secondary, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      trailing: IconButton(
+                                        icon: const Icon(LucideIcons.plusCircle, color: AppTheme.primary, size: 22),
+                                        onPressed: () async {
+                                          await playlistDao.addTrackToPlaylist(
+                                            playlistId: playlist.id,
+                                            trackId: track.id,
+                                            artistId: track.artistId,
+                                            albumId: track.albumId,
+                                            title: track.title,
+                                            artistName: track.artistName,
+                                            albumName: track.albumTitle,
+                                            coverUrl: track.coverUrl,
+                                            durationMs: track.durationSec * 1000,
+                                          );
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('"${track.title}" agregada a la playlist'), duration: const Duration(seconds: 1)),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                description,
-                                style: const TextStyle(
-                                  color: AppTheme.secondary,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-                              Row(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: const BorderRadius.all(Radius.circular(999)),
-                                    child: CachedNetworkImage(
-                                      imageUrl: 'https://i.pravatar.cc/150?img=11',
-                                      width: 24,
-                                      height: 24,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text('Alex Doe', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
-                                  const Text('  •  4 canciones  •  14 min', style: TextStyle(color: AppTheme.secondary, fontSize: 13)),
-                                ],
-                              ),
+                              ],
                             ],
                           ),
                         ),
+                        const SizedBox(height: 24),
                       ],
-                    )
-                  else
-                    Column(
-                      children: [
-                        Container(
-                          width: 180,
-                          height: 180,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: AppTheme.glowHighShadow,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: CachedNetworkImage(
-                              imageUrl: coverUrl,
-                              fit: BoxFit.cover,
+
+                      if (tracks.isEmpty && !_showAddSongsSearch)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Center(
+                            child: Text(
+                              'Esta playlist está vacía.\nUsa el buscador de arriba para agregar canciones.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: AppTheme.secondary, height: 1.5),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          title,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppTheme.primary,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          description,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppTheme.secondary,
-                            fontSize: 13,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ClipRRect(
-                              borderRadius: const BorderRadius.all(Radius.circular(999)),
-                              child: CachedNetworkImage(
-                                imageUrl: 'https://i.pravatar.cc/150?img=11',
-                                width: 20,
-                                height: 20,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Text('Alex Doe', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
-                            const Text(' • 4 canciones • 14 min', style: TextStyle(color: AppTheme.secondary, fontSize: 13)),
-                          ],
-                        ),
-                      ],
-                    ),
-
-                  const SizedBox(height: 24),
-
-                  // Fila de Botones de Acción (Imagen 2: Iconos limpios sin bordes circulares)
-                  Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppTheme.primary,
-                          boxShadow: AppTheme.glowShadow,
-                        ),
-                        child: IconButton(
-                          icon: const Icon(LucideIcons.play, color: AppTheme.background, size: 26),
-                          onPressed: () {
-                            controller.setQueue(_mockTracks, startIndex: 0);
-                            controller.play();
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      IconButton(
-                        icon: const Icon(LucideIcons.shuffle, color: AppTheme.primary, size: 24),
-                        onPressed: () {
-                          controller.setQueue(_mockTracks, startIndex: 0);
-                          controller.toggleShuffle();
-                          controller.play();
-                        },
-                        tooltip: 'Aleatorio',
-                      ),
-                      const SizedBox(width: 16),
-                      IconButton(
-                        icon: const Icon(LucideIcons.arrowDownToLine, color: AppTheme.secondary, size: 20),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Descargando playlist...')),
-                          );
-                        },
-                        tooltip: 'Descargar',
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(LucideIcons.heart, color: AppTheme.secondary, size: 20),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Guardado en biblioteca')),
-                          );
-                        },
-                        tooltip: 'Guardar',
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(LucideIcons.ellipsis, color: AppTheme.secondary, size: 20),
-                        onPressed: () {},
-                        tooltip: 'Más opciones',
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: isDesktop ? 24 : 8),
-
-                  // Cabecera de Tabla en Desktop (Imagen 2)
-                  if (isDesktop) ...[
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 32,
-                            child: Center(
-                              child: Text('#', style: TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 4,
-                            child: Text('Título', style: TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.bold)),
-                          ),
-                          Expanded(
-                            flex: 3,
-                            child: Text('Álbum', style: TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.bold)),
-                          ),
-                          SizedBox(
-                            width: 100,
-                            child: Text('Fecha', style: TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.bold)),
-                          ),
-                          SizedBox(
-                            width: 80,
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Icon(LucideIcons.clock, color: AppTheme.muted, size: 14),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(color: AppTheme.surfaceActive, height: 1),
-                    const SizedBox(height: 8),
-                  ],
-
-                  // Lista de Canciones
-                  _isLoading
-                      ? ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: 4,
-                          separatorBuilder: (ctx, index) => const SizedBox(height: 4),
-                          itemBuilder: (ctx, index) => const SkeletonBox(height: 52, borderRadius: 8),
                         )
-                      : ListView.builder(
+                      else
+                        ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _mockTracks.length,
+                          itemCount: syncoraTracks.length,
                           itemBuilder: (ctx, i) {
-                            final track = _mockTracks[i];
+                            final track = syncoraTracks[i];
+                            final playlistTrack = tracks[i];
                             final isPlaying = currentTrack?.id == track.id;
 
                             return _PlaylistTrackRow(
@@ -363,56 +529,59 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                               isPlaying: isPlaying,
                               isDesktop: isDesktop,
                               onTap: () {
-                                controller.setQueue(_mockTracks, startIndex: i);
+                                controller.setQueue(syncoraTracks, startIndex: i);
                                 controller.play();
                               },
+                              onRemove: () => playlistDao.removeTrackEntry(playlistTrack.id),
+                              onAddToQueue: () => controller.addToQueue(track),
                               formatDuration: _formatDuration,
                             );
                           },
                         ),
-                ],
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
 
-          // Botones Flotantes Superiores Glassmorphism (Sin barra de fondo que tape el scroll!)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 16,
-            right: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.black.withValues(alpha: 0.35),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(LucideIcons.chevronLeft, color: AppTheme.primary, size: 20),
-                    onPressed: () => context.pop(),
-                    padding: EdgeInsets.zero,
-                  ),
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 8,
+                left: 16,
+                right: 16,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.black.withValues(alpha: 0.35),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(LucideIcons.chevronLeft, color: AppTheme.primary, size: 20),
+                        onPressed: () => context.pop(),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.black.withValues(alpha: 0.35),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(LucideIcons.search, color: AppTheme.primary, size: 18),
+                        onPressed: () => context.push('/search'),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
                 ),
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.black.withValues(alpha: 0.35),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(LucideIcons.search, color: AppTheme.primary, size: 18),
-                    onPressed: () => context.push('/search'),
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -424,13 +593,14 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   }
 }
 
-/// Fila individual de canción (Centrado de número/icono ecualizador y menú de 3 puntos)
 class _PlaylistTrackRow extends StatefulWidget {
   final SyncoraTrack track;
   final int index;
   final bool isPlaying;
   final bool isDesktop;
   final VoidCallback onTap;
+  final VoidCallback onRemove;
+  final VoidCallback onAddToQueue;
   final String Function(Duration) formatDuration;
 
   const _PlaylistTrackRow({
@@ -439,6 +609,8 @@ class _PlaylistTrackRow extends StatefulWidget {
     required this.isPlaying,
     required this.isDesktop,
     required this.onTap,
+    required this.onRemove,
+    required this.onAddToQueue,
     required this.formatDuration,
   });
 
@@ -448,6 +620,37 @@ class _PlaylistTrackRow extends StatefulWidget {
 
 class _PlaylistTrackRowState extends State<_PlaylistTrackRow> {
   bool _isHovered = false;
+
+  void _showOptionsMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(LucideIcons.listPlus, color: AppTheme.primary),
+              title: const Text('Agregar a cola', style: TextStyle(color: AppTheme.primary)),
+              onTap: () {
+                Navigator.pop(ctx);
+                widget.onAddToQueue();
+              },
+            ),
+            ListTile(
+              leading: const Icon(LucideIcons.trash, color: Colors.redAccent),
+              title: const Text('Eliminar de playlist', style: TextStyle(color: Colors.redAccent)),
+              onTap: () {
+                Navigator.pop(ctx);
+                widget.onRemove();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -465,50 +668,37 @@ class _PlaylistTrackRowState extends State<_PlaylistTrackRow> {
       },
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: EdgeInsets.only(
-          left: 12,
-          right: widget.isDesktop ? 12 : 2,
-          top: 8,
-          bottom: 8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           children: [
-            // Índice o Icono de Ecualizador Centrado (Fix Imagen 5)
-            if (widget.isDesktop)
-              SizedBox(
-                width: 32,
-                child: Center(
-                  child: isPlaying
-                      ? const Icon(LucideIcons.chartColumn, color: AppTheme.primary, size: 16)
-                      : Text(
-                          '${widget.index}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: AppTheme.secondary, fontSize: 13, fontWeight: FontWeight.w600),
-                        ),
-                ),
+            SizedBox(
+              width: 32,
+              child: Center(
+                child: isPlaying
+                    ? const Icon(LucideIcons.chartColumn, color: AppTheme.primary, size: 16)
+                    : Text(
+                        '${widget.index}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: AppTheme.secondary, fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
               ),
-
-            // Cover (40x40)
+            ),
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: SizedBox(
                 width: 40,
                 height: 40,
-                child: CachedNetworkImage(
-                  imageUrl: track.coverUrl,
-                  fit: BoxFit.cover,
-                ),
+                child: (track.coverUrl.isNotEmpty)
+                    ? CachedNetworkImage(imageUrl: track.coverUrl, fit: BoxFit.cover)
+                    : Container(color: AppTheme.surfaceHover, child: const Icon(LucideIcons.music, color: AppTheme.muted)),
               ),
             ),
             const SizedBox(width: 12),
-
-            // Título y Artista
             Expanded(
-              flex: widget.isDesktop ? 4 : 1,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -527,78 +717,23 @@ class _PlaylistTrackRowState extends State<_PlaylistTrackRow> {
                     track.artist,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppTheme.secondary,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
                   ),
                 ],
               ),
             ),
-
-            // Álbum en Desktop
-            if (widget.isDesktop) ...[
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 3,
-                child: Text(
-                  track.album ?? 'Álbum',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                ),
-              ),
-              const SizedBox(width: 12),
-              const SizedBox(
-                width: 100,
-                child: Text(
-                  '11/07/2025',
-                  style: TextStyle(color: AppTheme.secondary, fontSize: 13),
-                ),
-              ),
-            ],
-
             const SizedBox(width: 12),
-            // Duración y Menú de 3 Puntos
-            if (widget.isDesktop)
-              SizedBox(
-                width: 80,
-                child: Row(
-                  children: [
-                    Text(
-                      widget.formatDuration(track.duration ?? Duration.zero),
-                      style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                    ),
-                    const Spacer(),
-                    if (_isHovered || isPlaying)
-                      IconButton(
-                        icon: const Icon(LucideIcons.ellipsis, color: AppTheme.secondary, size: 18),
-                        onPressed: () {},
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                      )
-                    else
-                      const SizedBox(width: 28),
-                  ],
-                ),
-              )
-            else
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.formatDuration(track.duration ?? Duration.zero),
-                    style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                  ),
-                  const SizedBox(width: 2),
-                  IconButton(
-                    icon: const Icon(LucideIcons.ellipsisVertical, color: AppTheme.secondary, size: 18),
-                    onPressed: () {},
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                  ),
-                ],
-              ),
+            Text(
+              widget.formatDuration(track.duration ?? Duration.zero),
+              style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+            ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(LucideIcons.ellipsisVertical, color: AppTheme.secondary, size: 18),
+              onPressed: () => _showOptionsMenu(context),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            ),
           ],
         ),
       ),

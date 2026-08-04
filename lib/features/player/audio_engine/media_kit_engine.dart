@@ -121,7 +121,12 @@ class MediaKitEngine implements AudioEngine {
   Future<void> setSpeed(double speed) => _player.setRate(speed);
 
   @override
-  Future<void> setVolume(double volume) => _player.setVolume(volume);
+  Future<void> setVolume(double volume) async {
+    final clamped = volume.clamp(0.0, 1.0);
+    _state = _state.copyWith(volume: clamped);
+    await _player.setVolume(clamped * 100.0);
+    _stateController.add(_state);
+  }
 
   @override
   Future<void> setSkipSilenceEnabled(bool enabled) async {

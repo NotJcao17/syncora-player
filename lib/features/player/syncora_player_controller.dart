@@ -6,6 +6,7 @@ import '../../core/extraction/extraction_service.dart';
 import '../../core/extraction/models/extraction_request.dart';
 import '../../core/extraction/models/extraction_result.dart';
 import '../../core/extraction/retry_policy.dart';
+import '../../core/extraction/yt_matcher_service.dart';
 import 'audio_engine/audio_engine_state.dart';
 import 'player_models.dart';
 
@@ -93,6 +94,7 @@ class SyncoraPlayerController extends ChangeNotifier {
   final AudioEngine _engine;
   final ExtractionService _extractionService;
   final RetryPolicy _retryPolicy = RetryPolicy();
+  final YtMatcherService _ytMatcher = YtMatcherService();
 
   StreamSubscription<AudioEngineState>? _engineSub;
   StreamSubscription<void>? _completionSub;
@@ -277,9 +279,21 @@ class SyncoraPlayerController extends ChangeNotifier {
     final track = _state.currentTrack;
     if (track == null) return;
 
-    _log('[Play] Resolviendo ${track.title} (${track.id})');
+    String targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)
+        ? track.youtubeVideoId!
+        : track.id;
+
+    if (!RegExp(r'^[a-zA-Z0-9_-]{11}$').hasMatch(targetId)) {
+      _log('[Play] Buscando coincidencia de YouTube para "${track.artist} - ${track.title}"...');
+      final resolvedId = await _ytMatcher.findYoutubeVideoId(track);
+      if (resolvedId != null && resolvedId.isNotEmpty) {
+        targetId = resolvedId;
+      }
+    }
+
+    _log('[Play] Resolviendo extracción de YouTube para ${track.title} ($targetId)');
     final result = await _extractionService.extractUrl(
-      track.id,
+      targetId,
       priority: ExtractionPriority.streaming,
     );
 

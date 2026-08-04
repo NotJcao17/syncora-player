@@ -40,25 +40,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return 'Buenas noches';
   }
 
-  // Mocks de prueba calcados del mockup HTML index.html
+  // Mocks de prueba conectados a álbumes reales de Deezer y Me Gusta
   final List<Map<String, String>> _mockMadeForYou = const [
     {
-      'id': 'p1',
-      'title': 'Synthwave',
-      'subtitle': 'The Midnight, Kavinsky, FM-84',
+      'id': '302127',
+      'title': 'A Head Full of Dreams',
+      'subtitle': 'Álbum • Coldplay',
       'cover': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=300&auto=format&fit=crop',
+      'type': 'album',
     },
     {
-      'id': 'p2',
-      'title': 'Chill Vibes',
-      'subtitle': 'Lofi, Ambient, Study',
+      'id': '112526',
+      'title': 'Parachutes',
+      'subtitle': 'Álbum • Coldplay',
       'cover': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=300&auto=format&fit=crop',
+      'type': 'album',
     },
     {
-      'id': 'p3',
-      'title': 'Focus 2026',
-      'subtitle': 'Deep beats for coding',
+      'id': '212377',
+      'title': 'Viva La Vida',
+      'subtitle': 'Álbum • Coldplay',
       'cover': 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=crop',
+      'type': 'album',
     },
   ];
 
@@ -166,29 +169,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             'route': '/playlist/liked',
                           },
                           {
-                            'title': 'Synthwave Mix',
+                            'title': 'A Head Full of Dreams',
                             'cover': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=200&auto=format&fit=crop',
-                            'route': '/playlist/p1',
+                            'route': '/album/302127',
                           },
                           {
-                            'title': 'Chill Vibes',
+                            'title': 'Parachutes',
                             'cover': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=200&auto=format&fit=crop',
-                            'route': '/playlist/p2',
+                            'route': '/album/112526',
                           },
                           {
-                            'title': 'Focus 2026',
+                            'title': 'Viva La Vida',
                             'cover': 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=200&auto=format&fit=crop',
-                            'route': '/playlist/p3',
+                            'route': '/album/212377',
                           },
                           {
-                            'title': 'Los Angeles',
+                            'title': 'Coldplay',
                             'cover': 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop',
-                            'route': '/album/album_1',
-                          },
-                          {
-                            'title': 'Sunset Mix',
-                            'cover': 'https://images.unsplash.com/photo-1493225457124-a1a2a5f529a8?q=80&w=200&auto=format&fit=crop',
-                            'route': '/playlist/p1',
+                            'route': '/artist/1421',
                           },
                         ];
 
@@ -289,7 +287,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 Expanded(
                                   flex: wide ? 2 : 1,
                                   child: GestureDetector(
-                                    onTap: () => context.push('/playlist/p_release'),
+                                    onTap: () => context.push('/album/302127'),
                                     child: Container(
                                       height: 240,
                                       decoration: BoxDecoration(
@@ -331,7 +329,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
                                                   const Text(
-                                                    'NUEVO LANZAMIENTO',
+                                                    'DESTACADO',
                                                     style: TextStyle(
                                                       color: AppTheme.secondary,
                                                       fontSize: 11,
@@ -341,7 +339,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                   ),
                                                   const SizedBox(height: 4),
                                                   const Text(
-                                                    'Los Angeles',
+                                                    'A Head Full of Dreams',
                                                     style: TextStyle(
                                                       color: Colors.white,
                                                       fontSize: 24,
@@ -350,7 +348,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                   ),
                                                   const SizedBox(height: 2),
                                                   const Text(
-                                                    'The Midnight',
+                                                    'Coldplay',
                                                     style: TextStyle(
                                                       color: AppTheme.secondary,
                                                       fontSize: 14,
@@ -417,7 +415,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   title: item['title']!,
                                   subtitle: item['subtitle']!,
                                   coverUrl: item['cover'],
-                                  onTap: () => context.push('/playlist/${item['id']}'),
+                                  onTap: () => context.push('/album/${item['id']}'),
                                 ),
                               );
                             },
