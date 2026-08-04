@@ -45,123 +45,113 @@ class MiniPlayer extends ConsumerWidget {
     bool isPlaying,
     SyncoraPlayerController controller,
   ) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GestureDetector(
-          onTap: () => context.push('/player'),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-            decoration: const BoxDecoration(
-              color: AppTheme.primary, // bg-primary (blanco)
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              boxShadow: AppTheme.miniPlayerShadow,
+    return GestureDetector(
+      onTap: () => context.push('/player'),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        decoration: const BoxDecoration(
+          color: AppTheme.primary, // bg-primary
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: AppTheme.miniPlayerShadow,
+        ),
+        child: Row(
+          children: [
+            // Portada 48x48 (w-12 h-12 rounded-lg) con Hero tag
+            Hero(
+              tag: 'player_cover_hero',
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: currentTrack.coverUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: currentTrack.coverUrl,
+                          memCacheWidth: 300,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, _, _) => _buildPlaceholder(),
+                        )
+                      : _buildPlaceholder(),
+                ),
+              ),
             ),
-            child: Row(
-              children: [
-                // Portada 48x48 (w-12 h-12 rounded-lg) con Hero tag
-                Hero(
-                  tag: 'player_cover_hero',
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: currentTrack.coverUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: currentTrack.coverUrl,
-                              memCacheWidth: 300,
-                              fit: BoxFit.cover,
-                              errorWidget: (_, _, _) => _buildPlaceholder(),
-                            )
-                          : _buildPlaceholder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-                // Título y Artista truncados (text-background / text-background/70)
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        currentTrack.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppTheme.background,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        currentTrack.artist,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppTheme.background.withValues(alpha: 0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Heart Icon Button (text-background, w-6 h-6)
-                IconButton(
-                  icon: const Icon(
-                    LucideIcons.heart,
-                    color: AppTheme.background,
-                    size: 24,
-                  ),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Guardado en Me Gusta')),
-                    );
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                ),
-                const SizedBox(width: 8),
-
-                // Play/Pause circular (bg-background text-primary, w-5 h-5)
-                GestureDetector(
-                  onTap: () {
-                    if (isPlaying) {
-                      controller.pause();
-                    } else {
-                      controller.play();
-                    }
-                  },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
+            // Título y Artista truncados (text-background / text-background/70)
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    currentTrack.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
                       color: AppTheme.background,
-                    ),
-                    child: Icon(
-                      isPlaying ? LucideIcons.pause : LucideIcons.play,
-                      color: AppTheme.primary,
-                      size: 20,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      height: 1.2,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    currentTrack.artist,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppTheme.background.withValues(alpha: 0.7),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+
+            // Heart Icon Button (text-background, w-6 h-6)
+            IconButton(
+              icon: const Icon(
+                LucideIcons.heart,
+                color: AppTheme.background,
+                size: 24,
+              ),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Guardado en Me Gusta')),
+                );
+              },
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            ),
+            const SizedBox(width: 8),
+
+            // Play/Pause circular (bg-background text-primary, w-5 h-5)
+            GestureDetector(
+              onTap: () {
+                if (isPlaying) {
+                  controller.pause();
+                } else {
+                  controller.play();
+                }
+              },
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppTheme.background,
+                ),
+                child: Icon(
+                  isPlaying ? LucideIcons.pause : LucideIcons.play,
+                  color: AppTheme.primary,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
         ),
-        // Extensión blanca inferior que rellena el área detrás de las esquinas redondeadas de _MobileNavBar
-        Container(
-          height: 16,
-          color: AppTheme.primary,
-        ),
-      ],
+      ),
     );
   }
 

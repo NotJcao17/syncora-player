@@ -90,19 +90,19 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       backgroundColor: AppTheme.background,
       body: Stack(
         children: [
-          // Fondo con resplandor ambiental blanco brillante en la parte superior
+          // Fondo con resplandor ambiental brillante en la parte superior
           Positioned.fill(
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.white.withValues(alpha: 0.15),
-                    Colors.white.withValues(alpha: 0.04),
+                    Color(0xFF38234C),
+                    Color(0xFF1E283C),
                     AppTheme.background,
                   ],
-                  stops: const [0.0, 0.35, 0.75],
+                  stops: [0.0, 0.35, 0.75],
                 ),
               ),
             ),
@@ -112,7 +112,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           Positioned.fill(
             child: SingleChildScrollView(
               padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + (isDesktop ? 56 : 40),
+                top: MediaQuery.of(context).padding.top + 56,
                 left: isDesktop ? 32 : 20,
                 right: isDesktop ? 32 : 20,
                 bottom: 40,
@@ -120,7 +120,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (!isDesktop) const SizedBox(height: 4),
+                  const SizedBox(height: 8),
 
                   // Header Info (Desktop horizontal / Móvil centrado)
                   if (isDesktop)
@@ -200,44 +200,42 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     Column(
                       children: [
                         Container(
-                          width: 140,
-                          height: 140,
+                          width: 180,
+                          height: 180,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20),
                             boxShadow: AppTheme.glowHighShadow,
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20),
                             child: CachedNetworkImage(
                               imageUrl: coverUrl,
                               fit: BoxFit.cover,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 16),
                         Text(
                           title,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: AppTheme.primary,
-                            fontSize: 24,
+                            fontSize: 28,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.5,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Text(
                           description,
                           textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: AppTheme.secondary,
-                            fontSize: 12,
-                            height: 1.3,
+                            fontSize: 13,
+                            height: 1.4,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -245,20 +243,20 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                               borderRadius: const BorderRadius.all(Radius.circular(999)),
                               child: CachedNetworkImage(
                                 imageUrl: 'https://i.pravatar.cc/150?img=11',
-                                width: 18,
-                                height: 18,
+                                width: 20,
+                                height: 20,
                                 fit: BoxFit.cover,
                               ),
                             ),
                             const SizedBox(width: 6),
-                            const Text('Alex Doe', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 12)),
-                            const Text(' • 4 canciones • 14 min', style: TextStyle(color: AppTheme.secondary, fontSize: 12)),
+                            const Text('Alex Doe', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                            const Text(' • 4 canciones • 14 min', style: TextStyle(color: AppTheme.secondary, fontSize: 13)),
                           ],
                         ),
                       ],
                     ),
 
-                  SizedBox(height: isDesktop ? 24 : 12),
+                  const SizedBox(height: 24),
 
                   // Fila de Botones de Acción (Imagen 2: Iconos limpios sin bordes circulares)
                   Row(

@@ -28,7 +28,6 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   bool _isSidebarCollapsed = false;
-  double _sidebarWidth = 256.0;
 
   int _calculateSelectedIndex() {
     if (widget.location.startsWith('/search')) return 1;
@@ -97,8 +96,8 @@ class _AppShellState extends ConsumerState<AppShell> {
       body: widget.child,
       bottomNavigationBar: SafeArea(
         top: false,
-        child: Stack(
-          alignment: Alignment.bottomCenter,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             const MiniPlayer(),
             _MobileNavBar(
@@ -113,7 +112,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   /// Layout Desktop (Windows / pantallas >= 768px calcado de index.html mockup)
   Widget _buildDesktopLayout(BuildContext context, int selectedIndex, bool isQueueOpen) {
-    final currentSidebarWidth = _isSidebarCollapsed ? 80.0 : _sidebarWidth;
+    final sidebarWidth = _isSidebarCollapsed ? 80.0 : 256.0;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -124,10 +123,10 @@ class _AppShellState extends ConsumerState<AppShell> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Sidebar Izquierdo (Redimensionable / colapsado)
+                // Sidebar Izquierdo (256px expandido / 80px colapsado)
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  width: currentSidebarWidth,
+                  duration: const Duration(milliseconds: 200),
+                  width: sidebarWidth,
                   decoration: const BoxDecoration(
                     color: AppTheme.background,
                     border: Border(
@@ -196,26 +195,23 @@ class _AppShellState extends ConsumerState<AppShell> {
                           ),
                         const SizedBox(height: 20),
 
-                        // Nav Items Principales con versión rellena al seleccionar
+                        // Nav Items Principales (Lucide Icons)
                         _DesktopSidebarItem(
-                          selectedIcon: Icons.home_rounded,
-                          unselectedIcon: LucideIcons.home,
+                          icon: LucideIcons.home,
                           label: 'Inicio',
                           isSelected: selectedIndex == 0,
                           isCollapsed: _isSidebarCollapsed,
                           onTap: () => _onItemTapped(0),
                         ),
                         _DesktopSidebarItem(
-                          selectedIcon: Icons.search_rounded,
-                          unselectedIcon: LucideIcons.search,
+                          icon: LucideIcons.search,
                           label: 'Buscar',
                           isSelected: selectedIndex == 1,
                           isCollapsed: _isSidebarCollapsed,
                           onTap: () => _onItemTapped(1),
                         ),
                         _DesktopSidebarItem(
-                          selectedIcon: Icons.collections_bookmark_rounded,
-                          unselectedIcon: LucideIcons.library,
+                          icon: LucideIcons.library,
                           label: 'Biblioteca',
                           isSelected: selectedIndex == 2,
                           isCollapsed: _isSidebarCollapsed,
@@ -262,23 +258,6 @@ class _AppShellState extends ConsumerState<AppShell> {
                     ),
                   ),
                 ),
-
-                // Mango de Arrastre para redimensionar el Sidebar en PC
-                if (!_isSidebarCollapsed)
-                  MouseRegion(
-                    cursor: SystemMouseCursors.resizeLeftRight,
-                    child: GestureDetector(
-                      onHorizontalDragUpdate: (details) {
-                        setState(() {
-                          _sidebarWidth = (_sidebarWidth + details.delta.dx).clamp(160.0, 420.0);
-                        });
-                      },
-                      child: Container(
-                        width: 6,
-                        color: Colors.transparent,
-                      ),
-                    ),
-                  ),
 
                 // Área Central
                 Expanded(
@@ -506,7 +485,7 @@ class _WindowCaptionButtonState extends State<_WindowCaptionButton> {
   }
 }
 
-/// Nav bar móvil custom perfectamente centrada con versión rellena al estar seleccionado.
+/// Nav bar móvil custom perfectamente centrada con íconos de Lucide.
 class _MobileNavBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemTapped;
@@ -526,8 +505,7 @@ class _MobileNavBar extends StatelessWidget {
         children: [
           Expanded(
             child: _NavDestination(
-              selectedIcon: Icons.home_rounded,
-              unselectedIcon: LucideIcons.home,
+              icon: LucideIcons.home,
               label: 'Inicio',
               isSelected: selectedIndex == 0,
               onTap: () => onItemTapped(0),
@@ -535,8 +513,7 @@ class _MobileNavBar extends StatelessWidget {
           ),
           Expanded(
             child: _NavDestination(
-              selectedIcon: Icons.search_rounded,
-              unselectedIcon: LucideIcons.search,
+              icon: LucideIcons.search,
               label: 'Buscar',
               isSelected: selectedIndex == 1,
               onTap: () => onItemTapped(1),
@@ -544,8 +521,7 @@ class _MobileNavBar extends StatelessWidget {
           ),
           Expanded(
             child: _NavDestination(
-              selectedIcon: Icons.collections_bookmark_rounded,
-              unselectedIcon: LucideIcons.library,
+              icon: LucideIcons.library,
               label: 'Biblioteca',
               isSelected: selectedIndex == 2,
               onTap: () => onItemTapped(2),
@@ -559,15 +535,13 @@ class _MobileNavBar extends StatelessWidget {
 
 /// Destino individual centrado horizontal y verticalmente.
 class _NavDestination extends StatelessWidget {
-  final IconData selectedIcon;
-  final IconData unselectedIcon;
+  final IconData icon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _NavDestination({
-    required this.selectedIcon,
-    required this.unselectedIcon,
+    required this.icon,
     required this.label,
     required this.isSelected,
     required this.onTap,
@@ -576,7 +550,6 @@ class _NavDestination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isSelected ? AppTheme.primary : AppTheme.secondary;
-    final iconData = isSelected ? selectedIcon : unselectedIcon;
 
     return InkWell(
       onTap: onTap,
@@ -590,7 +563,7 @@ class _NavDestination extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
-              iconData,
+              icon,
               color: color,
               size: 22,
             ),
@@ -613,16 +586,14 @@ class _NavDestination extends StatelessWidget {
 
 /// Item del sidebar desktop.
 class _DesktopSidebarItem extends StatelessWidget {
-  final IconData selectedIcon;
-  final IconData unselectedIcon;
+  final IconData icon;
   final String label;
   final bool isSelected;
   final bool isCollapsed;
   final VoidCallback onTap;
 
   const _DesktopSidebarItem({
-    required this.selectedIcon,
-    required this.unselectedIcon,
+    required this.icon,
     required this.label,
     required this.isSelected,
     required this.isCollapsed,
@@ -632,7 +603,6 @@ class _DesktopSidebarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isSelected ? AppTheme.primary : AppTheme.secondary;
-    final iconData = isSelected ? selectedIcon : unselectedIcon;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -654,7 +624,7 @@ class _DesktopSidebarItem extends StatelessWidget {
             child: Row(
               mainAxisAlignment: isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
               children: [
-                Icon(iconData, color: color, size: 22),
+                Icon(icon, color: color, size: 22),
                 if (!isCollapsed) ...[
                   const SizedBox(width: 14),
                   Expanded(
