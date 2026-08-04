@@ -28,6 +28,7 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   bool _isSidebarCollapsed = false;
+  double _sidebarWidth = 256.0;
 
   int _calculateSelectedIndex() {
     if (widget.location.startsWith('/search')) return 1;
@@ -78,12 +79,15 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final size = MediaQuery.of(context).size;
+    final isDesktop = size.width >= 768;
+    // Detectar celular en landscape: ancho >= 768 pero dimensión corta < 600
+    final isMobileLandscape = isDesktop && size.shortestSide < 600;
     final selectedIndex = _calculateSelectedIndex();
     final isQueueOpen = ref.watch(isQueueOpenProvider);
 
     if (isDesktop) {
-      return _buildDesktopLayout(context, selectedIndex, isQueueOpen);
+      return _buildDesktopLayout(context, selectedIndex, isQueueOpen, isMobileLandscape);
     } else {
       return _buildMobileLayout(context, selectedIndex);
     }
@@ -96,23 +100,28 @@ class _AppShellState extends ConsumerState<AppShell> {
       body: widget.child,
       bottomNavigationBar: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const MiniPlayer(),
-            _MobileNavBar(
-              selectedIndex: selectedIndex,
-              onItemTapped: _onItemTapped,
-            ),
-          ],
+        child: Container(
+          // Fondo blanco: las esquinas redondeadas superiores de la NavBar
+          // revelan este blanco, dando continuidad visual con el MiniPlayer.
+          color: AppTheme.primary,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const MiniPlayer(),
+              _MobileNavBar(
+                selectedIndex: selectedIndex,
+                onItemTapped: _onItemTapped,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   /// Layout Desktop (Windows / pantallas >= 768px calcado de index.html mockup)
-  Widget _buildDesktopLayout(BuildContext context, int selectedIndex, bool isQueueOpen) {
-    final sidebarWidth = _isSidebarCollapsed ? 80.0 : 256.0;
+  Widget _buildDesktopLayout(BuildContext context, int selectedIndex, bool isQueueOpen, bool isMobileLandscape) {
+    final sidebarWidth = _isSidebarCollapsed ? 80.0 : _sidebarWidth;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -198,6 +207,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                         // Nav Items Principales (Lucide Icons)
                         _DesktopSidebarItem(
                           icon: LucideIcons.home,
+                          filledIcon: Icons.home_rounded,
                           label: 'Inicio',
                           isSelected: selectedIndex == 0,
                           isCollapsed: _isSidebarCollapsed,
@@ -205,6 +215,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                         ),
                         _DesktopSidebarItem(
                           icon: LucideIcons.search,
+                          filledIcon: Icons.search_rounded,
                           label: 'Buscar',
                           isSelected: selectedIndex == 1,
                           isCollapsed: _isSidebarCollapsed,
@@ -212,6 +223,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                         ),
                         _DesktopSidebarItem(
                           icon: LucideIcons.library,
+                          filledIcon: Icons.library_books_rounded,
                           label: 'Biblioteca',
                           isSelected: selectedIndex == 2,
                           isCollapsed: _isSidebarCollapsed,
@@ -220,8 +232,8 @@ class _AppShellState extends ConsumerState<AppShell> {
 
                         const SizedBox(height: 20),
 
-                        // Sección de Playlists estilo Spotify
-                        if (!_isSidebarCollapsed)
+                        // Sección de Playlists: ocultar en celular landscape
+                        if (!_isSidebarCollapsed && !isMobileLandscape)
                           const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             child: Text(
@@ -236,28 +248,50 @@ class _AppShellState extends ConsumerState<AppShell> {
                           ),
                         const SizedBox(height: 8),
 
-                        Expanded(
-                          child: ListView.builder(
-                            itemCount: _mockPlaylists.length,
-                            itemBuilder: (ctx, i) {
-                              final pl = _mockPlaylists[i];
-                              final isPlaying = widget.location.endsWith(pl['id']!);
+                        // Lista de playlists: ocultar en celular landscape
+                        if (!isMobileLandscape)
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: _mockPlaylists.length,
+                              itemBuilder: (ctx, i) {
+                                final pl = _mockPlaylists[i];
+                                final isPlaying = widget.location.endsWith(pl['id']!);
 
-                              return _DesktopPlaylistItem(
-                                title: pl['title']!,
-                                subtitle: pl['subtitle']!,
-                                coverUrl: pl['cover']!,
-                                isSelected: isPlaying,
-                                isCollapsed: _isSidebarCollapsed,
-                                onTap: () => context.push('/playlist/${pl['id']}'),
-                              );
-                            },
-                          ),
-                        ),
+                                return _DesktopPlaylistItem(
+                                  title: pl['title']!,
+                                  subtitle: pl['subtitle']!,
+                                  coverUrl: pl['cover']!,
+                                  isSelected: isPlaying,
+                                  isCollapsed: _isSidebarCollapsed,
+                                  onTap: () => context.push('/playlist/${pl['id']}'),
+                                );
+                              },
+                            ),
+                          )
+                        else
+                          const Spacer(),
                       ],
                     ),
                   ),
                 ),
+
+                // Drag handle para redimensionar el sidebar (solo cuando expandido)
+                if (!_isSidebarCollapsed)
+                  MouseRegion(
+                    cursor: SystemMouseCursors.resizeLeftRight,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onHorizontalDragUpdate: (details) {
+                        setState(() {
+                          _sidebarWidth = (_sidebarWidth + details.delta.dx).clamp(180.0, 400.0);
+                        });
+                      },
+                      child: Container(
+                        width: 5,
+                        color: Colors.transparent,
+                      ),
+                    ),
+                  ),
 
                 // Área Central
                 Expanded(
@@ -506,6 +540,7 @@ class _MobileNavBar extends StatelessWidget {
           Expanded(
             child: _NavDestination(
               icon: LucideIcons.home,
+              filledIcon: Icons.home_rounded,
               label: 'Inicio',
               isSelected: selectedIndex == 0,
               onTap: () => onItemTapped(0),
@@ -514,6 +549,7 @@ class _MobileNavBar extends StatelessWidget {
           Expanded(
             child: _NavDestination(
               icon: LucideIcons.search,
+              filledIcon: Icons.search_rounded,
               label: 'Buscar',
               isSelected: selectedIndex == 1,
               onTap: () => onItemTapped(1),
@@ -522,6 +558,7 @@ class _MobileNavBar extends StatelessWidget {
           Expanded(
             child: _NavDestination(
               icon: LucideIcons.library,
+              filledIcon: Icons.library_books_rounded,
               label: 'Biblioteca',
               isSelected: selectedIndex == 2,
               onTap: () => onItemTapped(2),
@@ -536,12 +573,14 @@ class _MobileNavBar extends StatelessWidget {
 /// Destino individual centrado horizontal y verticalmente.
 class _NavDestination extends StatelessWidget {
   final IconData icon;
+  final IconData filledIcon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _NavDestination({
     required this.icon,
+    required this.filledIcon,
     required this.label,
     required this.isSelected,
     required this.onTap,
@@ -563,7 +602,7 @@ class _NavDestination extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
-              icon,
+              isSelected ? filledIcon : icon,
               color: color,
               size: 22,
             ),
@@ -587,6 +626,7 @@ class _NavDestination extends StatelessWidget {
 /// Item del sidebar desktop.
 class _DesktopSidebarItem extends StatelessWidget {
   final IconData icon;
+  final IconData filledIcon;
   final String label;
   final bool isSelected;
   final bool isCollapsed;
@@ -594,6 +634,7 @@ class _DesktopSidebarItem extends StatelessWidget {
 
   const _DesktopSidebarItem({
     required this.icon,
+    required this.filledIcon,
     required this.label,
     required this.isSelected,
     required this.isCollapsed,
@@ -624,7 +665,7 @@ class _DesktopSidebarItem extends StatelessWidget {
             child: Row(
               mainAxisAlignment: isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
               children: [
-                Icon(icon, color: color, size: 22),
+                Icon(isSelected ? filledIcon : icon, color: color, size: 22),
                 if (!isCollapsed) ...[
                   const SizedBox(width: 14),
                   Expanded(

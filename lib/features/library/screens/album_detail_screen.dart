@@ -79,16 +79,16 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
         children: [
           Positioned.fill(
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFF38234C),
-                    Color(0xFF1E283C),
+                    Colors.white.withValues(alpha: 0.10),
+                    Colors.white.withValues(alpha: 0.03),
                     AppTheme.background,
                   ],
-                  stops: [0.0, 0.35, 0.75],
+                  stops: const [0.0, 0.30, 0.65],
                 ),
               ),
             ),

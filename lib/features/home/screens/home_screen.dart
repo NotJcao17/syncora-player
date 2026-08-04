@@ -163,7 +163,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             'title': 'Tus me gusta',
                             'cover': '',
                             'isLiked': true,
-                            'route': '/library',
+                            'route': '/playlist/liked',
                           },
                           {
                             'title': 'Synthwave Mix',
