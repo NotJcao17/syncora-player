@@ -8,9 +8,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/skeleton_box.dart';
-import '../../../core/widgets/track_tile.dart';
-import '../../player/player_models.dart';
-import '../../player/player_providers.dart';
 
 /// Pantalla Principal (HomeScreen calcada del mockup index.html / image4.png).
 class HomeScreen extends ConsumerStatefulWidget {
@@ -65,33 +62,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     },
   ];
 
-  final List<SyncoraTrack> _mockRecentlyPlayed = [
-    SyncoraTrack(
-      id: 'recent_1',
-      title: 'Los Angeles',
-      artist: 'The Midnight',
-      album: 'Los Angeles',
-      duration: const Duration(seconds: 292),
-      youtubeVideoId: 'dQw4w9WgXcQ',
-      artUri: Uri.parse('https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop'),
-    ),
-    SyncoraTrack(
-      id: 'recent_2',
-      title: 'Sunset Mix',
-      artist: 'Daily Mix 1',
-      album: 'Synthwave',
-      duration: const Duration(seconds: 215),
-      youtubeVideoId: 'dvgZkm1xWPE',
-      artUri: Uri.parse('https://images.unsplash.com/photo-1493225457124-a1a2a5f529a8?q=80&w=300&auto=format&fit=crop'),
-    ),
-  ];
-
-  void _playMockTrack(SyncoraTrack track) {
-    final controller = ref.read(syncoraPlayerControllerProvider.notifier);
-    controller.setQueue([track], startIndex: 0);
-    controller.play();
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_hasError) {
@@ -115,7 +85,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          // Header Top Bar (Saludo "Buenas noches" / Notifications + Settings icon)
+          // Header Top Bar (Avatar en móvil + Saludo "Buenas noches" + Iconos con Tooltip)
           SliverPadding(
             padding: EdgeInsets.symmetric(
               horizontal: isDesktop ? 32 : 20,
@@ -125,26 +95,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    _getGreeting(),
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primary,
+                  Row(
+                    children: [
+                      if (!isDesktop) ...[
+                        GestureDetector(
+                          onTap: () => context.push('/settings'),
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.all(Radius.circular(999)),
+                            child: CachedNetworkImage(
+                              imageUrl: 'https://i.pravatar.cc/150?img=11',
+                              width: 38,
+                              height: 38,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
+                        const SizedBox(width: 12),
+                      ],
+                      Text(
+                        _getGreeting(),
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.primary,
+                              letterSpacing: -0.5,
+                            ),
+                      ),
+                    ],
                   ),
                   Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(LucideIcons.bell, color: AppTheme.primary, size: 22),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Notificaciones próximamente')),
-                          );
-                        },
+                      Tooltip(
+                        message: 'Notificaciones',
+                        child: IconButton(
+                          icon: const Icon(LucideIcons.bell, color: AppTheme.primary, size: 22),
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Notificaciones próximamente')),
+                            );
+                          },
+                        ),
                       ),
-                      IconButton(
-                        icon: const Icon(LucideIcons.settings, color: AppTheme.primary, size: 22),
-                        onPressed: () => context.push('/settings'),
+                      Tooltip(
+                        message: 'Configuración',
+                        child: IconButton(
+                          icon: const Icon(LucideIcons.settings, color: AppTheme.primary, size: 22),
+                          onPressed: () => context.push('/settings'),
+                        ),
                       ),
                     ],
                   ),
@@ -153,7 +149,120 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          // Sección 1: Bento Grid (Destacados: 1 tarjeta grande release + 2 normales)
+          // Sección 1: Reproducidos recientemente (Cuadrícula 2x4 tipo Spotify justo arriba)
+          SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+            sliver: SliverToBoxAdapter(
+              child: _isLoading
+                  ? const SkeletonBox(height: 120, borderRadius: 12)
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final crossCount = constraints.maxWidth > 700 ? 4 : 2;
+                        final items = [
+                          {
+                            'title': 'Tus me gusta',
+                            'cover': '',
+                            'isLiked': true,
+                            'route': '/library',
+                          },
+                          {
+                            'title': 'Synthwave Mix',
+                            'cover': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=200&auto=format&fit=crop',
+                            'route': '/playlist/p1',
+                          },
+                          {
+                            'title': 'Chill Vibes',
+                            'cover': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=200&auto=format&fit=crop',
+                            'route': '/playlist/p2',
+                          },
+                          {
+                            'title': 'Focus 2026',
+                            'cover': 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=200&auto=format&fit=crop',
+                            'route': '/playlist/p3',
+                          },
+                          {
+                            'title': 'Los Angeles',
+                            'cover': 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop',
+                            'route': '/album/album_1',
+                          },
+                          {
+                            'title': 'Sunset Mix',
+                            'cover': 'https://images.unsplash.com/photo-1493225457124-a1a2a5f529a8?q=80&w=200&auto=format&fit=crop',
+                            'route': '/playlist/p1',
+                          },
+                        ];
+
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossCount,
+                            mainAxisExtent: 56,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                          itemCount: items.length,
+                          itemBuilder: (ctx, i) {
+                            final item = items[i];
+                            final isLiked = item['isLiked'] == true;
+
+                            return InkWell(
+                              onTap: () => context.push(item['route'] as String),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: AppTheme.surface,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                                      child: SizedBox(
+                                        width: 56,
+                                        height: 56,
+                                        child: isLiked
+                                            ? Container(
+                                                decoration: const BoxDecoration(
+                                                  gradient: AppTheme.gradientLiked,
+                                                ),
+                                                child: const Icon(LucideIcons.heart, color: Colors.white, size: 24, fill: 1.0),
+                                              )
+                                            : CachedNetworkImage(
+                                                imageUrl: item['cover'] as String,
+                                                fit: BoxFit.cover,
+                                                errorWidget: (_, _, _) => Container(color: AppTheme.surfaceHover),
+                                              ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        item['title'] as String,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: AppTheme.primary,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 28)),
+
+          // Sección 2: Bento Grid (Destacados)
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
             sliver: SliverToBoxAdapter(
@@ -173,7 +282,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Tarjeta Grande Release (ocupa 2 cols si wide)
+                                // Tarjeta Grande Release
                                 Expanded(
                                   flex: wide ? 2 : 1,
                                   child: GestureDetector(
@@ -195,7 +304,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                               fit: BoxFit.cover,
                                               errorWidget: (_, _, _) => Container(color: AppTheme.surfaceHover),
                                             ),
-                                            // Gradiente inferior para legibilidad
                                             Positioned.fill(
                                               child: DecoratedBox(
                                                 decoration: BoxDecoration(
@@ -211,7 +319,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                 ),
                                               ),
                                             ),
-                                            // Textos y badge alineados abajo a la izquierda
                                             Positioned(
                                               left: 16,
                                               right: 16,
@@ -243,7 +350,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                     style: TextStyle(
                                                       color: Colors.white,
                                                       fontSize: 22,
-                                                      fontWeight: FontWeight.w800,
+                                                      fontWeight: FontWeight.w900,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 2),
@@ -295,7 +402,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 32)),
 
-          // Sección 2: Made for you (Hecho para ti)
+          // Sección 3: Made for you (Hecho para ti - Tarjetas limpia con texto abajo)
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
             sliver: SliverToBoxAdapter(
@@ -305,20 +412,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Text(
                     'Hecho para ti',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.primary,
                         ),
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
-                    height: 220,
+                    height: isDesktop ? 240 : 200,
                     child: _isLoading
                         ? ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: 3,
                             separatorBuilder: (ctx, index) => const SizedBox(width: 16),
                             itemBuilder: (ctx, index) => SkeletonBox(
-                              width: isDesktop ? 192 : 144,
-                              height: 220,
+                              width: isDesktop ? 180 : 140,
+                              height: 200,
                               borderRadius: 16,
                             ),
                           )
@@ -329,7 +437,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             itemBuilder: (ctx, i) {
                               final item = _mockMadeForYou[i];
                               return SizedBox(
-                                width: isDesktop ? 192 : 144,
+                                width: isDesktop ? 180 : 140,
                                 child: PlaylistCard(
                                   title: item['title']!,
                                   subtitle: item['subtitle']!,
@@ -341,47 +449,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                   ),
                 ],
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 32)),
-
-          // Sección 3: Reproducidos recientemente
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Reproducidos recientemente',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            ),
-          ),
-
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (ctx, i) {
-                  final track = _mockRecentlyPlayed[i];
-                  return TrackTile(
-                    track: track,
-                    index: i,
-                    onTap: () => _playMockTrack(track),
-                    onAddToQueue: () {
-                      ref.read(syncoraPlayerControllerProvider.notifier).addToQueue(track);
-                    },
-                  );
-                },
-                childCount: _mockRecentlyPlayed.length,
               ),
             ),
           ),

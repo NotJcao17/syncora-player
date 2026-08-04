@@ -68,26 +68,52 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Tu Biblioteca',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primary,
+                Row(
+                  children: [
+                    if (!isDesktop) ...[
+                      GestureDetector(
+                        onTap: () => context.push('/settings'),
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.all(Radius.circular(999)),
+                          child: CachedNetworkImage(
+                            imageUrl: 'https://i.pravatar.cc/150?img=11',
+                            width: 38,
+                            height: 38,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
+                      const SizedBox(width: 12),
+                    ],
+                    Text(
+                      'Tu Biblioteca',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: AppTheme.primary,
+                            letterSpacing: -0.5,
+                          ),
+                    ),
+                  ],
                 ),
                 Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(LucideIcons.search, color: AppTheme.primary, size: 20),
-                      onPressed: () => context.push('/search'),
+                    Tooltip(
+                      message: 'Buscar',
+                      child: IconButton(
+                        icon: const Icon(LucideIcons.search, color: AppTheme.primary, size: 20),
+                        onPressed: () => context.push('/search'),
+                      ),
                     ),
-                    IconButton(
-                      icon: const Icon(LucideIcons.plus, color: AppTheme.primary, size: 24),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Crear nueva playlist')),
-                        );
-                      },
+                    Tooltip(
+                      message: 'Crear playlist',
+                      child: IconButton(
+                        icon: const Icon(LucideIcons.plus, color: AppTheme.primary, size: 24),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Crear nueva playlist')),
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),

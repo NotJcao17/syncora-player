@@ -28,8 +28,8 @@ class MiniPlayer extends ConsumerWidget {
     if (!isVisible) return const SizedBox.shrink();
 
     return Material(
-      color: AppTheme.surface, // #1E2633 — Sólido sin glassmorphism
-      elevation: 12,
+      color: isDesktop ? AppTheme.surface : Colors.transparent,
+      elevation: isDesktop ? 12 : 0,
       child: isDesktop
           ? _buildDesktopBar(context, ref, currentTrack, isPlaying, controller, state)
           : _buildMobileBar(context, ref, currentTrack, isPlaying, controller),
@@ -48,7 +48,7 @@ class MiniPlayer extends ConsumerWidget {
     return GestureDetector(
       onTap: () => context.push('/player'),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         decoration: const BoxDecoration(
           color: AppTheme.primary, // bg-primary
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),

@@ -37,87 +37,81 @@ class _PlaylistCardState extends State<PlaylistCard> {
   Widget build(BuildContext context) {
     final isLarge = widget.size == PlaylistCardSize.large;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: _isHovered ? AppTheme.surfaceHover : AppTheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: _isHovered ? AppTheme.surfaceActive : Colors.transparent,
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Contenedor de Portada con Play button flotante
-              Expanded(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: _buildCoverImage(),
-                    ),
-                    // Botón Play Flotante en hover
-                    Positioned(
-                      right: 8,
-                      bottom: 8,
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 150),
-                        opacity: _isHovered ? 1.0 : 0.0,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppTheme.primary,
-                            boxShadow: AppTheme.glowShadow,
-                          ),
-                          child: IconButton(
-                            icon: const Icon(
-                              LucideIcons.play,
-                              color: AppTheme.background,
-                              size: 18,
-                            ),
-                            onPressed: widget.onPlayTap ?? widget.onTap,
-                            padding: EdgeInsets.zero,
-                          ),
+    return InkWell(
+      onTap: widget.onTap,
+      onHover: (hovered) {
+        if (mounted && _isHovered != hovered) {
+          setState(() => _isHovered = hovered);
+        }
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Portada redondeada 16px con Play button flotante
+          AspectRatio(
+            aspectRatio: 1.0,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: _buildCoverImage(),
+                  ),
+                ),
+                // Botón Play Flotante en hover
+                Positioned(
+                  right: 8,
+                  bottom: 8,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 150),
+                    opacity: _isHovered ? 1.0 : 0.0,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.primary,
+                        boxShadow: AppTheme.glowShadow,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          LucideIcons.play,
+                          color: AppTheme.background,
+                          size: 18,
                         ),
+                        onPressed: widget.onPlayTap ?? widget.onTap,
+                        padding: EdgeInsets.zero,
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                widget.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: AppTheme.primary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: isLarge ? 14 : 13,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                widget.subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppTheme.secondary,
-                  fontSize: 12,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            widget.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: AppTheme.primary,
+              fontWeight: FontWeight.w800,
+              fontSize: isLarge ? 14 : 13,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            widget.subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.secondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }

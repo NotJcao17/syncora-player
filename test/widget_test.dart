@@ -22,6 +22,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 800));
 
     expect(find.text('Hecho para ti'), findsOneWidget);
-    expect(find.text('Reproducidos recientemente'), findsOneWidget);
+    expect(find.text('Synthwave Mix'), findsWidgets);
   });
 }

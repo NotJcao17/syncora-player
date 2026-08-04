@@ -194,37 +194,37 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Layout 2 Columnas (Mejor resultado + Canciones)
-                        if (isDesktop)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Columna Izquierda: Mejor resultado
-                              Expanded(
-                                flex: 4,
-                                child: _buildTopResultCard(),
-                              ),
-                              const SizedBox(width: 24),
-                              // Columna Derecha: Canciones
-                              Expanded(
-                                flex: 6,
-                                child: _buildSongsListSection(),
-                              ),
-                            ],
-                          )
-                        else ...[
-                          _buildTopResultCard(),
-                          const SizedBox(height: 24),
-                          _buildSongsListSection(),
+                        // Solo mostrar resultados cuando hay un texto ingresado
+                        if (query.isNotEmpty) ...[
+                          if (isDesktop)
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 4,
+                                  child: _buildTopResultCard(),
+                                ),
+                                const SizedBox(width: 24),
+                                Expanded(
+                                  flex: 6,
+                                  child: _buildSongsListSection(),
+                                ),
+                              ],
+                            )
+                          else ...[
+                            _buildTopResultCard(),
+                            const SizedBox(height: 24),
+                            _buildSongsListSection(),
+                          ],
+                          const SizedBox(height: 32),
                         ],
 
-                        const SizedBox(height: 32),
-
-                        // Sección "Explorar todo"
+                        // Sección "Explorar todo" (Siempre visible al entrar a la pantalla)
                         Text(
                           'Explorar todo',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.primary,
                               ),
                         ),
                         const SizedBox(height: 16),
@@ -251,7 +251,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                 cat['name'] as String,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w800,
                                   fontSize: 16,
                                 ),
                               ),
