@@ -50,7 +50,7 @@ class TrackTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.only(left: 16, right: 4, top: 8, bottom: 8),
           child: Row(
             children: [
               // Número o Indicador de reproducción

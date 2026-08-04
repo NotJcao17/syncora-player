@@ -48,10 +48,10 @@ class MiniPlayer extends ConsumerWidget {
     return GestureDetector(
       onTap: () => context.push('/player'),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
         decoration: const BoxDecoration(
           color: AppTheme.primary, // bg-primary
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           boxShadow: AppTheme.miniPlayerShadow,
         ),
         child: Row(

@@ -117,7 +117,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.w900,
                               color: AppTheme.primary,
-                              letterSpacing: -0.5,
+                              letterSpacing: -0.8,
                             ),
                       ),
                     ],
@@ -209,6 +209,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             return InkWell(
                               onTap: () => context.push(item['route'] as String),
                               borderRadius: BorderRadius.circular(8),
+                              splashColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              hoverColor: AppTheme.surfaceHover.withValues(alpha: 0.5),
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: AppTheme.surface,
@@ -363,32 +366,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ),
                                   ),
                                 ),
-                                if (wide) ...[
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: SizedBox(
-                                      height: 240,
-                                      child: PlaylistCard(
-                                        title: 'Sunset Mix',
-                                        subtitle: 'Daily Mix 1',
-                                        coverUrl: 'https://images.unsplash.com/photo-1493225457124-a1a2a5f529a8?q=80&w=300&auto=format&fit=crop',
-                                        onTap: () => context.push('/playlist/p1'),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: SizedBox(
-                                      height: 240,
-                                      child: PlaylistCard(
-                                        title: 'Discover',
-                                        subtitle: 'Weekly',
-                                        coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=crop',
-                                        onTap: () => context.push('/playlist/p2'),
-                                      ),
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
                           ],

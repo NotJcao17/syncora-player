@@ -91,7 +91,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
                         color: AppTheme.primary,
-                        letterSpacing: -0.5,
+                        letterSpacing: -0.8,
                       ),
                     ),
                   ],

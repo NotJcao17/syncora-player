@@ -90,7 +90,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       backgroundColor: AppTheme.background,
       body: Stack(
         children: [
-          // Fondo con resplandor superior sutil
+          // Fondo con resplandor ambiental brillante en la parte superior
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
@@ -98,10 +98,11 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFF232B3B),
+                    Color(0xFF38234C),
+                    Color(0xFF1E283C),
                     AppTheme.background,
                   ],
-                  stops: [0.0, 0.4],
+                  stops: [0.0, 0.35, 0.75],
                 ),
               ),
             ),
@@ -315,7 +316,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 24),
+                  SizedBox(height: isDesktop ? 24 : 8),
 
                   // Cabecera de Tabla en Desktop (Imagen 2)
                   if (isDesktop) ...[
@@ -342,9 +343,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             child: Text('Fecha', style: TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.bold)),
                           ),
                           SizedBox(
-                            width: 60,
+                            width: 80,
                             child: Align(
-                              alignment: Alignment.centerRight,
+                              alignment: Alignment.centerLeft,
                               child: Icon(LucideIcons.clock, color: AppTheme.muted, size: 14),
                             ),
                           ),
@@ -480,7 +481,12 @@ class _PlaylistTrackRowState extends State<_PlaylistTrackRow> {
       },
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: EdgeInsets.only(
+          left: 12,
+          right: widget.isDesktop ? 12 : 2,
+          top: 8,
+          bottom: 8,
+        ),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(8),
@@ -569,33 +575,46 @@ class _PlaylistTrackRowState extends State<_PlaylistTrackRow> {
             ],
 
             const SizedBox(width: 12),
-            // Duración y Menú de 3 Puntos (3 puntos verticales en celular / 3 puntos horizontales en PC)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  widget.formatDuration(track.duration ?? Duration.zero),
-                  style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+            // Duración y Menú de 3 Puntos
+            if (widget.isDesktop)
+              SizedBox(
+                width: 80,
+                child: Row(
+                  children: [
+                    Text(
+                      widget.formatDuration(track.duration ?? Duration.zero),
+                      style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                    ),
+                    const Spacer(),
+                    if (_isHovered || isPlaying)
+                      IconButton(
+                        icon: const Icon(LucideIcons.ellipsis, color: AppTheme.secondary, size: 18),
+                        onPressed: () {},
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      )
+                    else
+                      const SizedBox(width: 28),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                if (!widget.isDesktop)
+              )
+            else
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.formatDuration(track.duration ?? Duration.zero),
+                    style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                  ),
+                  const SizedBox(width: 2),
                   IconButton(
                     icon: const Icon(LucideIcons.ellipsisVertical, color: AppTheme.secondary, size: 18),
                     onPressed: () {},
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                  )
-                else if (_isHovered || isPlaying)
-                  IconButton(
-                    icon: const Icon(LucideIcons.ellipsis, color: AppTheme.secondary, size: 18),
-                    onPressed: () {},
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                  )
-                else
-                  const SizedBox(width: 28),
-              ],
-            ),
+                    constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                  ),
+                ],
+              ),
           ],
         ),
       ),

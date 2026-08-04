@@ -84,10 +84,11 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFF232B3B),
+                    Color(0xFF38234C),
+                    Color(0xFF1E283C),
                     AppTheme.background,
                   ],
-                  stops: [0.0, 0.4],
+                  stops: [0.0, 0.35, 0.75],
                 ),
               ),
             ),

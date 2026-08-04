@@ -7,6 +7,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:smtc_windows/smtc_windows.dart';
+import 'package:window_manager/window_manager.dart';
 import 'app.dart';
 
 void main() async {
@@ -44,10 +45,25 @@ void main() async {
     publishableKey: validKey,
   );
 
-  // MediaKit y SMTCWindows solo se inicializan en Windows
+  // MediaKit, SMTCWindows y WindowManager solo se inicializan en Windows
   if (!kIsWeb && Platform.isWindows) {
     MediaKit.ensureInitialized();
     await SMTCWindows.initialize();
+    await windowManager.ensureInitialized();
+
+    const windowOptions = WindowOptions(
+      size: Size(1280, 720),
+      minimumSize: Size(900, 600),
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.hidden,
+    );
+
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
   }
 
   runApp(
