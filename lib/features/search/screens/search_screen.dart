@@ -109,10 +109,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               children: [
                 Text(
                   'Buscar',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primary,
-                      ),
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.primary,
+                    letterSpacing: -0.5,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(

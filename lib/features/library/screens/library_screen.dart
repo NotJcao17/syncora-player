@@ -88,11 +88,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                     Text(
                       'Tu Biblioteca',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 28,
                         fontWeight: FontWeight.w900,
                         color: AppTheme.primary,
                         letterSpacing: -0.5,
-                        shadows: AppTheme.textGlow,
                       ),
                     ),
                   ],

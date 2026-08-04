@@ -49,18 +49,27 @@ class _AppShellState extends ConsumerState<AppShell> {
   final List<Map<String, String>> _mockPlaylists = const [
     {
       'id': 'p1',
-      'title': 'Synthwave Mix',
+      'title': '2026',
+      'subtitle': 'Playlist • Syncora',
       'cover': 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop',
     },
     {
       'id': 'p2',
-      'title': 'Late Night Drive',
+      'title': 'ACÚSTICAS',
+      'subtitle': 'Playlist • Syncora',
       'cover': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=200&auto=format&fit=crop',
     },
     {
       'id': 'p3',
-      'title': 'Focus 2026',
+      'title': 'CHILL',
+      'subtitle': 'Playlist • Syncora',
       'cover': 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=200&auto=format&fit=crop',
+    },
+    {
+      'id': 'p4',
+      'title': 'COVERS',
+      'subtitle': 'Playlist • Syncora',
+      'cover': 'https://images.unsplash.com/photo-1493225457124-a1a2a5f529a8?q=80&w=200&auto=format&fit=crop',
     },
   ];
 
@@ -129,107 +138,92 @@ class _AppShellState extends ConsumerState<AppShell> {
                         ? CrossAxisAlignment.center
                         : CrossAxisAlignment.start,
                     children: [
-                      // Header del Sidebar: Logo 40x40 + Título con brillo + Toggle Colapsar
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                        child: Row(
-                          mainAxisAlignment: _isSidebarCollapsed
-                              ? MainAxisAlignment.center
-                              : MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Container(
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      boxShadow: AppTheme.glowShadow,
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.asset(
+                      // Header del Sidebar
+                      if (_isSidebarCollapsed)
+                        Center(
+                          child: IconButton(
+                            icon: const Icon(LucideIcons.panelLeftOpen, color: AppTheme.secondary, size: 22),
+                            onPressed: () => setState(() => _isSidebarCollapsed = false),
+                            tooltip: 'Expandir panel',
+                          ),
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => context.go('/'),
+                                  child: Row(
+                                    children: [
+                                      Image.asset(
                                         'assets/icon/icon.png',
-                                        width: 36,
-                                        height: 36,
-                                        errorBuilder: (_, _, _) => Container(
-                                          width: 36,
-                                          height: 36,
-                                          decoration: const BoxDecoration(
-                                            shape: BoxShape.circle,
+                                        width: 32,
+                                        height: 32,
+                                        errorBuilder: (_, _, _) => const Icon(LucideIcons.music, color: AppTheme.primary, size: 24),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Flexible(
+                                        child: Text(
+                                          'Syncora',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w900,
                                             color: AppTheme.primary,
+                                            letterSpacing: -0.5,
                                           ),
-                                          child: const Icon(LucideIcons.music, color: AppTheme.background, size: 18),
                                         ),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                  if (!_isSidebarCollapsed) ...[
-                                    const SizedBox(width: 8),
-                                    const Expanded(
-                                      child: Text(
-                                        'Syncora',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w900,
-                                          color: AppTheme.primary,
-                                          letterSpacing: -0.5,
-                                          shadows: AppTheme.textGlow,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
+                                ),
                               ),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                _isSidebarCollapsed ? LucideIcons.panelLeftOpen : LucideIcons.panelLeftClose,
-                                color: AppTheme.secondary,
-                                size: 18,
+                              IconButton(
+                                icon: const Icon(LucideIcons.panelLeftClose, color: AppTheme.secondary, size: 18),
+                                onPressed: () => setState(() => _isSidebarCollapsed = true),
+                                tooltip: 'Minimizar panel',
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _isSidebarCollapsed = !_isSidebarCollapsed;
-                                });
-                              },
-                              tooltip: _isSidebarCollapsed ? 'Expandir panel' : 'Minimizar panel',
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
 
-                      // Nav Items Principales
+                      // Nav Items Principales (Íconos rellenos como Imagen 3)
                       _DesktopSidebarItem(
-                        icon: LucideIcons.house,
+                        selectedIcon: Icons.home_rounded,
+                        unselectedIcon: Icons.home_outlined,
                         label: 'Inicio',
                         isSelected: selectedIndex == 0,
                         isCollapsed: _isSidebarCollapsed,
                         onTap: () => _onItemTapped(0),
                       ),
                       _DesktopSidebarItem(
-                        icon: LucideIcons.search,
+                        selectedIcon: Icons.search_rounded,
+                        unselectedIcon: Icons.search_rounded,
                         label: 'Buscar',
                         isSelected: selectedIndex == 1,
                         isCollapsed: _isSidebarCollapsed,
                         onTap: () => _onItemTapped(1),
                       ),
                       _DesktopSidebarItem(
-                        icon: LucideIcons.library,
+                        selectedIcon: Icons.collections_bookmark_rounded,
+                        unselectedIcon: Icons.collections_bookmark_outlined,
                         label: 'Biblioteca',
                         isSelected: selectedIndex == 2,
                         isCollapsed: _isSidebarCollapsed,
                         onTap: () => _onItemTapped(2),
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
 
-                      // Sección de Playlists con Miniaturas
+                      // Sección de Playlists estilo Spotify (Imagen 1)
                       if (!_isSidebarCollapsed)
                         const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           child: Text(
                             'PLAYLISTS',
                             style: TextStyle(
@@ -240,17 +234,20 @@ class _AppShellState extends ConsumerState<AppShell> {
                             ),
                           ),
                         ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
 
                       Expanded(
                         child: ListView.builder(
                           itemCount: _mockPlaylists.length,
                           itemBuilder: (ctx, i) {
                             final pl = _mockPlaylists[i];
+                            final isPlaying = widget.location.endsWith(pl['id']!);
+
                             return _DesktopPlaylistItem(
                               title: pl['title']!,
+                              subtitle: pl['subtitle']!,
                               coverUrl: pl['cover']!,
-                              isSelected: widget.location.endsWith(pl['id']!),
+                              isSelected: isPlaying,
                               isCollapsed: _isSidebarCollapsed,
                               onTap: () => context.push('/playlist/${pl['id']}'),
                             );
@@ -381,7 +378,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 }
 
-/// Nav bar móvil custom centrada.
+/// Nav bar móvil custom perfectamente centrada con íconos rellenos (Imagen 3).
 class _MobileNavBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemTapped;
@@ -396,27 +393,35 @@ class _MobileNavBar extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         boxShadow: AppTheme.bottomNavShadow,
       ),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _NavDestination(
-            icon: LucideIcons.house,
-            label: 'Inicio',
-            isSelected: selectedIndex == 0,
-            onTap: () => onItemTapped(0),
+          Expanded(
+            child: _NavDestination(
+              selectedIcon: Icons.home_rounded,
+              unselectedIcon: Icons.home_outlined,
+              label: 'Inicio',
+              isSelected: selectedIndex == 0,
+              onTap: () => onItemTapped(0),
+            ),
           ),
-          _NavDestination(
-            icon: LucideIcons.search,
-            label: 'Buscar',
-            isSelected: selectedIndex == 1,
-            onTap: () => onItemTapped(1),
+          Expanded(
+            child: _NavDestination(
+              selectedIcon: Icons.search_rounded,
+              unselectedIcon: Icons.search_rounded,
+              label: 'Buscar',
+              isSelected: selectedIndex == 1,
+              onTap: () => onItemTapped(1),
+            ),
           ),
-          _NavDestination(
-            icon: LucideIcons.library,
-            label: 'Biblioteca',
-            isSelected: selectedIndex == 2,
-            onTap: () => onItemTapped(2),
+          Expanded(
+            child: _NavDestination(
+              selectedIcon: Icons.collections_bookmark_rounded,
+              unselectedIcon: Icons.collections_bookmark_outlined,
+              label: 'Biblioteca',
+              isSelected: selectedIndex == 2,
+              onTap: () => onItemTapped(2),
+            ),
           ),
         ],
       ),
@@ -424,15 +429,17 @@ class _MobileNavBar extends StatelessWidget {
   }
 }
 
-/// Destino individual de la nav bar móvil centrado.
+/// Destino individual centrado horizontal y verticalmente.
 class _NavDestination extends StatelessWidget {
-  final IconData icon;
+  final IconData selectedIcon;
+  final IconData unselectedIcon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _NavDestination({
-    required this.icon,
+    required this.selectedIcon,
+    required this.unselectedIcon,
     required this.label,
     required this.isSelected,
     required this.onTap,
@@ -441,21 +448,23 @@ class _NavDestination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isSelected ? AppTheme.primary : AppTheme.secondary;
+    final iconData = isSelected ? selectedIcon : unselectedIcon;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
-              icon,
+              iconData,
               color: color,
               size: 24,
-              fill: isSelected ? 1.0 : 0.0,
             ),
             const SizedBox(height: 4),
             Text(
@@ -476,14 +485,16 @@ class _NavDestination extends StatelessWidget {
 
 /// Item del sidebar desktop.
 class _DesktopSidebarItem extends StatelessWidget {
-  final IconData icon;
+  final IconData selectedIcon;
+  final IconData unselectedIcon;
   final String label;
   final bool isSelected;
   final bool isCollapsed;
   final VoidCallback onTap;
 
   const _DesktopSidebarItem({
-    required this.icon,
+    required this.selectedIcon,
+    required this.unselectedIcon,
     required this.label,
     required this.isSelected,
     required this.isCollapsed,
@@ -493,8 +504,10 @@ class _DesktopSidebarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isSelected ? AppTheme.primary : AppTheme.secondary;
+    final iconData = isSelected ? selectedIcon : unselectedIcon;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Tooltip(
         message: label,
         waitDuration: const Duration(milliseconds: 200),
@@ -513,7 +526,7 @@ class _DesktopSidebarItem extends StatelessWidget {
             child: Row(
               mainAxisAlignment: isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
               children: [
-                Icon(icon, color: color, size: 22, fill: isSelected ? 1.0 : 0.0),
+                Icon(iconData, color: color, size: 22),
                 if (!isCollapsed) ...[
                   const SizedBox(width: 14),
                   Expanded(
@@ -538,9 +551,10 @@ class _DesktopSidebarItem extends StatelessWidget {
   }
 }
 
-/// Item de playlist con miniatura en el sidebar desktop.
+/// Item de playlist con miniatura estilo Spotify (Imagen 1: 48x48 miniatura, título, subtitle y parlante si reproduce).
 class _DesktopPlaylistItem extends StatelessWidget {
   final String title;
+  final String subtitle;
   final String coverUrl;
   final bool isSelected;
   final bool isCollapsed;
@@ -548,6 +562,7 @@ class _DesktopPlaylistItem extends StatelessWidget {
 
   const _DesktopPlaylistItem({
     required this.title,
+    required this.subtitle,
     required this.coverUrl,
     required this.isSelected,
     required this.isCollapsed,
@@ -561,35 +576,53 @@ class _DesktopPlaylistItem extends StatelessWidget {
       waitDuration: const Duration(milliseconds: 200),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
           child: Row(
             mainAxisAlignment: isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(8),
                 child: CachedNetworkImage(
                   imageUrl: coverUrl,
-                  width: 32,
-                  height: 32,
+                  width: 48,
+                  height: 48,
                   fit: BoxFit.cover,
                 ),
               ),
               if (!isCollapsed) ...[
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: isSelected ? AppTheme.primary : AppTheme.secondary,
-                      fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isSelected ? const Color(0xFF22C55E) : AppTheme.primary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.secondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                if (isSelected)
+                  const Icon(LucideIcons.volume2, color: Color(0xFF22C55E), size: 18),
               ],
             ],
           ),

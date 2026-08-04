@@ -118,7 +118,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               fontWeight: FontWeight.w900,
                               color: AppTheme.primary,
                               letterSpacing: -0.5,
-                              shadows: AppTheme.textGlow,
                             ),
                       ),
                     ],
@@ -289,7 +288,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   child: GestureDetector(
                                     onTap: () => context.push('/playlist/p_release'),
                                     child: Container(
-                                      height: wide ? 260 : 200,
+                                      height: 240,
                                       decoration: BoxDecoration(
                                         color: AppTheme.surface,
                                         borderRadius: BorderRadius.circular(16),
@@ -344,7 +343,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                       color: Colors.white,
                                                       fontSize: 24,
                                                       fontWeight: FontWeight.w900,
-                                                      shadows: AppTheme.textGlow,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 2),
@@ -368,20 +366,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 if (wide) ...[
                                   const SizedBox(width: 16),
                                   Expanded(
-                                    child: PlaylistCard(
-                                      title: 'Sunset Mix',
-                                      subtitle: 'Daily Mix 1',
-                                      coverUrl: 'https://images.unsplash.com/photo-1493225457124-a1a2a5f529a8?q=80&w=300&auto=format&fit=crop',
-                                      onTap: () => context.push('/playlist/p1'),
+                                    child: SizedBox(
+                                      height: 240,
+                                      child: PlaylistCard(
+                                        title: 'Sunset Mix',
+                                        subtitle: 'Daily Mix 1',
+                                        coverUrl: 'https://images.unsplash.com/photo-1493225457124-a1a2a5f529a8?q=80&w=300&auto=format&fit=crop',
+                                        onTap: () => context.push('/playlist/p1'),
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
-                                    child: PlaylistCard(
-                                      title: 'Discover',
-                                      subtitle: 'Weekly',
-                                      coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=crop',
-                                      onTap: () => context.push('/playlist/p2'),
+                                    child: SizedBox(
+                                      height: 240,
+                                      child: PlaylistCard(
+                                        title: 'Discover',
+                                        subtitle: 'Weekly',
+                                        coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=crop',
+                                        onTap: () => context.push('/playlist/p2'),
+                                      ),
                                     ),
                                   ),
                                 ],

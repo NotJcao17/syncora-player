@@ -52,44 +52,46 @@ class _PlaylistCardState extends State<PlaylistCard> {
           mainAxisSize: MainAxisSize.min,
           children: [
           // Portada redondeada 16px con Play button flotante
-          AspectRatio(
-            aspectRatio: 1.0,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: _buildCoverImage(),
+          Flexible(
+            child: AspectRatio(
+              aspectRatio: 1.0,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: _buildCoverImage(),
+                    ),
                   ),
-                ),
-                // Botón Play Flotante en hover
-                Positioned(
-                  right: 8,
-                  bottom: 8,
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 150),
-                    opacity: _isHovered ? 1.0 : 0.0,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppTheme.primary,
-                        boxShadow: AppTheme.glowShadow,
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          LucideIcons.play,
-                          color: AppTheme.background,
-                          size: 18,
+                  // Botón Play Flotante en hover
+                  Positioned(
+                    right: 8,
+                    bottom: 8,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 150),
+                      opacity: _isHovered ? 1.0 : 0.0,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppTheme.primary,
+                          boxShadow: AppTheme.glowShadow,
                         ),
-                        onPressed: widget.onPlayTap ?? widget.onTap,
-                        padding: EdgeInsets.zero,
+                        child: IconButton(
+                          icon: const Icon(
+                            LucideIcons.play,
+                            color: AppTheme.background,
+                            size: 18,
+                          ),
+                          onPressed: widget.onPlayTap ?? widget.onTap,
+                          padding: EdgeInsets.zero,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 8),
