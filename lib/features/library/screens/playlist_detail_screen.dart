@@ -88,196 +88,211 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Bar Sticky: Botón Atrás (<) a la izquierda, Botón Buscar (🔍) a la derecha
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppTheme.surface.withValues(alpha: 0.8),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(LucideIcons.chevronLeft, color: AppTheme.primary, size: 22),
-                      onPressed: () => context.pop(),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppTheme.surface.withValues(alpha: 0.8),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(LucideIcons.search, color: AppTheme.primary, size: 20),
-                      onPressed: () => context.push('/search'),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
+      body: Stack(
+        children: [
+          // Fondo con resplandor superior sutil
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF232B3B),
+                    AppTheme.background,
+                  ],
+                  stops: [0.0, 0.4],
+                ),
               ),
             ),
+          ),
 
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 8),
+          SafeArea(
+            child: Column(
+              children: [
+                // Top Bar Flotante estilo Glassmorphism (Imagen 3: sin tapa de fondo)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black.withValues(alpha: 0.3),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(LucideIcons.chevronLeft, color: AppTheme.primary, size: 22),
+                          onPressed: () => context.pop(),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black.withValues(alpha: 0.3),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(LucideIcons.search, color: AppTheme.primary, size: 20),
+                          onPressed: () => context.push('/search'),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
-                    // Header Info (Móvil centrado / Desktop horizontal calcado de image5 / playlist.html)
-                    if (isDesktop)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          // Cover 256x256
-                          Container(
-                            width: 256,
-                            height: 256,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: AppTheme.glowShadow,
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: CachedNetworkImage(
-                                imageUrl: coverUrl,
-                                fit: BoxFit.cover,
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 8),
+
+                        // Header Info (Desktop horizontal / Móvil centrado)
+                        if (isDesktop)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Container(
+                                width: 220,
+                                height: 220,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: AppTheme.glowShadow,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: CachedNetworkImage(
+                                    imageUrl: coverUrl,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 32),
-                          // Detalle a la izquierda
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'PLAYLIST',
-                                  style: TextStyle(
-                                    color: AppTheme.secondary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  title,
-                                  style: const TextStyle(
-                                    color: AppTheme.primary,
-                                    fontSize: 52,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -1,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  description,
-                                  style: const TextStyle(
-                                    color: AppTheme.secondary,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
+                              const SizedBox(width: 28),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    ClipRRect(
-                                      borderRadius: const BorderRadius.all(Radius.circular(999)),
-                                      child: CachedNetworkImage(
-                                        imageUrl: 'https://i.pravatar.cc/150?img=11',
-                                        width: 24,
-                                        height: 24,
-                                        fit: BoxFit.cover,
+                                    const Text(
+                                      'PLAYLIST',
+                                      style: TextStyle(
+                                        color: AppTheme.secondary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 1.5,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    const Text('Alex Doe', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 14)),
-                                    const Text('  •  4 canciones  •  14 min', style: TextStyle(color: AppTheme.secondary, fontSize: 14)),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      title,
+                                      style: const TextStyle(
+                                        color: AppTheme.primary,
+                                        fontSize: 44,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: -1,
+                                        shadows: AppTheme.textGlow,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      description,
+                                      style: const TextStyle(
+                                        color: AppTheme.secondary,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 14),
+                                    Row(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: const BorderRadius.all(Radius.circular(999)),
+                                          child: CachedNetworkImage(
+                                            imageUrl: 'https://i.pravatar.cc/150?img=11',
+                                            width: 24,
+                                            height: 24,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text('Alex Doe', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                                        const Text('  •  4 canciones  •  14 min', style: TextStyle(color: AppTheme.secondary, fontSize: 13)),
+                                      ],
+                                    ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      )
-                    else
-                      // Móvil Centrado (Imagen 5)
-                      Column(
-                        children: [
-                          // Cover disco centrado 192x192
-                          Container(
-                            width: 192,
-                            height: 192,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: AppTheme.glowHighShadow,
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: CachedNetworkImage(
-                                imageUrl: coverUrl,
-                                fit: BoxFit.cover,
                               ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            title,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppTheme.primary,
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            description,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppTheme.secondary,
-                              fontSize: 13,
-                              height: 1.4,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            ],
+                          )
+                        else
+                          Column(
                             children: [
-                              ClipRRect(
-                                borderRadius: const BorderRadius.all(Radius.circular(999)),
-                                child: CachedNetworkImage(
-                                  imageUrl: 'https://i.pravatar.cc/150?img=11',
-                                  width: 20,
-                                  height: 20,
-                                  fit: BoxFit.cover,
+                              Container(
+                                width: 180,
+                                height: 180,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: AppTheme.glowHighShadow,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: CachedNetworkImage(
+                                    imageUrl: coverUrl,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 6),
-                              const Text('Alex Doe', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
-                              const Text(' • 4 canciones • 14 min', style: TextStyle(color: AppTheme.secondary, fontSize: 13)),
+                              const SizedBox(height: 16),
+                              Text(
+                                title,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: AppTheme.primary,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.5,
+                                  shadows: AppTheme.textGlow,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                description,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: AppTheme.secondary,
+                                  fontSize: 13,
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: const BorderRadius.all(Radius.circular(999)),
+                                    child: CachedNetworkImage(
+                                      imageUrl: 'https://i.pravatar.cc/150?img=11',
+                                      width: 20,
+                                      height: 20,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Text('Alex Doe', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                                  const Text(' • 4 canciones • 14 min', style: TextStyle(color: AppTheme.secondary, fontSize: 13)),
+                                ],
+                              ),
                             ],
                           ),
-                        ],
-                      ),
 
-                    const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                    // Fila de Botones de Acción (Play blanco grande, shuffle, download, heart, options)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
+                        // Fila de Botones de Acción (Imagen 2: Iconos limpios sin bordes circulares)
                         Row(
                           children: [
                             Container(
@@ -298,172 +313,121 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             ),
                             const SizedBox(width: 16),
                             IconButton(
-                              icon: const Icon(LucideIcons.shuffle, color: AppTheme.primary, size: 26),
+                              icon: const Icon(LucideIcons.shuffle, color: AppTheme.primary, size: 24),
                               onPressed: () {
                                 controller.setQueue(_mockTracks, startIndex: 0);
                                 controller.toggleShuffle();
                                 controller.play();
                               },
+                              tooltip: 'Aleatorio',
                             ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppTheme.surfaceActive, width: 1),
-                              ),
-                              child: IconButton(
-                                icon: const Icon(LucideIcons.arrowDownToLine, color: AppTheme.secondary, size: 18),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Descargando playlist...')),
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppTheme.surfaceActive, width: 1),
-                              ),
-                              child: IconButton(
-                                icon: const Icon(LucideIcons.heart, color: AppTheme.secondary, size: 18),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Guardado en biblioteca')),
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 16),
                             IconButton(
-                              icon: const Icon(LucideIcons.ellipsis, color: AppTheme.secondary, size: 24),
+                              icon: const Icon(LucideIcons.arrowDownToLine, color: AppTheme.secondary, size: 20),
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Descargando playlist...')),
+                                );
+                              },
+                              tooltip: 'Descargar',
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(LucideIcons.heart, color: AppTheme.secondary, size: 20),
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Guardado en biblioteca')),
+                                );
+                              },
+                              tooltip: 'Guardar',
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(LucideIcons.ellipsis, color: AppTheme.secondary, size: 20),
                               onPressed: () {},
+                              tooltip: 'Más opciones',
                             ),
                           ],
                         ),
-                      ],
-                    ),
 
-                    const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                    // Lista de Canciones
-                    _isLoading
-                        ? ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: 4,
-                            separatorBuilder: (ctx, index) => const SizedBox(height: 8),
-                            itemBuilder: (ctx, index) => const SkeletonBox(height: 60, borderRadius: 12),
-                          )
-                        : ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _mockTracks.length,
-                            separatorBuilder: (ctx, index) => const SizedBox(height: 8),
-                            itemBuilder: (ctx, i) {
-                              final track = _mockTracks[i];
-                              final isPlaying = currentTrack?.id == track.id;
-
-                              return InkWell(
-                                onTap: () {
-                                  controller.setQueue(_mockTracks, startIndex: i);
-                                  controller.play();
-                                },
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.surface,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      // Portada 48x48
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: SizedBox(
-                                          width: 48,
-                                          height: 48,
-                                          child: Stack(
-                                            fit: StackFit.expand,
-                                            children: [
-                                              CachedNetworkImage(
-                                                imageUrl: track.coverUrl,
-                                                fit: BoxFit.cover,
-                                              ),
-                                              if (isPlaying)
-                                                Container(
-                                                  color: Colors.black.withValues(alpha: 0.5),
-                                                  child: const Icon(LucideIcons.chartColumn, color: Colors.white, size: 20),
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      // Título y Artista
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              track.title,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                color: isPlaying ? AppTheme.primary : AppTheme.primary,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              track.artist,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: AppTheme.secondary,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      // Duración y More options
-                                      Text(
-                                        _formatDuration(track.duration ?? Duration.zero),
-                                        style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        icon: const Icon(LucideIcons.ellipsis, color: AppTheme.secondary, size: 20),
-                                        onPressed: () {},
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                      ),
-                                    ],
+                        // Cabecera de Tabla en Desktop (Imagen 2)
+                        if (isDesktop) ...[
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 32,
+                                  child: Text('#', style: TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.bold)),
+                                ),
+                                Expanded(
+                                  flex: 4,
+                                  child: Text('Título', style: TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.bold)),
+                                ),
+                                Expanded(
+                                  flex: 3,
+                                  child: Text('Álbum', style: TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.bold)),
+                                ),
+                                SizedBox(
+                                  width: 100,
+                                  child: Text('Fecha', style: TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.bold)),
+                                ),
+                                SizedBox(
+                                  width: 60,
+                                  child: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Icon(LucideIcons.clock, color: AppTheme.muted, size: 14),
                                   ),
                                 ),
-                              );
-                            },
+                              ],
+                            ),
                           ),
+                          const Divider(color: AppTheme.surfaceActive, height: 1),
+                          const SizedBox(height: 8),
+                        ],
 
-                    const SizedBox(height: 40),
-                  ],
+                        // Lista de Canciones (Imagen 2: sin cajas individuales, resaltado tenue en active/hover)
+                        _isLoading
+                            ? ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: 4,
+                                separatorBuilder: (ctx, index) => const SizedBox(height: 4),
+                                itemBuilder: (ctx, index) => const SkeletonBox(height: 52, borderRadius: 8),
+                              )
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _mockTracks.length,
+                                itemBuilder: (ctx, i) {
+                                  final track = _mockTracks[i];
+                                  final isPlaying = currentTrack?.id == track.id;
+
+                                  return _PlaylistTrackRow(
+                                    track: track,
+                                    index: i + 1,
+                                    isPlaying: isPlaying,
+                                    isDesktop: isDesktop,
+                                    onTap: () {
+                                      controller.setQueue(_mockTracks, startIndex: i);
+                                      controller.play();
+                                    },
+                                    formatDuration: _formatDuration,
+                                  );
+                                },
+                              ),
+
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -472,5 +436,152 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final minutes = d.inMinutes;
     final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
+  }
+}
+
+/// Fila individual de canción (Sin caja individual, hover resalta fondo)
+class _PlaylistTrackRow extends StatefulWidget {
+  final SyncoraTrack track;
+  final int index;
+  final bool isPlaying;
+  final bool isDesktop;
+  final VoidCallback onTap;
+  final String Function(Duration) formatDuration;
+
+  const _PlaylistTrackRow({
+    required this.track,
+    required this.index,
+    required this.isPlaying,
+    required this.isDesktop,
+    required this.onTap,
+    required this.formatDuration,
+  });
+
+  @override
+  State<_PlaylistTrackRow> createState() => _PlaylistTrackRowState();
+}
+
+class _PlaylistTrackRowState extends State<_PlaylistTrackRow> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final track = widget.track;
+    final isPlaying = widget.isPlaying;
+
+    final bgColor = isPlaying
+        ? AppTheme.surfaceHover
+        : (_isHovered ? AppTheme.surfaceHover.withValues(alpha: 0.5) : Colors.transparent);
+
+    return InkWell(
+      onTap: widget.onTap,
+      onHover: (h) {
+        if (mounted && _isHovered != h) setState(() => _isHovered = h);
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            // Índice o Icono de Ecualizador en Desktop
+            if (widget.isDesktop)
+              SizedBox(
+                width: 32,
+                child: isPlaying
+                    ? const Icon(LucideIcons.chartColumn, color: AppTheme.primary, size: 16)
+                    : Text(
+                        '${widget.index}',
+                        style: const TextStyle(color: AppTheme.secondary, fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+              ),
+
+            // Cover (40x40)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: CachedNetworkImage(
+                  imageUrl: track.coverUrl,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Título y Artista
+            Expanded(
+              flex: widget.isDesktop ? 4 : 1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    track.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: isPlaying ? AppTheme.primary : AppTheme.primary.withValues(alpha: 0.95),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    track.artist,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppTheme.secondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Álbum en Desktop (Imagen 2)
+            if (widget.isDesktop) ...[
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  track.album ?? 'Álbum',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const SizedBox(
+                width: 100,
+                child: Text(
+                  '11/07/2025',
+                  style: TextStyle(color: AppTheme.secondary, fontSize: 13),
+                ),
+              ),
+            ],
+
+            const SizedBox(width: 12),
+            // Duración y Opciones
+            SizedBox(
+              width: 60,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    widget.formatDuration(track.duration ?? Duration.zero),
+                    style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

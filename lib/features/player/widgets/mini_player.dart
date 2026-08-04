@@ -388,8 +388,19 @@ class MiniPlayer extends ConsumerWidget {
                     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                   ),
                   IconButton(
-                    icon: const Icon(LucideIcons.listMusic, size: 16, color: AppTheme.secondary),
-                    onPressed: () => _showQueueSheet(context, ref),
+                    icon: Icon(
+                      LucideIcons.listMusic,
+                      size: 16,
+                      color: ref.watch(isQueueOpenProvider) ? AppTheme.primary : AppTheme.secondary,
+                    ),
+                    onPressed: () {
+                      final isDesktop = MediaQuery.of(context).size.width >= 768;
+                      if (isDesktop) {
+                        ref.read(isQueueOpenProvider.notifier).state = !ref.read(isQueueOpenProvider);
+                      } else {
+                        _showQueueSheet(context, ref);
+                      }
+                    },
                     tooltip: 'Cola de reproducción',
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),

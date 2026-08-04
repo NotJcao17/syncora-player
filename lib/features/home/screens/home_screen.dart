@@ -118,6 +118,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               fontWeight: FontWeight.w900,
                               color: AppTheme.primary,
                               letterSpacing: -0.5,
+                              shadows: AppTheme.textGlow,
                             ),
                       ),
                     ],
@@ -327,30 +328,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                                    decoration: BoxDecoration(
-                                                      color: AppTheme.primary.withValues(alpha: 0.2),
-                                                      borderRadius: BorderRadius.circular(4),
-                                                      border: Border.all(color: AppTheme.primary.withValues(alpha: 0.4), width: 1),
-                                                    ),
-                                                    child: const Text(
-                                                      'NUEVO LANZAMIENTO',
-                                                      style: TextStyle(
-                                                        color: AppTheme.primary,
-                                                        fontSize: 10,
-                                                        fontWeight: FontWeight.bold,
-                                                        letterSpacing: 1.2,
-                                                      ),
+                                                  const Text(
+                                                    'NUEVO LANZAMIENTO',
+                                                    style: TextStyle(
+                                                      color: AppTheme.secondary,
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.w800,
+                                                      letterSpacing: 1.5,
                                                     ),
                                                   ),
-                                                  const SizedBox(height: 6),
+                                                  const SizedBox(height: 4),
                                                   const Text(
                                                     'Los Angeles',
                                                     style: TextStyle(
                                                       color: Colors.white,
-                                                      fontSize: 22,
+                                                      fontSize: 24,
                                                       fontWeight: FontWeight.w900,
+                                                      shadows: AppTheme.textGlow,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 2),

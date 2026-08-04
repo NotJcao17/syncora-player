@@ -80,3 +80,6 @@ final currentTrackProvider = Provider<SyncoraTrack?>((ref) =>
 /// Selector reactivo: snapshot completo del estado del reproductor.
 final playerStateProvider = Provider<SyncoraPlayerState>((ref) =>
     ref.watch(syncoraPlayerControllerProvider).state);
+
+/// StateProvider para controlar la apertura del panel de cola de reproducción en escritorio
+final isQueueOpenProvider = StateProvider<bool>((ref) => false);

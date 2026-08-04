@@ -38,6 +38,11 @@ class AppTheme {
     BoxShadow(color: Color(0x4DFFFFFF), blurRadius: 40, spreadRadius: 0),
   ];
 
+  /// Brillo en texto para títulos principales
+  static const List<Shadow> textGlow = [
+    Shadow(color: Color(0x66FFFFFF), blurRadius: 16, offset: Offset(0, 0)),
+  ];
+
   /// shadow-surface: 0 8px 30px rgba(0,0,0,0.12) — tarjetas elevadas.
   static const List<BoxShadow> surfaceShadow = [
     BoxShadow(color: Color(0x1F000000), blurRadius: 30, offset: Offset(0, 8)),

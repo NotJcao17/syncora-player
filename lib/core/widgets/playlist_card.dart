@@ -45,10 +45,12 @@ class _PlaylistCardState extends State<PlaylistCard> {
         }
       },
       borderRadius: BorderRadius.circular(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // Portada redondeada 16px con Play button flotante
           AspectRatio(
             aspectRatio: 1.0,
@@ -113,7 +115,8 @@ class _PlaylistCardState extends State<PlaylistCard> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildCoverImage() {

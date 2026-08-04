@@ -61,9 +61,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           Padding(
             padding: EdgeInsets.fromLTRB(
               isDesktop ? 32 : 20,
-              isDesktop ? 24 : 16,
+              isDesktop ? 20 : 12,
               isDesktop ? 32 : 20,
-              12,
+              10,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -77,21 +77,23 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           borderRadius: const BorderRadius.all(Radius.circular(999)),
                           child: CachedNetworkImage(
                             imageUrl: 'https://i.pravatar.cc/150?img=11',
-                            width: 38,
-                            height: 38,
+                            width: 32,
+                            height: 32,
                             fit: BoxFit.cover,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                     ],
                     Text(
                       'Tu Biblioteca',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.primary,
-                            letterSpacing: -0.5,
-                          ),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primary,
+                        letterSpacing: -0.5,
+                        shadows: AppTheme.textGlow,
+                      ),
                     ),
                   ],
                 ),
@@ -107,7 +109,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                     Tooltip(
                       message: 'Crear playlist',
                       child: IconButton(
-                        icon: const Icon(LucideIcons.plus, color: AppTheme.primary, size: 24),
+                        icon: const Icon(LucideIcons.plus, color: AppTheme.primary, size: 22),
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Crear nueva playlist')),
@@ -121,10 +123,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             ),
           ),
 
+          const Divider(color: AppTheme.surface, height: 1),
+          const SizedBox(height: 12),
+
           // Píldoras de Filtro
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20, vertical: 4),
+            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20, vertical: 2),
             child: Row(
               children: _filters.map((filter) {
                 final isSelected = _selectedFilter == filter;
@@ -138,10 +143,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                     },
                     selectedColor: AppTheme.primary,
                     backgroundColor: AppTheme.surface,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     labelStyle: TextStyle(
                       color: isSelected ? AppTheme.background : AppTheme.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
                     ),
                     shape: StadiumBorder(
                       side: BorderSide(
