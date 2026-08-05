@@ -4,7 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../data/apis/deezer_provider.dart';
@@ -199,7 +199,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ] else ...[
-                        const Icon(LucideIcons.checkCircle2, color: Colors.green, size: 48),
+                        Icon(AppIcons.broken(SolarIcons.CheckCircle), color: Colors.green, size: 48),
                         const SizedBox(height: 16),
                         Text(
                           '${matched.length} encontradas, ${unmatched.length} no encontradas',
@@ -263,21 +263,21 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                     Tooltip(
                       message: 'Importar desde CSV/TXT',
                       child: IconButton(
-                        icon: const Icon(LucideIcons.fileInput, color: AppTheme.primary, size: 20),
+                        icon: Icon(AppIcons.broken(SolarIcons.Import), color: AppTheme.primary, size: 20),
                         onPressed: () => _importPlaylistFromFile(context),
                       ),
                     ),
                     Tooltip(
                       message: 'Buscar',
                       child: IconButton(
-                        icon: const Icon(LucideIcons.search, color: AppTheme.primary, size: 20),
+                        icon: Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.primary, size: 20),
                         onPressed: () => context.push('/search'),
                       ),
                     ),
                     Tooltip(
                       message: 'Crear playlist',
                       child: IconButton(
-                        icon: const Icon(LucideIcons.plus, color: AppTheme.primary, size: 22),
+                        icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
                         onPressed: () => _showCreatePlaylistDialog(context),
                       ),
                     ),
@@ -434,8 +434,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                                 decoration: const BoxDecoration(
                                                   gradient: AppTheme.gradientLiked,
                                                 ),
-                                                child: const Icon(
-                                                  LucideIcons.heart,
+                                                child: Icon(
+                                                  AppIcons.bold(SolarIcons.Heart),
                                                   color: Colors.white,
                                                   size: 28,
                                                 ),
@@ -448,7 +448,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                                   )
                                                 : Container(
                                                     color: AppTheme.surfaceHover,
-                                                    child: const Icon(LucideIcons.music, color: AppTheme.muted),
+                                                    child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted),
                                                   ),
                                       ),
                                     ),

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 
 /// Widget reusable para mostrar un estado vacío (Empty State).
 class EmptyStateWidget extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final String title;
   final String message;
   final Widget? action;
 
   const EmptyStateWidget({
     super.key,
-    this.icon = LucideIcons.music,
+    this.icon,
     required this.title,
     required this.message,
     this.action,
@@ -34,7 +34,7 @@ class EmptyStateWidget extends StatelessWidget {
                 border: Border.all(color: AppTheme.surfaceHover, width: 1.5),
               ),
               child: Icon(
-                icon,
+                icon ?? AppIcons.broken(SolarIcons.MusicNote),
                 size: 48,
                 color: AppTheme.muted,
               ),

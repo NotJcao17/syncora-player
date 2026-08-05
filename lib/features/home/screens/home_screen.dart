@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/error_state.dart';
@@ -20,17 +21,24 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isLoading = true;
   bool _hasError = false;
+  Timer? _loadTimer;
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 600), () {
+    _loadTimer = Timer(const Duration(milliseconds: 600), () {
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _loadTimer?.cancel();
+    super.dispose();
   }
 
   String _getGreeting() {
@@ -130,7 +138,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Tooltip(
                         message: 'Notificaciones',
                         child: IconButton(
-                          icon: const Icon(LucideIcons.bell, color: AppTheme.primary, size: 22),
+                          icon: Icon(AppIcons.broken(SolarIcons.Bell), color: AppTheme.primary, size: 22),
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Notificaciones próximamente')),
@@ -141,7 +149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Tooltip(
                         message: 'Configuración',
                         child: IconButton(
-                          icon: const Icon(LucideIcons.settings, color: AppTheme.primary, size: 22),
+                          icon: Icon(AppIcons.broken(SolarIcons.Settings), color: AppTheme.primary, size: 22),
                           onPressed: () => context.push('/settings'),
                         ),
                       ),
@@ -227,7 +235,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                 decoration: const BoxDecoration(
                                                   gradient: AppTheme.gradientLiked,
                                                 ),
-                                                child: const Icon(LucideIcons.heart, color: Colors.white, size: 24, fill: 1.0),
+                                                child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 24),
                                               )
                                             : CachedNetworkImage(
                                                 imageUrl: item['cover'] as String,

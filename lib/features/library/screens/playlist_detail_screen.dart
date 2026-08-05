@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_icons.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -236,13 +236,13 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                 child: isLiked
                                     ? Container(
                                         decoration: const BoxDecoration(gradient: AppTheme.gradientLiked),
-                                        child: const Icon(LucideIcons.heart, color: Colors.white, size: 64),
+                                        child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 64),
                                       )
                                     : (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty)
                                         ? CachedNetworkImage(imageUrl: playlist.coverUrl!, fit: BoxFit.cover)
                                         : Container(
                                             color: AppTheme.surfaceHover,
-                                            child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 64),
+                                            child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 64),
                                           ),
                               ),
                             ),
@@ -300,13 +300,13 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                 child: isLiked
                                     ? Container(
                                         decoration: const BoxDecoration(gradient: AppTheme.gradientLiked),
-                                        child: const Icon(LucideIcons.heart, color: Colors.white, size: 56),
+                                        child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 56),
                                       )
                                     : (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty)
                                         ? CachedNetworkImage(imageUrl: playlist.coverUrl!, fit: BoxFit.cover)
                                         : Container(
                                             color: AppTheme.surfaceHover,
-                                            child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 56),
+                                            child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 56),
                                           ),
                               ),
                             ),
@@ -350,7 +350,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                 boxShadow: AppTheme.glowShadow,
                               ),
                               child: IconButton(
-                                icon: const Icon(LucideIcons.play, color: AppTheme.background, size: 26),
+                                icon: Icon(AppIcons.broken(SolarIcons.Play), color: AppTheme.background, size: 26),
                                 onPressed: () {
                                   controller.setQueue(syncoraTracks, startIndex: 0);
                                   controller.play();
@@ -369,19 +369,19 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             onPressed: () {
                               setState(() => _showAddSongsSearch = !_showAddSongsSearch);
                             },
-                            icon: Icon(_showAddSongsSearch ? LucideIcons.x : LucideIcons.plus, size: 18),
+                            icon: Icon(_showAddSongsSearch ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.AddCircle), size: 18),
                             label: Text(_showAddSongsSearch ? 'Cerrar buscador' : 'Agregar canciones', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           ),
                           const SizedBox(width: 8),
                           IconButton(
-                            icon: const Icon(LucideIcons.fileOutput, color: AppTheme.secondary, size: 22),
+                            icon: Icon(AppIcons.broken(SolarIcons.Export), color: AppTheme.secondary, size: 22),
                             onPressed: () => _exportPlaylist(tracks),
                             tooltip: 'Exportar playlist (CSV)',
                           ),
                           const SizedBox(width: 8),
                           if (!isLiked)
                             IconButton(
-                              icon: const Icon(LucideIcons.trash2, color: AppTheme.secondary, size: 20),
+                              icon: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), color: AppTheme.secondary, size: 20),
                               onPressed: () async {
                                 final confirm = await showDialog<bool>(
                                   context: context,
@@ -435,7 +435,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                 decoration: InputDecoration(
                                   hintText: 'Escribe nombre de canción o artista...',
                                   hintStyle: TextStyle(color: AppTheme.secondary.withValues(alpha: 0.7)),
-                                  prefixIcon: const Icon(LucideIcons.search, color: AppTheme.secondary, size: 18),
+                                  prefixIcon: Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.secondary, size: 18),
                                   suffixIcon: _isSearchingSongs
                                       ? const Padding(
                                           padding: EdgeInsets.all(12),
@@ -443,7 +443,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                         )
                                       : (_addSongsController.text.isNotEmpty
                                           ? IconButton(
-                                              icon: const Icon(LucideIcons.x, color: AppTheme.secondary, size: 18),
+                                              icon: Icon(AppIcons.broken(SolarIcons.CloseCircle), color: AppTheme.secondary, size: 18),
                                               onPressed: () {
                                                 _addSongsController.clear();
                                                 _performAddSongsSearch('');
@@ -473,7 +473,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                       title: Text(track.title, style: const TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
                                       subtitle: Text(track.artistName, style: const TextStyle(color: AppTheme.secondary, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
                                       trailing: IconButton(
-                                        icon: const Icon(LucideIcons.plusCircle, color: AppTheme.primary, size: 22),
+                                        icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
                                         onPressed: () async {
                                           await playlistDao.addTrackToPlaylist(
                                             playlistId: playlist.id,
@@ -558,7 +558,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         color: Colors.black.withValues(alpha: 0.35),
                       ),
                       child: IconButton(
-                        icon: const Icon(LucideIcons.chevronLeft, color: AppTheme.primary, size: 20),
+                        icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary, size: 20),
                         onPressed: () => context.pop(),
                         padding: EdgeInsets.zero,
                       ),
@@ -571,7 +571,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         color: Colors.black.withValues(alpha: 0.35),
                       ),
                       child: IconButton(
-                        icon: const Icon(LucideIcons.search, color: AppTheme.primary, size: 18),
+                        icon: Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.primary, size: 18),
                         onPressed: () => context.push('/search'),
                         padding: EdgeInsets.zero,
                       ),
@@ -631,7 +631,7 @@ class _PlaylistTrackRowState extends State<_PlaylistTrackRow> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(LucideIcons.listPlus, color: AppTheme.primary),
+              leading: Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary),
               title: const Text('Agregar a cola', style: TextStyle(color: AppTheme.primary)),
               onTap: () {
                 Navigator.pop(ctx);
@@ -639,7 +639,7 @@ class _PlaylistTrackRowState extends State<_PlaylistTrackRow> {
               },
             ),
             ListTile(
-              leading: const Icon(LucideIcons.trash, color: Colors.redAccent),
+              leading: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), color: Colors.redAccent),
               title: const Text('Eliminar de playlist', style: TextStyle(color: Colors.redAccent)),
               onTap: () {
                 Navigator.pop(ctx);
@@ -679,7 +679,7 @@ class _PlaylistTrackRowState extends State<_PlaylistTrackRow> {
               width: 32,
               child: Center(
                 child: isPlaying
-                    ? const Icon(LucideIcons.chartColumn, color: AppTheme.primary, size: 16)
+                    ? Icon(AppIcons.broken(SolarIcons.Chart), color: AppTheme.primary, size: 16)
                     : Text(
                         '${widget.index}',
                         textAlign: TextAlign.center,
@@ -694,7 +694,7 @@ class _PlaylistTrackRowState extends State<_PlaylistTrackRow> {
                 height: 40,
                 child: (track.coverUrl.isNotEmpty)
                     ? CachedNetworkImage(imageUrl: track.coverUrl, fit: BoxFit.cover)
-                    : Container(color: AppTheme.surfaceHover, child: const Icon(LucideIcons.music, color: AppTheme.muted)),
+                    : Container(color: AppTheme.surfaceHover, child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted)),
               ),
             ),
             const SizedBox(width: 12),
@@ -729,7 +729,7 @@ class _PlaylistTrackRowState extends State<_PlaylistTrackRow> {
             ),
             const SizedBox(width: 4),
             IconButton(
-              icon: const Icon(LucideIcons.ellipsisVertical, color: AppTheme.secondary, size: 18),
+              icon: Icon(AppIcons.broken(SolarIcons.MenuDots), color: AppTheme.secondary, size: 18),
               onPressed: () => _showOptionsMenu(context),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 28, minHeight: 28),

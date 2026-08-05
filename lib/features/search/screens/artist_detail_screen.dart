@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/error_state.dart';
@@ -121,7 +121,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
               child: CircleAvatar(
                 backgroundColor: AppTheme.surfaceHover,
                 child: IconButton(
-                  icon: const Icon(LucideIcons.chevronLeft, color: AppTheme.primary, size: 20),
+                  icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary, size: 20),
                   onPressed: () => context.pop(),
                   padding: EdgeInsets.zero,
                 ),
@@ -157,9 +157,9 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Row(
+                        Row(
                           children: [
-                            Icon(LucideIcons.checkCircle2, color: AppTheme.primary, size: 16),
+                            Icon(AppIcons.broken(SolarIcons.CheckCircle), color: AppTheme.primary, size: 16),
                             SizedBox(width: 6),
                             Text(
                               'ARTISTA VERIFICADO',
@@ -213,8 +213,8 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                         boxShadow: AppTheme.glowShadow,
                       ),
                       child: IconButton(
-                        icon: const Icon(
-                          LucideIcons.play,
+                        icon: Icon(
+                          AppIcons.broken(SolarIcons.Play),
                           color: AppTheme.background,
                           size: 26,
                         ),

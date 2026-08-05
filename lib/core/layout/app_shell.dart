@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../theme/app_icons.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../data/local_db/database_provider.dart';
@@ -127,7 +127,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                         if (_isSidebarCollapsed)
                           Center(
                             child: IconButton(
-                              icon: const Icon(LucideIcons.panelLeftOpen, color: AppTheme.secondary, size: 22),
+                              icon: Icon(AppIcons.broken(SolarIcons.SidebarMinimalistic), color: AppTheme.secondary, size: 22),
                               onPressed: () => setState(() => _isSidebarCollapsed = false),
                               tooltip: 'Expandir panel',
                             ),
@@ -147,7 +147,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                                           'assets/icon/icon.png',
                                           width: 32,
                                           height: 32,
-                                          errorBuilder: (_, _, _) => const Icon(LucideIcons.music, color: AppTheme.primary, size: 24),
+                                          errorBuilder: (_, _, _) => Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.primary, size: 24),
                                         ),
                                         const SizedBox(width: 8),
                                         const Flexible(
@@ -169,7 +169,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(LucideIcons.panelLeftClose, color: AppTheme.secondary, size: 18),
+                                  icon: Icon(AppIcons.broken(SolarIcons.SidebarMinimalistic), color: AppTheme.secondary, size: 18),
                                   onPressed: () => setState(() => _isSidebarCollapsed = true),
                                   tooltip: 'Minimizar panel',
                                 ),
@@ -178,23 +178,26 @@ class _AppShellState extends ConsumerState<AppShell> {
                           ),
                         const SizedBox(height: 20),
 
-                        // Nav Items Principales (Lucide Icons)
+                        // Nav Items Principales (Solar Icons)
                         _DesktopSidebarItem(
-                          icon: LucideIcons.home,
+                          icon: AppIcons.broken(SolarIcons.HomeN2),
+                          selectedIcon: AppIcons.bold(SolarIcons.HomeN2),
                           label: 'Inicio',
                           isSelected: selectedIndex == 0,
                           isCollapsed: _isSidebarCollapsed,
                           onTap: () => _onItemTapped(0),
                         ),
                         _DesktopSidebarItem(
-                          icon: LucideIcons.search,
+                          icon: AppIcons.broken(SolarIcons.Magnifer),
+                          selectedIcon: AppIcons.bold(SolarIcons.Magnifer),
                           label: 'Buscar',
                           isSelected: selectedIndex == 1,
                           isCollapsed: _isSidebarCollapsed,
                           onTap: () => _onItemTapped(1),
                         ),
                         _DesktopSidebarItem(
-                          icon: LucideIcons.library,
+                          icon: AppIcons.broken(SolarIcons.Library),
+                          selectedIcon: AppIcons.bold(SolarIcons.Library),
                           label: 'Biblioteca',
                           isSelected: selectedIndex == 2,
                           isCollapsed: _isSidebarCollapsed,
@@ -318,7 +321,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(LucideIcons.x, color: AppTheme.secondary, size: 20),
+                                icon: Icon(AppIcons.broken(SolarIcons.CloseCircle), color: AppTheme.secondary, size: 20),
                                 onPressed: () {
                                   ref.read(isQueueOpenProvider.notifier).state = false;
                                 },
@@ -374,7 +377,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               fit: BoxFit.cover,
               errorWidget: (_, _, _) => Container(
                 color: AppTheme.surfaceHover,
-                child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 16),
+                child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 16),
               ),
             ),
           ),
@@ -395,7 +398,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             style: const TextStyle(color: AppTheme.secondary, fontSize: 11),
           ),
           trailing: isCurrent
-              ? const Icon(LucideIcons.chartColumn, color: AppTheme.primary, size: 16)
+              ? Icon(AppIcons.broken(SolarIcons.Chart), color: AppTheme.primary, size: 16)
               : null,
           onTap: () {
             ref.read(syncoraPlayerControllerProvider.notifier).skipToQueueIndex(i);
@@ -429,7 +432,7 @@ class _CustomTitleBar extends StatelessWidget {
                       'assets/icon/icon.png',
                       width: 18,
                       height: 18,
-                      errorBuilder: (_, _, _) => const Icon(LucideIcons.music, color: AppTheme.primary, size: 16),
+                      errorBuilder: (_, _, _) => Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.primary, size: 16),
                     ),
                     const SizedBox(width: 8),
                     const Text(
@@ -446,12 +449,12 @@ class _CustomTitleBar extends StatelessWidget {
             ),
           ),
           _WindowCaptionButton(
-            icon: LucideIcons.minus,
+            icon: AppIcons.broken(SolarIcons.MinusSquare),
             onPressed: () => windowManager.minimize(),
             hoverColor: AppTheme.surfaceHover,
           ),
           _WindowCaptionButton(
-            icon: LucideIcons.square,
+            icon: AppIcons.broken(SolarIcons.MaximizeSquare),
             onPressed: () async {
               if (await windowManager.isMaximized()) {
                 windowManager.unmaximize();
@@ -462,7 +465,7 @@ class _CustomTitleBar extends StatelessWidget {
             hoverColor: AppTheme.surfaceHover,
           ),
           _WindowCaptionButton(
-            icon: LucideIcons.x,
+            icon: AppIcons.broken(SolarIcons.CloseSquare),
             onPressed: () => windowManager.close(),
             hoverColor: const Color(0xFFE11D48),
           ),
@@ -512,7 +515,7 @@ class _WindowCaptionButtonState extends State<_WindowCaptionButton> {
   }
 }
 
-/// Nav bar móvil custom perfectamente centrada con íconos de Lucide.
+/// Nav bar móvil custom perfectamente centrada con íconos de Solar.
 class _MobileNavBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemTapped;
@@ -539,7 +542,8 @@ class _MobileNavBar extends StatelessWidget {
         children: [
           Expanded(
             child: _NavDestination(
-              icon: LucideIcons.home,
+              icon: AppIcons.broken(SolarIcons.HomeN2),
+              selectedIcon: AppIcons.bold(SolarIcons.HomeN2),
               label: 'Inicio',
               isSelected: selectedIndex == 0,
               onTap: () => onItemTapped(0),
@@ -547,7 +551,8 @@ class _MobileNavBar extends StatelessWidget {
           ),
           Expanded(
             child: _NavDestination(
-              icon: LucideIcons.search,
+              icon: AppIcons.broken(SolarIcons.Magnifer),
+              selectedIcon: AppIcons.bold(SolarIcons.Magnifer),
               label: 'Buscar',
               isSelected: selectedIndex == 1,
               onTap: () => onItemTapped(1),
@@ -555,7 +560,8 @@ class _MobileNavBar extends StatelessWidget {
           ),
           Expanded(
             child: _NavDestination(
-              icon: LucideIcons.library,
+              icon: AppIcons.broken(SolarIcons.Library),
+              selectedIcon: AppIcons.bold(SolarIcons.Library),
               label: 'Biblioteca',
               isSelected: selectedIndex == 2,
               onTap: () => onItemTapped(2),
@@ -571,12 +577,14 @@ class _MobileNavBar extends StatelessWidget {
 /// Destino individual centrado horizontal y verticalmente.
 class _NavDestination extends StatelessWidget {
   final IconData icon;
+  final IconData? selectedIcon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _NavDestination({
     required this.icon,
+    this.selectedIcon,
     required this.label,
     required this.isSelected,
     required this.onTap,
@@ -585,6 +593,7 @@ class _NavDestination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isSelected ? AppTheme.primary : AppTheme.secondary;
+    final currentIcon = isSelected ? (selectedIcon ?? icon) : icon;
 
     return InkWell(
       onTap: onTap,
@@ -598,7 +607,7 @@ class _NavDestination extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
-              icon,
+              currentIcon,
               color: color,
               size: 22,
             ),
@@ -622,6 +631,7 @@ class _NavDestination extends StatelessWidget {
 /// Item del sidebar desktop.
 class _DesktopSidebarItem extends StatelessWidget {
   final IconData icon;
+  final IconData? selectedIcon;
   final String label;
   final bool isSelected;
   final bool isCollapsed;
@@ -629,6 +639,7 @@ class _DesktopSidebarItem extends StatelessWidget {
 
   const _DesktopSidebarItem({
     required this.icon,
+    this.selectedIcon,
     required this.label,
     required this.isSelected,
     required this.isCollapsed,
@@ -638,6 +649,7 @@ class _DesktopSidebarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isSelected ? AppTheme.primary : AppTheme.secondary;
+    final currentIcon = isSelected ? (selectedIcon ?? icon) : icon;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -659,7 +671,7 @@ class _DesktopSidebarItem extends StatelessWidget {
             child: Row(
               mainAxisAlignment: isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
               children: [
-                Icon(icon, color: color, size: 22),
+                Icon(currentIcon, color: color, size: 22),
                 if (!isCollapsed) ...[
                   const SizedBox(width: 14),
                   Expanded(
@@ -726,15 +738,15 @@ class _DesktopPlaylistItem extends StatelessWidget {
                   child: isLiked
                       ? Container(
                           decoration: const BoxDecoration(gradient: AppTheme.gradientLiked),
-                          child: const Icon(LucideIcons.heart, color: Colors.white, size: 22),
+                          child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 22),
                         )
                       : (coverUrl.isNotEmpty
                           ? CachedNetworkImage(
                               imageUrl: coverUrl,
                               fit: BoxFit.cover,
-                              errorWidget: (_, _, _) => Container(color: AppTheme.surfaceHover, child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 20)),
+                              errorWidget: (_, _, _) => Container(color: AppTheme.surfaceHover, child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 20)),
                             )
-                          : Container(color: AppTheme.surfaceHover, child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 20))),
+                          : Container(color: AppTheme.surfaceHover, child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 20))),
                 ),
               ),
               if (!isCollapsed) ...[
@@ -770,7 +782,7 @@ class _DesktopPlaylistItem extends StatelessWidget {
                   ),
                 ),
                 if (isSelected)
-                  const Icon(LucideIcons.volume2, color: Color(0xFF22C55E), size: 18),
+                  Icon(AppIcons.broken(SolarIcons.VolumeLoud), color: Color(0xFF22C55E), size: 18),
               ],
             ],
           ),

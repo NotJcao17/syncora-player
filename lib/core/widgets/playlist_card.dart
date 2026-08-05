@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 
 enum PlaylistCardSize { small, large }
@@ -79,8 +79,8 @@ class _PlaylistCardState extends State<PlaylistCard> {
                           boxShadow: AppTheme.glowShadow,
                         ),
                         child: IconButton(
-                          icon: const Icon(
-                            LucideIcons.play,
+                          icon: Icon(
+                            AppIcons.broken(SolarIcons.Play),
                             color: AppTheme.background,
                             size: 18,
                           ),
@@ -151,7 +151,7 @@ class _PlaylistCardState extends State<PlaylistCard> {
 
     return Container(
       color: AppTheme.surfaceActive,
-      child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 36),
+      child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 36),
     );
   }
 
@@ -163,7 +163,7 @@ class _PlaylistCardState extends State<PlaylistCard> {
       placeholder: (context, url) => Container(color: AppTheme.surfaceHover),
       errorWidget: (context, url, error) => Container(
         color: AppTheme.surfaceHover,
-        child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 20),
+        child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 20),
       ),
     );
   }

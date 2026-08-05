@@ -23,6 +23,6 @@ void main() {
 
     expect(find.text('Hecho para ti'), findsOneWidget);
     expect(find.text('A Head Full of Dreams'), findsWidgets);
-    await tester.pump(const Duration(seconds: 10));
+    await tester.pumpAndSettle();
   });
 }

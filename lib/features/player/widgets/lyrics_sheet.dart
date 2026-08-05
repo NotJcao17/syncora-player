@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../data/apis/lrclib_api.dart';
@@ -90,7 +90,7 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Row(
               children: [
-                const Icon(LucideIcons.mic2, color: AppTheme.primary, size: 20),
+                Icon(AppIcons.broken(SolarIcons.Microphone), color: AppTheme.primary, size: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -119,7 +119,7 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(LucideIcons.x, color: AppTheme.secondary),
+                  icon: Icon(AppIcons.broken(SolarIcons.CloseCircle), color: AppTheme.secondary),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -133,13 +133,13 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
                     child: CircularProgressIndicator(color: AppTheme.primary),
                   )
                 : _lyricsResult == null || _lyricsResult!.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(LucideIcons.disc3, size: 48, color: AppTheme.secondary),
-                            SizedBox(height: 12),
-                            Text(
+                            Icon(AppIcons.broken(SolarIcons.Album), size: 48, color: AppTheme.secondary),
+                            const SizedBox(height: 12),
+                            const Text(
                               'No se encontraron letras para esta canción',
                               style: TextStyle(color: AppTheme.secondary, fontSize: 14),
                             ),

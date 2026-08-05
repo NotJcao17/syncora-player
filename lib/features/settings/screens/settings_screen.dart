@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../player/player_providers.dart';
@@ -27,7 +27,7 @@ class SettingsScreen extends ConsumerWidget {
           child: CircleAvatar(
             backgroundColor: AppTheme.surfaceHover,
             child: IconButton(
-              icon: const Icon(LucideIcons.chevronLeft, color: AppTheme.primary, size: 20),
+              icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary, size: 20),
               onPressed: () => context.pop(),
               padding: EdgeInsets.zero,
             ),
@@ -63,7 +63,7 @@ class SettingsScreen extends ConsumerWidget {
                           fit: BoxFit.cover,
                           errorWidget: (_, _, _) => Container(
                             color: AppTheme.surfaceHover,
-                            child: const Icon(LucideIcons.user, color: AppTheme.muted, size: 32),
+                            child: Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.muted, size: 32),
                           ),
                         ),
                       ),
@@ -77,7 +77,7 @@ class SettingsScreen extends ConsumerWidget {
                           color: AppTheme.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(LucideIcons.camera, color: AppTheme.background, size: 12),
+                        child: Icon(AppIcons.broken(SolarIcons.Camera), color: AppTheme.background, size: 12),
                       ),
                     ),
                   ],
@@ -126,7 +126,7 @@ class SettingsScreen extends ConsumerWidget {
             child: Column(
               children: [
                 _buildSwitchTile(
-                  icon: LucideIcons.scissors,
+                  icon: AppIcons.broken(SolarIcons.Scissors),
                   title: 'Omitir silencios (Skip Silence)',
                   subtitle: 'Elimina partes en silencio al inicio y final',
                   value: playerState.isSkipSilence,
@@ -142,14 +142,14 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const Divider(height: 24, color: AppTheme.surfaceHover),
                 _buildActionTile(
-                  icon: LucideIcons.sliders,
+                  icon: AppIcons.broken(SolarIcons.Tuning),
                   title: 'Ecualizador',
                   subtitle: 'Ajusta las frecuencias de sonido',
                   onTap: () => _showComingSoon(context),
                 ),
                 const Divider(height: 24, color: AppTheme.surfaceHover),
                 _buildActionTile(
-                  icon: LucideIcons.moon,
+                  icon: AppIcons.broken(SolarIcons.Moon),
                   title: 'Temporizador de apagado',
                   subtitle: 'Detener música automáticamente',
                   onTap: () => _showComingSoon(context),
@@ -167,7 +167,7 @@ class SettingsScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSwitchTile(
-                  icon: LucideIcons.wifi,
+                  icon: AppIcons.broken(SolarIcons.WiFiRouter),
                   title: 'Descargar solo con Wi-Fi',
                   subtitle: 'Evita consumo de datos móviles',
                   value: true,
@@ -194,7 +194,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 _buildActionTile(
-                  icon: LucideIcons.hardDrive,
+                  icon: AppIcons.broken(SolarIcons.Server),
                   title: 'Borrar caché',
                   subtitle: 'Libera espacio en disco',
                   onTap: () => _showComingSoon(context),
@@ -208,11 +208,11 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 8),
 
           _buildCard(
-            child: const Row(
+            child: Row(
               children: [
-                Icon(LucideIcons.info, color: AppTheme.primary, size: 22),
-                SizedBox(width: 16),
-                Expanded(
+                Icon(AppIcons.broken(SolarIcons.InfoCircle), color: AppTheme.primary, size: 22),
+                const SizedBox(width: 16),
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -318,7 +318,7 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const Icon(LucideIcons.chevronRight, color: AppTheme.secondary, size: 18),
+          Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 18),
         ],
       ),
     );

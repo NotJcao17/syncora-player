@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../theme/app_icons.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../features/player/player_models.dart';
 import '../theme/app_theme.dart';
@@ -61,7 +61,7 @@ class TrackTile extends ConsumerWidget {
                 SizedBox(
                   width: 28,
                   child: isPlaying
-                      ? const Icon(LucideIcons.barChart2, color: AppTheme.primary, size: 18)
+                      ? Icon(AppIcons.broken(SolarIcons.Chart), color: AppTheme.primary, size: 18)
                       : Text(
                           '${index! + 1}',
                           style: TextStyle(
@@ -103,7 +103,7 @@ class TrackTile extends ConsumerWidget {
                     Row(
                       children: [
                         if (!isAvailable) ...[
-                          const Icon(LucideIcons.triangleAlert, size: 14, color: AppTheme.muted),
+                          Icon(AppIcons.broken(SolarIcons.DangerTriangle), size: 14, color: AppTheme.muted),
                           const SizedBox(width: 4),
                         ],
                         Expanded(
@@ -124,7 +124,7 @@ class TrackTile extends ConsumerWidget {
                     Row(
                       children: [
                         if (isDownloaded) ...[
-                          const Icon(LucideIcons.arrowDownToLine, size: 12, color: AppTheme.secondary),
+                          Icon(AppIcons.broken(SolarIcons.Download), size: 12, color: AppTheme.secondary),
                           const SizedBox(width: 4),
                         ],
                         Expanded(
@@ -184,11 +184,11 @@ class TrackTile extends ConsumerWidget {
             color: AppTheme.surfaceActive,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Icon(LucideIcons.listPlus, color: AppTheme.primary, size: 20),
-              SizedBox(width: 8),
-              Text(
+              Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary, size: 20),
+              const SizedBox(width: 8),
+              const Text(
                 'Agregar a cola',
                 style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600),
               ),
@@ -205,7 +205,7 @@ class TrackTile extends ConsumerWidget {
   Widget _buildMoreButton(BuildContext context, WidgetRef ref) {
     if (onMorePressed != null) {
       return IconButton(
-        icon: const Icon(LucideIcons.ellipsisVertical, size: 18, color: AppTheme.secondary),
+        icon: Icon(AppIcons.broken(SolarIcons.MenuDots), size: 18, color: AppTheme.secondary),
         onPressed: onMorePressed,
         tooltip: 'Opciones',
       );
@@ -215,7 +215,7 @@ class TrackTile extends ConsumerWidget {
 
     if (isDesktop) {
       return PopupMenuButton<String>(
-        icon: const Icon(LucideIcons.ellipsisVertical, size: 18, color: AppTheme.secondary),
+        icon: Icon(AppIcons.broken(SolarIcons.MenuDots), size: 18, color: AppTheme.secondary),
         color: const Color(0xFF1E1E1E),
         elevation: 10,
         shape: RoundedRectangleBorder(
@@ -226,45 +226,45 @@ class TrackTile extends ConsumerWidget {
           _handleOptionSelected(context, ref, value);
         },
         itemBuilder: (ctx) => [
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'playlist',
             child: Row(
               children: [
-                Icon(LucideIcons.plus, color: AppTheme.primary, size: 18),
-                SizedBox(width: 12),
-                Expanded(child: Text('Agregar a una playlist', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
-                Icon(LucideIcons.chevronRight, color: AppTheme.secondary, size: 16),
+                Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 18),
+                const SizedBox(width: 12),
+                const Expanded(child: Text('Agregar a una playlist', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+                Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
               ],
             ),
           ),
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'like',
             child: Row(
               children: [
-                Icon(LucideIcons.circlePlus, color: AppTheme.primary, size: 18),
-                SizedBox(width: 12),
-                Text('Guardar en Tus me gusta', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+                Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 18),
+                const SizedBox(width: 12),
+                const Text('Guardar en Tus me gusta', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'queue',
             child: Row(
               children: [
-                Icon(LucideIcons.listPlus, color: AppTheme.primary, size: 18),
-                SizedBox(width: 12),
-                Text('Agregar a la fila de reproducción', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+                Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary, size: 18),
+                const SizedBox(width: 12),
+                const Text('Agregar a la fila de reproducción', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'share',
             child: Row(
               children: [
-                Icon(LucideIcons.share2, color: AppTheme.primary, size: 18),
-                SizedBox(width: 12),
-                Expanded(child: Text('Compartir', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
-                Icon(LucideIcons.chevronRight, color: AppTheme.secondary, size: 16),
+                Icon(AppIcons.broken(SolarIcons.Share), color: AppTheme.primary, size: 18),
+                const SizedBox(width: 12),
+                const Expanded(child: Text('Compartir', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+                Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
               ],
             ),
           ),
@@ -273,7 +273,7 @@ class TrackTile extends ConsumerWidget {
     }
 
     return IconButton(
-      icon: const Icon(LucideIcons.ellipsisVertical, size: 18, color: AppTheme.secondary),
+      icon: Icon(AppIcons.broken(SolarIcons.MenuDots), size: 18, color: AppTheme.secondary),
       onPressed: () => _showTrackOptionsMenu(context, ref),
       tooltip: 'Opciones',
     );
@@ -282,7 +282,7 @@ class TrackTile extends ConsumerWidget {
   Widget _buildPlaceholder() {
     return Container(
       color: AppTheme.surfaceHover,
-      child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 24),
+      child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 24),
     );
   }
 
@@ -349,7 +349,7 @@ class TrackTile extends ConsumerWidget {
             itemBuilder: (c, i) {
               final pl = playlists[i];
               return ListTile(
-                leading: const Icon(LucideIcons.music, color: AppTheme.primary),
+                leading: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.primary),
                 title: Text(pl.title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
                 subtitle: Text(pl.isLiked ? 'Especial' : (pl.description ?? 'Playlist'), style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
                 onTap: () async {
@@ -388,7 +388,7 @@ class TrackTile extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
           _OptionItem(
-            icon: LucideIcons.listPlus,
+            icon: AppIcons.broken(SolarIcons.PlaylistMinimalisticN2),
             label: 'Agregar a la cola',
             onTap: () {
               Navigator.pop(context);
@@ -396,7 +396,7 @@ class TrackTile extends ConsumerWidget {
             },
           ),
           _OptionItem(
-            icon: LucideIcons.heart,
+            icon: AppIcons.broken(SolarIcons.Heart),
             label: 'Agregar a Me Gusta',
             onTap: () {
               Navigator.pop(context);
@@ -404,7 +404,7 @@ class TrackTile extends ConsumerWidget {
             },
           ),
           _OptionItem(
-            icon: LucideIcons.folderPlus,
+            icon: AppIcons.broken(SolarIcons.AddFolder),
             label: 'Agregar a playlist',
             onTap: () {
               Navigator.pop(context);

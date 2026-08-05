@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 
 /// Widget reusable para mostrar un estado de error (Error State).
 class ErrorStateWidget extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final String title;
   final String message;
   final VoidCallback? onRetry;
 
   const ErrorStateWidget({
     super.key,
-    this.icon = LucideIcons.triangleAlert,
+    this.icon,
     this.title = 'Ha ocurrido un error',
     required this.message,
     this.onRetry,
@@ -37,7 +37,7 @@ class ErrorStateWidget extends StatelessWidget {
                 ),
               ),
               child: Icon(
-                icon,
+                icon ?? AppIcons.broken(SolarIcons.DangerTriangle),
                 size: 48,
                 color: Colors.redAccent,
               ),
@@ -62,7 +62,7 @@ class ErrorStateWidget extends StatelessWidget {
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(LucideIcons.refreshCw, size: 18),
+                icon: Icon(AppIcons.broken(SolarIcons.Refresh), size: 18),
                 label: const Text('Reintentar'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.surfaceActive,

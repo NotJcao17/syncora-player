@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/error_state.dart';
@@ -259,7 +259,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                             boxShadow: AppTheme.glowShadow,
                           ),
                           child: IconButton(
-                            icon: const Icon(LucideIcons.play, color: AppTheme.background, size: 26),
+                            icon: Icon(AppIcons.broken(SolarIcons.Play), color: AppTheme.background, size: 26),
                             onPressed: () {
                               controller.setQueue(syncoraTracks, startIndex: 0);
                               controller.play();
@@ -268,7 +268,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                         ),
                         const SizedBox(width: 16),
                         IconButton(
-                          icon: const Icon(LucideIcons.shuffle, color: AppTheme.primary, size: 24),
+                          icon: Icon(AppIcons.broken(SolarIcons.Shuffle), color: AppTheme.primary, size: 24),
                           onPressed: () {
                             controller.setQueue(syncoraTracks, startIndex: 0);
                             controller.toggleShuffle();
@@ -280,7 +280,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                       ],
                       IconButton(
                         icon: Icon(
-                          _isSaved ? LucideIcons.heartHandshake : LucideIcons.heart,
+                          _isSaved ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
                           color: _isSaved ? AppTheme.primary : AppTheme.secondary,
                           size: 24,
                         ),
@@ -333,7 +333,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     color: Colors.black.withValues(alpha: 0.35),
                   ),
                   child: IconButton(
-                    icon: const Icon(LucideIcons.chevronLeft, color: AppTheme.primary, size: 20),
+                    icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary, size: 20),
                     onPressed: () => context.pop(),
                     padding: EdgeInsets.zero,
                   ),
@@ -346,7 +346,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     color: Colors.black.withValues(alpha: 0.35),
                   ),
                   child: IconButton(
-                    icon: const Icon(LucideIcons.search, color: AppTheme.primary, size: 18),
+                    icon: Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.primary, size: 18),
                     onPressed: () => context.push('/search'),
                     padding: EdgeInsets.zero,
                   ),
@@ -417,7 +417,7 @@ class _AlbumTrackRowState extends State<_AlbumTrackRow> {
               width: 32,
               child: Center(
                 child: isPlaying
-                    ? const Icon(LucideIcons.chartColumn, color: AppTheme.primary, size: 16)
+                    ? Icon(AppIcons.broken(SolarIcons.Chart), color: AppTheme.primary, size: 16)
                     : Text(
                         '${widget.index}',
                         textAlign: TextAlign.center,

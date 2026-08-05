@@ -2,8 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-
+import 'package:syncora_player/core/theme/app_icons.dart';
 import 'package:syncora_player/core/extraction/extraction_service.dart';
 import 'package:syncora_player/core/extraction/models/extraction_request.dart';
 import 'package:syncora_player/core/extraction/models/extraction_result.dart';
@@ -12,6 +11,7 @@ import 'package:syncora_player/features/player/player_models.dart';
 import 'package:syncora_player/features/player/player_providers.dart';
 import 'package:syncora_player/features/player/syncora_player_controller.dart';
 import 'package:syncora_player/features/player/widgets/mini_player.dart';
+
 
 class FakeAudioEngine implements AudioEngine {
   final _stateController = StreamController<AudioEngineState>.broadcast();
@@ -210,7 +210,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final playButton = find.byIcon(LucideIcons.play).first;
+      final playButton = find.byIcon(AppIcons.broken(SolarIcons.Play)).first;
       expect(playButton, findsOneWidget);
 
       await tester.tap(playButton);

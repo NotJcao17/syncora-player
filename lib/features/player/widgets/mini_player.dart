@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
@@ -111,8 +111,8 @@ class MiniPlayer extends ConsumerWidget {
 
             // Heart Icon Button (text-background, w-6 h-6)
             IconButton(
-              icon: const Icon(
-                LucideIcons.heart,
+              icon: Icon(
+                AppIcons.broken(SolarIcons.Heart),
                 color: AppTheme.background,
                 size: 24,
               ),
@@ -143,7 +143,7 @@ class MiniPlayer extends ConsumerWidget {
                   color: AppTheme.background,
                 ),
                 child: Icon(
-                  isPlaying ? LucideIcons.pause : LucideIcons.play,
+                  isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
                   color: AppTheme.primary,
                   size: 20,
                 ),
@@ -241,7 +241,7 @@ class MiniPlayer extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(LucideIcons.heart, size: 16, color: AppTheme.secondary),
+                  icon: Icon(AppIcons.broken(SolarIcons.Heart), size: 16, color: AppTheme.secondary),
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Guardado en Me Gusta')),
@@ -267,7 +267,7 @@ class MiniPlayer extends ConsumerWidget {
                   children: [
                     IconButton(
                       icon: Icon(
-                        LucideIcons.shuffle,
+                        state.isShuffle ? AppIcons.bold(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
                         size: 16,
                         color: state.isShuffle ? Colors.white : AppTheme.secondary,
                       ),
@@ -277,7 +277,7 @@ class MiniPlayer extends ConsumerWidget {
                     ),
                     const SizedBox(width: 16),
                     IconButton(
-                      icon: const Icon(LucideIcons.skipBack, size: 20, color: AppTheme.primary),
+                      icon: Icon(AppIcons.broken(SolarIcons.SkipPrevious), size: 20, color: AppTheme.primary),
                       onPressed: () => controller.skipToPrevious(),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -294,7 +294,7 @@ class MiniPlayer extends ConsumerWidget {
                       ),
                       child: IconButton(
                         icon: Icon(
-                          isPlaying ? LucideIcons.pause : LucideIcons.play,
+                          isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
                           color: AppTheme.background,
                           size: 20,
                         ),
@@ -310,7 +310,7 @@ class MiniPlayer extends ConsumerWidget {
                     ),
                     const SizedBox(width: 16),
                     IconButton(
-                      icon: const Icon(LucideIcons.skipForward, size: 20, color: AppTheme.primary),
+                      icon: Icon(AppIcons.broken(SolarIcons.SkipNext), size: 20, color: AppTheme.primary),
                       onPressed: () => controller.skipToNext(),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -318,7 +318,7 @@ class MiniPlayer extends ConsumerWidget {
                     const SizedBox(width: 16),
                     IconButton(
                       icon: Icon(
-                        LucideIcons.repeat,
+                        state.repeatMode != SyncoraRepeatMode.off ? AppIcons.bold(SolarIcons.Repeat) : AppIcons.broken(SolarIcons.Repeat),
                         size: 16,
                         color: state.repeatMode != SyncoraRepeatMode.off ? Colors.white : AppTheme.secondary,
                       ),
@@ -377,7 +377,7 @@ class MiniPlayer extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   IconButton(
-                    icon: const Icon(LucideIcons.mic2, size: 16, color: AppTheme.secondary),
+                    icon: Icon(AppIcons.broken(SolarIcons.Microphone), size: 16, color: AppTheme.secondary),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Letras próximamente')),
@@ -389,7 +389,7 @@ class MiniPlayer extends ConsumerWidget {
                   ),
                   IconButton(
                     icon: Icon(
-                      LucideIcons.listMusic,
+                      ref.watch(isQueueOpenProvider) ? AppIcons.bold(SolarIcons.PlaylistMinimalisticN2) : AppIcons.broken(SolarIcons.PlaylistMinimalisticN2),
                       size: 16,
                       color: ref.watch(isQueueOpenProvider) ? AppTheme.primary : AppTheme.secondary,
                     ),
@@ -406,7 +406,7 @@ class MiniPlayer extends ConsumerWidget {
                     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                   ),
                   IconButton(
-                    icon: const Icon(LucideIcons.speaker, size: 16, color: AppTheme.secondary),
+                    icon: Icon(AppIcons.broken(SolarIcons.Speaker), size: 16, color: AppTheme.secondary),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Conectar dispositivo')),
@@ -419,7 +419,7 @@ class MiniPlayer extends ConsumerWidget {
                   const SizedBox(width: 4),
                   IconButton(
                     icon: Icon(
-                      state.engine.volume > 0 ? LucideIcons.volume2 : LucideIcons.volumeX,
+                      state.engine.volume > 0 ? AppIcons.broken(SolarIcons.VolumeLoud) : AppIcons.broken(SolarIcons.VolumeCross),
                       size: 18,
                       color: state.engine.volume > 0 ? AppTheme.secondary : AppTheme.muted,
                     ),
@@ -462,7 +462,7 @@ class MiniPlayer extends ConsumerWidget {
   Widget _buildPlaceholder() {
     return Container(
       color: AppTheme.surfaceHover,
-      child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 24),
+      child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 24),
     );
   }
 

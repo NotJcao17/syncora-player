@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/error_state.dart';
@@ -90,10 +90,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       color: AppTheme.secondary.withValues(alpha: 0.7),
                       fontWeight: FontWeight.w500,
                     ),
-                    prefixIcon: const Icon(LucideIcons.search, color: AppTheme.secondary, size: 20),
+                    prefixIcon: Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.secondary, size: 20),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(LucideIcons.x, color: AppTheme.secondary, size: 18),
+                            icon: Icon(AppIcons.broken(SolarIcons.CloseCircle), color: AppTheme.secondary, size: 18),
                             onPressed: () {
                               _searchController.clear();
                               searchNotifier.setQuery('');
@@ -233,13 +233,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final result = state.result;
 
     if (result.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(LucideIcons.searchX, size: 48, color: AppTheme.secondary),
-            SizedBox(height: 12),
-            Text(
+            Icon(AppIcons.broken(SolarIcons.Magnifer), size: 48, color: AppTheme.secondary),
+            const SizedBox(height: 12),
+            const Text(
               'No se encontraron resultados',
               style: TextStyle(color: AppTheme.secondary, fontSize: 16),
             ),
@@ -318,7 +318,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             fit: BoxFit.cover,
                             errorWidget: (_, _, _) => Container(
                               color: AppTheme.surfaceHover,
-                              child: const Icon(LucideIcons.user, color: AppTheme.muted, size: 28),
+                              child: Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.muted, size: 28),
                             ),
                           ),
                         ),
@@ -349,7 +349,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           ],
                         ),
                       ),
-                      const Icon(LucideIcons.chevronRight, color: AppTheme.secondary),
+                      Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary),
                     ],
                   ),
                 ),

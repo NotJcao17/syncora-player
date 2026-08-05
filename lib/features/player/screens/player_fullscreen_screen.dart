@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_icons.dart';
 import 'package:palette_generator/palette_generator.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -107,7 +107,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(LucideIcons.chevronDown, color: AppTheme.primary),
+            icon: Icon(AppIcons.broken(SolarIcons.AltArrowDown), color: AppTheme.primary),
             onPressed: () => context.pop(),
           ),
         ),
@@ -149,7 +149,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        icon: const Icon(LucideIcons.chevronDown, color: AppTheme.primary, size: 24),
+                        icon: Icon(AppIcons.broken(SolarIcons.AltArrowDown), color: AppTheme.primary, size: 24),
                         onPressed: () => context.pop(),
                         tooltip: 'Minimizar',
                       ),
@@ -176,7 +176,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(LucideIcons.moreHorizontal, color: AppTheme.primary, size: 24),
+                        icon: Icon(AppIcons.broken(SolarIcons.MenuDots), color: AppTheme.primary, size: 24),
                         onPressed: () => _showTrackOptionsMenu(context, currentTrack),
                         tooltip: 'Opciones',
                       ),
@@ -246,9 +246,8 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                       ),
                       IconButton(
                         icon: Icon(
-                          LucideIcons.heart,
+                          _isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
                           color: _isLiked ? Colors.white : AppTheme.secondary,
-                          fill: _isLiked ? 1.0 : 0.0,
                           size: 28,
                         ),
                         onPressed: () => _toggleLike(currentTrack),
@@ -269,7 +268,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                     children: [
                       IconButton(
                         icon: Icon(
-                          LucideIcons.shuffle,
+                          state.isShuffle ? AppIcons.bold(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
                           color: state.isShuffle ? Colors.white : AppTheme.secondary,
                           size: 24,
                         ),
@@ -277,7 +276,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                         tooltip: 'Aleatorio',
                       ),
                       IconButton(
-                        icon: const Icon(LucideIcons.skipBack, color: AppTheme.primary, size: 36),
+                        icon: Icon(AppIcons.broken(SolarIcons.SkipPrevious), color: AppTheme.primary, size: 36),
                         onPressed: () => controller.skipToPrevious(),
                         tooltip: 'Anterior',
                       ),
@@ -291,7 +290,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                         ),
                         child: IconButton(
                           icon: Icon(
-                            isPlaying ? LucideIcons.pause : LucideIcons.play,
+                            isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
                             color: AppTheme.background,
                             size: 40,
                           ),
@@ -306,15 +305,15 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(LucideIcons.skipForward, color: AppTheme.primary, size: 36),
+                        icon: Icon(AppIcons.broken(SolarIcons.SkipNext), color: AppTheme.primary, size: 36),
                         onPressed: () => controller.skipToNext(),
                         tooltip: 'Siguiente',
                       ),
                       IconButton(
                         icon: Icon(
                           state.repeatMode == SyncoraRepeatMode.one
-                              ? LucideIcons.repeat1
-                              : LucideIcons.repeat,
+                              ? (state.repeatMode != SyncoraRepeatMode.off ? AppIcons.bold(SolarIcons.RepeatOne) : AppIcons.broken(SolarIcons.RepeatOne))
+                              : (state.repeatMode != SyncoraRepeatMode.off ? AppIcons.bold(SolarIcons.Repeat) : AppIcons.broken(SolarIcons.Repeat)),
                           color: state.repeatMode != SyncoraRepeatMode.off ? Colors.white : AppTheme.secondary,
                           size: 24,
                         ),
@@ -332,11 +331,11 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                     children: [
                       TextButton.icon(
                         onPressed: () => _showLyricsSheet(context, currentTrack),
-                        icon: const Icon(LucideIcons.alignLeft, size: 18, color: AppTheme.secondary),
+                        icon: Icon(AppIcons.broken(SolarIcons.AlignLeft), size: 18, color: AppTheme.secondary),
                         label: const Text('Letras', style: TextStyle(color: AppTheme.secondary)),
                       ),
                       IconButton(
-                        icon: const Icon(LucideIcons.listMusic, size: 22, color: AppTheme.secondary),
+                        icon: Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), size: 22, color: AppTheme.secondary),
                         onPressed: () => _showQueueSheet(context, state, controller),
                         tooltip: 'Ver cola',
                       ),
@@ -412,7 +411,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
   Widget _buildCoverPlaceholder() {
     return Container(
       color: AppTheme.surfaceHover,
-      child: const Icon(LucideIcons.music, color: AppTheme.muted, size: 80),
+      child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 80),
     );
   }
 
@@ -458,25 +457,20 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
   }
 
   void _showTrackOptionsMenu(BuildContext context, SyncoraTrack track) {
-    showModalBottomSheet(
+    AppBottomSheet.show(
       context: context,
-      backgroundColor: AppTheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(LucideIcons.folderPlus, color: AppTheme.primary),
-              title: const Text('Agregar a playlist'),
-              onTap: () {
-                Navigator.pop(ctx);
-              },
-            ),
-          ],
-        ),
+      title: track.title,
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          ListTile(
+            leading: Icon(AppIcons.broken(SolarIcons.AddFolder), color: AppTheme.primary),
+            title: const Text('Agregar a playlist', style: TextStyle(color: AppTheme.primary)),
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
       ),
     );
   }
