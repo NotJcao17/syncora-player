@@ -504,9 +504,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             durationMs: track.durationSec * 1000,
                                           );
                                           if (!context.mounted) return;
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('"${track.title}" agregada a la playlist'), duration: const Duration(seconds: 1)),
-                                          );
+                                          AppToast.show(context, message: '"${track.title}" agregada a la playlist');
                                         },
                                       ),
                                     );
@@ -518,6 +516,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         ),
                         const SizedBox(height: 16),
                       ],
+                      const SizedBox(height: 16),
 
                       if (tracks.isEmpty && !_showAddSongsSearch)
                         const Padding(
@@ -530,7 +529,25 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             ),
                           ),
                         )
-                      else
+                      else ...[
+                        if (isDesktop && syncoraTracks.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            child: Row(
+                              children: [
+                                const SizedBox(width: 28, child: Text('#', style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+                                const SizedBox(width: 8),
+                                const Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(left: 60), child: Text('TÍTULO', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)))),
+                                const SizedBox(width: 16),
+                                const Expanded(flex: 2, child: Text('ÁLBUM', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2))),
+                                const SizedBox(width: 12),
+                                SizedBox(width: 50, child: Align(alignment: Alignment.centerRight, child: Icon(AppIcons.broken(SolarIcons.ClockCircle), color: AppTheme.secondary, size: 16))),
+                                const SizedBox(width: 52),
+                              ],
+                            ),
+                          ),
+                          const Divider(height: 12, color: AppTheme.surfaceHover),
+                        ],
                         ListView.builder(
                           padding: EdgeInsets.zero,
                           shrinkWrap: true,
@@ -539,7 +556,11 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                           itemBuilder: (ctx, i) {
                             final track = syncoraTracks[i];
                             final playlistTrack = tracks[i];
-                            final isPlaying = currentTrack?.id == track.id;
+                            final playerState = ref.watch(playerStateProvider);
+                            final isPlaying = currentTrack?.id == track.id &&
+                                (playerState.queue.length == syncoraTracks.length
+                                    ? playerState.currentIndex == i
+                                    : (playerState.currentIndex == i || syncoraTracks.indexWhere((t) => t.id == currentTrack?.id) == i));
 
                             return TrackTile(
                               track: track,
@@ -554,6 +575,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             );
                           },
                         ),
+                      ],
                     ],
                   ),
                 ),

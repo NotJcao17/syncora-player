@@ -43,7 +43,7 @@ class SyncoraTrack {
   const SyncoraTrack({
     required this.id,
     required this.title,
-    String artist = '',
+    this._artist = '',
     this.artists = const [],
     this.artistId,
     this.album,
@@ -53,7 +53,7 @@ class SyncoraTrack {
     this.artUri,
     this.previewUrl,
     this.isSpokenWord = false,
-  }) : _artist = artist;
+  });
 
   factory SyncoraTrack.fromVideoId({
     required String videoId,

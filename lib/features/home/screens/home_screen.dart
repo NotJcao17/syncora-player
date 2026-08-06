@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/skeleton_box.dart';
@@ -144,11 +145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         message: 'Notificaciones',
                         child: IconButton(
                           icon: Icon(AppIcons.broken(SolarIcons.Bell), color: AppTheme.primary, size: 22),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Notificaciones próximamente')),
-                            );
-                          },
+                          onPressed: () => AppToast.show(context, message: 'Notificaciones próximamente'),
                         ),
                       ),
                       Tooltip(

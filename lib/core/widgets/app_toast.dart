@@ -15,10 +15,9 @@ abstract class AppToast {
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width >= 768;
 
-    // Ancho fijo de 380px en PC centrado horizontalmente
-    final sideMargin = isDesktop ? (size.width - 380) / 2 : 16.0;
-    // 120px en PC (96px del reproductor + 24px de elevación), 140px en móvil
-    final bottomMargin = isDesktop ? 120.0 : 140.0;
+    // Floating above bottom bar / mini-player (90px margin)
+    final sideMargin = isDesktop ? ((size.width - 380) / 2).clamp(16.0, 2000.0) : 16.0;
+    const bottomMargin = 90.0;
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -27,28 +26,32 @@ abstract class AppToast {
         elevation: 12,
         margin: EdgeInsets.only(
           bottom: bottomMargin,
-          left: sideMargin.clamp(16.0, 2000.0),
-          right: sideMargin.clamp(16.0, 2000.0),
+          left: sideMargin,
+          right: sideMargin,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: duration,
         content: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            leadingIcon ??
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: const BoxDecoration(
-                    gradient: AppTheme.gradientLiked,
-                    borderRadius: BorderRadius.all(Radius.circular(6)),
-                  ),
-                  child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 16),
+            if (leadingIcon != null) ...[
+              leadingIcon,
+              const SizedBox(width: 10),
+            ] else ...[
+              Container(
+                width: 24,
+                height: 24,
+                decoration: const BoxDecoration(
+                  gradient: AppTheme.gradientLiked,
+                  borderRadius: BorderRadius.all(Radius.circular(6)),
                 ),
-            const SizedBox(width: 12),
-            Expanded(
+                child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 14),
+              ),
+              const SizedBox(width: 10),
+            ],
+            Flexible(
               child: Text(
                 message,
                 style: const TextStyle(
@@ -58,24 +61,23 @@ abstract class AppToast {
                 ),
               ),
             ),
-            if (actionLabel != null && onAction != null)
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
                   onAction();
                 },
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 12.0),
-                  child: Text(
-                    actionLabel,
-                    style: const TextStyle(
-                      color: Color(0xFF059669),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
+                child: Text(
+                  actionLabel,
+                  style: const TextStyle(
+                    color: Color(0xFF059669),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
                   ),
                 ),
               ),
+            ],
           ],
         ),
       ),

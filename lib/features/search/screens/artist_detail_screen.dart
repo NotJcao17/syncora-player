@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -204,25 +205,11 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
               child: Row(
                 children: [
                   if (syncoraTracks.isNotEmpty)
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppTheme.primary,
-                        boxShadow: AppTheme.glowShadow,
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          AppIcons.outline(SolarIcons.Play),
-                          color: AppTheme.background,
-                          size: 26,
-                        ),
-                        onPressed: () {
-                          controller.setQueue(syncoraTracks, startIndex: 0);
-                          controller.play();
-                        },
-                      ),
+                    _HeaderPlayButton(
+                      onPressed: () {
+                        controller.setQueue(syncoraTracks, startIndex: 0);
+                        controller.play();
+                      },
                     ),
                 ],
               ),
@@ -287,22 +274,37 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                     const SizedBox(height: 16),
                     SizedBox(
                       height: 220,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _albums.length,
-                        separatorBuilder: (ctx, index) => const SizedBox(width: 16),
-                        itemBuilder: (ctx, i) {
-                          final album = _albums[i];
-                          return SizedBox(
-                            width: isDesktop ? 192 : 144,
-                            child: PlaylistCard(
-                              title: album.title,
-                              subtitle: '${album.trackCount} canciones',
-                              coverUrl: album.coverUrl,
-                              onTap: () => context.push('/album/${album.id}'),
-                            ),
-                          );
-                        },
+                      child: ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(context).copyWith(
+                          dragDevices: {
+                            PointerDeviceKind.touch,
+                            PointerDeviceKind.mouse,
+                            PointerDeviceKind.trackpad,
+                            PointerDeviceKind.stylus,
+                          },
+                        ),
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _albums.length,
+                          separatorBuilder: (ctx, index) => const SizedBox(width: 16),
+                          itemBuilder: (ctx, i) {
+                            final album = _albums[i];
+                            final subtitleText = album.trackCount > 0
+                                ? '${album.trackCount} canciones'
+                                : (album.releaseDate.length >= 4
+                                    ? album.releaseDate.substring(0, 4)
+                                    : 'Álbum');
+                            return SizedBox(
+                              width: isDesktop ? 192 : 144,
+                              child: PlaylistCard(
+                                title: album.title,
+                                subtitle: subtitleText,
+                                coverUrl: album.coverUrl,
+                                onTap: () => context.push('/album/${album.id}'),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ],
@@ -312,6 +314,44 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],
+      ),
+    );
+  }
+}
+
+class _HeaderPlayButton extends StatefulWidget {
+  final VoidCallback onPressed;
+
+  const _HeaderPlayButton({required this.onPressed});
+
+  @override
+  State<_HeaderPlayButton> createState() => _HeaderPlayButtonState();
+}
+
+class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedScale(
+        scale: _isHovered ? 1.08 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.primary,
+            boxShadow: _isHovered ? AppTheme.glowHighShadow : AppTheme.glowShadow,
+          ),
+          child: IconButton(
+            icon: Icon(AppIcons.outline(SolarIcons.Play), color: AppTheme.background, size: 26),
+            onPressed: widget.onPressed,
+          ),
+        ),
       ),
     );
   }

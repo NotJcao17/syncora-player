@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
@@ -114,9 +115,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
     if (rawTracks.isEmpty) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se encontraron canciones válidas en el archivo.')),
-        );
+        AppToast.show(context, message: 'No se encontraron canciones válidas en el archivo.');
       }
       return;
     }

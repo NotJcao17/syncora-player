@@ -117,40 +117,78 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
           ),
 
-          // Píldoras de Filtro (Solo visibles al buscar algo)
+          // Filtros de Búsqueda (Dropdown en Móvil, Chips en Desktop)
           if (_searchController.text.trim().isNotEmpty)
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12, vertical: 4),
-              child: Row(
-                children: _filters.map((filter) {
-                  final filterType = filter['type'] as DeezerSearchType;
-                  final isSelected = searchState.searchType == filterType;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: ChoiceChip(
-                      label: Text(filter['name'] as String),
-                      selected: isSelected,
-                      onSelected: (val) {
-                        if (val) searchNotifier.setSearchType(filterType);
-                      },
-                      selectedColor: AppTheme.primary,
-                      backgroundColor: AppTheme.surface,
-                      labelStyle: TextStyle(
-                        color: isSelected ? AppTheme.background : AppTheme.primary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
+              child: isDesktop
+                  ? SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _filters.map((filter) {
+                          final filterType = filter['type'] as DeezerSearchType;
+                          final isSelected = searchState.searchType == filterType;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: ChoiceChip(
+                              label: Text(filter['name'] as String),
+                              selected: isSelected,
+                              onSelected: (val) {
+                                if (val) searchNotifier.setSearchType(filterType);
+                              },
+                              selectedColor: AppTheme.primary,
+                              backgroundColor: AppTheme.surface,
+                              labelStyle: TextStyle(
+                                color: isSelected ? AppTheme.background : AppTheme.primary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                              shape: StadiumBorder(
+                                side: BorderSide(
+                                  color: isSelected ? AppTheme.primary : AppTheme.surfaceHover,
+                                ),
+                              ),
+                              showCheckmark: false,
+                            ),
+                          );
+                        }).toList(),
                       ),
-                      shape: StadiumBorder(
-                        side: BorderSide(
-                          color: isSelected ? AppTheme.primary : AppTheme.surfaceHover,
+                    )
+                  : Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.surfaceHover),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<DeezerSearchType>(
+                          value: searchState.searchType,
+                          isExpanded: true,
+                          isDense: true,
+                          dropdownColor: AppTheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          icon: Icon(AppIcons.broken(SolarIcons.AltArrowDown), color: AppTheme.primary, size: 20),
+                          items: _filters.map((filter) {
+                            return DropdownMenuItem<DeezerSearchType>(
+                              value: filter['type'] as DeezerSearchType,
+                              child: Text(
+                                filter['name'] as String,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppTheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) searchNotifier.setSearchType(val);
+                          },
                         ),
                       ),
-                      showCheckmark: false,
                     ),
-                  );
-                }).toList(),
-              ),
             ),
 
           const SizedBox(height: 16),

@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../navigation/app_router.dart';
 import '../theme/app_icons.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -61,11 +63,22 @@ class _AppShellState extends ConsumerState<AppShell> {
     final selectedIndex = _calculateSelectedIndex();
     final isQueueOpen = ref.watch(isQueueOpenProvider);
 
-    if (isDesktop) {
-      return _buildDesktopLayout(context, selectedIndex, isQueueOpen, isMobileLandscape);
-    } else {
-      return _buildMobileLayout(context, selectedIndex);
-    }
+    final childWidget = isDesktop
+        ? _buildDesktopLayout(context, selectedIndex, isQueueOpen, isMobileLandscape)
+        : _buildMobileLayout(context, selectedIndex);
+
+    return Listener(
+      onPointerDown: (PointerDownEvent event) {
+        if (event.kind == PointerDeviceKind.mouse &&
+            (event.buttons == kBackMouseButton || (event.buttons & kBackMouseButton != 0))) {
+          final router = ref.read(appRouterProvider);
+          if (router.canPop()) {
+            router.pop();
+          }
+        }
+      },
+      child: childWidget,
+    );
   }
 
   /// Layout Móvil (Android / pantallas < 768px)

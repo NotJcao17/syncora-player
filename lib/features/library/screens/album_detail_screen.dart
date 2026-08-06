@@ -11,6 +11,7 @@ import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/models/deezer/deezer_album.dart';
+import '../../../data/models/deezer/deezer_track.dart';
 import '../../player/player_providers.dart';
 
 /// Pantalla de Detalle de Álbum (`/album/:id`) conectada a Deezer real.
@@ -95,6 +96,18 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
     }
   }
 
+  String _formatTotalDuration(List<DeezerTrack> tracks) {
+    final totalSec = tracks.fold<int>(0, (sum, t) => sum + t.durationSec);
+    final minutes = totalSec ~/ 60;
+    final seconds = totalSec % 60;
+    if (minutes >= 60) {
+      final hours = minutes ~/ 60;
+      final remMin = minutes % 60;
+      return '$hours h $remMin min';
+    }
+    return '$minutes min $seconds s';
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
@@ -120,6 +133,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
 
     final album = _album!;
     final syncoraTracks = album.tracks.map((t) => t.toSyncoraTrack()).toList();
+    final totalDurationStr = _formatTotalDuration(album.tracks);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -189,7 +203,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                     style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
                                   ),
                                   Text(
-                                    '  •  ${album.releaseDate}  •  ${album.trackCount} canciones',
+                                    '  •  ${album.releaseDate}  •  ${album.tracks.length} canciones, $totalDurationStr',
                                     style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
                                   ),
                                 ],
@@ -240,7 +254,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                               style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                             Text(
-                              ' • ${album.trackCount} canciones',
+                              ' • ${album.tracks.length} canciones, $totalDurationStr',
                               style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
                             ),
                           ],
@@ -254,21 +268,11 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
                     children: [
                       if (syncoraTracks.isNotEmpty) ...[
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppTheme.primary,
-                            boxShadow: AppTheme.glowShadow,
-                          ),
-                          child: IconButton(
-                            icon: Icon(AppIcons.outline(SolarIcons.Play), color: AppTheme.background, size: 26),
-                            onPressed: () {
-                              controller.setQueue(syncoraTracks, startIndex: 0);
-                              controller.play();
-                            },
-                          ),
+                        _HeaderPlayButton(
+                          onPressed: () {
+                            controller.setQueue(syncoraTracks, startIndex: 0);
+                            controller.play();
+                          },
                         ),
                         const SizedBox(width: 16),
                         IconButton(
@@ -294,7 +298,26 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 20), // Top padding before track list
+
+                  if (isDesktop && syncoraTracks.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 28, child: Text('#', style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+                          const SizedBox(width: 8),
+                          const Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(left: 60), child: Text('TÍTULO', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)))),
+                          const SizedBox(width: 16),
+                          const Expanded(flex: 2, child: Text('ÁLBUM', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2))),
+                          const SizedBox(width: 12),
+                          SizedBox(width: 50, child: Align(alignment: Alignment.centerRight, child: Icon(AppIcons.broken(SolarIcons.ClockCircle), color: AppTheme.secondary, size: 16))),
+                          const SizedBox(width: 52),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 12, color: AppTheme.surfaceHover),
+                  ],
 
                   ListView.builder(
                     padding: EdgeInsets.zero,
@@ -309,6 +332,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                         track: track,
                         index: i,
                         isPlaying: isPlaying,
+                        showAlbum: true,
                         onTap: () {
                           controller.setQueue(syncoraTracks, startIndex: i);
                           controller.play();
@@ -359,6 +383,44 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HeaderPlayButton extends StatefulWidget {
+  final VoidCallback onPressed;
+
+  const _HeaderPlayButton({required this.onPressed});
+
+  @override
+  State<_HeaderPlayButton> createState() => _HeaderPlayButtonState();
+}
+
+class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedScale(
+        scale: _isHovered ? 1.08 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.primary,
+            boxShadow: _isHovered ? AppTheme.glowHighShadow : AppTheme.glowShadow,
+          ),
+          child: IconButton(
+            icon: Icon(AppIcons.outline(SolarIcons.Play), color: AppTheme.background, size: 26),
+            onPressed: widget.onPressed,
+          ),
+        ),
       ),
     );
   }

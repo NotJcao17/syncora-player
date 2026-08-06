@@ -18,6 +18,7 @@ class TrackTile extends ConsumerStatefulWidget {
   final bool isPlaying;
   final bool isDownloaded;
   final bool isAvailable;
+  final bool showAlbum;
   final VoidCallback? onTap;
   final VoidCallback? onAddToQueue;
   final VoidCallback? onMorePressed;
@@ -30,6 +31,7 @@ class TrackTile extends ConsumerStatefulWidget {
     this.isPlaying = false,
     this.isDownloaded = false,
     this.isAvailable = true,
+    this.showAlbum = false,
     this.onTap,
     this.onAddToQueue,
     this.onMorePressed,
@@ -78,7 +80,6 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       ),
     );
 
-    // Tarea 6: Si index == null y isPlaying == true, mostrar indicador animado sobre la portada
     if (widget.index == null && widget.isPlaying) {
       coverWidget = Stack(
         children: [
@@ -91,10 +92,16 @@ class _TrackTileState extends ConsumerState<TrackTile> {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
-              child: LoadingAnimationWidget.staggeredDotsWave(
-                color: AppTheme.primary,
-                size: 18,
-              ),
+              child: _isHovered
+                  ? Icon(
+                      AppIcons.bold(SolarIcons.Pause),
+                      color: AppTheme.primary,
+                      size: 18,
+                    )
+                  : LoadingAnimationWidget.staggeredDotsWave(
+                      color: AppTheme.primary,
+                      size: 18,
+                    ),
             ),
           ),
         ],
@@ -109,23 +116,31 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         borderRadius: BorderRadius.circular(8),
         child: Container(
           decoration: BoxDecoration(
-            color: widget.isPlaying ? AppTheme.surfaceHover.withValues(alpha: 0.6) : Colors.transparent,
+            color: widget.isPlaying
+                ? AppTheme.surfaceHover.withValues(alpha: 0.6)
+                : (_isHovered ? AppTheme.surfaceHover.withValues(alpha: 0.3) : Colors.transparent),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               children: [
-                // Tarea 4 & 5 & 6: Número o Indicador de reproducción (solo si widget.index != null)
+                // Número / Play / Pause
                 if (widget.index != null) ...[
                   SizedBox(
                     width: 28,
                     child: Center(
                       child: widget.isPlaying
-                          ? LoadingAnimationWidget.staggeredDotsWave(
-                              color: AppTheme.primary,
-                              size: 18,
-                            )
+                          ? (_isHovered
+                              ? Icon(
+                                  AppIcons.bold(SolarIcons.Pause),
+                                  color: AppTheme.primary,
+                                  size: 18,
+                                )
+                              : LoadingAnimationWidget.staggeredDotsWave(
+                                  color: AppTheme.primary,
+                                  size: 18,
+                                ))
                           : (isDesktop && _isHovered
                               ? Icon(
                                   AppIcons.bold(SolarIcons.Play),
@@ -148,61 +163,87 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                   const SizedBox(width: 8),
                 ],
 
-                // Portada
-                coverWidget,
-                const SizedBox(width: 12),
-
-                // Título y Artista / Álbum (Tarea 8)
+                // Portada + Título + Artista (flex: 3 en Desktop con album, else Expanded)
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  flex: (isDesktop && widget.showAlbum) ? 3 : 1,
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          if (widget.isDownloaded) ...[
-                            Icon(
-                              AppIcons.bold(SolarIcons.CheckCircle),
-                              color: AppTheme.primary,
-                              size: 14,
+                      coverWidget,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              children: [
+                                if (widget.isDownloaded) ...[
+                                  Icon(
+                                    AppIcons.bold(SolarIcons.CheckCircle),
+                                    color: AppTheme.primary,
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    widget.track.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: textColor,
+                                      fontSize: 14,
+                                      fontWeight: widget.isPlaying ? FontWeight.bold : FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(height: 2),
+                            _buildSubtitle(context, subtitleColor),
                           ],
-                          Expanded(
-                            child: Text(
-                              widget.track.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: textColor,
-                                fontSize: 14,
-                                fontWeight: widget.isPlaying ? FontWeight.bold : FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 2),
-                      _buildSubtitle(context, subtitleColor),
                     ],
                   ),
                 ),
 
+                // Columna Álbum en Desktop
+                if (isDesktop && widget.showAlbum) ...[
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      widget.track.album ?? '—',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.secondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+
                 const SizedBox(width: 12),
 
-                // Duración en Desktop (Tarea 10: Oculto en móvil <768px)
+                // Duración en Desktop
                 if (isDesktop && widget.track.duration != null) ...[
-                  Text(
-                    _formatDuration(widget.track.duration!),
-                    style: const TextStyle(
-                      color: AppTheme.secondary,
-                      fontSize: 13,
+                  SizedBox(
+                    width: 50,
+                    child: Text(
+                      _formatDuration(widget.track.duration!),
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(
+                        color: AppTheme.secondary,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                 ],
 
-                // Botón de 3 Puntos u Opciones Personalizadas
+                // Botón de 3 Puntos u Opciones
                 _buildMoreButton(context),
               ],
             ),
@@ -216,9 +257,10 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       return Dismissible(
         key: Key('track_dismiss_${widget.track.id}_${widget.index}'),
         direction: DismissDirection.startToEnd,
-        onDismissed: (_) {
+        confirmDismiss: (direction) async {
           widget.onAddToQueue!();
           AppToast.show(context, message: '"${widget.track.title}" agregada a la cola');
+          return false; // Retornar false para no eliminar visualmente la canción de la lista
         },
         background: Container(
           alignment: Alignment.centerLeft,
@@ -518,9 +560,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                   );
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Agregada a "${pl.title}"')),
-                    );
+                    AppToast.show(context, message: 'Agregada a "${pl.title}"');
                   }
                 },
               );

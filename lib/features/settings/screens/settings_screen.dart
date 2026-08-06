@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../player/player_providers.dart';
 
 /// Pantalla de Configuración (SettingsScreen calcada de settings.html mockup).
@@ -132,11 +133,9 @@ class SettingsScreen extends ConsumerWidget {
                   value: playerState.isSkipSilence,
                   onChanged: (val) {
                     controller.setSkipSilence(val);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(val ? 'Skip Silence activado' : 'Skip Silence desactivado'),
-                        duration: const Duration(seconds: 1),
-                      ),
+                    AppToast.show(
+                      context,
+                      message: val ? 'Skip Silence activado' : 'Skip Silence desactivado',
                     );
                   },
                 ),
@@ -286,10 +285,8 @@ class SettingsScreen extends ConsumerWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeThumbColor: AppTheme.background,
           activeTrackColor: AppTheme.primary,
-          inactiveThumbColor: AppTheme.secondary,
-          inactiveTrackColor: AppTheme.surfaceHover,
+          activeThumbColor: AppTheme.background,
         ),
       ],
     );
@@ -304,29 +301,30 @@ class SettingsScreen extends ConsumerWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
-      child: Row(
-        children: [
-          Icon(icon, color: AppTheme.primary, size: 22),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 15)),
-                const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
-              ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Icon(icon, color: AppTheme.primary, size: 22),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 15)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
+                ],
+              ),
             ),
-          ),
-          Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 18),
-        ],
+            Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 18),
+          ],
+        ),
       ),
     );
   }
 
   void _showComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Próximamente')),
-    );
+    AppToast.show(context, message: 'Próximamente');
   }
 }

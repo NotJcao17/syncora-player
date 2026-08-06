@@ -7,6 +7,7 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/marquee_text.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
@@ -87,10 +88,8 @@ class MiniPlayer extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    currentTrack.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  MarqueeText(
+                    text: currentTrack.title,
                     style: const TextStyle(
                       color: AppTheme.background,
                       fontWeight: FontWeight.w700,
@@ -160,10 +159,6 @@ class MiniPlayer extends ConsumerWidget {
         ? state.engine.duration
         : (trackDuration != null && trackDuration.inSeconds > 0 ? trackDuration : const Duration(seconds: 180));
 
-    final progressRatio = duration.inMilliseconds > 0
-        ? (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0)
-        : 0.0;
-
     return Container(
       height: 96,
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -174,18 +169,10 @@ class MiniPlayer extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Izquierda: Portada (56x56) + Info + Heart
-          Expanded(
-            flex: 3,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _DesktopTrackInfo(currentTrack: currentTrack),
-                ),
-                const SizedBox(width: 8),
-                _MiniPlayerHeartButton(currentTrack: currentTrack, isDesktop: true),
-              ],
-            ),
+          // Izquierda: Portada (56x56) + Info + Heart (ancho acotado a 280px alejado del centro)
+          SizedBox(
+            width: 280,
+            child: _DesktopTrackInfo(currentTrack: currentTrack),
           ),
 
           // Centro: Controles + Barra de progreso
@@ -307,37 +294,11 @@ class MiniPlayer extends ConsumerWidget {
                 const SizedBox(height: 6),
 
                 // Slider Fino de Progreso
-                Row(
-                  children: [
-                    Text(
-                      _formatDuration(position),
-                      style: const TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          trackHeight: 6,
-                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
-                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 6),
-                          activeTrackColor: AppTheme.primary,
-                          inactiveTrackColor: AppTheme.surface,
-                        ),
-                        child: Slider(
-                          value: progressRatio,
-                          onChanged: (val) {
-                            final targetMs = (val * duration.inMilliseconds).toInt();
-                            controller.seek(Duration(milliseconds: targetMs));
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _formatDuration(duration),
-                      style: const TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.w500),
-                    ),
-                  ],
+                _DesktopProgressBar(
+                  position: position,
+                  duration: duration,
+                  controller: controller,
+                  isPlaying: isPlaying,
                 ),
               ],
             ),
@@ -412,7 +373,7 @@ class MiniPlayer extends ConsumerWidget {
                   ),
                   const SizedBox(width: 4),
                   SizedBox(
-                    width: 96,
+                    width: 140,
                     child: SliderTheme(
                       data: SliderTheme.of(context).copyWith(
                         trackHeight: 4,
@@ -440,12 +401,6 @@ class MiniPlayer extends ConsumerWidget {
       color: AppTheme.surfaceHover,
       child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 24),
     );
-  }
-
-  String _formatDuration(Duration d) {
-    final minutes = d.inMinutes;
-    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
   }
 
   void _showQueueSheet(BuildContext context, WidgetRef ref) {
@@ -622,32 +577,40 @@ class _DesktopTrackInfoState extends State<_DesktopTrackInfo> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Título de la canción
-              MouseRegion(
-                cursor: hasAlbumId ? SystemMouseCursors.click : SystemMouseCursors.basic,
-                onEnter: (_) {
-                  if (hasAlbumId) setState(() => _isAlbumHovered = true);
-                },
-                onExit: (_) {
-                  if (hasAlbumId) setState(() => _isAlbumHovered = false);
-                },
-                child: GestureDetector(
-                  onTap: hasAlbumId
-                      ? () => context.push('/album/${widget.currentTrack.albumId}')
-                      : null,
-                  child: Text(
-                    widget.currentTrack.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: AppTheme.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      decoration: (hasAlbumId && _isAlbumHovered) ? TextDecoration.underline : TextDecoration.none,
-                      decorationColor: AppTheme.primary,
+              // Título de la canción + Heart button
+              Row(
+                children: [
+                  Expanded(
+                    child: MouseRegion(
+                      cursor: hasAlbumId ? SystemMouseCursors.click : SystemMouseCursors.basic,
+                      onEnter: (_) {
+                        if (hasAlbumId) setState(() => _isAlbumHovered = true);
+                      },
+                      onExit: (_) {
+                        if (hasAlbumId) setState(() => _isAlbumHovered = false);
+                      },
+                      child: GestureDetector(
+                        onTap: hasAlbumId
+                            ? () => context.push('/album/${widget.currentTrack.albumId}')
+                            : null,
+                        child: Text(
+                          widget.currentTrack.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            decoration: (hasAlbumId && _isAlbumHovered) ? TextDecoration.underline : TextDecoration.none,
+                            decorationColor: AppTheme.primary,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 4),
+                  _MiniPlayerHeartButton(currentTrack: widget.currentTrack, isDesktop: true),
+                ],
               ),
               const SizedBox(height: 2),
 
@@ -796,4 +759,102 @@ class _MiniPlayerHoverableArtistState extends State<_MiniPlayerHoverableArtist> 
     );
   }
 }
+
+class _DesktopProgressBar extends StatefulWidget {
+  final Duration position;
+  final Duration duration;
+  final SyncoraPlayerController controller;
+  final bool isPlaying;
+
+  const _DesktopProgressBar({
+    required this.position,
+    required this.duration,
+    required this.controller,
+    required this.isPlaying,
+  });
+
+  @override
+  State<_DesktopProgressBar> createState() => _DesktopProgressBarState();
+}
+
+class _DesktopProgressBarState extends State<_DesktopProgressBar> {
+  bool _isDragging = false;
+  double _dragRatio = 0.0;
+  bool _wasPlayingBeforeDrag = false;
+
+  String _formatDuration(Duration d) {
+    final minutes = d.inMinutes;
+    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final durationMs = widget.duration.inMilliseconds;
+    final currentMs = widget.position.inMilliseconds;
+    final realRatio = durationMs > 0 ? (currentMs / durationMs).clamp(0.0, 1.0) : 0.0;
+    final effectiveRatio = _isDragging ? _dragRatio : realRatio;
+
+    final currentDisplayDuration = _isDragging
+        ? Duration(milliseconds: (_dragRatio * durationMs).toInt())
+        : widget.position;
+
+    return Row(
+      children: [
+        Text(
+          _formatDuration(currentDisplayDuration),
+          style: const TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 6,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 6),
+              activeTrackColor: AppTheme.primary,
+              inactiveTrackColor: AppTheme.surface,
+            ),
+            child: Slider(
+              value: effectiveRatio,
+              onChangeStart: (val) {
+                setState(() {
+                  _isDragging = true;
+                  _dragRatio = val;
+                  _wasPlayingBeforeDrag = widget.isPlaying;
+                });
+                if (widget.isPlaying) {
+                  widget.controller.pause();
+                }
+              },
+              onChanged: (val) {
+                setState(() {
+                  _dragRatio = val;
+                });
+              },
+              onChangeEnd: (val) async {
+                final targetMs = (val * durationMs).toInt();
+                await widget.controller.seek(Duration(milliseconds: targetMs));
+                if (mounted) {
+                  setState(() {
+                    _isDragging = false;
+                  });
+                }
+                if (_wasPlayingBeforeDrag) {
+                  widget.controller.play();
+                }
+              },
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          _formatDuration(widget.duration),
+          style: const TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.w500),
+        ),
+      ],
+    );
+  }
+}
+
 
