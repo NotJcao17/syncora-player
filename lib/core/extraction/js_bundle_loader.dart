@@ -6,13 +6,67 @@ if (typeof globalThis === 'undefined') {
   var globalThis = this;
 }
 
-// Polyfill Console
-globalThis.console = globalThis.console || {
-  log: function(...args) { sendMessage('consoleLog', JSON.stringify({ type: 'log', message: args.join(' ') })); },
-  error: function(...args) { sendMessage('consoleLog', JSON.stringify({ type: 'error', message: args.join(' ') })); },
-  warn: function(...args) { sendMessage('consoleLog', JSON.stringify({ type: 'warn', message: args.join(' ') })); },
-  info: function(...args) { sendMessage('consoleLog', JSON.stringify({ type: 'info', message: args.join(' ') })); }
-};
+(function() {
+  if (typeof globalThis === 'undefined') var globalThis = this;
+
+  function shouldSilence(args) {
+    if (!args || !args.length) return false;
+    for (var i = 0; i < args.length; i++) {
+      var s = String(args[i] || '');
+      if (s.indexOf('[YOUTUBEJS]') !== -1 || s.indexOf('MenuConditionalServiceItem') !== -1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  if (globalThis.console) {
+    var origLog = globalThis.console.log;
+    var origWarn = globalThis.console.warn;
+    var origInfo = globalThis.console.info;
+    var origErr = globalThis.console.error;
+
+    globalThis.console.log = function(...args) {
+      if (shouldSilence(args)) return;
+      if (origLog) origLog.apply(globalThis.console, args);
+      else sendMessage('consoleLog', JSON.stringify({ type: 'log', message: args.join(' ') }));
+    };
+    globalThis.console.warn = function(...args) {
+      if (shouldSilence(args)) return;
+      if (origWarn) origWarn.apply(globalThis.console, args);
+      else sendMessage('consoleLog', JSON.stringify({ type: 'warn', message: args.join(' ') }));
+    };
+    globalThis.console.info = function(...args) {
+      if (shouldSilence(args)) return;
+      if (origInfo) origInfo.apply(globalThis.console, args);
+      else sendMessage('consoleLog', JSON.stringify({ type: 'info', message: args.join(' ') }));
+    };
+    globalThis.console.error = function(...args) {
+      if (shouldSilence(args)) return;
+      if (origErr) origErr.apply(globalThis.console, args);
+      else sendMessage('consoleLog', JSON.stringify({ type: 'error', message: args.join(' ') }));
+    };
+  } else {
+    globalThis.console = {
+      log: function(...args) {
+        if (shouldSilence(args)) return;
+        sendMessage('consoleLog', JSON.stringify({ type: 'log', message: args.join(' ') }));
+      },
+      warn: function(...args) {
+        if (shouldSilence(args)) return;
+        sendMessage('consoleLog', JSON.stringify({ type: 'warn', message: args.join(' ') }));
+      },
+      info: function(...args) {
+        if (shouldSilence(args)) return;
+        sendMessage('consoleLog', JSON.stringify({ type: 'info', message: args.join(' ') }));
+      },
+      error: function(...args) {
+        if (shouldSilence(args)) return;
+        sendMessage('consoleLog', JSON.stringify({ type: 'error', message: args.join(' ') }));
+      }
+    };
+  }
+})();
 
 // Polyfill Event, CustomEvent, EventTarget
 if (typeof globalThis.Event === 'undefined') {
@@ -478,6 +532,10 @@ if (typeof globalThis.Innertube === 'undefined' && typeof globalThis.YouTubeJS !
 
 globalThis._ytInstances = globalThis._ytInstances || {};
 
+if (globalThis.YouTubeJS && globalThis.YouTubeJS.Utils && globalThis.YouTubeJS.Utils.Log) {
+  try { globalThis.YouTubeJS.Utils.Log.setLevel(0); } catch(_) {}
+}
+
 globalThis.resetJsEngine = function() {
   globalThis._ytInstances = {};
   console.log('[JS] Instancias de Innertube reiniciadas.');
@@ -500,7 +558,7 @@ globalThis.extractVideo = function(videoId, client, jsRequestId) {
       var yt = globalThis._ytInstances[client];
       if (!yt) {
         console.log('[JS] Creando nueva instancia Innertube para cliente: ' + client);
-        yt = await InnertubeClass.create({ client_type: client });
+        yt = await InnertubeClass.create({ client_type: client, retrieve_player: false });
         globalThis._ytInstances[client] = yt;
         console.log('[JS] Instancia creada y cacheada para cliente: ' + client);
       } else {
@@ -641,6 +699,147 @@ globalThis.extractVideo = function(videoId, client, jsRequestId) {
         requestId: jsRequestId,
         error: errStr + '\n' + stackStr
       }));
+    }
+  })();
+};
+
+function extractVideoCandidatesFromRaw(data) {
+  var results = [];
+  if (!data) return results;
+  try {
+    var seenIds = new Map();
+    function walk(node) {
+      if (!node || typeof node !== 'object') return;
+      var vr = node.videoRenderer || node.compactVideoRenderer;
+      if (vr && vr.videoId) {
+        var vId = String(vr.videoId);
+        if (!seenIds.has(vId)) {
+          var title = '';
+          if (vr.title) {
+            if (vr.title.runs && vr.title.runs[0] && vr.title.runs[0].text) title = vr.title.runs[0].text;
+            else if (vr.title.simpleText) title = vr.title.simpleText;
+          }
+
+          var author = '';
+          if (vr.ownerText && vr.ownerText.runs && vr.ownerText.runs[0] && vr.ownerText.runs[0].text) {
+            author = vr.ownerText.runs[0].text;
+          } else if (vr.shortBylineText && vr.shortBylineText.runs && vr.shortBylineText.runs[0] && vr.shortBylineText.runs[0].text) {
+            author = vr.shortBylineText.runs[0].text;
+          }
+
+          var durationSec = null;
+          if (vr.lengthText && vr.lengthText.simpleText) {
+            var parts = String(vr.lengthText.simpleText).split(':').map(Number);
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+              durationSec = parts[0] * 60 + parts[1];
+            } else if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+              durationSec = parts[0] * 3600 + parts[1] * 60 + parts[2];
+            }
+          } else if (vr.lengthSeconds) {
+            durationSec = parseInt(vr.lengthSeconds, 10);
+          }
+
+          var cand = {
+            videoId: vId,
+            title: title,
+            author: author,
+            durationSec: (durationSec != null && !isNaN(durationSec)) ? durationSec : null
+          };
+          seenIds.set(vId, cand);
+          results.push(cand);
+        }
+        return;
+      }
+
+      if (Array.isArray(node)) {
+        for (var i = 0; i < node.length; i++) walk(node[i]);
+      } else {
+        var keys = Object.keys(node);
+        for (var k = 0; k < keys.length; k++) {
+          if (keys[k] !== 'trackingParams') walk(node[keys[k]]);
+        }
+      }
+    }
+    walk(data);
+  } catch(e) {
+    console.log('[JS extractVideoCandidatesFromRaw Exception] ' + e);
+  }
+  return results;
+}
+
+globalThis.searchVideos = function(query, client, jsRequestId) {
+  console.log('[JS] searchVideos iniciado query="' + query + '", client=' + client + ', reqId=' + jsRequestId);
+  (async function() {
+    try {
+      var InnertubeClass = globalThis.Innertube || (globalThis.YouTubeJS ? (globalThis.YouTubeJS.Innertube || globalThis.YouTubeJS.default) : null);
+      if (!InnertubeClass) {
+        sendMessage('searchResult', JSON.stringify({ requestId: jsRequestId, error: 'Clase Innertube no encontrada.' }));
+        return;
+      }
+      var yt = globalThis._ytInstances[client];
+      if (!yt) {
+        yt = await InnertubeClass.create({ client_type: client, retrieve_player: false });
+        globalThis._ytInstances[client] = yt;
+      }
+
+      var results = [];
+
+      // Intento 1: yt.search (Parser estándar de youtubei.js)
+      try {
+        var search = await yt.search(query, { type: 'video' });
+        var videos = (search && search.videos) ? search.videos : [];
+        for (var i = 0; i < videos.length; i++) {
+          var v = videos[i];
+          if (v && v.id) {
+            results.push({
+              videoId: String(v.id),
+              title: (v.title && v.title.text) ? String(v.title.text) : '',
+              author: (v.author && v.author.name) ? String(v.author.name) : '',
+              durationSec: (v.duration && typeof v.duration.seconds === 'number') ? v.duration.seconds : null
+            });
+          }
+        }
+      } catch (e1) {
+        console.log('[JS searchVideos fallback por excepción AST] ' + (e1 ? e1.toString() : ''));
+      }
+
+      // Intento 2: Raw search vía yt.actions.execute si Intento 1 falló por error de AST / SearchHeader
+      if (results.length === 0 && yt.actions && typeof yt.actions.execute === 'function') {
+        try {
+          var rawResponse = await yt.actions.execute('/search', { query: query });
+          var rawData = (rawResponse && rawResponse.data) ? rawResponse.data : rawResponse;
+          results = extractVideoCandidatesFromRaw(rawData);
+        } catch (e2) {
+          console.log('[JS searchVideos raw fallback excepción] ' + (e2 ? e2.toString() : ''));
+        }
+      }
+
+      // Intento 3: YouTube Music search si sigue sin resultados
+      if (results.length === 0 && yt.music && typeof yt.music.search === 'function') {
+        try {
+          var musicSearch = await yt.music.search(query, { type: 'song' });
+          var songs = (musicSearch && musicSearch.songs) ? musicSearch.songs : [];
+          for (var j = 0; j < songs.length; j++) {
+            var s = songs[j];
+            if (s && s.id) {
+              results.push({
+                videoId: String(s.id),
+                title: (s.title && s.title.text) ? String(s.title.text) : (s.name || ''),
+                author: (s.artists && s.artists[0] && s.artists[0].name) ? String(s.artists[0].name) : '',
+                durationSec: (s.duration && typeof s.duration.seconds === 'number') ? s.duration.seconds : null
+              });
+            }
+          }
+        } catch (e3) {
+          console.log('[JS searchVideos music fallback excepción] ' + (e3 ? e3.toString() : ''));
+        }
+      }
+
+      console.log('[JS] searchVideos OK: ' + results.length + ' candidatos resueltos');
+      sendMessage('searchResult', JSON.stringify({ requestId: jsRequestId, results: results }));
+    } catch (e) {
+      console.log('[JS searchVideos EXCEPCIÓN FINAL] ' + (e ? e.toString() : 'search error'));
+      sendMessage('searchResult', JSON.stringify({ requestId: jsRequestId, error: e ? e.toString() : 'search error' }));
     }
   })();
 };

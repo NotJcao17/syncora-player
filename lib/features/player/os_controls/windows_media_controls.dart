@@ -116,7 +116,7 @@ class WindowsMediaControls {
   /// Limpia suscripciones locales. No se llama a `_smtc.dispose()` prematuramente
   /// porque destruye el runtime global de Rust de smtc_windows.
   void dispose() {
-    if (_disposed || kIsWeb || !Platform.isWindows) return;
+    if (_disposed || kIsWeb || !Platform.isWindows || Platform.environment.containsKey('FLUTTER_TEST')) return;
     _disposed = true;
     _buttonSub?.cancel();
     _controller.removeListener(_onControllerChanged);

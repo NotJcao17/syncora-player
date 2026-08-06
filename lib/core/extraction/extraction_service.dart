@@ -8,6 +8,9 @@ abstract class ExtractionService {
 
   Future<ExtractionResult> extractUrl(
     String videoId, {
+    String? trackTitle,
+    String? trackArtist,
+    int? durationSeconds,
     ExtractionPriority priority = ExtractionPriority.streaming,
   });
 
@@ -30,6 +33,9 @@ class ExtractionServiceReal implements ExtractionService {
   @override
   Future<ExtractionResult> extractUrl(
     String videoId, {
+    String? trackTitle,
+    String? trackArtist,
+    int? durationSeconds,
     ExtractionPriority priority = ExtractionPriority.streaming,
   }) async {
     final requestId =
@@ -47,6 +53,9 @@ class ExtractionServiceReal implements ExtractionService {
       videoId: videoId,
       requestId: requestId,
       priority: priority,
+      trackTitle: trackTitle,
+      trackArtist: trackArtist,
+      durationSeconds: durationSeconds,
     );
     return _isolate.request(request);
   }
@@ -75,6 +84,9 @@ class ExtractionServiceMock implements ExtractionService {
   @override
   Future<ExtractionResult> extractUrl(
     String videoId, {
+    String? trackTitle,
+    String? trackArtist,
+    int? durationSeconds,
     ExtractionPriority priority = ExtractionPriority.streaming,
   }) async {
     final requestId = 'mock_${DateTime.now().millisecondsSinceEpoch}';

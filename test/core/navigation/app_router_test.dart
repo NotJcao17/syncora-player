@@ -22,10 +22,8 @@ void main() {
           child: SyncoraApp(),
         ),
       );
-      await tester.pump(const Duration(milliseconds: 1000));
-
+      await tester.pumpAndSettle();
       expect(find.byType(HomeScreen), findsOneWidget);
-      await tester.pump(const Duration(milliseconds: 1000));
     });
 
     testWidgets('navegar a /search muestra SearchScreen', (tester) async {

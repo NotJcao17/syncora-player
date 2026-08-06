@@ -18,11 +18,8 @@ void main() {
       ),
     );
 
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 800));
-
+    await tester.pumpAndSettle();
     expect(find.text('Hecho para ti'), findsOneWidget);
     expect(find.text('A Head Full of Dreams'), findsWidgets);
-    await tester.pump(const Duration(milliseconds: 1000));
   });
 }

@@ -119,3 +119,9 @@ Este documento recopila las trampas técnicas más comunes y destructivas al des
 *   **El Error (Pitfall):** Diseñar el crossfade solo para Windows (`media_kit`) y dejarlo pendiente o no diseñado para Android.
 *   **Por qué falla:** Si no se planea desde el inicio, se llega a la Fase 7 con la función funcionando en una sola plataforma, lo cual obliga a una refactorización de la abstracción del `AudioHandler` en un momento tardío del proyecto.
 *   **La Regla:** Ambas plataformas deben tener un diseño explícito desde el Documento Maestro. **Windows:** Instancias duales de `media_kit` con control de volumen cruzado. **Android:** `just_audio` soporta dos instancias `AudioPlayer` simultáneas; implementar un `CrossfadeAudioHandler` que gestione el fade-in/fade-out entre ambas. En ambos casos, el crossfade está **restringido a tracks cacheados/descargados** (ver Pitfall #17).
+
+## 24. Fallback Silencioso de Audio Falso (MP3 de Prueba en Producción)
+*   **El Error (Pitfall):** Devolver una URL de audio de prueba de terceros (ej. MP3 de 6 minutos de SoundHelix) como un `ExtractionSuccess` cuando la resolución o matching de un videoId de YouTube falla.
+*   **Por qué falla:** Provoca que ante fallos intermitentes de red o resolución de IDs no-YouTube (ej. Deezer IDs), el usuario escuche un audio genérico no relacionado de ~6 minutos en lugar de la canción real.
+*   **La Regla:** Si la resolución o matching de YouTube falla, el Isolate de Extracción DEBE devolver un `ExtractionFailure` explícito (`ExtractionError.notFound`). La app gestionará el error pausando o pasando limpiamente al siguiente track según la política de reintentos, pero NUNCA reproduciendo contenido no relacionado disfrazado de éxito. Adicionalmente, el resolver de IDs debe usar Innertube Search (`yt.search`) client-side en QuickJS con scoring de metadatos en Dart (`YtSearchMatcher`), eliminando la fragilidad del scraping HTML.
+

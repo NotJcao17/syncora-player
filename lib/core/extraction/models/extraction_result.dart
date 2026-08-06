@@ -2,6 +2,7 @@ enum ExtractionError {
   notFound, // Error lógico — candidato a auto-skip
   rateLimited, // 403 persistente — PAUSAR, no hacer skip (Pitfall #11 y #14)
   networkError, // SocketException — 1 reintento, luego pausar
+  cancelled, // Petición cancelada por superposición de nuevo track
   unknownError,
 }
 

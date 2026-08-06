@@ -10,6 +10,7 @@ import 'js_bundle_loader.dart';
 import 'models/extraction_request.dart';
 import 'models/extraction_result.dart';
 import 'retry_policy.dart';
+import 'yt_search_matcher.dart';
 
 class _IsolateInitMessage {
   final RootIsolateToken token;
@@ -29,6 +30,8 @@ class ExtractionLogMessage {
 }
 
 final Map<String, Completer<Map<String, dynamic>>> _jsExtractCompleters = {};
+final Map<String, Completer<Map<String, dynamic>>> _jsSearchCompleters = {};
+final Map<String, String> _resolvedMatchCache = {};
 
 /// Isolate de extracción que vive durante toda la sesión de la app.
 /// Ejecuta QuickJS (flutter_js) en background sin congelar la UI (Pitfall #8).
@@ -224,6 +227,22 @@ class ExtractionIsolate {
         }
       });
 
+      // Canal searchResult
+      jsRuntime.onMessage('searchResult', (dynamic args) {
+        try {
+          final Map<String, dynamic> data = args is Map
+              ? Map<String, dynamic>.from(args)
+              : jsonDecode(args.toString());
+          final String? jsRequestId = data['requestId'];
+          if (jsRequestId != null) {
+            final completer = _jsSearchCompleters.remove(jsRequestId);
+            completer?.complete(data);
+          }
+        } catch (e) {
+          sendLog('[IsolateJS] Error al parsear searchResult: $e\nDatos originales: $args');
+        }
+      });
+
       // Asegurar que el microtask queue se procese constantemente
       pendingJobTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
         jsRuntime?.executePendingJob();
@@ -253,13 +272,12 @@ class ExtractionIsolate {
         initMessage.mainSendPort.send(result);
       } else if (message == 'RESET_ENGINE') {
         sendLog('[IsolateJS] Reiniciando motor JS...');
+        pendingJobTimer?.cancel();
         jsRuntime?.evaluate('globalThis.resetJsEngine();');
         retryPolicy.reset('');
         sendLog('[IsolateJS] Motor JS reiniciado.');
       }
     }
-
-    pendingJobTimer?.cancel();
   }
 
   static Future<ExtractionResult> _processExtraction({
@@ -281,13 +299,72 @@ class ExtractionIsolate {
 
     final is11CharYtId = RegExp(r'^[a-zA-Z0-9_-]{11}$').hasMatch(videoId);
     if (!is11CharYtId) {
-      sendLog('[IsolateJS] ID "$videoId" no es un ID de YouTube de 11 caracteres. Usando fallback de prueba.');
-      return ExtractionSuccess(
+      final cachedVideoId = _resolvedMatchCache[videoId];
+      if (cachedVideoId != null) {
+        sendLog('[IsolateJS] Usando match en caché de memoria: $cachedVideoId para $videoId');
+        final resolvedRequest = ExtractionRequest(
+          videoId: cachedVideoId,
+          requestId: request.requestId,
+          priority: request.priority,
+          trackTitle: request.trackTitle,
+          trackArtist: request.trackArtist,
+          durationSeconds: request.durationSeconds,
+        );
+        return _processExtraction(
+          request: resolvedRequest,
+          jsRuntime: jsRuntime,
+          retryPolicy: retryPolicy,
+          sendLog: sendLog,
+        );
+      }
+
+      if ((request.trackTitle != null && request.trackTitle!.isNotEmpty) ||
+          (request.trackArtist != null && request.trackArtist!.isNotEmpty)) {
+        final query = '${request.trackArtist ?? ''} ${request.trackTitle ?? ''}'.trim();
+        for (final client in ['WEB', 'ANDROID']) {
+          sendLog('[IsolateJS] Buscando match para "$query" con cliente $client...');
+          final candidates = await _trySearchWithClient(
+            query: query,
+            client: client,
+            jsRuntime: jsRuntime,
+            sendLog: sendLog,
+          );
+          if (candidates != null && candidates.isNotEmpty) {
+            final best = YtSearchMatcher.pickBest(
+              candidates,
+              artist: request.trackArtist ?? '',
+              title: request.trackTitle ?? '',
+              durationSec: request.durationSeconds,
+            );
+            if (best != null) {
+              sendLog('[IsolateJS] Match seleccionado: ${best.videoId} (score ${best.score}) para "$query"');
+              _resolvedMatchCache[videoId] = best.videoId;
+              final resolvedRequest = ExtractionRequest(
+                videoId: best.videoId,
+                requestId: request.requestId,
+                priority: request.priority,
+                trackTitle: request.trackTitle,
+                trackArtist: request.trackArtist,
+                durationSeconds: request.durationSeconds,
+              );
+              return _processExtraction(
+                request: resolvedRequest,
+                jsRuntime: jsRuntime,
+                retryPolicy: retryPolicy,
+                sendLog: sendLog,
+              );
+            }
+            sendLog('[IsolateJS] Ningún candidato superó el umbral de scoring con $client.');
+          } else {
+            sendLog('[IsolateJS] Búsqueda sin candidatos con $client.');
+          }
+        }
+      }
+
+      sendLog('[IsolateJS] Pista no-YouTube "$videoId" sin coincidencia válida -> notFound');
+      return ExtractionFailure(
         requestId: request.requestId,
-        streamUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-        headers: const {
-          'User-Agent': 'Mozilla/5.0 SyncoraPlayer',
-        },
+        error: ExtractionError.notFound,
       );
     }
 
@@ -429,6 +506,46 @@ class ExtractionIsolate {
       _jsExtractCompleters.remove(jsRequestId);
       sendLog('[IsolateJS] Timeout en extractVideo para $client');
       return {'error': 'Timeout o error esperando respuesta de QuickJS: $e'};
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>?> _trySearchWithClient({
+    required String query,
+    required String client,
+    required JavascriptRuntime? jsRuntime,
+    required void Function(String) sendLog,
+  }) async {
+    if (jsRuntime == null) return null;
+
+    final jsRequestId = 'js_search_${DateTime.now().microsecondsSinceEpoch}_$client';
+    final completer = Completer<Map<String, dynamic>>();
+    _jsSearchCompleters[jsRequestId] = completer;
+
+    final safeQuery = query.replaceAll("'", "\\'");
+    final code = "globalThis.searchVideos('$safeQuery', '$client', '$jsRequestId');";
+    final evalRes = jsRuntime.evaluate(code);
+
+    if (evalRes.isError) {
+      sendLog('[IsolateJS ERROR AL EJECUTAR SEARCHVIDEOS] ${evalRes.stringResult}');
+      _jsSearchCompleters.remove(jsRequestId);
+      return null;
+    }
+
+    jsRuntime.executePendingJob();
+
+    try {
+      final res = await completer.future.timeout(const Duration(seconds: 20));
+      if (res.containsKey('results') && res['results'] is List) {
+        return (res['results'] as List).cast<Map<String, dynamic>>();
+      }
+      if (res.containsKey('error')) {
+        sendLog('[IsolateJS] searchVideos $client devolvió error: ${res['error']}');
+      }
+      return null;
+    } catch (e) {
+      _jsSearchCompleters.remove(jsRequestId);
+      sendLog('[IsolateJS] Timeout en searchVideos para $client');
+      return null;
     }
   }
 }

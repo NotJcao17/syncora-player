@@ -91,6 +91,9 @@ class FakeExtractionService implements ExtractionService {
   @override
   Future<ExtractionResult> extractUrl(
     String videoId, {
+    String? trackTitle,
+    String? trackArtist,
+    int? durationSeconds,
     ExtractionPriority priority = ExtractionPriority.streaming,
   }) async {
     return const ExtractionSuccess(
@@ -210,7 +213,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final playButton = find.byIcon(AppIcons.outline(SolarIcons.Play)).first;
+      final playButton = find.byIcon(AppIcons.broken(SolarIcons.Play)).first;
       expect(playButton, findsOneWidget);
 
       await tester.tap(playButton);

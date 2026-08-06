@@ -96,6 +96,9 @@ class TestableExtractionService implements ExtractionService {
   @override
   Future<ExtractionResult> extractUrl(
     String videoId, {
+    String? trackTitle,
+    String? trackArtist,
+    int? durationSeconds,
     ExtractionPriority priority = ExtractionPriority.streaming,
   }) async {
     extractCount++;
