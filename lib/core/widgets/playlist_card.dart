@@ -80,7 +80,7 @@ class _PlaylistCardState extends State<PlaylistCard> {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            AppIcons.broken(SolarIcons.Play),
+                            AppIcons.outline(SolarIcons.Play),
                             color: AppTheme.background,
                             size: 18,
                           ),

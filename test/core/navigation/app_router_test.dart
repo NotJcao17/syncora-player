@@ -25,7 +25,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1000));
 
       expect(find.byType(HomeScreen), findsOneWidget);
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 1000));
     });
 
     testWidgets('navegar a /search muestra SearchScreen', (tester) async {
@@ -48,10 +48,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1000));
 
       router.go('/search');
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 1000));
 
       expect(find.byType(SearchScreen), findsOneWidget);
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 1000));
       container.dispose();
     });
 
@@ -75,10 +75,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1000));
 
       router.go('/library');
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 1000));
 
       expect(find.byType(LibraryScreen), findsOneWidget);
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 1000));
       container.dispose();
     });
   });

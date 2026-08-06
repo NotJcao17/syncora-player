@@ -80,6 +80,20 @@ dev_dependencies:
   drift_dev: ^2.34.0
   freezed: ^3.2.6-dev.1
   json_serializable: ^6.14.1
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: false
+  image_path: "assets/icon/icon_foreground.png"
+  adaptive_icon_background: "#181C27"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  adaptive_icon_monochrome: "assets/icon/icon_foreground.png"
+  windows:
+    generate: true
+    image_path: "assets/icon/icon_foreground.png"
+    icon_size: 256
+  min_sdk_android: 21
 
 dependency_overrides:
   flutter_rust_bridge: 2.11.1

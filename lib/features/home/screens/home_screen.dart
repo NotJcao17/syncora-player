@@ -42,9 +42,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Buenos días';
-    if (hour < 18) return 'Buenas tardes';
+    final mexicoNow = DateTime.now().toUtc().subtract(const Duration(hours: 6));
+    final hour = mexicoNow.hour;
+    if (hour >= 5 && hour < 12) return 'Buenos días';
+    if (hour >= 12 && hour < 19) return 'Buenas tardes';
     return 'Buenas noches';
   }
 
@@ -115,20 +116,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             borderRadius: const BorderRadius.all(Radius.circular(999)),
                             child: CachedNetworkImage(
                               imageUrl: 'https://i.pravatar.cc/150?img=11',
-                              width: 38,
-                              height: 38,
+                              width: 32,
+                              height: 32,
                               fit: BoxFit.cover,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                       ],
                       Text(
                         _getGreeting(),
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
+                        style: (isDesktop
+                                ? Theme.of(context).textTheme.headlineMedium
+                                : Theme.of(context).textTheme.titleLarge)
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
                               color: AppTheme.primary,
-                              letterSpacing: -0.8,
+                              fontSize: isDesktop ? 26 : 20,
+                              letterSpacing: -0.5,
                             ),
                       ),
                     ],
@@ -175,11 +180,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             'cover': '',
                             'isLiked': true,
                             'route': '/playlist/liked',
-                          },
-                          {
-                            'title': 'A Head Full of Dreams',
-                            'cover': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=200&auto=format&fit=crop',
-                            'route': '/album/302127',
                           },
                           {
                             'title': 'Parachutes',
@@ -244,7 +244,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                               ),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
                                         item['title'] as String,
@@ -257,7 +257,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 14),
                                   ],
                                 ),
                               ),
@@ -270,118 +270,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-          // Sección 2: Bento Grid (Destacados)
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-            sliver: SliverToBoxAdapter(
-              child: _isLoading
-                  ? const Row(
-                      children: [
-                        Flexible(flex: 2, child: SkeletonBox(height: 240, borderRadius: 16)),
-                        SizedBox(width: 16),
-                        Flexible(child: SkeletonBox(height: 240, borderRadius: 16)),
-                      ],
-                    )
-                  : LayoutBuilder(
-                      builder: (ctx, constraints) {
-                        final wide = constraints.maxWidth > 600;
-                        return Column(
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Tarjeta Grande Release
-                                Expanded(
-                                  flex: wide ? 2 : 1,
-                                  child: GestureDetector(
-                                    onTap: () => context.push('/album/302127'),
-                                    child: Container(
-                                      height: 240,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.surface,
-                                        borderRadius: BorderRadius.circular(16),
-                                        boxShadow: AppTheme.surfaceShadow,
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: Stack(
-                                          fit: StackFit.expand,
-                                          children: [
-                                            CachedNetworkImage(
-                                              imageUrl: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600&auto=format&fit=crop',
-                                              fit: BoxFit.cover,
-                                              errorWidget: (_, _, _) => Container(color: AppTheme.surfaceHover),
-                                            ),
-                                            Positioned.fill(
-                                              child: DecoratedBox(
-                                                decoration: BoxDecoration(
-                                                  gradient: LinearGradient(
-                                                    begin: Alignment.topCenter,
-                                                    end: Alignment.bottomCenter,
-                                                    colors: [
-                                                      Colors.transparent,
-                                                      Colors.black.withValues(alpha: 0.4),
-                                                      Colors.black.withValues(alpha: 0.85),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Positioned(
-                                              left: 16,
-                                              right: 16,
-                                              bottom: 16,
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  const Text(
-                                                    'DESTACADO',
-                                                    style: TextStyle(
-                                                      color: AppTheme.secondary,
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.w800,
-                                                      letterSpacing: 1.5,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  const Text(
-                                                    'A Head Full of Dreams',
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 24,
-                                                      fontWeight: FontWeight.w900,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  const Text(
-                                                    'Coldplay',
-                                                    style: TextStyle(
-                                                      color: AppTheme.secondary,
-                                                      fontSize: 14,
-                                                      fontWeight: FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 32)),
 
           // Sección 3: Made for you (Hecho para ti - Tarjetas limpia con texto abajo)
           SliverPadding(

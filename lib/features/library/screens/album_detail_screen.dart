@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
@@ -87,10 +88,9 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
 
     if (mounted) {
       setState(() => _isSaved = nowSaved);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(nowSaved ? 'Álbum guardado en tu biblioteca' : 'Álbum eliminado de tu biblioteca'),
-        ),
+      AppToast.show(
+        context,
+        message: nowSaved ? 'Álbum guardado en tu biblioteca' : 'Álbum eliminado de tu biblioteca',
       );
     }
   }
@@ -259,7 +259,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                             boxShadow: AppTheme.glowShadow,
                           ),
                           child: IconButton(
-                            icon: Icon(AppIcons.broken(SolarIcons.Play), color: AppTheme.background, size: 26),
+                            icon: Icon(AppIcons.outline(SolarIcons.Play), color: AppTheme.background, size: 26),
                             onPressed: () {
                               controller.setQueue(syncoraTracks, startIndex: 0);
                               controller.play();

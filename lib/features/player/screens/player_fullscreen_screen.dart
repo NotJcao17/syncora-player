@@ -7,6 +7,7 @@ import 'package:palette_generator/palette_generator.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../player_models.dart';
@@ -75,11 +76,9 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
 
     if (mounted) {
       setState(() => _isLiked = isLikedNow);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isLikedNow ? 'Añadido a Tus me gusta' : 'Eliminado de Tus me gusta'),
-          duration: const Duration(seconds: 1),
-        ),
+      AppToast.show(
+        context,
+        message: isLikedNow ? 'Se agregó a Tus me gusta.' : 'Se eliminó de Tus me gusta.',
       );
     }
   }
@@ -267,10 +266,27 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        icon: Icon(
-                          state.isShuffle ? AppIcons.bold(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
-                          color: state.isShuffle ? Colors.white : AppTheme.secondary,
-                          size: 24,
+                        icon: Padding(
+                          padding: const EdgeInsets.only(top: 3.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                state.isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
+                                color: state.isShuffle ? Colors.white : AppTheme.secondary,
+                                size: 24,
+                              ),
+                              const SizedBox(height: 2),
+                              Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: state.isShuffle ? Colors.white : Colors.transparent,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         onPressed: () => controller.toggleShuffle(),
                         tooltip: 'Aleatorio',
@@ -309,16 +325,39 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                         onPressed: () => controller.skipToNext(),
                         tooltip: 'Siguiente',
                       ),
-                      IconButton(
-                        icon: Icon(
-                          state.repeatMode == SyncoraRepeatMode.one
-                              ? (state.repeatMode != SyncoraRepeatMode.off ? AppIcons.bold(SolarIcons.RepeatOne) : AppIcons.broken(SolarIcons.RepeatOne))
-                              : (state.repeatMode != SyncoraRepeatMode.off ? AppIcons.bold(SolarIcons.Repeat) : AppIcons.broken(SolarIcons.Repeat)),
-                          color: state.repeatMode != SyncoraRepeatMode.off ? Colors.white : AppTheme.secondary,
-                          size: 24,
-                        ),
-                        onPressed: () => controller.cycleRepeatMode(),
-                        tooltip: 'Repetir',
+                      Builder(
+                        builder: (context) {
+                          final isRepeatActive = state.repeatMode != SyncoraRepeatMode.off;
+                          final repeatIconData = state.repeatMode == SyncoraRepeatMode.one
+                              ? (isRepeatActive ? AppIcons.outline(SolarIcons.RepeatOne) : AppIcons.broken(SolarIcons.RepeatOne))
+                              : (isRepeatActive ? AppIcons.outline(SolarIcons.Repeat) : AppIcons.broken(SolarIcons.Repeat));
+                          return IconButton(
+                            icon: Padding(
+                              padding: const EdgeInsets.only(top: 3.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    repeatIconData,
+                                    color: isRepeatActive ? Colors.white : AppTheme.secondary,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Container(
+                                    width: 4,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isRepeatActive ? Colors.white : Colors.transparent,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            onPressed: () => controller.cycleRepeatMode(),
+                            tooltip: 'Repetir',
+                          );
+                        },
                       ),
                     ],
                   ),

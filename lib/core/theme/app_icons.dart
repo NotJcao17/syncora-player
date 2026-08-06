@@ -26,4 +26,12 @@ abstract class AppIcons {
       fontPackage: 'flutty_solar_icons',
     );
   }
+
+  static IconData outline(SolarIconData icon) {
+    return IconData(
+      icon.codePoint,
+      fontFamily: 'SolarOutline',
+      fontPackage: 'flutty_solar_icons',
+    );
+  }
 }

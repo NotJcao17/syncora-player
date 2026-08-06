@@ -6,7 +6,10 @@ import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/track_tile.dart';
+import '../../../data/local_db/database_provider.dart';
+import '../../../data/local_db/syncora_database.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
 import '../syncora_player_controller.dart';
@@ -110,20 +113,7 @@ class MiniPlayer extends ConsumerWidget {
             ),
 
             // Heart Icon Button (text-background, w-6 h-6)
-            IconButton(
-              icon: Icon(
-                AppIcons.broken(SolarIcons.Heart),
-                color: AppTheme.background,
-                size: 24,
-              ),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Guardado en Me Gusta')),
-                );
-              },
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-            ),
+            _MiniPlayerHeartButton(currentTrack: currentTrack, isDesktop: false),
             const SizedBox(width: 8),
 
             // Play/Pause circular (bg-background text-primary, w-5 h-5)
@@ -240,16 +230,7 @@ class MiniPlayer extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton(
-                  icon: Icon(AppIcons.broken(SolarIcons.Heart), size: 16, color: AppTheme.secondary),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Guardado en Me Gusta')),
-                    );
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                ),
+                _MiniPlayerHeartButton(currentTrack: currentTrack, isDesktop: true),
               ],
             ),
           ),
@@ -266,10 +247,27 @@ class MiniPlayer extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      icon: Icon(
-                        state.isShuffle ? AppIcons.bold(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
-                        size: 16,
-                        color: state.isShuffle ? Colors.white : AppTheme.secondary,
+                      icon: Padding(
+                        padding: const EdgeInsets.only(top: 3.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              state.isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
+                              size: 20,
+                              color: state.isShuffle ? Colors.white : AppTheme.secondary,
+                            ),
+                            const SizedBox(height: 2),
+                            Container(
+                              width: 4,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: state.isShuffle ? Colors.white : Colors.transparent,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       onPressed: () => controller.toggleShuffle(),
                       padding: EdgeInsets.zero,
@@ -316,15 +314,40 @@ class MiniPlayer extends ConsumerWidget {
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     ),
                     const SizedBox(width: 16),
-                    IconButton(
-                      icon: Icon(
-                        state.repeatMode != SyncoraRepeatMode.off ? AppIcons.bold(SolarIcons.Repeat) : AppIcons.broken(SolarIcons.Repeat),
-                        size: 16,
-                        color: state.repeatMode != SyncoraRepeatMode.off ? Colors.white : AppTheme.secondary,
-                      ),
-                      onPressed: () => controller.cycleRepeatMode(),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    Builder(
+                      builder: (context) {
+                        final isRepeatActive = state.repeatMode != SyncoraRepeatMode.off;
+                        final repeatIconData = state.repeatMode == SyncoraRepeatMode.one
+                            ? (isRepeatActive ? AppIcons.outline(SolarIcons.RepeatOne) : AppIcons.broken(SolarIcons.RepeatOne))
+                            : (isRepeatActive ? AppIcons.outline(SolarIcons.Repeat) : AppIcons.broken(SolarIcons.Repeat));
+                        return IconButton(
+                          icon: Padding(
+                            padding: const EdgeInsets.only(top: 3.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  repeatIconData,
+                                  size: 20,
+                                  color: isRepeatActive ? Colors.white : AppTheme.secondary,
+                                ),
+                                const SizedBox(height: 2),
+                                Container(
+                                  width: 4,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isRepeatActive ? Colors.white : Colors.transparent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          onPressed: () => controller.cycleRepeatMode(),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -377,7 +400,7 @@ class MiniPlayer extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   IconButton(
-                    icon: Icon(AppIcons.broken(SolarIcons.Microphone), size: 16, color: AppTheme.secondary),
+                    icon: Icon(AppIcons.broken(SolarIcons.Microphone), size: 20, color: AppTheme.secondary),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Letras próximamente')),
@@ -390,7 +413,7 @@ class MiniPlayer extends ConsumerWidget {
                   IconButton(
                     icon: Icon(
                       ref.watch(isQueueOpenProvider) ? AppIcons.bold(SolarIcons.PlaylistMinimalisticN2) : AppIcons.broken(SolarIcons.PlaylistMinimalisticN2),
-                      size: 16,
+                      size: 20,
                       color: ref.watch(isQueueOpenProvider) ? AppTheme.primary : AppTheme.secondary,
                     ),
                     onPressed: () {
@@ -406,7 +429,7 @@ class MiniPlayer extends ConsumerWidget {
                     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                   ),
                   IconButton(
-                    icon: Icon(AppIcons.broken(SolarIcons.Speaker), size: 16, color: AppTheme.secondary),
+                    icon: Icon(AppIcons.broken(SolarIcons.Speaker), size: 20, color: AppTheme.secondary),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Conectar dispositivo')),
@@ -420,7 +443,7 @@ class MiniPlayer extends ConsumerWidget {
                   IconButton(
                     icon: Icon(
                       state.engine.volume > 0 ? AppIcons.broken(SolarIcons.VolumeLoud) : AppIcons.broken(SolarIcons.VolumeCross),
-                      size: 18,
+                      size: 20,
                       color: state.engine.volume > 0 ? AppTheme.secondary : AppTheme.muted,
                     ),
                     onPressed: () {
@@ -501,6 +524,86 @@ class MiniPlayer extends ConsumerWidget {
                 );
               },
             ),
+    );
+  }
+}
+
+class _MiniPlayerHeartButton extends ConsumerWidget {
+  final SyncoraTrack currentTrack;
+  final bool isDesktop;
+
+  const _MiniPlayerHeartButton({
+    required this.currentTrack,
+    this.isDesktop = false,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dao = ref.watch(playlistDaoProvider);
+    final trackIdInt = int.tryParse(currentTrack.id) ?? currentTrack.id.hashCode.abs();
+
+    return FutureBuilder<Playlist>(
+      future: dao.getLikedPlaylist(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return IconButton(
+            icon: Icon(
+              AppIcons.broken(SolarIcons.Heart),
+              color: isDesktop ? AppTheme.secondary : AppTheme.background,
+              size: isDesktop ? 20 : 24,
+            ),
+            onPressed: null,
+            padding: EdgeInsets.zero,
+            constraints: BoxConstraints(
+              minWidth: isDesktop ? 32 : 40,
+              minHeight: isDesktop ? 32 : 40,
+            ),
+          );
+        }
+
+        final likedPlaylist = snapshot.data!;
+        return StreamBuilder<List<PlaylistTrack>>(
+          stream: dao.watchTracksOrdered(likedPlaylist.id),
+          builder: (context, tracksSnapshot) {
+            final tracks = tracksSnapshot.data ?? [];
+            final isLiked = tracks.any((t) => t.trackId == trackIdInt);
+
+            return IconButton(
+              icon: Icon(
+                isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
+                color: isLiked
+                    ? (isDesktop ? Colors.white : AppTheme.background)
+                    : (isDesktop ? AppTheme.secondary : AppTheme.background),
+                size: isDesktop ? 20 : 24,
+              ),
+              onPressed: () async {
+                final isLikedNow = await dao.toggleLikeTrack(
+                  trackId: trackIdInt,
+                  artistId: 0,
+                  albumId: 0,
+                  title: currentTrack.title,
+                  artistName: currentTrack.artist,
+                  albumName: currentTrack.album ?? '',
+                  coverUrl: currentTrack.coverUrl,
+                  durationMs: (currentTrack.duration ?? Duration.zero).inMilliseconds,
+                );
+
+                if (context.mounted) {
+                  AppToast.show(
+                    context,
+                    message: isLikedNow ? 'Se agregó a Tus me gusta.' : 'Se eliminó de Tus me gusta.',
+                  );
+                }
+              },
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(
+                minWidth: isDesktop ? 32 : 40,
+                minHeight: isDesktop ? 32 : 40,
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

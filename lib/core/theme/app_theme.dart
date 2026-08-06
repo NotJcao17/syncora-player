@@ -64,7 +64,7 @@ class AppTheme {
   ];
 
   static ThemeData get darkTheme {
-    final baseTextTheme = GoogleFonts.plusJakartaSansTextTheme(
+    final baseTextTheme = GoogleFonts.interTextTheme(
       ThemeData.dark().textTheme,
     );
 
@@ -83,70 +83,82 @@ class AppTheme {
       textTheme: baseTextTheme.copyWith(
         displayLarge: baseTextTheme.displayLarge?.copyWith(
           color: primary,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w900,
           letterSpacing: -0.02,
         ),
         displayMedium: baseTextTheme.displayMedium?.copyWith(
           color: primary,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           letterSpacing: -0.02,
         ),
         displaySmall: baseTextTheme.displaySmall?.copyWith(
           color: primary,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           letterSpacing: -0.02,
         ),
         headlineLarge: baseTextTheme.headlineLarge?.copyWith(
           color: primary,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           letterSpacing: -0.02,
         ),
         headlineMedium: baseTextTheme.headlineMedium?.copyWith(
           color: primary,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           letterSpacing: -0.02,
         ),
         headlineSmall: baseTextTheme.headlineSmall?.copyWith(
           color: primary,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
         ),
         titleLarge: baseTextTheme.titleLarge?.copyWith(
           color: primary,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           letterSpacing: -0.02,
         ),
         titleMedium: baseTextTheme.titleMedium?.copyWith(
           color: primary,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
         ),
         titleSmall: baseTextTheme.titleSmall?.copyWith(
           color: secondary,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         ),
         bodyLarge: baseTextTheme.bodyLarge?.copyWith(
           color: primary,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
         ),
         bodyMedium: baseTextTheme.bodyMedium?.copyWith(
           color: secondary,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
         ),
         bodySmall: baseTextTheme.bodySmall?.copyWith(
           color: muted,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
         ),
         labelLarge: baseTextTheme.labelLarge?.copyWith(
           color: primary,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
         ),
         labelMedium: baseTextTheme.labelMedium?.copyWith(
           color: secondary,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         ),
         labelSmall: baseTextTheme.labelSmall?.copyWith(
           color: muted,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
         ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.white,
+        elevation: 12,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        contentTextStyle: const TextStyle(
+          color: Color(0xFF121212),
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+        actionTextColor: const Color(0xFF059669),
       ),
     );
   }

@@ -257,7 +257,7 @@ Para asegurar una apariencia Premium y evitar que la app luzca genérica, el Age
 
 ### Referencias y Assets
 *   **Mockups:** El desarrollo visual se basará estrictamente en los mockups alojados en la carpeta `/mockups` generados por Google Stitch.
-*   **Paquete de Íconos:** Se utilizará **`lucide_icons`** (o su equivalente en Flutter `lucide_icons_flutter`). Es un paquete excelente, moderno, consistente y con trazos limpios que evita el aspecto anticuado de los Material Icons por defecto.
+*   **Paquete de Íconos:** Se utiliza **`flutty_solar_icons`** (Solar Icons con variante *broken* de 1.5px por defecto y variante *bold* para elementos seleccionados/activos). Ofrece una estética moderna, limpia y consistente evitando la apariencia genérica de Material Icons.
 *   **Avatares de Usuarios:** Para evitar pedir fotos personales y darle un toque lúdico, se usarán avatares generados proceduralmente (ej. estilo Kahoot o "Beanheads"). Se utilizará la API de **DiceBear** (o su paquete nativo Flutter) pasando el UUID único del usuario como "seed". Esto asegura que cada usuario tenga un avatar divertido, único y consistente asignado automáticamente sin gastar almacenamiento de base de datos en imágenes.
 
 ### Tipografía y Color

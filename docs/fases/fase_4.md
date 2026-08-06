@@ -121,3 +121,23 @@ lib/
 2. **Persistencia local**: Crear playlist → agregar canciones → cerrar y reabrir la app (verificar persistencia en Drift).
 3. **Importación y Exportación**: Importar un CSV de ejemplo de TuneMyMusic → exportar playlist a CSV.
 4. **Letras Sincronizadas**: Reproducir canción conocida ("Bohemian Rhapsody") → abrir sheet de letras → verificar resaltado karaoke en tiempo real.
+
+---
+
+## 🎨 Migración del Sistema de Íconos (Lucide Icons -> Solar Icons)
+
+1. **Motivación y Diagnóstico**:
+   - Se migró la biblioteca de íconos base de Lucide Icons a **Solar Icons**.
+   - En el paquete inicial `solar_icons: ^0.1.0` se detectó un bug de empaquetado de mapa de caracteres Unicode rotos en fuentes TTF nativas (mostraba cuadrados/círculos en blanco).
+   - Se reemplazó exitosamente por `flutty_solar_icons: ^1.0.4` que empaqueta correctamente todas las variantes de fuentes TTF (`SolarBroken`, `SolarBold`, `SolarLinear`, `SolarOutline`, `SolarBoldDuotonePrimary`, `SolarLineDuotonePrimary`).
+
+2. **Arquitectura del Helper `AppIcons`**:
+   - Se creó `lib/core/theme/app_icons.dart` con la abstracción `AppIcons`:
+     - `AppIcons.broken(SolarIcons.xxx)`: Aplica el estilo `SolarBroken` (trazo 1.5px punteado por defecto).
+     - `AppIcons.bold(SolarIcons.xxx)`: Aplica el estilo `SolarBold` (relleno sólido para elementos seleccionados/activos).
+   - Mapeo exacto de nombres de constantes del paquete (`HomeN2`, `Magnifer`, `AddCircle`, `PlaylistMinimalisticN2`, `WiFiRouter`, etc.).
+
+3. **Verificación**:
+   - `flutter analyze`: **0 errores, 0 advertencias**.
+   - `flutter test`: **26/26 pruebas unitarias y de widgets pasadas**.
+

@@ -180,8 +180,8 @@ class _AppShellState extends ConsumerState<AppShell> {
 
                         // Nav Items Principales (Solar Icons)
                         _DesktopSidebarItem(
-                          icon: AppIcons.broken(SolarIcons.HomeN2),
-                          selectedIcon: AppIcons.bold(SolarIcons.HomeN2),
+                          icon: AppIcons.broken(SolarIcons.HomeInEssentionalUI),
+                          selectedIcon: AppIcons.bold(SolarIcons.HomeInEssentionalUI),
                           label: 'Inicio',
                           isSelected: selectedIndex == 0,
                           isCollapsed: _isSidebarCollapsed,
@@ -506,7 +506,7 @@ class _WindowCaptionButtonState extends State<_WindowCaptionButton> {
           color: _isHovered ? widget.hoverColor : Colors.transparent,
           child: Icon(
             widget.icon,
-            size: 14,
+            size: 19,
             color: AppTheme.primary,
           ),
         ),
@@ -542,8 +542,8 @@ class _MobileNavBar extends StatelessWidget {
         children: [
           Expanded(
             child: _NavDestination(
-              icon: AppIcons.broken(SolarIcons.HomeN2),
-              selectedIcon: AppIcons.bold(SolarIcons.HomeN2),
+              icon: AppIcons.broken(SolarIcons.HomeInEssentionalUI),
+              selectedIcon: AppIcons.bold(SolarIcons.HomeInEssentionalUI),
               label: 'Inicio',
               isSelected: selectedIndex == 0,
               onTap: () => onItemTapped(0),

@@ -6,6 +6,7 @@ import '../../data/local_db/database_provider.dart';
 import '../../features/player/player_models.dart';
 import '../theme/app_theme.dart';
 import 'app_bottom_sheet.dart';
+import 'app_toast.dart';
 
 /// Componente de fila de canción reutilizable.
 class TrackTile extends ConsumerWidget {
@@ -169,12 +170,7 @@ class TrackTile extends ConsumerWidget {
         direction: DismissDirection.startToEnd,
         confirmDismiss: (dir) async {
           onAddToQueue!();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('"${track.title}" agregada a la cola'),
-              duration: const Duration(seconds: 2),
-            ),
-          );
+          AppToast.show(context, message: '"${track.title}" agregada a la cola');
           return false;
         },
         background: Container(
@@ -294,9 +290,7 @@ class TrackTile extends ConsumerWidget {
       if (onAddToQueue != null) {
         onAddToQueue!();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"${track.title}" agregada a la cola')),
-        );
+        AppToast.show(context, message: '"${track.title}" agregada a la cola');
       }
     } else if (value == 'like') {
       final isLiked = await dao.toggleLikeTrack(
@@ -310,11 +304,9 @@ class TrackTile extends ConsumerWidget {
         durationMs: (track.duration ?? Duration.zero).inMilliseconds,
       );
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isLiked ? 'Añadida a Tus me gusta' : 'Eliminada de Tus me gusta'),
-            duration: const Duration(seconds: 2),
-          ),
+        AppToast.show(
+          context,
+          message: isLiked ? 'Se agregó a Tus me gusta.' : 'Se eliminó de Tus me gusta.',
         );
       }
     } else if (value == 'playlist') {
@@ -329,9 +321,7 @@ class TrackTile extends ConsumerWidget {
     if (!context.mounted) return;
 
     if (playlists.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No tienes playlists creadas. Crea una en tu biblioteca.')),
-      );
+      AppToast.show(context, message: 'No tienes playlists creadas. Crea una en tu biblioteca.');
       return;
     }
 

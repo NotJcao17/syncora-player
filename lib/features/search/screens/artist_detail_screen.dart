@@ -214,7 +214,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                       ),
                       child: IconButton(
                         icon: Icon(
-                          AppIcons.broken(SolarIcons.Play),
+                          AppIcons.outline(SolarIcons.Play),
                           color: AppTheme.background,
                           size: 26,
                         ),

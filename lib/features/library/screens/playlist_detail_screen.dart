@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/apis/deezer_provider.dart';
@@ -102,9 +103,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
   Future<void> _exportPlaylist(List<PlaylistTrack> tracks) async {
     if (_playlist == null || tracks.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No hay canciones para exportar.')),
-      );
+      AppToast.show(context, message: 'No hay canciones para exportar.');
       return;
     }
 
@@ -129,11 +128,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
         await file.writeAsString(csvContent);
         await Clipboard.setData(ClipboardData(text: csvContent));
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Playlist exportada a: ${file.path} (Copiada al portapapeles)'),
-              duration: const Duration(seconds: 4),
-            ),
+          AppToast.show(
+            context,
+            message: 'Playlist exportada a: ${file.path}',
           );
         }
       } else {
@@ -146,17 +143,13 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           ),
         ]);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Playlist exportada con éxito')),
-          );
+          AppToast.show(context, message: 'Playlist exportada con éxito');
         }
       }
     } catch (e) {
       await Clipboard.setData(ClipboardData(text: csvContent));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Exportación copiada al portapapeles (${tracks.length} canciones)')),
-        );
+        AppToast.show(context, message: 'Exportación copiada al portapapeles (${tracks.length} canciones)');
       }
     }
   }
@@ -350,7 +343,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                 boxShadow: AppTheme.glowShadow,
                               ),
                               child: IconButton(
-                                icon: Icon(AppIcons.broken(SolarIcons.Play), color: AppTheme.background, size: 26),
+                                icon: Icon(AppIcons.outline(SolarIcons.Play), color: AppTheme.background, size: 26),
                                 onPressed: () {
                                   controller.setQueue(syncoraTracks, startIndex: 0);
                                   controller.play();
