@@ -62,9 +62,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           // Header de Búsqueda
           Padding(
             padding: EdgeInsets.fromLTRB(
-              isDesktop ? 32 : 20,
+              isDesktop ? 32 : 12,
               isDesktop ? 24 : 16,
-              isDesktop ? 32 : 20,
+              isDesktop ? 32 : 12,
               12,
             ),
             child: Column(
@@ -121,7 +121,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           if (_searchController.text.trim().isNotEmpty)
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12, vertical: 4),
               child: Row(
                 children: _filters.map((filter) {
                   final filterType = filter['type'] as DeezerSearchType;
@@ -175,7 +175,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildExploreCategories(bool isDesktop) {
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -249,7 +249,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
 
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -431,8 +431,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildSkeletonResults() {
+    final isDesktop = MediaQuery.of(context).size.width >= 768;
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12, vertical: 8),
       itemCount: 6,
       separatorBuilder: (ctx, index) => const SizedBox(height: 12),
       itemBuilder: (ctx, index) => const Row(

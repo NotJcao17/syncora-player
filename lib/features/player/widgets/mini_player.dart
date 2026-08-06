@@ -179,55 +179,8 @@ class MiniPlayer extends ConsumerWidget {
             flex: 3,
             child: Row(
               children: [
-                GestureDetector(
-                  onTap: () => context.push('/player'),
-                  child: Hero(
-                    tag: 'player_cover_hero',
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: SizedBox(
-                        width: 56,
-                        height: 56,
-                        child: currentTrack.coverUrl.isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl: currentTrack.coverUrl,
-                                memCacheWidth: 300,
-                                fit: BoxFit.cover,
-                                errorWidget: (_, _, _) => _buildPlaceholder(),
-                              )
-                            : _buildPlaceholder(),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Flexible(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        currentTrack.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppTheme.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        currentTrack.artist,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppTheme.secondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
+                Expanded(
+                  child: _DesktopTrackInfo(currentTrack: currentTrack),
                 ),
                 const SizedBox(width: 8),
                 _MiniPlayerHeartButton(currentTrack: currentTrack, isDesktop: true),
@@ -607,3 +560,240 @@ class _MiniPlayerHeartButton extends ConsumerWidget {
     );
   }
 }
+
+class _DesktopTrackInfo extends StatefulWidget {
+  final SyncoraTrack currentTrack;
+
+  const _DesktopTrackInfo({required this.currentTrack});
+
+  @override
+  State<_DesktopTrackInfo> createState() => _DesktopTrackInfoState();
+}
+
+class _DesktopTrackInfoState extends State<_DesktopTrackInfo> {
+  bool _isAlbumHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasAlbumId = widget.currentTrack.albumId != null && widget.currentTrack.albumId != 0;
+
+    final coverWidget = Hero(
+      tag: 'player_cover_hero',
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: SizedBox(
+          width: 56,
+          height: 56,
+          child: widget.currentTrack.coverUrl.isNotEmpty
+              ? CachedNetworkImage(
+                  imageUrl: widget.currentTrack.coverUrl,
+                  memCacheWidth: 300,
+                  fit: BoxFit.cover,
+                  errorWidget: (_, _, _) => _buildPlaceholder(),
+                )
+              : _buildPlaceholder(),
+        ),
+      ),
+    );
+
+    return Row(
+      children: [
+        // Portada 56x56 (Enlace a Álbum)
+        MouseRegion(
+          cursor: hasAlbumId ? SystemMouseCursors.click : SystemMouseCursors.basic,
+          onEnter: (_) {
+            if (hasAlbumId) setState(() => _isAlbumHovered = true);
+          },
+          onExit: (_) {
+            if (hasAlbumId) setState(() => _isAlbumHovered = false);
+          },
+          child: GestureDetector(
+            onTap: hasAlbumId
+                ? () => context.push('/album/${widget.currentTrack.albumId}')
+                : null,
+            child: coverWidget,
+          ),
+        ),
+        const SizedBox(width: 14),
+
+        // Título (Enlace a Álbum) y Artista (Enlace a Artista)
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Título de la canción
+              MouseRegion(
+                cursor: hasAlbumId ? SystemMouseCursors.click : SystemMouseCursors.basic,
+                onEnter: (_) {
+                  if (hasAlbumId) setState(() => _isAlbumHovered = true);
+                },
+                onExit: (_) {
+                  if (hasAlbumId) setState(() => _isAlbumHovered = false);
+                },
+                child: GestureDetector(
+                  onTap: hasAlbumId
+                      ? () => context.push('/album/${widget.currentTrack.albumId}')
+                      : null,
+                  child: Text(
+                    widget.currentTrack.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppTheme.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      decoration: (hasAlbumId && _isAlbumHovered) ? TextDecoration.underline : TextDecoration.none,
+                      decorationColor: AppTheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 2),
+
+              // Artistas
+              _buildArtistSubtitle(context),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildArtistSubtitle(BuildContext context) {
+    const style = TextStyle(
+      color: AppTheme.secondary,
+      fontSize: 12,
+    );
+
+    final List<SyncoraArtistRef> effectiveArtists = [];
+    if (widget.currentTrack.artists.isNotEmpty) {
+      effectiveArtists.addAll(widget.currentTrack.artists);
+    } else if (widget.currentTrack.artist.contains(', ')) {
+      final names = widget.currentTrack.artist.split(', ');
+      final mainId = widget.currentTrack.artistId ?? 0;
+      for (int i = 0; i < names.length; i++) {
+        effectiveArtists.add(SyncoraArtistRef(
+          id: i == 0 ? mainId : 0,
+          name: names[i].trim(),
+        ));
+      }
+    }
+
+    if (effectiveArtists.isNotEmpty) {
+      final spans = <InlineSpan>[];
+      for (int i = 0; i < effectiveArtists.length; i++) {
+        final artist = effectiveArtists[i];
+        if (i > 0) {
+          spans.add(
+            const TextSpan(
+              text: ', ',
+              style: style,
+            ),
+          );
+        }
+        final isClickable = artist.id != 0;
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.baseline,
+            baseline: TextBaseline.alphabetic,
+            child: _MiniPlayerHoverableArtist(
+              text: artist.name,
+              style: style,
+              isClickable: isClickable,
+              onTap: isClickable ? () => context.push('/artist/${artist.id}') : null,
+            ),
+          ),
+        );
+      }
+
+      return Text.rich(
+        TextSpan(children: spans),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final hasArtistId = widget.currentTrack.artistId != null && widget.currentTrack.artistId != 0;
+
+    if (hasArtistId) {
+      return Text.rich(
+        TextSpan(
+          children: [
+            WidgetSpan(
+              alignment: PlaceholderAlignment.baseline,
+              baseline: TextBaseline.alphabetic,
+              child: _MiniPlayerHoverableArtist(
+                text: widget.currentTrack.artist,
+                style: style,
+                isClickable: true,
+                onTap: () => context.push('/artist/${widget.currentTrack.artistId}'),
+              ),
+            ),
+          ],
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    return Text(
+      widget.currentTrack.artist,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: style,
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: AppTheme.surfaceHover,
+      child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 24),
+    );
+  }
+}
+
+class _MiniPlayerHoverableArtist extends StatefulWidget {
+  final String text;
+  final TextStyle style;
+  final bool isClickable;
+  final VoidCallback? onTap;
+
+  const _MiniPlayerHoverableArtist({
+    required this.text,
+    required this.style,
+    required this.isClickable,
+    this.onTap,
+  });
+
+  @override
+  State<_MiniPlayerHoverableArtist> createState() => _MiniPlayerHoverableArtistState();
+}
+
+class _MiniPlayerHoverableArtistState extends State<_MiniPlayerHoverableArtist> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: widget.isClickable ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: (_) {
+        if (widget.isClickable) setState(() => _isHovered = true);
+      },
+      onExit: (_) {
+        if (widget.isClickable) setState(() => _isHovered = false);
+      },
+      child: GestureDetector(
+        onTap: widget.isClickable ? widget.onTap : null,
+        child: Text(
+          widget.text,
+          style: widget.style.copyWith(
+            decoration: (widget.isClickable && _isHovered) ? TextDecoration.underline : TextDecoration.none,
+            decorationColor: widget.style.color,
+          ),
+        ),
+      ),
+    );
+  }
+}
+

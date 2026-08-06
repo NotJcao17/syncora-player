@@ -7,10 +7,10 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/models/deezer/deezer_album.dart';
-import '../../player/player_models.dart';
 import '../../player/player_providers.dart';
 
 /// Pantalla de Detalle de Álbum (`/album/:id`) conectada a Deezer real.
@@ -129,8 +129,8 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
             child: SingleChildScrollView(
               padding: EdgeInsets.only(
                 top: MediaQuery.of(context).padding.top + 56,
-                left: isDesktop ? 32 : 20,
-                right: isDesktop ? 32 : 20,
+                left: isDesktop ? 32 : 12,
+                right: isDesktop ? 32 : 12,
                 bottom: 40,
               ),
               child: Column(
@@ -201,19 +201,22 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     )
                   else
                     Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 180,
-                          height: 180,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: AppTheme.glowHighShadow,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: CachedNetworkImage(
-                              imageUrl: album.coverUrl,
-                              fit: BoxFit.cover,
+                        Center(
+                          child: Container(
+                            width: 180,
+                            height: 180,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: AppTheme.glowHighShadow,
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: CachedNetworkImage(
+                                imageUrl: album.coverUrl,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         ),
@@ -245,9 +248,10 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                       ],
                     ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   Row(
+                    mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
                     children: [
                       if (syncoraTracks.isNotEmpty) ...[
                         Container(
@@ -290,9 +294,10 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
 
                   ListView.builder(
+                    padding: EdgeInsets.zero,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: syncoraTracks.length,
@@ -300,16 +305,15 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                       final track = syncoraTracks[i];
                       final isPlaying = currentTrack?.id == track.id;
 
-                      return _AlbumTrackRow(
+                      return TrackTile(
                         track: track,
-                        index: i + 1,
+                        index: i,
                         isPlaying: isPlaying,
-                        isDesktop: isDesktop,
                         onTap: () {
                           controller.setQueue(syncoraTracks, startIndex: i);
                           controller.play();
                         },
-                        formatDuration: _formatDuration,
+                        onAddToQueue: () => controller.addToQueue(track),
                       );
                     },
                   ),
@@ -355,111 +359,6 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  String _formatDuration(Duration d) {
-    final minutes = d.inMinutes;
-    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
-}
-
-class _AlbumTrackRow extends StatefulWidget {
-  final SyncoraTrack track;
-  final int index;
-  final bool isPlaying;
-  final bool isDesktop;
-  final VoidCallback onTap;
-  final String Function(Duration) formatDuration;
-
-  const _AlbumTrackRow({
-    required this.track,
-    required this.index,
-    required this.isPlaying,
-    required this.isDesktop,
-    required this.onTap,
-    required this.formatDuration,
-  });
-
-  @override
-  State<_AlbumTrackRow> createState() => _AlbumTrackRowState();
-}
-
-class _AlbumTrackRowState extends State<_AlbumTrackRow> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final track = widget.track;
-    final isPlaying = widget.isPlaying;
-
-    final bgColor = isPlaying
-        ? AppTheme.surfaceHover
-        : (_isHovered ? AppTheme.surfaceHover.withValues(alpha: 0.5) : Colors.transparent);
-
-    return InkWell(
-      onTap: widget.onTap,
-      onHover: (h) {
-        if (mounted && _isHovered != h) setState(() => _isHovered = h);
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 32,
-              child: Center(
-                child: isPlaying
-                    ? Icon(AppIcons.broken(SolarIcons.Chart), color: AppTheme.primary, size: 16)
-                    : Text(
-                        '${widget.index}',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppTheme.secondary, fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    track.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: isPlaying ? AppTheme.primary : AppTheme.primary.withValues(alpha: 0.95),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    track.artist,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppTheme.secondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              widget.formatDuration(track.duration ?? Duration.zero),
-              style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -10,6 +10,7 @@ class DeezerTrack {
   final String coverUrl;
   final int durationSec;
   final String? previewUrl;
+  final List<SyncoraArtistRef> contributorsList;
 
   const DeezerTrack({
     required this.id,
@@ -21,17 +22,56 @@ class DeezerTrack {
     required this.coverUrl,
     required this.durationSec,
     this.previewUrl,
+    this.contributorsList = const [],
   });
 
   factory DeezerTrack.fromJson(Map<String, dynamic> json) {
     final artistMap = json['artist'] as Map<String, dynamic>? ?? {};
     final albumMap = json['album'] as Map<String, dynamic>? ?? {};
+    final parsedArtistId = artistMap['id'] as int? ?? json['artist_id'] as int? ?? 0;
+
+    final List<SyncoraArtistRef> contributorsList = [];
+    final contributorsRaw = json['contributors'];
+    if (contributorsRaw is List) {
+      for (final item in contributorsRaw) {
+        if (item is Map) {
+          final rawId = item['id'];
+          final rawName = item['name'];
+          final id = rawId is int ? rawId : (rawId != null ? int.tryParse(rawId.toString()) ?? 0 : 0);
+          final name = rawName is String ? rawName : '';
+          if (name.isNotEmpty) {
+            contributorsList.add(SyncoraArtistRef(id: id, name: name));
+          }
+        }
+      }
+    }
+
+    String resolvedArtistName = '';
+    if (contributorsList.isNotEmpty) {
+      resolvedArtistName = contributorsList.map((c) => c.name).join(', ');
+    } else {
+      resolvedArtistName = artistMap['name'] as String? ?? json['artist_name'] as String? ?? 'Artista Desconocido';
+    }
+
+    if (contributorsList.isEmpty) {
+      if (resolvedArtistName.contains(', ')) {
+        final names = resolvedArtistName.split(', ');
+        for (int i = 0; i < names.length; i++) {
+          contributorsList.add(SyncoraArtistRef(
+            id: i == 0 ? parsedArtistId : 0,
+            name: names[i].trim(),
+          ));
+        }
+      } else if (parsedArtistId != 0 || resolvedArtistName.isNotEmpty) {
+        contributorsList.add(SyncoraArtistRef(id: parsedArtistId, name: resolvedArtistName));
+      }
+    }
 
     return DeezerTrack(
       id: json['id'] as int? ?? 0,
       title: json['title'] as String? ?? json['title_short'] as String? ?? 'Desconocida',
-      artistName: artistMap['name'] as String? ?? json['artist_name'] as String? ?? 'Artista Desconocido',
-      artistId: artistMap['id'] as int? ?? json['artist_id'] as int? ?? 0,
+      artistName: resolvedArtistName,
+      artistId: parsedArtistId,
       albumTitle: albumMap['title'] as String? ?? json['album_title'] as String? ?? '',
       albumId: albumMap['id'] as int? ?? json['album_id'] as int? ?? 0,
       coverUrl: albumMap['cover_medium'] as String? ??
@@ -41,6 +81,7 @@ class DeezerTrack {
           '',
       durationSec: json['duration'] as int? ?? 0,
       previewUrl: json['preview'] as String?,
+      contributorsList: contributorsList,
     );
   }
 
@@ -61,10 +102,14 @@ class DeezerTrack {
       id: id.toString(),
       title: title,
       artist: artistName,
+      artists: contributorsList,
+      artistId: artistId,
       album: albumTitle,
+      albumId: albumId,
       duration: Duration(seconds: durationSec),
       artUri: coverUrl.isNotEmpty ? Uri.tryParse(coverUrl) : null,
       previewUrl: previewUrl,
     );
   }
 }
+

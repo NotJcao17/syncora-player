@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
@@ -188,14 +189,32 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
         builder: (ctx, snapshot) {
           final tracks = snapshot.data ?? [];
           final syncoraTracks = tracks
-              .map((t) => SyncoraTrack(
-                    id: t.trackId.toString(),
-                    title: t.title,
-                    artist: t.artistName,
-                    album: t.albumName,
-                    duration: Duration(milliseconds: t.durationMs),
-                    artUri: t.coverUrl.isNotEmpty ? Uri.tryParse(t.coverUrl) : null,
-                  ))
+              .map((t) {
+                final List<SyncoraArtistRef> parsedArtists = [];
+                if (t.artistName.contains(', ')) {
+                  final names = t.artistName.split(', ');
+                  for (int i = 0; i < names.length; i++) {
+                    parsedArtists.add(SyncoraArtistRef(
+                      id: i == 0 ? t.artistId : 0,
+                      name: names[i].trim(),
+                    ));
+                  }
+                } else if (t.artistId != 0 || t.artistName.isNotEmpty) {
+                  parsedArtists.add(SyncoraArtistRef(id: t.artistId, name: t.artistName));
+                }
+
+                return SyncoraTrack(
+                  id: t.trackId.toString(),
+                  title: t.title,
+                  artist: t.artistName,
+                  artists: parsedArtists,
+                  artistId: t.artistId,
+                  album: t.albumName,
+                  albumId: t.albumId,
+                  duration: Duration(milliseconds: t.durationMs),
+                  artUri: t.coverUrl.isNotEmpty ? Uri.tryParse(t.coverUrl) : null,
+                );
+              })
               .toList();
 
           return Stack(
@@ -204,8 +223,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                 child: SingleChildScrollView(
                   padding: EdgeInsets.only(
                     top: MediaQuery.of(context).padding.top + 56,
-                    left: isDesktop ? 32 : 20,
-                    right: isDesktop ? 32 : 20,
+                    left: isDesktop ? 32 : 12,
+                    right: isDesktop ? 32 : 12,
                     bottom: 40,
                   ),
                   child: Column(
@@ -280,27 +299,30 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         )
                       else
                         Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Container(
-                              width: 180,
-                              height: 180,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: AppTheme.glowHighShadow,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: isLiked
-                                    ? Container(
-                                        decoration: const BoxDecoration(gradient: AppTheme.gradientLiked),
-                                        child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 56),
-                                      )
-                                    : (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty)
-                                        ? CachedNetworkImage(imageUrl: playlist.coverUrl!, fit: BoxFit.cover)
-                                        : Container(
-                                            color: AppTheme.surfaceHover,
-                                            child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 56),
-                                          ),
+                            Center(
+                              child: Container(
+                                width: 180,
+                                height: 180,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: AppTheme.glowHighShadow,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: isLiked
+                                      ? Container(
+                                          decoration: const BoxDecoration(gradient: AppTheme.gradientLiked),
+                                          child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 56),
+                                        )
+                                      : (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty)
+                                          ? CachedNetworkImage(imageUrl: playlist.coverUrl!, fit: BoxFit.cover)
+                                          : Container(
+                                              color: AppTheme.surfaceHover,
+                                              child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 56),
+                                            ),
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -323,15 +345,17 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             const SizedBox(height: 10),
                             Text(
                               '${tracks.length} canciones',
+                              textAlign: TextAlign.center,
                               style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
                             ),
                           ],
                         ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
                       // Actions row
                       Row(
+                        mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
                         children: [
                           if (syncoraTracks.isNotEmpty) ...[
                             Container(
@@ -402,7 +426,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 12),
 
                       // Buscador inline de canciones para agregar a esta playlist
                       if (_showAddSongsSearch || tracks.isEmpty) ...[
@@ -492,7 +516,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 16),
                       ],
 
                       if (tracks.isEmpty && !_showAddSongsSearch)
@@ -508,6 +532,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         )
                       else
                         ListView.builder(
+                          padding: EdgeInsets.zero,
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: syncoraTracks.length,
@@ -516,18 +541,16 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             final playlistTrack = tracks[i];
                             final isPlaying = currentTrack?.id == track.id;
 
-                            return _PlaylistTrackRow(
+                            return TrackTile(
                               track: track,
-                              index: i + 1,
+                              index: i,
                               isPlaying: isPlaying,
-                              isDesktop: isDesktop,
                               onTap: () {
                                 controller.setQueue(syncoraTracks, startIndex: i);
                                 controller.play();
                               },
                               onRemove: () => playlistDao.removeTrackEntry(playlistTrack.id),
                               onAddToQueue: () => controller.addToQueue(track),
-                              formatDuration: _formatDuration,
                             );
                           },
                         ),
@@ -575,160 +598,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             ],
           );
         },
-      ),
-    );
-  }
-
-  String _formatDuration(Duration d) {
-    final minutes = d.inMinutes;
-    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
-}
-
-class _PlaylistTrackRow extends StatefulWidget {
-  final SyncoraTrack track;
-  final int index;
-  final bool isPlaying;
-  final bool isDesktop;
-  final VoidCallback onTap;
-  final VoidCallback onRemove;
-  final VoidCallback onAddToQueue;
-  final String Function(Duration) formatDuration;
-
-  const _PlaylistTrackRow({
-    required this.track,
-    required this.index,
-    required this.isPlaying,
-    required this.isDesktop,
-    required this.onTap,
-    required this.onRemove,
-    required this.onAddToQueue,
-    required this.formatDuration,
-  });
-
-  @override
-  State<_PlaylistTrackRow> createState() => _PlaylistTrackRowState();
-}
-
-class _PlaylistTrackRowState extends State<_PlaylistTrackRow> {
-  bool _isHovered = false;
-
-  void _showOptionsMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary),
-              title: const Text('Agregar a cola', style: TextStyle(color: AppTheme.primary)),
-              onTap: () {
-                Navigator.pop(ctx);
-                widget.onAddToQueue();
-              },
-            ),
-            ListTile(
-              leading: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), color: Colors.redAccent),
-              title: const Text('Eliminar de playlist', style: TextStyle(color: Colors.redAccent)),
-              onTap: () {
-                Navigator.pop(ctx);
-                widget.onRemove();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final track = widget.track;
-    final isPlaying = widget.isPlaying;
-
-    final bgColor = isPlaying
-        ? AppTheme.surfaceHover
-        : (_isHovered ? AppTheme.surfaceHover.withValues(alpha: 0.5) : Colors.transparent);
-
-    return InkWell(
-      onTap: widget.onTap,
-      onHover: (h) {
-        if (mounted && _isHovered != h) setState(() => _isHovered = h);
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 32,
-              child: Center(
-                child: isPlaying
-                    ? Icon(AppIcons.broken(SolarIcons.Chart), color: AppTheme.primary, size: 16)
-                    : Text(
-                        '${widget.index}',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppTheme.secondary, fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-              ),
-            ),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: SizedBox(
-                width: 40,
-                height: 40,
-                child: (track.coverUrl.isNotEmpty)
-                    ? CachedNetworkImage(imageUrl: track.coverUrl, fit: BoxFit.cover)
-                    : Container(color: AppTheme.surfaceHover, child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted)),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    track.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: isPlaying ? AppTheme.primary : AppTheme.primary.withValues(alpha: 0.95),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    track.artist,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              widget.formatDuration(track.duration ?? Duration.zero),
-              style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-            ),
-            const SizedBox(width: 4),
-            IconButton(
-              icon: Icon(AppIcons.broken(SolarIcons.MenuDots), color: AppTheme.secondary, size: 18),
-              onPressed: () => _showOptionsMenu(context),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-            ),
-          ],
-        ),
       ),
     );
   }

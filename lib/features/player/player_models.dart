@@ -1,5 +1,12 @@
 import 'package:flutter/foundation.dart';
 
+@immutable
+class SyncoraArtistRef {
+  final int id;
+  final String name;
+  const SyncoraArtistRef({required this.id, required this.name});
+}
+
 /// Pista del dominio de Syncora, independiente de `audio_service`.
 @immutable
 class SyncoraTrack {
@@ -7,8 +14,19 @@ class SyncoraTrack {
   final String id;
 
   final String title;
-  final String artist;
+  final String _artist;
+
+  String get artist {
+    if (artists.isNotEmpty) {
+      return artists.map((a) => a.name).join(', ');
+    }
+    return _artist;
+  }
+
+  final List<SyncoraArtistRef> artists;
+  final int? artistId;
   final String? album;
+  final int? albumId;
   final Duration? duration;
   final String? youtubeVideoId;
 
@@ -25,25 +43,30 @@ class SyncoraTrack {
   const SyncoraTrack({
     required this.id,
     required this.title,
-    this.artist = '',
+    String artist = '',
+    this.artists = const [],
+    this.artistId,
     this.album,
+    this.albumId,
     this.duration,
     this.youtubeVideoId,
     this.artUri,
     this.previewUrl,
     this.isSpokenWord = false,
-  });
+  }) : _artist = artist;
 
   factory SyncoraTrack.fromVideoId({
     required String videoId,
     String? title,
     String? artist,
+    List<SyncoraArtistRef> artists = const [],
   }) {
     return SyncoraTrack(
       id: videoId,
       youtubeVideoId: videoId,
       title: title ?? 'Video $videoId',
       artist: artist ?? 'YouTube',
+      artists: artists,
     );
   }
 
@@ -51,7 +74,10 @@ class SyncoraTrack {
     String? id,
     String? title,
     String? artist,
+    List<SyncoraArtistRef>? artists,
+    int? artistId,
     String? album,
+    int? albumId,
     Duration? duration,
     String? youtubeVideoId,
     Uri? artUri,
@@ -62,8 +88,11 @@ class SyncoraTrack {
     return SyncoraTrack(
       id: id ?? this.id,
       title: title ?? this.title,
-      artist: artist ?? this.artist,
+      artist: artist ?? _artist,
+      artists: artists ?? this.artists,
+      artistId: artistId ?? this.artistId,
       album: album ?? this.album,
+      albumId: albumId ?? this.albumId,
       duration: duration ?? this.duration,
       youtubeVideoId: youtubeVideoId ?? this.youtubeVideoId,
       artUri: artUri ?? (coverUrl != null ? Uri.tryParse(coverUrl) : this.artUri),
@@ -75,3 +104,4 @@ class SyncoraTrack {
 
 /// Modo de repetición expuesto al reproductor.
 enum SyncoraRepeatMode { off, one, all }
+
