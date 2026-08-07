@@ -1,11 +1,19 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'extraction_service.dart';
 
+bool get _isTestEnv {
+  try {
+    final name = WidgetsBinding.instance.runtimeType.toString();
+    return name.contains('Test') || name.contains('Automated');
+  } catch (_) {
+    return true;
+  }
+}
+
 final extractionServiceProvider = Provider<ExtractionService>((ref) {
-  final isTestEnv = Platform.environment.containsKey('FLUTTER_TEST');
-  if (kIsWeb || isTestEnv) {
+  if (kIsWeb || _isTestEnv) {
     return ExtractionServiceMock();
   }
   final service = ExtractionServiceReal();

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:smtc_windows/smtc_windows.dart';
 
 import '../syncora_player_controller.dart';
@@ -18,8 +19,17 @@ class WindowsMediaControls {
   DateTime _lastTimelineUpdate = DateTime.fromMillisecondsSinceEpoch(0);
   bool _disposed = false;
 
+bool get _isTestEnv {
+  try {
+    final name = WidgetsBinding.instance.runtimeType.toString();
+    return name.contains('Test') || name.contains('Automated');
+  } catch (_) {
+    return true;
+  }
+}
+
   WindowsMediaControls(this._controller) {
-    if (kIsWeb || !Platform.isWindows) return;
+    if (kIsWeb || !Platform.isWindows || _isTestEnv) return;
 
     try {
       _smtc = SMTCWindows(

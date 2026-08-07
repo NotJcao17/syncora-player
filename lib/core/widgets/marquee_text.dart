@@ -1,6 +1,4 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 /// Componente de texto en marquesina (Marquee) con autodesplazamiento horizontal.
 ///
@@ -50,8 +48,17 @@ class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStat
     }
   }
 
+bool get _isTestEnv {
+  try {
+    final name = WidgetsBinding.instance.runtimeType.toString();
+    return name.contains('Test') || name.contains('Automated');
+  } catch (_) {
+    return true;
+  }
+}
+
   void _startAnimationIfNeeded(bool isOverflowing) {
-    if (!kIsWeb && Platform.environment.containsKey('FLUTTER_TEST')) return;
+    if (_isTestEnv) return;
     if (isOverflowing) {
       if (!_isAnimating) {
         _isAnimating = true;

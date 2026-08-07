@@ -432,7 +432,7 @@ class MiniPlayer extends ConsumerWidget {
   }
 }
 
-class _MiniPlayerHeartButton extends ConsumerWidget {
+class _MiniPlayerHeartButton extends ConsumerStatefulWidget {
   final SyncoraTrack currentTrack;
   final bool isDesktop;
 
@@ -442,25 +442,38 @@ class _MiniPlayerHeartButton extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_MiniPlayerHeartButton> createState() => _MiniPlayerHeartButtonState();
+}
+
+class _MiniPlayerHeartButtonState extends ConsumerState<_MiniPlayerHeartButton> {
+  Future<Playlist>? _likedPlaylistFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _likedPlaylistFuture = ref.read(playlistDaoProvider).getLikedPlaylist();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final dao = ref.watch(playlistDaoProvider);
-    final trackIdInt = int.tryParse(currentTrack.id) ?? currentTrack.id.hashCode.abs();
+    final trackIdInt = int.tryParse(widget.currentTrack.id) ?? widget.currentTrack.id.hashCode.abs();
 
     return FutureBuilder<Playlist>(
-      future: dao.getLikedPlaylist(),
+      future: _likedPlaylistFuture,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return IconButton(
             icon: Icon(
               AppIcons.broken(SolarIcons.Heart),
-              color: isDesktop ? AppTheme.secondary : AppTheme.background,
-              size: isDesktop ? 20 : 24,
+              color: widget.isDesktop ? AppTheme.secondary : AppTheme.background,
+              size: widget.isDesktop ? 20 : 24,
             ),
             onPressed: null,
             padding: EdgeInsets.zero,
             constraints: BoxConstraints(
-              minWidth: isDesktop ? 32 : 40,
-              minHeight: isDesktop ? 32 : 40,
+              minWidth: widget.isDesktop ? 32 : 40,
+              minHeight: widget.isDesktop ? 32 : 40,
             ),
           );
         }
@@ -476,20 +489,20 @@ class _MiniPlayerHeartButton extends ConsumerWidget {
               icon: Icon(
                 isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
                 color: isLiked
-                    ? (isDesktop ? Colors.white : AppTheme.background)
-                    : (isDesktop ? AppTheme.secondary : AppTheme.background),
-                size: isDesktop ? 20 : 24,
+                    ? (widget.isDesktop ? Colors.white : AppTheme.background)
+                    : (widget.isDesktop ? AppTheme.secondary : AppTheme.background),
+                size: widget.isDesktop ? 20 : 24,
               ),
               onPressed: () async {
                 final isLikedNow = await dao.toggleLikeTrack(
                   trackId: trackIdInt,
                   artistId: 0,
                   albumId: 0,
-                  title: currentTrack.title,
-                  artistName: currentTrack.artist,
-                  albumName: currentTrack.album ?? '',
-                  coverUrl: currentTrack.coverUrl,
-                  durationMs: (currentTrack.duration ?? Duration.zero).inMilliseconds,
+                  title: widget.currentTrack.title,
+                  artistName: widget.currentTrack.artist,
+                  albumName: widget.currentTrack.album ?? '',
+                  coverUrl: widget.currentTrack.coverUrl,
+                  durationMs: (widget.currentTrack.duration ?? Duration.zero).inMilliseconds,
                 );
 
                 if (context.mounted) {
@@ -501,8 +514,8 @@ class _MiniPlayerHeartButton extends ConsumerWidget {
               },
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(
-                minWidth: isDesktop ? 32 : 40,
-                minHeight: isDesktop ? 32 : 40,
+                minWidth: widget.isDesktop ? 32 : 40,
+                minHeight: widget.isDesktop ? 32 : 40,
               ),
             );
           },

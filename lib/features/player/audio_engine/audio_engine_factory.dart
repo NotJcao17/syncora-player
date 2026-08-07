@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import 'audio_engine_state.dart';
 import 'just_audio_engine.dart';
@@ -14,8 +15,17 @@ import 'media_kit_engine.dart';
 ///
 /// La selección se centraliza aquí para que el resto del reproductor dependa
 /// únicamente del contrato [AudioEngine].
+bool get _isTestEnv {
+  try {
+    final name = WidgetsBinding.instance.runtimeType.toString();
+    return name.contains('Test') || name.contains('Automated');
+  } catch (_) {
+    return true;
+  }
+}
+
 AudioEngine createAudioEngine() {
-  if (kIsWeb) {
+  if (kIsWeb || _isTestEnv) {
     return JustAudioEngine();
   }
   if (Platform.isWindows) {
