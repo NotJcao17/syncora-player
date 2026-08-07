@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import '../../core/extraction/extraction_provider.dart';
+import '../../data/apis/deezer_provider.dart';
 import 'audio_engine/audio_engine_factory.dart';
 import 'os_controls/syncora_audio_handler.dart';
 import 'os_controls/windows_media_controls.dart';
@@ -22,10 +23,12 @@ final syncoraPlayerControllerProvider =
     ChangeNotifierProvider<SyncoraPlayerController>((ref) {
   final engine = createAudioEngine();
   final extractionService = ref.watch(extractionServiceProvider);
+  final deezerApi = ref.watch(deezerApiProvider);
 
   final controller = SyncoraPlayerController(
     engine: engine,
     extractionService: extractionService,
+    deezerApi: deezerApi,
   );
 
   controller.init();

@@ -6,6 +6,8 @@ import '../../core/extraction/extraction_service.dart';
 import '../../core/extraction/models/extraction_request.dart';
 import '../../core/extraction/models/extraction_result.dart';
 import '../../core/extraction/retry_policy.dart';
+import '../../data/apis/deezer_api.dart';
+import '../../data/models/deezer/deezer_track.dart';
 import 'audio_engine/audio_engine_state.dart';
 import 'player_models.dart';
 import 'session/player_session_storage.dart';
@@ -87,11 +89,14 @@ class SyncoraPlayerController extends ChangeNotifier {
   SyncoraPlayerController({
     required AudioEngine engine,
     required ExtractionService extractionService,
+    DeezerApi? deezerApi,
   })  : _engine = engine, // ignore: prefer_initializing_formals
-        _extractionService = extractionService; // ignore: prefer_initializing_formals
+        _extractionService = extractionService, // ignore: prefer_initializing_formals
+        _deezerApi = deezerApi; // ignore: prefer_initializing_formals
 
   final AudioEngine _engine;
   final ExtractionService _extractionService;
+  final DeezerApi? _deezerApi;
   final RetryPolicy _retryPolicy = RetryPolicy();
   final PlayerSessionStorage _sessionStorage = PlayerSessionStorage();
 
@@ -188,9 +193,12 @@ class SyncoraPlayerController extends ChangeNotifier {
     try {
       final next = _computeNextIndex(autoAdvance: true);
       if (next == null) {
-        // Fin de la cola sin repeat: pausar.
-        await _engine.pause();
-        _saveSession();
+        // Fin de la cola sin repeat: intentar Autoplay con Deezer recommendations
+        final handledAutoplay = await _tryAutoplay();
+        if (!handledAutoplay) {
+          await _engine.pause();
+          _saveSession();
+        }
         return;
       }
       _state = _state.copyWith(currentIndex: next, clearError: true);
@@ -201,6 +209,65 @@ class SyncoraPlayerController extends ChangeNotifier {
       _isTransitioning = false;
     }
   }
+
+  /// Dispara Autoplay al llegar al final de la cola
+  Future<bool> _tryAutoplay() async {
+    if (_deezerApi == null || _state.queue.isEmpty) return false;
+
+    final lastTrack = _state.queue.last;
+    int? deezerTrackId = int.tryParse(lastTrack.id);
+
+    // Si el ID no es un int válido, buscar la canción en Deezer para obtener su ID
+    if (deezerTrackId == null) {
+      try {
+        final searchRes = await _deezerApi.search('${lastTrack.artist} ${lastTrack.title}');
+        if (searchRes.tracks.isNotEmpty) {
+          deezerTrackId = searchRes.tracks.first.id;
+        }
+      } catch (_) {}
+    }
+
+    List<DeezerTrack> recommendations = [];
+    if (deezerTrackId != null && deezerTrackId > 0) {
+      try {
+        recommendations = await _deezerApi.getTrackRecommendations(deezerTrackId);
+      } catch (e) {
+        _log('[Autoplay] Error obteniendo recomendaciones: $e');
+      }
+    }
+
+    if (recommendations.isEmpty) {
+      try {
+        recommendations = await _deezerApi.getTopCharts();
+      } catch (_) {}
+    }
+
+    if (recommendations.isEmpty) return false;
+
+    // Convertir a SyncoraTrack y filtrar canciones que ya están en la cola
+    final existingIds = _state.queue.map((t) => t.id).toSet();
+    final newTracks = recommendations
+        .map((t) => t.toSyncoraTrack())
+        .where((t) => !existingIds.contains(t.id))
+        .toList();
+
+    if (newTracks.isEmpty) return false;
+
+    _log('[Autoplay] ${newTracks.length} pistas similares añadidas a la cola automáticamente.');
+    final updatedQueue = List<SyncoraTrack>.from(_state.queue)..addAll(newTracks);
+    final nextIndex = _state.currentIndex + 1;
+
+    _state = _state.copyWith(
+      queue: List.unmodifiable(updatedQueue),
+      currentIndex: nextIndex,
+      clearError: true,
+    );
+    _notify();
+    _saveSession();
+    await playCurrent();
+    return true;
+  }
+
 
   Future<void> skipToPrevious() async {
     if (_isTransitioning) return;

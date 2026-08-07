@@ -79,6 +79,19 @@ class MediaKitEngine implements AudioEngine {
     });
     // Log de mpv → detección de bordes de silencio (Pitfall #7).
     _player.stream.log.listen(_onLog);
+    _configureAudioQuality();
+  }
+
+  Future<void> _configureAudioQuality() async {
+    final native = _player.platform;
+    if (native is NativePlayer) {
+      try {
+        await native.setProperty('demuxer-max-bytes', '33554432');
+        await native.setProperty('demuxer-readahead-secs', '20');
+        await native.setProperty('audio-buffer', '0.2');
+        await native.setProperty('audio-pitch-correction', 'yes');
+      } catch (_) {}
+    }
   }
 
   @override

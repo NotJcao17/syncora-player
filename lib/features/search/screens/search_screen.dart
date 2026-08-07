@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_icons.dart';
-
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/skeleton_box.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_api.dart';
+import '../../../data/apis/deezer_provider.dart';
 import '../../../data/models/deezer/deezer_album.dart';
 import '../../../data/models/deezer/deezer_artist.dart';
 import '../../../data/models/deezer/deezer_track.dart';
@@ -49,6 +49,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     super.dispose();
   }
 
+  void _openCascadeSearchModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => const _CascadeSearchModalSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final searchState = ref.watch(searchProvider);
@@ -70,14 +82,38 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Buscar',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.primary,
-                    letterSpacing: -0.8,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Buscar',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primary,
+                        letterSpacing: -0.8,
+                      ),
+                    ),
+
+                    // Botón explícito para la Búsqueda Profunda / Colaboraciones en Cascada
+                    OutlinedButton.icon(
+                      onPressed: () => _openCascadeSearchModal(context),
+                      icon: Icon(AppIcons.bold(SolarIcons.Magnifer), size: 16, color: AppTheme.accent),
+                      label: const Text(
+                        'Búsqueda Profunda',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.accent, width: 1.2),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -489,6 +525,312 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Modal Sheet para la Búsqueda Profunda / Colaboraciones en Cascada
+class _CascadeSearchModalSheet extends ConsumerStatefulWidget {
+  const _CascadeSearchModalSheet();
+
+  @override
+  ConsumerState<_CascadeSearchModalSheet> createState() => _CascadeSearchModalSheetState();
+}
+
+class _CascadeSearchModalSheetState extends ConsumerState<_CascadeSearchModalSheet> {
+  final TextEditingController _artist1Controller = TextEditingController(text: 'Coldplay');
+  final TextEditingController _artist2Controller = TextEditingController(text: 'BTS');
+
+  bool _isSearching = false;
+  int _step = 0; // 0: idle, 1: Artistas, 2: Top Tracks, 3: Discografía, 4: Listo
+  String _statusText = '';
+  List<DeezerTrack> _results = [];
+
+  @override
+  void dispose() {
+    _artist1Controller.dispose();
+    _artist2Controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _startCascadeSearch() async {
+    final a1Text = _artist1Controller.text.trim();
+    final a2Text = _artist2Controller.text.trim();
+    if (a1Text.isEmpty || a2Text.isEmpty) return;
+
+    setState(() {
+      _isSearching = true;
+      _step = 1;
+      _statusText = 'Paso 1: Buscando coincidencias de artista...';
+      _results = [];
+    });
+
+    final deezerApi = ref.read(deezerApiProvider);
+
+    try {
+      // Paso 1: Artistas
+      final search1 = await deezerApi.search(a1Text, type: DeezerSearchType.artist);
+      final search2 = await deezerApi.search(a2Text, type: DeezerSearchType.artist);
+
+      if (search1.artists.isEmpty || search2.artists.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _isSearching = false;
+            _step = 4;
+            _statusText = 'No se encontraron coincidencias para ambos artistas.';
+          });
+        }
+        return;
+      }
+
+      final artist1 = search1.artists.first;
+      final artist2 = search2.artists.first;
+
+      // Paso 2: Top Tracks
+      if (mounted) {
+        setState(() {
+          _step = 2;
+          _statusText = 'Paso 2: Explorando Top Tracks de ${artist1.name} y ${artist2.name}...';
+        });
+      }
+
+      final top1 = await deezerApi.getArtistTopTracks(artist1.id);
+      final top2 = await deezerApi.getArtistTopTracks(artist2.id);
+
+      final matches = <DeezerTrack>[];
+      final seenIds = <int>{};
+
+      bool isMatch(DeezerTrack track, String targetName) {
+        final targetLower = targetName.toLowerCase();
+        if (track.artistName.toLowerCase().contains(targetLower)) return true;
+        if (track.title.toLowerCase().contains(targetLower)) return true;
+        return track.contributorsList.any((c) => c.name.toLowerCase().contains(targetLower));
+      }
+
+      for (final t in top1) {
+        if (isMatch(t, artist2.name) && seenIds.add(t.id)) {
+          matches.add(t);
+        }
+      }
+      for (final t in top2) {
+        if (isMatch(t, artist1.name) && seenIds.add(t.id)) {
+          matches.add(t);
+        }
+      }
+
+      // Paso 3: Discografía
+      if (mounted) {
+        setState(() {
+          _step = 3;
+          _statusText = 'Paso 3: Analizando discografía y álbumes de los artistas...';
+        });
+      }
+
+      final albums1 = await deezerApi.getArtistAlbums(artist1.id);
+      for (final alb in albums1.take(5)) {
+        try {
+          final fullAlbum = await deezerApi.getAlbum(alb.id);
+          for (final t in fullAlbum.tracks) {
+            if (isMatch(t, artist2.name) && seenIds.add(t.id)) {
+              matches.add(t);
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (mounted) {
+        setState(() {
+          _isSearching = false;
+          _step = 4;
+          _results = matches;
+          _statusText = matches.isNotEmpty
+              ? '¡Se encontraron ${matches.length} colaboraciones!'
+              : 'No se encontraron canciones colaborativas directas entre ${artist1.name} y ${artist2.name}.';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSearching = false;
+          _step = 4;
+          _statusText = 'Error durante la búsqueda en cascada: $e';
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(AppIcons.bold(SolarIcons.Magnifer), color: AppTheme.accent, size: 22),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Búsqueda Profunda en Cascada',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: Icon(AppIcons.broken(SolarIcons.CloseCircle), color: AppTheme.secondary),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Busca canciones colaborativas y featurings analizando artistas, top canciones y discografía completa.',
+              style: TextStyle(color: AppTheme.secondary, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _artist1Controller,
+                    style: const TextStyle(color: AppTheme.primary, fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: 'Artista 1',
+                      labelStyle: const TextStyle(color: AppTheme.secondary),
+                      filled: true,
+                      fillColor: AppTheme.surface,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _artist2Controller,
+                    style: const TextStyle(color: AppTheme.primary, fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: 'Artista 2 / Colaborador',
+                      labelStyle: const TextStyle(color: AppTheme.secondary),
+                      filled: true,
+                      fillColor: AppTheme.surface,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: _isSearching ? null : _startCascadeSearch,
+                icon: _isSearching
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Icon(AppIcons.broken(SolarIcons.Magnifer), size: 20),
+                label: Text(_isSearching ? 'Buscando...' : 'Iniciar Búsqueda en Cascada'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            if (_step > 0) ...[
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.surfaceHover),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        if (_isSearching)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 10),
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accent),
+                            ),
+                          ),
+                        Expanded(
+                          child: Text(
+                            _statusText,
+                            style: TextStyle(
+                              color: _isSearching ? AppTheme.accent : AppTheme.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    LinearProgressIndicator(
+                      value: _step / 4.0,
+                      backgroundColor: AppTheme.surfaceHover,
+                      color: AppTheme.accent,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (_results.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Resultados Encontrados:',
+                style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              const SizedBox(height: 8),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _results.length,
+                itemBuilder: (ctx, i) {
+                  final deezerTrack = _results[i];
+                  final track = deezerTrack.toSyncoraTrack();
+                  return TrackTile(
+                    track: track,
+                    onTap: () {
+                      final syncoraTracks = _results.map((t) => t.toSyncoraTrack()).toList();
+                      ref.read(syncoraPlayerControllerProvider.notifier).setQueue(syncoraTracks, startIndex: i);
+                      Navigator.pop(context);
+                    },
+                    onAddToQueue: () {
+                      ref.read(syncoraPlayerControllerProvider.notifier).addToQueue(track);
+                    },
+                  );
+                },
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

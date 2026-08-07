@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../models/deezer/deezer_album.dart';
 import '../models/deezer/deezer_artist.dart';
+import '../models/deezer/deezer_playlist.dart';
 import '../models/deezer/deezer_search_result.dart';
 import '../models/deezer/deezer_track.dart';
 
@@ -135,6 +136,9 @@ class DeezerApi {
           }
         }
 
+        // Ordenar canciones por popularidad/rank descendente
+        tracks.sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
+
         final result = DeezerSearchResult(
           tracks: tracks,
           artists: artists,
@@ -186,10 +190,12 @@ class DeezerApi {
       final response = await _dio.get('/artist/$id/top');
       if (response.data == null || response.data['data'] is! List) return [];
       final list = response.data['data'] as List;
-      return list
+      final tracks = list
           .where((item) => (item['duration'] as int? ?? 0) > 60 && item['type'] != 'podcast')
           .map((item) => DeezerTrack.fromJson(Map<String, dynamic>.from(item as Map)))
           .toList();
+      tracks.sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
+      return tracks;
     });
   }
 
@@ -201,4 +207,77 @@ class DeezerApi {
       return list.map((item) => DeezerAlbum.fromJson(Map<String, dynamic>.from(item as Map))).toList();
     });
   }
+
+  /// Obtiene recomendaciones de pistas basadas en una pista origen (/track/$trackId/related)
+  Future<List<DeezerTrack>> getTrackRecommendations(int trackId) async {
+    return _rateLimiter.run(() async {
+      try {
+        final response = await _dio.get('/track/$trackId/related');
+        if (response.data != null && response.data['data'] is List) {
+          final list = response.data['data'] as List;
+          final tracks = list
+              .where((item) => (item['duration'] as int? ?? 0) > 60 && item['type'] != 'podcast')
+              .map((item) => DeezerTrack.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList();
+          if (tracks.isNotEmpty) {
+            tracks.sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
+            return tracks;
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error en getTrackRecommendations /track/$trackId/related: $e');
+        }
+      }
+
+      // Fallback 1: obtener pista origen e intentar top tracks del artista
+      try {
+        final sourceTrack = await getTrack(trackId);
+        if (sourceTrack.artistId > 0) {
+          final artistTracks = await getArtistTopTracks(sourceTrack.artistId);
+          final filtered = artistTracks.where((t) => t.id != trackId).toList();
+          if (filtered.isNotEmpty) return filtered;
+        }
+      } catch (_) {}
+
+      // Fallback 2: Top Charts globales
+      return getTopCharts();
+    });
+  }
+
+  /// Obtiene playlists editoriales (/chart/0/playlists)
+  Future<List<DeezerPlaylist>> getEditorialPlaylists() async {
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/chart/0/playlists');
+      if (response.data == null || response.data['data'] is! List) return [];
+      final list = response.data['data'] as List;
+      return list.map((item) => DeezerPlaylist.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+    });
+  }
+
+  /// Obtiene el top de canciones globales (/chart/0/tracks)
+  Future<List<DeezerTrack>> getTopCharts() async {
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/chart/0/tracks');
+      if (response.data == null || response.data['data'] is! List) return [];
+      final list = response.data['data'] as List;
+      final tracks = list
+          .where((item) => (item['duration'] as int? ?? 0) > 60 && item['type'] != 'podcast')
+          .map((item) => DeezerTrack.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList();
+      tracks.sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
+      return tracks;
+    });
+  }
+
+  /// Obtiene nuevos lanzamientos de álbumes (/chart/0/albums)
+  Future<List<DeezerAlbum>> getNewReleases() async {
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/chart/0/albums');
+      if (response.data == null || response.data['data'] is! List) return [];
+      final list = response.data['data'] as List;
+      return list.map((item) => DeezerAlbum.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+    });
+  }
 }
+

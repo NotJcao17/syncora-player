@@ -12,6 +12,7 @@ class AppTheme {
   static const Color primary = Color(0xFFFFFFFF);
   static const Color secondary = Color(0xFFA0ABBA);
   static const Color muted = Color(0xFF7F8C9D);
+  static const Color accent = Color(0xFF6366F1);
   static const Color error = Color(0xFFB4ABFF); // #ffb4ab (mockup "error")
 
   // Colores de géneros para "Explorar todo" (search.html mockup)

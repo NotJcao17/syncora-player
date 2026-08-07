@@ -11,6 +11,7 @@ class DeezerTrack {
   final int durationSec;
   final String? previewUrl;
   final List<SyncoraArtistRef> contributorsList;
+  final int? rank;
 
   const DeezerTrack({
     required this.id,
@@ -23,6 +24,7 @@ class DeezerTrack {
     required this.durationSec,
     this.previewUrl,
     this.contributorsList = const [],
+    this.rank,
   });
 
   factory DeezerTrack.fromJson(Map<String, dynamic> json) {
@@ -82,6 +84,7 @@ class DeezerTrack {
       durationSec: json['duration'] as int? ?? 0,
       previewUrl: json['preview'] as String?,
       contributorsList: contributorsList,
+      rank: json['rank'] as int?,
     );
   }
 
@@ -95,6 +98,7 @@ class DeezerTrack {
         'cover_url': coverUrl,
         'duration': durationSec,
         'preview': previewUrl,
+        'rank': rank,
       };
 
   SyncoraTrack toSyncoraTrack() {
@@ -112,4 +116,5 @@ class DeezerTrack {
     );
   }
 }
+
 

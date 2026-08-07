@@ -76,10 +76,10 @@ class JustAudioEngine implements AudioEngine {
   Future<void> seek(Duration position) => _player.seek(position);
 
   @override
-  Future<void> setSpeed(double speed) => _player.setSpeed(speed);
+  Future<void> setSpeed(double speed) => _player.setSpeed(speed.clamp(0.25, 2.0));
 
   @override
-  Future<void> setVolume(double volume) => _player.setVolume(volume);
+  Future<void> setVolume(double volume) => _player.setVolume(volume.clamp(0.0, 1.0));
 
   @override
   Future<void> setSkipSilenceEnabled(bool enabled) async {
