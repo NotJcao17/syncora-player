@@ -764,6 +764,7 @@ class _DesktopProgressBar extends StatefulWidget {
 
 class _DesktopProgressBarState extends State<_DesktopProgressBar> {
   bool _isDragging = false;
+  bool _isHovered = false;
   double _dragRatio = 0.0;
   bool _wasPlayingBeforeDrag = false;
 
@@ -792,43 +793,48 @@ class _DesktopProgressBarState extends State<_DesktopProgressBar> {
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 6,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 6),
-              activeTrackColor: AppTheme.primary,
-              inactiveTrackColor: AppTheme.surface,
-            ),
-            child: Slider(
-              value: effectiveRatio,
-              onChangeStart: (val) {
-                setState(() {
-                  _isDragging = true;
-                  _dragRatio = val;
-                  _wasPlayingBeforeDrag = widget.isPlaying;
-                });
-                if (widget.isPlaying) {
-                  widget.controller.pause();
-                }
-              },
-              onChanged: (val) {
-                setState(() {
-                  _dragRatio = val;
-                });
-              },
-              onChangeEnd: (val) async {
-                final targetMs = (val * durationMs).toInt();
-                await widget.controller.seek(Duration(milliseconds: targetMs));
-                if (mounted) {
+          child: MouseRegion(
+            onEnter: (_) => setState(() => _isHovered = true),
+            onExit: (_) => setState(() => _isHovered = false),
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: (_isHovered || _isDragging) ? 6 : 4,
+                thumbShape: RoundSliderThumbShape(enabledThumbRadius: (_isHovered || _isDragging) ? 6 : 0),
+                overlayShape: RoundSliderOverlayShape(overlayRadius: (_isHovered || _isDragging) ? 12 : 0),
+                activeTrackColor: AppTheme.primary,
+                inactiveTrackColor: AppTheme.surface,
+                thumbColor: AppTheme.primary,
+              ),
+              child: Slider(
+                value: effectiveRatio,
+                onChangeStart: (val) {
                   setState(() {
-                    _isDragging = false;
+                    _isDragging = true;
+                    _dragRatio = val;
+                    _wasPlayingBeforeDrag = widget.isPlaying;
                   });
-                }
-                if (_wasPlayingBeforeDrag) {
-                  widget.controller.play();
-                }
-              },
+                  if (widget.isPlaying) {
+                    widget.controller.pause();
+                  }
+                },
+                onChanged: (val) {
+                  setState(() {
+                    _dragRatio = val;
+                  });
+                },
+                onChangeEnd: (val) async {
+                  final targetMs = (val * durationMs).toInt();
+                  await widget.controller.seek(Duration(milliseconds: targetMs));
+                  if (mounted) {
+                    setState(() {
+                      _isDragging = false;
+                    });
+                  }
+                  if (_wasPlayingBeforeDrag) {
+                    widget.controller.play();
+                  }
+                },
+              ),
             ),
           ),
         ),

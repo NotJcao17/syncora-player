@@ -13,6 +13,7 @@ import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/models/deezer/deezer_album.dart';
 import '../../../data/models/deezer/deezer_track.dart';
+import '../../player/audio_engine/audio_engine_state.dart';
 import '../../player/player_providers.dart';
 
 /// Pantalla de Detalle de Álbum (`/album/:id`) conectada a Deezer real.
@@ -158,7 +159,10 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
     final playerState = ref.watch(playerStateProvider);
     final albumContextId = 'album_${album.id}';
     final isCurrentContext = playerState.activeContextId == albumContextId;
-    final showPauseHeader = isCurrentContext && isPlaying;
+    final isBufferingOrPlaying = isPlaying ||
+        (playerState.engine.processingState == AudioProcessingState.loading ||
+         playerState.engine.processingState == AudioProcessingState.buffering);
+    final showPauseHeader = isCurrentContext && isBufferingOrPlaying;
 
     final dominantGradientColor = _dominantColor?.withValues(alpha: 0.35) ?? AppTheme.surfaceHover.withValues(alpha: 0.3);
 
@@ -306,6 +310,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
 
                     Row(
                       mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         if (syncoraTracks.isNotEmpty) ...[
                           _HeaderPlayButton(
@@ -321,26 +326,46 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                               }
                             },
                           ),
+                          const SizedBox(width: 16),
                           Consumer(
                             builder: (context, ref, _) {
+                              final playerState = ref.watch(playerStateProvider);
+                              final isShuffle = playerState.isShuffle;
+
                               return IconButton(
                                 icon: Padding(
-                                  padding: const EdgeInsets.only(top: 3.0),
+                                  padding: const EdgeInsets.only(top: 2.0),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Icon(
-                                        AppIcons.broken(SolarIcons.Shuffle),
-                                        color: AppTheme.secondary,
-                                        size: 24,
+                                        isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
+                                        color: isShuffle ? const Color(0xFF22C55E) : AppTheme.secondary,
+                                        size: 22,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Container(
+                                        width: 4,
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: isShuffle ? const Color(0xFF22C55E) : Colors.transparent,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
                                 onPressed: () {
-                                  controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: albumContextId);
-                                  controller.toggleShuffle();
-                                  controller.play();
+                                  if (isCurrentContext) {
+                                    controller.toggleShuffle();
+                                  } else {
+                                    controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: albumContextId);
+                                    if (!isShuffle) {
+                                      controller.toggleShuffle();
+                                    }
+                                    controller.play();
+                                  }
                                 },
                                 tooltip: 'Aleatorio',
                               );

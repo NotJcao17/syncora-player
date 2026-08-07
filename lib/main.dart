@@ -48,7 +48,6 @@ void main() async {
   // MediaKit, SMTCWindows y WindowManager solo se inicializan en Windows
   if (!kIsWeb && Platform.isWindows) {
     MediaKit.ensureInitialized();
-    await SMTCWindows.initialize();
     await windowManager.ensureInitialized();
 
     const windowOptions = WindowOptions(
@@ -63,6 +62,7 @@ void main() async {
     windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();
+      await SMTCWindows.initialize();
     });
   }
 

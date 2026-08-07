@@ -21,22 +21,26 @@ class WindowsMediaControls {
   WindowsMediaControls(this._controller) {
     if (kIsWeb || !Platform.isWindows) return;
 
-    _smtc = SMTCWindows(
-      config: const SMTCConfig(
-        playEnabled: true,
-        pauseEnabled: true,
-        nextEnabled: true,
-        prevEnabled: true,
-        stopEnabled: true,
-        fastForwardEnabled: false,
-        rewindEnabled: false,
-      ),
-    );
-    _smtc.enableSmtc();
+    try {
+      _smtc = SMTCWindows(
+        config: const SMTCConfig(
+          playEnabled: true,
+          pauseEnabled: true,
+          nextEnabled: true,
+          prevEnabled: true,
+          stopEnabled: true,
+          fastForwardEnabled: false,
+          rewindEnabled: false,
+        ),
+      );
+      _smtc.enableSmtc();
 
-    _buttonSub = _smtc.buttonPressStream.listen(_onButtonPressed);
-    _controller.addListener(_onControllerChanged);
-    _onControllerChanged();
+      _buttonSub = _smtc.buttonPressStream.listen(_onButtonPressed);
+      _controller.addListener(_onControllerChanged);
+      _onControllerChanged();
+    } catch (e) {
+      debugPrint('[SMTCWindows] Error instantiating SMTC controls: $e');
+    }
   }
 
   void _onButtonPressed(PressedButton button) {

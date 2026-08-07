@@ -268,8 +268,8 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
 
                     const SizedBox(height: 24),
 
-                    // Barra de reproducción interactiva con Onda de Audio
-                    _WaveformSeekbar(
+                    // Barra de reproducción interactiva
+                    _FullscreenSeekBar(
                       position: state.engine.position,
                       duration: state.engine.duration.inSeconds > 0
                           ? state.engine.duration
@@ -542,14 +542,14 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
   }
 }
 
-class _WaveformSeekbar extends StatefulWidget {
+class _FullscreenSeekBar extends StatefulWidget {
   final Duration position;
   final Duration duration;
   final SyncoraTrack track;
   final SyncoraPlayerController controller;
   final bool isPlaying;
 
-  const _WaveformSeekbar({
+  const _FullscreenSeekBar({
     required this.position,
     required this.duration,
     required this.track,
@@ -558,38 +558,14 @@ class _WaveformSeekbar extends StatefulWidget {
   });
 
   @override
-  State<_WaveformSeekbar> createState() => _WaveformSeekbarState();
+  State<_FullscreenSeekBar> createState() => _FullscreenSeekBarState();
 }
 
-class _WaveformSeekbarState extends State<_WaveformSeekbar> {
+class _FullscreenSeekBarState extends State<_FullscreenSeekBar> {
   bool _isDragging = false;
+  bool _isHovered = false;
   double _dragRatio = 0.0;
   bool _wasPlayingBeforeDrag = false;
-  late List<double> _waveformHeights;
-
-  @override
-  void initState() {
-    super.initState();
-    _generateWaveform();
-  }
-
-  @override
-  void didUpdateWidget(_WaveformSeekbar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.track.id != widget.track.id) {
-      _generateWaveform();
-    }
-  }
-
-  void _generateWaveform() {
-    final seed = widget.track.id.hashCode.abs();
-    const count = 48;
-    _waveformHeights = List.generate(count, (i) {
-      final val = ((seed * (i + 1) * 31) % 100) / 100.0;
-      final wave = 0.25 + 0.75 * val;
-      return wave.clamp(0.2, 1.0);
-    });
-  }
 
   String _formatDuration(Duration d) {
     final minutes = d.inMinutes;
@@ -610,120 +586,54 @@ class _WaveformSeekbarState extends State<_WaveformSeekbar> {
 
     return Column(
       children: [
-        // Visual Waveform Bars
-        SizedBox(
-          height: 48,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              const barWidth = 4.0;
-              final activeIndex = (effectiveRatio * _waveformHeights.length).floor();
-
-              return GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onHorizontalDragStart: (details) {
-                  final ratio = (details.localPosition.dx / constraints.maxWidth).clamp(0.0, 1.0);
-                  setState(() {
-                    _isDragging = true;
-                    _dragRatio = ratio;
-                    _wasPlayingBeforeDrag = widget.isPlaying;
-                  });
-                  if (widget.isPlaying) {
-                    widget.controller.pause();
-                  }
-                },
-                onHorizontalDragUpdate: (details) {
-                  final ratio = (details.localPosition.dx / constraints.maxWidth).clamp(0.0, 1.0);
-                  setState(() {
-                    _dragRatio = ratio;
-                  });
-                },
-                onHorizontalDragEnd: (details) async {
-                  final targetMs = (_dragRatio * durationMs).toInt();
-                  await widget.controller.seek(Duration(milliseconds: targetMs));
-                  if (mounted) {
-                    setState(() {
-                      _isDragging = false;
-                    });
-                  }
-                  if (_wasPlayingBeforeDrag) {
-                    widget.controller.play();
-                  }
-                },
-                onTapDown: (details) async {
-                  final ratio = (details.localPosition.dx / constraints.maxWidth).clamp(0.0, 1.0);
-                  final targetMs = (ratio * durationMs).toInt();
-                  await widget.controller.seek(Duration(milliseconds: targetMs));
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: List.generate(_waveformHeights.length, (i) {
-                    final isActive = i <= activeIndex;
-                    final h = _waveformHeights[i] * 44;
-
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 100),
-                      width: barWidth,
-                      height: h,
-                      decoration: BoxDecoration(
-                        color: isActive ? AppTheme.primary : AppTheme.surfaceHover,
-                        borderRadius: BorderRadius.circular(2),
-                        boxShadow: isActive ? AppTheme.glowShadow : null,
-                      ),
-                    );
-                  }),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // Slider interactivo overlay para ajustar posición fina
-        SliderTheme(
-          data: SliderThemeData(
-            trackHeight: 3,
-            activeTrackColor: AppTheme.primary,
-            inactiveTrackColor: AppTheme.surfaceHover,
-            thumbColor: AppTheme.primary,
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-            overlayColor: AppTheme.primary.withValues(alpha: 0.2),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-          ),
-          child: Slider(
-            value: effectiveRatio,
-            min: 0.0,
-            max: 1.0,
-            onChangeStart: (val) {
-              setState(() {
-                _isDragging = true;
-                _dragRatio = val;
-                _wasPlayingBeforeDrag = widget.isPlaying;
-              });
-              if (widget.isPlaying) {
-                widget.controller.pause();
-              }
-            },
-            onChanged: (val) {
-              setState(() {
-                _dragRatio = val;
-              });
-            },
-            onChangeEnd: (val) async {
-              final targetMs = (val * durationMs).toInt();
-              await widget.controller.seek(Duration(milliseconds: targetMs));
-              if (mounted) {
+        MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          child: SliderTheme(
+            data: SliderThemeData(
+              trackHeight: (_isHovered || _isDragging) ? 6 : 4,
+              activeTrackColor: AppTheme.primary,
+              inactiveTrackColor: AppTheme.surfaceHover,
+              thumbColor: AppTheme.primary,
+              thumbShape: RoundSliderThumbShape(enabledThumbRadius: (_isHovered || _isDragging) ? 7 : 4),
+              overlayColor: AppTheme.primary.withValues(alpha: 0.2),
+              overlayShape: RoundSliderOverlayShape(overlayRadius: (_isHovered || _isDragging) ? 14 : 8),
+            ),
+            child: Slider(
+              value: effectiveRatio,
+              min: 0.0,
+              max: 1.0,
+              onChangeStart: (val) {
                 setState(() {
-                  _isDragging = false;
+                  _isDragging = true;
+                  _dragRatio = val;
+                  _wasPlayingBeforeDrag = widget.isPlaying;
                 });
-              }
-              if (_wasPlayingBeforeDrag) {
-                widget.controller.play();
-              }
-            },
+                if (widget.isPlaying) {
+                  widget.controller.pause();
+                }
+              },
+              onChanged: (val) {
+                setState(() {
+                  _dragRatio = val;
+                });
+              },
+              onChangeEnd: (val) async {
+                final targetMs = (val * durationMs).toInt();
+                await widget.controller.seek(Duration(milliseconds: targetMs));
+                if (mounted) {
+                  setState(() {
+                    _isDragging = false;
+                  });
+                }
+                if (_wasPlayingBeforeDrag) {
+                  widget.controller.play();
+                }
+              },
+            ),
           ),
         ),
-
+        const SizedBox(height: 4),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(

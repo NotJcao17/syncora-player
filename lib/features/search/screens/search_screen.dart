@@ -49,6 +49,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     super.dispose();
   }
 
+  // ignore: unused_element
   void _openCascadeSearchModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -95,20 +96,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ),
                     ),
 
-                    // Botón explícito para la Búsqueda Profunda / Colaboraciones en Cascada
+                    // Botón explícito para la Búsqueda Profunda / Colaboraciones en Cascada (Acción deshabilitada)
                     OutlinedButton.icon(
-                      onPressed: () => _openCascadeSearchModal(context),
-                      icon: Icon(AppIcons.bold(SolarIcons.Magnifer), size: 16, color: AppTheme.accent),
+                      onPressed: null,
+                      icon: Icon(AppIcons.bold(SolarIcons.Magnifer), size: 16, color: AppTheme.secondary),
                       label: const Text(
                         'Búsqueda Profunda',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primary,
+                          color: AppTheme.secondary,
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppTheme.accent, width: 1.2),
+                        disabledForegroundColor: AppTheme.secondary,
+                        disabledIconColor: AppTheme.secondary,
+                        side: BorderSide(color: AppTheme.secondary.withValues(alpha: 0.4), width: 1.2),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),

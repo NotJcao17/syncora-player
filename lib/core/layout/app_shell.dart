@@ -254,12 +254,16 @@ class _AppShellState extends ConsumerState<AppShell> {
                                       );
                                     }
 
+                                    final playerState = ref.watch(playerStateProvider);
+                                    final activeContextId = playerState.activeContextId;
+
                                     return ListView.builder(
                                       itemCount: playlists.length,
                                       itemBuilder: (ctx, i) {
                                         final pl = playlists[i];
                                         final isSelected = widget.location.endsWith('/playlist/${pl.id}') ||
                                             (pl.isLiked && widget.location.endsWith('/playlist/liked'));
+                                        final isActivelyPlaying = activeContextId == 'playlist_${pl.id}';
 
                                         return _DesktopPlaylistItem(
                                           title: pl.title,
@@ -267,6 +271,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                                           coverUrl: pl.coverUrl ?? '',
                                           isLiked: pl.isLiked,
                                           isSelected: isSelected,
+                                          isActivelyPlaying: isActivelyPlaying,
                                           isCollapsed: _isSidebarCollapsed,
                                           onTap: () => context.push('/playlist/${pl.isLiked ? 'liked' : pl.id}'),
                                         );
@@ -717,6 +722,7 @@ class _DesktopPlaylistItem extends StatefulWidget {
   final String coverUrl;
   final bool isLiked;
   final bool isSelected;
+  final bool isActivelyPlaying;
   final bool isCollapsed;
   final VoidCallback onTap;
 
@@ -726,6 +732,7 @@ class _DesktopPlaylistItem extends StatefulWidget {
     required this.coverUrl,
     this.isLiked = false,
     required this.isSelected,
+    this.isActivelyPlaying = false,
     required this.isCollapsed,
     required this.onTap,
   });
@@ -790,8 +797,8 @@ class _DesktopPlaylistItemState extends State<_DesktopPlaylistItem> {
                           maxLines: 1,
                           overflow: TextOverflow.clip,
                           softWrap: false,
-                          style: TextStyle(
-                            color: widget.isSelected ? const Color(0xFF22C55E) : AppTheme.primary,
+                          style: const TextStyle(
+                            color: AppTheme.primary,
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                           ),
@@ -810,7 +817,7 @@ class _DesktopPlaylistItemState extends State<_DesktopPlaylistItem> {
                       ],
                     ),
                   ),
-                  if (widget.isSelected)
+                  if (widget.isActivelyPlaying)
                     Icon(AppIcons.broken(SolarIcons.VolumeLoud), color: const Color(0xFF22C55E), size: 18),
                 ],
               ],

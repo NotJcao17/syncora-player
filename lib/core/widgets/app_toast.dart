@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,9 @@ import '../theme/app_theme.dart';
 
 /// Pop-up flotante suave al estilo Spotify Desktop / Móvil.
 abstract class AppToast {
+  static OverlayEntry? _currentEntry;
+  static Timer? _timer;
+
   static void show(
     BuildContext context, {
     required String message,
@@ -16,12 +20,17 @@ abstract class AppToast {
     VoidCallback? onAction,
     Duration duration = const Duration(seconds: 3),
   }) {
+    _timer?.cancel();
+    _currentEntry?.remove();
+    _currentEntry = null;
+
     final mediaQuery = MediaQuery.of(context);
     final size = mediaQuery.size;
     final isDesktop = size.width >= 768;
     final keyboardHeight = mediaQuery.viewInsets.bottom;
+    final paddingBottom = mediaQuery.padding.bottom;
 
-    double bottomMargin = 110.0;
+    double bottomMargin = 40.0;
     if (!isDesktop) {
       if (keyboardHeight > 0) {
         bottomMargin = keyboardHeight + 16.0;
@@ -33,7 +42,7 @@ abstract class AppToast {
         } catch (_) {}
 
         if (isFullscreenPlayer) {
-          bottomMargin = 24.0;
+          bottomMargin = 24.0 + paddingBottom;
         } else {
           bool hasTrack = false;
           try {
@@ -42,77 +51,151 @@ abstract class AppToast {
           } catch (_) {}
 
           if (hasTrack) {
-            bottomMargin = 140.0; // flotar dinámicamente sobre el mini-reproductor
+            bottomMargin = 140.0 + paddingBottom;
           } else {
-            bottomMargin = 72.0; // flotar sobre la nav bar móvil
+            bottomMargin = 80.0 + paddingBottom;
           }
         }
       }
     }
 
-    // Cálculo dinámico de ancho para PC (MainAxisSize.min centrado horizontalmente)
-    final textLength = message.length + (actionLabel?.length ?? 0);
-    final calculatedWidth = (textLength * 8.5 + 80.0).clamp(200.0, (size.width - 40.0).clamp(200.0, 600.0));
+    final overlay = Overlay.of(context, rootOverlay: true);
 
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        elevation: 12,
-        width: isDesktop ? calculatedWidth : null,
-        margin: isDesktop
-            ? EdgeInsets.only(bottom: bottomMargin)
-            : EdgeInsets.only(bottom: bottomMargin, left: 16.0, right: 16.0),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: duration,
-        content: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (leadingIcon != null) ...[
-              leadingIcon,
-              const SizedBox(width: 10),
-            ] else ...[
-              Container(
-                width: 24,
-                height: 24,
-                decoration: const BoxDecoration(
-                  gradient: AppTheme.gradientLiked,
-                  borderRadius: BorderRadius.all(Radius.circular(6)),
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          bottom: bottomMargin,
+          left: isDesktop ? null : 20.0,
+          right: isDesktop ? null : 20.0,
+          child: isDesktop
+              ? Align(
+                  alignment: Alignment.bottomCenter,
+                  child: _ToastWidget(
+                    message: message,
+                    leadingIcon: leadingIcon,
+                    actionLabel: actionLabel,
+                    onAction: () {
+                      _dismiss();
+                      onAction?.call();
+                    },
+                    isDesktop: true,
+                  ),
+                )
+              : _ToastWidget(
+                  message: message,
+                  leadingIcon: leadingIcon,
+                  actionLabel: actionLabel,
+                  onAction: () {
+                    _dismiss();
+                    onAction?.call();
+                  },
+                  isDesktop: false,
                 ),
-                child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 14),
+        );
+      },
+    );
+
+    _currentEntry = entry;
+    overlay.insert(entry);
+
+    _timer = Timer(duration, () {
+      _dismiss();
+    });
+  }
+
+  static void _dismiss() {
+    _timer?.cancel();
+    _timer = null;
+    _currentEntry?.remove();
+    _currentEntry = null;
+  }
+}
+
+class _ToastWidget extends StatelessWidget {
+  final String message;
+  final Widget? leadingIcon;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  final bool isDesktop;
+
+  const _ToastWidget({
+    required this.message,
+    this.leadingIcon,
+    this.actionLabel,
+    this.onAction,
+    required this.isDesktop,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      elevation: 0,
+      child: AnimatedOpacity(
+        opacity: 1.0,
+        duration: const Duration(milliseconds: 200),
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: isDesktop ? 600 : double.infinity,
+            minWidth: 180,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 16,
+                offset: Offset(0, 6),
               ),
-              const SizedBox(width: 10),
             ],
-            Flexible(
-              child: Text(
-                message,
-                style: const TextStyle(
-                  color: Color(0xFF121212),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (leadingIcon != null) ...[
+                leadingIcon!,
+                const SizedBox(width: 10),
+              ] else ...[
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: const BoxDecoration(
+                    gradient: AppTheme.gradientLiked,
+                    borderRadius: BorderRadius.all(Radius.circular(6)),
+                  ),
+                  child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 14),
                 ),
-              ),
-            ),
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: () {
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  onAction();
-                },
+                const SizedBox(width: 10),
+              ],
+              Flexible(
                 child: Text(
-                  actionLabel,
+                  message,
                   style: const TextStyle(
-                    color: Color(0xFF059669),
-                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF121212),
+                    fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
                 ),
               ),
+              if (actionLabel != null && onAction != null) ...[
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: onAction,
+                  child: Text(
+                    actionLabel!,
+                    style: const TextStyle(
+                      color: Color(0xFF059669),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

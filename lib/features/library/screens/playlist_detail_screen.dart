@@ -20,6 +20,7 @@ import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_track.dart';
+import '../../player/audio_engine/audio_engine_state.dart';
 import '../../player/player_models.dart';
 import '../../player/player_providers.dart';
 import '../import_export/playlist_import_export_service.dart';
@@ -249,7 +250,10 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           final playerState = ref.watch(playerStateProvider);
           final playlistContextId = 'playlist_${playlist.id}';
           final isCurrentContext = playerState.activeContextId == playlistContextId;
-          final showPauseHeader = isCurrentContext && isPlaying;
+          final isBufferingOrPlaying = isPlaying ||
+              (playerState.engine.processingState == AudioProcessingState.loading ||
+               playerState.engine.processingState == AudioProcessingState.buffering);
+          final showPauseHeader = isCurrentContext && isBufferingOrPlaying;
 
           return Container(
             decoration: BoxDecoration(
@@ -391,31 +395,18 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                           mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
                           children: [
                             if (syncoraTracks.isNotEmpty) ...[
-                              Container(
-                                width: 56,
-                                height: 56,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppTheme.primary,
-                                  boxShadow: AppTheme.glowShadow,
-                                ),
-                                child: IconButton(
-                                  icon: Icon(
-                                    showPauseHeader ? AppIcons.broken(SolarIcons.Pause) : AppIcons.outline(SolarIcons.Play),
-                                    color: AppTheme.background,
-                                    size: 26,
-                                  ),
-                                  onPressed: () {
-                                    if (showPauseHeader) {
-                                      controller.pause();
-                                    } else if (isCurrentContext) {
-                                      controller.play();
-                                    } else {
-                                      controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: playlistContextId);
-                                      controller.play();
-                                    }
-                                  },
-                                ),
+                              _HeaderPlayButton(
+                                isPlaying: showPauseHeader,
+                                onPressed: () {
+                                  if (showPauseHeader) {
+                                    controller.pause();
+                                  } else if (isCurrentContext) {
+                                    controller.play();
+                                  } else {
+                                    controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: playlistContextId);
+                                    controller.play();
+                                  }
+                                },
                               ),
                               const SizedBox(width: 16),
                             ],
@@ -608,6 +599,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                 track: track,
                                 index: i,
                                 isPlaying: isPlayingTrack,
+                                showAlbum: true,
                                 onTap: () {
                                   controller.setQueue(syncoraTracks, startIndex: i, activeContextId: playlistContextId);
                                   controller.play();
@@ -663,6 +655,52 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _HeaderPlayButton extends StatefulWidget {
+  final bool isPlaying;
+  final VoidCallback onPressed;
+
+  const _HeaderPlayButton({
+    required this.isPlaying,
+    required this.onPressed,
+  });
+
+  @override
+  State<_HeaderPlayButton> createState() => _HeaderPlayButtonState();
+}
+
+class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedScale(
+        scale: _isHovered ? 1.08 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.primary,
+            boxShadow: _isHovered ? AppTheme.glowHighShadow : AppTheme.glowShadow,
+          ),
+          child: IconButton(
+            icon: Icon(
+              widget.isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.outline(SolarIcons.Play),
+              color: AppTheme.background,
+              size: 26,
+            ),
+            onPressed: widget.onPressed,
+          ),
+        ),
       ),
     );
   }

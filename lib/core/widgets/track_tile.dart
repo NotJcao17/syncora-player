@@ -58,8 +58,15 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     final isDesktop = screenWidth >= 768;
     final isMobile = screenWidth < 768;
 
+    final isAudioPlaying = ref.watch(isPlayingProvider);
+    final isActiveTrack = widget.isPlaying;
+    final isPlayingActive = isActiveTrack && isAudioPlaying;
+    final isPausedActive = isActiveTrack && !isAudioPlaying;
+
+    const activeColor = Color(0xFF22C55E);
+
     final textColor = widget.isAvailable
-        ? (widget.isPlaying ? AppTheme.primary : AppTheme.primary)
+        ? (isActiveTrack ? activeColor : AppTheme.primary)
         : AppTheme.muted;
     final subtitleColor = widget.isAvailable ? AppTheme.secondary : AppTheme.muted;
 
@@ -81,7 +88,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       ),
     );
 
-    if (widget.index == null && widget.isPlaying) {
+    if (widget.index == null && isActiveTrack) {
       coverWidget = Stack(
         children: [
           coverWidget,
@@ -93,16 +100,28 @@ class _TrackTileState extends ConsumerState<TrackTile> {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
-              child: _isHovered
-                  ? Icon(
-                      AppIcons.bold(SolarIcons.Pause),
-                      color: AppTheme.primary,
-                      size: 18,
-                    )
-                  : LoadingAnimationWidget.staggeredDotsWave(
-                      color: AppTheme.primary,
-                      size: 18,
-                    ),
+              child: isPlayingActive
+                  ? (_isHovered
+                      ? Icon(
+                          AppIcons.bold(SolarIcons.Pause),
+                          color: activeColor,
+                          size: 18,
+                        )
+                      : LoadingAnimationWidget.staggeredDotsWave(
+                          color: activeColor,
+                          size: 18,
+                        ))
+                  : (_isHovered
+                      ? Icon(
+                          AppIcons.bold(SolarIcons.Play),
+                          color: activeColor,
+                          size: 18,
+                        )
+                      : Icon(
+                          AppIcons.bold(SolarIcons.Play),
+                          color: activeColor.withValues(alpha: 0.7),
+                          size: 18,
+                        )),
             ),
           ),
         ],
@@ -115,8 +134,10 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       child: InkWell(
         onTap: widget.isAvailable
             ? () {
-                if (widget.isPlaying) {
+                if (isPlayingActive) {
                   ref.read(syncoraPlayerControllerProvider.notifier).pause();
+                } else if (isPausedActive) {
+                  ref.read(syncoraPlayerControllerProvider.notifier).play();
                 } else if (widget.onTap != null) {
                   widget.onTap!();
                 }
@@ -125,7 +146,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         borderRadius: BorderRadius.circular(8),
         child: Container(
           decoration: BoxDecoration(
-            color: widget.isPlaying
+            color: isActiveTrack
                 ? AppTheme.surfaceHover.withValues(alpha: 0.6)
                 : (_isHovered ? AppTheme.surfaceHover.withValues(alpha: 0.3) : Colors.transparent),
             borderRadius: BorderRadius.circular(8),
@@ -139,34 +160,48 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                   SizedBox(
                     width: 28,
                     child: Center(
-                      child: widget.isPlaying
+                      child: isPlayingActive
                           ? (_isHovered
                               ? Icon(
                                   AppIcons.bold(SolarIcons.Pause),
-                                  color: AppTheme.primary,
+                                  color: activeColor,
                                   size: 18,
                                 )
                               : LoadingAnimationWidget.staggeredDotsWave(
-                                  color: AppTheme.primary,
+                                  color: activeColor,
                                   size: 18,
                                 ))
-                          : (isDesktop && _isHovered
-                              ? Icon(
-                                  AppIcons.bold(SolarIcons.Play),
-                                  color: AppTheme.primary,
-                                  size: 18,
-                                )
-                              : Text(
-                                  '${widget.index! + 1}',
-                                  style: TextStyle(
-                                    color: widget.isPlaying
-                                        ? AppTheme.primary
-                                        : AppTheme.secondary.withValues(alpha: 0.7),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                )),
+                          : (isPausedActive
+                              ? (_isHovered
+                                  ? Icon(
+                                      AppIcons.bold(SolarIcons.Play),
+                                      color: activeColor,
+                                      size: 18,
+                                    )
+                                  : Text(
+                                      '${widget.index! + 1}',
+                                      style: const TextStyle(
+                                        color: activeColor,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ))
+                              : (isDesktop && _isHovered
+                                  ? Icon(
+                                      AppIcons.bold(SolarIcons.Play),
+                                      color: AppTheme.primary,
+                                      size: 18,
+                                    )
+                                  : Text(
+                                      '${widget.index! + 1}',
+                                      style: TextStyle(
+                                        color: AppTheme.secondary.withValues(alpha: 0.7),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ))),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -189,7 +224,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                                 if (widget.isDownloaded) ...[
                                   Icon(
                                     AppIcons.bold(SolarIcons.CheckCircle),
-                                    color: AppTheme.primary,
+                                    color: activeColor,
                                     size: 14,
                                   ),
                                   const SizedBox(width: 4),
@@ -202,7 +237,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                                     style: TextStyle(
                                       color: textColor,
                                       fontSize: 14,
-                                      fontWeight: widget.isPlaying ? FontWeight.bold : FontWeight.w600,
+                                      fontWeight: isActiveTrack ? FontWeight.bold : FontWeight.w600,
                                     ),
                                   ),
                                 ),
@@ -223,7 +258,9 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      widget.track.album ?? '—',
+                      (widget.track.album != null && widget.track.album!.isNotEmpty)
+                          ? widget.track.album!
+                          : '—',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

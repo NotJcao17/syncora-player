@@ -144,6 +144,7 @@ class SyncoraPlayerController extends ChangeNotifier {
   }) async {
     _restoredPositionSeconds = null;
     if (tracks.isEmpty) {
+      await _microFadeOut();
       await _engine.stop();
       _state = SyncoraPlayerState.initial.copyWith(
         skipSilence: _state.skipSilence,
@@ -180,7 +181,11 @@ class SyncoraPlayerController extends ChangeNotifier {
   }
 
   Future<void> play() async {
-    await _engine.play();
+    if (_state.engine.processingState == AudioProcessingState.idle && _state.currentTrack != null) {
+      await playCurrent();
+    } else {
+      await _engine.play();
+    }
   }
 
   Future<void> pause() async {
@@ -194,6 +199,7 @@ class SyncoraPlayerController extends ChangeNotifier {
   }
 
   Future<void> stop() async {
+    await _microFadeOut();
     await _engine.stop();
     _saveSession();
   }
@@ -378,11 +384,31 @@ class SyncoraPlayerController extends ChangeNotifier {
     _saveSession();
   }
 
+  /// Micro fade-out de audio (150ms) antes de cambiar de pista o detener el motor
+  Future<void> _microFadeOut() async {
+    if (!_state.engine.playing) return;
+    try {
+      final currentVol = _state.engine.volume;
+      if (currentVol <= 0) return;
+      final step = currentVol / 3.0;
+      await _engine.setVolume((currentVol - step).clamp(0.0, 1.0));
+      await Future.delayed(const Duration(milliseconds: 50));
+      await _engine.setVolume((currentVol - 2 * step).clamp(0.0, 1.0));
+      await Future.delayed(const Duration(milliseconds: 50));
+      await _engine.setVolume(0.0);
+      await Future.delayed(const Duration(milliseconds: 50));
+      await _engine.setVolume(currentVol);
+    } catch (e) {
+      _log('[Audio] Error en micro fade-out: $e');
+    }
+  }
+
   /// Elimina una pista de la cola sin romper la reproducción en curso.
   Future<void> removeFromQueue(int index) async {
     if (index < 0 || index >= _state.queue.length) return;
 
     if (_state.queue.length == 1) {
+      await _microFadeOut();
       await _engine.stop();
       _state = _state.copyWith(
         queue: const [],
@@ -501,9 +527,12 @@ class SyncoraPlayerController extends ChangeNotifier {
       repeatMode: session.repeatMode,
       shuffle: session.shuffle,
       activeContextId: session.activeContextId,
+      clearContext: session.activeContextId == null,
       engine: _state.engine.copyWith(
         position: Duration(seconds: session.positionSeconds),
         duration: restoredDuration,
+        playing: false,
+        processingState: AudioProcessingState.idle,
       ),
       clearError: true,
     );
@@ -517,7 +546,8 @@ class SyncoraPlayerController extends ChangeNotifier {
     final track = _state.currentTrack;
     if (track == null) return;
 
-    // Detener inmediatamente cualquier audio previo para evitar audio bleed durante la extracción
+    // Detener inmediatamente cualquier audio previo con micro fade-out para evitar audio bleed/clics
+    await _microFadeOut();
     await _engine.stop();
 
     String targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)
