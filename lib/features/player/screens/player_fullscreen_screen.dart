@@ -426,30 +426,84 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     SyncoraPlayerState state,
     SyncoraPlayerController controller,
   ) {
-    final queue = state.queue;
-    final currentIndex = state.currentIndex;
-
     AppBottomSheet.show(
       context: context,
-      title: 'Cola de Reproducción (${queue.length})',
-      child: queue.isEmpty
+      title: 'Cola de Reproducción (${state.queue.length})',
+      child: state.queue.isEmpty
           ? const Padding(
               padding: EdgeInsets.all(24.0),
-              child: Text('La cola está vacía', textAlign: TextAlign.center),
+              child: Text('La cola está vacía', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.secondary)),
             )
-          : ListView.builder(
-              itemCount: queue.length,
-              itemBuilder: (ctx, i) {
-                final track = queue[i];
-                final isCurrent = i == currentIndex;
-                return TrackTile(
-                  track: track,
-                  index: i,
-                  isPlaying: isCurrent,
-                  onTap: () {
-                    controller.skipToQueueIndex(i);
-                    Navigator.pop(ctx);
-                  },
+          : Consumer(
+              builder: (ctx, ref, _) {
+                final currentState = ref.watch(playerStateProvider);
+                final queue = currentState.queue;
+                final currentIndex = currentState.currentIndex;
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${queue.length} canciones en total',
+                            style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
+                          ),
+                          TextButton.icon(
+                            onPressed: () {
+                              controller.clearQueue();
+                              Navigator.pop(ctx);
+                            },
+                            icon: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), size: 16, color: AppTheme.secondary),
+                            label: const Text('Limpiar cola', style: TextStyle(color: AppTheme.secondary, fontSize: 12)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Flexible(
+                      child: ReorderableListView.builder(
+                        shrinkWrap: true,
+                        itemCount: queue.length,
+                        // ignore: deprecated_member_use
+                        onReorder: (oldIndex, newIndex) {
+                          controller.reorderQueue(oldIndex, newIndex);
+                        },
+                        itemBuilder: (ctx, i) {
+                          final track = queue[i];
+                          final isCurrent = i == currentIndex;
+                          return Dismissible(
+                            key: ValueKey('queue_${track.id}_$i'),
+                            direction: DismissDirection.endToStart,
+                            onDismissed: (_) {
+                              controller.removeFromQueue(i);
+                            },
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 16),
+                              color: Colors.red.withValues(alpha: 0.2),
+                              child: const Icon(Icons.delete, color: Colors.red),
+                            ),
+                            child: TrackTile(
+                              key: ValueKey('tile_${track.id}_$i'),
+                              track: track,
+                              index: i,
+                              isPlaying: isCurrent,
+                              onTap: () {
+                                controller.skipToQueueIndex(i);
+                                Navigator.pop(ctx);
+                              },
+                              onRemove: () {
+                                controller.removeFromQueue(i);
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
@@ -457,6 +511,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
   }
 
   void _showTrackOptionsMenu(BuildContext context, SyncoraTrack track) {
+    final controller = ref.read(syncoraPlayerControllerProvider.notifier);
     AppBottomSheet.show(
       context: context,
       title: track.title,
@@ -464,10 +519,21 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
         shrinkWrap: true,
         children: [
           ListTile(
-            leading: Icon(AppIcons.broken(SolarIcons.AddFolder), color: AppTheme.primary),
-            title: const Text('Agregar a playlist', style: TextStyle(color: AppTheme.primary)),
+            leading: Icon(AppIcons.broken(SolarIcons.PlayCircle), color: AppTheme.primary),
+            title: const Text('Reproducir a continuación', style: TextStyle(color: AppTheme.primary)),
             onTap: () {
+              controller.playNext(track);
               Navigator.pop(context);
+              AppToast.show(context, message: 'Se reproducirá a continuación');
+            },
+          ),
+          ListTile(
+            leading: Icon(AppIcons.broken(SolarIcons.AddFolder), color: AppTheme.primary),
+            title: const Text('Agregar a la cola', style: TextStyle(color: AppTheme.primary)),
+            onTap: () {
+              controller.addToQueue(track);
+              Navigator.pop(context);
+              AppToast.show(context, message: 'Se agregó a la cola');
             },
           ),
         ],

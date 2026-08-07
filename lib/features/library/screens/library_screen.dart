@@ -8,10 +8,12 @@ import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/playlist_cover_widget.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../import_export/playlist_import_export_service.dart';
+
 
 /// Pantalla de Biblioteca conectada a la base de datos local Drift y servicio de Import/Export.
 class LibraryScreen extends ConsumerStatefulWidget {
@@ -423,33 +425,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                 padding: const EdgeInsets.all(8),
                                 child: Row(
                                   children: [
-                                    ClipRRect(
+                                    PlaylistCoverWidget(
+                                      coverUrl: playlist.coverUrl,
+                                      playlistId: playlist.id,
+                                      isLiked: isLiked,
+                                      width: 64,
+                                      height: 64,
                                       borderRadius: BorderRadius.circular(12),
-                                      child: SizedBox(
-                                        width: 64,
-                                        height: 64,
-                                        child: isLiked
-                                            ? Container(
-                                                decoration: const BoxDecoration(
-                                                  gradient: AppTheme.gradientLiked,
-                                                ),
-                                                child: Icon(
-                                                  AppIcons.bold(SolarIcons.Heart),
-                                                  color: Colors.white,
-                                                  size: 28,
-                                                ),
-                                              )
-                                            : (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty)
-                                                ? CachedNetworkImage(
-                                                    imageUrl: playlist.coverUrl!,
-                                                    memCacheWidth: 300,
-                                                    fit: BoxFit.cover,
-                                                  )
-                                                : Container(
-                                                    color: AppTheme.surfaceHover,
-                                                    child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted),
-                                                  ),
-                                      ),
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(

@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+import 'playlist_cover_widget.dart';
 
 enum PlaylistCardSize { small, large }
 
@@ -10,7 +10,9 @@ class PlaylistCard extends StatefulWidget {
   final String title;
   final String subtitle;
   final String? coverUrl;
-  final List<String>? gridCoverUrls;
+  final int? playlistId;
+  final List<dynamic>? tracks;
+  final bool isLiked;
   final PlaylistCardSize size;
   final VoidCallback? onTap;
   final VoidCallback? onPlayTap;
@@ -20,7 +22,9 @@ class PlaylistCard extends StatefulWidget {
     required this.title,
     required this.subtitle,
     this.coverUrl,
-    this.gridCoverUrls,
+    this.playlistId,
+    this.tracks,
+    this.isLiked = false,
     this.size = PlaylistCardSize.large,
     this.onTap,
     this.onPlayTap,
@@ -51,119 +55,75 @@ class _PlaylistCardState extends State<PlaylistCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-          // Portada redondeada 16px con Play button flotante
-          Flexible(
-            child: AspectRatio(
-              aspectRatio: 1.0,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: _buildCoverImage(),
+            // Portada redondeada 16px con Play button flotante
+            Flexible(
+              child: AspectRatio(
+                aspectRatio: 1.0,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: PlaylistCoverWidget(
+                        coverUrl: widget.coverUrl,
+                        playlistId: widget.playlistId,
+                        tracks: widget.tracks,
+                        isLiked: widget.isLiked,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
-                  ),
-                  // Botón Play Flotante en hover
-                  Positioned(
-                    right: 8,
-                    bottom: 8,
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 150),
-                      opacity: _isHovered ? 1.0 : 0.0,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppTheme.primary,
-                          boxShadow: AppTheme.glowShadow,
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            AppIcons.outline(SolarIcons.Play),
-                            color: AppTheme.background,
-                            size: 18,
+                    // Botón Play Flotante en hover
+                    Positioned(
+                      right: 8,
+                      bottom: 8,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 150),
+                        opacity: _isHovered ? 1.0 : 0.0,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppTheme.primary,
+                            boxShadow: AppTheme.glowShadow,
                           ),
-                          onPressed: widget.onPlayTap ?? widget.onTap,
-                          padding: EdgeInsets.zero,
+                          child: IconButton(
+                            icon: Icon(
+                              AppIcons.outline(SolarIcons.Play),
+                              color: AppTheme.background,
+                              size: 18,
+                            ),
+                            onPressed: widget.onPlayTap ?? widget.onTap,
+                            padding: EdgeInsets.zero,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            widget.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: AppTheme.primary,
-              fontWeight: FontWeight.w800,
-              fontSize: isLarge ? 14 : 13,
+            const SizedBox(height: 8),
+            Text(
+              widget.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppTheme.primary,
+                fontWeight: FontWeight.w800,
+                fontSize: isLarge ? 14 : 13,
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            widget.subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppTheme.secondary,
-              fontSize: 12,
+            const SizedBox(height: 2),
+            Text(
+              widget.subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppTheme.secondary,
+                fontSize: 12,
+              ),
             ),
-          ),
-        ],
-      ),
-    ),
-  );
-  }
-
-  Widget _buildCoverImage() {
-    if (widget.gridCoverUrls != null && widget.gridCoverUrls!.length >= 4) {
-      return Column(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(child: _buildSingleImage(widget.gridCoverUrls![0])),
-                Expanded(child: _buildSingleImage(widget.gridCoverUrls![1])),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(child: _buildSingleImage(widget.gridCoverUrls![2])),
-                Expanded(child: _buildSingleImage(widget.gridCoverUrls![3])),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-
-    if (widget.coverUrl != null && widget.coverUrl!.isNotEmpty) {
-      return _buildSingleImage(widget.coverUrl!);
-    }
-
-    return Container(
-      color: AppTheme.surfaceActive,
-      child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 36),
-    );
-  }
-
-  Widget _buildSingleImage(String url) {
-    return CachedNetworkImage(
-      imageUrl: url,
-      memCacheWidth: 300,
-      fit: BoxFit.cover,
-      placeholder: (context, url) => Container(color: AppTheme.surfaceHover),
-      errorWidget: (context, url, error) => Container(
-        color: AppTheme.surfaceHover,
-        child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 20),
+          ],
+        ),
       ),
     );
   }

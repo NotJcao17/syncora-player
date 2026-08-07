@@ -8,6 +8,7 @@ import '../../core/extraction/models/extraction_result.dart';
 import '../../core/extraction/retry_policy.dart';
 import 'audio_engine/audio_engine_state.dart';
 import 'player_models.dart';
+import 'session/player_session_storage.dart';
 
 /// Snapshot inmutable del estado completo del reproductor (cola + reproducción).
 ///
@@ -81,22 +82,23 @@ class SyncoraPlayerState {
 /// - [AudioEngine] (just_audio/media_kit): reproducción nativa.
 /// - [ExtractionService]: resolución de URLs firmadas de YouTube.
 /// - [RetryPolicy]: guard anti-bucle 403 (máx. 1 reintento).
-///
-/// Los controles del SO (audio_service / smtc_windows) se acoplan en el Paso 3
-/// y delegan aquí.
+/// - [PlayerSessionStorage]: persistencia de estado de reproducción y cola.
 class SyncoraPlayerController extends ChangeNotifier {
   SyncoraPlayerController({
-    required this._engine,
-    required this._extractionService,
-  });
+    required AudioEngine engine,
+    required ExtractionService extractionService,
+  })  : _engine = engine, // ignore: prefer_initializing_formals
+        _extractionService = extractionService; // ignore: prefer_initializing_formals
 
   final AudioEngine _engine;
   final ExtractionService _extractionService;
   final RetryPolicy _retryPolicy = RetryPolicy();
+  final PlayerSessionStorage _sessionStorage = PlayerSessionStorage();
 
   StreamSubscription<AudioEngineState>? _engineSub;
   StreamSubscription<void>? _completionSub;
   bool _disposed = false;
+  int? _restoredPositionSeconds;
 
   SyncoraPlayerState _state = SyncoraPlayerState.initial;
 
@@ -111,14 +113,15 @@ class SyncoraPlayerController extends ChangeNotifier {
   // recursivas mientras una extracción está en curso.
   bool _isTransitioning = false;
 
-  /// Inicializa suscripciones a los streams del motor.
+  /// Inicializa suscripciones a los streams del motor y restaura sesión guardada.
   void init() {
     _engineSub = _engine.stateStream.listen(_onEngineState);
     _completionSub = _engine.completionStream.listen((_) => _onComplete());
+    _restoreSession();
   }
 
   // ----------------------------------------------------------------------
-  // API pública de control
+  // API pública de control y gestión de cola
   // ----------------------------------------------------------------------
 
   /// Reemplaza la cola completa y (opcionalmente) arranca la reproducción
@@ -136,6 +139,7 @@ class SyncoraPlayerController extends ChangeNotifier {
         shuffle: _state.shuffle,
       );
       _notify();
+      _saveSession();
       return;
     }
     _state = _state.copyWith(
@@ -144,6 +148,7 @@ class SyncoraPlayerController extends ChangeNotifier {
       clearError: true,
     );
     _notify();
+    _saveSession();
     if (autoplay) {
       await playCurrent();
     }
@@ -154,6 +159,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     if (index < 0 || index >= _state.queue.length) return;
     _state = _state.copyWith(currentIndex: index, clearError: true);
     _notify();
+    _saveSession();
     await playCurrent();
   }
 
@@ -163,14 +169,17 @@ class SyncoraPlayerController extends ChangeNotifier {
 
   Future<void> pause() async {
     await _engine.pause();
+    _saveSession();
   }
 
   Future<void> seek(Duration position) async {
     await _engine.seek(position);
+    _saveSession();
   }
 
   Future<void> stop() async {
     await _engine.stop();
+    _saveSession();
   }
 
   Future<void> skipToNext() async {
@@ -181,10 +190,12 @@ class SyncoraPlayerController extends ChangeNotifier {
       if (next == null) {
         // Fin de la cola sin repeat: pausar.
         await _engine.pause();
+        _saveSession();
         return;
       }
       _state = _state.copyWith(currentIndex: next, clearError: true);
       _notify();
+      _saveSession();
       await playCurrent();
     } finally {
       _isTransitioning = false;
@@ -195,8 +206,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     if (_isTransitioning) return;
     _isTransitioning = true;
     try {
-      // Si llevamos >3s reproduciéndola, reiniciar la pista actual (comportamiento
-      // estándar de reproductores).
+      // Si llevamos >3s reproduciéndola, reiniciar la pista actual.
       if (_state.engine.position.inSeconds > 3) {
         await _engine.seek(Duration.zero);
         return;
@@ -208,6 +218,7 @@ class SyncoraPlayerController extends ChangeNotifier {
       }
       _state = _state.copyWith(currentIndex: prev, clearError: true);
       _notify();
+      _saveSession();
       await playCurrent();
     } finally {
       _isTransitioning = false;
@@ -217,6 +228,7 @@ class SyncoraPlayerController extends ChangeNotifier {
   void setRepeatMode(SyncoraRepeatMode mode) {
     _state = _state.copyWith(repeatMode: mode);
     _notify();
+    _saveSession();
   }
 
   void cycleRepeatMode() {
@@ -228,7 +240,24 @@ class SyncoraPlayerController extends ChangeNotifier {
     setRepeatMode(next);
   }
 
-  /// Agrega una pista a la cola actual.
+  /// Inserta la pista inmediatamente después de la pista actual [currentIndex].
+  void playNext(SyncoraTrack track) {
+    if (_state.queue.isEmpty || _state.currentIndex < 0) {
+      _state = _state.copyWith(
+        queue: List.unmodifiable([track]),
+        currentIndex: 0,
+      );
+    } else {
+      final updatedQueue = List<SyncoraTrack>.from(_state.queue);
+      final insertIndex = _state.currentIndex + 1;
+      updatedQueue.insert(insertIndex, track);
+      _state = _state.copyWith(queue: List.unmodifiable(updatedQueue));
+    }
+    _notify();
+    _saveSession();
+  }
+
+  /// Agrega una pista al final de la cola actual.
   void addToQueue(SyncoraTrack track) {
     final updatedQueue = List<SyncoraTrack>.from(_state.queue)..add(track);
     final newIndex = _state.currentIndex < 0 ? 0 : _state.currentIndex;
@@ -237,6 +266,98 @@ class SyncoraPlayerController extends ChangeNotifier {
       currentIndex: newIndex,
     );
     _notify();
+    _saveSession();
+  }
+
+  /// Reordena elementos en la cola asegurando la integridad de [currentIndex].
+  void reorderQueue(int oldIndex, int newIndex) {
+    if (oldIndex < 0 || oldIndex >= _state.queue.length) return;
+    int targetIndex = newIndex;
+    if (oldIndex < targetIndex) {
+      targetIndex -= 1;
+    }
+    if (targetIndex < 0 || targetIndex >= _state.queue.length) return;
+    if (oldIndex == targetIndex) return;
+
+    final updated = List<SyncoraTrack>.from(_state.queue);
+    final track = updated.removeAt(oldIndex);
+    updated.insert(targetIndex, track);
+
+    int newCurrentIndex = _state.currentIndex;
+    if (_state.currentIndex == oldIndex) {
+      newCurrentIndex = targetIndex;
+    } else if (oldIndex < _state.currentIndex && targetIndex >= _state.currentIndex) {
+      newCurrentIndex = _state.currentIndex - 1;
+    } else if (oldIndex > _state.currentIndex && targetIndex <= _state.currentIndex) {
+      newCurrentIndex = _state.currentIndex + 1;
+    }
+
+    _state = _state.copyWith(
+      queue: List.unmodifiable(updated),
+      currentIndex: newCurrentIndex,
+    );
+    _notify();
+    _saveSession();
+  }
+
+  /// Elimina una pista de la cola sin romper la reproducción en curso.
+  Future<void> removeFromQueue(int index) async {
+    if (index < 0 || index >= _state.queue.length) return;
+
+    if (_state.queue.length == 1) {
+      await _engine.stop();
+      _state = _state.copyWith(
+        queue: const [],
+        currentIndex: -1,
+      );
+      _notify();
+      _saveSession();
+      return;
+    }
+
+    final updated = List<SyncoraTrack>.from(_state.queue)..removeAt(index);
+    final currentIdx = _state.currentIndex;
+
+    if (index < currentIdx) {
+      _state = _state.copyWith(
+        queue: List.unmodifiable(updated),
+        currentIndex: currentIdx - 1,
+      );
+      _notify();
+      _saveSession();
+    } else if (index > currentIdx) {
+      _state = _state.copyWith(
+        queue: List.unmodifiable(updated),
+      );
+      _notify();
+      _saveSession();
+    } else {
+      // Se elimina la pista que está sonando actualmente
+      int nextIdx = index;
+      if (nextIdx >= updated.length) {
+        nextIdx = updated.length - 1;
+      }
+      _state = _state.copyWith(
+        queue: List.unmodifiable(updated),
+        currentIndex: nextIdx,
+        clearError: true,
+      );
+      _notify();
+      _saveSession();
+      await playCurrent();
+    }
+  }
+
+  /// Limpia las canciones siguientes en la cola (cola próxima).
+  void clearQueue() {
+    if (_state.currentIndex < 0 || _state.queue.isEmpty) {
+      _state = _state.copyWith(queue: const [], currentIndex: -1);
+    } else {
+      final remaining = _state.queue.sublist(0, _state.currentIndex + 1);
+      _state = _state.copyWith(queue: List.unmodifiable(remaining));
+    }
+    _notify();
+    _saveSession();
   }
 
   /// Alias de playIndex para saltar a un índice de la cola.
@@ -245,6 +366,7 @@ class SyncoraPlayerController extends ChangeNotifier {
   void setShuffle(bool enabled) {
     _state = _state.copyWith(shuffle: enabled);
     _notify();
+    _saveSession();
   }
 
   void toggleShuffle() {
@@ -266,18 +388,47 @@ class SyncoraPlayerController extends ChangeNotifier {
   }
 
   // ----------------------------------------------------------------------
-  // Lógica interna
+  // Lógica interna & Persistencia de Sesión
   // ----------------------------------------------------------------------
 
+  void _saveSession() {
+    _sessionStorage.saveSession(
+      queue: _state.queue,
+      currentIndex: _state.currentIndex,
+      positionSeconds: _state.engine.position.inSeconds,
+      repeatMode: _state.repeatMode,
+      shuffle: _state.shuffle,
+    );
+  }
+
+  Future<void> _restoreSession() async {
+    final session = await _sessionStorage.loadSession();
+    if (session == null || session.queue.isEmpty) return;
+
+    final restoredIndex = (session.currentIndex >= 0 && session.currentIndex < session.queue.length)
+        ? session.currentIndex
+        : 0;
+
+    _restoredPositionSeconds = session.positionSeconds;
+
+    _state = _state.copyWith(
+      queue: List.unmodifiable(session.queue),
+      currentIndex: restoredIndex,
+      repeatMode: session.repeatMode,
+      shuffle: session.shuffle,
+      clearError: true,
+    );
+    _notify();
+    _log('[Session] Sesión restaurada: ${session.queue.length} pistas en cola, posición: ${session.positionSeconds}s (pausado)');
+  }
+
   /// Núcleo: resuelve la URL de la pista actual vía [ExtractionService] y la
-  /// carga en el motor. Aplica el guard anti-bucle 403 (Pitfalls #11/#14):
-  /// errores lógicos (notFound) hacen auto-skip; errores 403/red respetan
-  /// máximo 1 reintento y luego pausan inmediatamente.
+  /// carga en el motor. Aplica el guard anti-bucle 403 (Pitfalls #11/#14).
   Future<void> playCurrent() async {
     final track = _state.currentTrack;
     if (track == null) return;
 
-    // Pausar inmediatamente cualquier audio previo para evitar sangrado de audio durante la extracción
+    // Pausar inmediatamente cualquier audio previo
     await _engine.pause();
 
     String targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)
@@ -299,7 +450,16 @@ class SyncoraPlayerController extends ChangeNotifier {
         _retryPolicy.reset(track.id); // extracción exitosa: resetear contador
         try {
           await _engine.setUrl(streamUrl, headers: headers);
+
+          // Si había una posición restaurada al iniciar la app, buscarla
+          if (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0) {
+            final targetPos = Duration(seconds: _restoredPositionSeconds!);
+            _restoredPositionSeconds = null;
+            await _engine.seek(targetPos);
+          }
+
           await _engine.play();
+          _saveSession();
         } catch (e) {
           _log('[Play] Error cargando en motor: $e');
           _state = _state.copyWith(
@@ -323,27 +483,21 @@ class SyncoraPlayerController extends ChangeNotifier {
   ) async {
     _log('[Play] Error $error: $message');
 
-    // Cancelación por superposición de peticiones (Next rápido / cambio de pista) → ignorar.
     if (error == ExtractionError.cancelled) {
       _log('[Play] Petición previa cancelada por superposición: omitiendo.');
       return;
     }
 
-    // Error lógico (metadata ausente, video privado) → auto-skip inmediato.
-    // Pitfall #14: el auto-skip solo es ciego para errores lógicos.
     if (error == ExtractionError.notFound || error == ExtractionError.unknownError) {
       _state = _state.copyWith(
         lastError: error,
         lastErrorMessage: message,
       );
       _notify();
-      // Auto-skip a la siguiente pista disponible (sin bucle: si toda la cola
-      // falla por notFound, se llega al final y se pausa).
       await skipToNext();
       return;
     }
 
-    // Error de red / 403 → Guard: máximo 1 reintento (Pitfalls #11/#14).
     final canRetry = _retryPolicy.canRetry(track.id, error);
     if (canRetry) {
       _log('[Play] Reintentando (intento ${_retryPolicy.getAttemptCount(track.id)})...');
@@ -351,8 +505,6 @@ class SyncoraPlayerController extends ChangeNotifier {
       return;
     }
 
-    // Agotado el reintento → PAUSA INMEDIATA. NUNCA auto-skip ciego ante 403/red
-    // (evitaría vaciar la cola en 2s y aseguraría un baneo de IP).
     _log('[Play] Pausa inmediata por $error persistente (guard 403).');
     await _engine.pause();
     _state = _state.copyWith(
@@ -360,6 +512,7 @@ class SyncoraPlayerController extends ChangeNotifier {
       lastErrorMessage: message ?? 'Reproducción pausada por error persistente.',
     );
     _notify();
+    _saveSession();
   }
 
   void _onEngineState(AudioEngineState engineState) {
@@ -368,7 +521,6 @@ class SyncoraPlayerController extends ChangeNotifier {
   }
 
   Future<void> _onComplete() async {
-    // Repeat one → volver a reproducir la misma pista.
     if (_state.repeatMode == SyncoraRepeatMode.one) {
       await _engine.seek(Duration.zero);
       await _engine.play();
@@ -383,8 +535,6 @@ class SyncoraPlayerController extends ChangeNotifier {
     if (queue.isEmpty) return null;
 
     if (_state.shuffle) {
-      // Shuffle simple: índice aleatorio distinto al actual (si la cola lo
-      // permite). El Smart Shuffle completo es Fase 7.
       if (queue.length == 1) {
         return _state.repeatMode == SyncoraRepeatMode.off ? null : 0;
       }
@@ -394,9 +544,8 @@ class SyncoraPlayerController extends ChangeNotifier {
 
     final next = _state.currentIndex + 1;
     if (next < queue.length) return next;
-    // Fin de cola.
     if (_state.repeatMode == SyncoraRepeatMode.all) return 0;
-    return null; // sin repeat → pausar
+    return null;
   }
 
   int? _computePrevIndex() {
@@ -427,3 +576,4 @@ class SyncoraPlayerController extends ChangeNotifier {
     super.dispose();
   }
 }
+

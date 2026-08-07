@@ -5,6 +5,16 @@ class SyncoraArtistRef {
   final int id;
   final String name;
   const SyncoraArtistRef({required this.id, required this.name});
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+      };
+
+  factory SyncoraArtistRef.fromJson(Map<String, dynamic> json) => SyncoraArtistRef(
+        id: json['id'] as int? ?? 0,
+        name: json['name'] as String? ?? '',
+      );
 }
 
 /// Pista del dominio de Syncora, independiente de `audio_service`.
@@ -43,7 +53,7 @@ class SyncoraTrack {
   const SyncoraTrack({
     required this.id,
     required this.title,
-    this._artist = '',
+    String artist = '',
     this.artists = const [],
     this.artistId,
     this.album,
@@ -53,7 +63,7 @@ class SyncoraTrack {
     this.artUri,
     this.previewUrl,
     this.isSpokenWord = false,
-  });
+  }) : _artist = artist; // ignore: prefer_initializing_formals
 
   factory SyncoraTrack.fromVideoId({
     required String videoId,
@@ -67,6 +77,42 @@ class SyncoraTrack {
       title: title ?? 'Video $videoId',
       artist: artist ?? 'YouTube',
       artists: artists,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'artist': _artist,
+        'artists': artists.map((a) => a.toJson()).toList(),
+        'artistId': artistId,
+        'album': album,
+        'albumId': albumId,
+        'durationMs': duration?.inMilliseconds,
+        'youtubeVideoId': youtubeVideoId,
+        'artUri': artUri?.toString(),
+        'previewUrl': previewUrl,
+        'isSpokenWord': isSpokenWord,
+      };
+
+  factory SyncoraTrack.fromJson(Map<String, dynamic> json) {
+    final artUriStr = json['artUri'] as String?;
+    return SyncoraTrack(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      artist: json['artist'] as String? ?? '',
+      artists: (json['artists'] as List<dynamic>?)
+              ?.map((a) => SyncoraArtistRef.fromJson(a as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      artistId: json['artistId'] as int?,
+      album: json['album'] as String?,
+      albumId: json['albumId'] as int?,
+      duration: json['durationMs'] != null ? Duration(milliseconds: json['durationMs'] as int) : null,
+      youtubeVideoId: json['youtubeVideoId'] as String?,
+      artUri: artUriStr != null && artUriStr.isNotEmpty ? Uri.tryParse(artUriStr) : null,
+      previewUrl: json['previewUrl'] as String?,
+      isSpokenWord: json['isSpokenWord'] as bool? ?? false,
     );
   }
 
@@ -104,4 +150,5 @@ class SyncoraTrack {
 
 /// Modo de repetición expuesto al reproductor.
 enum SyncoraRepeatMode { off, one, all }
+
 
