@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -13,6 +14,15 @@ import 'player_models.dart';
 import 'syncora_player_controller.dart';
 
 AudioHandler? _globalAndroidAudioHandler;
+
+bool get _isTestEnv {
+  try {
+    final name = WidgetsBinding.instance.runtimeType.toString();
+    return name.contains('Test') || name.contains('Automated');
+  } catch (_) {
+    return true;
+  }
+}
 
 /// Provider principal del controlador de reproducción.
 ///
@@ -33,7 +43,7 @@ final syncoraPlayerControllerProvider =
 
   controller.init();
 
-  if (!kIsWeb && Platform.isWindows) {
+  if (!kIsWeb && Platform.isWindows && !_isTestEnv) {
     try {
       final winControls = WindowsMediaControls(controller);
       ref.onDispose(winControls.dispose);

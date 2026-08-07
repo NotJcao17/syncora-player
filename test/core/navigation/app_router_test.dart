@@ -17,13 +17,20 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
+      final container = ProviderContainer();
+
       await tester.pumpWidget(
-        const ProviderScope(
-          child: SyncoraApp(),
+        UncontrolledProviderScope(
+          container: container,
+          child: const SyncoraApp(),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
       expect(find.byType(HomeScreen), findsOneWidget);
+
+      container.dispose();
+      await tester.pump();
     });
 
     testWidgets('navegar a /search muestra SearchScreen', (tester) async {

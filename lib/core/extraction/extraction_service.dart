@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/widgets.dart';
 import 'models/extraction_request.dart';
 import 'models/extraction_result.dart';
 import 'extraction_isolate.dart';
@@ -71,6 +72,15 @@ class ExtractionServiceReal implements ExtractionService {
   }
 }
 
+bool get _isTestEnv {
+  try {
+    final name = WidgetsBinding.instance.runtimeType.toString();
+    return name.contains('Test') || name.contains('Automated');
+  } catch (_) {
+    return true;
+  }
+}
+
 class ExtractionServiceMock implements ExtractionService {
   static const String _testUrl =
       'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
@@ -92,7 +102,6 @@ class ExtractionServiceMock implements ExtractionService {
     final requestId = 'mock_${DateTime.now().millisecondsSinceEpoch}';
 
     _mockLogController.add('[MockService] Extrayendo URL simulada...');
-    await Future.delayed(const Duration(milliseconds: 300));
 
     if (videoId == 'invalid' || videoId == 'aaaaaaaaaaa') {
       _mockLogController

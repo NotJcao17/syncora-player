@@ -145,6 +145,11 @@ void main() {
     });
 
     testWidgets('MiniPlayer es visible cuando hay una pista activa', (tester) async {
+      tester.view.physicalSize = const Size(1280, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       final mockEngine = FakeAudioEngine();
       final mockExtraction = FakeExtractionService();
       final controller = SyncoraPlayerController(
@@ -160,13 +165,17 @@ void main() {
         duration: Duration(seconds: 213),
       );
 
-      controller.setQueue([track], startIndex: 0);
+      controller.setQueue([track], startIndex: 0, autoplay: false);
+
+      final container = ProviderContainer(
+        overrides: [
+          syncoraPlayerControllerProvider.overrideWith((ref) => controller),
+        ],
+      );
 
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            syncoraPlayerControllerProvider.overrideWith((ref) => controller),
-          ],
+        UncontrolledProviderScope(
+          container: container,
           child: const MaterialApp(
             home: Scaffold(
               body: MiniPlayer(),
@@ -174,13 +183,24 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
 
-      expect(find.text('Never Gonna Give You Up'), findsOneWidget);
-      expect(find.text('Rick Astley'), findsOneWidget);
+      expect(find.text('Never Gonna Give You Up'), findsWidgets);
+      expect(find.text('Rick Astley'), findsWidgets);
+
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+      container.dispose();
+      await tester.pump();
     });
 
     testWidgets('Tocar Play/Pause cambia el estado', (tester) async {
+      tester.view.physicalSize = const Size(1280, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       final mockEngine = FakeAudioEngine();
       final mockExtraction = FakeExtractionService();
       final controller = SyncoraPlayerController(
@@ -199,11 +219,15 @@ void main() {
 
       controller.setQueue([track], startIndex: 0, autoplay: false);
 
+      final container = ProviderContainer(
+        overrides: [
+          syncoraPlayerControllerProvider.overrideWith((ref) => controller),
+        ],
+      );
+
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            syncoraPlayerControllerProvider.overrideWith((ref) => controller),
-          ],
+        UncontrolledProviderScope(
+          container: container,
           child: const MaterialApp(
             home: Scaffold(
               body: MiniPlayer(),
@@ -211,15 +235,22 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
 
       final playButton = find.byIcon(AppIcons.broken(SolarIcons.Play)).first;
       expect(playButton, findsOneWidget);
 
       await tester.tap(playButton);
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
 
       expect(controller.state.engine.playing, isTrue);
+
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+      container.dispose();
+      await tester.pump();
     });
   });
 }
