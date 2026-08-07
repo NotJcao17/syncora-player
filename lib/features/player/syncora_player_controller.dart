@@ -23,6 +23,7 @@ class SyncoraPlayerState {
   final SyncoraRepeatMode repeatMode;
   final bool shuffle;
   final bool skipSilence;
+  final String? activeContextId;
 
   bool get isShuffle => shuffle;
   bool get isSkipSilence => skipSilence;
@@ -45,6 +46,7 @@ class SyncoraPlayerState {
     this.repeatMode = SyncoraRepeatMode.off,
     this.shuffle = false,
     this.skipSilence = false,
+    this.activeContextId,
     this.lastError,
     this.lastErrorMessage,
   });
@@ -58,6 +60,8 @@ class SyncoraPlayerState {
     SyncoraRepeatMode? repeatMode,
     bool? shuffle,
     bool? skipSilence,
+    String? activeContextId,
+    bool clearContext = false,
     ExtractionError? lastError,
     String? lastErrorMessage,
     bool clearError = false,
@@ -69,6 +73,7 @@ class SyncoraPlayerState {
       repeatMode: repeatMode ?? this.repeatMode,
       shuffle: shuffle ?? this.shuffle,
       skipSilence: skipSilence ?? this.skipSilence,
+      activeContextId: clearContext ? null : (activeContextId ?? this.activeContextId),
       lastError: clearError ? null : (lastError ?? this.lastError),
       lastErrorMessage:
           clearError ? null : (lastErrorMessage ?? this.lastErrorMessage),
@@ -135,13 +140,16 @@ class SyncoraPlayerController extends ChangeNotifier {
     List<SyncoraTrack> tracks, {
     int startIndex = 0,
     bool autoplay = true,
+    String? activeContextId,
   }) async {
+    _restoredPositionSeconds = null;
     if (tracks.isEmpty) {
       await _engine.stop();
       _state = SyncoraPlayerState.initial.copyWith(
         skipSilence: _state.skipSilence,
         repeatMode: _state.repeatMode,
         shuffle: _state.shuffle,
+        clearContext: true,
       );
       _notify();
       _saveSession();
@@ -150,6 +158,8 @@ class SyncoraPlayerController extends ChangeNotifier {
     _state = _state.copyWith(
       queue: List.unmodifiable(tracks),
       currentIndex: startIndex,
+      activeContextId: activeContextId,
+      clearContext: activeContextId == null,
       clearError: true,
     );
     _notify();
@@ -162,6 +172,7 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// Reproduce la pista en [index] de la cola actual.
   Future<void> playIndex(int index) async {
     if (index < 0 || index >= _state.queue.length) return;
+    _restoredPositionSeconds = null;
     _state = _state.copyWith(currentIndex: index, clearError: true);
     _notify();
     _saveSession();
@@ -458,6 +469,8 @@ class SyncoraPlayerController extends ChangeNotifier {
   // Lógica interna & Persistencia de Sesión
   // ----------------------------------------------------------------------
 
+  int _lastSavedPositionSeconds = -1;
+
   void _saveSession() {
     _sessionStorage.saveSession(
       queue: _state.queue,
@@ -465,6 +478,7 @@ class SyncoraPlayerController extends ChangeNotifier {
       positionSeconds: _state.engine.position.inSeconds,
       repeatMode: _state.repeatMode,
       shuffle: _state.shuffle,
+      activeContextId: _state.activeContextId,
     );
   }
 
@@ -477,12 +491,20 @@ class SyncoraPlayerController extends ChangeNotifier {
         : 0;
 
     _restoredPositionSeconds = session.positionSeconds;
+    final restoredDuration = (restoredIndex >= 0 && restoredIndex < session.queue.length)
+        ? session.queue[restoredIndex].duration ?? Duration.zero
+        : Duration.zero;
 
     _state = _state.copyWith(
       queue: List.unmodifiable(session.queue),
       currentIndex: restoredIndex,
       repeatMode: session.repeatMode,
       shuffle: session.shuffle,
+      activeContextId: session.activeContextId,
+      engine: _state.engine.copyWith(
+        position: Duration(seconds: session.positionSeconds),
+        duration: restoredDuration,
+      ),
       clearError: true,
     );
     _notify();
@@ -495,8 +517,8 @@ class SyncoraPlayerController extends ChangeNotifier {
     final track = _state.currentTrack;
     if (track == null) return;
 
-    // Pausar inmediatamente cualquier audio previo
-    await _engine.pause();
+    // Detener inmediatamente cualquier audio previo para evitar audio bleed durante la extracción
+    await _engine.stop();
 
     String targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)
         ? track.youtubeVideoId!
@@ -585,6 +607,12 @@ class SyncoraPlayerController extends ChangeNotifier {
   void _onEngineState(AudioEngineState engineState) {
     _state = _state.copyWith(engine: engineState);
     _notify();
+
+    final currentPosSec = engineState.position.inSeconds;
+    if (currentPosSec != _lastSavedPositionSeconds && (currentPosSec % 2 == 0 || !engineState.playing)) {
+      _lastSavedPositionSeconds = currentPosSec;
+      _saveSession();
+    }
   }
 
   Future<void> _onComplete() async {

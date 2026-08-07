@@ -32,6 +32,7 @@ class WindowsMediaControls {
         rewindEnabled: false,
       ),
     );
+    _smtc.enableSmtc();
 
     _buttonSub = _smtc.buttonPressStream.listen(_onButtonPressed);
     _controller.addListener(_onControllerChanged);

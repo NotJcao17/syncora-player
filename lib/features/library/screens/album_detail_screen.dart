@@ -155,7 +155,9 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
     final syncoraTracks = album.tracks.map((t) => t.toSyncoraTrack()).toList();
     final totalDurationStr = _formatTotalDuration(album.tracks);
 
-    final isCurrentContext = currentTrack != null && syncoraTracks.any((t) => t.id == currentTrack.id);
+    final playerState = ref.watch(playerStateProvider);
+    final albumContextId = 'album_${album.id}';
+    final isCurrentContext = playerState.activeContextId == albumContextId;
     final showPauseHeader = isCurrentContext && isPlaying;
 
     final dominantGradientColor = _dominantColor?.withValues(alpha: 0.35) ?? AppTheme.surfaceHover.withValues(alpha: 0.3);
@@ -314,20 +316,35 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                               } else if (isCurrentContext) {
                                 controller.play();
                               } else {
-                                controller.setQueue(syncoraTracks, startIndex: 0);
+                                controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: albumContextId);
                                 controller.play();
                               }
                             },
                           ),
-                          const SizedBox(width: 16),
-                          IconButton(
-                            icon: Icon(AppIcons.broken(SolarIcons.Shuffle), color: AppTheme.primary, size: 24),
-                            onPressed: () {
-                              controller.setQueue(syncoraTracks, startIndex: 0);
-                              controller.toggleShuffle();
-                              controller.play();
+                          Consumer(
+                            builder: (context, ref, _) {
+                              return IconButton(
+                                icon: Padding(
+                                  padding: const EdgeInsets.only(top: 3.0),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        AppIcons.broken(SolarIcons.Shuffle),
+                                        color: AppTheme.secondary,
+                                        size: 24,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                onPressed: () {
+                                  controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: albumContextId);
+                                  controller.toggleShuffle();
+                                  controller.play();
+                                },
+                                tooltip: 'Aleatorio',
+                              );
                             },
-                            tooltip: 'Aleatorio',
                           ),
                           const SizedBox(width: 16),
                         ],
@@ -379,7 +396,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                           isPlaying: isPlayingTrack,
                           showAlbum: true,
                           onTap: () {
-                            controller.setQueue(syncoraTracks, startIndex: i);
+                            controller.setQueue(syncoraTracks, startIndex: i, activeContextId: albumContextId);
                             controller.play();
                           },
                           onAddToQueue: () => controller.addToQueue(track),

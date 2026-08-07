@@ -98,10 +98,8 @@ class MiniPlayer extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    currentTrack.artist,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  MarqueeText(
+                    text: currentTrack.artist,
                     style: TextStyle(
                       color: AppTheme.background.withValues(alpha: 0.7),
                       fontSize: 12,
@@ -169,15 +167,21 @@ class MiniPlayer extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Izquierda: Portada (56x56) + Info + Heart (ancho acotado a 280px alejado del centro)
-          SizedBox(
-            width: 280,
-            child: _DesktopTrackInfo(currentTrack: currentTrack),
+          // Izquierda: Portada (56x56) + Info + Heart (flex 1)
+          Expanded(
+            flex: 1,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: 280,
+                child: _DesktopTrackInfo(currentTrack: currentTrack),
+              ),
+            ),
           ),
 
-          // Centro: Controles + Barra de progreso
+          // Centro: Controles + Barra de progreso (flex 2, centrado exacto)
           Expanded(
-            flex: 5,
+            flex: 2,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
@@ -304,90 +308,82 @@ class MiniPlayer extends ConsumerWidget {
             ),
           ),
 
-          // Derecha: Letras, Cola, Dispositivos, Volumen
+          // Derecha: Letras, Cola, Dispositivos, Volumen (flex 1)
           Expanded(
-            flex: 3,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              reverse: true,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    icon: Icon(AppIcons.broken(SolarIcons.Microphone), size: 20, color: AppTheme.secondary),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Letras próximamente')),
-                      );
-                    },
-                    tooltip: 'Letras',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      ref.watch(isQueueOpenProvider) ? AppIcons.bold(SolarIcons.PlaylistMinimalisticN2) : AppIcons.broken(SolarIcons.PlaylistMinimalisticN2),
-                      size: 20,
-                      color: ref.watch(isQueueOpenProvider) ? AppTheme.primary : AppTheme.secondary,
+            flex: 1,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                reverse: true,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: Icon(AppIcons.broken(SolarIcons.Microphone), size: 20, color: AppTheme.secondary),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Letras próximamente')),
+                        );
+                      },
+                      tooltip: 'Letras',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                     ),
-                    onPressed: () {
-                      final isDesktop = MediaQuery.of(context).size.width >= 768;
-                      if (isDesktop) {
-                        ref.read(isQueueOpenProvider.notifier).state = !ref.read(isQueueOpenProvider);
-                      } else {
-                        _showQueueSheet(context, ref);
-                      }
-                    },
-                    tooltip: 'Cola de reproducción',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                  ),
-                  IconButton(
-                    icon: Icon(AppIcons.broken(SolarIcons.Speaker), size: 20, color: AppTheme.secondary),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Conectar dispositivo')),
-                      );
-                    },
-                    tooltip: 'Dispositivos',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                  ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: Icon(
-                      state.engine.volume > 0 ? AppIcons.broken(SolarIcons.VolumeLoud) : AppIcons.broken(SolarIcons.VolumeCross),
-                      size: 20,
-                      color: state.engine.volume > 0 ? AppTheme.secondary : AppTheme.muted,
-                    ),
-                    onPressed: () {
-                      if (state.engine.volume > 0) {
-                        controller.setVolume(0.0);
-                      } else {
-                        controller.setVolume(1.0);
-                      }
-                    },
-                    tooltip: state.engine.volume > 0 ? 'Silenciar' : 'Activar sonido',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                  ),
-                  const SizedBox(width: 4),
-                  SizedBox(
-                    width: 140,
-                    child: SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 4,
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
-                        activeTrackColor: AppTheme.primary,
-                        inactiveTrackColor: AppTheme.surface,
+                    IconButton(
+                      icon: Icon(
+                        ref.watch(isQueueOpenProvider) ? AppIcons.bold(SolarIcons.PlaylistMinimalisticN2) : AppIcons.broken(SolarIcons.PlaylistMinimalisticN2),
+                        size: 20,
+                        color: ref.watch(isQueueOpenProvider) ? AppTheme.primary : AppTheme.secondary,
                       ),
-                      child: Slider(
-                        value: state.engine.volume.clamp(0.0, 1.0),
-                        onChanged: (val) => controller.setVolume(val),
-                      ),
+                      onPressed: () {
+                        final isDesktop = MediaQuery.of(context).size.width >= 768;
+                        if (isDesktop) {
+                          ref.read(isQueueOpenProvider.notifier).state = !ref.read(isQueueOpenProvider);
+                        } else {
+                          _showQueueSheet(context, ref);
+                        }
+                      },
+                      tooltip: 'Cola de reproducción',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                     ),
-                  ),
-                ],
+                    IconButton(
+                      icon: Icon(AppIcons.broken(SolarIcons.Speaker), size: 20, color: AppTheme.secondary),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Conectar dispositivo')),
+                        );
+                      },
+                      tooltip: 'Dispositivos',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: Icon(
+                        state.engine.volume > 0 ? AppIcons.broken(SolarIcons.VolumeLoud) : AppIcons.broken(SolarIcons.VolumeCross),
+                        size: 20,
+                        color: state.engine.volume > 0 ? AppTheme.secondary : AppTheme.muted,
+                      ),
+                      onPressed: () {
+                        if (state.engine.volume > 0) {
+                          controller.setVolume(0.0);
+                        } else {
+                          controller.setVolume(1.0);
+                        }
+                      },
+                      tooltip: state.engine.volume > 0 ? 'Silenciar' : 'Activar sonido',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    ),
+                    const SizedBox(width: 4),
+                    _DesktopVolumeSlider(
+                      volume: state.engine.volume,
+                      onChanged: (val) => controller.setVolume(val),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -577,40 +573,29 @@ class _DesktopTrackInfoState extends State<_DesktopTrackInfo> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Título de la canción + Heart button
-              Row(
-                children: [
-                  Expanded(
-                    child: MouseRegion(
-                      cursor: hasAlbumId ? SystemMouseCursors.click : SystemMouseCursors.basic,
-                      onEnter: (_) {
-                        if (hasAlbumId) setState(() => _isAlbumHovered = true);
-                      },
-                      onExit: (_) {
-                        if (hasAlbumId) setState(() => _isAlbumHovered = false);
-                      },
-                      child: GestureDetector(
-                        onTap: hasAlbumId
-                            ? () => context.push('/album/${widget.currentTrack.albumId}')
-                            : null,
-                        child: Text(
-                          widget.currentTrack.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppTheme.primary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            decoration: (hasAlbumId && _isAlbumHovered) ? TextDecoration.underline : TextDecoration.none,
-                            decorationColor: AppTheme.primary,
-                          ),
-                        ),
-                      ),
+              MouseRegion(
+                cursor: hasAlbumId ? SystemMouseCursors.click : SystemMouseCursors.basic,
+                onEnter: (_) {
+                  if (hasAlbumId) setState(() => _isAlbumHovered = true);
+                },
+                onExit: (_) {
+                  if (hasAlbumId) setState(() => _isAlbumHovered = false);
+                },
+                child: GestureDetector(
+                  onTap: hasAlbumId
+                      ? () => context.push('/album/${widget.currentTrack.albumId}')
+                      : null,
+                  child: MarqueeText(
+                    text: widget.currentTrack.title,
+                    style: TextStyle(
+                      color: AppTheme.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      decoration: (hasAlbumId && _isAlbumHovered) ? TextDecoration.underline : TextDecoration.none,
+                      decorationColor: AppTheme.primary,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  _MiniPlayerHeartButton(currentTrack: widget.currentTrack, isDesktop: true),
-                ],
+                ),
               ),
               const SizedBox(height: 2),
 
@@ -619,6 +604,8 @@ class _DesktopTrackInfoState extends State<_DesktopTrackInfo> {
             ],
           ),
         ),
+        const SizedBox(width: 8),
+        _MiniPlayerHeartButton(currentTrack: widget.currentTrack, isDesktop: true),
       ],
     );
   }
@@ -700,10 +687,8 @@ class _DesktopTrackInfoState extends State<_DesktopTrackInfo> {
       );
     }
 
-    return Text(
-      widget.currentTrack.artist,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
+    return MarqueeText(
+      text: widget.currentTrack.artist,
       style: style,
     );
   }
@@ -853,6 +838,48 @@ class _DesktopProgressBarState extends State<_DesktopProgressBar> {
           style: const TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.w500),
         ),
       ],
+    );
+  }
+}
+
+class _DesktopVolumeSlider extends StatefulWidget {
+  final double volume;
+  final ValueChanged<double> onChanged;
+
+  const _DesktopVolumeSlider({
+    required this.volume,
+    required this.onChanged,
+  });
+
+  @override
+  State<_DesktopVolumeSlider> createState() => _DesktopVolumeSliderState();
+}
+
+class _DesktopVolumeSliderState extends State<_DesktopVolumeSlider> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: SizedBox(
+        width: 140,
+        child: SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 4,
+            thumbShape: RoundSliderThumbShape(enabledThumbRadius: _isHovered ? 6 : 0),
+            activeTrackColor: AppTheme.primary,
+            inactiveTrackColor: AppTheme.surface,
+            thumbColor: Colors.white,
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
+          ),
+          child: Slider(
+            value: widget.volume.clamp(0.0, 1.0),
+            onChanged: widget.onChanged,
+          ),
+        ),
+      ),
     );
   }
 }

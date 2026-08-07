@@ -246,7 +246,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             _extractPalette(syncoraTracks.first.coverUrl);
           }
 
-          final isCurrentContext = currentTrack != null && syncoraTracks.any((t) => t.id == currentTrack.id);
+          final playerState = ref.watch(playerStateProvider);
+          final playlistContextId = 'playlist_${playlist.id}';
+          final isCurrentContext = playerState.activeContextId == playlistContextId;
           final showPauseHeader = isCurrentContext && isPlaying;
 
           return Container(
@@ -409,7 +411,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                     } else if (isCurrentContext) {
                                       controller.play();
                                     } else {
-                                      controller.setQueue(syncoraTracks, startIndex: 0);
+                                      controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: playlistContextId);
                                       controller.play();
                                     }
                                   },
@@ -597,8 +599,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             itemBuilder: (ctx, i) {
                               final track = syncoraTracks[i];
                               final playlistTrack = tracks[i];
-                              final playerState = ref.watch(playerStateProvider);
-                              final isPlaying = currentTrack?.id == track.id &&
+                              final isPlayingTrack = currentTrack?.id == track.id &&
                                   (playerState.queue.length == syncoraTracks.length
                                       ? playerState.currentIndex == i
                                       : (playerState.currentIndex == i || syncoraTracks.indexWhere((t) => t.id == currentTrack?.id) == i));
@@ -606,9 +607,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                               return TrackTile(
                                 track: track,
                                 index: i,
-                                isPlaying: isPlaying,
+                                isPlaying: isPlayingTrack,
                                 onTap: () {
-                                  controller.setQueue(syncoraTracks, startIndex: i);
+                                  controller.setQueue(syncoraTracks, startIndex: i, activeContextId: playlistContextId);
                                   controller.play();
                                 },
                                 onRemove: () => playlistDao.removeTrackEntry(playlistTrack.id),

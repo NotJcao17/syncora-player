@@ -204,7 +204,13 @@ class DeezerApi {
       final response = await _dio.get('/artist/$id/albums');
       if (response.data == null || response.data['data'] is! List) return [];
       final list = response.data['data'] as List;
-      return list.map((item) => DeezerAlbum.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+      final albums = list.map((item) => DeezerAlbum.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+      albums.sort((a, b) {
+        if (a.releaseDate.isEmpty) return 1;
+        if (b.releaseDate.isEmpty) return -1;
+        return b.releaseDate.compareTo(a.releaseDate);
+      });
+      return albums;
     });
   }
 

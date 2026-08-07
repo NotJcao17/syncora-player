@@ -12,6 +12,7 @@ class PlayerSessionData {
   final int positionSeconds;
   final SyncoraRepeatMode repeatMode;
   final bool shuffle;
+  final String? activeContextId;
 
   const PlayerSessionData({
     required this.queue,
@@ -19,6 +20,7 @@ class PlayerSessionData {
     required this.positionSeconds,
     required this.repeatMode,
     required this.shuffle,
+    this.activeContextId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -27,6 +29,7 @@ class PlayerSessionData {
         'positionSeconds': positionSeconds,
         'repeatMode': repeatMode.name,
         'shuffle': shuffle,
+        'activeContextId': activeContextId,
       };
 
   factory PlayerSessionData.fromJson(Map<String, dynamic> json) {
@@ -43,9 +46,10 @@ class PlayerSessionData {
     return PlayerSessionData(
       queue: queueList,
       currentIndex: json['currentIndex'] as int? ?? -1,
-      positionSeconds: json['positionSeconds'] as int? ?? 0,
+      positionSeconds: (json['positionSeconds'] as num?)?.toInt() ?? 0,
       repeatMode: repeatMode,
       shuffle: json['shuffle'] as bool? ?? false,
+      activeContextId: json['activeContextId'] as String?,
     );
   }
 }
@@ -66,6 +70,7 @@ class PlayerSessionStorage {
     required int positionSeconds,
     required SyncoraRepeatMode repeatMode,
     required bool shuffle,
+    String? activeContextId,
   }) async {
     try {
       final file = await _getFile();
@@ -75,6 +80,7 @@ class PlayerSessionStorage {
         positionSeconds: positionSeconds,
         repeatMode: repeatMode,
         shuffle: shuffle,
+        activeContextId: activeContextId,
       );
       final jsonStr = jsonEncode(session.toJson());
       await file.writeAsString(jsonStr);

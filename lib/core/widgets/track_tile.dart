@@ -8,6 +8,7 @@ import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../features/player/player_models.dart';
+import '../../features/player/player_providers.dart';
 import 'app_bottom_sheet.dart';
 import 'app_toast.dart';
 
@@ -112,7 +113,15 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: InkWell(
-        onTap: widget.isAvailable ? widget.onTap : null,
+        onTap: widget.isAvailable
+            ? () {
+                if (widget.isPlaying) {
+                  ref.read(syncoraPlayerControllerProvider.notifier).pause();
+                } else if (widget.onTap != null) {
+                  widget.onTap!();
+                }
+              }
+            : null,
         borderRadius: BorderRadius.circular(8),
         child: Container(
           decoration: BoxDecoration(
@@ -397,80 +406,89 @@ class _TrackTileState extends ConsumerState<TrackTile> {
 
     final isDesktop = MediaQuery.of(context).size.width >= 768;
 
-    if (isDesktop) {
-      return PopupMenuButton<String>(
-        icon: Icon(AppIcons.broken(SolarIcons.MenuDots), size: 18, color: AppTheme.secondary),
-        color: const Color(0xFF1E1E1E),
-        elevation: 10,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: Color(0xFF2A2A2A)),
-        ),
-        onSelected: (value) async {
-          _handleOptionSelected(context, ref, value);
-        },
-        itemBuilder: (ctx) => [
-          PopupMenuItem(
-            value: 'playlist',
-            child: Row(
-              children: [
-                Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 18),
-                const SizedBox(width: 12),
-                const Expanded(child: Text('Agregar a una playlist', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
-                Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
-              ],
-            ),
-          ),
-          PopupMenuItem(
-            value: 'like',
-            child: Row(
-              children: [
-                Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 18),
-                const SizedBox(width: 12),
-                const Text('Guardar en Tus me gusta', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ),
-          PopupMenuItem(
-            value: 'queue',
-            child: Row(
-              children: [
-                Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary, size: 18),
-                const SizedBox(width: 12),
-                const Text('Agregar a la fila de reproducción', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ),
-          if (widget.onRemove != null)
-            PopupMenuItem(
-              value: 'remove',
-              child: Row(
-                children: [
-                  Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: AppTheme.primary, size: 18),
-                  const SizedBox(width: 12),
-                  const Text('Eliminar de la playlist', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
-                ],
-              ),
-            ),
-          PopupMenuItem(
-            value: 'share',
-            child: Row(
-              children: [
-                Icon(AppIcons.broken(SolarIcons.Share), color: AppTheme.primary, size: 18),
-                const SizedBox(width: 12),
-                const Expanded(child: Text('Compartir', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
-                Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
+    final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
 
-    return IconButton(
-      icon: Icon(AppIcons.broken(SolarIcons.MenuDots), size: 18, color: AppTheme.secondary),
-      onPressed: () => _showTrackOptionsMenu(context, ref),
-      tooltip: 'Opciones',
+    return FutureBuilder<bool>(
+      future: ref.read(playlistDaoProvider).isTrackLiked(trackIdInt),
+      builder: (context, snapshot) {
+        final isLiked = snapshot.data ?? false;
+
+        if (isDesktop) {
+          return PopupMenuButton<String>(
+            icon: Icon(AppIcons.broken(SolarIcons.MenuDots), size: 18, color: AppTheme.secondary),
+            color: const Color(0xFF1E1E1E),
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: Color(0xFF2A2A2A)),
+            ),
+            onSelected: (value) async {
+              _handleOptionSelected(context, ref, value);
+            },
+            itemBuilder: (ctx) => [
+              PopupMenuItem(
+                value: 'playlist',
+                child: Row(
+                  children: [
+                    Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 18),
+                    const SizedBox(width: 12),
+                    const Expanded(child: Text('Agregar a una playlist', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+                    Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'like',
+                child: Row(
+                  children: [
+                    Icon(isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart), color: AppTheme.primary, size: 18),
+                    const SizedBox(width: 12),
+                    Text(isLiked ? 'Eliminar de Me Gusta' : 'Guardar en Tus me gusta', style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'queue',
+                child: Row(
+                  children: [
+                    Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary, size: 18),
+                    const SizedBox(width: 12),
+                    const Text('Agregar a la fila de reproducción', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
+              if (widget.onRemove != null)
+                PopupMenuItem(
+                  value: 'remove',
+                  child: Row(
+                    children: [
+                      Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: AppTheme.primary, size: 18),
+                      const SizedBox(width: 12),
+                      const Text('Eliminar de la playlist', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+              PopupMenuItem(
+                value: 'share',
+                child: Row(
+                  children: [
+                    Icon(AppIcons.broken(SolarIcons.Share), color: AppTheme.primary, size: 18),
+                    const SizedBox(width: 12),
+                    const Expanded(child: Text('Compartir', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+                    Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+
+        return IconButton(
+          icon: Icon(AppIcons.broken(SolarIcons.MenuDots), size: 18, color: AppTheme.secondary),
+          onPressed: () => _showTrackOptionsMenu(context, ref),
+          tooltip: 'Opciones',
+        );
+      },
     );
   }
 
@@ -571,11 +589,18 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     );
   }
 
-  void _showTrackOptionsMenu(BuildContext context, WidgetRef ref) {
+  void _showTrackOptionsMenu(BuildContext context, WidgetRef ref) async {
+    final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
+    final isLiked = await ref.read(playlistDaoProvider).isTrackLiked(trackIdInt);
+
+    if (!context.mounted) return;
+
     AppBottomSheet.show(
       context: context,
       title: widget.track.title,
       child: ListView(
+        shrinkWrap: true,
+        physics: const ClampingScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
           _OptionItem(
@@ -587,8 +612,8 @@ class _TrackTileState extends ConsumerState<TrackTile> {
             },
           ),
           _OptionItem(
-            icon: AppIcons.broken(SolarIcons.Heart),
-            label: 'Agregar a Me Gusta',
+            icon: isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
+            label: isLiked ? 'Eliminar de Me Gusta' : 'Agregar a Me Gusta',
             onTap: () {
               Navigator.pop(context);
               _handleOptionSelected(context, ref, 'like');

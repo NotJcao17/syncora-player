@@ -65,10 +65,17 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
       ]);
 
       if (mounted) {
+        final rawAlbums = results[2] as List<DeezerAlbum>;
+        rawAlbums.sort((a, b) {
+          if (a.releaseDate.isEmpty) return 1;
+          if (b.releaseDate.isEmpty) return -1;
+          return b.releaseDate.compareTo(a.releaseDate);
+        });
+
         setState(() {
           _artist = results[0] as DeezerArtist;
           _topTracks = results[1] as List<DeezerTrack>;
-          _albums = results[2] as List<DeezerAlbum>;
+          _albums = rawAlbums;
           _isLoading = false;
         });
       }

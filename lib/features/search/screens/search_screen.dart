@@ -539,8 +539,8 @@ class _CascadeSearchModalSheet extends ConsumerStatefulWidget {
 }
 
 class _CascadeSearchModalSheetState extends ConsumerState<_CascadeSearchModalSheet> {
-  final TextEditingController _artist1Controller = TextEditingController(text: 'Coldplay');
-  final TextEditingController _artist2Controller = TextEditingController(text: 'BTS');
+  final TextEditingController _artist1Controller = TextEditingController();
+  final TextEditingController _artist2Controller = TextEditingController();
 
   bool _isSearching = false;
   int _step = 0; // 0: idle, 1: Artistas, 2: Top Tracks, 3: Discografía, 4: Listo

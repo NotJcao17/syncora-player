@@ -711,7 +711,7 @@ class _DesktopSidebarItem extends StatelessWidget {
 }
 
 /// Item de playlist con miniatura estilo Spotify.
-class _DesktopPlaylistItem extends StatelessWidget {
+class _DesktopPlaylistItem extends StatefulWidget {
   final String title;
   final String subtitle;
   final String coverUrl;
@@ -731,73 +731,90 @@ class _DesktopPlaylistItem extends StatelessWidget {
   });
 
   @override
+  State<_DesktopPlaylistItem> createState() => _DesktopPlaylistItemState();
+}
+
+class _DesktopPlaylistItemState extends State<_DesktopPlaylistItem> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: title,
+      message: widget.title,
       waitDuration: const Duration(milliseconds: 200),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-          child: Row(
-            mainAxisAlignment: isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: isLiked
-                      ? Container(
-                          decoration: const BoxDecoration(gradient: AppTheme.gradientLiked),
-                          child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 22),
-                        )
-                      : (coverUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: coverUrl,
-                              fit: BoxFit.cover,
-                              errorWidget: (_, _, _) => Container(color: AppTheme.surfaceHover, child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 20)),
-                            )
-                          : Container(color: AppTheme.surfaceHover, child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 20))),
-                ),
-              ),
-              if (!isCollapsed) ...[
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.clip,
-                        softWrap: false,
-                        style: TextStyle(
-                          color: isSelected ? const Color(0xFF22C55E) : AppTheme.primary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.clip,
-                        softWrap: false,
-                        style: const TextStyle(
-                          color: AppTheme.secondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: widget.isSelected
+                  ? AppTheme.surfaceHover
+                  : (_isHovered ? AppTheme.surfaceHover.withValues(alpha: 0.5) : Colors.transparent),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            child: Row(
+              mainAxisAlignment: widget.isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: widget.isLiked
+                        ? Container(
+                            decoration: const BoxDecoration(gradient: AppTheme.gradientLiked),
+                            child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 22),
+                          )
+                        : (widget.coverUrl.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: widget.coverUrl,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, _, _) => Container(color: AppTheme.surfaceHover, child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 20)),
+                              )
+                            : Container(color: AppTheme.surfaceHover, child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 20))),
                   ),
                 ),
-                if (isSelected)
-                  Icon(AppIcons.broken(SolarIcons.VolumeLoud), color: Color(0xFF22C55E), size: 18),
+                if (!widget.isCollapsed) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          widget.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.clip,
+                          softWrap: false,
+                          style: TextStyle(
+                            color: widget.isSelected ? const Color(0xFF22C55E) : AppTheme.primary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.clip,
+                          softWrap: false,
+                          style: const TextStyle(
+                            color: AppTheme.secondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (widget.isSelected)
+                    Icon(AppIcons.broken(SolarIcons.VolumeLoud), color: const Color(0xFF22C55E), size: 18),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
