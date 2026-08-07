@@ -56,6 +56,12 @@ lib/
    - Búsqueda en UI con `Debouncer` de 500ms.
    - Retardo de 200ms por item en importaciones masivas para evitar saturación de red.
 
+4. **Extracción y Resiliencia Client-Side (Innertube + YtSearchMatcher)**:
+   - Eliminación total de fallbacks silenciosos de prueba (SoundHelix MP3 6min).
+   - Reemplazo del scraper HTML por búsqueda nativa client-side (`Innertube`) en QuickJS (`ExtractionIsolate`) con cliente `WEB` para resolver los 20 candidatos de búsqueda en ~200ms y `ANDROID` para extraer el stream directo en ~400ms.
+   - Scoring en Dart con `YtSearchMatcher` (evaluando duración, artista y filtrando covers/karaokes).
+   - Optimización de Cold Start (< 2s) omitiendo la descarga del script de 3 MB de `base.js` vía `retrieve_player: false`.
+
 ---
 
 ## 🏁 Estado de Verificación
