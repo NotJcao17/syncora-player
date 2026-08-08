@@ -33,7 +33,7 @@ void main() async {
 
   final validUrl = (rawUrl.isNotEmpty &&
           rawUrl != 'tu_url_aqui' &&
-          Uri.tryParse(rawUrl)?.hasAbsolutePath == true)
+          (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')))
       ? rawUrl
       : 'https://placeholder.supabase.co';
 

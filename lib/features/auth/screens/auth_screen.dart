@@ -170,18 +170,27 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 Center(
                   child: Column(
                     children: [
-                      Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: AppTheme.gradientLiked,
-                          boxShadow: AppTheme.glowShadow,
-                        ),
-                        child: const Icon(
-                          Icons.graphic_eq,
-                          size: 36,
-                          color: Colors.white,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset(
+                          'assets/icon/icon.png',
+                          width: 64,
+                          height: 64,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: AppTheme.gradientLiked,
+                              boxShadow: AppTheme.glowShadow,
+                            ),
+                            child: const Icon(
+                              Icons.graphic_eq,
+                              size: 36,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 14),
