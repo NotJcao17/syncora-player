@@ -1,21 +1,24 @@
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_icons.dart';
 
+import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/playlist_cover_widget.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
+import '../../../data/supabase/supabase_providers.dart';
 import '../import_export/playlist_import_export_service.dart';
 
-
-/// Pantalla de Biblioteca conectada a la base de datos local Drift y servicio de Import/Export.
+/// Pantalla de Biblioteca conectada a Drift local, Supabase y servicio de Import/Export.
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
 
@@ -27,7 +30,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   String _selectedFilter = 'Playlists';
   final List<String> _filters = const ['Playlists', 'Álbumes'];
 
-  void _showCreatePlaylistDialog(BuildContext context) {
+  void _showCreatePlaylistDialog(BuildContext context, bool isConnected) {
+    if (!isConnected) {
+      AppToast.show(context, message: 'Sin conexión. No se pueden crear playlists offline.');
+      return;
+    }
+
     final titleController = TextEditingController();
     final descController = TextEditingController();
 
@@ -77,15 +85,154 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             onPressed: () async {
               final title = titleController.text.trim();
               if (title.isNotEmpty) {
+                final description = descController.text.trim().isEmpty ? null : descController.text.trim();
+                try {
+                  final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                  await supabaseRepo.createPlaylist(title: title, description: description);
+                } catch (_) {}
+
                 final dao = ref.read(playlistDaoProvider);
                 await dao.createPlaylist(
                   title: title,
-                  description: descController.text.trim().isEmpty ? null : descController.text.trim(),
+                  description: description,
                 );
                 if (ctx.mounted) Navigator.of(ctx).pop();
               }
             },
             child: const Text('Crear', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPlaylistOptionsMenu(BuildContext context, Playlist playlist, bool isConnected) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceHover,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: Icon(AppIcons.broken(SolarIcons.PenNewSquare), color: isConnected ? AppTheme.primary : AppTheme.muted),
+                title: Text('Editar nombre', style: TextStyle(color: isConnected ? AppTheme.primary : AppTheme.muted)),
+                enabled: isConnected,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showEditPlaylistDialog(context, playlist);
+                },
+              ),
+              ListTile(
+                leading: Icon(AppIcons.broken(SolarIcons.LinkMinimalistic), color: AppTheme.primary),
+                title: const Text('Copiar enlace', style: TextStyle(color: AppTheme.primary)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Clipboard.setData(ClipboardData(text: 'syncoraplayer://playlist/${playlist.id}'));
+                  AppToast.show(context, message: 'Enlace copiado al portapapeles');
+                },
+              ),
+              ListTile(
+                leading: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), color: isConnected ? Colors.redAccent : AppTheme.muted),
+                title: Text('Eliminar playlist', style: TextStyle(color: isConnected ? Colors.redAccent : AppTheme.muted)),
+                enabled: isConnected,
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                    await supabaseRepo.deletePlaylist(playlist.id.toString());
+                  } catch (_) {}
+                  final dao = ref.read(playlistDaoProvider);
+                  await dao.deletePlaylist(playlist.id);
+                  if (context.mounted) {
+                    AppToast.show(context, message: 'Playlist eliminada');
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditPlaylistDialog(BuildContext context, Playlist playlist) {
+    final titleController = TextEditingController(text: playlist.title);
+    final descController = TextEditingController(text: playlist.description ?? '');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Editar Playlist', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              autofocus: true,
+              style: const TextStyle(color: AppTheme.primary),
+              decoration: const InputDecoration(
+                labelText: 'Nombre de la playlist',
+                labelStyle: TextStyle(color: AppTheme.secondary),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.surfaceHover)),
+                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.primary)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: descController,
+              style: const TextStyle(color: AppTheme.primary),
+              decoration: const InputDecoration(
+                labelText: 'Descripción',
+                labelStyle: TextStyle(color: AppTheme.secondary),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.surfaceHover)),
+                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.primary)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: AppTheme.background,
+            ),
+            onPressed: () async {
+              final newTitle = titleController.text.trim();
+              if (newTitle.isNotEmpty) {
+                final newDesc = descController.text.trim().isEmpty ? null : descController.text.trim();
+                try {
+                  final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                  await supabaseRepo.updatePlaylist(playlist.id.toString(), title: newTitle, description: newDesc);
+                } catch (_) {}
+                final dao = ref.read(playlistDaoProvider);
+                await dao.updatePlaylist(playlist.copyWith(
+                  title: newTitle,
+                  description: Value(newDesc),
+                ));
+                if (ctx.mounted) Navigator.of(ctx).pop();
+              }
+            },
+            child: const Text('Guardar', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -122,7 +269,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       return;
     }
 
-    // Create a new playlist for the imported tracks
     final dao = ref.read(playlistDaoProvider);
     final playlistName = file.name.replaceAll(RegExp(r'\.(csv|txt)$'), '');
     final playlistId = await dao.createPlaylist(
@@ -132,7 +278,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
     if (!context.mounted) return;
 
-    // Show progress modal dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -153,7 +298,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 final isDone = snapshot.connectionState == ConnectionState.done;
 
                 if (isDone) {
-                  // Add matched tracks to database playlist
                   Future.microtask(() async {
                     for (final track in matched) {
                       await dao.addTrackToPlaylist(
@@ -234,12 +378,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final isDesktop = MediaQuery.of(context).size.width >= 768;
     final playlistDao = ref.watch(playlistDaoProvider);
     final savedAlbumDao = ref.watch(savedAlbumDaoProvider);
+    final isConnected = ref.watch(isConnectedProvider).value ?? true;
 
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Tu Biblioteca + Search & Plus action buttons
           Padding(
             padding: EdgeInsets.fromLTRB(
               isDesktop ? 32 : 20,
@@ -276,10 +420,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       ),
                     ),
                     Tooltip(
-                      message: 'Crear playlist',
+                      message: isConnected ? 'Crear playlist' : 'Sin conexión',
                       child: IconButton(
-                        icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
-                        onPressed: () => _showCreatePlaylistDialog(context),
+                        icon: Icon(
+                          AppIcons.broken(SolarIcons.AddCircle),
+                          color: isConnected ? AppTheme.primary : AppTheme.muted,
+                          size: 22,
+                        ),
+                        onPressed: () => _showCreatePlaylistDialog(context, isConnected),
                       ),
                     ),
                   ],
@@ -291,7 +439,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           const Divider(color: AppTheme.surface, height: 1),
           const SizedBox(height: 12),
 
-          // Píldoras de Filtro
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20, vertical: 2),
@@ -329,7 +476,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
           const SizedBox(height: 16),
 
-          // Lista dinámica de biblioteca
           Expanded(
             child: _selectedFilter == 'Álbumes'
                 ? StreamBuilder<List<SavedAlbum>>(
@@ -457,6 +603,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                         ],
                                       ),
                                     ),
+                                    if (!isLiked)
+                                      IconButton(
+                                        icon: Icon(AppIcons.broken(SolarIcons.MenuDots), color: AppTheme.secondary, size: 20),
+                                        onPressed: () => _showPlaylistOptionsMenu(context, playlist, isConnected),
+                                      ),
                                   ],
                                 ),
                               ),

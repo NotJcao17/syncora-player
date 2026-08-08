@@ -5,12 +5,15 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../navigation/app_router.dart';
 import '../theme/app_icons.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../data/local_db/database_provider.dart';
 import '../../data/local_db/syncora_database.dart';
+import '../../features/auth/auth_provider.dart';
 import '../../features/player/player_providers.dart';
 import '../../features/player/widgets/mini_player.dart';
 import '../theme/app_theme.dart';
@@ -428,11 +431,15 @@ class _AppShellState extends ConsumerState<AppShell> {
 }
 
 /// Barra de título personalizada para Windows (Estilo Spotify, frameless con controles de ventana y área de arrastre)
-class _CustomTitleBar extends StatelessWidget {
+class _CustomTitleBar extends ConsumerWidget {
   const _CustomTitleBar();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    final profileAsync = ref.watch(profileProvider);
+    final seed = profileAsync.value?['avatar_seed'] ?? user?.id ?? 'default-seed';
+
     return Container(
       height: 38,
       color: AppTheme.background,
@@ -466,6 +473,61 @@ class _CustomTitleBar extends StatelessWidget {
               ),
             ),
           ),
+          if (user != null)
+            PopupMenuButton<String>(
+              tooltip: 'Mi Perfil',
+              color: AppTheme.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              offset: const Offset(0, 38),
+              onSelected: (value) async {
+                if (value == 'settings') {
+                  context.push('/settings');
+                } else if (value == 'logout') {
+                  try {
+                    await Supabase.instance.client.auth.signOut();
+                  } catch (_) {}
+                  if (context.mounted) context.go('/auth');
+                }
+              },
+              itemBuilder: (ctx) => [
+                PopupMenuItem(
+                  value: 'settings',
+                  child: Row(
+                    children: [
+                      Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.primary, size: 18),
+                      const SizedBox(width: 10),
+                      const Text('Mi cuenta', style: TextStyle(color: AppTheme.primary, fontSize: 13)),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(AppIcons.broken(SolarIcons.Logout), color: Colors.redAccent, size: 18),
+                      const SizedBox(width: 10),
+                      const Text('Cerrar sesión', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
+                    ],
+                  ),
+                ),
+              ],
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    color: AppTheme.surfaceActive,
+                    child: SvgPicture.network(
+                      'https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=$seed',
+                      fit: BoxFit.cover,
+                      placeholderBuilder: (_) => Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.muted, size: 16),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           _WindowCaptionButton(
             icon: AppIcons.broken(SolarIcons.MinusSquare),
             onPressed: () => windowManager.minimize(),

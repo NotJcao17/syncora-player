@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/widgets.dart';
 import 'models/extraction_request.dart';
 import 'models/extraction_result.dart';
 import 'extraction_isolate.dart';
@@ -69,15 +68,6 @@ class ExtractionServiceReal implements ExtractionService {
   @override
   void dispose() {
     _isolate.dispose();
-  }
-}
-
-bool get _isTestEnv {
-  try {
-    final name = WidgetsBinding.instance.runtimeType.toString();
-    return name.contains('Test') || name.contains('Automated');
-  } catch (_) {
-    return true;
   }
 }
 

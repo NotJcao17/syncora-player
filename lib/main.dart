@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -44,6 +45,12 @@ void main() async {
     url: validUrl,
     publishableKey: validKey,
   );
+
+  // AppLinks listener para Deep Links / OAuth redirect callbacks
+  final appLinks = AppLinks();
+  appLinks.uriLinkStream.listen((uri) {
+    Supabase.instance.client.auth.getSessionFromUrl(uri);
+  });
 
   // MediaKit, SMTCWindows y WindowManager solo se inicializan en Windows
   if (!kIsWeb && Platform.isWindows) {

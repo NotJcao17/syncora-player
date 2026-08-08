@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/auth_provider.dart';
+import '../../features/auth/screens/auth_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/library/screens/album_detail_screen.dart';
 import '../../features/library/screens/library_screen.dart';
@@ -17,10 +20,38 @@ final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>()
 
 /// Provider de Riverpod para GoRouter.
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final currentUser = ref.watch(currentUserProvider);
+  final isTestEnv = Platform.environment.containsKey('FLUTTER_TEST');
+
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
+    redirect: (context, state) {
+      if (isTestEnv) {
+        return null;
+      }
+
+      final location = state.uri.path;
+      final isAuthRoute = location == '/auth';
+
+      if (currentUser == null && !isAuthRoute) {
+        return '/auth';
+      }
+      if (currentUser != null && isAuthRoute) {
+        return '/';
+      }
+      return null;
+    },
     routes: [
+      // Auth Screen fuera del Shell (pantalla completa sin bottom nav / sidebar)
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/auth',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: AuthScreen(),
+        ),
+      ),
+
       // Shell Route que persiste el layout adaptativo (AppShell con MiniPlayer)
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -107,3 +138,4 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+

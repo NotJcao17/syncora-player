@@ -1,22 +1,40 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_icons.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../auth/auth_provider.dart';
 import '../../player/player_providers.dart';
+import '../../profile/widgets/avatar_selector_sheet.dart';
 
-/// Pantalla de Configuración (SettingsScreen calcada de settings.html mockup).
+/// Pantalla de Configuración (SettingsScreen)
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
+
+  void _openAvatarSelector(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => const AvatarSelectorSheet(),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playerState = ref.watch(playerStateProvider);
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final currentUser = ref.watch(currentUserProvider);
+    final profileAsync = ref.watch(profileProvider);
+
+    final String seed = profileAsync.value?['avatar_seed'] ?? currentUser?.id ?? 'default-seed';
+    final String avatarUrl = 'https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=$seed';
+    final String userEmail = currentUser?.email ?? 'usuario@syncora.com';
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -48,57 +66,65 @@ class SettingsScreen extends ConsumerWidget {
           vertical: 16,
         ),
         children: [
+          _buildSectionHeader('MI CUENTA'),
+          const SizedBox(height: 8),
           // Tarjeta Perfil
           _buildCard(
             child: Row(
               children: [
-                Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(32),
-                      child: SizedBox(
-                        width: 64,
-                        height: 64,
-                        child: CachedNetworkImage(
-                          imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop',
-                          fit: BoxFit.cover,
-                          errorWidget: (_, _, _) => Container(
-                            color: AppTheme.surfaceHover,
-                            child: Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.muted, size: 32),
+                GestureDetector(
+                  onTap: () => _openAvatarSelector(context),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(32),
+                        child: Container(
+                          width: 64,
+                          height: 64,
+                          color: AppTheme.surfaceActive,
+                          child: SvgPicture.network(
+                            avatarUrl,
+                            fit: BoxFit.cover,
+                            placeholderBuilder: (_) => Container(
+                              color: AppTheme.surfaceHover,
+                              child: Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.muted, size: 32),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: AppTheme.primary,
-                          shape: BoxShape.circle,
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: AppTheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(AppIcons.broken(SolarIcons.PenNewSquare), color: AppTheme.background, size: 12),
                         ),
-                        child: Icon(AppIcons.broken(SolarIcons.Camera), color: AppTheme.background, size: 12),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 16),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Alex Morgan',
-                        style: TextStyle(
+                        userEmail,
+                        style: const TextStyle(
                           color: AppTheme.primary,
                           fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                          fontSize: 16,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Plan Premium',
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Usuario Syncora',
                         style: TextStyle(
                           color: AppTheme.secondary,
                           fontSize: 13,
@@ -108,14 +134,49 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 OutlinedButton(
-                  onPressed: () => _showComingSoon(context),
+                  onPressed: () => _openAvatarSelector(context),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppTheme.surfaceHover),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
-                  child: const Text('Editar', style: TextStyle(color: AppTheme.primary)),
+                  child: const Text('Avatar', style: TextStyle(color: AppTheme.primary)),
                 ),
               ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+          // Botón Cerrar Sesión
+          _buildCard(
+            child: InkWell(
+              onTap: () async {
+                try {
+                  await Supabase.instance.client.auth.signOut();
+                } catch (_) {}
+                if (context.mounted) {
+                  context.go('/auth');
+                }
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Icon(AppIcons.broken(SolarIcons.Logout), color: Colors.redAccent, size: 22),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Text(
+                        'Cerrar sesión',
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
 
@@ -173,19 +234,18 @@ class SettingsScreen extends ConsumerWidget {
                   onChanged: (val) => _showComingSoon(context),
                 ),
                 const Divider(height: 24, color: AppTheme.surfaceHover),
-                // Storage Bar
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Almacenamiento usado', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-                    Text('2.4 GB / 32 GB', style: TextStyle(color: AppTheme.secondary, fontSize: 13)),
+                    Text('0 GB / Local', style: TextStyle(color: AppTheme.secondary, fontSize: 13)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: const LinearProgressIndicator(
-                    value: 0.18,
+                    value: 0.05,
                     backgroundColor: AppTheme.surfaceHover,
                     color: AppTheme.primary,
                     minHeight: 6,
