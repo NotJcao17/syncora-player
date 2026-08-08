@@ -31,6 +31,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   void initState() {
     super.initState();
     if (!_isTestEnvironment()) {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ref.read(appRouterProvider).go('/');
+          }
+        });
+      }
+
       _authSubscription =
           Supabase.instance.client.auth.onAuthStateChange.listen((data) {
         if (data.session != null && mounted) {
