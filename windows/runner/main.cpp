@@ -13,6 +13,34 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     CreateAndAttachConsole();
   }
 
+  // Check if another instance of Syncora Player is already running
+  HWND existing_hwnd = ::FindWindow(L"FLUTTER_RUNNER_WIN32_WINDOW", L"Syncora Player");
+  if (existing_hwnd != NULL) {
+    // Restore and bring existing window to front
+    if (::IsIconic(existing_hwnd)) {
+      ::ShowWindow(existing_hwnd, SW_RESTORE);
+    } else {
+      ::ShowWindow(existing_hwnd, SW_SHOW);
+    }
+    ::SetForegroundWindow(existing_hwnd);
+
+    // Forward command line arguments to existing window via WM_COPYDATA
+    std::vector<std::string> command_line_arguments = GetCommandLineArguments();
+    if (!command_line_arguments.empty()) {
+      std::string cmd = "";
+      for (size_t i = 0; i < command_line_arguments.size(); ++i) {
+        if (i > 0) cmd += " ";
+        cmd += command_line_arguments[i];
+      }
+      COPYDATASTRUCT cds;
+      cds.dwData = 1;
+      cds.cbData = static_cast<DWORD>(cmd.length() + 1);
+      cds.lpData = const_cast<char*>(cmd.c_str());
+      ::SendMessage(existing_hwnd, WM_COPYDATA, 0, reinterpret_cast<LPARAM>(&cds));
+    }
+    return EXIT_SUCCESS;
+  }
+
   // Initialize COM, so that it is available for use in the library and/or
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);

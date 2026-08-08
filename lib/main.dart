@@ -11,20 +11,76 @@ import 'package:smtc_windows/smtc_windows.dart';
 import 'package:window_manager/window_manager.dart';
 import 'app.dart';
 
+void _registerWindowsProtocolHandler() {
+  if (!kIsWeb && Platform.isWindows) {
+    try {
+      final exePath = Platform.resolvedExecutable;
+      final regCmd =
+          'reg add "HKCU\\Software\\Classes\\syncoraplayer" /ve /t REG_SZ /d "URL:Syncora Player Protocol" /f && '
+          'reg add "HKCU\\Software\\Classes\\syncoraplayer" /v "URL Protocol" /t REG_SZ /d "" /f && '
+          'reg add "HKCU\\Software\\Classes\\syncoraplayer\\shell\\open\\command" /ve /t REG_SZ /d "\\"$exePath\\" \\"%1\\"" /f';
+      Process.run('cmd.exe', ['/c', regCmd]);
+    } catch (_) {}
+  }
+}
+
+Future<void> _handleAuthDeepLink(Uri uri) async {
+  debugPrint('🔗 Deep Link recibido: $uri');
+  try {
+    await Supabase.instance.client.auth.getSessionFromUrl(uri);
+    debugPrint('✅ getSessionFromUrl completado');
+  } catch (e) {
+    debugPrint('⚠️ Error en getSessionFromUrl: $e');
+  }
+
+  // Fallback: extraer tokens o código si getSessionFromUrl no actualizó la sesión activa
+  final currentSession = Supabase.instance.client.auth.currentSession;
+  if (currentSession == null) {
+    final fragment = uri.fragment;
+    final query = uri.queryParameters;
+
+    String? accessToken = query['access_token'];
+    String? refreshToken = query['refresh_token'];
+    String? code = query['code'];
+
+    if ((accessToken == null || accessToken.isEmpty) && fragment.isNotEmpty) {
+      final params = Uri.splitQueryString(fragment);
+      accessToken = params['access_token'];
+      refreshToken = params['refresh_token'];
+      code ??= params['code'];
+    }
+
+    if (code != null && code.isNotEmpty) {
+      try {
+        await Supabase.instance.client.auth.exchangeCodeForSession(code);
+        debugPrint('✅ exchangeCodeForSession manual exitoso');
+      } catch (ex) {
+        debugPrint('⚠️ exchangeCodeForSession manual falló: $ex');
+      }
+    } else if (refreshToken != null && refreshToken.isNotEmpty) {
+      try {
+        await Supabase.instance.client.auth.setSession(refreshToken);
+        debugPrint('✅ setSession manual exitoso');
+      } catch (ex) {
+        debugPrint('⚠️ setSession manual falló: $ex');
+      }
+    }
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Cargar variables de entorno
   try {
     await dotenv.load(fileName: ".env");
-  } catch (_) {
-    // Si no se encuentra .env, continua con vars vacias o por defecto
-  }
+  } catch (_) {}
 
-  // Init sqflite_common_ffi en Windows (Pitfall #9 — CRÍTICO)
+  // Init sqflite_common_ffi en Windows
   if (!kIsWeb && Platform.isWindows) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+    _registerWindowsProtocolHandler();
   }
 
   // Init Supabase
@@ -51,14 +107,12 @@ void main() async {
   try {
     final initialUri = await appLinks.getInitialLink();
     if (initialUri != null) {
-      await Supabase.instance.client.auth.getSessionFromUrl(initialUri);
+      await _handleAuthDeepLink(initialUri);
     }
   } catch (_) {}
 
   appLinks.uriLinkStream.listen((uri) async {
-    try {
-      await Supabase.instance.client.auth.getSessionFromUrl(uri);
-    } catch (_) {}
+    await _handleAuthDeepLink(uri);
   });
 
   // MediaKit, SMTCWindows y WindowManager solo se inicializan en Windows
