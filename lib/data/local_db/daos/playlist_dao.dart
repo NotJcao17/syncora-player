@@ -27,6 +27,9 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
   Future<Playlist?> getPlaylistById(int id) =>
       (select(playlists)..where((t) => t.id.equals(id))).getSingleOrNull();
 
+  Future<Playlist?> getPlaylistByRemoteId(String remoteId) =>
+      (select(playlists)..where((t) => t.remoteId.equals(remoteId))).getSingleOrNull();
+
   Future<Playlist> getLikedPlaylist() async {
     final existing = await (select(playlists)..where((t) => t.isLiked.equals(true))).getSingleOrNull();
     if (existing != null) return existing;
@@ -47,12 +50,16 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     required String title,
     String? description,
     String? coverUrl,
+    String? remoteId,
+    bool isPublic = false,
   }) async {
     return into(playlists).insert(
       PlaylistsCompanion.insert(
         title: title,
         description: Value(description),
         coverUrl: Value(coverUrl),
+        remoteId: Value(remoteId),
+        isPublic: Value(isPublic),
       ),
     );
   }

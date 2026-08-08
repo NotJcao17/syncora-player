@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -57,35 +58,48 @@ class SyncService {
   Future<void> _syncPlaylistsAndTracks() async {
     final remotePlaylists = await _playlistRepo.fetchUserPlaylists();
     final localPlaylists = await _playlistDao.getAllPlaylists();
+    final remoteIdsSet = <String>{};
 
     for (final remote in remotePlaylists) {
       final String remoteId = remote['id'].toString();
+      remoteIdsSet.add(remoteId);
+
       final String title = remote['title'] as String? ?? 'Untitled';
       final String? description = remote['description'] as String?;
       final String? coverUrl = remote['cover_url'] as String?;
       final bool isLiked = remote['is_liked'] as bool? ?? false;
+      final bool isPublic = remote['is_public'] as bool? ?? false;
 
       int localPlaylistId;
 
       if (isLiked) {
         final likedPlaylist = await _playlistDao.getLikedPlaylist();
         localPlaylistId = likedPlaylist.id;
-      } else {
-        Playlist? match;
-        for (final p in localPlaylists) {
-          if (p.title == title) {
-            match = p;
-            break;
-          }
+        if (likedPlaylist.remoteId != remoteId) {
+          await _playlistDao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(remoteId)));
         }
+      } else {
+        Playlist? match = await _playlistDao.getPlaylistByRemoteId(remoteId);
+        match ??= localPlaylists.where((p) => p.title == title && !p.isLiked).firstOrNull;
 
         if (match != null) {
           localPlaylistId = match.id;
+          await _playlistDao.updatePlaylist(
+            match.copyWith(
+              remoteId: Value(remoteId),
+              title: title,
+              description: Value(description),
+              coverUrl: Value(coverUrl),
+              isPublic: isPublic,
+            ),
+          );
         } else {
           localPlaylistId = await _playlistDao.createPlaylist(
             title: title,
             description: description,
             coverUrl: coverUrl,
+            remoteId: remoteId,
+            isPublic: isPublic,
           );
         }
       }
@@ -111,6 +125,12 @@ class SyncService {
             genre: trackMap['genre'] as String?,
           );
         }
+      }
+    }
+
+    for (final localP in localPlaylists) {
+      if (!localP.isLiked && localP.remoteId != null && !remoteIdsSet.contains(localP.remoteId)) {
+        await _playlistDao.deletePlaylist(localP.id);
       }
     }
   }

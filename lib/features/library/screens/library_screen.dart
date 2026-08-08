@@ -86,15 +86,18 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               final title = titleController.text.trim();
               if (title.isNotEmpty) {
                 final description = descController.text.trim().isEmpty ? null : descController.text.trim();
+                String? remoteId;
                 try {
                   final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                  await supabaseRepo.createPlaylist(title: title, description: description);
+                  final supabaseRes = await supabaseRepo.createPlaylist(title: title, description: description);
+                  remoteId = supabaseRes['id']?.toString();
                 } catch (_) {}
 
                 final dao = ref.read(playlistDaoProvider);
                 await dao.createPlaylist(
                   title: title,
                   description: description,
+                  remoteId: remoteId,
                 );
                 if (ctx.mounted) Navigator.of(ctx).pop();
               }
@@ -137,11 +140,40 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 },
               ),
               ListTile(
+                leading: Icon(
+                  AppIcons.broken(playlist.isPublic ? SolarIcons.Lock : SolarIcons.Global),
+                  color: isConnected ? AppTheme.primary : AppTheme.muted,
+                ),
+                title: Text(
+                  playlist.isPublic ? 'Hacer privada' : 'Hacer pública',
+                  style: TextStyle(color: isConnected ? AppTheme.primary : AppTheme.muted),
+                ),
+                enabled: isConnected,
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final newPublic = !playlist.isPublic;
+                  final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                  final dao = ref.read(playlistDaoProvider);
+                  if (playlist.remoteId != null) {
+                    try {
+                      await supabaseRepo.updatePlaylist(playlist.remoteId!, isPublic: newPublic);
+                    } catch (_) {}
+                  }
+                  await dao.updatePlaylist(playlist.copyWith(isPublic: newPublic));
+                  if (context.mounted) {
+                    AppToast.show(
+                      context,
+                      message: newPublic ? 'Playlist marcada como pública' : 'Playlist marcada como privada',
+                    );
+                  }
+                },
+              ),
+              ListTile(
                 leading: Icon(AppIcons.broken(SolarIcons.LinkMinimalistic), color: AppTheme.primary),
                 title: const Text('Copiar enlace', style: TextStyle(color: AppTheme.primary)),
                 onTap: () {
                   Navigator.pop(ctx);
-                  Clipboard.setData(ClipboardData(text: 'syncoraplayer://playlist/${playlist.id}'));
+                  Clipboard.setData(ClipboardData(text: 'syncoraplayer://playlist/${playlist.remoteId ?? playlist.id}'));
                   AppToast.show(context, message: 'Enlace copiado al portapapeles');
                 },
               ),
@@ -153,7 +185,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   Navigator.pop(ctx);
                   try {
                     final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                    await supabaseRepo.deletePlaylist(playlist.id.toString());
+                    if (playlist.remoteId != null) {
+                      await supabaseRepo.deletePlaylist(playlist.remoteId!);
+                    }
                   } catch (_) {}
                   final dao = ref.read(playlistDaoProvider);
                   await dao.deletePlaylist(playlist.id);

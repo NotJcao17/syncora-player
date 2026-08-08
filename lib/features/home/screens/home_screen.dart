@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import '../../auth/auth_provider.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
@@ -48,17 +50,36 @@ class HomeScreen extends ConsumerWidget {
                   Row(
                     children: [
                       if (!isDesktop) ...[
-                        GestureDetector(
-                          onTap: () => context.push('/settings'),
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.all(Radius.circular(999)),
-                            child: CachedNetworkImage(
-                              imageUrl: 'https://i.pravatar.cc/150?img=11',
-                              width: 32,
-                              height: 32,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                        Builder(
+                          builder: (ctx) {
+                            final profileAsync = ref.watch(profileProvider);
+                            final user = ref.watch(currentUserProvider);
+                            final seed = profileAsync.value?['avatar_seed'] as String? ?? user?.id ?? 'default';
+                            final avatarUrl = 'https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=$seed';
+
+                            return GestureDetector(
+                              onTap: () => context.push('/settings'),
+                              child: ClipRRect(
+                                borderRadius: const BorderRadius.all(Radius.circular(999)),
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  color: AppTheme.surfaceActive,
+                                  child: SvgPicture.network(
+                                    avatarUrl,
+                                    width: 32,
+                                    height: 32,
+                                    fit: BoxFit.cover,
+                                    placeholderBuilder: (_) => const Icon(
+                                      Icons.person,
+                                      size: 20,
+                                      color: AppTheme.secondary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(width: 10),
                       ],

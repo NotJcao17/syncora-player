@@ -14,9 +14,11 @@ part 'syncora_database.g.dart';
 // Playlists locales
 class Playlists extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get remoteId => text().nullable()();
   TextColumn get title => text()();
   TextColumn get description => text().nullable()();
   TextColumn get coverUrl => text().nullable()();
+  BoolColumn get isPublic => boolean().withDefault(const Constant(false))();
   BoolColumn get isLiked => boolean().withDefault(const Constant(false))();
   BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
   IntColumn get orderIndex => integer().withDefault(const Constant(0))();
@@ -70,7 +72,7 @@ class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
@@ -87,6 +89,12 @@ class SyncoraDatabase extends _$SyncoraDatabase {
             orderIndex: const Value(-1),
           ),
         );
+      },
+      onUpgrade: (m, from, to) async {
+        if (from < 2) {
+          await m.addColumn(playlists, playlists.remoteId);
+          await m.addColumn(playlists, playlists.isPublic);
+        }
       },
     );
   }

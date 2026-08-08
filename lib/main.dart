@@ -48,8 +48,17 @@ void main() async {
 
   // AppLinks listener para Deep Links / OAuth redirect callbacks
   final appLinks = AppLinks();
-  appLinks.uriLinkStream.listen((uri) {
-    Supabase.instance.client.auth.getSessionFromUrl(uri);
+  try {
+    final initialUri = await appLinks.getInitialLink();
+    if (initialUri != null) {
+      await Supabase.instance.client.auth.getSessionFromUrl(initialUri);
+    }
+  } catch (_) {}
+
+  appLinks.uriLinkStream.listen((uri) async {
+    try {
+      await Supabase.instance.client.auth.getSessionFromUrl(uri);
+    } catch (_) {}
   });
 
   // MediaKit, SMTCWindows y WindowManager solo se inicializan en Windows

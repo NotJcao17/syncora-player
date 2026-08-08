@@ -91,6 +91,7 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
         await Supabase.instance.client
             .from('profiles')
             .update({'avatar_seed': seed}).eq('id', userId);
+        ref.invalidate(profileProvider);
       }
       widget.onAvatarSelected?.call(seed);
     } catch (e) {

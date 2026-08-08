@@ -22,6 +22,17 @@ class $PlaylistsTable extends Playlists
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _remoteIdMeta = const VerificationMeta(
+    'remoteId',
+  );
+  @override
+  late final GeneratedColumn<String> remoteId = GeneratedColumn<String>(
+    'remote_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -52,6 +63,21 @@ class $PlaylistsTable extends Playlists
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPublicMeta = const VerificationMeta(
+    'isPublic',
+  );
+  @override
+  late final GeneratedColumn<bool> isPublic = GeneratedColumn<bool>(
+    'is_public',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_public" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
   );
   static const VerificationMeta _isLikedMeta = const VerificationMeta(
     'isLiked',
@@ -122,9 +148,11 @@ class $PlaylistsTable extends Playlists
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    remoteId,
     title,
     description,
     coverUrl,
+    isPublic,
     isLiked,
     isPinned,
     orderIndex,
@@ -145,6 +173,12 @@ class $PlaylistsTable extends Playlists
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('remote_id')) {
+      context.handle(
+        _remoteIdMeta,
+        remoteId.isAcceptableOrUnknown(data['remote_id']!, _remoteIdMeta),
+      );
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -167,6 +201,12 @@ class $PlaylistsTable extends Playlists
       context.handle(
         _coverUrlMeta,
         coverUrl.isAcceptableOrUnknown(data['cover_url']!, _coverUrlMeta),
+      );
+    }
+    if (data.containsKey('is_public')) {
+      context.handle(
+        _isPublicMeta,
+        isPublic.isAcceptableOrUnknown(data['is_public']!, _isPublicMeta),
       );
     }
     if (data.containsKey('is_liked')) {
@@ -212,6 +252,10 @@ class $PlaylistsTable extends Playlists
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      remoteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_id'],
+      ),
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}title'],
@@ -224,6 +268,10 @@ class $PlaylistsTable extends Playlists
         DriftSqlType.string,
         data['${effectivePrefix}cover_url'],
       ),
+      isPublic: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_public'],
+      )!,
       isLiked: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_liked'],
@@ -255,9 +303,11 @@ class $PlaylistsTable extends Playlists
 
 class Playlist extends DataClass implements Insertable<Playlist> {
   final int id;
+  final String? remoteId;
   final String title;
   final String? description;
   final String? coverUrl;
+  final bool isPublic;
   final bool isLiked;
   final bool isPinned;
   final int orderIndex;
@@ -265,9 +315,11 @@ class Playlist extends DataClass implements Insertable<Playlist> {
   final DateTime updatedAt;
   const Playlist({
     required this.id,
+    this.remoteId,
     required this.title,
     this.description,
     this.coverUrl,
+    required this.isPublic,
     required this.isLiked,
     required this.isPinned,
     required this.orderIndex,
@@ -278,6 +330,9 @@ class Playlist extends DataClass implements Insertable<Playlist> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    if (!nullToAbsent || remoteId != null) {
+      map['remote_id'] = Variable<String>(remoteId);
+    }
     map['title'] = Variable<String>(title);
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
@@ -285,6 +340,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     if (!nullToAbsent || coverUrl != null) {
       map['cover_url'] = Variable<String>(coverUrl);
     }
+    map['is_public'] = Variable<bool>(isPublic);
     map['is_liked'] = Variable<bool>(isLiked);
     map['is_pinned'] = Variable<bool>(isPinned);
     map['order_index'] = Variable<int>(orderIndex);
@@ -296,6 +352,9 @@ class Playlist extends DataClass implements Insertable<Playlist> {
   PlaylistsCompanion toCompanion(bool nullToAbsent) {
     return PlaylistsCompanion(
       id: Value(id),
+      remoteId: remoteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remoteId),
       title: Value(title),
       description: description == null && nullToAbsent
           ? const Value.absent()
@@ -303,6 +362,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       coverUrl: coverUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(coverUrl),
+      isPublic: Value(isPublic),
       isLiked: Value(isLiked),
       isPinned: Value(isPinned),
       orderIndex: Value(orderIndex),
@@ -318,9 +378,11 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Playlist(
       id: serializer.fromJson<int>(json['id']),
+      remoteId: serializer.fromJson<String?>(json['remoteId']),
       title: serializer.fromJson<String>(json['title']),
       description: serializer.fromJson<String?>(json['description']),
       coverUrl: serializer.fromJson<String?>(json['coverUrl']),
+      isPublic: serializer.fromJson<bool>(json['isPublic']),
       isLiked: serializer.fromJson<bool>(json['isLiked']),
       isPinned: serializer.fromJson<bool>(json['isPinned']),
       orderIndex: serializer.fromJson<int>(json['orderIndex']),
@@ -333,9 +395,11 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'remoteId': serializer.toJson<String?>(remoteId),
       'title': serializer.toJson<String>(title),
       'description': serializer.toJson<String?>(description),
       'coverUrl': serializer.toJson<String?>(coverUrl),
+      'isPublic': serializer.toJson<bool>(isPublic),
       'isLiked': serializer.toJson<bool>(isLiked),
       'isPinned': serializer.toJson<bool>(isPinned),
       'orderIndex': serializer.toJson<int>(orderIndex),
@@ -346,9 +410,11 @@ class Playlist extends DataClass implements Insertable<Playlist> {
 
   Playlist copyWith({
     int? id,
+    Value<String?> remoteId = const Value.absent(),
     String? title,
     Value<String?> description = const Value.absent(),
     Value<String?> coverUrl = const Value.absent(),
+    bool? isPublic,
     bool? isLiked,
     bool? isPinned,
     int? orderIndex,
@@ -356,9 +422,11 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     DateTime? updatedAt,
   }) => Playlist(
     id: id ?? this.id,
+    remoteId: remoteId.present ? remoteId.value : this.remoteId,
     title: title ?? this.title,
     description: description.present ? description.value : this.description,
     coverUrl: coverUrl.present ? coverUrl.value : this.coverUrl,
+    isPublic: isPublic ?? this.isPublic,
     isLiked: isLiked ?? this.isLiked,
     isPinned: isPinned ?? this.isPinned,
     orderIndex: orderIndex ?? this.orderIndex,
@@ -368,11 +436,13 @@ class Playlist extends DataClass implements Insertable<Playlist> {
   Playlist copyWithCompanion(PlaylistsCompanion data) {
     return Playlist(
       id: data.id.present ? data.id.value : this.id,
+      remoteId: data.remoteId.present ? data.remoteId.value : this.remoteId,
       title: data.title.present ? data.title.value : this.title,
       description: data.description.present
           ? data.description.value
           : this.description,
       coverUrl: data.coverUrl.present ? data.coverUrl.value : this.coverUrl,
+      isPublic: data.isPublic.present ? data.isPublic.value : this.isPublic,
       isLiked: data.isLiked.present ? data.isLiked.value : this.isLiked,
       isPinned: data.isPinned.present ? data.isPinned.value : this.isPinned,
       orderIndex: data.orderIndex.present
@@ -387,9 +457,11 @@ class Playlist extends DataClass implements Insertable<Playlist> {
   String toString() {
     return (StringBuffer('Playlist(')
           ..write('id: $id, ')
+          ..write('remoteId: $remoteId, ')
           ..write('title: $title, ')
           ..write('description: $description, ')
           ..write('coverUrl: $coverUrl, ')
+          ..write('isPublic: $isPublic, ')
           ..write('isLiked: $isLiked, ')
           ..write('isPinned: $isPinned, ')
           ..write('orderIndex: $orderIndex, ')
@@ -402,9 +474,11 @@ class Playlist extends DataClass implements Insertable<Playlist> {
   @override
   int get hashCode => Object.hash(
     id,
+    remoteId,
     title,
     description,
     coverUrl,
+    isPublic,
     isLiked,
     isPinned,
     orderIndex,
@@ -416,9 +490,11 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       identical(this, other) ||
       (other is Playlist &&
           other.id == this.id &&
+          other.remoteId == this.remoteId &&
           other.title == this.title &&
           other.description == this.description &&
           other.coverUrl == this.coverUrl &&
+          other.isPublic == this.isPublic &&
           other.isLiked == this.isLiked &&
           other.isPinned == this.isPinned &&
           other.orderIndex == this.orderIndex &&
@@ -428,9 +504,11 @@ class Playlist extends DataClass implements Insertable<Playlist> {
 
 class PlaylistsCompanion extends UpdateCompanion<Playlist> {
   final Value<int> id;
+  final Value<String?> remoteId;
   final Value<String> title;
   final Value<String?> description;
   final Value<String?> coverUrl;
+  final Value<bool> isPublic;
   final Value<bool> isLiked;
   final Value<bool> isPinned;
   final Value<int> orderIndex;
@@ -438,9 +516,11 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
   final Value<DateTime> updatedAt;
   const PlaylistsCompanion({
     this.id = const Value.absent(),
+    this.remoteId = const Value.absent(),
     this.title = const Value.absent(),
     this.description = const Value.absent(),
     this.coverUrl = const Value.absent(),
+    this.isPublic = const Value.absent(),
     this.isLiked = const Value.absent(),
     this.isPinned = const Value.absent(),
     this.orderIndex = const Value.absent(),
@@ -449,9 +529,11 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
   });
   PlaylistsCompanion.insert({
     this.id = const Value.absent(),
+    this.remoteId = const Value.absent(),
     required String title,
     this.description = const Value.absent(),
     this.coverUrl = const Value.absent(),
+    this.isPublic = const Value.absent(),
     this.isLiked = const Value.absent(),
     this.isPinned = const Value.absent(),
     this.orderIndex = const Value.absent(),
@@ -460,9 +542,11 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
   }) : title = Value(title);
   static Insertable<Playlist> custom({
     Expression<int>? id,
+    Expression<String>? remoteId,
     Expression<String>? title,
     Expression<String>? description,
     Expression<String>? coverUrl,
+    Expression<bool>? isPublic,
     Expression<bool>? isLiked,
     Expression<bool>? isPinned,
     Expression<int>? orderIndex,
@@ -471,9 +555,11 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (remoteId != null) 'remote_id': remoteId,
       if (title != null) 'title': title,
       if (description != null) 'description': description,
       if (coverUrl != null) 'cover_url': coverUrl,
+      if (isPublic != null) 'is_public': isPublic,
       if (isLiked != null) 'is_liked': isLiked,
       if (isPinned != null) 'is_pinned': isPinned,
       if (orderIndex != null) 'order_index': orderIndex,
@@ -484,9 +570,11 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
 
   PlaylistsCompanion copyWith({
     Value<int>? id,
+    Value<String?>? remoteId,
     Value<String>? title,
     Value<String?>? description,
     Value<String?>? coverUrl,
+    Value<bool>? isPublic,
     Value<bool>? isLiked,
     Value<bool>? isPinned,
     Value<int>? orderIndex,
@@ -495,9 +583,11 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
   }) {
     return PlaylistsCompanion(
       id: id ?? this.id,
+      remoteId: remoteId ?? this.remoteId,
       title: title ?? this.title,
       description: description ?? this.description,
       coverUrl: coverUrl ?? this.coverUrl,
+      isPublic: isPublic ?? this.isPublic,
       isLiked: isLiked ?? this.isLiked,
       isPinned: isPinned ?? this.isPinned,
       orderIndex: orderIndex ?? this.orderIndex,
@@ -512,6 +602,9 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
+    if (remoteId.present) {
+      map['remote_id'] = Variable<String>(remoteId.value);
+    }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
     }
@@ -520,6 +613,9 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     }
     if (coverUrl.present) {
       map['cover_url'] = Variable<String>(coverUrl.value);
+    }
+    if (isPublic.present) {
+      map['is_public'] = Variable<bool>(isPublic.value);
     }
     if (isLiked.present) {
       map['is_liked'] = Variable<bool>(isLiked.value);
@@ -543,9 +639,11 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
   String toString() {
     return (StringBuffer('PlaylistsCompanion(')
           ..write('id: $id, ')
+          ..write('remoteId: $remoteId, ')
           ..write('title: $title, ')
           ..write('description: $description, ')
           ..write('coverUrl: $coverUrl, ')
+          ..write('isPublic: $isPublic, ')
           ..write('isLiked: $isLiked, ')
           ..write('isPinned: $isPinned, ')
           ..write('orderIndex: $orderIndex, ')
@@ -2201,9 +2299,11 @@ abstract class _$SyncoraDatabase extends GeneratedDatabase {
 typedef $$PlaylistsTableCreateCompanionBuilder =
     PlaylistsCompanion Function({
       Value<int> id,
+      Value<String?> remoteId,
       required String title,
       Value<String?> description,
       Value<String?> coverUrl,
+      Value<bool> isPublic,
       Value<bool> isLiked,
       Value<bool> isPinned,
       Value<int> orderIndex,
@@ -2213,9 +2313,11 @@ typedef $$PlaylistsTableCreateCompanionBuilder =
 typedef $$PlaylistsTableUpdateCompanionBuilder =
     PlaylistsCompanion Function({
       Value<int> id,
+      Value<String?> remoteId,
       Value<String> title,
       Value<String?> description,
       Value<String?> coverUrl,
+      Value<bool> isPublic,
       Value<bool> isLiked,
       Value<bool> isPinned,
       Value<int> orderIndex,
@@ -2261,6 +2363,11 @@ class $$PlaylistsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get title => $composableBuilder(
     column: $table.title,
     builder: (column) => ColumnFilters(column),
@@ -2273,6 +2380,11 @@ class $$PlaylistsTableFilterComposer
 
   ColumnFilters<String> get coverUrl => $composableBuilder(
     column: $table.coverUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPublic => $composableBuilder(
+    column: $table.isPublic,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2341,6 +2453,11 @@ class $$PlaylistsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get title => $composableBuilder(
     column: $table.title,
     builder: (column) => ColumnOrderings(column),
@@ -2353,6 +2470,11 @@ class $$PlaylistsTableOrderingComposer
 
   ColumnOrderings<String> get coverUrl => $composableBuilder(
     column: $table.coverUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPublic => $composableBuilder(
+    column: $table.isPublic,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -2394,6 +2516,9 @@ class $$PlaylistsTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
+  GeneratedColumn<String> get remoteId =>
+      $composableBuilder(column: $table.remoteId, builder: (column) => column);
+
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
 
@@ -2404,6 +2529,9 @@ class $$PlaylistsTableAnnotationComposer
 
   GeneratedColumn<String> get coverUrl =>
       $composableBuilder(column: $table.coverUrl, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPublic =>
+      $composableBuilder(column: $table.isPublic, builder: (column) => column);
 
   GeneratedColumn<bool> get isLiked =>
       $composableBuilder(column: $table.isLiked, builder: (column) => column);
@@ -2477,9 +2605,11 @@ class $$PlaylistsTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String?> remoteId = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<String?> coverUrl = const Value.absent(),
+                Value<bool> isPublic = const Value.absent(),
                 Value<bool> isLiked = const Value.absent(),
                 Value<bool> isPinned = const Value.absent(),
                 Value<int> orderIndex = const Value.absent(),
@@ -2487,9 +2617,11 @@ class $$PlaylistsTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => PlaylistsCompanion(
                 id: id,
+                remoteId: remoteId,
                 title: title,
                 description: description,
                 coverUrl: coverUrl,
+                isPublic: isPublic,
                 isLiked: isLiked,
                 isPinned: isPinned,
                 orderIndex: orderIndex,
@@ -2499,9 +2631,11 @@ class $$PlaylistsTableTableManager
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String?> remoteId = const Value.absent(),
                 required String title,
                 Value<String?> description = const Value.absent(),
                 Value<String?> coverUrl = const Value.absent(),
+                Value<bool> isPublic = const Value.absent(),
                 Value<bool> isLiked = const Value.absent(),
                 Value<bool> isPinned = const Value.absent(),
                 Value<int> orderIndex = const Value.absent(),
@@ -2509,9 +2643,11 @@ class $$PlaylistsTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => PlaylistsCompanion.insert(
                 id: id,
+                remoteId: remoteId,
                 title: title,
                 description: description,
                 coverUrl: coverUrl,
+                isPublic: isPublic,
                 isLiked: isLiked,
                 isPinned: isPinned,
                 orderIndex: orderIndex,

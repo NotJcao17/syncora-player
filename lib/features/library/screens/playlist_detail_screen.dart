@@ -19,6 +19,7 @@ import '../../../data/apis/deezer_api.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
+import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
 import '../../player/player_models.dart';
@@ -451,6 +452,12 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                     ),
                                   );
                                   if (confirm == true) {
+                                    if (playlist.remoteId != null) {
+                                      try {
+                                        final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                                        await supabaseRepo.deletePlaylist(playlist.remoteId!);
+                                      } catch (_) {}
+                                    }
                                     await playlistDao.deletePlaylist(playlist.id);
                                     if (context.mounted) context.pop();
                                   }
