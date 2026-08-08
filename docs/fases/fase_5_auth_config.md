@@ -68,16 +68,56 @@ principal (com.ryanheise.audioservice.AudioServiceActivity):
 </intent-filter>
 ```
 
-### Windows
+### Windows — Solución Final: Servidor HTTP Loopback Local (Puerto Fijo 7734)
 
-El esquema syncoraplayer:// ya esta registrado manualmente en el Registro de Windows
-de la maquina del desarrollador (HKEY_CURRENT_USER\Software\Classes\syncoraplayer)
-apuntando al ejecutable compilado en build\windows\x64\runner\Release\syncora_player.exe,
-para pruebas locales de deep link. Esto es temporal/manual.
+**Problema que existía con el enfoque de esquema personalizado (`syncoraplayer://`):**
+El navegador (Chrome/Edge) redirigía a `syncoraplayer://login-callback?code=XXX` después del
+consentimiento de Google. Al ser un esquema personalizado, el browser no recibe ninguna
+respuesta HTTP de vuelta — la pestaña se queda cargando infinitamente.
+En Android funciona porque el OS maneja intents nativamente. En Windows Desktop, el browser
+no tiene mecanismo equivalente para "completar" la navegación a un esquema no-HTTP.
 
-En el futuro debera reemplazarse por un script de instalador (Inno Setup o MSIX) que
-registre esta entrada automaticamente en la maquina de cada usuario final durante la
-instalacion. Tarea pendiente para la fase de empaquetado/distribucion, no ahora.
+**Intento fallido — Puerto aleatorio:**
+Se intentó usar un `HttpServer` local con puerto `0` (aleatorio), por ejemplo
+`http://localhost:56461/auth/callback`. Supabase hace matching **exacto** de la URL del
+redirect incluyendo el número de puerto. La entrada `http://localhost` en the allowlist
+**NO hace match** con `http://localhost:56461/auth/callback` (puerto diferente). Supabase
+rechaza el redirect y cae al Site URL (`syncoraplayer://`), sin efecto.
+
+**Solución implementada — Puerto fijo 7734:**
+Se usa un `HttpServer` en `localhost:7734` (puerto fijo). Esto permite registrar la URL
+exacta `http://localhost:7734/auth/callback` en el allowlist de Supabase.
+
+Flujo completo en Windows:
+1. `DesktopAuthService.signInWithGoogle()` inicia `HttpServer` en `localhost:7734`.
+2. Llama a `signInWithOAuth(redirectTo: 'http://localhost:7734/auth/callback')`.
+3. Supabase valida el redirect contra su allowlist → match exacto → acepta.
+4. El browser navega a Google OAuth → usuario da consentimiento.
+5. Google redirige a Supabase → Supabase redirige a `http://localhost:7734/auth/callback?code=XXX`.
+6. El browser hace GET al servidor local → recibe respuesta HTML de éxito → intenta cerrarse.
+7. `DesktopAuthService` extrae el `code` → llama `exchangeCodeForSession(code)` → sesión PKCE establecida.
+8. `onAuthStateChange` dispara → GoRouter redirige al Home.
+
+**Archivos involucrados:**
+- `lib/features/auth/services/desktop_auth_service.dart` — nuevo servicio (puerto fijo 7734)
+- `lib/features/auth/screens/auth_screen.dart` — bifurca Windows vs Android/iOS
+- `lib/main.dart` — se removió `_registerWindowsProtocolHandler()` (ya no necesario para auth)
+- Registro de Windows `HKCU\Software\Classes\syncoraplayer` — eliminado manualmente
+
+**Configuración en Supabase Dashboard (Authentication → URL Configuration):**
+- Site URL: `syncoraplayer://` (sin cambios)
+- Redirect URLs:
+  - `syncoraplayer://login-callback` (Android — sin cambios)
+  - `http://localhost:7734/auth/callback` (Windows Desktop — agregado)
+
+**Notas de seguridad:**
+- El puerto `7734` está abierto solo durante la autenticación activa (se cierra el servidor
+  tras recibir el primer request o al expirar el timeout de 5 minutos).
+- Solo acepta conexiones de `127.0.0.1` (loopback — no accesible desde la red).
+- El `code` de PKCE es de un solo uso y expira en segundos; capturarlo en loopback es
+  el patrón estándar recomendado por OAuth 2.0 RFC 8252 para aplicaciones nativas de escritorio.
+- Si el puerto 7734 estuviera ocupado por otra app, el servicio lanza `AuthException` con
+  mensaje claro al usuario.
 
 ---
 
@@ -153,4 +193,4 @@ El agente debe usar este comando en lugar de link+push en toda la Fase 5.
 ---
 
 Fecha de configuracion: 2026-08-07
-Actualizado: 2026-08-07 (bug supabase link + workaround --db-url)
+Actualizado: 2026-08-08 (fix Google OAuth Windows Desktop — servidor HTTP loopback puerto fijo 7734)

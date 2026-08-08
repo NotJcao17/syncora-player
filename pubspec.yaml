@@ -69,6 +69,7 @@ dependencies:
   app_links: ^6.3.3
   google_sign_in: ^6.3.0
   connectivity_plus: ^6.1.4
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

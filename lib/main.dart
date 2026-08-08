@@ -122,7 +122,9 @@ void main() async {
   if (!kIsWeb && Platform.isWindows) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
-    _registerWindowsProtocolHandler();
+    // Nota: _registerWindowsProtocolHandler() fue removido porque el flujo OAuth
+    // en Windows ahora usa un servidor HTTP loopback local y ya no requiere el
+    // esquema personalizado syncoraplayer:// para el callback de autenticación.
   }
 
   // Init Supabase

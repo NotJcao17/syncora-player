@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -7,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/navigation/app_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../services/desktop_auth_service.dart';
 
 /// Pantalla de Autenticación para Syncora Player.
 class AuthScreen extends ConsumerStatefulWidget {
@@ -78,10 +80,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     try {
       if (!_isTestEnvironment()) {
-        await Supabase.instance.client.auth.signInWithOAuth(
-          OAuthProvider.google,
-          redirectTo: 'syncoraplayer://login-callback',
-        );
+        if (!kIsWeb && Platform.isWindows) {
+          // En Windows usamos un servidor HTTP loopback local para el callback.
+          // Esto evita que el navegador se quede cargando al redirigir a un
+          // esquema personalizado (syncoraplayer://) que no devuelve respuesta HTTP.
+          await DesktopAuthService().signInWithGoogle();
+        } else {
+          // En Android/iOS/otras plataformas usamos deep links nativos.
+          await Supabase.instance.client.auth.signInWithOAuth(
+            OAuthProvider.google,
+            redirectTo: 'syncoraplayer://login-callback',
+          );
+        }
+      }
+    } on DesktopAuthTimeoutException {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'El tiempo de espera para la autenticación expiró. Inténtalo de nuevo.';
+        });
       }
     } catch (e) {
       if (mounted) {
