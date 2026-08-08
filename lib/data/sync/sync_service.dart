@@ -3,15 +3,17 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../local_db/database_provider.dart';
 import '../local_db/daos/listening_history_dao.dart';
 import '../local_db/daos/playlist_dao.dart';
 import '../local_db/daos/saved_album_dao.dart';
+import '../local_db/database_provider.dart';
 import '../local_db/syncora_database.dart';
 import '../supabase/supabase_album_repository.dart';
 import '../supabase/supabase_history_repository.dart';
 import '../supabase/supabase_playlist_repository.dart';
 import '../supabase/supabase_providers.dart';
+import 'realtime_providers.dart';
+import 'realtime_sync_service.dart';
 
 class SyncService {
   final SupabasePlaylistRepository _playlistRepo;
@@ -20,6 +22,7 @@ class SyncService {
   final PlaylistDao _playlistDao;
   final SavedAlbumDao _savedAlbumDao;
   final ListeningHistoryDao _listeningHistoryDao;
+  final RealtimeSyncService _realtimeSyncService;
 
   SyncService({
     required SupabasePlaylistRepository playlistRepo,
@@ -28,22 +31,27 @@ class SyncService {
     required PlaylistDao playlistDao,
     required SavedAlbumDao savedAlbumDao,
     required ListeningHistoryDao listeningHistoryDao,
+    required RealtimeSyncService realtimeSyncService,
   })  : _playlistRepo = playlistRepo, // ignore: prefer_initializing_formals
         _albumRepo = albumRepo, // ignore: prefer_initializing_formals
         _historyRepo = historyRepo, // ignore: prefer_initializing_formals
         _playlistDao = playlistDao, // ignore: prefer_initializing_formals
         _savedAlbumDao = savedAlbumDao, // ignore: prefer_initializing_formals
-        _listeningHistoryDao = listeningHistoryDao; // ignore: prefer_initializing_formals
+        _listeningHistoryDao = listeningHistoryDao, // ignore: prefer_initializing_formals
+        _realtimeSyncService = realtimeSyncService; // ignore: prefer_initializing_formals
 
   bool get _isTestEnv => Platform.environment.containsKey('FLUTTER_TEST');
 
   Future<void> syncOnStartup() async {
     if (_isTestEnv) return;
 
+    final String userId;
     try {
-      if (Supabase.instance.client.auth.currentUser == null) {
+      final currentUser = Supabase.instance.client.auth.currentUser;
+      if (currentUser == null) {
         return;
       }
+      userId = currentUser.id;
     } catch (_) {
       return;
     }
@@ -52,6 +60,7 @@ class SyncService {
       await _syncPlaylistsAndTracks();
       await _syncSavedAlbums();
       await _syncListeningHistory();
+      _realtimeSyncService.subscribe(userId);
     } catch (_) {}
   }
 
@@ -76,11 +85,14 @@ class SyncService {
         final likedPlaylist = await _playlistDao.getLikedPlaylist();
         localPlaylistId = likedPlaylist.id;
         if (likedPlaylist.remoteId != remoteId) {
-          await _playlistDao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(remoteId)));
+          await _playlistDao.updatePlaylist(
+              likedPlaylist.copyWith(remoteId: Value(remoteId)));
         }
       } else {
         Playlist? match = await _playlistDao.getPlaylistByRemoteId(remoteId);
-        match ??= localPlaylists.where((p) => p.title == title && !p.isLiked).firstOrNull;
+        match ??= localPlaylists
+            .where((p) => p.title == title && !p.isLiked)
+            .firstOrNull;
 
         if (match != null) {
           localPlaylistId = match.id;
@@ -105,7 +117,8 @@ class SyncService {
       }
 
       final remoteTracks = await _playlistRepo.fetchPlaylistTracks(remoteId);
-      final localTracks = await _playlistDao.getTracksOrdered(localPlaylistId);
+      final localTracks =
+          await _playlistDao.getTracksOrdered(localPlaylistId);
       final localTrackIds = localTracks.map((t) => t.trackId).toSet();
 
       for (final trackMap in remoteTracks) {
@@ -129,7 +142,9 @@ class SyncService {
     }
 
     for (final localP in localPlaylists) {
-      if (!localP.isLiked && localP.remoteId != null && !remoteIdsSet.contains(localP.remoteId)) {
+      if (!localP.isLiked &&
+          localP.remoteId != null &&
+          !remoteIdsSet.contains(localP.remoteId)) {
         await _playlistDao.deletePlaylist(localP.id);
       }
     }
@@ -153,7 +168,8 @@ class SyncService {
   }
 
   Future<void> _syncListeningHistory() async {
-    final localHistory = await _listeningHistoryDao.getRecentHistory(limit: 100);
+    final localHistory =
+        await _listeningHistoryDao.getRecentHistory(limit: 100);
     for (final historyEntry in localHistory) {
       await _historyRepo.insertListeningHistory(
         trackId: historyEntry.trackId,
@@ -174,5 +190,6 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     playlistDao: ref.watch(playlistDaoProvider),
     savedAlbumDao: ref.watch(savedAlbumDaoProvider),
     listeningHistoryDao: ref.watch(listeningHistoryDaoProvider),
+    realtimeSyncService: ref.watch(realtimeSyncServiceProvider),
   );
 });

@@ -7,6 +7,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../../data/local_db/database_provider.dart';
+import '../../data/supabase/supabase_providers.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
 import 'app_bottom_sheet.dart';
@@ -561,6 +562,27 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         coverUrl: widget.track.coverUrl,
         durationMs: (widget.track.duration ?? Duration.zero).inMilliseconds,
       );
+      final likedPlaylist = await dao.getLikedPlaylist();
+      if (likedPlaylist.remoteId != null) {
+        try {
+          final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+          if (isLiked) {
+            await supabaseRepo.addTrackToPlaylist(likedPlaylist.remoteId!, {
+              'track_id': trackIdInt,
+              'artist_id': widget.track.artistId ?? 0,
+              'album_id': widget.track.albumId ?? 0,
+              'title': widget.track.title,
+              'artist_name': widget.track.artist,
+              'album_name': widget.track.album ?? '',
+              'cover_url': widget.track.coverUrl,
+              'duration_ms': (widget.track.duration ?? Duration.zero).inMilliseconds,
+              'genre': widget.track.genre,
+            });
+          } else {
+            await supabaseRepo.removeTrackFromPlaylist(likedPlaylist.remoteId!, trackIdInt);
+          }
+        } catch (_) {}
+      }
       if (context.mounted) {
         AppToast.show(
           context,
@@ -602,6 +624,23 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                 subtitle: Text(pl.isLiked ? 'Especial' : (pl.description ?? 'Playlist'), style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
                 onTap: () async {
                   final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
+                  if (pl.remoteId != null) {
+                    try {
+                      final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                      await supabaseRepo.addTrackToPlaylist(pl.remoteId!, {
+                        'track_id': trackIdInt,
+                        'artist_id': widget.track.artistId ?? 0,
+                        'album_id': widget.track.albumId ?? 0,
+                        'title': widget.track.title,
+                        'artist_name': widget.track.artist,
+                        'album_name': widget.track.album ?? '',
+                        'cover_url': widget.track.coverUrl,
+                        'duration_ms': (widget.track.duration ?? Duration.zero).inMilliseconds,
+                        'genre': widget.track.genre,
+                      });
+                    } catch (_) {}
+                  }
+
                   await dao.addTrackToPlaylist(
                     playlistId: pl.id,
                     trackId: trackIdInt,

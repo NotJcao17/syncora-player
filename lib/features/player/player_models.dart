@@ -46,9 +46,9 @@ class SyncoraTrack {
   /// Helper de conveniencia para obtener la URL de portada como String.
   String get coverUrl => artUri?.toString() ?? '';
 
-  /// Indica si la pista es spoken-word/podcast (habilita Skip Silence agresivo en Android).
   final String? previewUrl;
   final bool isSpokenWord;
+  final String? genre;
 
   const SyncoraTrack({
     required this.id,
@@ -63,6 +63,7 @@ class SyncoraTrack {
     this.artUri,
     this.previewUrl,
     this.isSpokenWord = false,
+    this.genre,
   }) : _artist = artist; // ignore: prefer_initializing_formals
 
   factory SyncoraTrack.fromVideoId({
@@ -93,6 +94,7 @@ class SyncoraTrack {
         'artUri': artUri?.toString(),
         'previewUrl': previewUrl,
         'isSpokenWord': isSpokenWord,
+        'genre': genre,
       };
 
   factory SyncoraTrack.fromJson(Map<String, dynamic> json) {
@@ -113,6 +115,7 @@ class SyncoraTrack {
       artUri: artUriStr != null && artUriStr.isNotEmpty ? Uri.tryParse(artUriStr) : null,
       previewUrl: json['previewUrl'] as String?,
       isSpokenWord: json['isSpokenWord'] as bool? ?? false,
+      genre: json['genre'] as String?,
     );
   }
 
@@ -130,6 +133,7 @@ class SyncoraTrack {
     String? coverUrl,
     String? previewUrl,
     bool? isSpokenWord,
+    String? genre,
   }) {
     return SyncoraTrack(
       id: id ?? this.id,
@@ -144,11 +148,10 @@ class SyncoraTrack {
       artUri: artUri ?? (coverUrl != null ? Uri.tryParse(coverUrl) : this.artUri),
       previewUrl: previewUrl ?? this.previewUrl,
       isSpokenWord: isSpokenWord ?? this.isSpokenWord,
+      genre: genre ?? this.genre,
     );
   }
 }
 
 /// Modo de repetición expuesto al reproductor.
 enum SyncoraRepeatMode { off, one, all }
-
-

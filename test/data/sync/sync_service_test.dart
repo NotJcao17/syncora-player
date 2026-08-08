@@ -4,6 +4,7 @@ import 'package:syncora_player/data/local_db/syncora_database.dart';
 import 'package:syncora_player/data/supabase/supabase_album_repository.dart';
 import 'package:syncora_player/data/supabase/supabase_history_repository.dart';
 import 'package:syncora_player/data/supabase/supabase_playlist_repository.dart';
+import 'package:syncora_player/data/sync/realtime_sync_service.dart';
 import 'package:syncora_player/data/sync/sync_service.dart';
 
 void main() {
@@ -15,13 +16,23 @@ void main() {
 
     setUp(() {
       db = SyncoraDatabase(NativeDatabase.memory());
+      final playlistRepo = SupabasePlaylistRepository();
+      final albumRepo = SupabaseAlbumRepository();
+      final historyRepo = SupabaseHistoryRepository();
+
       syncService = SyncService(
-        playlistRepo: SupabasePlaylistRepository(),
-        albumRepo: SupabaseAlbumRepository(),
-        historyRepo: SupabaseHistoryRepository(),
+        playlistRepo: playlistRepo,
+        albumRepo: albumRepo,
+        historyRepo: historyRepo,
         playlistDao: db.playlistDao,
         savedAlbumDao: db.savedAlbumDao,
         listeningHistoryDao: db.listeningHistoryDao,
+        realtimeSyncService: RealtimeSyncService(
+          playlistRepo: playlistRepo,
+          albumRepo: albumRepo,
+          playlistDao: db.playlistDao,
+          savedAlbumDao: db.savedAlbumDao,
+        ),
       );
     });
 

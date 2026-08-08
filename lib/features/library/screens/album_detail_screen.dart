@@ -11,6 +11,7 @@ import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
+import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/models/deezer/deezer_album.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
@@ -100,12 +101,27 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
   Future<void> _toggleSaveAlbum() async {
     if (_album == null) return;
     final savedDao = ref.read(savedAlbumDaoProvider);
+    final supabaseAlbumRepo = ref.read(supabaseAlbumRepositoryProvider);
+
     final nowSaved = await savedDao.toggleSaveAlbum(
       albumId: _album!.id,
       title: _album!.title,
       artistName: _album!.artistName,
       coverUrl: _album!.coverUrl,
     );
+
+    try {
+      if (nowSaved) {
+        await supabaseAlbumRepo.saveAlbum({
+          'album_id': _album!.id,
+          'title': _album!.title,
+          'artist_name': _album!.artistName,
+          'cover_url': _album!.coverUrl,
+        });
+      } else {
+        await supabaseAlbumRepo.removeAlbum(_album!.id);
+      }
+    } catch (_) {}
 
     if (mounted) {
       setState(() => _isSaved = nowSaved);

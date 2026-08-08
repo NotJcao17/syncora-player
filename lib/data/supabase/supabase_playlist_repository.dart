@@ -48,9 +48,7 @@ class SupabasePlaylistRepository {
     final client = _client;
     if (client == null) return {};
     final userId = client.auth.currentUser?.id;
-    if (userId == null) {
-      return {};
-    }
+    if (userId == null) return {};
 
     final response = await client.from('playlists').insert({
       'user_id': userId,
@@ -109,10 +107,14 @@ class SupabasePlaylistRepository {
     await client.from('playlist_tracks').insert(payload);
   }
 
-  Future<void> removeTrackFromPlaylist(String trackId) async {
+  Future<void> removeTrackFromPlaylist(String playlistId, int trackId) async {
     final client = _client;
     if (client == null) return;
-    await client.from('playlist_tracks').delete().eq('id', trackId);
+    await client
+        .from('playlist_tracks')
+        .delete()
+        .eq('playlist_id', playlistId)
+        .eq('track_id', trackId);
   }
 
   Future<void> reorderTracks(
@@ -122,11 +124,21 @@ class SupabasePlaylistRepository {
     final client = _client;
     if (client == null) return;
     for (int i = 0; i < trackIdsInOrder.length; i++) {
-      await client
-          .from('playlist_tracks')
-          .update({'order_index': i})
-          .eq('id', trackIdsInOrder[i])
-          .eq('playlist_id', playlistId);
+      final tid = trackIdsInOrder[i];
+      final parsedTrackId = int.tryParse(tid);
+      if (parsedTrackId != null) {
+        await client
+            .from('playlist_tracks')
+            .update({'order_index': i})
+            .eq('playlist_id', playlistId)
+            .eq('track_id', parsedTrackId);
+      } else {
+        await client
+            .from('playlist_tracks')
+            .update({'order_index': i})
+            .eq('playlist_id', playlistId)
+            .eq('id', tid);
+      }
     }
   }
 }
