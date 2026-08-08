@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/navigation/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// Pantalla de Autenticación para Syncora Player.
@@ -23,6 +25,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
+  StreamSubscription<AuthState>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!_isTestEnvironment()) {
+      _authSubscription =
+          Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+        if (data.session != null && mounted) {
+          ref.read(appRouterProvider).go('/');
+        }
+      });
+    }
+  }
 
   static const String _googleSvg = '''
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
@@ -35,6 +51,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();

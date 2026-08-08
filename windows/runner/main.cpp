@@ -24,18 +24,24 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     }
     ::SetForegroundWindow(existing_hwnd);
 
-    // Forward command line arguments to existing window via WM_COPYDATA
+    // Forward ONLY the deep link URI to existing window via WM_COPYDATA
     std::vector<std::string> command_line_arguments = GetCommandLineArguments();
-    if (!command_line_arguments.empty()) {
-      std::string cmd = "";
-      for (size_t i = 0; i < command_line_arguments.size(); ++i) {
-        if (i > 0) cmd += " ";
-        cmd += command_line_arguments[i];
+    std::string uri_arg = "";
+    for (const auto& arg : command_line_arguments) {
+      if (arg.rfind("syncoraplayer://", 0) == 0 || arg.find("://") != std::string::npos) {
+        uri_arg = arg;
+        break;
       }
+    }
+    if (uri_arg.empty() && command_line_arguments.size() > 1) {
+      uri_arg = command_line_arguments[1];
+    }
+
+    if (!uri_arg.empty()) {
       COPYDATASTRUCT cds;
-      cds.dwData = 1;
-      cds.cbData = static_cast<DWORD>(cmd.length() + 1);
-      cds.lpData = const_cast<char*>(cmd.c_str());
+      cds.dwData = 0; // app_links expects dwData = 0
+      cds.cbData = static_cast<DWORD>(uri_arg.length() + 1);
+      cds.lpData = const_cast<char*>(uri_arg.c_str());
       ::SendMessage(existing_hwnd, WM_COPYDATA, 0, reinterpret_cast<LPARAM>(&cds));
     }
     return EXIT_SUCCESS;

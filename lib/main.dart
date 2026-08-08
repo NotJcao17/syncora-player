@@ -14,30 +14,72 @@ import 'app.dart';
 void _registerWindowsProtocolHandler() {
   if (!kIsWeb && Platform.isWindows) {
     try {
-      final exePath = Platform.resolvedExecutable;
-      final regCmd =
-          'reg add "HKCU\\Software\\Classes\\syncoraplayer" /ve /t REG_SZ /d "URL:Syncora Player Protocol" /f && '
-          'reg add "HKCU\\Software\\Classes\\syncoraplayer" /v "URL Protocol" /t REG_SZ /d "" /f && '
-          'reg add "HKCU\\Software\\Classes\\syncoraplayer\\shell\\open\\command" /ve /t REG_SZ /d "\\"$exePath\\" \\"%1\\"" /f';
-      Process.run('cmd.exe', ['/c', regCmd]);
+      final exePath = Platform.resolvedExecutable.replaceAll('/', '\\');
+      final command = '"$exePath" "%1"';
+
+      Process.run('reg', [
+        'add',
+        r'HKCU\Software\Classes\syncoraplayer',
+        '/ve',
+        '/t',
+        'REG_SZ',
+        '/d',
+        'URL:Syncora Player Protocol',
+        '/f'
+      ]);
+
+      Process.run('reg', [
+        'add',
+        r'HKCU\Software\Classes\syncoraplayer',
+        '/v',
+        'URL Protocol',
+        '/t',
+        'REG_SZ',
+        '/d',
+        '',
+        '/f'
+      ]);
+
+      Process.run('reg', [
+        'add',
+        r'HKCU\Software\Classes\syncoraplayer\shell\open\command',
+        '/ve',
+        '/t',
+        'REG_SZ',
+        '/d',
+        command,
+        '/f'
+      ]);
     } catch (_) {}
   }
 }
 
-Future<void> _handleAuthDeepLink(Uri uri) async {
-  debugPrint('🔗 Deep Link recibido: $uri');
-  try {
-    await Supabase.instance.client.auth.getSessionFromUrl(uri);
-    debugPrint('✅ getSessionFromUrl completado');
-  } catch (e) {
-    debugPrint('⚠️ Error en getSessionFromUrl: $e');
+Future<void> _handleAuthDeepLink(Uri rawUri) async {
+  final rawString = rawUri.toString().trim();
+  debugPrint('🔗 Deep Link recibido: $rawString');
+
+  Uri targetUri = rawUri;
+  if (rawString.contains('syncoraplayer://')) {
+    final idx = rawString.indexOf('syncoraplayer://');
+    final cleanUrl = rawString.substring(idx);
+    final parsed = Uri.tryParse(cleanUrl);
+    if (parsed != null) {
+      targetUri = parsed;
+    }
   }
 
-  // Fallback: extraer tokens o código si getSessionFromUrl no actualizó la sesión activa
+  try {
+    await Supabase.instance.client.auth.getSessionFromUrl(targetUri);
+    debugPrint('✅ getSessionFromUrl completado');
+  } catch (e) {
+    debugPrint('⚠️ getSessionFromUrl error: $e');
+  }
+
+  // Fallback: si el cliente aún no inició sesión, intentar extraer tokens o código
   final currentSession = Supabase.instance.client.auth.currentSession;
   if (currentSession == null) {
-    final fragment = uri.fragment;
-    final query = uri.queryParameters;
+    final fragment = targetUri.fragment;
+    final query = targetUri.queryParameters;
 
     String? accessToken = query['access_token'];
     String? refreshToken = query['refresh_token'];
@@ -100,6 +142,9 @@ void main() async {
   await Supabase.initialize(
     url: validUrl,
     publishableKey: validKey,
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce,
+    ),
   );
 
   // AppLinks listener para Deep Links / OAuth redirect callbacks
