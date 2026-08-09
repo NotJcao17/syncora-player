@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
@@ -105,16 +106,37 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     }
   }
 
-  Future<void> _executeRemoteMutation(Future<void> Function() remoteTask) async {
+  Future<bool> _executeRemoteMutation(Future<void> Function() remoteTask) async {
+    final dao = ref.read(playlistDaoProvider);
+    if (_playlist != null && _playlist!.remoteId != null && !_playlist!.isLiked) {
+      try {
+        final client = Supabase.instance.client;
+        final res = await client
+            .from('playlists')
+            .select('id')
+            .eq('id', _playlist!.remoteId!)
+            .maybeSingle();
+        if (res == null) {
+          if (mounted) {
+            AppToast.show(context, message: 'La playlist ya no existe en la nube');
+            await dao.deletePlaylist(_playlist!.id);
+          }
+          return false;
+        }
+      } catch (_) {}
+    }
+
     try {
       await remoteTask();
+      return true;
     } catch (e) {
       if (mounted) {
         AppToast.show(context, message: 'La playlist ya no existe en la nube');
         if (_playlist != null && !_playlist!.isLiked) {
-          await ref.read(playlistDaoProvider).deletePlaylist(_playlist!.id);
+          await dao.deletePlaylist(_playlist!.id);
         }
       }
+      return false;
     }
   }
 
@@ -595,7 +617,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                         trailing: IconButton(
                                           icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
                                           onPressed: () async {
-                                            await _executeRemoteMutation(() async {
+                                            final ok = await _executeRemoteMutation(() async {
                                               String? remoteId = playlist.remoteId;
                                               final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
                                               if (remoteId == null) {
@@ -624,6 +646,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                 });
                                               }
                                             });
+
+                                            if (!ok) return;
 
                                             final currentPl = await playlistDao.getPlaylistById(playlist.id);
                                             if (currentPl == null) return;
@@ -707,12 +731,13 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                   controller.play();
                                 },
                                 onRemove: () async {
-                                  await _executeRemoteMutation(() async {
+                                  final ok = await _executeRemoteMutation(() async {
                                     if (playlist.remoteId != null) {
                                       final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
                                       await supabaseRepo.removeTrackFromPlaylist(playlist.remoteId!, playlistTrack.trackId);
                                     }
                                   });
+                                  if (!ok) return;
                                   final currentPl = await playlistDao.getPlaylistById(playlist.id);
                                   if (currentPl != null) {
                                     await playlistDao.removeTrackEntry(playlistTrack.id);
