@@ -63,7 +63,7 @@ Se crearon y aplicaron las siguientes migraciones mediante `supabase db push --d
 ## 5. Verificación Automatizada y Auditoría de Código
 
 - **`flutter analyze`**: **0 issues**
-- **`flutter test`**: **61/61 pasando** (incluyendo la suite de pruebas unitarias para `SyncCacheManager` y actualización de `SyncService`)
+- **`flutter test`**: **65/65 pasando** (incluyendo la suite de pruebas unitarias para `SyncCacheManager`, `SupabasePlaylistRepository` y actualización de `SyncService`)
 - **Auditoría de Subagente**: Pasada con éxito verificando la eliminación de Realtime WebSockets, implementación de caché TTL 5 min, Pull-to-Refresh, botones de escritorio y resiliencia offline.
 
 ---
