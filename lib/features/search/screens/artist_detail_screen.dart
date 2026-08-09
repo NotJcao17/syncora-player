@@ -43,7 +43,9 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
   Future<void> _loadArtistData() async {
     setState(() {
-      _isLoading = true;
+      if (_artist == null) {
+        _isLoading = true;
+      }
       _errorMessage = null;
     });
 

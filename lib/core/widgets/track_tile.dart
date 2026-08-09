@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -562,7 +563,18 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         coverUrl: widget.track.coverUrl,
         durationMs: (widget.track.duration ?? Duration.zero).inMilliseconds,
       );
-      final likedPlaylist = await dao.getLikedPlaylist();
+      var likedPlaylist = await dao.getLikedPlaylist();
+      if (likedPlaylist.remoteId == null) {
+        try {
+          final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+          final res = await supabaseRepo.createPlaylist(title: 'Tus me gusta', isLiked: true);
+          final remoteId = res['id']?.toString();
+          if (remoteId != null && remoteId.isNotEmpty) {
+            await dao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(remoteId)));
+            likedPlaylist = await dao.getLikedPlaylist();
+          }
+        } catch (_) {}
+      }
       if (likedPlaylist.remoteId != null) {
         try {
           final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
@@ -624,10 +636,26 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                 subtitle: Text(pl.isLiked ? 'Especial' : (pl.description ?? 'Playlist'), style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
                 onTap: () async {
                   final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
-                  if (pl.remoteId != null) {
+                  var remoteId = pl.remoteId;
+                  final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                  if (remoteId == null) {
                     try {
-                      final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                      await supabaseRepo.addTrackToPlaylist(pl.remoteId!, {
+                      final created = await supabaseRepo.createPlaylist(
+                        title: pl.title,
+                        description: pl.description,
+                        isPublic: pl.isPublic,
+                        isLiked: pl.isLiked,
+                      );
+                      remoteId = created['id']?.toString();
+                      if (remoteId != null && remoteId.isNotEmpty) {
+                        await dao.updatePlaylist(pl.copyWith(remoteId: Value(remoteId)));
+                      }
+                    } catch (_) {}
+                  }
+
+                  if (remoteId != null) {
+                    try {
+                      await supabaseRepo.addTrackToPlaylist(remoteId, {
                         'track_id': trackIdInt,
                         'artist_id': widget.track.artistId ?? 0,
                         'album_id': widget.track.albumId ?? 0,

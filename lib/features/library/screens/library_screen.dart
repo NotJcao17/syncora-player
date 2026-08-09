@@ -163,12 +163,26 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   final newPublic = !playlist.isPublic;
                   final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
                   final dao = ref.read(playlistDaoProvider);
-                  if (playlist.remoteId != null) {
+                  String? remoteId = playlist.remoteId;
+                  if (remoteId == null) {
                     try {
-                      await supabaseRepo.updatePlaylist(playlist.remoteId!, isPublic: newPublic);
+                      final supabaseRes = await supabaseRepo.createPlaylist(
+                        title: playlist.title,
+                        description: playlist.description,
+                        isPublic: newPublic,
+                        isLiked: playlist.isLiked,
+                      );
+                      remoteId = supabaseRes['id']?.toString();
+                    } catch (_) {}
+                  } else {
+                    try {
+                      await supabaseRepo.updatePlaylist(remoteId, isPublic: newPublic);
                     } catch (_) {}
                   }
-                  await dao.updatePlaylist(playlist.copyWith(isPublic: newPublic));
+                  await dao.updatePlaylist(playlist.copyWith(
+                    isPublic: newPublic,
+                    remoteId: Value(remoteId),
+                  ));
                   if (context.mounted) {
                     AppToast.show(
                       context,
@@ -263,14 +277,26 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               final newTitle = titleController.text.trim();
               if (newTitle.isNotEmpty) {
                 final newDesc = descController.text.trim().isEmpty ? null : descController.text.trim();
+                String? remoteId = playlist.remoteId;
                 try {
                   final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                  await supabaseRepo.updatePlaylist(playlist.id.toString(), title: newTitle, description: newDesc);
+                  if (remoteId == null) {
+                    final supabaseRes = await supabaseRepo.createPlaylist(
+                      title: newTitle,
+                      description: newDesc,
+                      isPublic: playlist.isPublic,
+                      isLiked: playlist.isLiked,
+                    );
+                    remoteId = supabaseRes['id']?.toString();
+                  } else {
+                    await supabaseRepo.updatePlaylist(remoteId, title: newTitle, description: newDesc);
+                  }
                 } catch (_) {}
                 final dao = ref.read(playlistDaoProvider);
                 await dao.updatePlaylist(playlist.copyWith(
                   title: newTitle,
                   description: Value(newDesc),
+                  remoteId: Value(remoteId),
                 ));
                 if (ctx.mounted) Navigator.of(ctx).pop();
               }
@@ -452,7 +478,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       IconButton(
                         icon: const Icon(Icons.refresh),
                         color: AppTheme.primary,
-                        onPressed: () => ref.read(syncServiceProvider).syncLibrary(force: true),
+                        onPressed: () async {
+                          await ref.read(syncServiceProvider).syncLibrary(force: true);
+                          await ref.read(syncServiceProvider).syncSavedAlbums(force: true);
+                        },
                         tooltip: 'Sincronizar biblioteca',
                       ),
                     Tooltip(
@@ -528,7 +557,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
           Expanded(
             child: RefreshIndicator(
-              onRefresh: () => ref.read(syncServiceProvider).syncLibrary(force: true),
+              onRefresh: () async {
+                await ref.read(syncServiceProvider).syncLibrary(force: true);
+                await ref.read(syncServiceProvider).syncSavedAlbums(force: true);
+              },
               child: _selectedFilter == 'Álbumes'
                   ? StreamBuilder<List<SavedAlbum>>(
                       stream: savedAlbumDao.watchAllSavedAlbums(),

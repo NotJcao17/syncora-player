@@ -65,6 +65,7 @@ class SyncService {
 
     try {
       await _syncPlaylistsAndTracks();
+      await _syncSavedAlbumsInternal();
       _cacheManager.markSynced('library');
     } catch (_) {
       // Network/offline error caught silently, fallback to local DB
@@ -215,12 +216,23 @@ class SyncService {
         await _playlistDao.deletePlaylist(localP.id);
       }
     }
+
+    final likedPlaylist = await _playlistDao.getLikedPlaylist();
+    if (likedPlaylist.remoteId == null) {
+      final created = await _playlistRepo.createPlaylist(title: 'Tus me gusta', isLiked: true);
+      final remoteId = created['id']?.toString();
+      if (remoteId != null && remoteId.isNotEmpty) {
+        await _playlistDao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(remoteId)));
+      }
+    }
   }
 
   Future<void> _syncSavedAlbumsInternal() async {
     final remoteAlbums = await _albumRepo.fetchSavedAlbums();
+    final remoteAlbumIds = <int>{};
     for (final albumMap in remoteAlbums) {
       final albumId = (albumMap['album_id'] as num).toInt();
+      remoteAlbumIds.add(albumId);
       final title = albumMap['title'] as String? ?? '';
       final artistName = albumMap['artist_name'] as String? ?? '';
       final coverUrl = albumMap['cover_url'] as String? ?? '';
@@ -231,6 +243,13 @@ class SyncService {
         artistName: artistName,
         coverUrl: coverUrl,
       );
+    }
+
+    final localSavedAlbums = await _savedAlbumDao.getAllSavedAlbums();
+    for (final localAlbum in localSavedAlbums) {
+      if (!remoteAlbumIds.contains(localAlbum.albumId)) {
+        await _savedAlbumDao.removeSavedAlbum(localAlbum.albumId);
+      }
     }
   }
 

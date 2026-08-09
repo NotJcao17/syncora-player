@@ -44,6 +44,7 @@ class SupabasePlaylistRepository {
     required String title,
     String? description,
     bool isPublic = false,
+    bool isLiked = false,
   }) async {
     final client = _client;
     if (client == null) return {};
@@ -55,6 +56,7 @@ class SupabasePlaylistRepository {
       'title': title,
       'description': description,
       'is_public': isPublic,
+      'is_liked': isLiked,
     }).select().single();
 
     return response;

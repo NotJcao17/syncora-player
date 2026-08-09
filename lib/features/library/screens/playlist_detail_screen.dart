@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -560,6 +561,38 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                         trailing: IconButton(
                                           icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
                                           onPressed: () async {
+                                            String? remoteId = playlist.remoteId;
+                                            final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                                            if (remoteId == null) {
+                                              try {
+                                                final res = await supabaseRepo.createPlaylist(
+                                                  title: playlist.title,
+                                                  description: playlist.description,
+                                                  isPublic: playlist.isPublic,
+                                                  isLiked: playlist.isLiked,
+                                                );
+                                                remoteId = res['id']?.toString();
+                                                if (remoteId != null) {
+                                                  await playlistDao.updatePlaylist(playlist.copyWith(remoteId: Value(remoteId)));
+                                                }
+                                              } catch (_) {}
+                                            }
+
+                                            if (remoteId != null) {
+                                              try {
+                                                await supabaseRepo.addTrackToPlaylist(remoteId, {
+                                                  'track_id': track.id,
+                                                  'artist_id': track.artistId,
+                                                  'album_id': track.albumId,
+                                                  'title': track.title,
+                                                  'artist_name': track.artistName,
+                                                  'album_name': track.albumTitle,
+                                                  'cover_url': track.coverUrl,
+                                                  'duration_ms': track.durationSec * 1000,
+                                                });
+                                              } catch (_) {}
+                                            }
+
                                             await playlistDao.addTrackToPlaylist(
                                               playlistId: playlist.id,
                                               trackId: track.id,
@@ -638,7 +671,15 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                   controller.setQueue(syncoraTracks, startIndex: i, activeContextId: playlistContextId);
                                   controller.play();
                                 },
-                                onRemove: () => playlistDao.removeTrackEntry(playlistTrack.id),
+                                onRemove: () async {
+                                  if (playlist.remoteId != null) {
+                                    try {
+                                      final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                                      await supabaseRepo.removeTrackFromPlaylist(playlist.remoteId!, playlistTrack.trackId);
+                                    } catch (_) {}
+                                  }
+                                  await playlistDao.removeTrackEntry(playlistTrack.id);
+                                },
                                 onAddToQueue: () => controller.addToQueue(track),
                               );
                             },

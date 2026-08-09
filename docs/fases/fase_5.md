@@ -68,6 +68,20 @@ Se crearon y aplicaron las siguientes migraciones mediante `supabase db push --d
 
 ---
 
+## 6. Sincronización Remota 100% y Estrategia de Mutación Síncrona (Remediación Remote Sync)
+
+- **Garantía de Mutación Remota 100%**:
+  - **Creación remota previa de RemoteId**: Todas las mutaciones locales (`updatePlaylist`, `addTrackToPlaylist`, `removeTrackFromPlaylist`, etc.) aseguran que `playlist.remoteId` exista remotamente antes o durante la mutación en Supabase. Si `remoteId` es `null`, se invoca `createPlaylist` en Supabase primero, se obtiene el `id` asignado y se persiste en Drift con `remoteId: Value(remoteId)`.
+  - **Remoción de tracks**: En `PlaylistDetailScreen` y `TrackTile`, al eliminar una canción se ejecuta `supabaseRepo.removeTrackFromPlaylist` si la playlist cuenta con `remoteId`.
+  - **Me Gusta Sincronizado**: La playlist especial "Tus me gusta" asegura su existencia en la tabla `playlists` de Supabase (`is_liked: true`). Al dar o quitar "like" en `TrackTile`, se muta de forma inmediata tanto en Drift como en Supabase `playlist_tracks`.
+  - **Poda de Álbumes Guardados**: `_syncSavedAlbumsInternal()` implementa la poda automática de álbumes locales que ya no existen en Supabase.
+  - **Prevención de Flicker UI en Artista**: `ArtistDetailScreen._loadArtistData()` solo establece `_isLoading = true` si el artista no está cargado previamente, evitando la destrucción de la pantalla al refrescar.
+- **Estrategia LWW (Last-Write-Wins) y Resiliencia Offline**:
+  - En la sincronización de lectura/escritura prima la última escritura remota/local gracias al timestamp `updated_at`.
+  - Fallos de red se capturan silenciosamente manteniendo acceso ininterrumpido a la base de datos Drift local.
+
+---
+
 ## Pruebas para el Desarrollador (Humano)
 
 Consulte la sección **Fase 5** en `docs/matriz_de_pruebas.md` para ejecutar la checklist manual de QA (Google Sign-In, Email Sign-Up, selector de avatares, guardias offline y validación de RLS).
