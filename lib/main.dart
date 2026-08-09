@@ -11,49 +11,6 @@ import 'package:smtc_windows/smtc_windows.dart';
 import 'package:window_manager/window_manager.dart';
 import 'app.dart';
 
-void _registerWindowsProtocolHandler() {
-  if (!kIsWeb && Platform.isWindows) {
-    try {
-      final exePath = Platform.resolvedExecutable.replaceAll('/', '\\');
-      final command = '"$exePath" "%1"';
-
-      Process.run('reg', [
-        'add',
-        r'HKCU\Software\Classes\syncoraplayer',
-        '/ve',
-        '/t',
-        'REG_SZ',
-        '/d',
-        'URL:Syncora Player Protocol',
-        '/f'
-      ]);
-
-      Process.run('reg', [
-        'add',
-        r'HKCU\Software\Classes\syncoraplayer',
-        '/v',
-        'URL Protocol',
-        '/t',
-        'REG_SZ',
-        '/d',
-        '',
-        '/f'
-      ]);
-
-      Process.run('reg', [
-        'add',
-        r'HKCU\Software\Classes\syncoraplayer\shell\open\command',
-        '/ve',
-        '/t',
-        'REG_SZ',
-        '/d',
-        command,
-        '/f'
-      ]);
-    } catch (_) {}
-  }
-}
-
 Future<void> _handleAuthDeepLink(Uri rawUri) async {
   final rawString = rawUri.toString().trim();
   debugPrint('🔗 Deep Link recibido: $rawString');

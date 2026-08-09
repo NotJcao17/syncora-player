@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:drift/drift.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -17,6 +18,8 @@ class RealtimeSyncService {
   final Ref? _ref;
 
   RealtimeChannel? _channel;
+  AppLifecycleListener? _lifecycleListener;
+  String? _subscribedUserId;
 
   RealtimeSyncService({
     required SupabasePlaylistRepository playlistRepo,
@@ -40,6 +43,7 @@ class RealtimeSyncService {
         unsubscribe();
       }
 
+      _subscribedUserId = userId;
       final client = Supabase.instance.client;
       _channel = client.channel('public-db-changes');
 
@@ -89,16 +93,36 @@ class RealtimeSyncService {
             callback: (payload) => _handleProfileChange(payload),
           )
           .subscribe();
+
+      // Listener para pausar WebSockets en background (ahorro de datos y batería)
+      _lifecycleListener ??= AppLifecycleListener(
+        onPause: () {
+          if (_channel != null) {
+            try {
+              Supabase.instance.client.removeChannel(_channel!);
+            } catch (_) {}
+            _channel = null;
+          }
+        },
+        onResume: () {
+          if (_subscribedUserId != null && _channel == null) {
+            subscribe(_subscribedUserId!);
+          }
+        },
+      );
     } catch (_) {}
   }
 
   void unsubscribe() {
     if (_isTestEnv) return;
     try {
+      _subscribedUserId = null;
       if (_channel != null) {
         Supabase.instance.client.removeChannel(_channel!);
         _channel = null;
       }
+      _lifecycleListener?.dispose();
+      _lifecycleListener = null;
     } catch (_) {}
   }
 
