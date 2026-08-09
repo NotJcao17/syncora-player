@@ -82,6 +82,20 @@ Se crearon y aplicaron las siguientes migraciones mediante `supabase db push --d
 
 ---
 
+## 7. Poda de Canciones, Deduplicación de Me Gusta y Guardias de Eliminación en Vista Activa
+
+- **Poda de Canciones (Track Pruning)**:
+  - En `syncPlaylistDetail(playlistRemoteId)` y `_syncPlaylistsAndTracks()`, se compara el conjunto de `track_id` remotos contra las canciones locales en Drift. Las canciones eliminadas en Supabase se eliminan inmediatamente de Drift local (`removeTrackFromPlaylist`).
+  - **Verificación de Existencia de Playlist Remota**: Si una playlist ya no existe en Supabase al ejecutar `syncPlaylistDetail`, se elimina la playlist de Drift local y se invalidan las entradas correspondientes en `SyncCacheManager` (`playlist_<id>` y `library`).
+- **Deduplicación de Playlists Me Gusta (Liked Playlist Deduplication)**:
+  - En `_syncPlaylistsAndTracks()`, se buscan todas las playlists remotas marcadas con `is_liked == true`. Si existen múltiples playlists "Me gusta" (debido a condiciones de carrera en la creación), se conserva la primera como oficial y se invocan `deletePlaylist(dup['id'])` en Supabase para todas las duplicadas.
+  - Al sincronizar si no existe `remoteId` para "Tus me gusta", se consulta Supabase una segunda vez antes de invocar `createPlaylist`, garantizando una única playlist de Me Gusta.
+- **Guardias de Eliminación en Vista Activa y Manejo de Errores Remotos**:
+  - **`PlaylistDetailScreen`**: Protegida mediante `StreamBuilder<Playlist?>`. Si la playlist activa se elimina durante una sincronización en segundo plano o el stream emite `null`, se presenta un `ErrorStateWidget` elegante con el título `"Playlist eliminada"`, el mensaje `"Esta playlist ha sido eliminada de la nube."` y el botón `"Volver a la biblioteca"` (`context.pop()`).
+  - **`TrackTile` e Inline Search**: Las llamadas a `addTrackToPlaylist` de Supabase se envuelven en bloques `try/catch`. En caso de fallo (indicio de que la playlist fue eliminada en la nube), se captura la excepción, se muestra el toast `"La playlist ya no existe en la nube"`, se elimina la playlist local en Drift y se actualiza la interfaz.
+
+---
+
 ## Pruebas para el Desarrollador (Humano)
 
 Consulte la sección **Fase 5** en `docs/matriz_de_pruebas.md` para ejecutar la checklist manual de QA (Google Sign-In, Email Sign-Up, selector de avatares, guardias offline y validación de RLS).

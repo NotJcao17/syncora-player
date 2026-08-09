@@ -7,6 +7,7 @@ class ErrorStateWidget extends StatelessWidget {
   final IconData? icon;
   final String title;
   final String message;
+  final String? retryLabel;
   final VoidCallback? onRetry;
 
   const ErrorStateWidget({
@@ -14,6 +15,7 @@ class ErrorStateWidget extends StatelessWidget {
     this.icon,
     this.title = 'Ha ocurrido un error',
     required this.message,
+    this.retryLabel,
     this.onRetry,
   });
 
@@ -63,7 +65,7 @@ class ErrorStateWidget extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: Icon(AppIcons.broken(SolarIcons.Refresh), size: 18),
-                label: const Text('Reintentar'),
+                label: Text(retryLabel ?? 'Reintentar'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.surfaceActive,
                   foregroundColor: AppTheme.primary,

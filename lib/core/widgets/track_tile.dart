@@ -666,7 +666,14 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                         'duration_ms': (widget.track.duration ?? Duration.zero).inMilliseconds,
                         'genre': widget.track.genre,
                       });
-                    } catch (_) {}
+                    } catch (_) {
+                      if (context.mounted) {
+                        AppToast.show(context, message: 'La playlist ya no existe en la nube');
+                      }
+                      await dao.deletePlaylist(pl.id);
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      return;
+                    }
                   }
 
                   await dao.addTrackToPlaylist(

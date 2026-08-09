@@ -193,6 +193,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final isPlaying = ref.watch(isPlayingProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 768;
     final playlistDao = ref.watch(playlistDaoProvider);
+    final playlistStream = widget.playlistId == 'liked'
+        ? playlistDao.watchLikedPlaylist()
+        : playlistDao.watchPlaylistById(int.tryParse(widget.playlistId) ?? 0);
 
     if (_isLoadingHeader) {
       return const Scaffold(
@@ -201,24 +204,37 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       );
     }
 
-    if (_playlist == null) {
-      return Scaffold(
-        backgroundColor: AppTheme.background,
-        body: ErrorStateWidget(
-          message: 'No se encontró la playlist',
-          onRetry: _loadPlaylistHeader,
-        ),
-      );
-    }
+    return StreamBuilder<Playlist?>(
+      stream: playlistStream,
+      initialData: _playlist,
+      builder: (context, playlistSnapshot) {
+        final playlist = playlistSnapshot.data;
 
-    final playlist = _playlist!;
-    final isLiked = playlist.isLiked;
-    final dominantGradientColor = _dominantColor?.withValues(alpha: 0.35) ?? AppTheme.surfaceHover.withValues(alpha: 0.3);
+        if (playlist == null) {
+          return Scaffold(
+            backgroundColor: AppTheme.background,
+            body: ErrorStateWidget(
+              title: 'Playlist eliminada',
+              message: 'Esta playlist ha sido eliminada de la nube.',
+              retryLabel: 'Volver a la biblioteca',
+              onRetry: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/library');
+                }
+              },
+            ),
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: StreamBuilder<List<PlaylistTrack>>(
-        stream: playlistDao.watchTracksOrdered(playlist.id),
+        final isLiked = playlist.isLiked;
+        final dominantGradientColor = _dominantColor?.withValues(alpha: 0.35) ?? AppTheme.surfaceHover.withValues(alpha: 0.3);
+
+        return Scaffold(
+          backgroundColor: AppTheme.background,
+          body: StreamBuilder<List<PlaylistTrack>>(
+            stream: playlistDao.watchTracksOrdered(playlist.id),
         builder: (ctx, snapshot) {
           final tracks = snapshot.data ?? [];
           final syncoraTracks = tracks
@@ -590,7 +606,16 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                   'cover_url': track.coverUrl,
                                                   'duration_ms': track.durationSec * 1000,
                                                 });
-                                              } catch (_) {}
+                                              } catch (_) {
+                                                if (context.mounted) {
+                                                  AppToast.show(context, message: 'La playlist ya no existe en la nube');
+                                                }
+                                                await playlistDao.deletePlaylist(playlist.id);
+                                                if (context.mounted && context.canPop()) {
+                                                  context.pop();
+                                                }
+                                                return;
+                                              }
                                             }
 
                                             await playlistDao.addTrackToPlaylist(
@@ -733,6 +758,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
         },
       ),
     );
+  },
+);
   }
 }
 

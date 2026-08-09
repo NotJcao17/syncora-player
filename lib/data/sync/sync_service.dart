@@ -79,13 +79,35 @@ class SyncService {
     }
 
     try {
+      final remotePlaylists = await _playlistRepo.fetchUserPlaylists();
+      final existsRemote = remotePlaylists.any((p) => p['id']?.toString() == playlistRemoteId);
+
+      if (!existsRemote) {
+        final localPlaylist = await _playlistDao.getPlaylistByRemoteId(playlistRemoteId);
+        if (localPlaylist != null) {
+          await _playlistDao.deletePlaylist(localPlaylist.id);
+        }
+        _cacheManager.invalidate('playlist_$playlistRemoteId');
+        _cacheManager.invalidate('library');
+        return;
+      }
+
       final remoteTracks = await _playlistRepo.fetchPlaylistTracks(playlistRemoteId);
       final localPlaylist = await _playlistDao.getPlaylistByRemoteId(playlistRemoteId);
 
       if (localPlaylist != null) {
         final localTracks = await _playlistDao.getTracksOrdered(localPlaylist.id);
         final localTrackIds = localTracks.map((t) => t.trackId).toSet();
+        final remoteTrackIds = remoteTracks.map((t) => (t['track_id'] as num).toInt()).toSet();
 
+        // Pruning local tracks not in remote
+        for (final localTrack in localTracks) {
+          if (!remoteTrackIds.contains(localTrack.trackId)) {
+            await _playlistDao.removeTrackFromPlaylist(localPlaylist.id, localTrack.trackId);
+          }
+        }
+
+        // Adding remote tracks not in local
         for (final trackMap in remoteTracks) {
           final trackId = (trackMap['track_id'] as num).toInt();
 
@@ -134,6 +156,21 @@ class SyncService {
 
   Future<void> _syncPlaylistsAndTracks() async {
     final remotePlaylists = await _playlistRepo.fetchUserPlaylists();
+
+    // Liked Playlist Deduplication
+    final likedRemotePlaylists = remotePlaylists.where((p) => p['is_liked'] == true).toList();
+    if (likedRemotePlaylists.length > 1) {
+      final officialRemoteLiked = likedRemotePlaylists.first;
+      final officialId = officialRemoteLiked['id']?.toString();
+      for (int i = 1; i < likedRemotePlaylists.length; i++) {
+        final dupId = likedRemotePlaylists[i]['id']?.toString();
+        if (dupId != null) {
+          await _playlistRepo.deletePlaylist(dupId);
+        }
+      }
+      remotePlaylists.removeWhere((p) => p['is_liked'] == true && p['id']?.toString() != officialId);
+    }
+
     final localPlaylists = await _playlistDao.getAllPlaylists();
     final remoteIdsSet = <String>{};
 
@@ -188,7 +225,16 @@ class SyncService {
       final localTracks =
           await _playlistDao.getTracksOrdered(localPlaylistId);
       final localTrackIds = localTracks.map((t) => t.trackId).toSet();
+      final remoteTrackIds = remoteTracks.map((t) => (t['track_id'] as num).toInt()).toSet();
 
+      // Pruning local tracks not in remote
+      for (final localTrack in localTracks) {
+        if (!remoteTrackIds.contains(localTrack.trackId)) {
+          await _playlistDao.removeTrackFromPlaylist(localPlaylistId, localTrack.trackId);
+        }
+      }
+
+      // Adding remote tracks not in local
       for (final trackMap in remoteTracks) {
         final trackId = (trackMap['track_id'] as num).toInt();
 
@@ -219,10 +265,19 @@ class SyncService {
 
     final likedPlaylist = await _playlistDao.getLikedPlaylist();
     if (likedPlaylist.remoteId == null) {
-      final created = await _playlistRepo.createPlaylist(title: 'Tus me gusta', isLiked: true);
-      final remoteId = created['id']?.toString();
-      if (remoteId != null && remoteId.isNotEmpty) {
-        await _playlistDao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(remoteId)));
+      final recheckRemote = await _playlistRepo.fetchUserPlaylists();
+      final existingLiked = recheckRemote.where((p) => p['is_liked'] == true).firstOrNull;
+      if (existingLiked != null) {
+        final remoteId = existingLiked['id']?.toString();
+        if (remoteId != null && remoteId.isNotEmpty) {
+          await _playlistDao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(remoteId)));
+        }
+      } else {
+        final created = await _playlistRepo.createPlaylist(title: 'Tus me gusta', isLiked: true);
+        final remoteId = created['id']?.toString();
+        if (remoteId != null && remoteId.isNotEmpty) {
+          await _playlistDao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(remoteId)));
+        }
       }
     }
   }

@@ -27,6 +27,12 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
   Future<Playlist?> getPlaylistById(int id) =>
       (select(playlists)..where((t) => t.id.equals(id))).getSingleOrNull();
 
+  Stream<Playlist?> watchPlaylistById(int id) =>
+      (select(playlists)..where((t) => t.id.equals(id))).watchSingleOrNull();
+
+  Stream<Playlist?> watchLikedPlaylist() =>
+      (select(playlists)..where((t) => t.isLiked.equals(true))).watchSingleOrNull();
+
   Future<Playlist?> getPlaylistByRemoteId(String remoteId) =>
       (select(playlists)..where((t) => t.remoteId.equals(remoteId))).getSingleOrNull();
 
