@@ -17,8 +17,10 @@ import '../../features/auth/auth_provider.dart';
 import '../../features/player/player_providers.dart';
 import '../../features/player/widgets/mini_player.dart';
 import '../theme/app_theme.dart';
+import '../widgets/offline_banner.dart';
 
 /// Layout adaptativo de la aplicación (Móvil vs Desktop calcado de los mockups HTML).
+
 class AppShell extends ConsumerStatefulWidget {
   final Widget child;
   final String location;
@@ -89,25 +91,38 @@ class _AppShellState extends ConsumerState<AppShell> {
     final currentTrack = ref.watch(currentTrackProvider);
     final hasTrack = currentTrack != null;
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: widget.child,
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const MiniPlayer(),
-            _MobileNavBar(
-              selectedIndex: selectedIndex,
-              onItemTapped: _onItemTapped,
-              hasTrack: hasTrack,
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: AppTheme.background,
+          body: widget.child,
+          bottomNavigationBar: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const MiniPlayer(),
+                _MobileNavBar(
+                  selectedIndex: selectedIndex,
+                  onItemTapped: _onItemTapped,
+                  hasTrack: hasTrack,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+        Positioned(
+          bottom: (hasTrack ? 124.0 : 64.0) + 12.0,
+          left: 0,
+          right: 0,
+          child: const Center(
+            child: OfflineBanner(),
+          ),
+        ),
+      ],
     );
   }
+
 
   /// Layout Desktop (Windows / pantallas >= 768px calcado de index.html mockup)
   Widget _buildDesktopLayout(BuildContext context, int selectedIndex, bool isQueueOpen, bool isMobileLandscape) {

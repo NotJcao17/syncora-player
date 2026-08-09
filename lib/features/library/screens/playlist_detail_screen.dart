@@ -24,7 +24,9 @@ import '../../../data/local_db/syncora_database.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/sync/sync_service.dart';
+import '../../download/widgets/download_header_button.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
+
 import '../../player/player_models.dart';
 import '../../player/player_providers.dart';
 import '../import_export/playlist_import_export_service.dart';
@@ -478,8 +480,14 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                     }
                                   },
                                 ),
-                                const SizedBox(width: 16),
+                                const SizedBox(width: 8),
+                                DownloadHeaderButton(
+                                  title: playlist.title,
+                                  tracks: syncoraTracks,
+                                ),
+                                const SizedBox(width: 12),
                               ],
+
                               if (isDesktop && playlist.remoteId != null) ...[
                                 IconButton(
                                   icon: const Icon(Icons.refresh),

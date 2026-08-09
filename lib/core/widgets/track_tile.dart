@@ -7,8 +7,10 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+import '../utils/connectivity_service.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../data/supabase/supabase_providers.dart';
+import '../../features/download/download_provider.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
 import 'app_bottom_sheet.dart';
@@ -65,12 +67,25 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     final isPlayingActive = isActiveTrack && isAudioPlaying;
     final isPausedActive = isActiveTrack && !isAudioPlaying;
 
+    final isConnectedAsync = ref.watch(isConnectedProvider);
+    final isConnected = isConnectedAsync.value ?? true;
+
+    final trackDeezerId = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
+
+    final downloadedTrackAsync = ref.watch(watchDownloadedTrackProvider(trackDeezerId));
+    final downloadedTrack = downloadedTrackAsync.value;
+
+    final isDownloadedLocal = (downloadedTrack?.downloadState == 2) || widget.isDownloaded;
+    final isDownloadingLocal = downloadedTrack?.downloadState == 1;
+
+    final isPlayable = isConnected || isDownloadedLocal;
+
     const activeColor = Color(0xFF22C55E);
 
-    final textColor = widget.isAvailable
+    final textColor = isPlayable
         ? (isActiveTrack ? activeColor : AppTheme.primary)
         : AppTheme.muted;
-    final subtitleColor = widget.isAvailable ? AppTheme.secondary : AppTheme.muted;
+    final subtitleColor = isPlayable ? AppTheme.secondary : AppTheme.muted;
 
     // Portada base de 48x48
     Widget coverWidget = ClipRRect(
@@ -130,129 +145,150 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       );
     }
 
-    Widget content = MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: InkWell(
-        onTap: widget.isAvailable
-            ? () {
-                if (isPlayingActive) {
-                  ref.read(syncoraPlayerControllerProvider.notifier).pause();
-                } else if (isPausedActive) {
-                  ref.read(syncoraPlayerControllerProvider.notifier).play();
-                } else if (widget.onTap != null) {
-                  widget.onTap!();
-                }
-              }
-            : null,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isActiveTrack
-                ? AppTheme.surfaceHover.withValues(alpha: 0.6)
-                : (_isHovered ? AppTheme.surfaceHover.withValues(alpha: 0.3) : Colors.transparent),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                // Número / Play / Pause
-                if (widget.index != null) ...[
-                  SizedBox(
-                    width: 28,
-                    child: Center(
-                      child: isPlayingActive
-                          ? (_isHovered
-                              ? Icon(
-                                  AppIcons.bold(SolarIcons.Pause),
-                                  color: activeColor,
-                                  size: 18,
-                                )
-                              : LoadingAnimationWidget.staggeredDotsWave(
-                                  color: activeColor,
-                                  size: 18,
-                                ))
-                          : (isPausedActive
-                              ? (_isHovered
-                                  ? Icon(
-                                      AppIcons.bold(SolarIcons.Play),
-                                      color: activeColor,
-                                      size: 18,
-                                    )
-                                  : Text(
-                                      '${widget.index! + 1}',
-                                      style: const TextStyle(
-                                        color: activeColor,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ))
-                              : (isDesktop && _isHovered
-                                  ? Icon(
-                                      AppIcons.bold(SolarIcons.Play),
-                                      color: AppTheme.primary,
-                                      size: 18,
-                                    )
-                                  : Text(
-                                      '${widget.index! + 1}',
-                                      style: TextStyle(
-                                        color: AppTheme.secondary.withValues(alpha: 0.7),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ))),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-
-                // Portada + Título + Artista (flex: 3 en Desktop con album, else Expanded)
-                Expanded(
-                  flex: (isDesktop && widget.showAlbum) ? 3 : 1,
-                  child: Row(
-                    children: [
-                      coverWidget,
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              children: [
-                                if (widget.isDownloaded) ...[
-                                  Icon(
-                                    AppIcons.bold(SolarIcons.CheckCircle),
+    Widget content = Opacity(
+      opacity: isPlayable ? 1.0 : 0.4,
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: InkWell(
+          onTap: () {
+            if (!isPlayable) {
+              AppToast.show(context, message: 'No disponible sin conexión');
+              return;
+            }
+            if (isPlayingActive) {
+              ref.read(syncoraPlayerControllerProvider.notifier).pause();
+            } else if (isPausedActive) {
+              ref.read(syncoraPlayerControllerProvider.notifier).play();
+            } else if (widget.onTap != null) {
+              widget.onTap!();
+            }
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isActiveTrack
+                  ? AppTheme.surfaceHover.withValues(alpha: 0.6)
+                  : (_isHovered ? AppTheme.surfaceHover.withValues(alpha: 0.3) : Colors.transparent),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                children: [
+                  // Número / Play / Pause
+                  if (widget.index != null) ...[
+                    SizedBox(
+                      width: 28,
+                      child: Center(
+                        child: isPlayingActive
+                            ? (_isHovered
+                                ? Icon(
+                                    AppIcons.bold(SolarIcons.Pause),
                                     color: activeColor,
-                                    size: 14,
-                                  ),
-                                  const SizedBox(width: 4),
-                                ],
-                                Expanded(
-                                  child: Text(
-                                    widget.track.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: textColor,
-                                      fontSize: 14,
-                                      fontWeight: isActiveTrack ? FontWeight.bold : FontWeight.w600,
+                                    size: 18,
+                                  )
+                                : LoadingAnimationWidget.staggeredDotsWave(
+                                    color: activeColor,
+                                    size: 18,
+                                  ))
+                            : (isPausedActive
+                                ? (_isHovered
+                                    ? Icon(
+                                        AppIcons.bold(SolarIcons.Play),
+                                        color: activeColor,
+                                        size: 18,
+                                      )
+                                    : Text(
+                                        '${widget.index! + 1}',
+                                        style: const TextStyle(
+                                          color: activeColor,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ))
+                                : (isDesktop && _isHovered
+                                    ? Icon(
+                                        AppIcons.bold(SolarIcons.Play),
+                                        color: AppTheme.primary,
+                                        size: 18,
+                                      )
+                                    : Text(
+                                        '${widget.index! + 1}',
+                                        style: TextStyle(
+                                          color: AppTheme.secondary.withValues(alpha: 0.7),
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ))),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+
+                  // Portada + Título + Artista
+                  Expanded(
+                    flex: (isDesktop && widget.showAlbum) ? 3 : 1,
+                    child: Row(
+                      children: [
+                        coverWidget,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      widget.track.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: textColor,
+                                        fontSize: 14,
+                                        fontWeight: isActiveTrack ? FontWeight.bold : FontWeight.w600,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            _buildSubtitle(context, subtitleColor),
-                          ],
+                                  if (isDownloadingLocal) ...[
+                                    const SizedBox(width: 6),
+                                    const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 1.5,
+                                        color: AppTheme.secondary,
+                                      ),
+                                    ),
+                                  ] else if (isDownloadedLocal) ...[
+                                    const SizedBox(width: 6),
+                                    Icon(
+                                      AppIcons.bold(SolarIcons.DownloadMinimalistic),
+                                      color: AppTheme.secondary,
+                                      size: 14,
+                                    ),
+                                  ] else if (!isConnected) ...[
+                                    const SizedBox(width: 6),
+                                    Icon(
+                                      AppIcons.broken(SolarIcons.WiFiRouter),
+                                      color: const Color(0xFFF59E0B),
+                                      size: 14,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              _buildSubtitle(context, subtitleColor),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
 
                 // Columna Álbum en Desktop
                 if (isDesktop && widget.showAlbum) ...[
@@ -298,7 +334,9 @@ class _TrackTileState extends ConsumerState<TrackTile> {
           ),
         ),
       ),
-    );
+    ),
+  );
+
 
     // Tarea 7: Swipe para agregar a la cola en móvil
     if (isMobile && widget.onAddToQueue != null) {

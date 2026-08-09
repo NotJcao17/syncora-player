@@ -70,6 +70,7 @@ dependencies:
   google_sign_in: ^6.3.0
   connectivity_plus: ^6.1.4
   url_launcher: ^6.3.2
+  background_downloader: ^9.5.7
 
 dev_dependencies:
   flutter_test:

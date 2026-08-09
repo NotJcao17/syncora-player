@@ -64,6 +64,14 @@ class JustAudioEngine implements AudioEngine {
   }
 
   @override
+  Future<void> setLocalSource(String path) async {
+    _emit(_state.copyWith(processingState: AudioProcessingState.loading));
+    final source = AudioSource.file(path);
+    await _player.setAudioSource(source);
+  }
+
+
+  @override
   Future<void> play() => _player.play();
 
   @override

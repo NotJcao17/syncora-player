@@ -85,6 +85,10 @@ abstract class AudioEngine {
   /// URL (Pitfall #13), o YouTube devolverá 403 silenciosamente.
   Future<void> setUrl(String url, {Map<String, String>? headers});
 
+  /// Carga un archivo de audio descargado localmente sin peticiones HTTP.
+  Future<void> setLocalSource(String path);
+
+
   Future<void> play();
   Future<void> pause();
   Future<void> stop();

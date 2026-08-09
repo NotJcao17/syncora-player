@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'daos/playlist_dao.dart';
 import 'daos/saved_album_dao.dart';
 import 'daos/listening_history_dao.dart';
+import 'daos/downloaded_track_dao.dart';
 
 part 'syncora_database.g.dart';
 
@@ -64,15 +65,35 @@ class ListeningHistory extends Table {
   IntColumn get durationListenedMs => integer()();
 }
 
+// Pistas descargadas localmente (Fase 6 — Device-specific)
+class DownloadedTracks extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get trackId => integer().unique()();
+  IntColumn get artistId => integer()();
+  IntColumn get albumId => integer()();
+  TextColumn get title => text()();
+  TextColumn get artistName => text()();
+  TextColumn get albumName => text()();
+  TextColumn get coverUrl => text()();
+  TextColumn get localCoverPath => text().nullable()();
+  TextColumn get localAudioPath => text()();
+  IntColumn get durationMs => integer()();
+  TextColumn get genre => text().nullable()();
+  IntColumn get fileSizeBytes => integer().withDefault(const Constant(0))();
+  IntColumn get downloadState => integer().withDefault(const Constant(0))();
+  // 0=pending, 1=downloading, 2=done, 3=failed, 4=cancelled
+  DateTimeColumn get downloadedAt => dateTime().withDefault(currentDateAndTime)();
+}
+
 @DriftDatabase(
-  tables: [Playlists, PlaylistTracks, SavedAlbums, ListeningHistory],
-  daos: [PlaylistDao, SavedAlbumDao, ListeningHistoryDao],
+  tables: [Playlists, PlaylistTracks, SavedAlbums, ListeningHistory, DownloadedTracks],
+  daos: [PlaylistDao, SavedAlbumDao, ListeningHistoryDao, DownloadedTrackDao],
 )
 class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -94,6 +115,9 @@ class SyncoraDatabase extends _$SyncoraDatabase {
         if (from < 2) {
           await m.addColumn(playlists, playlists.remoteId);
           await m.addColumn(playlists, playlists.isPublic);
+        }
+        if (from < 3) {
+          await m.createTable(downloadedTracks);
         }
       },
     );

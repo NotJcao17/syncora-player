@@ -9,6 +9,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:smtc_windows/smtc_windows.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:background_downloader/background_downloader.dart';
 import 'app.dart';
 
 Future<void> _handleAuthDeepLink(Uri rawUri) async {
@@ -70,6 +71,16 @@ Future<void> _handleAuthDeepLink(Uri rawUri) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Configurar background_downloader (Doze Mode / WorkManager en Android)
+  if (!kIsWeb) {
+    try {
+      await FileDownloader().configure(
+        globalConfig: [(Config.requestTimeout, const Duration(seconds: 60))],
+        androidConfig: [(Config.holdingQueue, null)],
+      );
+    } catch (_) {}
+  }
+
   // Cargar variables de entorno
   try {
     await dotenv.load(fileName: ".env");
@@ -79,9 +90,6 @@ void main() async {
   if (!kIsWeb && Platform.isWindows) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
-    // Nota: _registerWindowsProtocolHandler() fue removido porque el flujo OAuth
-    // en Windows ahora usa un servidor HTTP loopback local y ya no requiere el
-    // esquema personalizado syncoraplayer:// para el callback de autenticación.
   }
 
   // Init Supabase

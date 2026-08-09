@@ -119,6 +119,17 @@ class MediaKitEngine implements AudioEngine {
   }
 
   @override
+  Future<void> setLocalSource(String path) async {
+    _seekedThisTrack = false;
+    _emit(_state.copyWith(processingState: AudioProcessingState.loading));
+    await _player.open(Media(path));
+    if (_skipSilence) {
+      await _applySilenceFilter();
+    }
+  }
+
+
+  @override
   Future<void> play() => _player.play();
 
   @override

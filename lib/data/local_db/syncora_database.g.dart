@@ -2258,6 +2258,868 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
   }
 }
 
+class $DownloadedTracksTable extends DownloadedTracks
+    with TableInfo<$DownloadedTracksTable, DownloadedTrack> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DownloadedTracksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _trackIdMeta = const VerificationMeta(
+    'trackId',
+  );
+  @override
+  late final GeneratedColumn<int> trackId = GeneratedColumn<int>(
+    'track_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _artistIdMeta = const VerificationMeta(
+    'artistId',
+  );
+  @override
+  late final GeneratedColumn<int> artistId = GeneratedColumn<int>(
+    'artist_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _albumIdMeta = const VerificationMeta(
+    'albumId',
+  );
+  @override
+  late final GeneratedColumn<int> albumId = GeneratedColumn<int>(
+    'album_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _artistNameMeta = const VerificationMeta(
+    'artistName',
+  );
+  @override
+  late final GeneratedColumn<String> artistName = GeneratedColumn<String>(
+    'artist_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _albumNameMeta = const VerificationMeta(
+    'albumName',
+  );
+  @override
+  late final GeneratedColumn<String> albumName = GeneratedColumn<String>(
+    'album_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _coverUrlMeta = const VerificationMeta(
+    'coverUrl',
+  );
+  @override
+  late final GeneratedColumn<String> coverUrl = GeneratedColumn<String>(
+    'cover_url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _localCoverPathMeta = const VerificationMeta(
+    'localCoverPath',
+  );
+  @override
+  late final GeneratedColumn<String> localCoverPath = GeneratedColumn<String>(
+    'local_cover_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _localAudioPathMeta = const VerificationMeta(
+    'localAudioPath',
+  );
+  @override
+  late final GeneratedColumn<String> localAudioPath = GeneratedColumn<String>(
+    'local_audio_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _durationMsMeta = const VerificationMeta(
+    'durationMs',
+  );
+  @override
+  late final GeneratedColumn<int> durationMs = GeneratedColumn<int>(
+    'duration_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _genreMeta = const VerificationMeta('genre');
+  @override
+  late final GeneratedColumn<String> genre = GeneratedColumn<String>(
+    'genre',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fileSizeBytesMeta = const VerificationMeta(
+    'fileSizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> fileSizeBytes = GeneratedColumn<int>(
+    'file_size_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _downloadStateMeta = const VerificationMeta(
+    'downloadState',
+  );
+  @override
+  late final GeneratedColumn<int> downloadState = GeneratedColumn<int>(
+    'download_state',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _downloadedAtMeta = const VerificationMeta(
+    'downloadedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> downloadedAt = GeneratedColumn<DateTime>(
+    'downloaded_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    trackId,
+    artistId,
+    albumId,
+    title,
+    artistName,
+    albumName,
+    coverUrl,
+    localCoverPath,
+    localAudioPath,
+    durationMs,
+    genre,
+    fileSizeBytes,
+    downloadState,
+    downloadedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'downloaded_tracks';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DownloadedTrack> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('track_id')) {
+      context.handle(
+        _trackIdMeta,
+        trackId.isAcceptableOrUnknown(data['track_id']!, _trackIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_trackIdMeta);
+    }
+    if (data.containsKey('artist_id')) {
+      context.handle(
+        _artistIdMeta,
+        artistId.isAcceptableOrUnknown(data['artist_id']!, _artistIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_artistIdMeta);
+    }
+    if (data.containsKey('album_id')) {
+      context.handle(
+        _albumIdMeta,
+        albumId.isAcceptableOrUnknown(data['album_id']!, _albumIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_albumIdMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('artist_name')) {
+      context.handle(
+        _artistNameMeta,
+        artistName.isAcceptableOrUnknown(data['artist_name']!, _artistNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_artistNameMeta);
+    }
+    if (data.containsKey('album_name')) {
+      context.handle(
+        _albumNameMeta,
+        albumName.isAcceptableOrUnknown(data['album_name']!, _albumNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_albumNameMeta);
+    }
+    if (data.containsKey('cover_url')) {
+      context.handle(
+        _coverUrlMeta,
+        coverUrl.isAcceptableOrUnknown(data['cover_url']!, _coverUrlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_coverUrlMeta);
+    }
+    if (data.containsKey('local_cover_path')) {
+      context.handle(
+        _localCoverPathMeta,
+        localCoverPath.isAcceptableOrUnknown(
+          data['local_cover_path']!,
+          _localCoverPathMeta,
+        ),
+      );
+    }
+    if (data.containsKey('local_audio_path')) {
+      context.handle(
+        _localAudioPathMeta,
+        localAudioPath.isAcceptableOrUnknown(
+          data['local_audio_path']!,
+          _localAudioPathMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_localAudioPathMeta);
+    }
+    if (data.containsKey('duration_ms')) {
+      context.handle(
+        _durationMsMeta,
+        durationMs.isAcceptableOrUnknown(data['duration_ms']!, _durationMsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_durationMsMeta);
+    }
+    if (data.containsKey('genre')) {
+      context.handle(
+        _genreMeta,
+        genre.isAcceptableOrUnknown(data['genre']!, _genreMeta),
+      );
+    }
+    if (data.containsKey('file_size_bytes')) {
+      context.handle(
+        _fileSizeBytesMeta,
+        fileSizeBytes.isAcceptableOrUnknown(
+          data['file_size_bytes']!,
+          _fileSizeBytesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('download_state')) {
+      context.handle(
+        _downloadStateMeta,
+        downloadState.isAcceptableOrUnknown(
+          data['download_state']!,
+          _downloadStateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('downloaded_at')) {
+      context.handle(
+        _downloadedAtMeta,
+        downloadedAt.isAcceptableOrUnknown(
+          data['downloaded_at']!,
+          _downloadedAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DownloadedTrack map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DownloadedTrack(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      trackId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}track_id'],
+      )!,
+      artistId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}artist_id'],
+      )!,
+      albumId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}album_id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      artistName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}artist_name'],
+      )!,
+      albumName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}album_name'],
+      )!,
+      coverUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cover_url'],
+      )!,
+      localCoverPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_cover_path'],
+      ),
+      localAudioPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_audio_path'],
+      )!,
+      durationMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_ms'],
+      )!,
+      genre: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}genre'],
+      ),
+      fileSizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}file_size_bytes'],
+      )!,
+      downloadState: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}download_state'],
+      )!,
+      downloadedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}downloaded_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DownloadedTracksTable createAlias(String alias) {
+    return $DownloadedTracksTable(attachedDatabase, alias);
+  }
+}
+
+class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
+  final int id;
+  final int trackId;
+  final int artistId;
+  final int albumId;
+  final String title;
+  final String artistName;
+  final String albumName;
+  final String coverUrl;
+  final String? localCoverPath;
+  final String localAudioPath;
+  final int durationMs;
+  final String? genre;
+  final int fileSizeBytes;
+  final int downloadState;
+  final DateTime downloadedAt;
+  const DownloadedTrack({
+    required this.id,
+    required this.trackId,
+    required this.artistId,
+    required this.albumId,
+    required this.title,
+    required this.artistName,
+    required this.albumName,
+    required this.coverUrl,
+    this.localCoverPath,
+    required this.localAudioPath,
+    required this.durationMs,
+    this.genre,
+    required this.fileSizeBytes,
+    required this.downloadState,
+    required this.downloadedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['track_id'] = Variable<int>(trackId);
+    map['artist_id'] = Variable<int>(artistId);
+    map['album_id'] = Variable<int>(albumId);
+    map['title'] = Variable<String>(title);
+    map['artist_name'] = Variable<String>(artistName);
+    map['album_name'] = Variable<String>(albumName);
+    map['cover_url'] = Variable<String>(coverUrl);
+    if (!nullToAbsent || localCoverPath != null) {
+      map['local_cover_path'] = Variable<String>(localCoverPath);
+    }
+    map['local_audio_path'] = Variable<String>(localAudioPath);
+    map['duration_ms'] = Variable<int>(durationMs);
+    if (!nullToAbsent || genre != null) {
+      map['genre'] = Variable<String>(genre);
+    }
+    map['file_size_bytes'] = Variable<int>(fileSizeBytes);
+    map['download_state'] = Variable<int>(downloadState);
+    map['downloaded_at'] = Variable<DateTime>(downloadedAt);
+    return map;
+  }
+
+  DownloadedTracksCompanion toCompanion(bool nullToAbsent) {
+    return DownloadedTracksCompanion(
+      id: Value(id),
+      trackId: Value(trackId),
+      artistId: Value(artistId),
+      albumId: Value(albumId),
+      title: Value(title),
+      artistName: Value(artistName),
+      albumName: Value(albumName),
+      coverUrl: Value(coverUrl),
+      localCoverPath: localCoverPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(localCoverPath),
+      localAudioPath: Value(localAudioPath),
+      durationMs: Value(durationMs),
+      genre: genre == null && nullToAbsent
+          ? const Value.absent()
+          : Value(genre),
+      fileSizeBytes: Value(fileSizeBytes),
+      downloadState: Value(downloadState),
+      downloadedAt: Value(downloadedAt),
+    );
+  }
+
+  factory DownloadedTrack.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DownloadedTrack(
+      id: serializer.fromJson<int>(json['id']),
+      trackId: serializer.fromJson<int>(json['trackId']),
+      artistId: serializer.fromJson<int>(json['artistId']),
+      albumId: serializer.fromJson<int>(json['albumId']),
+      title: serializer.fromJson<String>(json['title']),
+      artistName: serializer.fromJson<String>(json['artistName']),
+      albumName: serializer.fromJson<String>(json['albumName']),
+      coverUrl: serializer.fromJson<String>(json['coverUrl']),
+      localCoverPath: serializer.fromJson<String?>(json['localCoverPath']),
+      localAudioPath: serializer.fromJson<String>(json['localAudioPath']),
+      durationMs: serializer.fromJson<int>(json['durationMs']),
+      genre: serializer.fromJson<String?>(json['genre']),
+      fileSizeBytes: serializer.fromJson<int>(json['fileSizeBytes']),
+      downloadState: serializer.fromJson<int>(json['downloadState']),
+      downloadedAt: serializer.fromJson<DateTime>(json['downloadedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'trackId': serializer.toJson<int>(trackId),
+      'artistId': serializer.toJson<int>(artistId),
+      'albumId': serializer.toJson<int>(albumId),
+      'title': serializer.toJson<String>(title),
+      'artistName': serializer.toJson<String>(artistName),
+      'albumName': serializer.toJson<String>(albumName),
+      'coverUrl': serializer.toJson<String>(coverUrl),
+      'localCoverPath': serializer.toJson<String?>(localCoverPath),
+      'localAudioPath': serializer.toJson<String>(localAudioPath),
+      'durationMs': serializer.toJson<int>(durationMs),
+      'genre': serializer.toJson<String?>(genre),
+      'fileSizeBytes': serializer.toJson<int>(fileSizeBytes),
+      'downloadState': serializer.toJson<int>(downloadState),
+      'downloadedAt': serializer.toJson<DateTime>(downloadedAt),
+    };
+  }
+
+  DownloadedTrack copyWith({
+    int? id,
+    int? trackId,
+    int? artistId,
+    int? albumId,
+    String? title,
+    String? artistName,
+    String? albumName,
+    String? coverUrl,
+    Value<String?> localCoverPath = const Value.absent(),
+    String? localAudioPath,
+    int? durationMs,
+    Value<String?> genre = const Value.absent(),
+    int? fileSizeBytes,
+    int? downloadState,
+    DateTime? downloadedAt,
+  }) => DownloadedTrack(
+    id: id ?? this.id,
+    trackId: trackId ?? this.trackId,
+    artistId: artistId ?? this.artistId,
+    albumId: albumId ?? this.albumId,
+    title: title ?? this.title,
+    artistName: artistName ?? this.artistName,
+    albumName: albumName ?? this.albumName,
+    coverUrl: coverUrl ?? this.coverUrl,
+    localCoverPath: localCoverPath.present
+        ? localCoverPath.value
+        : this.localCoverPath,
+    localAudioPath: localAudioPath ?? this.localAudioPath,
+    durationMs: durationMs ?? this.durationMs,
+    genre: genre.present ? genre.value : this.genre,
+    fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
+    downloadState: downloadState ?? this.downloadState,
+    downloadedAt: downloadedAt ?? this.downloadedAt,
+  );
+  DownloadedTrack copyWithCompanion(DownloadedTracksCompanion data) {
+    return DownloadedTrack(
+      id: data.id.present ? data.id.value : this.id,
+      trackId: data.trackId.present ? data.trackId.value : this.trackId,
+      artistId: data.artistId.present ? data.artistId.value : this.artistId,
+      albumId: data.albumId.present ? data.albumId.value : this.albumId,
+      title: data.title.present ? data.title.value : this.title,
+      artistName: data.artistName.present
+          ? data.artistName.value
+          : this.artistName,
+      albumName: data.albumName.present ? data.albumName.value : this.albumName,
+      coverUrl: data.coverUrl.present ? data.coverUrl.value : this.coverUrl,
+      localCoverPath: data.localCoverPath.present
+          ? data.localCoverPath.value
+          : this.localCoverPath,
+      localAudioPath: data.localAudioPath.present
+          ? data.localAudioPath.value
+          : this.localAudioPath,
+      durationMs: data.durationMs.present
+          ? data.durationMs.value
+          : this.durationMs,
+      genre: data.genre.present ? data.genre.value : this.genre,
+      fileSizeBytes: data.fileSizeBytes.present
+          ? data.fileSizeBytes.value
+          : this.fileSizeBytes,
+      downloadState: data.downloadState.present
+          ? data.downloadState.value
+          : this.downloadState,
+      downloadedAt: data.downloadedAt.present
+          ? data.downloadedAt.value
+          : this.downloadedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DownloadedTrack(')
+          ..write('id: $id, ')
+          ..write('trackId: $trackId, ')
+          ..write('artistId: $artistId, ')
+          ..write('albumId: $albumId, ')
+          ..write('title: $title, ')
+          ..write('artistName: $artistName, ')
+          ..write('albumName: $albumName, ')
+          ..write('coverUrl: $coverUrl, ')
+          ..write('localCoverPath: $localCoverPath, ')
+          ..write('localAudioPath: $localAudioPath, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('genre: $genre, ')
+          ..write('fileSizeBytes: $fileSizeBytes, ')
+          ..write('downloadState: $downloadState, ')
+          ..write('downloadedAt: $downloadedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    trackId,
+    artistId,
+    albumId,
+    title,
+    artistName,
+    albumName,
+    coverUrl,
+    localCoverPath,
+    localAudioPath,
+    durationMs,
+    genre,
+    fileSizeBytes,
+    downloadState,
+    downloadedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DownloadedTrack &&
+          other.id == this.id &&
+          other.trackId == this.trackId &&
+          other.artistId == this.artistId &&
+          other.albumId == this.albumId &&
+          other.title == this.title &&
+          other.artistName == this.artistName &&
+          other.albumName == this.albumName &&
+          other.coverUrl == this.coverUrl &&
+          other.localCoverPath == this.localCoverPath &&
+          other.localAudioPath == this.localAudioPath &&
+          other.durationMs == this.durationMs &&
+          other.genre == this.genre &&
+          other.fileSizeBytes == this.fileSizeBytes &&
+          other.downloadState == this.downloadState &&
+          other.downloadedAt == this.downloadedAt);
+}
+
+class DownloadedTracksCompanion extends UpdateCompanion<DownloadedTrack> {
+  final Value<int> id;
+  final Value<int> trackId;
+  final Value<int> artistId;
+  final Value<int> albumId;
+  final Value<String> title;
+  final Value<String> artistName;
+  final Value<String> albumName;
+  final Value<String> coverUrl;
+  final Value<String?> localCoverPath;
+  final Value<String> localAudioPath;
+  final Value<int> durationMs;
+  final Value<String?> genre;
+  final Value<int> fileSizeBytes;
+  final Value<int> downloadState;
+  final Value<DateTime> downloadedAt;
+  const DownloadedTracksCompanion({
+    this.id = const Value.absent(),
+    this.trackId = const Value.absent(),
+    this.artistId = const Value.absent(),
+    this.albumId = const Value.absent(),
+    this.title = const Value.absent(),
+    this.artistName = const Value.absent(),
+    this.albumName = const Value.absent(),
+    this.coverUrl = const Value.absent(),
+    this.localCoverPath = const Value.absent(),
+    this.localAudioPath = const Value.absent(),
+    this.durationMs = const Value.absent(),
+    this.genre = const Value.absent(),
+    this.fileSizeBytes = const Value.absent(),
+    this.downloadState = const Value.absent(),
+    this.downloadedAt = const Value.absent(),
+  });
+  DownloadedTracksCompanion.insert({
+    this.id = const Value.absent(),
+    required int trackId,
+    required int artistId,
+    required int albumId,
+    required String title,
+    required String artistName,
+    required String albumName,
+    required String coverUrl,
+    this.localCoverPath = const Value.absent(),
+    required String localAudioPath,
+    required int durationMs,
+    this.genre = const Value.absent(),
+    this.fileSizeBytes = const Value.absent(),
+    this.downloadState = const Value.absent(),
+    this.downloadedAt = const Value.absent(),
+  }) : trackId = Value(trackId),
+       artistId = Value(artistId),
+       albumId = Value(albumId),
+       title = Value(title),
+       artistName = Value(artistName),
+       albumName = Value(albumName),
+       coverUrl = Value(coverUrl),
+       localAudioPath = Value(localAudioPath),
+       durationMs = Value(durationMs);
+  static Insertable<DownloadedTrack> custom({
+    Expression<int>? id,
+    Expression<int>? trackId,
+    Expression<int>? artistId,
+    Expression<int>? albumId,
+    Expression<String>? title,
+    Expression<String>? artistName,
+    Expression<String>? albumName,
+    Expression<String>? coverUrl,
+    Expression<String>? localCoverPath,
+    Expression<String>? localAudioPath,
+    Expression<int>? durationMs,
+    Expression<String>? genre,
+    Expression<int>? fileSizeBytes,
+    Expression<int>? downloadState,
+    Expression<DateTime>? downloadedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (trackId != null) 'track_id': trackId,
+      if (artistId != null) 'artist_id': artistId,
+      if (albumId != null) 'album_id': albumId,
+      if (title != null) 'title': title,
+      if (artistName != null) 'artist_name': artistName,
+      if (albumName != null) 'album_name': albumName,
+      if (coverUrl != null) 'cover_url': coverUrl,
+      if (localCoverPath != null) 'local_cover_path': localCoverPath,
+      if (localAudioPath != null) 'local_audio_path': localAudioPath,
+      if (durationMs != null) 'duration_ms': durationMs,
+      if (genre != null) 'genre': genre,
+      if (fileSizeBytes != null) 'file_size_bytes': fileSizeBytes,
+      if (downloadState != null) 'download_state': downloadState,
+      if (downloadedAt != null) 'downloaded_at': downloadedAt,
+    });
+  }
+
+  DownloadedTracksCompanion copyWith({
+    Value<int>? id,
+    Value<int>? trackId,
+    Value<int>? artistId,
+    Value<int>? albumId,
+    Value<String>? title,
+    Value<String>? artistName,
+    Value<String>? albumName,
+    Value<String>? coverUrl,
+    Value<String?>? localCoverPath,
+    Value<String>? localAudioPath,
+    Value<int>? durationMs,
+    Value<String?>? genre,
+    Value<int>? fileSizeBytes,
+    Value<int>? downloadState,
+    Value<DateTime>? downloadedAt,
+  }) {
+    return DownloadedTracksCompanion(
+      id: id ?? this.id,
+      trackId: trackId ?? this.trackId,
+      artistId: artistId ?? this.artistId,
+      albumId: albumId ?? this.albumId,
+      title: title ?? this.title,
+      artistName: artistName ?? this.artistName,
+      albumName: albumName ?? this.albumName,
+      coverUrl: coverUrl ?? this.coverUrl,
+      localCoverPath: localCoverPath ?? this.localCoverPath,
+      localAudioPath: localAudioPath ?? this.localAudioPath,
+      durationMs: durationMs ?? this.durationMs,
+      genre: genre ?? this.genre,
+      fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
+      downloadState: downloadState ?? this.downloadState,
+      downloadedAt: downloadedAt ?? this.downloadedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (trackId.present) {
+      map['track_id'] = Variable<int>(trackId.value);
+    }
+    if (artistId.present) {
+      map['artist_id'] = Variable<int>(artistId.value);
+    }
+    if (albumId.present) {
+      map['album_id'] = Variable<int>(albumId.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (artistName.present) {
+      map['artist_name'] = Variable<String>(artistName.value);
+    }
+    if (albumName.present) {
+      map['album_name'] = Variable<String>(albumName.value);
+    }
+    if (coverUrl.present) {
+      map['cover_url'] = Variable<String>(coverUrl.value);
+    }
+    if (localCoverPath.present) {
+      map['local_cover_path'] = Variable<String>(localCoverPath.value);
+    }
+    if (localAudioPath.present) {
+      map['local_audio_path'] = Variable<String>(localAudioPath.value);
+    }
+    if (durationMs.present) {
+      map['duration_ms'] = Variable<int>(durationMs.value);
+    }
+    if (genre.present) {
+      map['genre'] = Variable<String>(genre.value);
+    }
+    if (fileSizeBytes.present) {
+      map['file_size_bytes'] = Variable<int>(fileSizeBytes.value);
+    }
+    if (downloadState.present) {
+      map['download_state'] = Variable<int>(downloadState.value);
+    }
+    if (downloadedAt.present) {
+      map['downloaded_at'] = Variable<DateTime>(downloadedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DownloadedTracksCompanion(')
+          ..write('id: $id, ')
+          ..write('trackId: $trackId, ')
+          ..write('artistId: $artistId, ')
+          ..write('albumId: $albumId, ')
+          ..write('title: $title, ')
+          ..write('artistName: $artistName, ')
+          ..write('albumName: $albumName, ')
+          ..write('coverUrl: $coverUrl, ')
+          ..write('localCoverPath: $localCoverPath, ')
+          ..write('localAudioPath: $localAudioPath, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('genre: $genre, ')
+          ..write('fileSizeBytes: $fileSizeBytes, ')
+          ..write('downloadState: $downloadState, ')
+          ..write('downloadedAt: $downloadedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$SyncoraDatabase extends GeneratedDatabase {
   _$SyncoraDatabase(QueryExecutor e) : super(e);
   $SyncoraDatabaseManager get managers => $SyncoraDatabaseManager(this);
@@ -2267,11 +3129,17 @@ abstract class _$SyncoraDatabase extends GeneratedDatabase {
   late final $ListeningHistoryTable listeningHistory = $ListeningHistoryTable(
     this,
   );
+  late final $DownloadedTracksTable downloadedTracks = $DownloadedTracksTable(
+    this,
+  );
   late final PlaylistDao playlistDao = PlaylistDao(this as SyncoraDatabase);
   late final SavedAlbumDao savedAlbumDao = SavedAlbumDao(
     this as SyncoraDatabase,
   );
   late final ListeningHistoryDao listeningHistoryDao = ListeningHistoryDao(
+    this as SyncoraDatabase,
+  );
+  late final DownloadedTrackDao downloadedTrackDao = DownloadedTrackDao(
     this as SyncoraDatabase,
   );
   @override
@@ -2283,6 +3151,7 @@ abstract class _$SyncoraDatabase extends GeneratedDatabase {
     playlistTracks,
     savedAlbums,
     listeningHistory,
+    downloadedTracks,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3650,6 +4519,414 @@ typedef $$ListeningHistoryTableProcessedTableManager =
       ListeningHistoryData,
       PrefetchHooks Function()
     >;
+typedef $$DownloadedTracksTableCreateCompanionBuilder =
+    DownloadedTracksCompanion Function({
+      Value<int> id,
+      required int trackId,
+      required int artistId,
+      required int albumId,
+      required String title,
+      required String artistName,
+      required String albumName,
+      required String coverUrl,
+      Value<String?> localCoverPath,
+      required String localAudioPath,
+      required int durationMs,
+      Value<String?> genre,
+      Value<int> fileSizeBytes,
+      Value<int> downloadState,
+      Value<DateTime> downloadedAt,
+    });
+typedef $$DownloadedTracksTableUpdateCompanionBuilder =
+    DownloadedTracksCompanion Function({
+      Value<int> id,
+      Value<int> trackId,
+      Value<int> artistId,
+      Value<int> albumId,
+      Value<String> title,
+      Value<String> artistName,
+      Value<String> albumName,
+      Value<String> coverUrl,
+      Value<String?> localCoverPath,
+      Value<String> localAudioPath,
+      Value<int> durationMs,
+      Value<String?> genre,
+      Value<int> fileSizeBytes,
+      Value<int> downloadState,
+      Value<DateTime> downloadedAt,
+    });
+
+class $$DownloadedTracksTableFilterComposer
+    extends Composer<_$SyncoraDatabase, $DownloadedTracksTable> {
+  $$DownloadedTracksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get trackId => $composableBuilder(
+    column: $table.trackId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get artistId => $composableBuilder(
+    column: $table.artistId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get albumId => $composableBuilder(
+    column: $table.albumId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get artistName => $composableBuilder(
+    column: $table.artistName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get albumName => $composableBuilder(
+    column: $table.albumName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get coverUrl => $composableBuilder(
+    column: $table.coverUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localCoverPath => $composableBuilder(
+    column: $table.localCoverPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localAudioPath => $composableBuilder(
+    column: $table.localAudioPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get genre => $composableBuilder(
+    column: $table.genre,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get fileSizeBytes => $composableBuilder(
+    column: $table.fileSizeBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get downloadState => $composableBuilder(
+    column: $table.downloadState,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get downloadedAt => $composableBuilder(
+    column: $table.downloadedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DownloadedTracksTableOrderingComposer
+    extends Composer<_$SyncoraDatabase, $DownloadedTracksTable> {
+  $$DownloadedTracksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get trackId => $composableBuilder(
+    column: $table.trackId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get artistId => $composableBuilder(
+    column: $table.artistId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get albumId => $composableBuilder(
+    column: $table.albumId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get artistName => $composableBuilder(
+    column: $table.artistName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get albumName => $composableBuilder(
+    column: $table.albumName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get coverUrl => $composableBuilder(
+    column: $table.coverUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localCoverPath => $composableBuilder(
+    column: $table.localCoverPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localAudioPath => $composableBuilder(
+    column: $table.localAudioPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get genre => $composableBuilder(
+    column: $table.genre,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get fileSizeBytes => $composableBuilder(
+    column: $table.fileSizeBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get downloadState => $composableBuilder(
+    column: $table.downloadState,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get downloadedAt => $composableBuilder(
+    column: $table.downloadedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DownloadedTracksTableAnnotationComposer
+    extends Composer<_$SyncoraDatabase, $DownloadedTracksTable> {
+  $$DownloadedTracksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get trackId =>
+      $composableBuilder(column: $table.trackId, builder: (column) => column);
+
+  GeneratedColumn<int> get artistId =>
+      $composableBuilder(column: $table.artistId, builder: (column) => column);
+
+  GeneratedColumn<int> get albumId =>
+      $composableBuilder(column: $table.albumId, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get artistName => $composableBuilder(
+    column: $table.artistName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get albumName =>
+      $composableBuilder(column: $table.albumName, builder: (column) => column);
+
+  GeneratedColumn<String> get coverUrl =>
+      $composableBuilder(column: $table.coverUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get localCoverPath => $composableBuilder(
+    column: $table.localCoverPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get localAudioPath => $composableBuilder(
+    column: $table.localAudioPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get genre =>
+      $composableBuilder(column: $table.genre, builder: (column) => column);
+
+  GeneratedColumn<int> get fileSizeBytes => $composableBuilder(
+    column: $table.fileSizeBytes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get downloadState => $composableBuilder(
+    column: $table.downloadState,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get downloadedAt => $composableBuilder(
+    column: $table.downloadedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$DownloadedTracksTableTableManager
+    extends
+        RootTableManager<
+          _$SyncoraDatabase,
+          $DownloadedTracksTable,
+          DownloadedTrack,
+          $$DownloadedTracksTableFilterComposer,
+          $$DownloadedTracksTableOrderingComposer,
+          $$DownloadedTracksTableAnnotationComposer,
+          $$DownloadedTracksTableCreateCompanionBuilder,
+          $$DownloadedTracksTableUpdateCompanionBuilder,
+          (
+            DownloadedTrack,
+            BaseReferences<
+              _$SyncoraDatabase,
+              $DownloadedTracksTable,
+              DownloadedTrack
+            >,
+          ),
+          DownloadedTrack,
+          PrefetchHooks Function()
+        > {
+  $$DownloadedTracksTableTableManager(
+    _$SyncoraDatabase db,
+    $DownloadedTracksTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DownloadedTracksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DownloadedTracksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DownloadedTracksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> trackId = const Value.absent(),
+                Value<int> artistId = const Value.absent(),
+                Value<int> albumId = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> artistName = const Value.absent(),
+                Value<String> albumName = const Value.absent(),
+                Value<String> coverUrl = const Value.absent(),
+                Value<String?> localCoverPath = const Value.absent(),
+                Value<String> localAudioPath = const Value.absent(),
+                Value<int> durationMs = const Value.absent(),
+                Value<String?> genre = const Value.absent(),
+                Value<int> fileSizeBytes = const Value.absent(),
+                Value<int> downloadState = const Value.absent(),
+                Value<DateTime> downloadedAt = const Value.absent(),
+              }) => DownloadedTracksCompanion(
+                id: id,
+                trackId: trackId,
+                artistId: artistId,
+                albumId: albumId,
+                title: title,
+                artistName: artistName,
+                albumName: albumName,
+                coverUrl: coverUrl,
+                localCoverPath: localCoverPath,
+                localAudioPath: localAudioPath,
+                durationMs: durationMs,
+                genre: genre,
+                fileSizeBytes: fileSizeBytes,
+                downloadState: downloadState,
+                downloadedAt: downloadedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int trackId,
+                required int artistId,
+                required int albumId,
+                required String title,
+                required String artistName,
+                required String albumName,
+                required String coverUrl,
+                Value<String?> localCoverPath = const Value.absent(),
+                required String localAudioPath,
+                required int durationMs,
+                Value<String?> genre = const Value.absent(),
+                Value<int> fileSizeBytes = const Value.absent(),
+                Value<int> downloadState = const Value.absent(),
+                Value<DateTime> downloadedAt = const Value.absent(),
+              }) => DownloadedTracksCompanion.insert(
+                id: id,
+                trackId: trackId,
+                artistId: artistId,
+                albumId: albumId,
+                title: title,
+                artistName: artistName,
+                albumName: albumName,
+                coverUrl: coverUrl,
+                localCoverPath: localCoverPath,
+                localAudioPath: localAudioPath,
+                durationMs: durationMs,
+                genre: genre,
+                fileSizeBytes: fileSizeBytes,
+                downloadState: downloadState,
+                downloadedAt: downloadedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DownloadedTracksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$SyncoraDatabase,
+      $DownloadedTracksTable,
+      DownloadedTrack,
+      $$DownloadedTracksTableFilterComposer,
+      $$DownloadedTracksTableOrderingComposer,
+      $$DownloadedTracksTableAnnotationComposer,
+      $$DownloadedTracksTableCreateCompanionBuilder,
+      $$DownloadedTracksTableUpdateCompanionBuilder,
+      (
+        DownloadedTrack,
+        BaseReferences<
+          _$SyncoraDatabase,
+          $DownloadedTracksTable,
+          DownloadedTrack
+        >,
+      ),
+      DownloadedTrack,
+      PrefetchHooks Function()
+    >;
 
 class $SyncoraDatabaseManager {
   final _$SyncoraDatabase _db;
@@ -3662,4 +4939,6 @@ class $SyncoraDatabaseManager {
       $$SavedAlbumsTableTableManager(_db, _db.savedAlbums);
   $$ListeningHistoryTableTableManager get listeningHistory =>
       $$ListeningHistoryTableTableManager(_db, _db.listeningHistory);
+  $$DownloadedTracksTableTableManager get downloadedTracks =>
+      $$DownloadedTracksTableTableManager(_db, _db.downloadedTracks);
 }

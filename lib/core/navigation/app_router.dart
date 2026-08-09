@@ -7,7 +7,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/auth_provider.dart';
 import '../../features/auth/screens/auth_screen.dart';
+import '../../features/download/screens/downloads_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+
 import '../../features/library/screens/album_detail_screen.dart';
 import '../../features/library/screens/library_screen.dart';
 import '../../features/library/screens/playlist_detail_screen.dart';
@@ -133,6 +135,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               child: SettingsScreen(),
             ),
           ),
+          GoRoute(
+            path: '/downloads',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: DownloadsScreen(),
+            ),
+          ),
+
         ],
       ),
 

@@ -17,6 +17,7 @@ import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/sync/sync_service.dart';
+import '../../download/download_provider.dart';
 import '../import_export/playlist_import_export_service.dart';
 
 /// Pantalla de Biblioteca conectada a Drift local, Supabase y servicio de Import/Export.
@@ -29,7 +30,8 @@ class LibraryScreen extends ConsumerStatefulWidget {
 
 class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   String _selectedFilter = 'Playlists';
-  final List<String> _filters = const ['Playlists', 'Álbumes'];
+  final List<String> _filters = const ['Playlists', 'Álbumes', 'Descargados'];
+
 
   @override
   void initState() {
@@ -485,6 +487,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         tooltip: 'Sincronizar biblioteca',
                       ),
                     Tooltip(
+                      message: 'Pantalla de descargas',
+                      child: IconButton(
+                        icon: Icon(AppIcons.broken(SolarIcons.DownloadMinimalistic), color: AppTheme.primary, size: 20),
+                        onPressed: () => context.push('/downloads'),
+                      ),
+                    ),
+                    Tooltip(
                       message: 'Importar desde CSV/TXT',
                       child: IconButton(
                         icon: Icon(AppIcons.broken(SolarIcons.Import), color: AppTheme.primary, size: 20),
@@ -640,87 +649,261 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         );
                       },
                     )
-                  : StreamBuilder<List<Playlist>>(
-                      stream: playlistDao.watchAllPlaylists(),
-                      builder: (ctx, snapshot) {
-                        final playlists = snapshot.data ?? [];
-                        if (playlists.isEmpty) {
-                          return SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            child: Container(
-                              height: MediaQuery.of(context).size.height * 0.5,
-                              alignment: Alignment.center,
-                              child: const Text(
-                                'No tienes playlists',
-                                style: TextStyle(color: AppTheme.secondary),
+                  : _selectedFilter == 'Descargados'
+                      ? StreamBuilder<List<DownloadedTrack>>(
+                          stream: ref.watch(watchAllDownloadedTracksProvider).when(
+                                data: (data) => Stream.value(data),
+                                loading: () => Stream.value([]),
+                                error: (err, stack) => Stream.value([]),
+
                               ),
-                            ),
-                          );
-                        }
-
-                        return ListView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-                          itemCount: playlists.length,
-                          itemBuilder: (ctx, i) {
-                            final playlist = playlists[i];
-                            final isLiked = playlist.isLiked;
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: InkWell(
-                                onTap: () => context.push('/playlist/${playlist.id}'),
-                                borderRadius: BorderRadius.circular(12),
+                          builder: (ctx, snapshot) {
+                            final downloadedTracks = snapshot.data ?? [];
+                            if (downloadedTracks.isEmpty) {
+                              return SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
                                 child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  child: Row(
+                                  height: MediaQuery.of(context).size.height * 0.5,
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      PlaylistCoverWidget(
-                                        coverUrl: playlist.coverUrl,
-                                        playlistId: playlist.id,
-                                        isLiked: isLiked,
-                                        width: 64,
-                                        height: 64,
-                                        borderRadius: BorderRadius.circular(12),
+                                      Icon(
+                                        AppIcons.broken(SolarIcons.CloudDownload),
+                                        size: 56,
+                                        color: AppTheme.secondary,
                                       ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              playlist.title,
-                                              style: const TextStyle(
-                                                color: AppTheme.primary,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              isLiked ? 'Playlist especial' : (playlist.description ?? 'Playlist'),
-                                              style: const TextStyle(
-                                                color: AppTheme.secondary,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ],
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Sin descargas',
+                                        style: TextStyle(
+                                          color: AppTheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
                                         ),
                                       ),
-                                      if (!isLiked)
-                                        IconButton(
-                                          icon: Icon(AppIcons.broken(SolarIcons.MenuDots), color: AppTheme.secondary, size: 20),
-                                          onPressed: () => _showPlaylistOptionsMenu(context, playlist, isConnected),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        'Descarga playlists o álbumes para escucharlos sin internet',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: AppTheme.secondary,
+                                          fontSize: 13,
                                         ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                              ),
+                              );
+                            }
+
+                            return StreamBuilder<List<Playlist>>(
+                              stream: playlistDao.watchAllPlaylists(),
+                              builder: (ctx, plSnapshot) {
+                                final allPlaylists = plSnapshot.data ?? [];
+                                final downloadedTrackIds = downloadedTracks.map((t) => t.trackId).toSet();
+
+                                return FutureBuilder<List<Playlist>>(
+                                  future: () async {
+                                    final result = <Playlist>[];
+                                    for (final pl in allPlaylists) {
+                                      final tracks = await playlistDao.getTracksOrdered(pl.id);
+                                      if (tracks.any((t) => downloadedTrackIds.contains(t.trackId))) {
+                                        result.add(pl);
+                                      }
+                                    }
+                                    return result;
+                                  }(),
+                                  builder: (ctx, filteredSnapshot) {
+                                    final filteredPlaylists = filteredSnapshot.data ?? [];
+                                    if (filteredPlaylists.isEmpty) {
+                                      return SingleChildScrollView(
+                                        physics: const AlwaysScrollableScrollPhysics(),
+                                        child: Container(
+                                          height: MediaQuery.of(context).size.height * 0.5,
+                                          alignment: Alignment.center,
+                                          padding: const EdgeInsets.all(24),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                AppIcons.broken(SolarIcons.CloudDownload),
+                                                size: 56,
+                                                color: AppTheme.secondary,
+                                              ),
+                                              const SizedBox(height: 16),
+                                              const Text(
+                                                'Sin descargas',
+                                                style: TextStyle(
+                                                  color: AppTheme.primary,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              const Text(
+                                                'Descarga playlists o álbumes para escucharlos sin internet',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  color: AppTheme.secondary,
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }
+
+                                    return ListView.builder(
+                                      physics: const AlwaysScrollableScrollPhysics(),
+                                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+                                      itemCount: filteredPlaylists.length,
+                                      itemBuilder: (ctx, i) {
+                                        final playlist = filteredPlaylists[i];
+                                        final isLiked = playlist.isLiked;
+
+                                        return Padding(
+                                          padding: const EdgeInsets.only(bottom: 8.0),
+                                          child: InkWell(
+                                            onTap: () => context.push('/playlist/${playlist.id}'),
+                                            borderRadius: BorderRadius.circular(12),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(8),
+                                              child: Row(
+                                                children: [
+                                                  PlaylistCoverWidget(
+                                                    coverUrl: playlist.coverUrl,
+                                                    playlistId: playlist.id,
+                                                    isLiked: isLiked,
+                                                    width: 64,
+                                                    height: 64,
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  const SizedBox(width: 16),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Text(
+                                                          playlist.title,
+                                                          style: const TextStyle(
+                                                            color: AppTheme.primary,
+                                                            fontWeight: FontWeight.bold,
+                                                            fontSize: 16,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(height: 4),
+                                                        Text(
+                                                          isLiked ? 'Playlist especial • Descargada' : '${playlist.description ?? "Playlist"} • Descargada',
+                                                          style: const TextStyle(
+                                                            color: AppTheme.secondary,
+                                                            fontSize: 13,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  Icon(
+                                                    AppIcons.bold(SolarIcons.DownloadMinimalistic),
+                                                    color: AppTheme.secondary,
+                                                    size: 18,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                );
+                              },
                             );
                           },
-                        );
-                      },
-                    ),
+                        )
+                      : StreamBuilder<List<Playlist>>(
+                          stream: playlistDao.watchAllPlaylists(),
+                          builder: (ctx, snapshot) {
+                            final playlists = snapshot.data ?? [];
+                            if (playlists.isEmpty) {
+                              return SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: Container(
+                                  height: MediaQuery.of(context).size.height * 0.5,
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'No tienes playlists',
+                                    style: TextStyle(color: AppTheme.secondary),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            return ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+                              itemCount: playlists.length,
+                              itemBuilder: (ctx, i) {
+                                final playlist = playlists[i];
+                                final isLiked = playlist.isLiked;
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: InkWell(
+                                    onTap: () => context.push('/playlist/${playlist.id}'),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Row(
+                                        children: [
+                                          PlaylistCoverWidget(
+                                            coverUrl: playlist.coverUrl,
+                                            playlistId: playlist.id,
+                                            isLiked: isLiked,
+                                            width: 64,
+                                            height: 64,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  playlist.title,
+                                                  style: const TextStyle(
+                                                    color: AppTheme.primary,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  isLiked ? 'Playlist especial' : (playlist.description ?? 'Playlist'),
+                                                  style: const TextStyle(
+                                                    color: AppTheme.secondary,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          if (!isLiked)
+                                            IconButton(
+                                              icon: Icon(AppIcons.broken(SolarIcons.MenuDots), color: AppTheme.secondary, size: 20),
+                                              onPressed: () => _showPlaylistOptionsMenu(context, playlist, isConnected),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
             ),
           ),
         ],
@@ -728,3 +911,4 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     );
   }
 }
+

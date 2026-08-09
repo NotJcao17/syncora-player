@@ -7,7 +7,9 @@ import '../../core/extraction/models/extraction_request.dart';
 import '../../core/extraction/models/extraction_result.dart';
 import '../../core/extraction/retry_policy.dart';
 import '../../data/apis/deezer_api.dart';
+import '../../data/local_db/daos/downloaded_track_dao.dart';
 import '../../data/models/deezer/deezer_track.dart';
+
 import 'audio_engine/audio_engine_state.dart';
 import 'player_models.dart';
 import 'session/player_session_storage.dart';
@@ -90,18 +92,25 @@ class SyncoraPlayerState {
 /// - [ExtractionService]: resolución de URLs firmadas de YouTube.
 /// - [RetryPolicy]: guard anti-bucle 403 (máx. 1 reintento).
 /// - [PlayerSessionStorage]: persistencia de estado de reproducción y cola.
+
 class SyncoraPlayerController extends ChangeNotifier {
   SyncoraPlayerController({
     required AudioEngine engine,
     required ExtractionService extractionService,
     DeezerApi? deezerApi,
+    DownloadedTrackDao? downloadedTrackDao,
+    bool Function()? isConnectedGetter,
   })  : _engine = engine, // ignore: prefer_initializing_formals
         _extractionService = extractionService, // ignore: prefer_initializing_formals
-        _deezerApi = deezerApi; // ignore: prefer_initializing_formals
+        _deezerApi = deezerApi, // ignore: prefer_initializing_formals
+        _downloadedTrackDao = downloadedTrackDao,
+        _isConnectedGetter = isConnectedGetter;
 
   final AudioEngine _engine;
   final ExtractionService _extractionService;
   final DeezerApi? _deezerApi;
+  final DownloadedTrackDao? _downloadedTrackDao;
+  final bool Function()? _isConnectedGetter;
   final RetryPolicy _retryPolicy = RetryPolicy();
   final PlayerSessionStorage _sessionStorage = PlayerSessionStorage();
 
@@ -549,8 +558,27 @@ bool get _isTestEnv {
     _log('[Session] Sesión restaurada: ${session.queue.length} pistas en cola, posición: ${session.positionSeconds}s (pausado)');
   }
 
-  /// Núcleo: resuelve la URL de la pista actual vía [ExtractionService] y la
-  /// carga en el motor. Aplica el guard anti-bucle 403 (Pitfalls #11/#14).
+  /// Salto silencioso automático cuando se intenta reproducir una pista no descargada estando offline.
+  Future<void> _skipSilently() async {
+    if (_isTransitioning) return;
+    _isTransitioning = true;
+    try {
+      final next = _computeNextIndex(autoAdvance: true);
+      if (next == null) {
+        await _engine.pause();
+        _saveSession();
+        return;
+      }
+      _state = _state.copyWith(currentIndex: next, clearError: true);
+      _notify();
+      _saveSession();
+      await playCurrent();
+    } finally {
+      _isTransitioning = false;
+    }
+  }
+
+  /// Núcleo: resuelve la URL de la pista actual o carga el archivo local si está descargado.
   Future<void> playCurrent() async {
     final track = _state.currentTrack;
     if (track == null) return;
@@ -559,6 +587,41 @@ bool get _isTestEnv {
     await _microFadeOut();
     await _engine.stop();
 
+    final trackDeezerId = int.tryParse(track.id) ?? track.id.hashCode.abs();
+
+
+    // 1. Verificar si existe descarga local (state == 2)
+    if (_downloadedTrackDao != null && trackDeezerId > 0) {
+      try {
+        final downloaded = await _downloadedTrackDao.getByTrackId(trackDeezerId);
+        if (downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty) {
+          _log('[Play] Pista local descargada encontrada: ${downloaded.localAudioPath}. Cargando sin pasar por ExtractionIsolate.');
+          await _engine.setLocalSource(downloaded.localAudioPath);
+
+          if (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0) {
+            final targetPos = Duration(seconds: _restoredPositionSeconds!);
+            _restoredPositionSeconds = null;
+            await _engine.seek(targetPos);
+          }
+
+          await _engine.play();
+          _saveSession();
+          return;
+        }
+      } catch (e) {
+        _log('[Play] Error verificando descarga local: $e');
+      }
+    }
+
+    // 2. Sin descarga local: verificar conectividad a internet
+    final isConnected = _isConnectedGetter?.call() ?? true;
+    if (!isConnected) {
+      _log('[Play] Sin conexión y la canción no está descargada: ejecutando salto silencioso.');
+      await _skipSilently();
+      return;
+    }
+
+    // 3. Flujo normal de extracción de YouTube
     String targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)
         ? track.youtubeVideoId!
         : track.id;

@@ -3,6 +3,7 @@ import 'syncora_database.dart';
 import 'daos/playlist_dao.dart';
 import 'daos/saved_album_dao.dart';
 import 'daos/listening_history_dao.dart';
+import 'daos/downloaded_track_dao.dart';
 
 final syncoraDatabaseProvider = Provider<SyncoraDatabase>((ref) {
   final db = SyncoraDatabase();
@@ -21,3 +22,8 @@ final savedAlbumDaoProvider = Provider<SavedAlbumDao>((ref) {
 final listeningHistoryDaoProvider = Provider<ListeningHistoryDao>((ref) {
   return ref.watch(syncoraDatabaseProvider).listeningHistoryDao;
 });
+
+final downloadedTrackDaoProvider = Provider<DownloadedTrackDao>((ref) {
+  return ref.watch(syncoraDatabaseProvider).downloadedTrackDao;
+});
+

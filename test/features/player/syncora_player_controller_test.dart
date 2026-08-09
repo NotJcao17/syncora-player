@@ -43,6 +43,15 @@ class FakeAudioEngine implements AudioEngine {
   }
 
   @override
+  Future<void> setLocalSource(String path) async {
+    emitState(_state.copyWith(
+      processingState: AudioProcessingState.ready,
+      duration: const Duration(seconds: 180),
+    ));
+  }
+
+
+  @override
   Future<void> play() async {
     emitState(_state.copyWith(playing: true));
   }

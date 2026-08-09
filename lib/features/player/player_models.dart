@@ -23,7 +23,10 @@ class SyncoraTrack {
   /// ID lógico de la pista. Para esta fase es el `videoId` de YouTube o ID de Deezer.
   final String id;
 
+  int get deezerId => int.tryParse(id) ?? id.hashCode.abs();
+
   final String title;
+
   final String _artist;
 
   String get artist {

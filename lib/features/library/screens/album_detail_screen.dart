@@ -15,7 +15,9 @@ import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/models/deezer/deezer_album.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/sync/sync_service.dart';
+import '../../download/widgets/download_header_button.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
+
 import '../../player/player_providers.dart';
 
 /// Pantalla de Detalle de Álbum (`/album/:id`) conectada a Deezer real.
@@ -349,8 +351,14 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                 }
                               },
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 12),
+                            DownloadHeaderButton(
+                              title: album.title,
+                              tracks: syncoraTracks,
+                            ),
+                            const SizedBox(width: 12),
                             Consumer(
+
                               builder: (context, ref, _) {
                                 final playerState = ref.watch(playerStateProvider);
                                 final isShuffle = playerState.isShuffle;

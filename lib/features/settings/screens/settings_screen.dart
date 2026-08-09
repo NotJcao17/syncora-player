@@ -4,12 +4,18 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/cache/cover_cache_service.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../data/local_db/database_provider.dart';
+import '../../../data/local_db/syncora_database.dart';
 import '../../auth/auth_provider.dart';
+
+import '../../download/download_provider.dart';
 import '../../player/player_providers.dart';
 import '../../profile/widgets/avatar_selector_sheet.dart';
+
 
 /// Pantalla de Configuración (SettingsScreen)
 class SettingsScreen extends ConsumerWidget {
@@ -220,47 +226,112 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
           _buildSectionHeader('DESCARGA Y ALMACENAMIENTO'),
+
           const SizedBox(height: 8),
 
-          _buildCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSwitchTile(
-                  icon: AppIcons.broken(SolarIcons.WiFiRouter),
-                  title: 'Descargar solo con Wi-Fi',
-                  subtitle: 'Evita consumo de datos móviles',
-                  value: true,
-                  onChanged: (val) => _showComingSoon(context),
-                ),
-                const Divider(height: 24, color: AppTheme.surfaceHover),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Consumer(
+            builder: (context, ref, _) {
+              final wifiOnly = ref.watch(downloadWifiOnlyProvider);
+              final downloadedTracksAsync = ref.watch(watchAllDownloadedTracksProvider);
+              final coverCache = ref.watch(coverCacheServiceProvider);
+              final dao = ref.watch(downloadedTrackDaoProvider);
+
+              final downloadedTracks = downloadedTracksAsync.value ?? [];
+              final audioBytes = downloadedTracks.fold<int>(0, (int sum, DownloadedTrack t) => sum + t.fileSizeBytes);
+
+              final coverBytes = coverCache.currentSizeBytes;
+              final totalMB = ((audioBytes + coverBytes) / (1024 * 1024)).toStringAsFixed(1);
+              final audioMB = (audioBytes / (1024 * 1024)).toStringAsFixed(1);
+              final coverMB = (coverBytes / (1024 * 1024)).toStringAsFixed(1);
+
+              return _buildCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Almacenamiento usado', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-                    Text('0 GB / Local', style: TextStyle(color: AppTheme.secondary, fontSize: 13)),
+                    _buildSwitchTile(
+                      icon: AppIcons.broken(SolarIcons.WiFiRouter),
+                      title: 'Descargar solo con Wi-Fi',
+                      subtitle: 'Evita consumo de datos móviles',
+                      value: wifiOnly,
+                      onChanged: (val) {
+                        ref.read(downloadWifiOnlyProvider.notifier).state = val;
+                        AppToast.show(
+                          context,
+                          message: val ? 'Descargas restringidas a Wi-Fi' : 'Descargas permitidas con datos móviles',
+                        );
+                      },
+                    ),
+                    const Divider(height: 24, color: AppTheme.surfaceHover),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Almacenamiento usado', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+                        Text('$totalMB MB / Local', style: const TextStyle(color: AppTheme.secondary, fontSize: 13)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$audioMB MB audio  •  $coverMB MB portadas',
+                      style: const TextStyle(color: AppTheme.secondary, fontSize: 11),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: (audioBytes + coverBytes) / (500 * 1024 * 1024), // Max reference 500MB
+                        backgroundColor: AppTheme.surfaceHover,
+                        color: AppTheme.primary,
+                        minHeight: 6,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildActionTile(
+                      icon: AppIcons.broken(SolarIcons.Server),
+                      title: 'Borrar caché de portadas',
+                      subtitle: 'Libera $coverMB MB de imágenes',
+                      onTap: () async {
+                        await coverCache.clear();
+                        if (context.mounted) {
+                          AppToast.show(context, message: 'Caché de portadas borrada');
+                        }
+                      },
+                    ),
+                    const Divider(height: 24, color: AppTheme.surfaceHover),
+                    _buildActionTile(
+                      icon: AppIcons.broken(SolarIcons.TrashBinTrash),
+                      title: 'Borrar todas las descargas',
+                      subtitle: 'Libera $audioMB MB de audio (${downloadedTracks.length} canciones)',
+                      onTap: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: AppTheme.surface,
+                            title: const Text('¿Eliminar todas las descargas?', style: TextStyle(color: AppTheme.primary)),
+                            content: const Text('Esta acción borrará todas las canciones descargadas de tu dispositivo.', style: TextStyle(color: AppTheme.secondary)),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('Eliminar todo'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          await dao.deleteAll();
+                          if (context.mounted) {
+                            AppToast.show(context, message: 'Todas las descargas han sido eliminadas');
+                          }
+                        }
+                      },
+                    ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: const LinearProgressIndicator(
-                    value: 0.05,
-                    backgroundColor: AppTheme.surfaceHover,
-                    color: AppTheme.primary,
-                    minHeight: 6,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildActionTile(
-                  icon: AppIcons.broken(SolarIcons.Server),
-                  title: 'Borrar caché',
-                  subtitle: 'Libera espacio en disco',
-                  onTap: () => _showComingSoon(context),
-                ),
-              ],
-            ),
+              );
+            },
           ),
+
 
           const SizedBox(height: 24),
           _buildSectionHeader('ACERCA DE'),
