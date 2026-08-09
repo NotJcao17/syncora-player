@@ -21,6 +21,11 @@ void main() {
       expect(result, isA<Map<String, dynamic>>());
     });
 
+    test('getOrCreateLikedPlaylist returns empty map in test env when unauthenticated', () async {
+      final result = await repository.getOrCreateLikedPlaylist();
+      expect(result, isA<Map<String, dynamic>>());
+    });
+
     test('updatePlaylist does not crash in test env', () async {
       expect(
         () async => await repository.updatePlaylist('test-id', title: 'New Title'),

@@ -105,6 +105,19 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     }
   }
 
+  Future<void> _executeRemoteMutation(Future<void> Function() remoteTask) async {
+    try {
+      await remoteTask();
+    } catch (e) {
+      if (mounted) {
+        AppToast.show(context, message: 'La playlist ya no existe en la nube');
+        if (_playlist != null && !_playlist!.isLiked) {
+          await ref.read(playlistDaoProvider).deletePlaylist(_playlist!.id);
+        }
+      }
+    }
+  }
+
   Future<void> _loadPlaylistHeader() async {
     final dao = ref.read(playlistDaoProvider);
     if (widget.playlistId == 'liked') {
@@ -209,6 +222,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       initialData: _playlist,
       builder: (context, playlistSnapshot) {
         final playlist = playlistSnapshot.data;
+        if (playlist != null) {
+          _playlist = playlist;
+        }
 
         if (playlist == null) {
           return Scaffold(
@@ -496,14 +512,16 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                     ),
                                   );
                                   if (confirm == true) {
-                                    if (playlist.remoteId != null) {
-                                      try {
+                                    await _executeRemoteMutation(() async {
+                                      if (playlist.remoteId != null) {
                                         final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
                                         await supabaseRepo.deletePlaylist(playlist.remoteId!);
-                                      } catch (_) {}
+                                      }
+                                    });
+                                    if (!playlist.isLiked) {
+                                      await playlistDao.deletePlaylist(playlist.id);
                                     }
-                                    await playlistDao.deletePlaylist(playlist.id);
-                                    if (context.mounted) context.pop();
+                                    if (context.mounted && context.canPop()) context.pop();
                                   }
                                 },
                                 tooltip: 'Eliminar playlist',
@@ -577,10 +595,10 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                         trailing: IconButton(
                                           icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
                                           onPressed: () async {
-                                            String? remoteId = playlist.remoteId;
-                                            final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                                            if (remoteId == null) {
-                                              try {
+                                            await _executeRemoteMutation(() async {
+                                              String? remoteId = playlist.remoteId;
+                                              final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                                              if (remoteId == null) {
                                                 final res = await supabaseRepo.createPlaylist(
                                                   title: playlist.title,
                                                   description: playlist.description,
@@ -591,11 +609,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                 if (remoteId != null) {
                                                   await playlistDao.updatePlaylist(playlist.copyWith(remoteId: Value(remoteId)));
                                                 }
-                                              } catch (_) {}
-                                            }
+                                              }
 
-                                            if (remoteId != null) {
-                                              try {
+                                              if (remoteId != null) {
                                                 await supabaseRepo.addTrackToPlaylist(remoteId, {
                                                   'track_id': track.id,
                                                   'artist_id': track.artistId,
@@ -606,17 +622,11 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                   'cover_url': track.coverUrl,
                                                   'duration_ms': track.durationSec * 1000,
                                                 });
-                                              } catch (_) {
-                                                if (context.mounted) {
-                                                  AppToast.show(context, message: 'La playlist ya no existe en la nube');
-                                                }
-                                                await playlistDao.deletePlaylist(playlist.id);
-                                                if (context.mounted && context.canPop()) {
-                                                  context.pop();
-                                                }
-                                                return;
                                               }
-                                            }
+                                            });
+
+                                            final currentPl = await playlistDao.getPlaylistById(playlist.id);
+                                            if (currentPl == null) return;
 
                                             await playlistDao.addTrackToPlaylist(
                                               playlistId: playlist.id,
@@ -697,13 +707,16 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                   controller.play();
                                 },
                                 onRemove: () async {
-                                  if (playlist.remoteId != null) {
-                                    try {
+                                  await _executeRemoteMutation(() async {
+                                    if (playlist.remoteId != null) {
                                       final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
                                       await supabaseRepo.removeTrackFromPlaylist(playlist.remoteId!, playlistTrack.trackId);
-                                    } catch (_) {}
+                                    }
+                                  });
+                                  final currentPl = await playlistDao.getPlaylistById(playlist.id);
+                                  if (currentPl != null) {
+                                    await playlistDao.removeTrackEntry(playlistTrack.id);
                                   }
-                                  await playlistDao.removeTrackEntry(playlistTrack.id);
                                 },
                                 onAddToQueue: () => controller.addToQueue(track),
                               );

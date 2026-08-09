@@ -567,7 +567,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       if (likedPlaylist.remoteId == null) {
         try {
           final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-          final res = await supabaseRepo.createPlaylist(title: 'Tus me gusta', isLiked: true);
+          final res = await supabaseRepo.getOrCreateLikedPlaylist();
           final remoteId = res['id']?.toString();
           if (remoteId != null && remoteId.isNotEmpty) {
             await dao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(remoteId)));
@@ -593,7 +593,11 @@ class _TrackTileState extends ConsumerState<TrackTile> {
           } else {
             await supabaseRepo.removeTrackFromPlaylist(likedPlaylist.remoteId!, trackIdInt);
           }
-        } catch (_) {}
+        } catch (_) {
+          if (context.mounted) {
+            AppToast.show(context, message: 'La playlist ya no existe en la nube');
+          }
+        }
       }
       if (context.mounted) {
         AppToast.show(
@@ -640,12 +644,14 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                   final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
                   if (remoteId == null) {
                     try {
-                      final created = await supabaseRepo.createPlaylist(
-                        title: pl.title,
-                        description: pl.description,
-                        isPublic: pl.isPublic,
-                        isLiked: pl.isLiked,
-                      );
+                      final created = pl.isLiked
+                          ? await supabaseRepo.getOrCreateLikedPlaylist()
+                          : await supabaseRepo.createPlaylist(
+                              title: pl.title,
+                              description: pl.description,
+                              isPublic: pl.isPublic,
+                              isLiked: pl.isLiked,
+                            );
                       remoteId = created['id']?.toString();
                       if (remoteId != null && remoteId.isNotEmpty) {
                         await dao.updatePlaylist(pl.copyWith(remoteId: Value(remoteId)));
@@ -670,7 +676,9 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                       if (context.mounted) {
                         AppToast.show(context, message: 'La playlist ya no existe en la nube');
                       }
-                      await dao.deletePlaylist(pl.id);
+                      if (!pl.isLiked) {
+                        await dao.deletePlaylist(pl.id);
+                      }
                       if (ctx.mounted) Navigator.pop(ctx);
                       return;
                     }

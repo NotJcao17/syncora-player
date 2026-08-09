@@ -96,6 +96,23 @@ Se crearon y aplicaron las siguientes migraciones mediante `supabase db push --d
 
 ---
 
+## 8. Protección Inmutable de Playlist "Me Gusta", Restricción Unique Partial Index y Guardias Universales de Mutación
+
+- **Restricción PostgreSQL Unique Partial Index (`20250001000005_protect_liked_playlist.sql`)**:
+  - `CREATE UNIQUE INDEX unique_liked_playlist_per_user ON public.playlists (user_id) WHERE (is_liked = true);`
+  - Garantiza a nivel de base de datos relacional que un usuario jamás posea más de una playlist con `is_liked = true`.
+  - Trigger `handle_new_user()` actualizado para insertar automáticamente la playlist por defecto `"Tus me gusta"` (`is_liked = true`) al registrarse un usuario.
+  - Política RLS de DELETE en Supabase (`Prevent delete liked playlist`): previene la eliminación en PostgreSQL de cualquier playlist donde `is_liked = true`.
+- **Garantía Inmutable de Playlist Me Gusta en Flutter**:
+  - Método `getOrCreateLikedPlaylist()` en `SupabasePlaylistRepository`: consulta la playlist `is_liked = true` del usuario en Supabase y la crea en caso de no existir, manejando reintentos ante conflictos de concurrencia.
+  - La playlist `likedPlaylist` local en Drift DB **jamás es eliminada** por sincronización (`syncPlaylistDetail`, `_syncPlaylistsAndTracks`) ni por podas (`!localPlaylist.isLiked`).
+- **Guardias Universales de Mutación Remota**:
+  - `PlaylistDetailScreen`: Todas las mutaciones remotas (agregar canción, remover canción, eliminar playlist) están encapsuladas en `_executeRemoteMutation`. Si la playlist remota fue eliminada en la nube, se captura el error, se presenta la notificación `AppToast` *"La playlist ya no existe en la nube"* y se elimina la réplica local no especial.
+  - La ruta `/playlist/liked` observa `watchLikedPlaylist()` garantizando que la playlist "Me Gusta" sea siempre accesible y nunca muestre la pantalla de error.
+  - `TrackTile`: Las mutaciones remotas en `_handleOptionSelected` y `_showAddToPlaylistDialog` se envuelven en guardias con captura de errores, protegiendo contra la eliminación accidental de la playlist Me Gusta y notificando adecuadamente al usuario.
+
+---
+
 ## Pruebas para el Desarrollador (Humano)
 
 Consulte la sección **Fase 5** en `docs/matriz_de_pruebas.md` para ejecutar la checklist manual de QA (Google Sign-In, Email Sign-Up, selector de avatares, guardias offline y validación de RLS).

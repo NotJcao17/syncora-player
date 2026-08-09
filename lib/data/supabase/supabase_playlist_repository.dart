@@ -62,6 +62,44 @@ class SupabasePlaylistRepository {
     return response;
   }
 
+  Future<Map<String, dynamic>> getOrCreateLikedPlaylist() async {
+    final client = _client;
+    if (client == null) return {};
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return {};
+
+    try {
+      final response = await client
+          .from('playlists')
+          .select()
+          .eq('user_id', userId)
+          .eq('is_liked', true);
+
+      final list = List<Map<String, dynamic>>.from(response);
+      if (list.isNotEmpty) {
+        return list.first;
+      }
+
+      return await createPlaylist(
+        title: 'Tus me gusta',
+        isLiked: true,
+      );
+    } catch (_) {
+      try {
+        final recheck = await client
+            .from('playlists')
+            .select()
+            .eq('user_id', userId)
+            .eq('is_liked', true);
+        final recheckList = List<Map<String, dynamic>>.from(recheck);
+        if (recheckList.isNotEmpty) {
+          return recheckList.first;
+        }
+      } catch (_) {}
+      return {};
+    }
+  }
+
   Future<void> updatePlaylist(
     String id, {
     String? title,

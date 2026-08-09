@@ -84,7 +84,7 @@ class SyncService {
 
       if (!existsRemote) {
         final localPlaylist = await _playlistDao.getPlaylistByRemoteId(playlistRemoteId);
-        if (localPlaylist != null) {
+        if (localPlaylist != null && !localPlaylist.isLiked) {
           await _playlistDao.deletePlaylist(localPlaylist.id);
         }
         _cacheManager.invalidate('playlist_$playlistRemoteId');
@@ -273,7 +273,7 @@ class SyncService {
           await _playlistDao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(remoteId)));
         }
       } else {
-        final created = await _playlistRepo.createPlaylist(title: 'Tus me gusta', isLiked: true);
+        final created = await _playlistRepo.getOrCreateLikedPlaylist();
         final remoteId = created['id']?.toString();
         if (remoteId != null && remoteId.isNotEmpty) {
           await _playlistDao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(remoteId)));
