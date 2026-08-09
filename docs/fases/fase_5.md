@@ -38,15 +38,17 @@ Se crearon y aplicaron las siguientes migraciones mediante `supabase db push --d
 
 ---
 
-## 3. Repositorios de Supabase y Sincronización Online-First
+## 3. Repositorios de Supabase y Sincronización (Pull-to-Refresh + Caché TTL 5 min)
 
 - **`SupabasePlaylistRepository`**, **`SupabaseAlbumRepository`**, **`SupabaseHistoryRepository`**: Operan exclusivamente con el cliente autenticado del usuario (`Supabase.instance.client`), garantizando que RLS restrinja las mutaciones.
-- **`ConnectivityService`**: Stream reactivo (`isConnectedProvider`) para detección de red vía `connectivity_plus`.
-- **`SyncService`**: Estrategia estricta Online-First:
-  - Lecturas desde Drift local (0ms).
-  - Al iniciar la app, recupera playlists, tracks y álbumes de Supabase y hace upsert en Drift.
-  - Subida de historial de escucha local acumulado offline.
-  - Escrituras bloqueadas en la interfaz cuando `isConnected == false`.
+- **Transición de WebSockets Realtime a Pull-to-Refresh & Caché TTL**:
+  - Se removió la dependencia constante de Supabase Realtime WebSockets (`RealtimeSyncService`) para optimizar el consumo de red y recursos en backend.
+  - **`SyncCacheManager`**: Implementa una política de caché con validez TTL de 5 minutos por clave (`library`, `saved_albums`, `playlist_<id>`).
+  - **Pull-to-Refresh**: Integración de `RefreshIndicator` en `LibraryScreen`, `PlaylistDetailScreen`, `AlbumDetailScreen` y `ArtistDetailScreen` para dispositivos móviles.
+  - **Botones de Refresh Manual**: Botones dedicados en la barra de herramientas de escritorio (desktop) para forzar la actualización manual del contenido (`force: true`).
+- **Resiliencia Offline**:
+  - Todas las operaciones de red de `SyncService` están envueltas en bloques `try/catch`. En caso de desconexión o fallo de red, se degradan de forma silenciosa garantizando el acceso ininterrumpido a los datos locales en Drift DB.
+  - Al iniciar la app (`syncOnStartup`), se ejecuta la sincronización inicial de biblioteca, álbumes e historial respetando el caché TTL.
 
 ---
 
@@ -61,8 +63,8 @@ Se crearon y aplicaron las siguientes migraciones mediante `supabase db push --d
 ## 5. Verificación Automatizada y Auditoría de Código
 
 - **`flutter analyze`**: **0 issues**
-- **`flutter test`**: **56/56 pasando** (suites de Fases 1 a 5 combinadas)
-- **Auditoría de Subagente**: Pasada con éxito verificando 0 llaves privadas en código, guards de conectividad en UI, respeto de `FLUTTER_TEST` y no duplicación de triggers DB en Dart.
+- **`flutter test`**: **61/61 pasando** (incluyendo la suite de pruebas unitarias para `SyncCacheManager` y actualización de `SyncService`)
+- **Auditoría de Subagente**: Pasada con éxito verificando la eliminación de Realtime WebSockets, implementación de caché TTL 5 min, Pull-to-Refresh, botones de escritorio y resiliencia offline.
 
 ---
 

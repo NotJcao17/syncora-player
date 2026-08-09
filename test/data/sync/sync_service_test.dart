@@ -4,7 +4,7 @@ import 'package:syncora_player/data/local_db/syncora_database.dart';
 import 'package:syncora_player/data/supabase/supabase_album_repository.dart';
 import 'package:syncora_player/data/supabase/supabase_history_repository.dart';
 import 'package:syncora_player/data/supabase/supabase_playlist_repository.dart';
-import 'package:syncora_player/data/sync/realtime_sync_service.dart';
+import 'package:syncora_player/data/sync/sync_cache_manager.dart';
 import 'package:syncora_player/data/sync/sync_service.dart';
 
 void main() {
@@ -12,10 +12,12 @@ void main() {
 
   group('SyncService Tests', () {
     late SyncoraDatabase db;
+    late SyncCacheManager cacheManager;
     late SyncService syncService;
 
     setUp(() {
       db = SyncoraDatabase(NativeDatabase.memory());
+      cacheManager = SyncCacheManager();
       final playlistRepo = SupabasePlaylistRepository();
       final albumRepo = SupabaseAlbumRepository();
       final historyRepo = SupabaseHistoryRepository();
@@ -27,12 +29,7 @@ void main() {
         playlistDao: db.playlistDao,
         savedAlbumDao: db.savedAlbumDao,
         listeningHistoryDao: db.listeningHistoryDao,
-        realtimeSyncService: RealtimeSyncService(
-          playlistRepo: playlistRepo,
-          albumRepo: albumRepo,
-          playlistDao: db.playlistDao,
-          savedAlbumDao: db.savedAlbumDao,
-        ),
+        cacheManager: cacheManager,
       );
     });
 

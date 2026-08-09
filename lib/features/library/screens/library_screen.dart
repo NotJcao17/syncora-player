@@ -16,6 +16,7 @@ import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../../data/supabase/supabase_providers.dart';
+import '../../../data/sync/sync_service.dart';
 import '../import_export/playlist_import_export_service.dart';
 
 /// Pantalla de Biblioteca conectada a Drift local, Supabase y servicio de Import/Export.
@@ -29,6 +30,14 @@ class LibraryScreen extends ConsumerStatefulWidget {
 class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   String _selectedFilter = 'Playlists';
   final List<String> _filters = const ['Playlists', 'Álbumes'];
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(syncServiceProvider).syncLibrary(force: false);
+    });
+  }
 
   void _showCreatePlaylistDialog(BuildContext context, bool isConnected) {
     if (!isConnected) {
@@ -439,6 +448,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 ),
                 Row(
                   children: [
+                    if (isDesktop)
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        color: AppTheme.primary,
+                        onPressed: () => ref.read(syncServiceProvider).syncLibrary(force: true),
+                        tooltip: 'Sincronizar biblioteca',
+                      ),
                     Tooltip(
                       message: 'Importar desde CSV/TXT',
                       child: IconButton(
@@ -511,146 +527,169 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           const SizedBox(height: 16),
 
           Expanded(
-            child: _selectedFilter == 'Álbumes'
-                ? StreamBuilder<List<SavedAlbum>>(
-                    stream: savedAlbumDao.watchAllSavedAlbums(),
-                    builder: (ctx, snapshot) {
-                      final albums = snapshot.data ?? [];
-                      if (albums.isEmpty) {
-                        return const Center(
-                          child: Text(
-                            'No tienes álbumes guardados',
-                            style: TextStyle(color: AppTheme.secondary),
-                          ),
-                        );
-                      }
+            child: RefreshIndicator(
+              onRefresh: () => ref.read(syncServiceProvider).syncLibrary(force: true),
+              child: _selectedFilter == 'Álbumes'
+                  ? StreamBuilder<List<SavedAlbum>>(
+                      stream: savedAlbumDao.watchAllSavedAlbums(),
+                      builder: (ctx, snapshot) {
+                        final albums = snapshot.data ?? [];
+                        if (albums.isEmpty) {
+                          return SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: Container(
+                              height: MediaQuery.of(context).size.height * 0.5,
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'No tienes álbumes guardados',
+                                style: TextStyle(color: AppTheme.secondary),
+                              ),
+                            ),
+                          );
+                        }
 
-                      return ListView.builder(
-                        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-                        itemCount: albums.length,
-                        itemBuilder: (ctx, i) {
-                          final album = albums[i];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: InkWell(
-                              onTap: () => context.push('/album/${album.albumId}'),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                child: Row(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: SizedBox(
-                                        width: 64,
-                                        height: 64,
-                                        child: CachedNetworkImage(
-                                          imageUrl: album.coverUrl,
-                                          memCacheWidth: 300,
-                                          fit: BoxFit.cover,
+                        return ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+                          itemCount: albums.length,
+                          itemBuilder: (ctx, i) {
+                            final album = albums[i];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: InkWell(
+                                onTap: () => context.push('/album/${album.albumId}'),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Row(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: SizedBox(
+                                          width: 64,
+                                          height: 64,
+                                          child: CachedNetworkImage(
+                                            imageUrl: album.coverUrl,
+                                            memCacheWidth: 300,
+                                            fit: BoxFit.cover,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            album.title,
-                                            style: const TextStyle(
-                                              color: AppTheme.primary,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              album.title,
+                                              style: const TextStyle(
+                                                color: AppTheme.primary,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Álbum • ${album.artistName}',
-                                            style: const TextStyle(
-                                              color: AppTheme.secondary,
-                                              fontSize: 13,
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Álbum • ${album.artistName}',
+                                              style: const TextStyle(
+                                                color: AppTheme.secondary,
+                                                fontSize: 13,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    )
+                  : StreamBuilder<List<Playlist>>(
+                      stream: playlistDao.watchAllPlaylists(),
+                      builder: (ctx, snapshot) {
+                        final playlists = snapshot.data ?? [];
+                        if (playlists.isEmpty) {
+                          return SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: Container(
+                              height: MediaQuery.of(context).size.height * 0.5,
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'No tienes playlists',
+                                style: TextStyle(color: AppTheme.secondary),
                               ),
                             ),
                           );
-                        },
-                      );
-                    },
-                  )
-                : StreamBuilder<List<Playlist>>(
-                    stream: playlistDao.watchAllPlaylists(),
-                    builder: (ctx, snapshot) {
-                      final playlists = snapshot.data ?? [];
+                        }
 
-                      return ListView.builder(
-                        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-                        itemCount: playlists.length,
-                        itemBuilder: (ctx, i) {
-                          final playlist = playlists[i];
-                          final isLiked = playlist.isLiked;
+                        return ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+                          itemCount: playlists.length,
+                          itemBuilder: (ctx, i) {
+                            final playlist = playlists[i];
+                            final isLiked = playlist.isLiked;
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: InkWell(
-                              onTap: () => context.push('/playlist/${playlist.id}'),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                child: Row(
-                                  children: [
-                                    PlaylistCoverWidget(
-                                      coverUrl: playlist.coverUrl,
-                                      playlistId: playlist.id,
-                                      isLiked: isLiked,
-                                      width: 64,
-                                      height: 64,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            playlist.title,
-                                            style: const TextStyle(
-                                              color: AppTheme.primary,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            isLiked ? 'Playlist especial' : (playlist.description ?? 'Playlist'),
-                                            style: const TextStyle(
-                                              color: AppTheme.secondary,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: InkWell(
+                                onTap: () => context.push('/playlist/${playlist.id}'),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Row(
+                                    children: [
+                                      PlaylistCoverWidget(
+                                        coverUrl: playlist.coverUrl,
+                                        playlistId: playlist.id,
+                                        isLiked: isLiked,
+                                        width: 64,
+                                        height: 64,
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
-                                    ),
-                                    if (!isLiked)
-                                      IconButton(
-                                        icon: Icon(AppIcons.broken(SolarIcons.MenuDots), color: AppTheme.secondary, size: 20),
-                                        onPressed: () => _showPlaylistOptionsMenu(context, playlist, isConnected),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              playlist.title,
+                                              style: const TextStyle(
+                                                color: AppTheme.primary,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              isLiked ? 'Playlist especial' : (playlist.description ?? 'Playlist'),
+                                              style: const TextStyle(
+                                                color: AppTheme.secondary,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                  ],
+                                      if (!isLiked)
+                                        IconButton(
+                                          icon: Icon(AppIcons.broken(SolarIcons.MenuDots), color: AppTheme.secondary, size: 20),
+                                          onPressed: () => _showPlaylistOptionsMenu(context, playlist, isConnected),
+                                        ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+            ),
           ),
         ],
       ),

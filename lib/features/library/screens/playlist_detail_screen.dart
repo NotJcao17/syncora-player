@@ -21,6 +21,7 @@ import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/models/deezer/deezer_track.dart';
+import '../../../data/sync/sync_service.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
 import '../../player/player_models.dart';
 import '../../player/player_providers.dart';
@@ -112,6 +113,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           _playlist = liked;
           _isLoadingHeader = false;
         });
+        if (liked.remoteId != null) {
+          ref.read(syncServiceProvider).syncPlaylistDetail(liked.remoteId!, force: false);
+        }
       }
     } else {
       final id = int.tryParse(widget.playlistId) ?? 0;
@@ -121,6 +125,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           _playlist = pl;
           _isLoadingHeader = false;
         });
+        if (pl?.remoteId != null) {
+          ref.read(syncServiceProvider).syncPlaylistDetail(pl!.remoteId!, force: false);
+        }
       }
     }
   }
@@ -272,145 +279,165 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.only(
-                      top: MediaQuery.of(context).padding.top + 56,
-                      left: isDesktop ? 32 : 12,
-                      right: isDesktop ? 32 : 12,
-                      bottom: 40,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 8),
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      if (playlist.remoteId != null) {
+                        await ref.read(syncServiceProvider).syncPlaylistDetail(playlist.remoteId!, force: true);
+                      }
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.only(
+                        top: MediaQuery.of(context).padding.top + 56,
+                        left: isDesktop ? 32 : 12,
+                        right: isDesktop ? 32 : 12,
+                        bottom: 40,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
 
-                        if (isDesktop)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Container(
-                                width: 220,
-                                height: 220,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: AppTheme.glowShadow,
-                                ),
-                                child: PlaylistCoverWidget(
-                                  coverUrl: playlist.coverUrl,
-                                  playlistId: playlist.id,
-                                  tracks: syncoraTracks,
-                                  isLiked: isLiked,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              const SizedBox(width: 28),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'PLAYLIST',
-                                      style: TextStyle(
-                                        color: AppTheme.secondary,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 1.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      playlist.title,
-                                      style: const TextStyle(
-                                        color: AppTheme.primary,
-                                        fontSize: 44,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: -1,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      playlist.description ?? 'Sin descripción',
-                                      style: const TextStyle(color: AppTheme.secondary, fontSize: 14),
-                                    ),
-                                    const SizedBox(height: 14),
-                                    Text(
-                                      '${tracks.length} canciones',
-                                      style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          )
-                        else
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Center(
-                                child: Container(
-                                  width: 180,
-                                  height: 180,
+                          if (isDesktop)
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Container(
+                                  width: 220,
+                                  height: 220,
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: AppTheme.glowHighShadow,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: AppTheme.glowShadow,
                                   ),
                                   child: PlaylistCoverWidget(
                                     coverUrl: playlist.coverUrl,
                                     playlistId: playlist.id,
                                     tracks: syncoraTracks,
                                     isLiked: isLiked,
-                                    borderRadius: BorderRadius.circular(20),
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                playlist.title,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: AppTheme.primary,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.5,
+                                const SizedBox(width: 28),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'PLAYLIST',
+                                        style: TextStyle(
+                                          color: AppTheme.secondary,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 1.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        playlist.title,
+                                        style: const TextStyle(
+                                          color: AppTheme.primary,
+                                          fontSize: 44,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: -1,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        playlist.description ?? 'Sin descripción',
+                                        style: const TextStyle(color: AppTheme.secondary, fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      Text(
+                                        '${tracks.length} canciones',
+                                        style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                playlist.description ?? 'Sin descripción',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                '${tracks.length} canciones',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                              ),
-                            ],
-                          ),
+                              ],
+                            )
+                          else
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Center(
+                                  child: Container(
+                                    width: 180,
+                                    height: 180,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: AppTheme.glowHighShadow,
+                                    ),
+                                    child: PlaylistCoverWidget(
+                                      coverUrl: playlist.coverUrl,
+                                      playlistId: playlist.id,
+                                      tracks: syncoraTracks,
+                                      isLiked: isLiked,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  playlist.title,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: AppTheme.primary,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  playlist.description ?? 'Sin descripción',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  '${tracks.length} canciones',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                                ),
+                              ],
+                            ),
 
-                        const SizedBox(height: 16),
+                          const SizedBox(height: 16),
 
-                        // Actions row
-                        Row(
-                          mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
-                          children: [
-                            if (syncoraTracks.isNotEmpty) ...[
-                              _HeaderPlayButton(
-                                isPlaying: showPauseHeader,
-                                onPressed: () {
-                                  if (showPauseHeader) {
-                                    controller.pause();
-                                  } else if (isCurrentContext) {
-                                    controller.play();
-                                  } else {
-                                    controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: playlistContextId);
-                                    controller.play();
-                                  }
-                                },
-                              ),
-                              const SizedBox(width: 16),
-                            ],
+                          // Actions row
+                          Row(
+                            mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
+                            children: [
+                              if (syncoraTracks.isNotEmpty) ...[
+                                _HeaderPlayButton(
+                                  isPlaying: showPauseHeader,
+                                  onPressed: () {
+                                    if (showPauseHeader) {
+                                      controller.pause();
+                                    } else if (isCurrentContext) {
+                                      controller.play();
+                                    } else {
+                                      controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: playlistContextId);
+                                      controller.play();
+                                    }
+                                  },
+                                ),
+                                const SizedBox(width: 16),
+                              ],
+                              if (isDesktop && playlist.remoteId != null) ...[
+                                IconButton(
+                                  icon: const Icon(Icons.refresh),
+                                  color: AppTheme.secondary,
+                                  onPressed: () {
+                                    if (playlist.remoteId != null) {
+                                      ref.read(syncServiceProvider).syncPlaylistDetail(playlist.remoteId!, force: true);
+                                    }
+                                  },
+                                  tooltip: 'Sincronizar playlist',
+                                ),
+                                const SizedBox(width: 8),
+                              ],
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: _showAddSongsSearch ? AppTheme.surfaceHover : AppTheme.surface,
@@ -621,6 +648,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     ),
                   ),
                 ),
+              ),
 
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,

@@ -117,111 +117,123 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: CustomScrollView(
-        slivers: [
-          // Header con foto del artista
-          SliverAppBar(
-            backgroundColor: AppTheme.surface,
-            expandedHeight: isDesktop ? 340 : 280,
-            pinned: true,
-            leading: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: CircleAvatar(
-                backgroundColor: AppTheme.surfaceHover,
-                child: IconButton(
-                  icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary, size: 20),
-                  onPressed: () => context.pop(),
-                  padding: EdgeInsets.zero,
+      body: RefreshIndicator(
+        onRefresh: _loadArtistData,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // Header con foto del artista
+            SliverAppBar(
+              backgroundColor: AppTheme.surface,
+              expandedHeight: isDesktop ? 340 : 280,
+              pinned: true,
+              leading: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CircleAvatar(
+                  backgroundColor: AppTheme.surfaceHover,
+                  child: IconButton(
+                    icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary, size: 20),
+                    onPressed: () => context.pop(),
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+              flexibleSpace: FlexibleSpaceBar(
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: artist.pictureUrl,
+                      memCacheWidth: 600,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, _, _) => Container(color: AppTheme.surface),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            AppTheme.background.withValues(alpha: 0.7),
+                            AppTheme.background,
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 20,
+                      left: isDesktop ? 32 : 20,
+                      right: isDesktop ? 32 : 20,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(AppIcons.broken(SolarIcons.CheckCircle), color: AppTheme.primary, size: 16),
+                              SizedBox(width: 6),
+                              Text(
+                                'ARTISTA VERIFICADO',
+                                style: TextStyle(
+                                  color: AppTheme.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            artist.name,
+                            style: TextStyle(
+                              color: AppTheme.primary,
+                              fontSize: isDesktop ? 44 : 32,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${artist.nbFan} fans en Deezer',
+                            style: const TextStyle(color: AppTheme.secondary, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  CachedNetworkImage(
-                    imageUrl: artist.pictureUrl,
-                    memCacheWidth: 600,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, _, _) => Container(color: AppTheme.surface),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          AppTheme.background.withValues(alpha: 0.7),
-                          AppTheme.background,
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 20,
-                    left: isDesktop ? 32 : 20,
-                    right: isDesktop ? 32 : 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(AppIcons.broken(SolarIcons.CheckCircle), color: AppTheme.primary, size: 16),
-                            SizedBox(width: 6),
-                            Text(
-                              'ARTISTA VERIFICADO',
-                              style: TextStyle(
-                                color: AppTheme.primary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          artist.name,
-                          style: TextStyle(
-                            color: AppTheme.primary,
-                            fontSize: isDesktop ? 44 : 32,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${artist.nbFan} fans en Deezer',
-                          style: const TextStyle(color: AppTheme.secondary, fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
 
-          // Botón Reproducir
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 32 : 20,
-                vertical: 16,
-              ),
-              child: Row(
-                children: [
-                  if (syncoraTracks.isNotEmpty)
-                    _HeaderPlayButton(
-                      onPressed: () {
-                        controller.setQueue(syncoraTracks, startIndex: 0);
-                        controller.play();
-                      },
-                    ),
-                ],
+            // Botón Reproducir
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 32 : 20,
+                  vertical: 16,
+                ),
+                child: Row(
+                  children: [
+                    if (syncoraTracks.isNotEmpty)
+                      _HeaderPlayButton(
+                        onPressed: () {
+                          controller.setQueue(syncoraTracks, startIndex: 0);
+                          controller.play();
+                        },
+                      ),
+                    if (isDesktop) ...[
+                      const SizedBox(width: 16),
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        color: AppTheme.primary,
+                        tooltip: 'Actualizar discografía',
+                        onPressed: _loadArtistData,
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
-          ),
 
           // Top Canciones
           SliverPadding(
@@ -322,7 +334,8 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],
       ),
-    );
+    ),
+  );
   }
 }
 
