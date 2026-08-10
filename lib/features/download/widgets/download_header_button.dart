@@ -138,7 +138,7 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
               leading: Icon(AppIcons.broken(SolarIcons.CloudDownload), color: AppTheme.primary),
               title: Text('Descargar todo ($totalCount canciones)', style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
               onTap: () {
-                Navigator.of(context, rootNavigator: true).pop();
+                if (Navigator.canPop(context)) Navigator.pop(context);
                 _startDownload(downloadService, widget.tracks);
               },
             ),
@@ -147,7 +147,7 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
               leading: Icon(AppIcons.broken(SolarIcons.CloudDownload), color: AppTheme.primary),
               title: Text('Descargar ${totalCount - downloadedCount} faltantes', style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
               onTap: () {
-                Navigator.of(context, rootNavigator: true).pop();
+                if (Navigator.canPop(context)) Navigator.pop(context);
                 _startDownload(downloadService, widget.tracks);
               },
             ),
@@ -155,7 +155,7 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
               leading: Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: Colors.redAccent),
               title: const Text('Eliminar descargas existentes', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
               onTap: () {
-                Navigator.of(context, rootNavigator: true).pop();
+                if (Navigator.canPop(context)) Navigator.pop(context);
                 _confirmAndDelete(dao);
               },
             ),
@@ -164,7 +164,7 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
               leading: Icon(AppIcons.broken(SolarIcons.Restart), color: AppTheme.primary),
               title: const Text('Verificar y actualizar descargas', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
               onTap: () {
-                Navigator.of(context, rootNavigator: true).pop();
+                if (Navigator.canPop(context)) Navigator.pop(context);
                 _startDownload(downloadService, widget.tracks);
               },
             ),
@@ -172,19 +172,15 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
               leading: Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: Colors.redAccent),
               title: const Text('Eliminar todas las descargas', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
               onTap: () {
-                Navigator.of(context, rootNavigator: true).pop();
+                if (Navigator.canPop(context)) Navigator.pop(context);
                 _confirmAndDelete(dao);
               },
             ),
           ],
-
-
         ],
       ),
     );
   }
-
-
 
   void _confirmAndDelete(dynamic dao) {
     AppBottomSheet.show(
@@ -205,7 +201,9 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+                    onPressed: () {
+                      if (Navigator.canPop(context)) Navigator.pop(context);
+                    },
                     child: const Text('Cancelar', style: TextStyle(color: AppTheme.primary)),
                   ),
                 ),
@@ -214,10 +212,10 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
                     onPressed: () async {
-                      Navigator.of(context, rootNavigator: true).pop();
+                      if (Navigator.canPop(context)) Navigator.pop(context);
                       for (final t in widget.tracks) {
-
                         final tId = int.tryParse(t.id) ?? t.id.hashCode.abs();
+
                         await dao.deleteByTrackId(tId);
                       }
 
