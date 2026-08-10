@@ -741,7 +741,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                 showAlbum: true,
                                 onTap: () {
                                   controller.setQueue(syncoraTracks, startIndex: i, activeContextId: playlistContextId);
-                                  controller.play();
                                 },
                                 onRemove: () async {
                                   final ok = await _executeRemoteMutation(() async {

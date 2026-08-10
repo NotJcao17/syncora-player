@@ -265,7 +265,6 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                     isPlaying: currentTrack?.id == track.id,
                     onTap: () {
                       controller.setQueue(syncoraTracks, startIndex: i);
-                      controller.play();
                     },
                     onAddToQueue: () => controller.addToQueue(track),
                   );

@@ -470,7 +470,6 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                           showAlbum: true,
                           onTap: () {
                             controller.setQueue(syncoraTracks, startIndex: i, activeContextId: albumContextId);
-                            controller.play();
                           },
                           onAddToQueue: () => controller.addToQueue(track),
                         );

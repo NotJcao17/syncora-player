@@ -464,7 +464,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               isPlaying: isPlaying,
               onTap: () {
                 controller.setQueue(syncoraTracks, startIndex: i);
-                controller.play();
               },
               onAddToQueue: () => controller.addToQueue(track),
             );

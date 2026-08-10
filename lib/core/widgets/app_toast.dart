@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/player/player_providers.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+
 
 /// Pop-up flotante suave al estilo Spotify Desktop / Móvil.
 abstract class AppToast {
@@ -44,17 +43,7 @@ abstract class AppToast {
         if (isFullscreenPlayer) {
           bottomMargin = 24.0 + paddingBottom;
         } else {
-          bool hasTrack = false;
-          try {
-            final container = ProviderScope.containerOf(context, listen: false);
-            hasTrack = container.read(currentTrackProvider) != null;
-          } catch (_) {}
-
-          if (hasTrack) {
-            bottomMargin = 140.0 + paddingBottom;
-          } else {
-            bottomMargin = 80.0 + paddingBottom;
-          }
+          bottomMargin = 152.0 + paddingBottom;
         }
       }
     }
@@ -120,35 +109,11 @@ class _ToastWidget extends StatelessWidget {
     Widget defaultIcon;
     final lower = message.toLowerCase();
     if (lower.contains('descarg')) {
-      defaultIcon = Container(
-        width: 24,
-        height: 24,
-        decoration: const BoxDecoration(
-          color: Color(0xFF1E2633),
-          borderRadius: BorderRadius.all(Radius.circular(6)),
-        ),
-        child: Icon(AppIcons.bold(SolarIcons.CloudCheck), color: AppTheme.primary, size: 14),
-      );
+      defaultIcon = Icon(AppIcons.bold(SolarIcons.CloudCheck), color: AppTheme.primary, size: 15);
     } else if (lower.contains('conexió') || lower.contains('restaurad')) {
-      defaultIcon = Container(
-        width: 24,
-        height: 24,
-        decoration: const BoxDecoration(
-          color: Color(0xFF1E2633),
-          borderRadius: BorderRadius.all(Radius.circular(6)),
-        ),
-        child: Icon(AppIcons.bold(SolarIcons.WiFiRouter), color: const Color(0xFF22C55E), size: 14),
-      );
+      defaultIcon = Icon(AppIcons.bold(SolarIcons.WiFiRouter), color: const Color(0xFF22C55E), size: 15);
     } else {
-      defaultIcon = Container(
-        width: 24,
-        height: 24,
-        decoration: const BoxDecoration(
-          color: Color(0xFF1E2633),
-          borderRadius: BorderRadius.all(Radius.circular(6)),
-        ),
-        child: Icon(AppIcons.bold(SolarIcons.CheckCircle), color: Colors.white, size: 14),
-      );
+      defaultIcon = Icon(AppIcons.bold(SolarIcons.CheckCircle), color: Colors.white, size: 15);
     }
 
     return Material(
@@ -162,15 +127,19 @@ class _ToastWidget extends StatelessWidget {
             maxWidth: isDesktop ? 600 : 360,
             minWidth: 180,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            color: const Color(0xFF1E2633),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppTheme.surfaceActive,
+              width: 1,
+            ),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 16,
-                offset: Offset(0, 6),
+                color: Colors.black38,
+                blurRadius: 12,
+                offset: Offset(0, 4),
               ),
             ],
           ),
@@ -179,18 +148,19 @@ class _ToastWidget extends StatelessWidget {
             children: [
               if (leadingIcon != null) ...[
                 leadingIcon!,
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
               ] else ...[
                 defaultIcon,
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
               ],
               Flexible(
                 child: Text(
                   message,
                   style: const TextStyle(
-                    color: Color(0xFF121212),
+                    color: AppTheme.primary,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
+                    decoration: TextDecoration.none,
                   ),
                 ),
               ),
@@ -201,9 +171,10 @@ class _ToastWidget extends StatelessWidget {
                   child: Text(
                     actionLabel!,
                     style: const TextStyle(
-                      color: Color(0xFF059669),
+                      color: Color(0xFF22C55E),
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
+                      decoration: TextDecoration.none,
                     ),
                   ),
                 ),
@@ -215,4 +186,5 @@ class _ToastWidget extends StatelessWidget {
     );
   }
 }
+
 

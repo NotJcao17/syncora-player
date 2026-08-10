@@ -229,7 +229,6 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
                           showAlbum: true,
                           onTap: () {
                             controller.setQueue(syncoraTracks, startIndex: i, activeContextId: 'downloads');
-                            controller.play();
                           },
                           onRemove: () async {
                             await dao.deleteByTrackId(downloadedTrack.trackId);

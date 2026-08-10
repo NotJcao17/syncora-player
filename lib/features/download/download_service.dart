@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:background_downloader/background_downloader.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
@@ -39,6 +39,22 @@ class DownloadProgress {
     required this.state,
     this.error,
   });
+}
+
+class DownloadBatchResult {
+  final int totalCount;
+  final int successCount;
+  final int failedCount;
+  final List<String> errors;
+
+  const DownloadBatchResult({
+    required this.totalCount,
+    required this.successCount,
+    required this.failedCount,
+    required this.errors,
+  });
+
+  bool get isSuccess => failedCount == 0;
 }
 
 class DownloadService {
@@ -106,12 +122,12 @@ class DownloadService {
     return count;
   }
 
-  Future<void> downloadTrack(SyncoraTrack track) async {
+  Future<bool> downloadTrack(SyncoraTrack track) async {
     await _checkWifiGuard();
 
     final existing = await _dao.getByTrackId(track.deezerId);
     if (existing != null && existing.downloadState == 2) {
-      return; // Ya descargado
+      return true; // Ya descargado
     }
 
     _activeCancelTokens[track.deezerId] = false;
@@ -161,7 +177,7 @@ class DownloadService {
 
       if (_activeCancelTokens[track.deezerId] == true) {
         await _handleCancelled(track.deezerId);
-        return;
+        return false;
       }
 
       if (result is! ExtractionSuccess) {
@@ -169,10 +185,11 @@ class DownloadService {
             ? (result.message ?? 'Falló la extracción de YouTube')
             : 'Falló la extracción de YouTube';
         await _handleFailed(track.deezerId, errorMsg);
-        return;
+        return false;
       }
 
       final streamUrl = result.streamUrl;
+      final headers = result.headers;
 
       _progressController.add(
         DownloadProgress(
@@ -193,7 +210,7 @@ class DownloadService {
 
       if (_activeCancelTokens[track.deezerId] == true) {
         await _handleCancelled(track.deezerId);
-        return;
+        return false;
       }
 
       // 4. Descargar archivo de audio
@@ -207,6 +224,10 @@ class DownloadService {
         final client = HttpClient();
         try {
           final request = await client.getUrl(Uri.parse(streamUrl));
+          headers.forEach((key, value) {
+            request.headers.set(key, value);
+          });
+
           final response = await request.close();
 
           if (response.statusCode == 200 || response.statusCode == 206) {
@@ -219,8 +240,7 @@ class DownloadService {
                 await sink.close();
                 if (file.existsSync()) file.deleteSync();
                 await _handleCancelled(track.deezerId);
-                client.close();
-                return;
+                return false;
               }
               sink.add(chunk);
               receivedBytes += chunk.length;
@@ -237,14 +257,12 @@ class DownloadService {
             await sink.close();
             fileSize = file.lengthSync();
           } else {
-            client.close();
             await _handleFailed(track.deezerId, 'Error HTTP ${response.statusCode}');
-            return;
+            return false;
           }
         } catch (e) {
-          client.close();
           await _handleFailed(track.deezerId, e.toString());
-          return;
+          return false;
         } finally {
           client.close();
         }
@@ -278,30 +296,54 @@ class DownloadService {
           state: DownloadState.done,
         ),
       );
+      return true;
     } catch (e) {
       if (_activeCancelTokens[track.deezerId] == true) {
         await _handleCancelled(track.deezerId);
       } else {
         await _handleFailed(track.deezerId, e.toString());
       }
+      return false;
     } finally {
       _activeCancelTokens.remove(track.deezerId);
     }
   }
 
-  Future<void> downloadTracks(List<SyncoraTrack> tracks, {String? groupLabel}) async {
+  Future<DownloadBatchResult> downloadTracks(List<SyncoraTrack> tracks, {String? groupLabel}) async {
+    await _checkWifiGuard();
+
+    int successCount = 0;
+    int failedCount = 0;
+    final List<String> errors = [];
+
     for (final track in tracks) {
       final existing = await _dao.getByTrackId(track.deezerId);
       if (existing != null && existing.downloadState == 2) {
+        successCount++;
         continue; // Saltar si ya descargado
       }
       try {
-        await downloadTrack(track);
+        final success = await downloadTrack(track);
+        if (success) {
+          successCount++;
+        } else {
+          failedCount++;
+          final updated = await _dao.getByTrackId(track.deezerId);
+          errors.add('${track.title}: ${updated?.downloadState == 3 ? "Error en la descarga" : "Descarga cancelada"}');
+        }
       } catch (e) {
         if (e is DownloadException) rethrow;
-        // Continuar con la siguiente en la cola si falla una pista individual
+        failedCount++;
+        errors.add('${track.title}: $e');
       }
     }
+
+    return DownloadBatchResult(
+      totalCount: tracks.length,
+      successCount: successCount,
+      failedCount: failedCount,
+      errors: errors,
+    );
   }
 
   Future<void> cancelDownload(int trackId) async {

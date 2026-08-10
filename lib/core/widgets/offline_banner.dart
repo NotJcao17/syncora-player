@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../utils/connectivity_service.dart';
+import 'app_toast.dart';
+
 
 class OfflineBanner extends ConsumerStatefulWidget {
   const OfflineBanner({super.key});
@@ -26,16 +28,10 @@ class _OfflineBannerState extends ConsumerState<OfflineBanner> {
       if (!prevVal && nextVal) {
         // Conexión restaurada
         if (mounted) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Conexión restaurada'),
-              duration: Duration(seconds: 2),
-              backgroundColor: AppTheme.surfaceActive,
-            ),
-          );
+          AppToast.show(context, message: 'Conexión restaurada');
         }
       }
+
     });
 
     final isOffline = !isConnected;

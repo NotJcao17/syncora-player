@@ -138,9 +138,10 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
               leading: Icon(AppIcons.broken(SolarIcons.CloudDownload), color: AppTheme.primary),
               title: Text('Descargar todo ($totalCount canciones)', style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
               onTap: () {
-                Navigator.pop(context);
-                _confirmAndStartDownload(downloadService, widget.tracks);
+                Navigator.of(context).pop();
+                _startDownload(downloadService, widget.tracks);
               },
+
             ),
           ] else if (state == DownloadButtonState.partial) ...[
             ListTile(
@@ -183,47 +184,7 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
     );
   }
 
-  void _confirmAndStartDownload(DownloadService service, List<SyncoraTrack> tracks) {
-    AppBottomSheet.show(
-      context: context,
-      title: 'Confirmar descarga',
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Se descargarán ${tracks.length} canciones para escucharlas offline.',
-              style: const TextStyle(color: AppTheme.secondary, fontSize: 14),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancelar', style: TextStyle(color: AppTheme.primary)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _startDownload(service, tracks);
-                    },
-                    child: const Text('Descargar', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   void _confirmAndDelete(dynamic dao) {
     AppBottomSheet.show(
@@ -278,9 +239,19 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
     setState(() => _isProcessing = true);
     try {
       AppToast.show(context, message: 'Iniciando descarga de ${tracks.length} canciones...');
-      await service.downloadTracks(tracks, groupLabel: widget.title);
+      final result = await service.downloadTracks(tracks, groupLabel: widget.title);
       if (mounted) {
-        AppToast.show(context, message: 'Descarga completada');
+        if (result.failedCount == 0) {
+          AppToast.show(context, message: 'Descarga completada');
+        } else if (result.successCount == 0) {
+          final errorText = result.errors.isNotEmpty ? result.errors.first : 'Error en la descarga';
+          AppToast.show(context, message: errorText);
+        } else {
+          AppToast.show(
+            context,
+            message: 'Descargadas ${result.successCount}/${tracks.length}. Fallaron ${result.failedCount}',
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
