@@ -90,8 +90,9 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget _buildMobileLayout(BuildContext context, int selectedIndex) {
     final currentTrack = ref.watch(currentTrackProvider);
     final hasTrack = currentTrack != null;
-
+    final paddingBottom = MediaQuery.of(context).padding.bottom;
     return Stack(
+
       children: [
         Scaffold(
           backgroundColor: AppTheme.background,
@@ -112,13 +113,14 @@ class _AppShellState extends ConsumerState<AppShell> {
           ),
         ),
         Positioned(
-          bottom: (hasTrack ? 124.0 : 64.0) + 12.0,
+          bottom: (hasTrack ? 152.0 : 80.0) + paddingBottom,
           left: 0,
           right: 0,
           child: const Center(
             child: OfflineBanner(),
           ),
         ),
+
       ],
     );
   }

@@ -214,7 +214,9 @@ class SyncoraPlayerController extends ChangeNotifier {
   }
 
   Future<void> skipToNext() async {
-    if (_isTransitioning) return;
+    if (_isTransitioning) {
+      _isTransitioning = false;
+    }
     _isTransitioning = true;
     try {
       final next = _computeNextIndex(autoAdvance: true);
@@ -235,6 +237,7 @@ class SyncoraPlayerController extends ChangeNotifier {
       _isTransitioning = false;
     }
   }
+
 
   /// Dispara Autoplay al llegar al final de la cola
   Future<bool> _tryAutoplay() async {
@@ -295,12 +298,20 @@ class SyncoraPlayerController extends ChangeNotifier {
   }
 
 
+  DateTime? _lastPrevTapTime;
+
   Future<void> skipToPrevious() async {
-    if (_isTransitioning) return;
+    final now = DateTime.now();
+    final isDoubleTap = _lastPrevTapTime != null && now.difference(_lastPrevTapTime!) < const Duration(milliseconds: 1500);
+    _lastPrevTapTime = now;
+
+    if (_isTransitioning) {
+      _isTransitioning = false;
+    }
     _isTransitioning = true;
     try {
-      // Si llevamos >3s reproduciéndola, reiniciar la pista actual.
-      if (_state.engine.position.inSeconds > 3) {
+      // Si llevamos >3s reproduciéndola y NO es doble tap rápido, reiniciar la pista actual.
+      if (!isDoubleTap && _state.engine.position.inSeconds > 3) {
         await _engine.seek(Duration.zero);
         return;
       }
@@ -317,6 +328,7 @@ class SyncoraPlayerController extends ChangeNotifier {
       _isTransitioning = false;
     }
   }
+
 
   void setRepeatMode(SyncoraRepeatMode mode) {
     _state = _state.copyWith(repeatMode: mode);

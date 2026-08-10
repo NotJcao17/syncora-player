@@ -240,47 +240,62 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      widget.track.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                              Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: widget.track.title,
                                       style: TextStyle(
                                         color: textColor,
                                         fontSize: 14,
                                         fontWeight: isActiveTrack ? FontWeight.bold : FontWeight.w600,
                                       ),
                                     ),
-                                  ),
-                                  if (isDownloadingLocal) ...[
-                                    const SizedBox(width: 6),
-                                    const SizedBox(
-                                      width: 14,
-                                      height: 14,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 1.5,
-                                        color: AppTheme.secondary,
+                                    if (isDownloadingLocal)
+                                      WidgetSpan(
+                                        alignment: PlaceholderAlignment.middle,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(left: 6),
+                                          child: SizedBox(
+                                            width: 14,
+                                            height: 14,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 1.5,
+                                              color: AppTheme.secondary,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    else if (isDownloadedLocal)
+                                      WidgetSpan(
+                                        alignment: PlaceholderAlignment.middle,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(left: 6),
+                                          child: Icon(
+                                            AppIcons.bold(SolarIcons.DownloadMinimalistic),
+                                            color: AppTheme.secondary,
+                                            size: 14,
+                                          ),
+                                        ),
+                                      )
+                                    else if (!isConnected)
+                                      WidgetSpan(
+                                        alignment: PlaceholderAlignment.middle,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(left: 6),
+                                          child: Icon(
+                                            AppIcons.broken(SolarIcons.WiFiRouter),
+                                            color: const Color(0xFFF59E0B),
+                                            size: 14,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ] else if (isDownloadedLocal) ...[
-                                    const SizedBox(width: 6),
-                                    Icon(
-                                      AppIcons.bold(SolarIcons.DownloadMinimalistic),
-                                      color: AppTheme.secondary,
-                                      size: 14,
-                                    ),
-                                  ] else if (!isConnected) ...[
-                                    const SizedBox(width: 6),
-                                    Icon(
-                                      AppIcons.broken(SolarIcons.WiFiRouter),
-                                      color: const Color(0xFFF59E0B),
-                                      size: 14,
-                                    ),
                                   ],
-                                ],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
+
                               const SizedBox(height: 2),
                               _buildSubtitle(context, subtitleColor),
                             ],
