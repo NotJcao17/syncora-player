@@ -558,17 +558,26 @@ bool get _isTestEnv {
     _log('[Session] Sesión restaurada: ${session.queue.length} pistas en cola, posición: ${session.positionSeconds}s (pausado)');
   }
 
+  final Set<int> _skippedIndicesOffline = {};
+
   /// Salto silencioso automático cuando se intenta reproducir una pista no descargada estando offline.
   Future<void> _skipSilently() async {
     if (_isTransitioning) return;
     _isTransitioning = true;
     try {
       final next = _computeNextIndex(autoAdvance: true);
-      if (next == null) {
-        await _engine.pause();
+      if (next == null || _skippedIndicesOffline.contains(next)) {
+        _skippedIndicesOffline.clear();
+        await _engine.stop();
+        _state = _state.copyWith(
+          clearError: true,
+        );
+        _notify();
         _saveSession();
         return;
       }
+
+      _skippedIndicesOffline.add(next);
       _state = _state.copyWith(currentIndex: next, clearError: true);
       _notify();
       _saveSession();
@@ -589,13 +598,13 @@ bool get _isTestEnv {
 
     final trackDeezerId = int.tryParse(track.id) ?? track.id.hashCode.abs();
 
-
     // 1. Verificar si existe descarga local (state == 2)
     if (_downloadedTrackDao != null && trackDeezerId > 0) {
       try {
         final downloaded = await _downloadedTrackDao.getByTrackId(trackDeezerId);
         if (downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty) {
           _log('[Play] Pista local descargada encontrada: ${downloaded.localAudioPath}. Cargando sin pasar por ExtractionIsolate.');
+          _skippedIndicesOffline.clear();
           await _engine.setLocalSource(downloaded.localAudioPath);
 
           if (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0) {
@@ -620,6 +629,9 @@ bool get _isTestEnv {
       await _skipSilently();
       return;
     }
+
+    _skippedIndicesOffline.clear();
+
 
     // 3. Flujo normal de extracción de YouTube
     String targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)

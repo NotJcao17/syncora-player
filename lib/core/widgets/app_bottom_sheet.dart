@@ -20,6 +20,39 @@ class AppBottomSheet extends StatelessWidget {
     String? title,
     double maxHeightFactor = 0.85,
   }) {
+    final isDesktop = MediaQuery.of(context).size.width >= 720;
+    if (isDesktop) {
+      return showDialog<T>(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: AppTheme.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 480),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (title != null) ...[
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1, color: AppTheme.surfaceHover),
+                  const SizedBox(height: 12),
+                ],
+                Flexible(child: child),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
@@ -31,6 +64,7 @@ class AppBottomSheet extends StatelessWidget {
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

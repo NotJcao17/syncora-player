@@ -136,7 +136,7 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
           if (state == DownloadButtonState.none) ...[
             ListTile(
               leading: Icon(AppIcons.broken(SolarIcons.CloudDownload), color: AppTheme.primary),
-              title: Text('⬇ Descargar todo ($totalCount canciones)', style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+              title: Text('Descargar todo ($totalCount canciones)', style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
               onTap: () {
                 Navigator.pop(context);
                 _confirmAndStartDownload(downloadService, widget.tracks);
@@ -145,7 +145,7 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
           ] else if (state == DownloadButtonState.partial) ...[
             ListTile(
               leading: Icon(AppIcons.broken(SolarIcons.CloudDownload), color: AppTheme.primary),
-              title: Text('⬇ Descargar ${totalCount - downloadedCount} faltantes', style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+              title: Text('Descargar ${totalCount - downloadedCount} faltantes', style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
               onTap: () {
                 Navigator.pop(context);
                 _startDownload(downloadService, widget.tracks);
@@ -153,7 +153,7 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
             ),
             ListTile(
               leading: Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: Colors.redAccent),
-              title: const Text('🗑 Eliminar descargas existentes', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
+              title: const Text('Eliminar descargas existentes', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
               onTap: () {
                 Navigator.pop(context);
                 _confirmAndDelete(dao);
@@ -162,7 +162,7 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
           ] else ...[
             ListTile(
               leading: Icon(AppIcons.broken(SolarIcons.Restart), color: AppTheme.primary),
-              title: const Text('🔄 Verificar y actualizar descargas', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+              title: const Text('Verificar y actualizar descargas', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
               onTap: () {
                 Navigator.pop(context);
                 _startDownload(downloadService, widget.tracks);
@@ -170,13 +170,14 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
             ),
             ListTile(
               leading: Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: Colors.redAccent),
-              title: const Text('🗑 Eliminar todas las descargas', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
+              title: const Text('Eliminar todas las descargas', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
               onTap: () {
                 Navigator.pop(context);
                 _confirmAndDelete(dao);
               },
             ),
           ],
+
         ],
       ),
     );

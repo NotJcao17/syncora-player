@@ -30,7 +30,7 @@ abstract class AppToast {
     final keyboardHeight = mediaQuery.viewInsets.bottom;
     final paddingBottom = mediaQuery.padding.bottom;
 
-    double bottomMargin = 40.0;
+    double bottomMargin = 104.0;
     if (!isDesktop) {
       if (keyboardHeight > 0) {
         bottomMargin = keyboardHeight + 16.0;
@@ -66,32 +66,20 @@ abstract class AppToast {
       builder: (context) {
         return Positioned(
           bottom: bottomMargin,
-          left: isDesktop ? null : 20.0,
-          right: isDesktop ? null : 20.0,
-          child: isDesktop
-              ? Align(
-                  alignment: Alignment.bottomCenter,
-                  child: _ToastWidget(
-                    message: message,
-                    leadingIcon: leadingIcon,
-                    actionLabel: actionLabel,
-                    onAction: () {
-                      _dismiss();
-                      onAction?.call();
-                    },
-                    isDesktop: true,
-                  ),
-                )
-              : _ToastWidget(
-                  message: message,
-                  leadingIcon: leadingIcon,
-                  actionLabel: actionLabel,
-                  onAction: () {
-                    _dismiss();
-                    onAction?.call();
-                  },
-                  isDesktop: false,
-                ),
+          left: 0,
+          right: 0,
+          child: Center(
+            child: _ToastWidget(
+              message: message,
+              leadingIcon: leadingIcon,
+              actionLabel: actionLabel,
+              onAction: () {
+                _dismiss();
+                onAction?.call();
+              },
+              isDesktop: isDesktop,
+            ),
+          ),
         );
       },
     );
@@ -129,6 +117,40 @@ class _ToastWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget defaultIcon;
+    final lower = message.toLowerCase();
+    if (lower.contains('descarg')) {
+      defaultIcon = Container(
+        width: 24,
+        height: 24,
+        decoration: const BoxDecoration(
+          color: Color(0xFF1E2633),
+          borderRadius: BorderRadius.all(Radius.circular(6)),
+        ),
+        child: Icon(AppIcons.bold(SolarIcons.CloudCheck), color: AppTheme.primary, size: 14),
+      );
+    } else if (lower.contains('conexió') || lower.contains('restaurad')) {
+      defaultIcon = Container(
+        width: 24,
+        height: 24,
+        decoration: const BoxDecoration(
+          color: Color(0xFF1E2633),
+          borderRadius: BorderRadius.all(Radius.circular(6)),
+        ),
+        child: Icon(AppIcons.bold(SolarIcons.WiFiRouter), color: const Color(0xFF22C55E), size: 14),
+      );
+    } else {
+      defaultIcon = Container(
+        width: 24,
+        height: 24,
+        decoration: const BoxDecoration(
+          color: Color(0xFF1E2633),
+          borderRadius: BorderRadius.all(Radius.circular(6)),
+        ),
+        child: Icon(AppIcons.bold(SolarIcons.CheckCircle), color: Colors.white, size: 14),
+      );
+    }
+
     return Material(
       color: Colors.transparent,
       elevation: 0,
@@ -137,7 +159,7 @@ class _ToastWidget extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         child: Container(
           constraints: BoxConstraints(
-            maxWidth: isDesktop ? 600 : double.infinity,
+            maxWidth: isDesktop ? 600 : 360,
             minWidth: 180,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -159,15 +181,7 @@ class _ToastWidget extends StatelessWidget {
                 leadingIcon!,
                 const SizedBox(width: 10),
               ] else ...[
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: const BoxDecoration(
-                    gradient: AppTheme.gradientLiked,
-                    borderRadius: BorderRadius.all(Radius.circular(6)),
-                  ),
-                  child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 14),
-                ),
+                defaultIcon,
                 const SizedBox(width: 10),
               ],
               Flexible(
@@ -201,3 +215,4 @@ class _ToastWidget extends StatelessWidget {
     );
   }
 }
+

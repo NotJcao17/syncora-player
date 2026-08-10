@@ -463,8 +463,11 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                           const SizedBox(height: 16),
 
                           // Actions row
-                          Row(
-                            mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
+
                             children: [
                               if (syncoraTracks.isNotEmpty) ...[
                                 _HeaderPlayButton(
@@ -558,6 +561,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                               ),
                           ],
                         ),
+                      ),
+
 
                         const SizedBox(height: 12),
 

@@ -333,10 +333,13 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
 
                       const SizedBox(height: 16),
 
-                      Row(
-                        mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+
                           if (syncoraTracks.isNotEmpty) ...[
                             _HeaderPlayButton(
                               isPlaying: showPauseHeader,
@@ -427,6 +430,8 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                           ),
                         ],
                       ),
+                    ),
+
 
                     const SizedBox(height: 20),
 

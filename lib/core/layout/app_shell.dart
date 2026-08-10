@@ -130,13 +130,16 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: Column(
+      body: Stack(
         children: [
-          if (!kIsWeb && Platform.isWindows) const _CustomTitleBar(),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+          Column(
+            children: [
+              if (!kIsWeb && Platform.isWindows) const _CustomTitleBar(),
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+
                 // Sidebar Izquierdo (256px expandido / 80px colapsado)
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -380,7 +383,18 @@ class _AppShellState extends ConsumerState<AppShell> {
           const MiniPlayer(),
         ],
       ),
-    );
+      Positioned(
+        bottom: 104,
+        left: 0,
+        right: 0,
+        child: const Center(
+          child: OfflineBanner(),
+        ),
+      ),
+    ],
+  ),
+);
+
   }
 
   Widget _buildQueueList(WidgetRef ref) {

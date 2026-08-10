@@ -47,45 +47,49 @@ class _OfflineBannerState extends ConsumerState<OfflineBanner> {
       child: AnimatedOpacity(
         opacity: isOffline ? 1.0 : 0.0,
         duration: const Duration(milliseconds: 200),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E2633),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFFF59E0B),
-              width: 1,
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 8,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                AppIcons.broken(SolarIcons.WiFiRouter),
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E2633),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
                 color: const Color(0xFFF59E0B),
-                size: 14,
+                width: 1,
               ),
-
-              const SizedBox(width: 8),
-              const Text(
-                'Sin conexión',
-                style: TextStyle(
-                  color: AppTheme.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  AppIcons.broken(SolarIcons.WiFiRouter),
+                  color: const Color(0xFFF59E0B),
+                  size: 15,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Reproduciendo sin conexión',
+                  style: TextStyle(
+                    color: AppTheme.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+
   }
 }

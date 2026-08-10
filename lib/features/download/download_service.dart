@@ -147,8 +147,12 @@ class DownloadService {
 
     try {
       // 2. Extraer URL de YouTube
+      final targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)
+          ? track.youtubeVideoId!
+          : track.id;
+
       final result = await _extractionService.extractUrl(
-        track.deezerId.toString(),
+        targetId,
         trackTitle: track.title,
         trackArtist: track.artist,
         durationSeconds: ((track.duration?.inMilliseconds ?? 0) / 1000).round(),
@@ -168,9 +172,7 @@ class DownloadService {
         return;
       }
 
-
       final streamUrl = result.streamUrl;
-
 
       _progressController.add(
         DownloadProgress(
@@ -201,43 +203,53 @@ class DownloadService {
         f.writeAsStringSync('mock_audio_content_${track.deezerId}');
         fileSize = f.lengthSync();
       } else {
-        final task = DownloadTask(
-          url: streamUrl,
-          filename: '${track.deezerId}.mp4',
-          directory: 'syncora/downloads',
-          baseDirectory: BaseDirectory.applicationDocuments,
-          updates: Updates.statusAndProgress,
-        );
+        final file = File(localAudioPath);
+        final client = HttpClient();
+        try {
+          final request = await client.getUrl(Uri.parse(streamUrl));
+          final response = await request.close();
 
-        final result = await FileDownloader().download(
-          task,
-          onProgress: (prog) {
-            _progressController.add(
-              DownloadProgress(
-                trackId: track.deezerId,
-                progress: 0.2 + (prog * 0.75),
-                state: DownloadState.downloading,
-              ),
-            );
-          },
-        );
+          if (response.statusCode == 200 || response.statusCode == 206) {
+            final sink = file.openWrite();
+            final totalBytes = response.contentLength;
+            int receivedBytes = 0;
 
-        if (_activeCancelTokens[track.deezerId] == true) {
-          await FileDownloader().cancelTaskWithId(task.taskId);
-          await _handleCancelled(track.deezerId);
+            await for (final chunk in response) {
+              if (_activeCancelTokens[track.deezerId] == true) {
+                await sink.close();
+                if (file.existsSync()) file.deleteSync();
+                await _handleCancelled(track.deezerId);
+                client.close();
+                return;
+              }
+              sink.add(chunk);
+              receivedBytes += chunk.length;
+              if (totalBytes > 0) {
+                _progressController.add(
+                  DownloadProgress(
+                    trackId: track.deezerId,
+                    progress: 0.2 + (receivedBytes / totalBytes * 0.75),
+                    state: DownloadState.downloading,
+                  ),
+                );
+              }
+            }
+            await sink.close();
+            fileSize = file.lengthSync();
+          } else {
+            client.close();
+            await _handleFailed(track.deezerId, 'Error HTTP ${response.statusCode}');
+            return;
+          }
+        } catch (e) {
+          client.close();
+          await _handleFailed(track.deezerId, e.toString());
           return;
-        }
-
-        if (result.status != TaskStatus.complete) {
-          await _handleFailed(track.deezerId, 'Error en descarga background');
-          return;
-        }
-
-        final downloadedFile = File(localAudioPath);
-        if (downloadedFile.existsSync()) {
-          fileSize = downloadedFile.lengthSync();
+        } finally {
+          client.close();
         }
       }
+
 
       // 5. Actualizar estado completado en DB
       await _dao.insertOrUpdate(
