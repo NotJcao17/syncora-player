@@ -66,6 +66,25 @@ class AppBottomSheet extends StatelessWidget {
     );
   }
 
+  static void pop(BuildContext context) {
+    if (!context.mounted) return;
+    try {
+      final isDesktop = MediaQuery.of(context).size.width >= 720;
+      if (isDesktop) {
+        Navigator.of(context, rootNavigator: true).pop();
+      } else {
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop();
+        }
+      }
+    } catch (_) {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {

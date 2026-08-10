@@ -574,9 +574,7 @@ bool get _isTestEnv {
 
   /// Salto silencioso automático cuando se intenta reproducir una pista no descargada estando offline.
   Future<void> _skipSilently() async {
-    if (_isTransitioning) return;
-    _isTransitioning = true;
-    try {
+    while (true) {
       final next = _computeNextIndex(autoAdvance: true);
       if (next == null || _skippedIndicesOffline.contains(next)) {
         _skippedIndicesOffline.clear();
@@ -593,11 +591,22 @@ bool get _isTestEnv {
       _state = _state.copyWith(currentIndex: next, clearError: true);
       _notify();
       _saveSession();
-      await playCurrent();
-    } finally {
-      _isTransitioning = false;
+
+      final track = _state.currentTrack;
+      if (track != null && _downloadedTrackDao != null) {
+        final trackDeezerId = int.tryParse(track.id) ?? track.id.hashCode.abs();
+        try {
+          final downloaded = await _downloadedTrackDao.getByTrackId(trackDeezerId);
+          if (downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty) {
+            _log('[OfflineSkip] Pista descargada encontrada a la posición $next: ${track.title}');
+            await playCurrent();
+            return;
+          }
+        } catch (_) {}
+      }
     }
   }
+
 
   /// Núcleo: resuelve la URL de la pista actual o carga el archivo local si está descargado.
   Future<void> playCurrent() async {

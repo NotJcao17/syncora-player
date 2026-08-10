@@ -20,7 +20,12 @@ class DownloadedTrackDao extends DatabaseAccessor<SyncoraDatabase> with _$Downlo
   }
 
 
+  Future<List<DownloadedTrack>> getAll() async {
+    return select(downloadedTracks).get();
+  }
+
   Future<DownloadedTrack?> getByTrackId(int trackId) async {
+
     return (select(downloadedTracks)..where((t) => t.trackId.equals(trackId))).getSingleOrNull();
   }
 

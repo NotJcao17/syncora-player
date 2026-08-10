@@ -240,64 +240,19 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text.rich(
-                                TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: widget.track.title,
-                                      style: TextStyle(
-                                        color: textColor,
-                                        fontSize: 14,
-                                        fontWeight: isActiveTrack ? FontWeight.bold : FontWeight.w600,
-                                      ),
-                                    ),
-                                    if (isDownloadingLocal)
-                                      WidgetSpan(
-                                        alignment: PlaceholderAlignment.middle,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(left: 6),
-                                          child: SizedBox(
-                                            width: 14,
-                                            height: 14,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 1.5,
-                                              color: AppTheme.secondary,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                    else if (isDownloadedLocal)
-                                      WidgetSpan(
-                                        alignment: PlaceholderAlignment.middle,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(left: 6),
-                                          child: Icon(
-                                            AppIcons.bold(SolarIcons.DownloadMinimalistic),
-                                            color: AppTheme.secondary,
-                                            size: 14,
-                                          ),
-                                        ),
-                                      )
-                                    else if (!isConnected)
-                                      WidgetSpan(
-                                        alignment: PlaceholderAlignment.middle,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(left: 6),
-                                          child: Icon(
-                                            AppIcons.broken(SolarIcons.WiFiRouter),
-                                            color: const Color(0xFFF59E0B),
-                                            size: 14,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
+                              Text(
+                                widget.track.title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 14,
+                                  fontWeight: isActiveTrack ? FontWeight.bold : FontWeight.w600,
+                                ),
                               ),
-
                               const SizedBox(height: 2),
-                              _buildSubtitle(context, subtitleColor),
+                              _buildSubtitle(context, subtitleColor, isDownloadingLocal, isDownloadedLocal, isConnected),
+
                             ],
                           ),
                         ),
@@ -388,18 +343,64 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     return content;
   }
 
-  Widget _buildSubtitle(BuildContext context, Color subtitleColor) {
+  Widget _buildSubtitle(
+    BuildContext context,
+    Color subtitleColor,
+    bool isDownloadingLocal,
+    bool isDownloadedLocal,
+    bool isConnected,
+  ) {
+    Widget? statusIcon;
+    if (isDownloadingLocal) {
+      statusIcon = const Padding(
+        padding: EdgeInsets.only(right: 6),
+        child: SizedBox(
+          width: 13,
+          height: 13,
+          child: CircularProgressIndicator(
+            strokeWidth: 1.5,
+            color: AppTheme.secondary,
+          ),
+        ),
+      );
+    } else if (isDownloadedLocal) {
+      statusIcon = Padding(
+        padding: const EdgeInsets.only(right: 6),
+        child: Icon(
+          AppIcons.bold(SolarIcons.DownloadMinimalistic),
+          color: AppTheme.secondary,
+          size: 13,
+        ),
+      );
+    } else if (!isConnected) {
+      statusIcon = Padding(
+        padding: const EdgeInsets.only(right: 6),
+        child: Icon(
+          AppIcons.broken(SolarIcons.WiFiRouter),
+          color: const Color(0xFFF59E0B),
+          size: 13,
+        ),
+      );
+    }
+
     final isDesktop = MediaQuery.of(context).size.width >= 768;
 
     if (!isDesktop) {
-      return Text(
-        widget.track.artist,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: subtitleColor,
-          fontSize: 13,
-        ),
+      return Row(
+        children: [
+          if (statusIcon != null) statusIcon,
+          Expanded(
+            child: Text(
+              widget.track.artist,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: subtitleColor,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
       );
     }
 
@@ -407,6 +408,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       color: subtitleColor,
       fontSize: 13,
     );
+
 
     final List<SyncoraArtistRef> effectiveArtists = [];
     if (widget.track.artists.isNotEmpty) {
@@ -449,43 +451,65 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         );
       }
 
-      return Text.rich(
-        TextSpan(children: spans),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      return Row(
+        children: [
+          if (statusIcon != null) statusIcon,
+          Expanded(
+            child: Text.rich(
+              TextSpan(children: spans),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       );
     }
 
     final hasArtistId = widget.track.artistId != null && widget.track.artistId != 0;
 
     if (hasArtistId) {
-      return Text.rich(
-        TextSpan(
-          children: [
-            WidgetSpan(
-              alignment: PlaceholderAlignment.baseline,
-              baseline: TextBaseline.alphabetic,
-              child: _HoverableText(
-                text: widget.track.artist,
-                style: style,
-                isClickable: true,
-                onTap: () => context.push('/artist/${widget.track.artistId}'),
+      return Row(
+        children: [
+          if (statusIcon != null) statusIcon,
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.baseline,
+                    baseline: TextBaseline.alphabetic,
+                    child: _HoverableText(
+                      text: widget.track.artist,
+                      style: style,
+                      isClickable: true,
+                      onTap: () => context.push('/artist/${widget.track.artistId}'),
+                    ),
+                  ),
+                ],
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+          ),
+        ],
       );
     }
 
-    return Text(
-      widget.track.artist,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: style,
+    return Row(
+      children: [
+        if (statusIcon != null) statusIcon,
+        Expanded(
+          child: Text(
+            widget.track.artist,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          ),
+        ),
+      ],
     );
   }
+
 
   Widget _buildMoreButton(BuildContext context) {
     if (widget.onMorePressed != null) {

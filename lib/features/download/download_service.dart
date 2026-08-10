@@ -358,9 +358,36 @@ class DownloadService {
     }
   }
 
+  Future<void> cleanupInterruptedDownloads() async {
+    if (_isTestEnv || kIsWeb) return;
+    try {
+      final allDownloaded = await _dao.getAll();
+      for (final track in allDownloaded) {
+        if (track.downloadState == 1) {
+          final file = File(track.localAudioPath);
+          if (file.existsSync()) {
+            try { file.deleteSync(); } catch (_) {}
+          }
+          await _dao.deleteByTrackId(track.trackId);
+        } else if (track.downloadState == 2) {
+          final file = File(track.localAudioPath);
+          if (!file.existsSync() || file.lengthSync() == 0) {
+            await _dao.deleteByTrackId(track.trackId);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
   Future<void> _handleCancelled(int trackId) async {
     final existing = await _dao.getByTrackId(trackId);
     if (existing != null) {
+      if (existing.localAudioPath.isNotEmpty) {
+        final file = File(existing.localAudioPath);
+        if (file.existsSync()) {
+          try { file.deleteSync(); } catch (_) {}
+        }
+      }
       await _dao.insertOrUpdate(
         DownloadedTracksCompanion.insert(
           trackId: trackId,
@@ -388,6 +415,12 @@ class DownloadService {
   Future<void> _handleFailed(int trackId, String error) async {
     final existing = await _dao.getByTrackId(trackId);
     if (existing != null) {
+      if (existing.localAudioPath.isNotEmpty) {
+        final file = File(existing.localAudioPath);
+        if (file.existsSync()) {
+          try { file.deleteSync(); } catch (_) {}
+        }
+      }
       await _dao.insertOrUpdate(
         DownloadedTracksCompanion.insert(
           trackId: trackId,
@@ -412,6 +445,7 @@ class DownloadService {
       ),
     );
   }
+
 
   void dispose() {
     _progressController.close();

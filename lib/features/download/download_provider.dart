@@ -35,6 +35,8 @@ final downloadServiceProvider = Provider<DownloadService>((ref) {
   );
 
   service.setWifiOnly(wifiOnly);
+  service.cleanupInterruptedDownloads();
   ref.onDispose(() => service.dispose());
   return service;
 });
+
