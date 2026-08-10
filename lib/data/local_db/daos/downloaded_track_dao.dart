@@ -9,8 +9,16 @@ class DownloadedTrackDao extends DatabaseAccessor<SyncoraDatabase> with _$Downlo
   DownloadedTrackDao(super.db);
 
   Future<int> insertOrUpdate(DownloadedTracksCompanion track) async {
-    return into(downloadedTracks).insertOnConflictUpdate(track);
+    final trackIdVal = track.trackId.value;
+    final existing = await getByTrackId(trackIdVal);
+    if (existing != null) {
+      await (update(downloadedTracks)..where((t) => t.trackId.equals(trackIdVal))).write(track);
+      return existing.id;
+    } else {
+      return into(downloadedTracks).insert(track);
+    }
   }
+
 
   Future<DownloadedTrack?> getByTrackId(int trackId) async {
     return (select(downloadedTracks)..where((t) => t.trackId.equals(trackId))).getSingleOrNull();

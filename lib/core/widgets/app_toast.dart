@@ -19,67 +19,71 @@ abstract class AppToast {
     VoidCallback? onAction,
     Duration duration = const Duration(seconds: 3),
   }) {
-    _timer?.cancel();
-    _currentEntry?.remove();
-    _currentEntry = null;
+    if (!context.mounted) return;
+    try {
+      _timer?.cancel();
+      _currentEntry?.remove();
+      _currentEntry = null;
 
-    final mediaQuery = MediaQuery.of(context);
-    final size = mediaQuery.size;
-    final isDesktop = size.width >= 768;
-    final keyboardHeight = mediaQuery.viewInsets.bottom;
-    final paddingBottom = mediaQuery.padding.bottom;
+      final mediaQuery = MediaQuery.of(context);
+      final size = mediaQuery.size;
+      final isDesktop = size.width >= 768;
+      final keyboardHeight = mediaQuery.viewInsets.bottom;
+      final paddingBottom = mediaQuery.padding.bottom;
 
-    double bottomMargin = 104.0;
-    if (!isDesktop) {
-      if (keyboardHeight > 0) {
-        bottomMargin = keyboardHeight + 16.0;
-      } else {
-        bool isFullscreenPlayer = false;
-        try {
-          final location = GoRouterState.of(context).matchedLocation;
-          isFullscreenPlayer = location == '/player';
-        } catch (_) {}
-
-        if (isFullscreenPlayer) {
-          bottomMargin = 24.0 + paddingBottom;
+      double bottomMargin = 104.0;
+      if (!isDesktop) {
+        if (keyboardHeight > 0) {
+          bottomMargin = keyboardHeight + 16.0;
         } else {
-          bottomMargin = 152.0 + paddingBottom;
+          bool isFullscreenPlayer = false;
+          try {
+            final location = GoRouterState.of(context).matchedLocation;
+            isFullscreenPlayer = location == '/player';
+          } catch (_) {}
+
+          if (isFullscreenPlayer) {
+            bottomMargin = 24.0 + paddingBottom;
+          } else {
+            bottomMargin = 152.0 + paddingBottom;
+          }
         }
       }
-    }
 
-    final overlay = Overlay.of(context, rootOverlay: true);
+      final overlay = Overlay.of(context, rootOverlay: true);
 
-    late OverlayEntry entry;
-    entry = OverlayEntry(
-      builder: (context) {
-        return Positioned(
-          bottom: bottomMargin,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: _ToastWidget(
-              message: message,
-              leadingIcon: leadingIcon,
-              actionLabel: actionLabel,
-              onAction: () {
-                _dismiss();
-                onAction?.call();
-              },
-              isDesktop: isDesktop,
+      late OverlayEntry entry;
+      entry = OverlayEntry(
+        builder: (context) {
+          return Positioned(
+            bottom: bottomMargin,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: _ToastWidget(
+                message: message,
+                leadingIcon: leadingIcon,
+                actionLabel: actionLabel,
+                onAction: () {
+                  _dismiss();
+                  onAction?.call();
+                },
+                isDesktop: isDesktop,
+              ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
 
-    _currentEntry = entry;
-    overlay.insert(entry);
+      _currentEntry = entry;
+      overlay.insert(entry);
 
-    _timer = Timer(duration, () {
-      _dismiss();
-    });
+      _timer = Timer(duration, () {
+        _dismiss();
+      });
+    } catch (_) {}
   }
+
 
   static void _dismiss() {
     _timer?.cancel();

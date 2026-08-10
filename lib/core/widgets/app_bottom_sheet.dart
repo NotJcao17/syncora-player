@@ -37,10 +37,11 @@ class AppBottomSheet extends StatelessWidget {
                 if (title != null) ...[
                   Text(
                     title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                   ),
+
                   const SizedBox(height: 12),
                   const Divider(height: 1, color: AppTheme.surfaceHover),
                   const SizedBox(height: 12),
