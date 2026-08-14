@@ -50,3 +50,10 @@ Todas las 37 reglas y escenarios de prueba de la Fase 6 han sido satisfechos y v
 - [x] Guardias de eliminación en reproductor activo.
 - [x] Salto silencioso en cola offline.
 - [x] Limpieza correcta de archivos físicos al borrar descargas o caché LRU.
+
+---
+
+## 📌 Documento de Correcciones y QA
+Para el registro completo de ajustes de interfaz, manejo de pop modales adaptativo en PC/Móvil, escaneo iterativo offline y limpieza de descargas interrumpidas, consultar:
+- [fase_6_correcciones.md](file:///c:/Users/j_c_o/Documents/proyectosPersonales/syncora-player/docs/fases/fase_6_correcciones.md)
+
