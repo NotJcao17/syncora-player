@@ -3,6 +3,24 @@
 > Documento de planificación. Redactado tras una sesión de análisis y pruebas en vivo contra la API
 > de Deezer. Todos los hallazgos citados aquí fueron verificados empíricamente, no inferidos.
 
+## Estado actual (leer primero)
+
+- **Fase 0** (BD de colaboradores), **Fase A** (buscador), **Fase B** (importación CSV) y **Fase C**
+  (matcher Deezer→YouTube) — **completas**, probadas manualmente en la app real por el usuario,
+  comiteadas y pusheadas.
+- Tras cerrar Fase C se encontraron y arreglaron en pruebas manuales varios bugs reales, algunos
+  fuera del alcance original de las 3 fases (una condición de carrera en el reproductor, cómo
+  `MediaKitEngine` distinguía fin de pista real de fallo de carga, un bug de sincronización de
+  playlists con Supabase que llegó a borrar playlists importadas, y un bug de tokenización en el
+  buscador). Todo está documentado en detalle en las secciones "hallazgo" de abajo, con causa raíz,
+  fix y tests — **no hace falta releer esas secciones para trabajar en Fase D**, son historial.
+- Las migraciones de Supabase están al día en producción (confirmado con
+  `supabase migration list --linked`, `upToDate: true`) y el usuario confirmó en vivo que los tres
+  bugs reportados quedaron resueltos.
+- **Lo único pendiente es Fase D** (búsqueda profunda: D1 colaboración, D2 buscar otras versiones,
+  D3 búsqueda exacta) — diseño ya discutido y acordado con el usuario, checklist abajo. Nada de Fase D
+  está implementado todavía.
+
 ## Contexto y diagnóstico
 
 Se identificaron **tres frentes** con problemas, no dos como se pensaba al inicio:
@@ -719,13 +737,24 @@ escribe en local cuando local y remoto YA son iguales — nunca antes.**
 
 **Colaboradores en Supabase (punto 2 del usuario, confirmado como importante):** se agregó la
 migración `supabase/migrations/20250001000006_playlist_tracks_contributors.sql`
-(`ALTER TABLE playlist_tracks ADD COLUMN contributors_json TEXT`) — **no aplicada automáticamente,
-requiere `supabase db push` o correrla manualmente contra el proyecto**, no se ejecutó por ser un
-cambio de schema en infraestructura compartida. Los 4 puntos que suben pistas a Supabase
-(`track_tile.dart` ×3, `library_screen.dart` ×1) ahora incluyen `contributors_json` en el payload
-cuando hay más de un colaborador, y `sync_service.dart` ahora lo lee de vuelta al bajar pistas
-remotas y lo pasa a `PlaylistDao.addTrackToPlaylist`. Sin la migración aplicada, Supabase rechazaría
-el campo desconocido — **hay que correr la migración antes de probar este punto**.
+(`ALTER TABLE playlist_tracks ADD COLUMN contributors_json TEXT`). Los 4 puntos que suben pistas a
+Supabase (`track_tile.dart` ×3, `library_screen.dart` ×1) incluyen `contributors_json` en el payload
+cuando hay más de un colaborador, y `sync_service.dart` lo lee de vuelta al bajar pistas remotas y lo
+pasa a `PlaylistDao.addTrackToPlaylist`.
+
+**Migraciones aplicadas a producción (2026-08-16, con autorización explícita del usuario).** Se
+detectó de paso que había otra migración pendiente sin aplicar, `20250001000005_protect_liked_playlist.sql`
+(de antes de esta sesión, no relacionada) — índice único de 1 "Tus me gusta" por usuario + política
+RLS que impide borrarla. `supabase db push` aplica todas las pendientes en orden, sin forma de elegir
+una sola, así que se consultó al usuario antes de aplicar ambas (`db push --linked --dry-run` primero
+para confirmar exactamente qué se iba a tocar). Las dos aplicaron limpio — no había duplicados de
+"Tus me gusta" en producción que rompieran el índice único. Verificado con
+`supabase migration list --linked`: local == remoto en las 7 migraciones,
+`db push --dry-run` reporta `upToDate: true`.
+
+**Confirmado funcionando en producción por el usuario** tras probar los tres bugs reportados
+(playlist que se borraba al importar, colaboradores no persistiendo entre dispositivos, "3A.M." mal
+rankeado). Fases 0, A, B, C y este hallazgo de sincronización quedan **completos y cerrados**.
 
 Verificado: 153 tests, `flutter analyze` limpio (mismos infos preexistentes).
 
