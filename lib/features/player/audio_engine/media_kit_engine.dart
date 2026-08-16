@@ -29,6 +29,8 @@ class MediaKitEngine implements AudioEngine {
       StreamController<AudioEngineState>.broadcast();
   final StreamController<void> _completionController =
       StreamController<void>.broadcast();
+  final StreamController<String> _logStreamController =
+      StreamController<String>.broadcast();
 
   AudioEngineState _state = AudioEngineState.initial;
   bool _skipSilence = false;
@@ -39,6 +41,15 @@ class MediaKitEngine implements AudioEngine {
   bool _seekedThisTrack = false;
   static final RegExp _silenceEndRe =
       RegExp(r'silence_end:\s*([\d.]+)');
+
+  // --- Distinguir fin de pista real de un fallo de carga ---------------
+  // libmpv emite `completed = true` tanto al llegar al final genuino de una
+  // pista como cuando el stream nunca llegó a reproducir nada (URL firmada
+  // vencida/con 403, respuesta vacía, formato roto) — en ambos casos es un
+  // EOF desde su punto de vista. Sin esta distinción, un fallo de carga se
+  // trataba exactamente igual que una canción terminada normalmente: sin
+  // error visible, saltando en silencio a la siguiente pista de la cola.
+  bool _hadMeaningfulPlayback = false;
 
   /// Construye el motor. Usa `logLevel: info` para poder capturar los eventos
   /// de `silencedetect` (Pitfall #7).
@@ -54,9 +65,15 @@ class MediaKitEngine implements AudioEngine {
       _emit(_state.copyWith(playing: playing));
     });
     _player.stream.position.listen((p) {
+      if (!_hadMeaningfulPlayback && p > const Duration(milliseconds: 500)) {
+        _hadMeaningfulPlayback = true;
+      }
       _emit(_state.copyWith(position: p));
     });
     _player.stream.duration.listen((d) {
+      if (!_hadMeaningfulPlayback && d > Duration.zero) {
+        _hadMeaningfulPlayback = true;
+      }
       _emit(_state.copyWith(duration: d));
     });
     _player.stream.buffer.listen((b) {
@@ -69,15 +86,26 @@ class MediaKitEngine implements AudioEngine {
       ));
     });
     _player.stream.completed.listen((completed) {
-      if (completed) {
-        _completionController.add(null);
-        _emit(_state.copyWith(
-          playing: false,
-          processingState: AudioProcessingState.completed,
-        ));
+      if (!completed) return;
+      if (!_hadMeaningfulPlayback) {
+        // EOF sin haber reproducido nada real: fallo de carga (URL/stream
+        // roto), no el fin genuino de la pista. No se emite
+        // `completionStream` — eso dispararía el mismo avance de cola que
+        // una canción terminada normalmente, indistinguible para el usuario.
+        _logStreamController.add(
+          '[MediaKit] EOF sin reproducción real — tratado como fallo de carga, no como fin de pista.',
+        );
+        _emit(_state.copyWith(playing: false, processingState: AudioProcessingState.error));
+        return;
       }
+      _completionController.add(null);
+      _emit(_state.copyWith(
+        playing: false,
+        processingState: AudioProcessingState.completed,
+      ));
     });
-    // Log de mpv → detección de bordes de silencio (Pitfall #7).
+    // Log de mpv → detección de bordes de silencio (Pitfall #7) y reenvío de
+    // líneas de error/advertencia al panel de logs de la app.
     _player.stream.log.listen(_onLog);
     _configureAudioQuality();
   }
@@ -101,6 +129,9 @@ class MediaKitEngine implements AudioEngine {
   Stream<void> get completionStream => _completionController.stream;
 
   @override
+  Stream<String> get logStream => _logStreamController.stream;
+
+  @override
   Duration get position => _player.state.position;
 
   @override
@@ -109,6 +140,7 @@ class MediaKitEngine implements AudioEngine {
   @override
   Future<void> setUrl(String url, {Map<String, String>? headers}) async {
     _seekedThisTrack = false;
+    _hadMeaningfulPlayback = false;
     _emit(_state.copyWith(processingState: AudioProcessingState.loading));
     await _player.open(Media(url, httpHeaders: headers));
     // Si el Skip Silence ya estaba activado, re-aplicar el filtro para esta
@@ -121,6 +153,7 @@ class MediaKitEngine implements AudioEngine {
   @override
   Future<void> setLocalSource(String path) async {
     _seekedThisTrack = false;
+    _hadMeaningfulPlayback = false;
     _emit(_state.copyWith(processingState: AudioProcessingState.loading));
     await _player.open(Media(path));
     if (_skipSilence) {
@@ -183,7 +216,17 @@ class MediaKitEngine implements AudioEngine {
     }
   }
 
+  static const Set<String> _loggableLevels = {'fatal', 'error', 'warn'};
+
   void _onLog(PlayerLog log) {
+    // Reenviar errores/advertencias reales de mpv (HTTP, demuxer, códec) al
+    // panel de logs de la app — antes se descartaban por completo salvo que
+    // Skip Silence estuviera activo, así que un fallo de carga (403, stream
+    // vacío/roto) no dejaba ningún rastro diagnosticable.
+    if (_loggableLevels.contains(log.level)) {
+      _logStreamController.add('[MediaKit:${log.level}] [${log.prefix}] ${log.text}');
+    }
+
     if (!_skipSilence) return;
     if (log.prefix != 'silencedetect') return;
     if (_seekedThisTrack) return; // ya recortamos el intro de esta pista
@@ -209,6 +252,7 @@ class MediaKitEngine implements AudioEngine {
   void dispose() {
     _stateController.close();
     _completionController.close();
+    _logStreamController.close();
     _player.dispose();
   }
 }

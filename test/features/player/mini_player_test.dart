@@ -16,6 +16,7 @@ import 'package:syncora_player/features/player/widgets/mini_player.dart';
 class FakeAudioEngine implements AudioEngine {
   final _stateController = StreamController<AudioEngineState>.broadcast();
   final _completionController = StreamController<void>.broadcast();
+  final _logStreamController = StreamController<String>.broadcast();
 
   AudioEngineState _state = AudioEngineState.initial;
 
@@ -24,6 +25,9 @@ class FakeAudioEngine implements AudioEngine {
 
   @override
   Stream<void> get completionStream => _completionController.stream;
+
+  @override
+  Stream<String> get logStream => _logStreamController.stream;
 
   @override
   Duration get position => _state.position;
@@ -93,6 +97,7 @@ class FakeAudioEngine implements AudioEngine {
   Future<void> dispose() async {
     await _stateController.close();
     await _completionController.close();
+    await _logStreamController.close();
   }
 }
 

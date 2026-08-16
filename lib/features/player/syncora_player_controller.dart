@@ -116,6 +116,7 @@ class SyncoraPlayerController extends ChangeNotifier {
 
   StreamSubscription<AudioEngineState>? _engineSub;
   StreamSubscription<void>? _completionSub;
+  StreamSubscription<String>? _engineLogSub;
   bool _disposed = false;
   int? _restoredPositionSeconds;
 
@@ -136,6 +137,7 @@ class SyncoraPlayerController extends ChangeNotifier {
   void init() {
     _engineSub = _engine.stateStream.listen(_onEngineState);
     _completionSub = _engine.completionStream.listen((_) => _onComplete());
+    _engineLogSub = _engine.logStream.listen(_log);
     _restoreSession();
   }
 
@@ -760,6 +762,9 @@ bool get _isTestEnv {
   }
 
   void _onEngineState(AudioEngineState engineState) {
+    final wasError = _state.engine.processingState == AudioProcessingState.error;
+    final isNowError = engineState.processingState == AudioProcessingState.error;
+
     _state = _state.copyWith(engine: engineState);
     _notify();
 
@@ -767,6 +772,25 @@ bool get _isTestEnv {
     if (currentPosSec != _lastSavedPositionSeconds && (currentPosSec % 2 == 0 || !engineState.playing)) {
       _lastSavedPositionSeconds = currentPosSec;
       _saveSession();
+    }
+
+    // El motor nativo puede reportar un error de reproducción sin pasar por
+    // ExtractionFailure (ej. MediaKitEngine detecta un EOF sin haber sonado
+    // nada real — stream roto/403 — y lo traduce a `error`; JustAudioEngine
+    // lo hace ante cualquier excepción de ExoPlayer). Antes nada escuchaba
+    // esta transición: en Android el reproductor se quedaba trabado en
+    // `error` sin avanzar; en Windows dependía por completo de que el propio
+    // motor mintiera con `completed` para no trabarse. Solo reacciona en la
+    // transición (no en cada re-emisión) para no disparar `skipToNext()` en
+    // bucle.
+    if (isNowError && !wasError) {
+      _log('[Play] El motor de audio reportó un error de reproducción — saltando a la siguiente pista.');
+      _state = _state.copyWith(
+        lastError: ExtractionError.unknownError,
+        lastErrorMessage: 'El motor de audio no pudo reproducir esta pista.',
+      );
+      _notify();
+      skipToNext();
     }
   }
 
@@ -821,6 +845,7 @@ bool get _isTestEnv {
     _disposed = true;
     _engineSub?.cancel();
     _completionSub?.cancel();
+    _engineLogSub?.cancel();
     _logController.close();
     _engine.dispose();
     super.dispose();

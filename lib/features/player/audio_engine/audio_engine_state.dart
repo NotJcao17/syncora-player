@@ -79,6 +79,11 @@ abstract class AudioEngine {
   /// Stream discreto que se emite cuando una pista termina de reproducirse.
   Stream<void> get completionStream;
 
+  /// Líneas de log/diagnóstico del motor nativo (errores HTTP, de demuxer,
+  /// etc.) — se reenvían al panel de logs de la app para poder diagnosticar
+  /// fallos de reproducción que no llegan como excepción Dart.
+  Stream<String> get logStream;
+
   /// Carga una URL de streaming con sus headers HTTP obligatorios.
   ///
   /// Los headers DEBEN ser los mismos con los que se generó la firma de la

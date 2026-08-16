@@ -21,6 +21,8 @@ class JustAudioEngine implements AudioEngine {
       StreamController<AudioEngineState>.broadcast();
   final StreamController<void> _completionController =
       StreamController<void>.broadcast();
+  final StreamController<String> _logStreamController =
+      StreamController<String>.broadcast();
 
   AudioEngineState _state = AudioEngineState.initial;
 
@@ -36,6 +38,7 @@ class JustAudioEngine implements AudioEngine {
     _player.playbackEventStream.listen(
       (_) {},
       onError: (Object e, StackTrace st) {
+        _logStreamController.add('[JustAudio:error] $e');
         _emit(_state.copyWith(processingState: AudioProcessingState.error));
       },
     );
@@ -46,6 +49,9 @@ class JustAudioEngine implements AudioEngine {
 
   @override
   Stream<void> get completionStream => _completionController.stream;
+
+  @override
+  Stream<String> get logStream => _logStreamController.stream;
 
   @override
   Duration get position => _player.position;
@@ -154,6 +160,7 @@ class JustAudioEngine implements AudioEngine {
   void dispose() {
     _stateController.close();
     _completionController.close();
+    _logStreamController.close();
     _player.dispose();
   }
 }

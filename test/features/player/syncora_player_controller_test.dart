@@ -10,6 +10,7 @@ import 'package:syncora_player/features/player/syncora_player_controller.dart';
 class FakeAudioEngine implements AudioEngine {
   final _stateController = StreamController<AudioEngineState>.broadcast();
   final _completionController = StreamController<void>.broadcast();
+  final _logStreamController = StreamController<String>.broadcast();
 
   AudioEngineState _state = AudioEngineState.initial;
 
@@ -18,6 +19,13 @@ class FakeAudioEngine implements AudioEngine {
 
   @override
   Stream<void> get completionStream => _completionController.stream;
+
+  @override
+  Stream<String> get logStream => _logStreamController.stream;
+
+  void emitError() {
+    emitState(_state.copyWith(processingState: AudioProcessingState.error));
+  }
 
   @override
   Duration get position => _state.position;
@@ -96,6 +104,7 @@ class FakeAudioEngine implements AudioEngine {
   void dispose() {
     _stateController.close();
     _completionController.close();
+    _logStreamController.close();
   }
 }
 
@@ -294,6 +303,22 @@ void main() {
       expect(controller.state.currentIndex, 1, reason: 'no debe volver a track1');
       expect(engine.lastUrl, contains('track2'), reason: 'el motor no debe recibir la URL vieja de track1');
       expect(engine.setUrlCallCount, urlCountAfterTrack2, reason: 'la resolución obsoleta no debe llamar a setUrl de nuevo');
+    });
+
+    test(
+        '9. AudioProcessingState.error del motor dispara auto-skip en vez de trabarse '
+        '(antes solo se manejaba ExtractionFailure, no un fallo del motor nativo)', () async {
+      await controller.setQueue(testTracks, autoplay: true);
+      expect(controller.state.currentIndex, 0);
+
+      engine.emitError();
+      await pumpEventQueue();
+
+      // skipToNext() limpia lastError al avanzar (clearError: true) — mismo
+      // comportamiento ya existente para ExtractionError.notFound, el error
+      // es transitorio por diseño. Lo que importa aquí es que sí avanzó en
+      // vez de quedarse trabado en processingState.error para siempre.
+      expect(controller.state.currentIndex, 1, reason: 'debe saltar a la siguiente pista, no quedarse trabado');
     });
   });
 }

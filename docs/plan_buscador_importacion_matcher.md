@@ -474,22 +474,41 @@ extracción exitosa (`ub_y5t23VcE`) pero el audio que sonaba era el de otra canc
 
 - [x] **C10 (no estaba en el checklist original). Condición de carrera en `playCurrent()`.**
       `lib/features/player/syncora_player_controller.dart` no tenía ninguna protección contra llamadas
-      solapadas: si el usuario cambia de pista mientras una extracción anterior sigue en curso (p. ej.
-      el auto-skip por `notFound` dispara una extracción para la siguiente pista mientras la extracción
-      original, más lenta, sigue pendiente), la extracción vieja, al resolver tarde, pisaba el motor de
-      audio (`_engine.setUrl` + `.play()`) sin verificar si la pista para la que fue pedida seguía
-      siendo la activa. No es un bug nuevo de esta fase — el mecanismo llevaba tiempo ahí (el usuario
-      confirma que "ya nos había pasado antes") — pero **C6** (top-3 candidatos, cada uno con su propio
-      ciclo de 3 clientes + reintentos dentro de `_processExtraction`) alarga mucho el peor caso para
-      pistas sin match fácil, ensanchando la ventana en la que esta carrera se dispara.
-      **Implementado:** contador `_playGeneration`, incrementado al entrar a `playCurrent()`; cada
-      llamada captura su propia "generación" y, tras cada `await` que puede tardar (lookup de descarga
-      local, `extractUrl`), verifica si sigue siendo la generación vigente antes de tocar `_engine` o de
-      dejar que `_handleExtractionError` dispare `skipToNext()`. Una extracción obsoleta que resuelve
-      tarde ahora se descarta en silencio (con log) en vez de sobrescribir la pista que el usuario ya
-      eligió después. Test de regresión: `test/features/player/syncora_player_controller_test.dart`,
-      caso 8 — usa un `Completer` retenido a mano para forzar el orden "pista vieja resuelve después de
-      que ya se cambió a la nueva" y confirma que el motor nunca recibe la URL vieja.
+      solapadas: si el usuario cambia de pista mientras una extracción anterior sigue en curso, la
+      extracción vieja, al resolver tarde, pisaba el motor de audio sin verificar si la pista para la
+      que fue pedida seguía siendo la activa. Real y arreglado (contador `_playGeneration`, test de
+      regresión caso 8) — pero **no era la causa del bug reportado**: al reproducir la pista de nicho
+      desde cero (sin cambiar de pista de por medio) el síntoma seguía igual, así que había una segunda
+      causa independiente. Ver C11.
+- [x] **C11. `completed` de libmpv no distingue fin de pista real de fallo de carga.**
+      Causa real del bug reportado ("carga un par de segundos, salta automático, no hay error en los
+      logs"). `MediaKitEngine` (Windows) escuchaba `_player.stream.completed` y trataba **cualquier**
+      `true` como fin de canción — pero libmpv también emite `completed = true` cuando el stream nunca
+      llegó a reproducir nada real (URL firmada vencida/403, respuesta vacía, formato roto): desde su
+      punto de vista ambos casos son un EOF. El resultado: un fallo de carga se comportaba exactamente
+      igual que una canción terminada normalmente — sin error visible, saltando en silencio a la
+      siguiente pista de la cola. Además, `_onLog` (el listener del log nativo de mpv) solo procesaba
+      líneas con prefijo `silencedetect`, y solo si Skip Silence estaba activo — **cualquier error real
+      de mpv (HTTP, demuxer, códec) se descartaba sin llegar nunca al panel de logs de la app**, por
+      eso "en los logs no veo un error" pese a que sí lo había, a nivel nativo.
+      **Implementado:**
+  - `MediaKitEngine` ahora rastrea si hubo reproducción real (`position > 500ms` o `duration` conocida)
+    desde el último `setUrl`/`setLocalSource`. Si `completed` llega sin eso, se trata como fallo de
+    carga (`AudioProcessingState.error`), no como fin de pista — no dispara `completionStream`.
+  - Nuevo `AudioEngine.logStream`: reenvía líneas de mpv con nivel `fatal`/`error`/`warn` (antes se
+    descartaban todas salvo `silencedetect`) al panel de logs de la app. `JustAudioEngine` también lo
+    implementa, alimentado desde su `onError` ya existente.
+  - `SyncoraPlayerController` se suscribe a `logStream` en `init()` y reacciona a la transición a
+    `AudioProcessingState.error` con auto-skip — antes **nada** escuchaba ese estado: en Android
+    (`JustAudioEngine`, que sí distinguía error de completed desde antes) el reproductor se quedaba
+    trabado sin avanzar; en Windows dependía por completo de que `MediaKitEngine` "mintiera" con
+    `completed` para no trabarse.
+      Tests de regresión: `test/features/player/syncora_player_controller_test.dart`, caso 9 (fuerza
+      `AudioProcessingState.error` y confirma auto-skip en vez de bloqueo). El mecanismo de detección de
+      libmpv en sí (`_hadMeaningfulPlayback`) no tiene test automatizado — depende de streams nativos de
+      `media_kit`/libmpv que no corren en el sandbox de `flutter test` en Windows (mismo motivo que
+      `multi_song_extraction_test.dart`); queda pendiente de una próxima prueba manual con la canción de
+      nicho para confirmar en vivo, ahora con logs reales de mpv disponibles si algo sigue sin sonar.
 
 ---
 
