@@ -357,15 +357,21 @@ Archivos: `lib/core/extraction/yt_search_matcher.dart`, `lib/core/extraction/ext
 
 Ordenado por impacto en el usuario (canción que suena equivocada o no suena).
 
-- [ ] **C1. Usar `title` en el scoring.** Es el bug de fondo: el parámetro se recibe como requerido y
+- [x] **C1. Usar `title` en el scoring.** Es el bug de fondo: el parámetro se recibe como requerido y
       **no se usa en ninguna línea** (`yt_search_matcher.dart:58-140`). Hoy cualquier vídeo del mismo
       artista con duración parecida puntúa igual que el correcto. Añadir solapamiento de tokens y
       convertirlo en **requisito de aceptación**, no solo en un sumando.
-- [ ] **C2. Acotar el bonus de posición.** `score += (candidates.length - index) * 2`
+      **Implementado:** `_titleOverlap` — % de tokens del título esperado (sin el sufijo `feat.`, que
+      YouTube casi nunca repite en el título aunque sí sea la canción correcta) presentes en el título
+      candidato. Umbral de aceptación: 50% (`_minTitleOverlapPct`), descarta el candidato de plano si no
+      lo alcanza, antes de calcular ningún otro puntaje.
+- [x] **C2. Acotar el bonus de posición.** `score += (candidates.length - index) * 2`
       (`yt_search_matcher.dart:119`) escala con el tamaño de la lista y no tiene tope: en la ruta de
       fallback (30-60 candidatos) el primero recibe +60 a +120, **más que un match exacto de duración
       (+100)**. Usar algo como `max(0, 10 - index)`, independiente de `N`.
-- [ ] **C3. Arreglar el match de artista.** Falla en los dos casos más frecuentes:
+      **Implementado** tal cual. Verificado con fixture sintética: un candidato real en la posición 35 de
+      40 le sigue ganando a 34 candidatos irrelevantes en las posiciones 0-34.
+- [x] **C3. Arreglar el match de artista.** Falla en los dos casos más frecuentes:
   - Canales VEVO van pegados: `"taylorswiftvevo"` no contiene `"taylor swift"`
   - Colaboraciones: `DeezerTrack.fromJson` une **todos** los contributors en un string
     (`deezer_track.dart:51-56`), y esa cadena completa no existe en ningún canal ni título
@@ -373,7 +379,12 @@ Ordenado por impacto en el usuario (canción que suena equivocada o no suena).
     también contra el canal sin espacios
   - Añadir señal de canal **`- Topic`** (masters exactos del sello) y buscar `vevo` en el **canal**,
     no solo en el título (hoy `'vevo'` es casi inerte porque solo se busca en el título)
-- [ ] **C4. `_badTerms` condicional al título de Deezer.** Si el título ya contiene "Remix"/"Live"/
+      **Implementado:** `_artistConfirmed` separa el campo `artist` por comas y basta con que UNO de los
+      colaboradores matchee; compara tanto contra el autor sin espacios (VEVO concatenado) como contra el
+      título como frase completa. `vevo`/`topic` se movieron a una lista de "términos de canal" separada
+      (`_goodChannelTerms`) evaluada solo contra `author`, no contra `title` (antes estaban mezclados con
+      los términos de calidad del título y `vevo` ahí era casi inerte).
+- [x] **C4. `_badTerms` condicional al título de Deezer.** Si el título ya contiene "Remix"/"Live"/
       "Instrumental", **todos** los candidatos arrastran el −80 y sube la tasa de `null` →
       `skipToNext()` → la canción no suena. Penalizar solo la **asimetría**. Además:
   - Límites de palabra en vez de `contains` (hoy penaliza "Undercover Martyn", "Chain Reaction",
@@ -384,16 +395,37 @@ Ordenado por impacto en el usuario (canción que suena equivocada o no suena).
   - `'m/v'` es **código inerte**: `norm()` borra las barras
   - Añadir `live`, `en vivo`, `sped up`, `slowed`, `nightcore`, `8d`, `bass boosted`, `mashup`,
     `full album`, `1 hour`, `tribute`/`tributo`, `ao vivo`
-- [ ] **C5. Construcción de la query** (`extraction_isolate.dart:323`): usar artista principal (no la
+      **Implementado con un cambio de diseño respecto al plan original:** un término indeseado
+      **descalifica el candidato de plano** (no resta -80 puntos). Se detectó escribiendo el test de
+      regresión de "Karaoke Cover": con solo -80 y tope de una penalización, la duración exacta (+100) +
+      artista confirmado (+50, el título del karaoke suele decir "Artista - Canción") + bonus de posición
+      superaban de sobra la única penalización, y el karaoke volvía a aceptarse — exactamente el riesgo
+      que describe C9 ("con N=5 el mismo karaoke sería aceptado"), solo que ahora también pasaba con
+      N=1. Descalificar en vez de penalizar deja "tope de una sola penalización" resuelto trivialmente
+      (no hay puntaje que acumular) y es más robusto ante cualquier combinación de las otras señales.
+      Límites de palabra/frase (`_containsPhrase`, con *lookaround*, no `contains`) arreglan los falsos
+      positivos y, de paso, el doble conteo de `lyric`/`lyrics` (son palabras distintas tras normalizar,
+      ya no ambas via substring). Los términos se normalizan con la misma `norm()` que el texto
+      comparado, así que `'m/v'` se convierte en `'m v'` igual que el título candidato, en vez de buscar
+      una barra que `norm()` ya eliminó. Términos nuevos añadidos tal cual los pidió el plan.
+- [x] **C5. Construcción de la query** (`extraction_isolate.dart:323`): usar artista principal (no la
       lista con comas), quitar sufijos de versión (`- Remastered 2011`), evitar duplicar el artista
       cuando ya está en el título, y recuperar el hint `"official audio"` que tenía el scraper anterior
       y se perdió en la migración. Variante relajada en el segundo intento (hoy reintenta con
       **exactamente la misma query**, así que falla igual).
-- [ ] **C6. Guardar top-3 candidatos** y probar el siguiente si la extracción falla con `notFound`
+      **Implementado** tal cual los 5 puntos. La variante relajada del segundo intento es simplemente el
+      título limpio solo (sin artista, sin el hint "official audio") — un cambio real de query, no una
+      repetición.
+- [x] **C6. Guardar top-3 candidatos** y probar el siguiente si la extracción falla con `notFound`
       (vídeo privado/geobloqueado/age gate). Hoy se descarta la lista y la canción se salta en silencio.
       Invalidar `_resolvedMatchCache` en fallo — hoy se escribe **antes** de saber si funciona y
       **nunca se invalida**, así que un match equivocado queda fijado toda la sesión.
-- [ ] **C7. Robustez:**
+      **Implementado:** `YtSearchMatcher.pickTopCandidates` (mismo ranking que `pickBest`, top-3). El
+      caché `_resolvedMatchCache` ahora se escribe **después** de una extracción realmente exitosa, no al
+      elegir el candidato — si el primero falla con `notFound` se prueba el siguiente de la lista; si
+      falla con otro tipo de error (red/rate-limit) se corta ahí, no tiene sentido seguir probando
+      candidatos en ese momento.
+- [x] **C7. Robustez:**
   - Casts inseguros (`raw['durationSec'] as int?`) pueden lanzar y romper el bucle del isolate;
     sin timeout en `extractUrl`, el `Completer` nunca se resuelve → **spinner colgado para siempre**
   - `jsonEncode(query)` para el escapado (hoy escapa comillas pero no barras invertidas)
@@ -402,15 +434,34 @@ Ordenado por impacto en el usuario (canción que suena equivocada o no suena).
   - `norm()` con `\p{L}` Unicode en vez de tabla manual de diacríticos (hoy borra coreano, japonés,
     cirílico; y no cubre `ł`, `ş`, `ß`, `æ`, `ø`)
   - `is11CharYtId` puede confundir un ID numérico de Deezer de 11 dígitos
-- [ ] **C8. Umbral final.** `maxScore >= 0` es permisivo y estricto a la vez: acepta cualquier candidato
+      **Estado real al revisar código:** el timeout de `extractUrl`/`extractVideo` **ya existía**
+      (`_tryExtractWithClient` con `.timeout(25s)`, `_trySearchWithClient` con `.timeout(20s)`) — no era
+      parte de este trabajo, no se tocó. El resto, implementado: cast defensivo vía `as num?`; `norm()`
+      reescrito con `\p{L}\p{N}` Unicode (verificado que Dart lo soporta con `unicode: true`, incluidos
+      *lookaround* `(?<!...)`/`(?!...)`) + tabla de diacríticos ampliada (incluye `ł`/`ş`/`ß`/`æ`/`ø` y
+      más); `jsonEncode` para los tres valores interpolados en el script JS generado (`videoId`, `client`,
+      `jsRequestId`/`query`); `durationSec == 0` ahora requiere explícitamente `> 0` en ambos lados antes
+      de entrar al bloque de duración; `is11CharYtId` excluye strings puramente numéricos (un id real de
+      YouTube en base64url prácticamente nunca sale así, un id de Deezer siempre).
+- [x] **C8. Umbral final.** `maxScore >= 0` es permisivo y estricto a la vez: acepta cualquier candidato
       sin penalizaciones (el bonus de posición siempre es ≥ +2) y rechaza remixes/directos legítimos.
       Sustituir por **evidencia positiva**: similitud de título suficiente **y** (duración en rango
       **o** artista confirmado).
-- [ ] **C9. Tests.** Escenarios sin cobertura hoy: canción equivocada del mismo artista con duración
+      **Implementado** tal cual: título ≥50% de solapamiento (C1) Y (duración dentro de 20s O artista
+      confirmado). Sin duración esperada conocida (`null`/`0`), el segundo término solo puede satisfacerse
+      con artista confirmado.
+- [x] **C9. Tests.** Escenarios sin cobertura hoy: canción equivocada del mismo artista con duración
       idéntica; efecto del tamaño de la lista (el test de karaoke pasa **solo porque `N=1`**; con `N=5`
       el mismo karaoke sería aceptado); canal VEVO concatenado; colaboración `"A, B"`; canal `- Topic`;
       remix/live legítimo; `durationSec` `null` y `0`; falsos positivos de substring; títulos no latinos;
       frontera del umbral.
+      **Implementado:** 25 tests nuevos en `test/core/extraction/yt_search_matcher_test.dart` (29 en
+      total con los 4 originales), cubriendo cada punto de la lista de arriba — incluida la propia
+      trampa de "N=1 vs N=5" para el karaoke, que fue justo la que expuso el bug real descrito en C4
+      (ver más arriba: el karaoke se aceptaba con N=5 **y también con N=1** bajo el modelo de -80
+      puntos, antes de pasar a descalificación directa). Verificado de forma independiente (no solo el
+      reporte del subagente que los escribió): `flutter test` 29/29, `flutter analyze` limpio, y
+      revisión manual del diff confirmando que solo se tocó el archivo de test.
 
 ---
 

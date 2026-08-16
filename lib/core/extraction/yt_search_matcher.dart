@@ -1,9 +1,12 @@
+import 'dart:math' as math;
+
 class CandidateVideo {
   final String videoId;
   final String title;
   final String author;
   final int? durationSec;
   final int score;
+  final bool artistConfirmed;
 
   const CandidateVideo({
     required this.videoId,
@@ -11,6 +14,7 @@ class CandidateVideo {
     required this.author,
     this.durationSec,
     required this.score,
+    required this.artistConfirmed,
   });
 }
 
@@ -27,6 +31,19 @@ class YtSearchMatcher {
     'remix',
     'teaser',
     'trailer',
+    'live',
+    'en vivo',
+    'ao vivo',
+    'sped up',
+    'slowed',
+    'nightcore',
+    '8d',
+    'bass boosted',
+    'mashup',
+    'full album',
+    '1 hour',
+    'tribute',
+    'tributo',
   ];
 
   static const _goodTerms = [
@@ -35,38 +52,137 @@ class YtSearchMatcher {
     'lyric',
     'lyrics',
     'mv',
-    'vevo',
     'm/v',
   ];
 
-  /// Normaliza texto: minúsculas, elimina acentos/diacríticos y caracteres especiales.
+  /// C3: señal de canal — "VEVO" y "- Topic" (masters exactos del sello,
+  /// auto-generados por YouTube) identifican al uploader, no al título. El
+  /// código anterior solo buscaba `vevo` en el título, donde casi nunca
+  /// aparece, así que la señal era casi inerte.
+  static const _goodChannelTerms = ['vevo', 'topic'];
+
+  /// C1: mínimo de solapamiento de tokens entre el título esperado (Deezer) y
+  /// el título del candidato para que este ni siquiera entre a puntuarse.
+  /// Antes `title` se recibía como parámetro pero no se usaba en ninguna
+  /// línea: cualquier vídeo del mismo artista con duración parecida puntuaba
+  /// igual que el correcto. 50% deja pasar títulos con ruido normal
+  /// (artista repetido, "Official Video") pero descarta canciones distintas.
+  static const int _minTitleOverlapPct = 50;
+
+  /// C8: tolerancia de duración para considerarla "en rango" a efectos del
+  /// umbral final de aceptación (ver `_rankCandidates`).
+  static const int _durationToleranceSec = 20;
+
+  static const Map<String, String> _diacriticsFold = {
+    'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a', 'ā': 'a', 'ă': 'a', 'ą': 'a',
+    'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e', 'ē': 'e', 'ĕ': 'e', 'ė': 'e', 'ę': 'e', 'ě': 'e',
+    'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i', 'ĩ': 'i', 'ī': 'i', 'ĭ': 'i', 'į': 'i',
+    'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o', 'ö': 'o', 'ø': 'o', 'ō': 'o', 'ŏ': 'o', 'ő': 'o',
+    'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u', 'ũ': 'u', 'ū': 'u', 'ŭ': 'u', 'ů': 'u', 'ű': 'u', 'ų': 'u',
+    'ý': 'y', 'ÿ': 'y', 'ŷ': 'y',
+    'ñ': 'n', 'ń': 'n', 'ņ': 'n', 'ň': 'n',
+    'ç': 'c', 'ć': 'c', 'ĉ': 'c', 'ċ': 'c', 'č': 'c',
+    'ł': 'l', 'ĺ': 'l', 'ľ': 'l',
+    'ś': 's', 'ŝ': 's', 'ş': 's', 'š': 's',
+    'ź': 'z', 'ż': 'z', 'ž': 'z',
+  };
+
+  // C7: `norm()` original borraba cualquier carácter fuera de a-z0-9 (incluido
+  // TODO el alfabeto), así que un título coreano/japonés/cirílico quedaba
+  // vacío tras normalizar y perdía toda señal de coincidencia. Ahora solo se
+  // reemplaza lo que no es letra/número/espacio en ningún alfabeto (`\p{L}`,
+  // `\p{N}` Unicode), preservando esos scripts intactos.
+  static final RegExp _nonWordChar = RegExp(r'[^\p{L}\p{N}\s]', unicode: true);
+
+  static final RegExp _featSuffix = RegExp(
+    r'\s*[\(\[]?\s*-?\s*(feat\.?|featuring|ft\.?|with)\s+.*$',
+    caseSensitive: false,
+  );
+
+  /// Normaliza texto: minúsculas, diacríticos latinos plegados a su base
+  /// ASCII (para que una búsqueda sin tildes siga matcheando), resto de
+  /// alfabetos preservado tal cual.
   static String norm(String s) {
     var str = s.toLowerCase();
-    const withDiacritics = 'àáâãäåèéêëìíîïòóôõöùúûüýÿñç';
-    const withoutDiacritics = 'aaaaaaeeeeiiiiooooouuuuyync';
+    str = str.replaceAll('ß', 'ss').replaceAll('œ', 'oe').replaceAll('æ', 'ae');
 
-    for (var i = 0; i < withDiacritics.length; i++) {
-      str = str.replaceAll(withDiacritics[i], withoutDiacritics[i]);
+    final buffer = StringBuffer();
+    for (final rune in str.runes) {
+      final ch = String.fromCharCode(rune);
+      buffer.write(_diacriticsFold[ch] ?? ch);
     }
+    str = buffer.toString();
 
-    // Reemplazar signos y puntuación por espacios
-    return str.replaceAll(RegExp(r'[^a-z0-9\s]'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+    str = str.replaceAll(_nonWordChar, ' ');
+    return str.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 
-  /// Evalúa la lista de candidatos devueltos por Innertube search
-  /// y devuelve el candidato con mejor puntuación (o null si ninguno alcanza el umbral de 0).
-  static CandidateVideo? pickBest(
+  static List<String> _tokens(String normalized) =>
+      normalized.isEmpty ? const <String>[] : normalized.split(' ');
+
+  /// Título "núcleo" sin el colaborador — un upload de YouTube casi nunca
+  /// repite "(feat. X)" en el título aunque sí sea la canción correcta, así
+  /// que exigir esos tokens en `_titleOverlap` rechazaría matches legítimos.
+  static String _coreTitle(String title) => title.replaceAll(_featSuffix, '').trim();
+
+  /// `needle` (ya normalizado) aparece en `haystack` (ya normalizado) como
+  /// palabra o frase completa, no como substring suelto — evita falsos
+  /// positivos tipo "Undercover Martyn"/"Coverdale"/"Chain Reaction" al
+  /// buscar "cover"/"live"/"reaction".
+  static bool _containsPhrase(String haystackNorm, String needleNorm) {
+    if (needleNorm.isEmpty) return false;
+    final pattern = RegExp('(?<![a-z0-9])${RegExp.escape(needleNorm)}(?![a-z0-9])');
+    return pattern.hasMatch(haystackNorm);
+  }
+
+  // Los términos se normalizan una sola vez con la misma función que el
+  // texto contra el que se comparan — así "m/v" (que `norm()` convierte en
+  // "m v", dos tokens) matchea igual que el título candidato, en vez de
+  // quedar como código inerte buscando una barra que ya no existe.
+  static final List<String> _normBadTerms = _badTerms.map(norm).toList();
+  static final List<String> _normGoodTerms = _goodTerms.map(norm).toList();
+  static final List<String> _normGoodChannelTerms = _goodChannelTerms.map(norm).toList();
+
+  /// C1: 0..100, cuánto del título esperado (Deezer, sin el sufijo de feat)
+  /// aparece como tokens completos en el título del candidato. Solo mide
+  /// recall (no penaliza que el candidato tenga texto de más, como el nombre
+  /// del canal repetido) — eso es ruido normal de YouTube, no una señal de
+  /// canción equivocada.
+  static double _titleOverlap(String expectedTitle, String candidateTitleNorm) {
+    final expectedTokens = _tokens(norm(_coreTitle(expectedTitle))).toSet();
+    if (expectedTokens.isEmpty) return 100;
+    final candidateTokens = _tokens(candidateTitleNorm).toSet();
+    final matched = expectedTokens.where(candidateTokens.contains).length;
+    return 100 * matched / expectedTokens.length;
+  }
+
+  /// C3: coincidencia por artista INDIVIDUAL, no por la cadena completa de
+  /// colaboradores unida con comas (`DeezerTrack.artistName` la une así, y esa
+  /// cadena completa no existe tal cual en ningún canal ni título real). Basta
+  /// con que UNO de los colaboradores aparezca. También cubre canales VEVO
+  /// donde el nombre va pegado sin espacios ("taylorswiftvevo").
+  static bool _artistConfirmed(String artistField, String normAuthor, String normTitle) {
+    if (artistField.trim().isEmpty) return false;
+    final normAuthorNoSpace = normAuthor.replaceAll(' ', '');
+    for (final rawName in artistField.split(',')) {
+      final normName = norm(rawName);
+      if (normName.isEmpty) continue;
+      if (normAuthorNoSpace.contains(normName.replaceAll(' ', ''))) return true;
+      if (_containsPhrase(normTitle, normName)) return true;
+    }
+    return false;
+  }
+
+  static List<CandidateVideo> _rankCandidates(
     List<Map<String, dynamic>> candidates, {
     required String artist,
     required String title,
     int? durationSec,
   }) {
-    if (candidates.isEmpty) return null;
+    if (candidates.isEmpty) return const [];
 
-    final normArtist = norm(artist);
-
-    CandidateVideo? bestCandidate;
-    int maxScore = -999999;
+    final normExpectedTitle = norm(title);
+    final scored = <CandidateVideo>[];
 
     for (var index = 0; index < candidates.length; index++) {
       final raw = candidates[index];
@@ -75,16 +191,30 @@ class YtSearchMatcher {
 
       final rawTitle = (raw['title'] as String?) ?? '';
       final rawAuthor = (raw['author'] as String?) ?? '';
-      final candidateDuration = raw['durationSec'] as int?;
+      // C7: cast inseguro — el motor JS puede entregar el número como double
+      // y `as int?` lanza en vez de devolver null, rompiendo el bucle.
+      final candidateDuration = (raw['durationSec'] as num?)?.toInt();
 
       final normTitle = norm(rawTitle);
       final normAuthor = norm(rawAuthor);
 
-      int score = 0;
+      // C1: requisito de aceptación, no un simple sumando.
+      final titleOverlap = _titleOverlap(title, normTitle);
+      if (titleOverlap < _minTitleOverlapPct) continue;
 
-      // 1. Comparación de duración si se conoce
-      if (durationSec != null && candidateDuration != null && candidateDuration > 0) {
+      final artistConfirmed = _artistConfirmed(artist, normAuthor, normTitle);
+
+      int score = (titleOverlap * 0.6).round();
+
+      // 1. Comparación de duración si se conoce. C7: `durationSec == 0` (el
+      // fallback `?? 0` cuando Deezer no trae duración) no debe tratarse como
+      // "duración esperada real" — antes solo se comprobaba que la del
+      // candidato fuera > 0, así que una pista sin duración conocida penalizaba
+      // -50 a TODOS los candidatos.
+      bool durationOk = false;
+      if (durationSec != null && durationSec > 0 && candidateDuration != null && candidateDuration > 0) {
         final diff = (candidateDuration - durationSec).abs();
+        durationOk = diff <= _durationToleranceSec;
         if (diff <= 3) {
           score += 100;
         } else if (diff <= 10) {
@@ -96,46 +226,96 @@ class YtSearchMatcher {
         }
       }
 
-      // 2. Penalización por términos indeseados en título o autor
-      for (final bad in _badTerms) {
-        if (normTitle.contains(bad) || normAuthor.contains(bad)) {
-          score -= 80;
-        }
-      }
+      // C8: evidencia positiva — además del título, se exige duración en
+      // rango O artista confirmado. Reemplaza el viejo umbral `maxScore >= 0`
+      // (permisivo y estricto a la vez: aceptaba cualquier candidato sin
+      // penalizaciones porque el bonus de posición siempre sumaba algo, y
+      // rechazaba remixes/directos legítimos por acumular penalizaciones).
+      if (!durationOk && !artistConfirmed) continue;
 
-      // 3. Bonificación por términos de calidad en título
-      for (final good in _goodTerms) {
-        if (normTitle.contains(good)) {
+      // 2. Términos indeseados — DESCALIFICAN el candidato de plano, no
+      // restan puntos. Un simple -80 puede quedar absorbido por duración
+      // exacta (+100) + artista confirmado (+50) + bonus de posición y
+      // terminar aceptando un karaoke/cover de todos modos (justo el riesgo
+      // que señala el plan: "con N=5 el mismo karaoke sería aceptado"). Como
+      // ahora es descalificación en vez de puntaje, "tope de una sola
+      // penalización" queda resuelto de forma trivial (antes "Karaoke Cover"
+      // acumulaba -160 vía dos términos). Condicional al título original
+      // (C4): si la pista de origen ya es, por ejemplo, "Live", ese término
+      // no es señal de nada (todos los candidatos lo compartirían por igual)
+      // y no debe descalificar. Límites de palabra/frase evitan falsos
+      // positivos ("Undercover Martyn", "Coverdale", "Chain Reaction",
+      // "Trailer Trash").
+      final isBadMatch = _normBadTerms.any((bad) =>
+          !_containsPhrase(normExpectedTitle, bad) &&
+          (_containsPhrase(normTitle, bad) || _containsPhrase(normAuthor, bad)));
+      if (isBadMatch) continue;
+
+      // 3. Bonificación por términos de calidad. Los límites de palabra de
+      // paso corrigen que "lyric" y "lyrics" contaran como dos señales
+      // separadas para el mismo video (antes vía `contains`, "Lyrics Video"
+      // matcheaba ambos términos y sumaba +60, el doble que "Official Video").
+      for (final good in _normGoodTerms) {
+        if (_containsPhrase(normTitle, good)) {
           score += 30;
         }
       }
 
-      // 4. Coincidencia del nombre del artista en autor o título
-      if (normArtist.isNotEmpty && (normAuthor.contains(normArtist) || normTitle.contains(normArtist))) {
-        score += 50;
+      // C3: señal de canal — "VEVO"/"- Topic" identifican al uploader, se
+      // busca en el autor, no en el título (donde antes "vevo" era casi
+      // inerte porque casi nunca aparece ahí).
+      for (final good in _normGoodChannelTerms) {
+        if (_containsPhrase(normAuthor, good)) {
+          score += 30;
+        }
       }
 
-      // 5. Bonus por posición de relevancia de YouTube (desempate suave)
-      score += (candidates.length - index) * 2;
+      // 4. Coincidencia de artista confirmada (ver arriba).
+      if (artistConfirmed) score += 50;
 
-      final candidate = CandidateVideo(
+      // 5. Bonus de posición de relevancia de YouTube, acotado (C2) — antes
+      // escalaba con `candidates.length` (`(candidates.length - index) * 2`),
+      // así que en la ruta de fallback (30-60 candidatos) el primero recibía
+      // +60 a +120, más que un match exacto de duración (+100).
+      score += math.max(0, 10 - index);
+
+      scored.add(CandidateVideo(
         videoId: vId,
         title: rawTitle,
         author: rawAuthor,
         durationSec: candidateDuration,
         score: score,
-      );
-
-      if (score > maxScore) {
-        maxScore = score;
-        bestCandidate = candidate;
-      }
+        artistConfirmed: artistConfirmed,
+      ));
     }
 
-    if (bestCandidate != null && maxScore >= 0) {
-      return bestCandidate;
-    }
+    scored.sort((a, b) => b.score.compareTo(a.score));
+    return scored;
+  }
 
-    return null;
+  /// Evalúa la lista de candidatos devueltos por Innertube search y devuelve
+  /// el de mejor puntuación, o `null` si ninguno pasa el umbral de aceptación
+  /// (título + duración-o-artista, ver `_rankCandidates`).
+  static CandidateVideo? pickBest(
+    List<Map<String, dynamic>> candidates, {
+    required String artist,
+    required String title,
+    int? durationSec,
+  }) {
+    final ranked = _rankCandidates(candidates, artist: artist, title: title, durationSec: durationSec);
+    return ranked.isEmpty ? null : ranked.first;
+  }
+
+  /// C6: top-[topN] candidatos que ya superaron el umbral de aceptación, para
+  /// poder probar el siguiente si la extracción real del primero falla
+  /// (vídeo privado/geobloqueado/age-gate) en vez de rendirse de inmediato.
+  static List<CandidateVideo> pickTopCandidates(
+    List<Map<String, dynamic>> candidates, {
+    required String artist,
+    required String title,
+    int? durationSec,
+    int topN = 3,
+  }) {
+    return _rankCandidates(candidates, artist: artist, title: title, durationSec: durationSec).take(topN).toList();
   }
 }

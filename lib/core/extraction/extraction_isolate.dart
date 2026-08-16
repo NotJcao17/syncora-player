@@ -297,7 +297,13 @@ class ExtractionIsolate {
       );
     }
 
-    final is11CharYtId = RegExp(r'^[a-zA-Z0-9_-]{11}$').hasMatch(videoId);
+    // C7: un id de Deezer numérico puede coincidir por longitud (11 dígitos)
+    // a medida que crece el catálogo. Un id real de YouTube usa base64url y
+    // es prácticamente imposible que salga puramente numérico — se excluye
+    // ese caso para no tratar un id de Deezer como si ya fuera un video de
+    // YouTube resuelto (saltándose el matcher por completo).
+    final is11CharYtId = RegExp(r'^[a-zA-Z0-9_-]{11}$').hasMatch(videoId) &&
+        !RegExp(r'^[0-9]+$').hasMatch(videoId);
     if (!is11CharYtId) {
       final cachedVideoId = _resolvedMatchCache[videoId];
       if (cachedVideoId != null) {
@@ -320,8 +326,31 @@ class ExtractionIsolate {
 
       if ((request.trackTitle != null && request.trackTitle!.isNotEmpty) ||
           (request.trackArtist != null && request.trackArtist!.isNotEmpty)) {
-        final query = '${request.trackArtist ?? ''} ${request.trackTitle ?? ''}'.trim();
-        for (final client in ['WEB', 'ANDROID']) {
+        final rawArtist = request.trackArtist ?? '';
+        final rawTitle = request.trackTitle ?? '';
+
+        // C5: usar solo el artista principal en la query (no la lista con
+        // comas de colaboradores — `DeezerTrack.artistName` las une así, y
+        // esa cadena completa no es una búsqueda razonable), quitar sufijos
+        // de versión tipo "- Remastered 2011", y no duplicar el artista si ya
+        // aparece en el título.
+        final primaryArtist = rawArtist.split(',').first.trim();
+        final cleanTitle = _stripVersionSuffix(rawTitle);
+        final artistAlreadyInTitle = primaryArtist.isNotEmpty &&
+            YtSearchMatcher.norm(cleanTitle).contains(YtSearchMatcher.norm(primaryArtist));
+        final baseQuery = (artistAlreadyInTitle || primaryArtist.isEmpty) ? cleanTitle : '$primaryArtist $cleanTitle';
+
+        // Segundo intento con una variante realmente distinta (antes
+        // reintentaba con exactamente la misma query, así que fallaba igual):
+        // se recupera el hint "official audio" para el primer intento y se
+        // cae a solo-título (sin hint, sin artista) si ese no encontró nada.
+        final queries = ['$baseQuery official audio'.trim(), cleanTitle];
+        final clients = ['WEB', 'ANDROID'];
+
+        List<CandidateVideo> topCandidates = const [];
+        for (var i = 0; i < clients.length; i++) {
+          final client = clients[i];
+          final query = queries[i];
           sendLog('[IsolateJS] Buscando match para "$query" con cliente $client...');
           final candidates = await _trySearchWithClient(
             query: query,
@@ -330,34 +359,51 @@ class ExtractionIsolate {
             sendLog: sendLog,
           );
           if (candidates != null && candidates.isNotEmpty) {
-            final best = YtSearchMatcher.pickBest(
+            topCandidates = YtSearchMatcher.pickTopCandidates(
               candidates,
-              artist: request.trackArtist ?? '',
-              title: request.trackTitle ?? '',
+              artist: rawArtist,
+              title: rawTitle,
               durationSec: request.durationSeconds,
             );
-            if (best != null) {
-              sendLog('[IsolateJS] Match seleccionado: ${best.videoId} (score ${best.score}) para "$query"');
-              _resolvedMatchCache[videoId] = best.videoId;
-              final resolvedRequest = ExtractionRequest(
-                videoId: best.videoId,
-                requestId: request.requestId,
-                priority: request.priority,
-                trackTitle: request.trackTitle,
-                trackArtist: request.trackArtist,
-                durationSeconds: request.durationSeconds,
-              );
-              return _processExtraction(
-                request: resolvedRequest,
-                jsRuntime: jsRuntime,
-                retryPolicy: retryPolicy,
-                sendLog: sendLog,
-              );
-            }
+            if (topCandidates.isNotEmpty) break;
             sendLog('[IsolateJS] Ningún candidato superó el umbral de scoring con $client.');
           } else {
             sendLog('[IsolateJS] Búsqueda sin candidatos con $client.');
           }
+        }
+
+        // C6: probar el siguiente candidato si la extracción real del
+        // primero falla por notFound (privado/geobloqueado/age-gate), en vez
+        // de rendirse de inmediato. El caché de match resuelto solo se
+        // escribe tras una extracción realmente exitosa — antes se escribía
+        // apenas se elegía el candidato y nunca se invalidaba, así que un
+        // match equivocado quedaba fijado el resto de la sesión.
+        for (final candidate in topCandidates) {
+          sendLog('[IsolateJS] Probando candidato ${candidate.videoId} (score ${candidate.score})...');
+          final resolvedRequest = ExtractionRequest(
+            videoId: candidate.videoId,
+            requestId: request.requestId,
+            priority: request.priority,
+            trackTitle: request.trackTitle,
+            trackArtist: request.trackArtist,
+            durationSeconds: request.durationSeconds,
+          );
+          final result = await _processExtraction(
+            request: resolvedRequest,
+            jsRuntime: jsRuntime,
+            retryPolicy: retryPolicy,
+            sendLog: sendLog,
+          );
+          if (result is ExtractionSuccess) {
+            _resolvedMatchCache[videoId] = candidate.videoId;
+            return result;
+          }
+          if (result is ExtractionFailure && result.error != ExtractionError.notFound) {
+            // Error distinto a "no encontrado" (red/rate-limit/desconocido):
+            // no tiene sentido seguir probando otros candidatos ahora mismo.
+            return result;
+          }
+          sendLog('[IsolateJS] Candidato ${candidate.videoId} no disponible, probando el siguiente...');
         }
       }
 
@@ -477,6 +523,16 @@ class ExtractionIsolate {
     return ExtractionError.unknownError;
   }
 
+  // C5: sufijos de versión ("- Remastered 2011", "(Remaster 2009)") no
+  // ayudan a la búsqueda en YouTube y a veces la empeoran (el upload rara vez
+  // repite el año del remaster en el título).
+  static final RegExp _versionSuffix = RegExp(
+    r'\s*[\(\[-]\s*(re)?master(ed)?(\s*\d{4})?\s*[\)\]]?\s*$',
+    caseSensitive: false,
+  );
+
+  static String _stripVersionSuffix(String title) => title.replaceAll(_versionSuffix, '').trim();
+
   static Future<Map<String, dynamic>?> _tryExtractWithClient({
     required String videoId,
     required String client,
@@ -489,7 +545,11 @@ class ExtractionIsolate {
     final completer = Completer<Map<String, dynamic>>();
     _jsExtractCompleters[jsRequestId] = completer;
 
-    final code = "globalThis.extractVideo('$videoId', '$client', '$jsRequestId');";
+    // C7: `jsonEncode` en vez de interpolación cruda — antes solo comillas
+    // simples sin escapar en absoluto; un id/valor con un apóstrofe literal
+    // rompía la sintaxis del script generado.
+    final code =
+        'globalThis.extractVideo(${jsonEncode(videoId)}, ${jsonEncode(client)}, ${jsonEncode(jsRequestId)});';
     final evalRes = jsRuntime.evaluate(code);
     
     if (evalRes.isError) {
@@ -521,8 +581,10 @@ class ExtractionIsolate {
     final completer = Completer<Map<String, dynamic>>();
     _jsSearchCompleters[jsRequestId] = completer;
 
-    final safeQuery = query.replaceAll("'", "\\'");
-    final code = "globalThis.searchVideos('$safeQuery', '$client', '$jsRequestId');";
+    // C7: `jsonEncode` en vez de escapar a mano solo comillas simples (no
+    // cubría backslashes, comillas dobles ni saltos de línea en el título).
+    final code =
+        'globalThis.searchVideos(${jsonEncode(query)}, ${jsonEncode(client)}, ${jsonEncode(jsRequestId)});';
     final evalRes = jsRuntime.evaluate(code);
 
     if (evalRes.isError) {
