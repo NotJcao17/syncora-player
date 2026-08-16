@@ -35,13 +35,20 @@ class DeezerTrack {
     final List<SyncoraArtistRef> contributorsList = [];
     final contributorsRaw = json['contributors'];
     if (contributorsRaw is List) {
+      // Deezer repite al mismo colaborador con roles distintos (ej. Bruno
+      // Mars aparece como "Main" y "Featured" con el mismo id en
+      // /track/{id}) — confirmado contra la API en vivo. Deduplicar por id
+      // cuando hay uno real; si falta (id=0), por nombre, para no fusionar
+      // por accidente a dos colaboradores distintos sin id.
+      final seenKeys = <String>{};
       for (final item in contributorsRaw) {
         if (item is Map) {
           final rawId = item['id'];
           final rawName = item['name'];
           final id = rawId is int ? rawId : (rawId != null ? int.tryParse(rawId.toString()) ?? 0 : 0);
           final name = rawName is String ? rawName : '';
-          if (name.isNotEmpty) {
+          final key = id != 0 ? 'id:$id' : 'name:${name.toLowerCase()}';
+          if (name.isNotEmpty && seenKeys.add(key)) {
             contributorsList.add(SyncoraArtistRef(id: id, name: name));
           }
         }
@@ -100,6 +107,27 @@ class DeezerTrack {
         'preview': previewUrl,
         'rank': rank,
       };
+
+  /// Devuelve una copia con `contributorsList` (y `artistName` derivado de esa
+  /// lista) reemplazados — usado para enriquecer resultados de búsqueda que
+  /// llegaron con un solo artista (`/search` no trae `contributors`) con el
+  /// detalle completo obtenido de `/track/{id}`.
+  DeezerTrack withContributors(List<SyncoraArtistRef> contributors) {
+    if (contributors.isEmpty) return this;
+    return DeezerTrack(
+      id: id,
+      title: title,
+      artistName: contributors.map((c) => c.name).join(', '),
+      artistId: artistId,
+      albumTitle: albumTitle,
+      albumId: albumId,
+      coverUrl: coverUrl,
+      durationSec: durationSec,
+      previewUrl: previewUrl,
+      contributorsList: contributors,
+      rank: rank,
+    );
+  }
 
   SyncoraTrack toSyncoraTrack() {
     return SyncoraTrack(

@@ -10,8 +10,10 @@ import '../../core/cache/cover_cache_service.dart';
 import '../../core/extraction/extraction_service.dart';
 import '../../core/extraction/models/extraction_request.dart';
 import '../../core/extraction/models/extraction_result.dart';
+import '../../core/utils/contributor_resolver.dart';
 
 import 'package:drift/drift.dart';
+import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/daos/downloaded_track_dao.dart';
 import '../../data/local_db/syncora_database.dart';
 
@@ -132,6 +134,11 @@ class DownloadService {
 
     _activeCancelTokens[track.deezerId] = false;
 
+    // Resolver colaboradores completos antes de persistir — `/search` no los trae,
+    // solo `/track/{id}`. Se pide una única vez aquí, no durante la navegación.
+    final contributors = await resolveTrackContributors(_ref.read(deezerApiProvider), track);
+    final contributorsJson = SyncoraArtistRef.encodeList(contributors);
+
     // 1. Insertar estado pendiente / descargando en DB
     final audioDir = await _getAudioDir();
     final localAudioPath = '$audioDir/${track.deezerId}.mp4';
@@ -148,6 +155,7 @@ class DownloadService {
         localAudioPath: localAudioPath,
         durationMs: track.duration?.inMilliseconds ?? 0,
         genre: Value(track.genre),
+        contributorsJson: Value(contributorsJson),
         downloadState: const Value(1), // downloading
       ),
 
@@ -283,6 +291,7 @@ class DownloadService {
           localAudioPath: localAudioPath,
           durationMs: track.duration?.inMilliseconds ?? 0,
           genre: Value(track.genre),
+          contributorsJson: Value(contributorsJson),
           fileSizeBytes: Value(fileSize),
           downloadState: const Value(2), // done
         ),
@@ -399,6 +408,7 @@ class DownloadService {
           coverUrl: existing.coverUrl,
           localAudioPath: existing.localAudioPath,
           durationMs: existing.durationMs,
+          contributorsJson: Value(existing.contributorsJson),
           downloadState: const Value(4), // cancelled
         ),
       );
@@ -432,6 +442,7 @@ class DownloadService {
           coverUrl: existing.coverUrl,
           localAudioPath: existing.localAudioPath,
           durationMs: existing.durationMs,
+          contributorsJson: Value(existing.contributorsJson),
           downloadState: const Value(3), // failed
         ),
       );

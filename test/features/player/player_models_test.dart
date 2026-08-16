@@ -44,6 +44,39 @@ void main() {
     });
   });
 
+  group('SyncoraArtistRef.encodeList / decodeList round-trip', () {
+    test('encodeList returns null for 0 or 1 artists (artistName ya basta)', () {
+      expect(SyncoraArtistRef.encodeList(const []), isNull);
+      expect(
+        SyncoraArtistRef.encodeList(const [SyncoraArtistRef(id: 1, name: 'Solo')]),
+        isNull,
+      );
+    });
+
+    test('encode -> decode preserves id and name for multiple colaboradores', () {
+      const original = [
+        SyncoraArtistRef(id: 10, name: 'Jesse & Joy'),
+        SyncoraArtistRef(id: 20, name: 'Gente De Zona'),
+      ];
+
+      final encoded = SyncoraArtistRef.encodeList(original);
+      expect(encoded, isNotNull);
+
+      final decoded = SyncoraArtistRef.decodeList(encoded);
+      expect(decoded.length, equals(2));
+      expect(decoded[0].id, equals(10));
+      expect(decoded[0].name, equals('Jesse & Joy'));
+      expect(decoded[1].id, equals(20));
+      expect(decoded[1].name, equals('Gente De Zona'));
+    });
+
+    test('decodeList tolera null, vacío y JSON corrupto sin lanzar', () {
+      expect(SyncoraArtistRef.decodeList(null), isEmpty);
+      expect(SyncoraArtistRef.decodeList(''), isEmpty);
+      expect(SyncoraArtistRef.decodeList('{esto no es json valido'), isEmpty);
+    });
+  });
+
   group('DeezerTrack contributors parsing Tests', () {
     test('parses json contributors into contributorsList', () {
       final json = {
@@ -86,6 +119,43 @@ void main() {
       final syncoraTrack = deezerTrack.toSyncoraTrack();
       expect(syncoraTrack.artists.length, equals(1));
       expect(syncoraTrack.artist, equals('Single Deezer Artist'));
+    });
+
+    test('withContributors reemplaza contributorsList y re-deriva artistName (A5)', () {
+      final json = {
+        'id': 300,
+        'title': '3 A.M.',
+        'artist': {'id': 10, 'name': 'Jesse & Joy'},
+        'album': {'id': 1, 'title': '3 A.M.'},
+        'duration': 183,
+      };
+      final original = DeezerTrack.fromJson(json);
+      expect(original.contributorsList.length, equals(1)); // /search no trae contributors
+
+      final enriched = original.withContributors(const [
+        SyncoraArtistRef(id: 10, name: 'Jesse & Joy'),
+        SyncoraArtistRef(id: 20, name: 'Gente De Zona'),
+      ]);
+
+      expect(enriched.contributorsList.length, equals(2));
+      expect(enriched.artistName, equals('Jesse & Joy, Gente De Zona'));
+      // El resto de los campos no cambia.
+      expect(enriched.id, equals(original.id));
+      expect(enriched.title, equals(original.title));
+    });
+
+    test('withContributors con lista vacía no modifica el track', () {
+      final json = {
+        'id': 301,
+        'title': 'Solo Track',
+        'artist': {'id': 5, 'name': 'Solo Artist'},
+        'album': {'id': 1, 'title': 'Album'},
+        'duration': 200,
+      };
+      final original = DeezerTrack.fromJson(json);
+      final result = original.withContributors(const []);
+      expect(result.artistName, equals(original.artistName));
+      expect(result.contributorsList.length, equals(original.contributorsList.length));
     });
   });
 }

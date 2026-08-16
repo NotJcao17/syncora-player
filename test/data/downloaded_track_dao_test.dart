@@ -119,5 +119,29 @@ void main() {
       list = await dao.getAllDownloaded();
       expect(list, isEmpty);
     });
+
+    test('contributorsJson persiste y sobrevive el round-trip de lectura', () async {
+      const json = '[{"id":10,"name":"Jesse & Joy"},{"id":20,"name":"Gente De Zona"}]';
+
+      await dao.insertOrUpdate(
+        DownloadedTracksCompanion.insert(
+          trackId: 5005,
+          artistId: 10,
+          albumId: 1,
+          title: '3 A.M.',
+          artistName: 'Jesse & Joy',
+          albumName: '3 A.M.',
+          coverUrl: 'https://cover.jpg',
+          localAudioPath: '/storage/music/5005.mp3',
+          durationMs: 183000,
+          contributorsJson: const Value(json),
+          downloadState: const Value(2),
+        ),
+      );
+
+      final track = await dao.getByTrackId(5005);
+      expect(track, isNotNull);
+      expect(track!.contributorsJson, equals(json));
+    });
   });
 }

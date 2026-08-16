@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import '../../features/search/search_ranking.dart';
 import '../models/deezer/deezer_album.dart';
 import '../models/deezer/deezer_artist.dart';
 import '../models/deezer/deezer_playlist.dart';
@@ -38,13 +39,40 @@ class RateLimiter {
   }
 }
 
+/// Caché LRU simple e in-memory, reusada para búsquedas, top tracks de artista
+/// y detalle de pista (A6 del plan: evitar repetir peticiones ya resueltas).
+class _LruCache<K, V> {
+  final int maxSize;
+  final Map<K, V> _map = {};
+  final List<K> _order = [];
+
+  _LruCache({this.maxSize = 20});
+
+  V? get(K key) {
+    if (!_map.containsKey(key)) return null;
+    _order.remove(key);
+    _order.add(key);
+    return _map[key];
+  }
+
+  void put(K key, V value) {
+    _order.remove(key);
+    if (_map.length >= maxSize && _order.isNotEmpty) {
+      final oldest = _order.removeAt(0);
+      _map.remove(oldest);
+    }
+    _map[key] = value;
+    _order.add(key);
+  }
+}
+
 class DeezerApi {
   final Dio _dio;
   final RateLimiter _rateLimiter;
 
-  // Simple in-memory LRU cache for last 10 search queries
-  final Map<String, DeezerSearchResult> _searchCache = {};
-  final List<String> _cacheKeysOrder = [];
+  final _LruCache<String, DeezerSearchResult> _searchCache = _LruCache(maxSize: 10);
+  final _LruCache<int, List<DeezerTrack>> _topTracksCache = _LruCache(maxSize: 20);
+  final _LruCache<int, DeezerTrack> _trackCache = _LruCache(maxSize: 30);
 
   DeezerApi({Dio? dio, RateLimiter? rateLimiter})
       : _dio = dio ?? Dio(BaseOptions(baseUrl: 'https://api.deezer.com')),
@@ -55,23 +83,21 @@ class DeezerApi {
     if (trimmed.isEmpty) return const DeezerSearchResult();
 
     final cacheKey = '${type.name}:$trimmed';
-    if (_searchCache.containsKey(cacheKey)) {
-      _cacheKeysOrder.remove(cacheKey);
-      _cacheKeysOrder.add(cacheKey);
-      return _searchCache[cacheKey]!;
-    }
+    final cached = _searchCache.get(cacheKey);
+    if (cached != null) return cached;
 
     return _rateLimiter.run(() async {
       try {
         List<DeezerTrack> tracks = [];
         List<DeezerArtist> artists = [];
         List<DeezerAlbum> albums = [];
+        DeezerArtist? dominantArtist;
 
         if (type == DeezerSearchType.all) {
           final res = await Future.wait([
-            _dio.get('/search', queryParameters: {'q': trimmed}),
-            _dio.get('/search/artist', queryParameters: {'q': trimmed}),
-            _dio.get('/search/album', queryParameters: {'q': trimmed}),
+            _dio.get('/search', queryParameters: {'q': trimmed, 'limit': 100}),
+            _dio.get('/search/artist', queryParameters: {'q': trimmed, 'limit': 100}),
+            _dio.get('/search/album', queryParameters: {'q': trimmed, 'limit': 100}),
           ]);
 
           final trackData = res[0].data;
@@ -92,15 +118,13 @@ class DeezerApi {
                 artists.add(DeezerArtist.fromJson(Map<String, dynamic>.from(item)));
               }
             }
-            // En la pestaña "Todo", filtrar para conservar solo artistas realmente relevantes
-            final queryLower = trimmed.toLowerCase();
-            artists = artists.where((a) {
-              final artistNameLower = a.name.toLowerCase();
-              final isExactMatch = artistNameLower == queryLower;
-              final isPartialMatch = artistNameLower.contains(queryLower) || queryLower.contains(artistNameLower);
-              final hasHighFanCount = a.nbFan >= 1000;
-              return isExactMatch || (isPartialMatch && hasHighFanCount);
-            }).toList();
+            // Ordenar por relevancia de texto + popularidad de fans (ver search_ranking.dart)
+            artists = SearchRanking.rankArtists(artists, trimmed);
+            dominantArtist = SearchRanking.findDominantArtist(artists, trimmed, tracks);
+            // Filtra artistas "novedad" que matchean por nombre pero no tienen
+            // ninguna canción real en el pool ya traído (ver "DJ Despacito" en
+            // el plan) — gratis, reusa `tracks` ya obtenido en esta búsqueda.
+            artists = SearchRanking.filterArtistsWithPresence(artists, tracks);
           }
 
           if (albumData != null && albumData is Map && albumData['data'] is List) {
@@ -115,7 +139,7 @@ class DeezerApi {
           if (type == DeezerSearchType.artist) endpoint = '/search/artist';
           if (type == DeezerSearchType.album) endpoint = '/search/album';
 
-          final response = await _dio.get(endpoint, queryParameters: {'q': trimmed});
+          final response = await _dio.get(endpoint, queryParameters: {'q': trimmed, 'limit': 100});
           if (response.data != null && response.data is Map && response.data['data'] is List) {
             final items = response.data['data'] as List;
             for (final item in items) {
@@ -134,10 +158,41 @@ class DeezerApi {
               }
             }
           }
+          if (type == DeezerSearchType.artist) {
+            artists = SearchRanking.rankArtists(artists, trimmed);
+          }
         }
 
-        // Ordenar canciones por popularidad/rank descendente
-        tracks.sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
+        tracks = SearchRanking.rankTracks(tracks, trimmed, dominantArtist: dominantArtist);
+
+        // A4: si el artista dominante existe pero sus canciones no aparecen en el
+        // top 5 (Deezer las enterró bajo ruido de covers/remixes), traer su top
+        // tracks (+1 petición condicional) y re-rankear con ellas incluidas.
+        if (type == DeezerSearchType.all && dominantArtist != null) {
+          final alreadyOnTop = tracks
+              .take(5)
+              .any((t) => SearchRanking.trackMatchesArtist(t, dominantArtist!));
+          if (!alreadyOnTop) {
+            try {
+              final topTracks = await getArtistTopTracks(dominantArtist.id);
+              final existingIds = tracks.map((t) => t.id).toSet();
+              final newOnes = topTracks.where((t) => existingIds.add(t.id)).take(10);
+              if (newOnes.isNotEmpty) {
+                tracks = SearchRanking.rankTracks(
+                  [...tracks, ...newOnes],
+                  trimmed,
+                  dominantArtist: dominantArtist,
+                );
+              }
+            } catch (_) {}
+          }
+        }
+
+        // A5: enriquecer con /track/{id} solo los títulos que aparecen más de una
+        // vez entre los primeros resultados (mismo título base + artista) — es
+        // justo ahí donde el usuario no puede distinguir una colaboración de una
+        // versión solista, porque /search no trae `contributors`.
+        tracks = await _enrichAmbiguousTitles(tracks);
 
         final result = DeezerSearchResult(
           tracks: tracks,
@@ -145,14 +200,7 @@ class DeezerApi {
           albums: albums,
         );
 
-        // Put in cache LRU (max 10)
-        _cacheKeysOrder.remove(cacheKey);
-        if (_searchCache.length >= 10 && _cacheKeysOrder.isNotEmpty) {
-          final oldestKey = _cacheKeysOrder.removeAt(0);
-          _searchCache.remove(oldestKey);
-        }
-        _searchCache[cacheKey] = result;
-        _cacheKeysOrder.add(cacheKey);
+        _searchCache.put(cacheKey, result);
 
         return result;
       } catch (e) {
@@ -164,10 +212,79 @@ class DeezerApi {
     });
   }
 
+  /// A5: agrupa los primeros [_ambiguousScanLimit] resultados por título base +
+  /// artista; para cada grupo con más de un miembro (ej. "3 A.M." y "3 A.M.
+  /// (feat. Tommy Torres)"), pide el detalle completo vía `getTrack` para poder
+  /// mostrar quién colabora en cada uno.
+  ///
+  /// Extendido (A5b): esto por sí solo dejaba huecos inconsistentes — "3 A.M."
+  /// o "Despacito" se enriquecían por casualidad (Deezer repite el mismo
+  /// título+artista más de una vez en el pool), pero canciones como "Un Día
+  /// (One Day)" no tienen ningún duplicado ni ninguna pista en el texto del
+  /// título — así que nunca se enriquecían, pese a ser justo los primeros
+  /// resultados que el usuario ve. Por eso los primeros [_alwaysEnrichTop]
+  /// tracks del ranking final SIEMPRE entran como candidatos, tengan o no
+  /// duplicado. Sigue respetando el mismo tope de [_ambiguousMaxRequests]
+  /// peticiones ya presupuestado en el plan — no se añade presupuesto nuevo,
+  /// solo se prioriza mejor a quién se le gasta.
+  ///
+  /// Se descartó extraer el colaborador directo del texto del título (gratis,
+  /// sin request) porque esos nombres no traen `artistId` real de Deezer —
+  /// saldrían como texto no clickeable en la UI, inconsistente con el resto
+  /// de artistas. Se prefiere pagar la petición y tener siempre un ID real.
+  static const int _ambiguousScanLimit = 20;
+  static const int _alwaysEnrichTop = 5;
+  static const int _ambiguousMaxRequests = 8;
+
+  Future<List<DeezerTrack>> _enrichAmbiguousTitles(List<DeezerTrack> tracks) async {
+    final scanned = tracks.take(_ambiguousScanLimit).toList();
+    final groups = <String, List<DeezerTrack>>{};
+    for (final t in scanned) {
+      final key = '${SearchRanking.baseTitle(t.title)}|${SearchRanking.normalize(t.artistName)}';
+      (groups[key] ??= []).add(t);
+    }
+
+    final candidates = <int, DeezerTrack>{};
+    for (final t in tracks.take(_alwaysEnrichTop)) {
+      if (t.contributorsList.length <= 1) candidates[t.id] = t;
+    }
+    for (final group in groups.values) {
+      if (group.length <= 1) continue;
+      for (final t in group) {
+        if (t.contributorsList.length <= 1) candidates[t.id] = t;
+      }
+    }
+
+    final toEnrich = candidates.values.take(_ambiguousMaxRequests);
+    if (toEnrich.isEmpty) return tracks;
+
+    // En paralelo, no secuencial: con el top-5 siempre incluido esto pasó de
+    // 0-2 peticiones típicas a hasta 5+, y en secuencia cada una suma su
+    // latencia completa (~3s percibidos). El RateLimiter ya soporta llamadas
+    // concurrentes (lo mismo hace el fetch inicial de tracks/artistas/álbumes
+    // de más arriba) y encola en vez de fallar si se pasa del límite.
+    final result = List<DeezerTrack>.from(tracks);
+    await Future.wait(toEnrich.map((original) async {
+      try {
+        final full = await getTrack(original.id);
+        if (full.contributorsList.length > 1) {
+          final pos = result.indexWhere((t) => t.id == original.id);
+          if (pos != -1) result[pos] = original.withContributors(full.contributorsList);
+        }
+      } catch (_) {}
+    }));
+    return result;
+  }
+
   Future<DeezerTrack> getTrack(int id) async {
+    final cached = _trackCache.get(id);
+    if (cached != null) return cached;
+
     return _rateLimiter.run(() async {
       final response = await _dio.get('/track/$id');
-      return DeezerTrack.fromJson(Map<String, dynamic>.from(response.data as Map));
+      final track = DeezerTrack.fromJson(Map<String, dynamic>.from(response.data as Map));
+      _trackCache.put(id, track);
+      return track;
     });
   }
 
@@ -186,6 +303,9 @@ class DeezerApi {
   }
 
   Future<List<DeezerTrack>> getArtistTopTracks(int id) async {
+    final cached = _topTracksCache.get(id);
+    if (cached != null) return cached;
+
     return _rateLimiter.run(() async {
       final response = await _dio.get('/artist/$id/top');
       if (response.data == null || response.data['data'] is! List) return [];
@@ -195,6 +315,7 @@ class DeezerApi {
           .map((item) => DeezerTrack.fromJson(Map<String, dynamic>.from(item as Map)))
           .toList();
       tracks.sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
+      _topTracksCache.put(id, tracks);
       return tracks;
     });
   }

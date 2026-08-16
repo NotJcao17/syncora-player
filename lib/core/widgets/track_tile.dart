@@ -8,6 +8,8 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../utils/connectivity_service.dart';
+import '../utils/contributor_resolver.dart';
+import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../data/supabase/supabase_providers.dart';
 import '../../features/download/download_provider.dart';
@@ -630,6 +632,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         AppToast.show(context, message: '"${widget.track.title}" agregada a la cola');
       }
     } else if (value == 'like') {
+      final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), widget.track);
       final isLiked = await dao.toggleLikeTrack(
         trackId: trackIdInt,
         artistId: widget.track.artistId ?? 0,
@@ -639,6 +642,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         albumName: widget.track.album ?? '',
         coverUrl: widget.track.coverUrl,
         durationMs: (widget.track.duration ?? Duration.zero).inMilliseconds,
+        contributorsJson: SyncoraArtistRef.encodeList(contributors),
       );
       var likedPlaylist = await dao.getLikedPlaylist();
       if (likedPlaylist.remoteId == null) {
@@ -761,6 +765,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                     }
                   }
 
+                  final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), widget.track);
                   await dao.addTrackToPlaylist(
                     playlistId: pl.id,
                     trackId: trackIdInt,
@@ -771,6 +776,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                     albumName: widget.track.album ?? '',
                     coverUrl: widget.track.coverUrl,
                     durationMs: (widget.track.duration ?? Duration.zero).inMilliseconds,
+                    contributorsJson: SyncoraArtistRef.encodeList(contributors),
                   );
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (context.mounted) {

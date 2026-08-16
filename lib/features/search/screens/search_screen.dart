@@ -15,6 +15,7 @@ import '../../../data/models/deezer/deezer_artist.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../player/player_providers.dart';
 import '../search_provider.dart';
+import '../search_ranking.dart';
 
 /// Pantalla de Búsqueda conectada a Deezer real con Debounce 500ms y filtros.
 class SearchScreen extends ConsumerStatefulWidget {
@@ -96,25 +97,65 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ),
                     ),
 
-                    // Botón explícito para la Búsqueda Profunda / Colaboraciones en Cascada (Acción deshabilitada)
-                    OutlinedButton.icon(
-                      onPressed: null,
-                      icon: Icon(AppIcons.bold(SolarIcons.Magnifer), size: 16, color: AppTheme.secondary),
-                      label: const Text(
-                        'Búsqueda Profunda',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.secondary,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Tooltip(
+                          message: searchState.popularOnly
+                              ? 'Mostrando solo resultados populares'
+                              : 'Mostrando todos los resultados',
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () => searchNotifier.setPopularOnly(!searchState.popularOnly),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: searchState.popularOnly ? AppTheme.primary : AppTheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: searchState.popularOnly
+                                      ? AppTheme.primary
+                                      : AppTheme.secondary.withValues(alpha: 0.4),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Icon(
+                                AppIcons.bold(SolarIcons.Fire),
+                                size: 18,
+                                color: searchState.popularOnly ? AppTheme.background : AppTheme.secondary,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        disabledForegroundColor: AppTheme.secondary,
-                        disabledIconColor: AppTheme.secondary,
-                        side: BorderSide(color: AppTheme.secondary.withValues(alpha: 0.4), width: 1.2),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                        const SizedBox(width: 8),
+                        // Botón explícito para la Búsqueda Profunda / Colaboraciones en Cascada (Acción deshabilitada)
+                        SizedBox(
+                          height: 40,
+                          child: OutlinedButton.icon(
+                            onPressed: null,
+                            icon: Icon(AppIcons.bold(SolarIcons.Magnifer), size: 16, color: AppTheme.secondary),
+                            label: const Text(
+                              'Búsqueda Profunda',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.secondary,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              disabledForegroundColor: AppTheme.secondary,
+                              disabledIconColor: AppTheme.secondary,
+                              side: BorderSide(color: AppTheme.secondary.withValues(alpha: 0.4), width: 1.2),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -325,20 +366,49 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       );
     }
 
+    // Toggle "Popular": filtro en cliente, no dispara una nueva búsqueda.
+    final displayedArtists =
+        state.popularOnly ? result.artists.where(SearchRanking.isPopularArtist).toList() : result.artists;
+    final displayedTracks =
+        state.popularOnly ? result.tracks.where(SearchRanking.isPopularTrack).toList() : result.tracks;
+
+    final hasContent = displayedArtists.isNotEmpty || displayedTracks.isNotEmpty || result.albums.isNotEmpty;
+    if (!hasContent) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(AppIcons.broken(SolarIcons.Fire), size: 48, color: AppTheme.secondary),
+            const SizedBox(height: 12),
+            const Text(
+              'Sin resultados populares para esta búsqueda',
+              style: TextStyle(color: AppTheme.secondary, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => ref.read(searchProvider.notifier).setPopularOnly(false),
+              child: const Text('Mostrar todos los resultados'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Artistas destacados si existen
-          if (result.artists.isNotEmpty) ...[
-            _buildArtistSection(result.artists, isDesktop),
+          if (displayedArtists.isNotEmpty) ...[
+            _buildArtistSection(displayedArtists, isDesktop, state.searchType),
             const SizedBox(height: 24),
           ],
 
           // Lista de canciones
-          if (result.tracks.isNotEmpty) ...[
-            _buildSongsSection(result.tracks),
+          if (displayedTracks.isNotEmpty) ...[
+            _buildSongsSection(displayedTracks),
             const SizedBox(height: 24),
           ],
 
@@ -354,8 +424,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _buildArtistSection(List<DeezerArtist> artists, bool isDesktop) {
-    final displayArtists = artists.length > 5 ? artists.sublist(0, 5) : artists;
+  Widget _buildArtistSection(List<DeezerArtist> artists, bool isDesktop, DeezerSearchType searchType) {
+    // "Todo" comparte espacio con canciones y álbumes, se queda acotado a 5.
+    // La pestaña "Artistas" dedicada puede mostrar bastantes más — ya viene
+    // filtrada por relevancia (y, si el toggle "Popular" está activo, por
+    // popularidad también), así que un tope más alto no implica mostrar ruido.
+    final cap = searchType == DeezerSearchType.all ? 5 : 40;
+    final displayArtists = artists.length > cap ? artists.sublist(0, cap) : artists;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

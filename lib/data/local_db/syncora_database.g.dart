@@ -806,6 +806,17 @@ class $PlaylistTracksTable extends PlaylistTracks
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _contributorsJsonMeta = const VerificationMeta(
+    'contributorsJson',
+  );
+  @override
+  late final GeneratedColumn<String> contributorsJson = GeneratedColumn<String>(
+    'contributors_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -821,6 +832,7 @@ class $PlaylistTracksTable extends PlaylistTracks
     genre,
     orderIndex,
     addedAt,
+    contributorsJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -927,6 +939,15 @@ class $PlaylistTracksTable extends PlaylistTracks
         addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
       );
     }
+    if (data.containsKey('contributors_json')) {
+      context.handle(
+        _contributorsJsonMeta,
+        contributorsJson.isAcceptableOrUnknown(
+          data['contributors_json']!,
+          _contributorsJsonMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -988,6 +1009,10 @@ class $PlaylistTracksTable extends PlaylistTracks
         DriftSqlType.dateTime,
         data['${effectivePrefix}added_at'],
       )!,
+      contributorsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}contributors_json'],
+      ),
     );
   }
 
@@ -1011,6 +1036,7 @@ class PlaylistTrack extends DataClass implements Insertable<PlaylistTrack> {
   final String? genre;
   final int orderIndex;
   final DateTime addedAt;
+  final String? contributorsJson;
   const PlaylistTrack({
     required this.id,
     required this.playlistId,
@@ -1025,6 +1051,7 @@ class PlaylistTrack extends DataClass implements Insertable<PlaylistTrack> {
     this.genre,
     required this.orderIndex,
     required this.addedAt,
+    this.contributorsJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1044,6 +1071,9 @@ class PlaylistTrack extends DataClass implements Insertable<PlaylistTrack> {
     }
     map['order_index'] = Variable<int>(orderIndex);
     map['added_at'] = Variable<DateTime>(addedAt);
+    if (!nullToAbsent || contributorsJson != null) {
+      map['contributors_json'] = Variable<String>(contributorsJson);
+    }
     return map;
   }
 
@@ -1064,6 +1094,9 @@ class PlaylistTrack extends DataClass implements Insertable<PlaylistTrack> {
           : Value(genre),
       orderIndex: Value(orderIndex),
       addedAt: Value(addedAt),
+      contributorsJson: contributorsJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(contributorsJson),
     );
   }
 
@@ -1086,6 +1119,7 @@ class PlaylistTrack extends DataClass implements Insertable<PlaylistTrack> {
       genre: serializer.fromJson<String?>(json['genre']),
       orderIndex: serializer.fromJson<int>(json['orderIndex']),
       addedAt: serializer.fromJson<DateTime>(json['addedAt']),
+      contributorsJson: serializer.fromJson<String?>(json['contributorsJson']),
     );
   }
   @override
@@ -1105,6 +1139,7 @@ class PlaylistTrack extends DataClass implements Insertable<PlaylistTrack> {
       'genre': serializer.toJson<String?>(genre),
       'orderIndex': serializer.toJson<int>(orderIndex),
       'addedAt': serializer.toJson<DateTime>(addedAt),
+      'contributorsJson': serializer.toJson<String?>(contributorsJson),
     };
   }
 
@@ -1122,6 +1157,7 @@ class PlaylistTrack extends DataClass implements Insertable<PlaylistTrack> {
     Value<String?> genre = const Value.absent(),
     int? orderIndex,
     DateTime? addedAt,
+    Value<String?> contributorsJson = const Value.absent(),
   }) => PlaylistTrack(
     id: id ?? this.id,
     playlistId: playlistId ?? this.playlistId,
@@ -1136,6 +1172,9 @@ class PlaylistTrack extends DataClass implements Insertable<PlaylistTrack> {
     genre: genre.present ? genre.value : this.genre,
     orderIndex: orderIndex ?? this.orderIndex,
     addedAt: addedAt ?? this.addedAt,
+    contributorsJson: contributorsJson.present
+        ? contributorsJson.value
+        : this.contributorsJson,
   );
   PlaylistTrack copyWithCompanion(PlaylistTracksCompanion data) {
     return PlaylistTrack(
@@ -1160,6 +1199,9 @@ class PlaylistTrack extends DataClass implements Insertable<PlaylistTrack> {
           ? data.orderIndex.value
           : this.orderIndex,
       addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+      contributorsJson: data.contributorsJson.present
+          ? data.contributorsJson.value
+          : this.contributorsJson,
     );
   }
 
@@ -1178,7 +1220,8 @@ class PlaylistTrack extends DataClass implements Insertable<PlaylistTrack> {
           ..write('durationMs: $durationMs, ')
           ..write('genre: $genre, ')
           ..write('orderIndex: $orderIndex, ')
-          ..write('addedAt: $addedAt')
+          ..write('addedAt: $addedAt, ')
+          ..write('contributorsJson: $contributorsJson')
           ..write(')'))
         .toString();
   }
@@ -1198,6 +1241,7 @@ class PlaylistTrack extends DataClass implements Insertable<PlaylistTrack> {
     genre,
     orderIndex,
     addedAt,
+    contributorsJson,
   );
   @override
   bool operator ==(Object other) =>
@@ -1215,7 +1259,8 @@ class PlaylistTrack extends DataClass implements Insertable<PlaylistTrack> {
           other.durationMs == this.durationMs &&
           other.genre == this.genre &&
           other.orderIndex == this.orderIndex &&
-          other.addedAt == this.addedAt);
+          other.addedAt == this.addedAt &&
+          other.contributorsJson == this.contributorsJson);
 }
 
 class PlaylistTracksCompanion extends UpdateCompanion<PlaylistTrack> {
@@ -1232,6 +1277,7 @@ class PlaylistTracksCompanion extends UpdateCompanion<PlaylistTrack> {
   final Value<String?> genre;
   final Value<int> orderIndex;
   final Value<DateTime> addedAt;
+  final Value<String?> contributorsJson;
   const PlaylistTracksCompanion({
     this.id = const Value.absent(),
     this.playlistId = const Value.absent(),
@@ -1246,6 +1292,7 @@ class PlaylistTracksCompanion extends UpdateCompanion<PlaylistTrack> {
     this.genre = const Value.absent(),
     this.orderIndex = const Value.absent(),
     this.addedAt = const Value.absent(),
+    this.contributorsJson = const Value.absent(),
   });
   PlaylistTracksCompanion.insert({
     this.id = const Value.absent(),
@@ -1261,6 +1308,7 @@ class PlaylistTracksCompanion extends UpdateCompanion<PlaylistTrack> {
     this.genre = const Value.absent(),
     this.orderIndex = const Value.absent(),
     this.addedAt = const Value.absent(),
+    this.contributorsJson = const Value.absent(),
   }) : playlistId = Value(playlistId),
        trackId = Value(trackId),
        artistId = Value(artistId),
@@ -1284,6 +1332,7 @@ class PlaylistTracksCompanion extends UpdateCompanion<PlaylistTrack> {
     Expression<String>? genre,
     Expression<int>? orderIndex,
     Expression<DateTime>? addedAt,
+    Expression<String>? contributorsJson,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1299,6 +1348,7 @@ class PlaylistTracksCompanion extends UpdateCompanion<PlaylistTrack> {
       if (genre != null) 'genre': genre,
       if (orderIndex != null) 'order_index': orderIndex,
       if (addedAt != null) 'added_at': addedAt,
+      if (contributorsJson != null) 'contributors_json': contributorsJson,
     });
   }
 
@@ -1316,6 +1366,7 @@ class PlaylistTracksCompanion extends UpdateCompanion<PlaylistTrack> {
     Value<String?>? genre,
     Value<int>? orderIndex,
     Value<DateTime>? addedAt,
+    Value<String?>? contributorsJson,
   }) {
     return PlaylistTracksCompanion(
       id: id ?? this.id,
@@ -1331,6 +1382,7 @@ class PlaylistTracksCompanion extends UpdateCompanion<PlaylistTrack> {
       genre: genre ?? this.genre,
       orderIndex: orderIndex ?? this.orderIndex,
       addedAt: addedAt ?? this.addedAt,
+      contributorsJson: contributorsJson ?? this.contributorsJson,
     );
   }
 
@@ -1376,6 +1428,9 @@ class PlaylistTracksCompanion extends UpdateCompanion<PlaylistTrack> {
     if (addedAt.present) {
       map['added_at'] = Variable<DateTime>(addedAt.value);
     }
+    if (contributorsJson.present) {
+      map['contributors_json'] = Variable<String>(contributorsJson.value);
+    }
     return map;
   }
 
@@ -1394,7 +1449,8 @@ class PlaylistTracksCompanion extends UpdateCompanion<PlaylistTrack> {
           ..write('durationMs: $durationMs, ')
           ..write('genre: $genre, ')
           ..write('orderIndex: $orderIndex, ')
-          ..write('addedAt: $addedAt')
+          ..write('addedAt: $addedAt, ')
+          ..write('contributorsJson: $contributorsJson')
           ..write(')'))
         .toString();
   }
@@ -2431,6 +2487,17 @@ class $DownloadedTracksTable extends DownloadedTracks
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _contributorsJsonMeta = const VerificationMeta(
+    'contributorsJson',
+  );
+  @override
+  late final GeneratedColumn<String> contributorsJson = GeneratedColumn<String>(
+    'contributors_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2448,6 +2515,7 @@ class $DownloadedTracksTable extends DownloadedTracks
     fileSizeBytes,
     downloadState,
     downloadedAt,
+    contributorsJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2581,6 +2649,15 @@ class $DownloadedTracksTable extends DownloadedTracks
         ),
       );
     }
+    if (data.containsKey('contributors_json')) {
+      context.handle(
+        _contributorsJsonMeta,
+        contributorsJson.isAcceptableOrUnknown(
+          data['contributors_json']!,
+          _contributorsJsonMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2650,6 +2727,10 @@ class $DownloadedTracksTable extends DownloadedTracks
         DriftSqlType.dateTime,
         data['${effectivePrefix}downloaded_at'],
       )!,
+      contributorsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}contributors_json'],
+      ),
     );
   }
 
@@ -2675,6 +2756,7 @@ class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
   final int fileSizeBytes;
   final int downloadState;
   final DateTime downloadedAt;
+  final String? contributorsJson;
   const DownloadedTrack({
     required this.id,
     required this.trackId,
@@ -2691,6 +2773,7 @@ class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
     required this.fileSizeBytes,
     required this.downloadState,
     required this.downloadedAt,
+    this.contributorsJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2714,6 +2797,9 @@ class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
     map['file_size_bytes'] = Variable<int>(fileSizeBytes);
     map['download_state'] = Variable<int>(downloadState);
     map['downloaded_at'] = Variable<DateTime>(downloadedAt);
+    if (!nullToAbsent || contributorsJson != null) {
+      map['contributors_json'] = Variable<String>(contributorsJson);
+    }
     return map;
   }
 
@@ -2738,6 +2824,9 @@ class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
       fileSizeBytes: Value(fileSizeBytes),
       downloadState: Value(downloadState),
       downloadedAt: Value(downloadedAt),
+      contributorsJson: contributorsJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(contributorsJson),
     );
   }
 
@@ -2762,6 +2851,7 @@ class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
       fileSizeBytes: serializer.fromJson<int>(json['fileSizeBytes']),
       downloadState: serializer.fromJson<int>(json['downloadState']),
       downloadedAt: serializer.fromJson<DateTime>(json['downloadedAt']),
+      contributorsJson: serializer.fromJson<String?>(json['contributorsJson']),
     );
   }
   @override
@@ -2783,6 +2873,7 @@ class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
       'fileSizeBytes': serializer.toJson<int>(fileSizeBytes),
       'downloadState': serializer.toJson<int>(downloadState),
       'downloadedAt': serializer.toJson<DateTime>(downloadedAt),
+      'contributorsJson': serializer.toJson<String?>(contributorsJson),
     };
   }
 
@@ -2802,6 +2893,7 @@ class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
     int? fileSizeBytes,
     int? downloadState,
     DateTime? downloadedAt,
+    Value<String?> contributorsJson = const Value.absent(),
   }) => DownloadedTrack(
     id: id ?? this.id,
     trackId: trackId ?? this.trackId,
@@ -2820,6 +2912,9 @@ class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
     fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
     downloadState: downloadState ?? this.downloadState,
     downloadedAt: downloadedAt ?? this.downloadedAt,
+    contributorsJson: contributorsJson.present
+        ? contributorsJson.value
+        : this.contributorsJson,
   );
   DownloadedTrack copyWithCompanion(DownloadedTracksCompanion data) {
     return DownloadedTrack(
@@ -2852,6 +2947,9 @@ class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
       downloadedAt: data.downloadedAt.present
           ? data.downloadedAt.value
           : this.downloadedAt,
+      contributorsJson: data.contributorsJson.present
+          ? data.contributorsJson.value
+          : this.contributorsJson,
     );
   }
 
@@ -2872,7 +2970,8 @@ class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
           ..write('genre: $genre, ')
           ..write('fileSizeBytes: $fileSizeBytes, ')
           ..write('downloadState: $downloadState, ')
-          ..write('downloadedAt: $downloadedAt')
+          ..write('downloadedAt: $downloadedAt, ')
+          ..write('contributorsJson: $contributorsJson')
           ..write(')'))
         .toString();
   }
@@ -2894,6 +2993,7 @@ class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
     fileSizeBytes,
     downloadState,
     downloadedAt,
+    contributorsJson,
   );
   @override
   bool operator ==(Object other) =>
@@ -2913,7 +3013,8 @@ class DownloadedTrack extends DataClass implements Insertable<DownloadedTrack> {
           other.genre == this.genre &&
           other.fileSizeBytes == this.fileSizeBytes &&
           other.downloadState == this.downloadState &&
-          other.downloadedAt == this.downloadedAt);
+          other.downloadedAt == this.downloadedAt &&
+          other.contributorsJson == this.contributorsJson);
 }
 
 class DownloadedTracksCompanion extends UpdateCompanion<DownloadedTrack> {
@@ -2932,6 +3033,7 @@ class DownloadedTracksCompanion extends UpdateCompanion<DownloadedTrack> {
   final Value<int> fileSizeBytes;
   final Value<int> downloadState;
   final Value<DateTime> downloadedAt;
+  final Value<String?> contributorsJson;
   const DownloadedTracksCompanion({
     this.id = const Value.absent(),
     this.trackId = const Value.absent(),
@@ -2948,6 +3050,7 @@ class DownloadedTracksCompanion extends UpdateCompanion<DownloadedTrack> {
     this.fileSizeBytes = const Value.absent(),
     this.downloadState = const Value.absent(),
     this.downloadedAt = const Value.absent(),
+    this.contributorsJson = const Value.absent(),
   });
   DownloadedTracksCompanion.insert({
     this.id = const Value.absent(),
@@ -2965,6 +3068,7 @@ class DownloadedTracksCompanion extends UpdateCompanion<DownloadedTrack> {
     this.fileSizeBytes = const Value.absent(),
     this.downloadState = const Value.absent(),
     this.downloadedAt = const Value.absent(),
+    this.contributorsJson = const Value.absent(),
   }) : trackId = Value(trackId),
        artistId = Value(artistId),
        albumId = Value(albumId),
@@ -2990,6 +3094,7 @@ class DownloadedTracksCompanion extends UpdateCompanion<DownloadedTrack> {
     Expression<int>? fileSizeBytes,
     Expression<int>? downloadState,
     Expression<DateTime>? downloadedAt,
+    Expression<String>? contributorsJson,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3007,6 +3112,7 @@ class DownloadedTracksCompanion extends UpdateCompanion<DownloadedTrack> {
       if (fileSizeBytes != null) 'file_size_bytes': fileSizeBytes,
       if (downloadState != null) 'download_state': downloadState,
       if (downloadedAt != null) 'downloaded_at': downloadedAt,
+      if (contributorsJson != null) 'contributors_json': contributorsJson,
     });
   }
 
@@ -3026,6 +3132,7 @@ class DownloadedTracksCompanion extends UpdateCompanion<DownloadedTrack> {
     Value<int>? fileSizeBytes,
     Value<int>? downloadState,
     Value<DateTime>? downloadedAt,
+    Value<String?>? contributorsJson,
   }) {
     return DownloadedTracksCompanion(
       id: id ?? this.id,
@@ -3043,6 +3150,7 @@ class DownloadedTracksCompanion extends UpdateCompanion<DownloadedTrack> {
       fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
       downloadState: downloadState ?? this.downloadState,
       downloadedAt: downloadedAt ?? this.downloadedAt,
+      contributorsJson: contributorsJson ?? this.contributorsJson,
     );
   }
 
@@ -3094,6 +3202,9 @@ class DownloadedTracksCompanion extends UpdateCompanion<DownloadedTrack> {
     if (downloadedAt.present) {
       map['downloaded_at'] = Variable<DateTime>(downloadedAt.value);
     }
+    if (contributorsJson.present) {
+      map['contributors_json'] = Variable<String>(contributorsJson.value);
+    }
     return map;
   }
 
@@ -3114,7 +3225,8 @@ class DownloadedTracksCompanion extends UpdateCompanion<DownloadedTrack> {
           ..write('genre: $genre, ')
           ..write('fileSizeBytes: $fileSizeBytes, ')
           ..write('downloadState: $downloadState, ')
-          ..write('downloadedAt: $downloadedAt')
+          ..write('downloadedAt: $downloadedAt, ')
+          ..write('contributorsJson: $contributorsJson')
           ..write(')'))
         .toString();
   }
@@ -3596,6 +3708,7 @@ typedef $$PlaylistTracksTableCreateCompanionBuilder =
       Value<String?> genre,
       Value<int> orderIndex,
       Value<DateTime> addedAt,
+      Value<String?> contributorsJson,
     });
 typedef $$PlaylistTracksTableUpdateCompanionBuilder =
     PlaylistTracksCompanion Function({
@@ -3612,6 +3725,7 @@ typedef $$PlaylistTracksTableUpdateCompanionBuilder =
       Value<String?> genre,
       Value<int> orderIndex,
       Value<DateTime> addedAt,
+      Value<String?> contributorsJson,
     });
 
 final class $$PlaylistTracksTableReferences
@@ -3710,6 +3824,11 @@ class $$PlaylistTracksTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get contributorsJson => $composableBuilder(
+    column: $table.contributorsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$PlaylistsTableFilterComposer get playlistId {
     final $$PlaylistsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -3803,6 +3922,11 @@ class $$PlaylistTracksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get contributorsJson => $composableBuilder(
+    column: $table.contributorsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PlaylistsTableOrderingComposer get playlistId {
     final $$PlaylistsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3878,6 +4002,11 @@ class $$PlaylistTracksTableAnnotationComposer
   GeneratedColumn<DateTime> get addedAt =>
       $composableBuilder(column: $table.addedAt, builder: (column) => column);
 
+  GeneratedColumn<String> get contributorsJson => $composableBuilder(
+    column: $table.contributorsJson,
+    builder: (column) => column,
+  );
+
   $$PlaylistsTableAnnotationComposer get playlistId {
     final $$PlaylistsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -3945,6 +4074,7 @@ class $$PlaylistTracksTableTableManager
                 Value<String?> genre = const Value.absent(),
                 Value<int> orderIndex = const Value.absent(),
                 Value<DateTime> addedAt = const Value.absent(),
+                Value<String?> contributorsJson = const Value.absent(),
               }) => PlaylistTracksCompanion(
                 id: id,
                 playlistId: playlistId,
@@ -3959,6 +4089,7 @@ class $$PlaylistTracksTableTableManager
                 genre: genre,
                 orderIndex: orderIndex,
                 addedAt: addedAt,
+                contributorsJson: contributorsJson,
               ),
           createCompanionCallback:
               ({
@@ -3975,6 +4106,7 @@ class $$PlaylistTracksTableTableManager
                 Value<String?> genre = const Value.absent(),
                 Value<int> orderIndex = const Value.absent(),
                 Value<DateTime> addedAt = const Value.absent(),
+                Value<String?> contributorsJson = const Value.absent(),
               }) => PlaylistTracksCompanion.insert(
                 id: id,
                 playlistId: playlistId,
@@ -3989,6 +4121,7 @@ class $$PlaylistTracksTableTableManager
                 genre: genre,
                 orderIndex: orderIndex,
                 addedAt: addedAt,
+                contributorsJson: contributorsJson,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -4536,6 +4669,7 @@ typedef $$DownloadedTracksTableCreateCompanionBuilder =
       Value<int> fileSizeBytes,
       Value<int> downloadState,
       Value<DateTime> downloadedAt,
+      Value<String?> contributorsJson,
     });
 typedef $$DownloadedTracksTableUpdateCompanionBuilder =
     DownloadedTracksCompanion Function({
@@ -4554,6 +4688,7 @@ typedef $$DownloadedTracksTableUpdateCompanionBuilder =
       Value<int> fileSizeBytes,
       Value<int> downloadState,
       Value<DateTime> downloadedAt,
+      Value<String?> contributorsJson,
     });
 
 class $$DownloadedTracksTableFilterComposer
@@ -4637,6 +4772,11 @@ class $$DownloadedTracksTableFilterComposer
 
   ColumnFilters<DateTime> get downloadedAt => $composableBuilder(
     column: $table.downloadedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contributorsJson => $composableBuilder(
+    column: $table.contributorsJson,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4724,6 +4864,11 @@ class $$DownloadedTracksTableOrderingComposer
     column: $table.downloadedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get contributorsJson => $composableBuilder(
+    column: $table.contributorsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DownloadedTracksTableAnnotationComposer
@@ -4793,6 +4938,11 @@ class $$DownloadedTracksTableAnnotationComposer
     column: $table.downloadedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get contributorsJson => $composableBuilder(
+    column: $table.contributorsJson,
+    builder: (column) => column,
+  );
 }
 
 class $$DownloadedTracksTableTableManager
@@ -4847,6 +4997,7 @@ class $$DownloadedTracksTableTableManager
                 Value<int> fileSizeBytes = const Value.absent(),
                 Value<int> downloadState = const Value.absent(),
                 Value<DateTime> downloadedAt = const Value.absent(),
+                Value<String?> contributorsJson = const Value.absent(),
               }) => DownloadedTracksCompanion(
                 id: id,
                 trackId: trackId,
@@ -4863,6 +5014,7 @@ class $$DownloadedTracksTableTableManager
                 fileSizeBytes: fileSizeBytes,
                 downloadState: downloadState,
                 downloadedAt: downloadedAt,
+                contributorsJson: contributorsJson,
               ),
           createCompanionCallback:
               ({
@@ -4881,6 +5033,7 @@ class $$DownloadedTracksTableTableManager
                 Value<int> fileSizeBytes = const Value.absent(),
                 Value<int> downloadState = const Value.absent(),
                 Value<DateTime> downloadedAt = const Value.absent(),
+                Value<String?> contributorsJson = const Value.absent(),
               }) => DownloadedTracksCompanion.insert(
                 id: id,
                 trackId: trackId,
@@ -4897,6 +5050,7 @@ class $$DownloadedTracksTableTableManager
                 fileSizeBytes: fileSizeBytes,
                 downloadState: downloadState,
                 downloadedAt: downloadedAt,
+                contributorsJson: contributorsJson,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

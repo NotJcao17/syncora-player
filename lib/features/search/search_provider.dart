@@ -10,6 +10,11 @@ class SearchState {
   final bool isLoading;
   final DeezerSearchResult result;
   final String? errorMessage;
+  // Toggle "Popular": oculta canciones/artistas de muy baja popularidad.
+  // Filtro 100% en cliente (rank/nb_fan ya vienen en la respuesta), activado
+  // por defecto porque la mayoría de búsquedas buscan lo conocido, no la
+  // rareza — el usuario lo apaga cuando busca algo de nicho a propósito.
+  final bool popularOnly;
 
   const SearchState({
     this.query = '',
@@ -17,6 +22,7 @@ class SearchState {
     this.isLoading = false,
     this.result = const DeezerSearchResult(),
     this.errorMessage,
+    this.popularOnly = true,
   });
 
   SearchState copyWith({
@@ -26,6 +32,7 @@ class SearchState {
     DeezerSearchResult? result,
     String? errorMessage,
     bool clearError = false,
+    bool? popularOnly,
   }) {
     return SearchState(
       query: query ?? this.query,
@@ -33,6 +40,7 @@ class SearchState {
       isLoading: isLoading ?? this.isLoading,
       result: result ?? this.result,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      popularOnly: popularOnly ?? this.popularOnly,
     );
   }
 }
@@ -77,6 +85,13 @@ class SearchNotifier extends Notifier<SearchState> {
     if (state.query.trim().isNotEmpty) {
       _performSearch(state.query.trim(), type);
     }
+  }
+
+  /// Filtro en cliente, no dispara una nueva búsqueda — `rank`/`nb_fan` ya
+  /// vienen en el resultado guardado en `state.result`.
+  void setPopularOnly(bool value) {
+    if (state.popularOnly == value) return;
+    state = state.copyWith(popularOnly: value);
   }
 
   void retry() {

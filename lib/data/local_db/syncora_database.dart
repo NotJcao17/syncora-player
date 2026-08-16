@@ -42,6 +42,9 @@ class PlaylistTracks extends Table {
   TextColumn get genre => text().nullable()();
   IntColumn get orderIndex => integer().withDefault(const Constant(0))();
   DateTimeColumn get addedAt => dateTime().withDefault(currentDateAndTime)();
+  // JSON de List<{id,name}> con todos los colaboradores (Deezer `contributors`).
+  // Nullable: solo se llena cuando se pudo resolver más de 1 artista al guardar.
+  TextColumn get contributorsJson => text().nullable()();
 }
 
 // Álbumes guardados
@@ -83,6 +86,9 @@ class DownloadedTracks extends Table {
   IntColumn get downloadState => integer().withDefault(const Constant(0))();
   // 0=pending, 1=downloading, 2=done, 3=failed, 4=cancelled
   DateTimeColumn get downloadedAt => dateTime().withDefault(currentDateAndTime)();
+  // JSON de List<{id,name}> con todos los colaboradores (Deezer `contributors`).
+  // Nullable: solo se llena cuando se pudo resolver más de 1 artista al guardar.
+  TextColumn get contributorsJson => text().nullable()();
 }
 
 @DriftDatabase(
@@ -93,7 +99,7 @@ class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -118,6 +124,10 @@ class SyncoraDatabase extends _$SyncoraDatabase {
         }
         if (from < 3) {
           await m.createTable(downloadedTracks);
+        }
+        if (from < 4) {
+          await m.addColumn(playlistTracks, playlistTracks.contributorsJson);
+          await m.addColumn(downloadedTracks, downloadedTracks.contributorsJson);
         }
       },
     );

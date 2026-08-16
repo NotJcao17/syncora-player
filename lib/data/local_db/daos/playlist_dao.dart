@@ -100,6 +100,7 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     required String coverUrl,
     required int durationMs,
     String? genre,
+    String? contributorsJson,
   }) async {
     // Determine orderIndex (max + 1)
     final existingTracks = await getTracksOrdered(playlistId);
@@ -117,6 +118,7 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
         coverUrl: coverUrl,
         durationMs: durationMs,
         genre: Value(genre),
+        contributorsJson: Value(contributorsJson),
         orderIndex: Value(nextOrder),
       ),
     );
@@ -150,6 +152,7 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     required String coverUrl,
     required int durationMs,
     String? genre,
+    String? contributorsJson,
   }) async {
     return transaction(() async {
       final likedPlaylist = await getLikedPlaylist();
@@ -170,6 +173,7 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
           coverUrl: coverUrl,
           durationMs: durationMs,
           genre: genre,
+          contributorsJson: contributorsJson,
         );
         return true;
       }

@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/connectivity_service.dart';
+import '../../../core/utils/contributor_resolver.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/playlist_cover_widget.dart';
 import '../../../data/apis/deezer_provider.dart';
@@ -18,6 +19,7 @@ import '../../../data/local_db/syncora_database.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/sync/sync_service.dart';
 import '../../download/download_provider.dart';
+import '../../player/player_models.dart';
 import '../import_export/playlist_import_export_service.dart';
 
 /// Pantalla de Biblioteca conectada a Drift local, Supabase y servicio de Import/Export.
@@ -371,6 +373,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 if (isDone) {
                   Future.microtask(() async {
                     for (final track in matched) {
+                      final contributors = await resolveDeezerTrackContributors(deezerApi, track);
                       await dao.addTrackToPlaylist(
                         playlistId: playlistId,
                         trackId: track.id,
@@ -381,6 +384,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         albumName: track.albumTitle,
                         coverUrl: track.coverUrl,
                         durationMs: track.durationSec * 1000,
+                        contributorsJson: SyncoraArtistRef.encodeList(contributors),
                       );
                     }
                   });

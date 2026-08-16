@@ -1,0 +1,158 @@
+[
+  {
+    "query": "adele",
+    "file": "adele.json",
+    "tracks": 54,
+    "artists": 100
+  },
+  {
+    "query": "bruno",
+    "file": "bruno.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "ariana",
+    "file": "ariana.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "uptown",
+    "file": "uptown.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "queen",
+    "file": "queen.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "eagles",
+    "file": "eagles.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "chicago",
+    "file": "chicago.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "love",
+    "file": "love.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "hello",
+    "file": "hello.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "circles",
+    "file": "circles.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "si no estas tu",
+    "file": "si_no_estas_tu.json",
+    "tracks": 100,
+    "artists": 0
+  },
+  {
+    "query": "cancion",
+    "file": "cancion.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "jose jose",
+    "file": "jose_jose.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "mana",
+    "file": "mana.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "perfect ed sheeran",
+    "file": "perfect_ed_sheeran.json",
+    "tracks": 88,
+    "artists": 0
+  },
+  {
+    "query": "ed sheeran perfect",
+    "file": "ed_sheeran_perfect.json",
+    "tracks": 88,
+    "artists": 0
+  },
+  {
+    "query": "someone like you adele",
+    "file": "someone_like_you_adele.json",
+    "tracks": 100,
+    "artists": 0
+  },
+  {
+    "query": "drake gods plan",
+    "file": "drake_gods_plan.json",
+    "tracks": 44,
+    "artists": 0
+  },
+  {
+    "query": "taylor swift",
+    "file": "taylor_swift.json",
+    "tracks": 100,
+    "artists": 28
+  },
+  {
+    "query": "despacito",
+    "file": "despacito.json",
+    "tracks": 100,
+    "artists": 21
+  },
+  {
+    "query": "karol g",
+    "file": "karol_g.json",
+    "tracks": 100,
+    "artists": 21
+  },
+  {
+    "query": "blinding lights",
+    "file": "blinding_lights.json",
+    "tracks": 100,
+    "artists": 11
+  },
+  {
+    "query": "bad bunny",
+    "file": "bad_bunny.json",
+    "tracks": 100,
+    "artists": 51
+  },
+  {
+    "query": "imagine dragons believer",
+    "file": "imagine_dragons_believer.json",
+    "tracks": 44,
+    "artists": 0
+  },
+  {
+    "query": "bruno m",
+    "file": "bruno_m.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
+    "query": "arian",
+    "file": "arian.json",
+    "tracks": 100,
+    "artists": 100
+  }
+]

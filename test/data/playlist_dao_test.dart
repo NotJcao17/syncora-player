@@ -97,5 +97,46 @@ void main() {
       final likedAfter = await playlistDao.isTrackLiked(999);
       expect(likedAfter, isTrue);
     });
+
+    test('contributorsJson persiste y sobrevive el round-trip de lectura', () async {
+      final playlistId = await playlistDao.createPlaylist(title: 'Colaboradores Test');
+      const json = '[{"id":10,"name":"Jesse & Joy"},{"id":20,"name":"Gente De Zona"}]';
+
+      await playlistDao.addTrackToPlaylist(
+        playlistId: playlistId,
+        trackId: 777,
+        artistId: 10,
+        albumId: 1,
+        title: '3 A.M.',
+        artistName: 'Jesse & Joy',
+        albumName: '3 A.M.',
+        coverUrl: 'https://cover.jpg',
+        durationMs: 183000,
+        contributorsJson: json,
+      );
+
+      final tracks = await playlistDao.getTracksOrdered(playlistId);
+      expect(tracks.length, equals(1));
+      expect(tracks.first.contributorsJson, equals(json));
+    });
+
+    test('contributorsJson queda null cuando no se provee (filas sin colaboración)', () async {
+      final playlistId = await playlistDao.createPlaylist(title: 'Sin Colaboradores Test');
+
+      await playlistDao.addTrackToPlaylist(
+        playlistId: playlistId,
+        trackId: 888,
+        artistId: 1,
+        albumId: 1,
+        title: 'Track Solo',
+        artistName: 'Artista Solo',
+        albumName: 'Álbum',
+        coverUrl: 'https://cover.jpg',
+        durationMs: 200000,
+      );
+
+      final tracks = await playlistDao.getTracksOrdered(playlistId);
+      expect(tracks.first.contributorsJson, isNull);
+    });
   });
 }

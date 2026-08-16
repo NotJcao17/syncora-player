@@ -17,6 +17,7 @@ import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_cover_widget.dart';
 import '../../../core/widgets/track_tile.dart';
+import '../../../core/utils/contributor_resolver.dart';
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
@@ -24,6 +25,7 @@ import '../../../data/local_db/syncora_database.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/sync/sync_service.dart';
+import '../../search/search_ranking.dart';
 import '../../download/widgets/download_header_button.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
 
@@ -99,7 +101,11 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       final res = await deezerApi.search(trimmed, type: DeezerSearchType.track);
       if (mounted) {
         setState(() {
-          _searchResults = res.tracks;
+          // Misma lógica de ranking del buscador real (pestaña "Canciones"),
+          // con el filtro "Popular" siempre activo y sin exponer el toggle —
+          // este mini-buscador es para agregar canciones rápido, no para
+          // explorar rarezas/covers.
+          _searchResults = res.tracks.where(SearchRanking.isPopularTrack).toList();
           _isSearchingSongs = false;
         });
       }
@@ -279,17 +285,15 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           final tracks = snapshot.data ?? [];
           final syncoraTracks = tracks
               .map((t) {
-                final List<SyncoraArtistRef> parsedArtists = [];
-                if (t.artistName.contains(', ')) {
+                var parsedArtists = SyncoraArtistRef.decodeList(t.contributorsJson);
+                if (parsedArtists.isEmpty && t.artistName.contains(', ')) {
                   final names = t.artistName.split(', ');
-                  for (int i = 0; i < names.length; i++) {
-                    parsedArtists.add(SyncoraArtistRef(
-                      id: i == 0 ? t.artistId : 0,
-                      name: names[i].trim(),
-                    ));
-                  }
-                } else if (t.artistId != 0 || t.artistName.isNotEmpty) {
-                  parsedArtists.add(SyncoraArtistRef(id: t.artistId, name: t.artistName));
+                  parsedArtists = [
+                    for (int i = 0; i < names.length; i++)
+                      SyncoraArtistRef(id: i == 0 ? t.artistId : 0, name: names[i].trim()),
+                  ];
+                } else if (parsedArtists.isEmpty && (t.artistId != 0 || t.artistName.isNotEmpty)) {
+                  parsedArtists = [SyncoraArtistRef(id: t.artistId, name: t.artistName)];
                 }
 
                 return SyncoraTrack(
@@ -665,6 +669,10 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             final currentPl = await playlistDao.getPlaylistById(playlist.id);
                                             if (currentPl == null) return;
 
+                                            final contributors = await resolveDeezerTrackContributors(
+                                              ref.read(deezerApiProvider),
+                                              track,
+                                            );
                                             await playlistDao.addTrackToPlaylist(
                                               playlistId: playlist.id,
                                               trackId: track.id,
@@ -675,6 +683,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                               albumName: track.albumTitle,
                                               coverUrl: track.coverUrl,
                                               durationMs: track.durationSec * 1000,
+                                              contributorsJson: SyncoraArtistRef.encodeList(contributors),
                                             );
                                             if (!context.mounted) return;
                                             AppToast.show(context, message: '"${track.title}" agregada a la playlist');

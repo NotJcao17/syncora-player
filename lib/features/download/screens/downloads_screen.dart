@@ -181,11 +181,23 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
                   }
 
                   final syncoraTracks = filtered.map<SyncoraTrack>((DownloadedTrack t) {
+                    var parsedArtists = SyncoraArtistRef.decodeList(t.contributorsJson);
+                    if (parsedArtists.isEmpty && t.artistName.contains(', ')) {
+                      final names = t.artistName.split(', ');
+                      parsedArtists = [
+                        for (int i = 0; i < names.length; i++)
+                          SyncoraArtistRef(id: i == 0 ? t.artistId : 0, name: names[i].trim()),
+                      ];
+                    }
+
                     return SyncoraTrack(
                       id: t.trackId.toString(),
                       title: t.title,
                       artist: t.artistName,
+                      artists: parsedArtists,
+                      artistId: t.artistId,
                       album: t.albumName,
+                      albumId: t.albumId,
                       duration: Duration(milliseconds: t.durationMs),
                       artUri: t.localCoverPath != null ? Uri.file(t.localCoverPath!) : null,
                     );

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 @immutable
@@ -15,6 +16,28 @@ class SyncoraArtistRef {
         id: json['id'] as int? ?? 0,
         name: json['name'] as String? ?? '',
       );
+
+  /// Serializa la lista de colaboradores para persistirla en BD (columna `contributorsJson`).
+  /// Devuelve `null` cuando hay 0 o 1 artista: en ese caso `artistName` ya basta y no vale
+  /// la pena guardar el JSON.
+  static String? encodeList(List<SyncoraArtistRef> artists) {
+    if (artists.length <= 1) return null;
+    return jsonEncode(artists.map((a) => a.toJson()).toList());
+  }
+
+  /// Inverso de [encodeList]. Devuelve lista vacía si `raw` es nulo, vacío o inválido —
+  /// nunca lanza, para no romper la lectura de filas antiguas sin este dato.
+  static List<SyncoraArtistRef> decodeList(String? raw) {
+    if (raw == null || raw.isEmpty) return const [];
+    try {
+      final decoded = jsonDecode(raw) as List;
+      return decoded
+          .map((e) => SyncoraArtistRef.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
 }
 
 /// Pista del dominio de Syncora, independiente de `audio_service`.
