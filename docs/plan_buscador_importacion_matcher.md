@@ -303,6 +303,23 @@ API de Deezer real antes de tocar código. Suite ampliada a 26 fixtures / 33 tes
       id — ej. Bruno Mars en `track/92734438`) — dato real de Deezer, no bug de diseño nuestro.
       `DeezerTrack.fromJson` ahora deduplica el array `contributors` por id (o por nombre si el id viene
       en 0). Tests en `test/data/deezer_track_test.dart`.
+- [x] **A14. `normalize()` no separaba dígitos y letras pegados.** Reportado probando en vivo: buscar
+      "3A.M." (sin espacio) mostraba la canción real de Jesse & Joy en la posición 14, aunque Deezer la
+      devuelve **primera** en el pool crudo (confirmado contra la API en vivo con esa query exacta —
+      no es un hueco de índice como "Someone Like You", es puramente nuestro re-ranking). No es una
+      regresión de esta sesión: `search_ranking.dart` no se había tocado desde que se comiteó Fase A;
+      el bug llevaba ahí desde entonces, sin detectarse porque los 33 tests existentes y la sesión de
+      diagnóstico original siempre usaron "3 A.M." **con** espacio.
+      Causa: `"3A.M."` normaliza a los tokens `["3a", "m"]` (el punto entre "A" y "M" se convierte en
+      espacio, pero "3" y "A" quedan pegados porque no hay separador entre ellos), mientras que el
+      título real `"3 A.M."` normaliza a `["3", "a", "m"]`. El token de query `"3a"` nunca "cubre"
+      (`startsWith`) a ningún token del título real, así que la canción pierde casi todo el recall/
+      precisión de texto y queda enterrada bajo popularidad de tracks irrelevantes.
+      **Implementado:** `normalize()` ahora inserta un espacio en cada frontera dígito↔letra antes de
+      tokenizar (`(?<=[0-9])(?=[a-z])|(?<=[a-z])(?=[0-9])`) — estrictamente más permisivo (separa,
+      nunca fusiona), así que no puede romper ningún caso de los 33 anteriores; confirmado corriendo
+      la suite completa sin cambios. Fixture nueva `3am_no_space.json` (capturada en vivo,
+      `/search` + `/search/artist` para `"3A.M."`), 34 tests en el archivo.
 
 ---
 
@@ -619,6 +636,61 @@ genuinos (C10 carrera en `playCurrent`, C11 `completed` de libmpv sin distinguir
 umbral sin degradación, C13 pase relajado mal acotado). Ninguno de los cuatro era *el* bug. Lo que
 alargó el diagnóstico fue no verificar primero que los logs de depuración fueran visibles: se
 dedujo por eliminación durante tres rondas lo que una sola línea de log habría dicho de inmediato.
+
+---
+
+### Hallazgo fuera de las 3 fases — sincronización de playlists con Supabase
+
+No estaba en el alcance original del plan (buscador/importación/matcher), pero se descubrió
+probando el resultado de Fase B y es de severidad alta (pérdida de datos), así que se documenta y
+arregla aquí en vez de abrirlo aparte.
+
+**Síntoma reportado:** una playlist importada por CSV se veía bien; al agregarle una canción desde
+otro lugar de la app (menú "Agregar a playlist" de `track_tile.dart`), se agregaba la canción nueva
+y **desaparecía el resto de la playlist**.
+
+**Causa raíz:** `SyncService._syncPlaylistsAndTracks()` (`lib/data/sync/sync_service.dart`) trata el
+contenido remoto (Supabase) como fuente de verdad y **poda** cualquier pista local que no esté en el
+remoto — diseño correcto en general (permite borrar desde otro dispositivo), pero peligroso cuando
+una playlist tiene pistas que **nunca se subieron** a Supabase. El importador de CSV (Fase B) solo
+escribía en SQLite local — la playlist se creaba con `remoteId = null`, y mientras se quedara así,
+`_syncPlaylistsAndTracks()` no la tocaba (ningún loop del sync itera playlists sin `remoteId`). El
+problema aparece en el momento en que **algo le asigna un `remoteId`** por primera vez: el flujo de
+"Agregar a playlist" de `track_tile.dart`, al ver `pl.remoteId == null`, crea la contraparte remota y
+sube **solo la pista que se está agregando** — dejando el remoto con 1 pista contra las N locales.
+La siguiente sincronización (dispara sola al entrar a Biblioteca, `library_screen.dart:42`, sujeta a
+un caché de 5 min) ve ese remoto "más flaco" y poda las N-1 pistas que nunca llegaron a subirse.
+
+**Arreglado en dos puntos, uno defensivo y uno de raíz:**
+- **`track_tile.dart` (defensivo, cubre cualquier playlist local-only, no solo CSV):** cuando el
+  diálogo "Agregar a playlist" detecta que una playlist no tenía `remoteId` y le crea uno nuevo,
+  ahora sube **todas** sus pistas existentes a Supabase en ese momento (no solo la que se está
+  agregando), vía el nuevo método en lote `SupabasePlaylistRepository.addTracksToPlaylist`. Así el
+  remoto nunca queda más flaco que lo local en el instante justo en que empieza a importar.
+- **`library_screen.dart` (de raíz, para que una importación quede respaldada de una):** el
+  importador de CSV ahora crea también la playlist en Supabase desde el principio y sube todas las
+  pistas emparejadas en un solo lote al terminar la importación, en vez de depender de que alguien
+  más tarde la "promueva" agregándole una canción.
+
+Ambos usan el mismo patrón ya existente en el resto del archivo (try/catch silencioso, sin bloquear
+el flujo local si Supabase falla o el usuario no tiene cuenta) y el mismo método nuevo en lote.
+
+**No cubierto, fuera de alcance de este arreglo puntual:** el diseño de fondo del sync
+(prune-por-ausencia-en-remoto) sigue siendo agresivo — cualquier futura ruta de escritura que cree
+contenido local sin subirlo a Supabase reproducirá el mismo patrón de bug la primera vez que ese
+contenido gane un `remoteId`. No se tocó `sync_service.dart` en sí porque cambiar esa lógica central
+(usada también por álbumes guardados e historial) es un cambio de arquitectura mayor que amerita su
+propia discusión, no un parche dentro de esta sesión.
+
+**Pregunta del usuario respondida de paso:** los colaboradores (más de 1 artista) se guardan en
+`PlaylistTracks.contributorsJson` (columna añadida en Fase 0), como JSON de `List<{id, name}>` — ver
+`SyncoraArtistRef.encodeList`/`decodeList` en `player_models.dart`. `artistName`/`artistId` siguen
+guardando el nombre/id principal aplanado para compatibilidad con las pantallas que no decodifican
+la lista completa. **Nota:** el payload que se sube a Supabase (tanto el existente en `track_tile.dart`
+como el nuevo de este fix) no incluye `contributors_json` — no hay confirmación de que la tabla
+remota tenga esa columna, así que no se agregó por seguridad. Implica que, si algún día se restaura
+una playlist puramente desde Supabase (reinstalación, otro dispositivo), los colaboradores extra no
+sobrevivirían el viaje — solo el artista principal. Vale la pena revisarlo aparte si eso importa.
 
 ---
 

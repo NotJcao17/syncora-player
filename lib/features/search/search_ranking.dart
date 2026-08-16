@@ -26,6 +26,16 @@ class SearchRanking {
       s = s.replaceAll(withDiacritics[i], withoutDiacritics[i]);
     }
 
+    // Separar dígitos y letras pegados sin espacio ("3A.M." -> "3 a m") antes
+    // de tokenizar. Sin esto, "3A.M." (sin espacio, como puede teclearse)
+    // normalizaba a los tokens ["3a", "m"], mientras que el título real
+    // "3 A.M." normalizaba a ["3", "a", "m"] — ningún token de la query
+    // "cubría" (prefijo) a ninguno del título, y la canción correcta caía a
+    // la posición 14 en vez de la 1 pese a que Deezer sí la devuelve primero.
+    // Es estrictamente más permisivo (separa, nunca fusiona), así que no
+    // puede perder ningún match que ya funcionara.
+    s = s.replaceAllMapped(RegExp(r'(?<=[0-9])(?=[a-z])|(?<=[a-z])(?=[0-9])'), (m) => ' ');
+
     s = s.replaceAll(RegExp(r'[^a-z0-9\s]'), ' ');
     s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
     return s;

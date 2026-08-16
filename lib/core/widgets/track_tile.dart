@@ -722,6 +722,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                 onTap: () async {
                   final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
                   var remoteId = pl.remoteId;
+                  final wasLocalOnly = remoteId == null;
                   final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
                   if (remoteId == null) {
                     try {
@@ -736,6 +737,40 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                       remoteId = created['id']?.toString();
                       if (remoteId != null && remoteId.isNotEmpty) {
                         await dao.updatePlaylist(pl.copyWith(remoteId: Value(remoteId)));
+                      }
+                    } catch (_) {}
+                  }
+
+                  // Si la playlist era solo local (ej. importada desde CSV,
+                  // que no sube a Supabase) y recién le creamos su
+                  // contraparte remota, hay que subir TODAS sus pistas
+                  // existentes ahora, no solo la nueva que se está
+                  // agregando. Si no, la próxima sincronización ve un
+                  // remoto más flaco que lo local y PODA todo lo que no
+                  // esté ahí (`sync_service.dart`, `_syncPlaylistsAndTracks`
+                  // trata el remoto como fuente de verdad) — borrando la
+                  // playlist importada casi entera. Bug real reportado en
+                  // vivo: se agregaba UNA canción y desaparecía el resto.
+                  if (wasLocalOnly && remoteId != null) {
+                    try {
+                      final existingTracks = await dao.getTracksOrdered(pl.id);
+                      if (existingTracks.isNotEmpty) {
+                        await supabaseRepo.addTracksToPlaylist(
+                          remoteId,
+                          existingTracks
+                              .map((t) => {
+                                    'track_id': t.trackId,
+                                    'artist_id': t.artistId,
+                                    'album_id': t.albumId,
+                                    'title': t.title,
+                                    'artist_name': t.artistName,
+                                    'album_name': t.albumName,
+                                    'cover_url': t.coverUrl,
+                                    'duration_ms': t.durationMs,
+                                    if (t.genre != null) 'genre': t.genre,
+                                  })
+                              .toList(),
+                        );
                       }
                     } catch (_) {}
                   }

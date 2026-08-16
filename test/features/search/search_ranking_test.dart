@@ -259,6 +259,19 @@ void main() {
       expect(r.dominant?.name, equals('Ariana Grande'));
       expect(r.tracks.first.artistName, equals('Ariana Grande'));
     });
+
+    // Caso real reportado probando la app: "3A.M." (sin espacio) mostraba la
+    // canción real de Jesse & Joy en la posición 14, aunque Deezer la
+    // devuelve primero en el pool crudo (confirmado contra la API en vivo,
+    // con esta query exacta). Causa: `normalize` no separaba dígito y letra
+    // pegados, así que "3A.M." tokenizaba como ["3a","m"] mientras el título
+    // real "3 A.M." tokenizaba como ["3","a","m"] — "3a" nunca cubría a
+    // ningún token del título real.
+    test('"3A.M." (sin espacio) encuentra la canción real en primer lugar', () {
+      final r = _runAll('3A.M.', '3am_no_space');
+      expect(r.tracks.first.id, equals(390959001));
+      expect(r.tracks.first.artistName, contains('Jesse & Joy'));
+    });
   });
 
   group('SearchRanking — fixtures reales: nombres en español con diacríticos', () {

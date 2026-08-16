@@ -343,11 +343,35 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     }
 
     final dao = ref.read(playlistDaoProvider);
-    final playlistName = file.name.replaceAll(RegExp(r'\.(csv|txt)$'), '');
+    final playlistTitle = 'Importada: ${file.name.replaceAll(RegExp(r'\.(csv|txt)$'), '')}';
+    final playlistDescription = 'Importada desde ${file.name}';
     final playlistId = await dao.createPlaylist(
-      title: 'Importada: $playlistName',
-      description: 'Importada desde ${file.name}',
+      title: playlistTitle,
+      description: playlistDescription,
     );
+
+    // Crear también la contraparte remota desde el principio. Antes el
+    // importador solo escribía en SQLite local (remoteId se quedaba en
+    // null); si más tarde se agregaba una sola canción a esa playlist desde
+    // otro lado (track_tile.dart sí crea remoto), la siguiente
+    // sincronización veía un remoto mucho más flaco que lo local y podaba
+    // casi toda la playlist importada. Esto la deja respaldada en la nube
+    // de una, sin depender de que alguien la "promueva" después.
+    String? remotePlaylistId;
+    try {
+      final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+      final created = await supabaseRepo.createPlaylist(
+        title: playlistTitle,
+        description: playlistDescription,
+      );
+      remotePlaylistId = created['id']?.toString();
+      if (remotePlaylistId != null && remotePlaylistId.isNotEmpty) {
+        final localPlaylist = await dao.getPlaylistById(playlistId);
+        if (localPlaylist != null) {
+          await dao.updatePlaylist(localPlaylist.copyWith(remoteId: Value(remotePlaylistId)));
+        }
+      }
+    } catch (_) {}
 
     if (!context.mounted) return;
 
@@ -372,6 +396,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
                 if (isDone) {
                   Future.microtask(() async {
+                    final remoteTracksPayload = <Map<String, dynamic>>[];
                     for (final track in matched) {
                       final contributors = await resolveDeezerTrackContributors(deezerApi, track);
                       await dao.addTrackToPlaylist(
@@ -386,6 +411,24 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         durationMs: track.durationSec * 1000,
                         contributorsJson: SyncoraArtistRef.encodeList(contributors),
                       );
+                      if (remotePlaylistId != null) {
+                        remoteTracksPayload.add({
+                          'track_id': track.id,
+                          'artist_id': track.artistId,
+                          'album_id': track.albumId,
+                          'title': track.title,
+                          'artist_name': track.artistName,
+                          'album_name': track.albumTitle,
+                          'cover_url': track.coverUrl,
+                          'duration_ms': track.durationSec * 1000,
+                        });
+                      }
+                    }
+                    if (remotePlaylistId != null && remoteTracksPayload.isNotEmpty) {
+                      try {
+                        final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                        await supabaseRepo.addTracksToPlaylist(remotePlaylistId, remoteTracksPayload);
+                      } catch (_) {}
                     }
                   });
                 }

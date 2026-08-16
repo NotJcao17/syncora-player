@@ -1,5 +1,11 @@
 [
   {
+    "query": "3A.M.",
+    "file": "3am_no_space.json",
+    "tracks": 100,
+    "artists": 100
+  },
+  {
     "query": "adele",
     "file": "adele.json",
     "tracks": 54,

@@ -147,6 +147,27 @@ class SupabasePlaylistRepository {
     await client.from('playlist_tracks').insert(payload);
   }
 
+  /// Variante en lote de [addTrackToPlaylist] — una sola petición para
+  /// varias pistas, en vez de una por pista (usado al "promover" una
+  /// playlist local-only a remota, donde puede haber decenas de pistas de
+  /// golpe, ej. una importación CSV).
+  Future<void> addTracksToPlaylist(
+    String playlistId,
+    List<Map<String, dynamic>> tracksData,
+  ) async {
+    if (tracksData.isEmpty) return;
+    final client = _client;
+    if (client == null) return;
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final payload = tracksData
+        .map((t) => {...t, 'playlist_id': playlistId, 'user_id': userId})
+        .toList();
+
+    await client.from('playlist_tracks').insert(payload);
+  }
+
   Future<void> removeTrackFromPlaylist(String playlistId, int trackId) async {
     final client = _client;
     if (client == null) return;
