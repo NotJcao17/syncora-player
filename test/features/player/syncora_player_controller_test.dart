@@ -34,8 +34,13 @@ class FakeAudioEngine implements AudioEngine {
     _completionController.add(null);
   }
 
+  String? lastUrl;
+  int setUrlCallCount = 0;
+
   @override
   Future<void> setUrl(String url, {Map<String, String>? headers}) async {
+    lastUrl = url;
+    setUrlCallCount++;
     emitState(_state.copyWith(
       processingState: AudioProcessingState.ready,
       duration: const Duration(seconds: 180),
@@ -99,6 +104,17 @@ class TestableExtractionService implements ExtractionService {
   int extractCount = 0;
   ExtractionError? forcedError;
 
+  // Permite retener la resolución de un videoId concreto hasta que el test
+  // la complete a mano — reproduce a voluntad la carrera de "extracción
+  // vieja y lenta resuelve después de que el usuario ya cambió de pista".
+  final Map<String, Completer<ExtractionResult>> _held = {};
+
+  Completer<ExtractionResult> holdResolution(String videoId) {
+    final completer = Completer<ExtractionResult>();
+    _held[videoId] = completer;
+    return completer;
+  }
+
   @override
   Stream<String> get onLogMessage => _logController.stream;
 
@@ -111,6 +127,10 @@ class TestableExtractionService implements ExtractionService {
     ExtractionPriority priority = ExtractionPriority.streaming,
   }) async {
     extractCount++;
+    final held = _held.remove(videoId);
+    if (held != null) {
+      return held.future;
+    }
     if (forcedError != null) {
       return ExtractionFailure(
         requestId: 'req_$extractCount',
@@ -239,6 +259,41 @@ void main() {
 
       expect(controller.state.currentIndex, 0);
       expect(controller.state.engine.playing, isTrue);
+    });
+
+    test(
+        '8. Extracción vieja y lenta no pisa el motor tras un cambio de pista '
+        'posterior (guard de generación, ver bug reportado en Fase C)', () async {
+      await controller.setQueue(testTracks, autoplay: false);
+
+      // track1 empieza a resolverse pero se queda "colgada" a propósito —
+      // simula una extracción de Fase C que tarda mucho (varios candidatos,
+      // varios clientes) porque la pista no tiene un match bueno y fácil.
+      final held = extractionService.holdResolution('track1');
+      final firstPlay = controller.playIndex(0);
+      await pumpEventQueue();
+
+      // Mientras la extracción de track1 sigue pendiente, el usuario cambia
+      // a track2 — esta sí resuelve de inmediato.
+      await controller.playIndex(1);
+      expect(controller.state.currentIndex, 1);
+      expect(engine.lastUrl, contains('track2'));
+      final urlCountAfterTrack2 = engine.setUrlCallCount;
+
+      // Ahora, tarde, la extracción huérfana de track1 por fin resuelve con
+      // éxito. Sin el guard de generación, esto pisaría el motor con la URL
+      // de track1 aunque el usuario ya esté en track2.
+      held.complete(ExtractionSuccess(
+        requestId: 'stale_req',
+        streamUrl: 'https://example.com/audio_track1.mp3',
+        headers: const {},
+      ));
+      await firstPlay;
+      await pumpEventQueue();
+
+      expect(controller.state.currentIndex, 1, reason: 'no debe volver a track1');
+      expect(engine.lastUrl, contains('track2'), reason: 'el motor no debe recibir la URL vieja de track1');
+      expect(engine.setUrlCallCount, urlCountAfterTrack2, reason: 'la resolución obsoleta no debe llamar a setUrl de nuevo');
     });
   });
 }

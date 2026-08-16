@@ -608,10 +608,24 @@ bool get _isTestEnv {
   }
 
 
+  // Guard contra condiciones de carrera: si el usuario cambia de pista
+  // mientras una extracción anterior sigue en curso (Fase C hizo que
+  // resolver una pista sin match bueno pueda tardar bastante más — top-3
+  // candidatos, cada uno con su propio ciclo de clientes/reintentos), esa
+  // extracción vieja no debe pisar el motor de audio cuando por fin
+  // resuelva. Cada `playCurrent()` reclama una "generación" propia al
+  // entrar; solo la más reciente puede tocar `_engine` o disparar
+  // `skipToNext()` por error. Sin esto, una extracción lenta y ya obsoleta
+  // puede sobrescribir en silencio la pista que el usuario eligió después.
+  int _playGeneration = 0;
+
   /// Núcleo: resuelve la URL de la pista actual o carga el archivo local si está descargado.
   Future<void> playCurrent() async {
     final track = _state.currentTrack;
     if (track == null) return;
+
+    final myGeneration = ++_playGeneration;
+    bool isStale() => myGeneration != _playGeneration;
 
     // Detener inmediatamente cualquier audio previo con micro fade-out para evitar audio bleed/clics
     await _microFadeOut();
@@ -623,6 +637,7 @@ bool get _isTestEnv {
     if (_downloadedTrackDao != null && trackDeezerId > 0) {
       try {
         final downloaded = await _downloadedTrackDao.getByTrackId(trackDeezerId);
+        if (isStale()) return;
         if (downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty) {
           _log('[Play] Pista local descargada encontrada: ${downloaded.localAudioPath}. Cargando sin pasar por ExtractionIsolate.');
           _skippedIndicesOffline.clear();
@@ -667,6 +682,11 @@ bool get _isTestEnv {
       durationSeconds: track.duration?.inSeconds,
       priority: ExtractionPriority.streaming,
     );
+
+    if (isStale()) {
+      _log('[Play] Resultado de extracción descartado (ya no es la pista activa): ${track.title}');
+      return;
+    }
 
     switch (result) {
       case ExtractionSuccess(:final streamUrl, :final headers):

@@ -465,6 +465,34 @@ Ordenado por impacto en el usuario (canción que suena equivocada o no suena).
 
 ---
 
+### Fase C — hallazgo de pruebas manuales post-implementación
+
+Encontrado probando la app en vivo con una canción de nicho ("Sofia Giusti - Antes De Que Salga El
+Sol"): al darle play, cargaba un par de segundos, saltaba automáticamente y empezaba a sonar la
+siguiente pista de la cola. Al volver a hacer click en la pista original, los logs mostraban una
+extracción exitosa (`ub_y5t23VcE`) pero el audio que sonaba era el de otra canción.
+
+- [x] **C10 (no estaba en el checklist original). Condición de carrera en `playCurrent()`.**
+      `lib/features/player/syncora_player_controller.dart` no tenía ninguna protección contra llamadas
+      solapadas: si el usuario cambia de pista mientras una extracción anterior sigue en curso (p. ej.
+      el auto-skip por `notFound` dispara una extracción para la siguiente pista mientras la extracción
+      original, más lenta, sigue pendiente), la extracción vieja, al resolver tarde, pisaba el motor de
+      audio (`_engine.setUrl` + `.play()`) sin verificar si la pista para la que fue pedida seguía
+      siendo la activa. No es un bug nuevo de esta fase — el mecanismo llevaba tiempo ahí (el usuario
+      confirma que "ya nos había pasado antes") — pero **C6** (top-3 candidatos, cada uno con su propio
+      ciclo de 3 clientes + reintentos dentro de `_processExtraction`) alarga mucho el peor caso para
+      pistas sin match fácil, ensanchando la ventana en la que esta carrera se dispara.
+      **Implementado:** contador `_playGeneration`, incrementado al entrar a `playCurrent()`; cada
+      llamada captura su propia "generación" y, tras cada `await` que puede tardar (lookup de descarga
+      local, `extractUrl`), verifica si sigue siendo la generación vigente antes de tocar `_engine` o de
+      dejar que `_handleExtractionError` dispare `skipToNext()`. Una extracción obsoleta que resuelve
+      tarde ahora se descarta en silencio (con log) en vez de sobrescribir la pista que el usuario ya
+      eligió después. Test de regresión: `test/features/player/syncora_player_controller_test.dart`,
+      caso 8 — usa un `Completer` retenido a mano para forzar el orden "pista vieja resuelve después de
+      que ya se cambió a la nueva" y confirma que el motor nunca recibe la URL vieja.
+
+---
+
 ### Fase D — Opcional, baja prioridad
 
 - [ ] **D1. Búsqueda profunda / colaboraciones (2 artistas)** — rediseño del modal hoy deshabilitado
