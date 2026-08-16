@@ -419,7 +419,12 @@ class ExtractionIsolate {
             }
           }
 
-          final bearsArtist = normPrimaryArtist.isNotEmpty &&
+          // Si la pista no trae artista conocido, no hay ninguna query "más
+          // específica" que otra: todos los lotes son igual de buenos y
+          // deben poder alimentar el pase relajado. Sin esta salvedad,
+          // `artistBatches` quedaba vacío y el relajado no corría nunca,
+          // dejando esas pistas sin reproducir.
+          final bearsArtist = normPrimaryArtist.isEmpty ||
               YtSearchMatcher.norm(query).contains(normPrimaryArtist);
           if (bearsArtist && batch.isNotEmpty) artistBatches.add(batch);
 

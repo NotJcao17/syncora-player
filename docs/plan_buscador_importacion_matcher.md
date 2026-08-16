@@ -570,27 +570,123 @@ extracción exitosa (`ub_y5t23VcE`) pero el audio que sonaba era el de otra canc
       Tests: 3 casos más (rechaza homónimo con duración muy distinta / sigue aceptando cuando la
       duración se desconoce / acepta desfase moderado ≤30s). 37 tests en ese archivo, 152 en la
       suite completa.
+      **Nota honesta tras verificar en vivo:** esta guarda de duración **no** fue lo que arregló el
+      caso. El homónimo de Nacha Pop dura 220s y el tema correcto 213s — 7s de diferencia, muy por
+      debajo del tope de 30s. La guarda sigue siendo correcta y útil como red de seguridad, pero
+      atribuirle el arreglo habría sido una conclusión falsa: lo que resolvió el caso fue C14.
+
+- [x] **C14. La causa de fondo: la canción solo existía en YouTube Music, y no la buscábamos ahí.**
+      Tras C12 y C13 el síntoma seguía. El dato decisivo llegó de una captura del usuario: el tema
+      aparece en **YT Music** con 756 reproducciones — es decir, existe casi con seguridad solo como
+      pista auto-generada de YouTube Music (canal `"<Artista> - Topic"`), no como vídeo subido.
+      Tres defectos, uno de ellos la razón por la que costó tanto diagnosticar todo lo anterior:
+  - **Los logs del isolate nunca llegaron a la terminal.** `sendLog` usaba `dev.log` desde un
+    isolate secundario, que solo llega a DevTools, no a la terminal de `flutter run` donde se estaba
+    depurando. Las líneas `[JS] ...` sí se veían porque las imprime QuickJS directo a stdout. Es
+    decir: **tres rondas de diagnóstico se hicieron a ciegas**, con mensajes que el usuario nunca
+    pudo ver. Corregido con `debugPrint` (además del `dev.log`). Lección para el futuro: antes de
+    depurar por logs, verificar que los logs efectivamente se ven.
+  - **YouTube Music solo se consultaba si la búsqueda de vídeos devolvía CERO resultados**
+    (`js_bundle_loader.dart`, `searchVideos`, intento 3). Para un tema de nicho con título genérico,
+    la búsqueda normal devuelve 20 homónimos de otros artistas, así que la condición nunca se
+    cumplía y jamás se llegaba a mirar donde sí estaba la canción. Ahora se consulta también cuando
+    hay **pocos** resultados (<8) y los **añade** a los existentes (dedup por `videoId`) en vez de
+    reemplazarlos. En el caso real: 7 candidatos normales + **19 desde YouTube Music** = 26, y el
+    correcto pasó el umbral estricto de una, con score 200, sin necesitar el pase relajado.
+  - **Regresión de C5 en el orden de clientes:** la query `artista título` —exactamente la que
+    funcionaba antes de Fase C— había quedado asignada al cliente ANDROID, cuyo parser falla
+    (`Cannot cast SearchMobileHeader to one of SearchHeader`, visible en los logs) y cae a un parseo
+    crudo que pierde la duración. Ahora la escalera es: `artista título` en WEB (la más fiable, no
+    la más adornada) → `artista título official audio` en WEB → `artista título` en ANDROID como
+    cliente alterno → `título` pelado en WEB como último recurso.
+      También se añadió un volcado de los candidatos considerados (título, canal, duración, id)
+      cuando el pase estricto falla — sin eso no hay forma de distinguir "el vídeo correcto está
+      pero el umbral lo rechaza" de "el vídeo correcto no está entre los candidatos", que es
+      justamente la diferencia entre ajustar el scoring y buscar en otra fuente.
+      Verificado en vivo por el usuario: la pista de nicho reproduce correctamente.
+
+- [x] **C15. Salvedad para pistas sin artista conocido.** El filtro de C13 (el pase relajado solo
+      usa lotes de queries que llevaban el artista) dejaba fuera a las pistas cuya metadata no trae
+      artista: `bearsArtist` era siempre `false`, `artistBatches` quedaba vacío y el pase relajado
+      no corría nunca, con lo que esas pistas volvían a ser irreproducibles. Ahora, si no hay
+      artista conocido, ninguna query es "más específica" que otra y todos los lotes son elegibles.
+
+### Resumen de la depuración de Fase C (para no repetir el camino)
+
+El bug reportado ("le doy play a un tema de nicho, carga y salta a la siguiente") tuvo **una sola
+causa real** (C14), pero por el camino se encontraron y arreglaron cuatro problemas independientes y
+genuinos (C10 carrera en `playCurrent`, C11 `completed` de libmpv sin distinguir fallo de carga, C12
+umbral sin degradación, C13 pase relajado mal acotado). Ninguno de los cuatro era *el* bug. Lo que
+alargó el diagnóstico fue no verificar primero que los logs de depuración fueran visibles: se
+dedujo por eliminación durante tres rondas lo que una sola línea de log habría dicho de inmediato.
 
 ---
 
-### Fase D — Opcional, baja prioridad
+### Fase D — Búsqueda profunda (plan acordado)
 
-- [ ] **D1. Búsqueda profunda / colaboraciones (2 artistas)** — rediseño del modal hoy deshabilitado
-      (`search_screen.dart:100`, `onPressed: null`). Campos: Artista 1 / Artista 2.
-      **5 peticiones en 2 tandas paralelas (~1s)** en vez de las ~10 secuenciales actuales:
+**Problema que resuelve, en concreto.** El buscador normal (Fase A) re-rankea lo que Deezer devuelve
+en su pool de 100 resultados por relevancia difusa. Eso deja dos huecos reales, ya medidos:
+
+| Hueco | Caso confirmado | Lo resuelve |
+|---|---|---|
+| El tema existe y la sintaxis avanzada lo encuentra, pero el texto plano **no lo devuelve en 100** | "Someone Like You" de Adele (posición 1 con `artist:"Adele" track:"Someone Like You"`, ausente del pool con texto plano); "Conqueror" de AURORA | **D3** |
+| La colaboración existe pero ninguno de los dos artistas por separado la posiciona bien | "Guess" de Charli xcx con Billie Eilish | **D1** |
+| El tema **no está en el índice de búsqueda de Deezer bajo ninguna query**, ni avanzada | La versión solista de "Guess" (solo alcanzable vía `/album/{id}/tracks`) | **D2** |
+
+**Decisión de arquitectura acordada:** un solo punto de entrada en la UI (el botón "Búsqueda
+Profunda", hoy deshabilitado en `search_screen.dart:100` con `onPressed: null`) que abre un modal con
+dos pestañas, **Exacta** (D3) y **Colaboración** (D1). D2 no es una pestaña: es una acción manual
+disparable desde dos sitios distintos (ver abajo). Nada de esto se ejecuta automáticamente — todo
+cuesta peticiones y siempre lo decide el usuario.
+
+- [ ] **D3. Búsqueda exacta por artista + título** (pestaña "Exacta").
+      Dos campos: Artista y Título. Usa la **misma cascada ya implementada y probada en Fase B**
+      (`artist:"X" track:"Y"` → texto plano `"X Y"` → solo título).
+  - **Refactor previo, no duplicar lógica:** extraer `PlaylistImportExportService._resolveTrack` /
+    `_bestByDuration` / `_queryTitle` / `_primaryArtist` a un módulo compartido nuevo
+    (`lib/features/search/exact_track_search.dart`). Hoy esa cascada vive dentro del importador CSV;
+    si D3 la reescribe, las dos copias divergen con el tiempo. El importador pasa a consumir el
+    módulo compartido, sin cambiar su comportamiento (sigue auto-eligiendo por duración, porque ahí
+    no hay humano mirando).
+  - **Diferencia clave con el importador:** D3 **no auto-elige**. Devuelve la lista de resultados de
+    la cascada, rankeada con `SearchRanking` igual que el buscador normal, y el usuario elige. En
+    importación se adivina por duración porque es masivo y desatendido; aquí el usuario está viendo
+    la pantalla y sabe cuál quiere.
+  - Costo: **1-3 peticiones** (se corta en el primer tier que devuelva algo).
+  - Tests: fixtures de la cascada con `artist:"Adele" track:"Someone Like You"` (el caso que el
+    buscador normal no puede resolver, ya documentado como test de límite conocido en Fase A).
+
+- [ ] **D1. Colaboraciones de 2 artistas** (pestaña "Colaboración").
+      Campos: Artista 1 / Artista 2. **5 peticiones en 2 tandas paralelas (~1s)** en vez de las ~10
+      secuenciales del diseño viejo:
   1. Resolver ambos artistas en paralelo (2 req)
   2. En paralelo: texto plano `"Artista1 Artista2"` + `/artist/{A}/top?limit=100` +
      `/artist/{B}/top?limit=100` (3 req)
   3. Filtrar los tops por `contributors` cruzando ambos nombres, sin duplicados
+  - Aprovecha que `contributorsJson` ya se persiste (Fase 0) y que `DeezerTrack.contributorsList` ya
+    viene deduplicado por id (A13).
+  - Sin crawl de discografía por defecto.
 
-  Sin crawl de discografía por defecto. Si los resultados salen escasos, ofrecer un botón explícito
-  "buscar más a fondo" que sí lo haga — decisión del usuario, no automática.
+- [ ] **D2. "Buscar otras versiones"** — el crawl acotado, como **escape manual**, nunca automático.
+      Una sola función compartida con **dos puntos de entrada**, porque son dos momentos distintos:
+  - **Entrada 1 — acción en el menú de una canción** (`track_tile.dart`). Aquí no hay ningún fallo
+    del que caer: el usuario ya tiene una canción válida y quiere otras versiones de ella (caso
+    "Guess": tiene la colaboración, quiere la solista). Usa artista/título/fecha de esa canción, sin
+    formularios.
+  - **Entrada 2 — botón "buscar más a fondo"** que aparece dentro del modal cuando D1 o D3 devuelven
+    vacío o muy pocos resultados. Aquí sí es un fallback.
+  - **Implementación compartida:** `getArtistAlbums` (1 req) → ordenar por cercanía de fecha de
+    lanzamiento a la de la canción → tomar solo los **10-15 más cercanos** → `/album/{id}/tracks` de
+    cada uno → filtrar por `SearchRanking.baseTitle` coincidente. Acotar por fecha es lo que hace
+    esto viable: Charli xcx tiene ~50 álbumes y crawlearlos todos sería absurdo.
+  - Costo: **11-16 peticiones**. El `RateLimiter` encola (no falla), así que el efecto es lentitud,
+    no error — de ahí que deba ser explícito y mostrar progreso en la UI.
+  - Prioridad la más baja de las tres: el patrón "Guess" no se repitió en 10 pares probados, así que
+    es una rareza de catálogo, no algo sistemático.
 
-- [ ] **D2. "Buscar otras versiones"** — acción manual en el menú de una canción, para casos tipo
-      "Guess". Sin campos que llenar: usa artista/título/fecha de la canción abierta. Acotado por
-      **cercanía de fecha de lanzamiento** — crawlear solo los ~10-15 álbumes más cercanos, no toda la
-      discografía (Charli xcx tiene 50 álbumes).
-      Prioridad baja: el patrón no se repitió en 10 pares probados.
+**Orden sugerido de implementación:** D3 primero (resuelve los casos ya confirmados en pruebas
+reales — Conqueror, Someone Like You — y el refactor compartido con Fase B es barato), luego D1
+(más UI pero lógica acotada), y D2 al final, solo si sigue haciendo falta.
 
 ---
 
