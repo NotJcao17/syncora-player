@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 
 import 'package:flutter/widgets.dart';
 
@@ -837,6 +838,13 @@ bool get _isTestEnv {
   }
 
   void _log(String msg) {
+    // `dev.log` es lo que efectivamente aparece en la consola/DevTools que
+    // se está usando para depurar — `_logController` no tiene ningún
+    // suscriptor en la app hoy, así que sin esto los mensajes de este
+    // controlador (y los del motor de audio, reenviados vía `logStream`)
+    // eran invisibles en la práctica, a diferencia de los `[JS] ...` del
+    // isolate de extracción, que sí llaman a `dev.log` directamente.
+    dev.log(msg, name: 'SyncoraPlayer');
     if (!_logController.isClosed) _logController.add(msg);
   }
 
