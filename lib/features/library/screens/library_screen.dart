@@ -425,6 +425,36 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           '${matched.length} encontradas, ${unmatched.length} no encontradas',
                           style: const TextStyle(color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold),
                         ),
+                        if (unmatched.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'No encontradas:',
+                              style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 200),
+                            child: SizedBox(
+                              width: double.maxFinite,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: unmatched.length,
+                                itemBuilder: (_, i) => Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 3),
+                                  child: Text(
+                                    unmatched[i].toString(),
+                                    style: const TextStyle(color: AppTheme.primary, fontSize: 12),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ],
                   ),

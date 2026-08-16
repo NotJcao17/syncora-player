@@ -310,20 +310,44 @@ API de Deezer real antes de tocar código. Suite ampliada a 26 fixtures / 33 tes
 
 Archivo: `lib/features/library/import_export/playlist_import_export_service.dart`
 
-- [ ] **B1.** Detección de columnas flexible — reconocer `Artist Name(s)`, `Track Name`, `Album Name`,
+- [x] **B1.** Detección de columnas flexible — reconocer `Artist Name(s)`, `Track Name`, `Album Name`,
       etc. Hoy la lista de nombres exactos (`playlist_import_export_service.dart:77-85`) falla con el
       export real de Spotify y **toda fila se importa sin artista**. Este es el bug que causa el ~1/3
       de fallos.
-- [ ] **B2.** Cadena de fallback avanzada → texto plano → solo título (ver decisión 5), en vez del
+      **Implementado:** columna de artista/álbum/duración por `contains('artist'/'album'/'duration')`
+      en vez de igualdad exacta (cubre `Artist Name(s)`, `Album Name`, `Duration (ms)` sin abrir falsos
+      positivos entre sí, ya que cada columna cae en una sola categoría). `RawImportTrack` ganó el campo
+      `durationMs`.
+- [x] **B2.** Cadena de fallback avanzada → texto plano → solo título (ver decisión 5), en vez del
       único intento a ciegas que toma `searchRes.tracks.first` sin validar nada.
-- [ ] **B3.** Validación por duración con tolerancia usando `Duration (ms)` del CSV (ver decisión 6),
+      **Implementado** en `PlaylistImportExportService._resolveTrack`: intenta
+      `artist:"X" track:"Y"` primero, luego texto plano `"X Y"`, luego solo título — cada tier valida
+      por duración (B3) antes de aceptar; el último tier no tiene mejor alternativa así que toma el
+      candidato más cercano en duración (o el primero si no hay duración conocida).
+- [x] **B3.** Validación por duración con tolerancia usando `Duration (ms)` del CSV (ver decisión 6),
       para no quedarse con la versión Live/Acústica/Remix.
-- [ ] **B4.** Separar múltiples artistas por `;` (formato Spotify: `Gente De Zona;Marc Anthony`) y usar
+      **Implementado:** `_bestByDuration` — tolerancia de 20s para los tiers avanzada/texto-plano
+      (dentro del rango "confianza media/baja" de la escala ya calibrada en `yt_search_matcher.dart`);
+      sin tolerancia (mejor disponible) en el tier de solo-título, por ser el último recurso.
+- [x] **B4.** Separar múltiples artistas por `;` (formato Spotify: `Gente De Zona;Marc Anthony`) y usar
       el primero como artista principal en la query avanzada.
-- [ ] **B5.** Limpiar sufijos `(feat. …)` del título antes de la query avanzada
+      **Implementado:** `_primaryArtist` toma el primero antes del `;`; `RawImportTrack.artist`
+      conserva la cadena completa (se usa tal cual en el reporte de no-matcheados, B6).
+- [x] **B5.** Limpiar sufijos `(feat. …)` del título antes de la query avanzada
       (validado: es lo que hizo funcionar `Conqueror` de AURORA).
-- [ ] **B6.** Reporte de no-matcheados accionable al final de la importación.
-- [ ] **B7.** Tests con `docs/test.csv` como fixture.
+      **Implementado:** `_queryTitle` (regex `_featSuffix`, cubre `feat.`/`featuring`/`ft.`/`with`,
+      con o sin paréntesis/guion previo) — solo se usa para construir la query, `RawImportTrack.title`
+      original queda intacto para el reporte.
+- [x] **B6.** Reporte de no-matcheados accionable al final de la importación.
+      **Implementado** en `library_screen.dart`: lista scrolleable (`ListView.builder`, tope 200px) de
+      cada pista no encontrada (`"$artist - $title"`) en el diálogo de fin de importación, en vez de
+      solo el conteo.
+- [x] **B7.** Tests con `docs/test.csv` como fixture.
+      **Implementado** en `test/data/import_export_test.dart`: parseo del fixture real (10 filas, todas
+      con artista detectado — confirma el fix de B1), más casos puntuales para `Artist Name(s)` (B1) y
+      colaboradores separados por `;` (B4). El fallback con validación por duración (B2/B3) no se testea
+      automatizado porque requiere llamadas en vivo a Deezer (fuera del alcance de tests reproducibles,
+      igual que el resto del proyecto) — verificado manualmente contra la API real durante el diseño.
 
 ---
 

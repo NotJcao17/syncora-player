@@ -10,16 +10,18 @@ class RawImportTrack {
   final String artist;
   final String? album;
   final String? isrc;
+  final int? durationMs;
 
   const RawImportTrack({
     required this.title,
     required this.artist,
     this.album,
     this.isrc,
+    this.durationMs,
   });
 
   @override
-  String toString() => '$artist - $title';
+  String toString() => artist.isEmpty ? title : '$artist - $title';
 }
 
 class ImportProgress {
@@ -65,23 +67,32 @@ class PlaylistImportExportService {
         final rows = csv.decode(fileContent.replaceAll('\r\n', '\n'));
 
         if (rows.isNotEmpty) {
-          // Check header row
+          // Check header row. Detección flexible (B1): distintos exportadores
+          // (Spotify, TuneMyMusic, etc.) usan nombres de columna distintos para
+          // lo mismo — ej. Spotify exporta "Artist Name(s)", que no matcheaba
+          // ninguno de los nombres exactos que reconocíamos antes, así que toda
+          // fila se importaba sin artista. `contains` en vez de igualdad exacta
+          // para artist/album/duration cubre esas variantes sin falsos positivos
+          // entre sí (cada columna solo puede caer en una categoría).
           final firstRowStr = rows.first.map((e) => e.toString().toLowerCase().trim()).toList();
           int titleIdx = -1;
           int artistIdx = -1;
           int albumIdx = -1;
           int isrcIdx = -1;
+          int durationIdx = -1;
 
           for (int i = 0; i < firstRowStr.length; i++) {
             final col = firstRowStr[i];
-            if (col == 'name' || col == 'title' || col == 'track name' || col == 'song') {
+            if (titleIdx == -1 && (col == 'name' || col == 'title' || col == 'track name' || col == 'song')) {
               titleIdx = i;
-            } else if (col == 'artist' || col == 'artist name') {
+            } else if (artistIdx == -1 && col.contains('artist')) {
               artistIdx = i;
-            } else if (col == 'album' || col == 'album name') {
+            } else if (albumIdx == -1 && col.contains('album')) {
               albumIdx = i;
-            } else if (col == 'isrc') {
+            } else if (isrcIdx == -1 && col == 'isrc') {
               isrcIdx = i;
+            } else if (durationIdx == -1 && col.contains('duration')) {
+              durationIdx = i;
             }
           }
 
@@ -104,6 +115,9 @@ class PlaylistImportExportService {
             final artistStr = (artistIdx >= 0 && artistIdx < row.length) ? row[artistIdx].toString().trim() : '';
             final albumStr = (albumIdx >= 0 && albumIdx < row.length) ? row[albumIdx].toString().trim() : null;
             final isrcStr = (isrcIdx >= 0 && isrcIdx < row.length) ? row[isrcIdx].toString().trim() : null;
+            final durationStr =
+                (durationIdx >= 0 && durationIdx < row.length) ? row[durationIdx].toString().trim() : '';
+            final durationMs = int.tryParse(durationStr);
 
             if (titleStr.isNotEmpty || artistStr.isNotEmpty) {
               results.add(RawImportTrack(
@@ -111,6 +125,7 @@ class PlaylistImportExportService {
                 artist: artistStr,
                 album: albumStr,
                 isrc: isrcStr,
+                durationMs: durationMs,
               ));
             }
           }
@@ -140,6 +155,86 @@ class PlaylistImportExportService {
     return results;
   }
 
+  // B5: quitar sufijos "(feat. X)" / "featuring X" / "with X" del título antes
+  // de armar la query — validado en el análisis original: es lo que hizo
+  // funcionar "Conqueror" de AURORA (el CSV trae el feat en el título, Deezer
+  // indexa la versión sin él bajo sintaxis avanzada). Solo se usa para
+  // construir queries; `RawImportTrack.title` (mostrado en el reporte) queda
+  // intacto.
+  static final RegExp _featSuffix = RegExp(
+    r'\s*[\(\[]?\s*-?\s*(feat\.?|featuring|ft\.?|with)\s+.*$',
+    caseSensitive: false,
+  );
+
+  String _queryTitle(String title) => title.replaceAll(_featSuffix, '').trim();
+
+  // B4: Spotify separa colaboradores con ";" (ej. "Gente De Zona;Marc
+  // Anthony"). El primero se usa como artista principal en la query avanzada;
+  // `RawImportTrack.artist` conserva la cadena completa para mostrarla tal
+  // cual en el reporte de no-matcheados.
+  String _primaryArtist(String artist) => artist.isEmpty ? '' : artist.split(';').first.trim();
+
+  // La sintaxis avanzada de Deezer usa comillas como delimitador de campo;
+  // quitarlas del valor evita romper la query si el título/artista ya trae
+  // comillas literales.
+  String _forQuery(String s) => s.replaceAll('"', '').trim();
+
+  /// Mejor candidato por cercanía de duración (decisión 6 del plan: nunca
+  /// coincidencia exacta, siempre tolerancia). Sin duración esperada, se
+  /// confía en el primero (ya viene rankeado por relevancia). Con duración
+  /// esperada, se exige estar dentro de [toleranceSec] para no quedarse con
+  /// una versión Live/Acústica/Remix que matchea el texto pero no la duración.
+  DeezerTrack? _bestByDuration(List<DeezerTrack> tracks, int? expectedMs, {required int toleranceSec}) {
+    if (tracks.isEmpty) return null;
+    if (expectedMs == null) return tracks.first;
+
+    DeezerTrack? best;
+    int bestDiff = 1 << 30;
+    final expectedSec = (expectedMs / 1000).round();
+    for (final t in tracks) {
+      final diff = (t.durationSec - expectedSec).abs();
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = t;
+      }
+    }
+    return (best != null && bestDiff <= toleranceSec) ? best : null;
+  }
+
+  /// B2: cadena de fallback (decisión 5 del plan) — sintaxis avanzada precisa
+  /// pero frágil ante typos/variantes de escritura, luego texto plano, luego
+  /// solo título como último recurso. Cada tier valida por duración (B3) antes
+  /// de aceptar, salvo el último, donde no hay mejor alternativa.
+  Future<DeezerTrack?> _resolveTrack(RawImportTrack item) async {
+    final queryTitle = _queryTitle(item.title);
+    final primaryArtist = _primaryArtist(item.artist);
+
+    if (primaryArtist.isNotEmpty && queryTitle.isNotEmpty) {
+      try {
+        final advanced = 'artist:"${_forQuery(primaryArtist)}" track:"${_forQuery(queryTitle)}"';
+        final res = await _deezerApi.search(advanced, type: DeezerSearchType.track);
+        final best = _bestByDuration(res.tracks, item.durationMs, toleranceSec: 20);
+        if (best != null) return best;
+      } catch (_) {}
+    }
+
+    try {
+      final plain = primaryArtist.isNotEmpty ? '$primaryArtist $queryTitle' : queryTitle;
+      final res = await _deezerApi.search(plain, type: DeezerSearchType.track);
+      final best = _bestByDuration(res.tracks, item.durationMs, toleranceSec: 20);
+      if (best != null) return best;
+    } catch (_) {}
+
+    try {
+      final res = await _deezerApi.search(queryTitle, type: DeezerSearchType.track);
+      if (res.tracks.isNotEmpty) {
+        return _bestByDuration(res.tracks, item.durationMs, toleranceSec: 1 << 30) ?? res.tracks.first;
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
   /// Process raw tracks sequentially against Deezer API with rate limiting
   Stream<ImportProgress> processImport({
     required List<RawImportTrack> rawTracks,
@@ -155,11 +250,9 @@ class PlaylistImportExportService {
       );
 
       try {
-        final query = item.artist.isNotEmpty ? '${item.artist} ${item.title}' : item.title;
-        final searchRes = await _deezerApi.search(query, type: DeezerSearchType.track);
-
-        if (searchRes.tracks.isNotEmpty) {
-          outMatched.add(searchRes.tracks.first);
+        final match = await _resolveTrack(item);
+        if (match != null) {
+          outMatched.add(match);
         } else {
           outUnmatched.add(item);
         }
