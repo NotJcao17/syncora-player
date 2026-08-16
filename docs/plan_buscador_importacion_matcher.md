@@ -510,6 +510,42 @@ extracción exitosa (`ub_y5t23VcE`) pero el audio que sonaba era el de otra canc
       `multi_song_extraction_test.dart`); queda pendiente de una próxima prueba manual con la canción de
       nicho para confirmar en vivo, ahora con logs reales de mpv disponibles si algo sigue sin sonar.
 
+- [x] **C12. Regresión introducida por C1/C5/C8: temas de nicho imposibles de reproducir.**
+      Causa real del bug (C10 y C11 eran problemas reales pero no eran *este*). Diagnóstico a partir
+      de los logs: al reproducir "Sofia Giusti - Antes De Que Salga El Sol" aparecía una tercera
+      búsqueda con el nombre de **otra** canción ("Stefano Vieni - Antes de Que Salga el Sol", la
+      siguiente de la cola) y jamás un `extractVideo` para la pista pedida — prueba de que la
+      extracción devolvió `notFound` y el auto-skip ya había avanzado. Tres defectos combinados,
+      todos introducidos en Fase C:
+  - **Escalera de queries (C5) mal escalonada.** Los dos intentos eran `"artista título official
+    audio"` y `"título"` pelado. El primero, con el hint, estrecha tanto que para un tema de nicho
+    devolvió 2 resultados; el segundo **pierde al artista**, y para un título genérico en español
+    devuelve sobre todo canciones homónimas de otros artistas (19 candidatos, ninguno el correcto).
+  - **Los candidatos se reemplazaban entre intentos**, no se acumulaban: lo que trajo el primer
+    intento se tiraba al pasar al segundo, aunque el vídeo correcto estuviera ahí.
+  - **El umbral de C8 no tenía degradación.** Si nada pasaba (título ≥50% Y (duración en rango O
+    artista confirmado)) → `notFound` → auto-skip. Antes de Fase C el umbral era `maxScore >= 0`,
+    que aceptaba casi cualquier cosa: por eso estos temas **sí** sonaban antes. Un upload de nicho
+    típico no confirma nada — el canal no lleva el nombre del artista y la búsqueda no siempre trae
+    duración (`extractVideoCandidatesFromRaw` la deja en `null` si falta `lengthText`).
+      **Implementado:**
+  - Escalera de 3 queries de más específica a más laxa: `artista título official audio` → `artista
+    título` (sin hint, **conservando** el artista) → `título` solo, como último recurso.
+  - Los candidatos se **acumulan** en un pool deduplicado por `videoId` a lo largo de los intentos;
+    el ranking siempre ve la unión de todo lo encontrado, y se corta en cuanto algo pasa el umbral.
+  - Pase **relajado** de último recurso (`YtSearchMatcher.pickTopCandidates(relaxed: true)`): exige
+    **más** título (70% en vez de 50%) a cambio de no exigir corroboración de duración ni artista —
+    cuando no hay corroboración posible, el título debe cargar solo con toda la evidencia. Los
+    términos indeseados **siguen descalificando** igual que en el pase estricto: relajar no puede
+    llegar al punto de reproducir un karaoke. La alternativa real a este pase no era "sonar la
+    canción correcta" sino "no sonar en absoluto".
+  - Log explícito cuando se usa el pase relajado y cuando ni así hay candidato aceptable (antes el
+    fallo era completamente silencioso, que es justo por qué costó tanto diagnosticarlo).
+      Tests: 6 casos nuevos en `test/core/extraction/yt_search_matcher_test.dart` reproduciendo el
+      caso real (estricto rechaza / relajado acepta / relajado sigue rechazando karaokes / relajado
+      exige más título / el relajado sigue prefiriendo artista confirmado). 34 tests en ese archivo,
+      149 en la suite completa.
+
 ---
 
 ### Fase D — Opcional, baja prioridad

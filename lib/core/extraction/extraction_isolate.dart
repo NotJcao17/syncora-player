@@ -340,16 +340,35 @@ class ExtractionIsolate {
             YtSearchMatcher.norm(cleanTitle).contains(YtSearchMatcher.norm(primaryArtist));
         final baseQuery = (artistAlreadyInTitle || primaryArtist.isEmpty) ? cleanTitle : '$primaryArtist $cleanTitle';
 
-        // Segundo intento con una variante realmente distinta (antes
-        // reintentaba con exactamente la misma query, así que fallaba igual):
-        // se recupera el hint "official audio" para el primer intento y se
-        // cae a solo-título (sin hint, sin artista) si ese no encontró nada.
-        final queries = ['$baseQuery official audio'.trim(), cleanTitle];
-        final clients = ['WEB', 'ANDROID'];
+        // Escalera de queries, de más específica a más laxa. El hint
+        // "official audio" ayuda a dar con el upload oficial en temas
+        // conocidos, pero en temas de nicho estrecha tanto la búsqueda que
+        // apenas devuelve resultados — por eso hay un intento intermedio
+        // SIN el hint pero CON el artista. El título pelado va al final y
+        // solo como último recurso: para títulos genéricos (ej. "Antes De
+        // Que Salga El Sol") devuelve sobre todo canciones homónimas de
+        // otros artistas, así que no debe ser el segundo intento.
+        final queries = <String>[];
+        void addQuery(String q) {
+          final t = q.trim();
+          if (t.isNotEmpty && !queries.contains(t)) queries.add(t);
+        }
 
+        addQuery('$baseQuery official audio');
+        addQuery(baseQuery);
+        addQuery(cleanTitle);
+        const clients = ['WEB', 'ANDROID', 'WEB'];
+
+        // Los candidatos se ACUMULAN entre intentos (dedup por videoId) en
+        // vez de reemplazarse: antes, si el primer intento traía el vídeo
+        // correcto pero ninguno pasaba el umbral todavía, esos candidatos se
+        // tiraban al pasar al siguiente intento. Ahora el ranking siempre ve
+        // la unión de todo lo encontrado hasta el momento.
+        final pool = <String, Map<String, dynamic>>{};
         List<CandidateVideo> topCandidates = const [];
-        for (var i = 0; i < clients.length; i++) {
-          final client = clients[i];
+
+        for (var i = 0; i < queries.length; i++) {
+          final client = clients[i % clients.length];
           final query = queries[i];
           sendLog('[IsolateJS] Buscando match para "$query" con cliente $client...');
           final candidates = await _trySearchWithClient(
@@ -358,17 +377,46 @@ class ExtractionIsolate {
             jsRuntime: jsRuntime,
             sendLog: sendLog,
           );
-          if (candidates != null && candidates.isNotEmpty) {
-            topCandidates = YtSearchMatcher.pickTopCandidates(
-              candidates,
-              artist: rawArtist,
-              title: rawTitle,
-              durationSec: request.durationSeconds,
-            );
-            if (topCandidates.isNotEmpty) break;
-            sendLog('[IsolateJS] Ningún candidato superó el umbral de scoring con $client.');
-          } else {
+          if (candidates == null || candidates.isEmpty) {
             sendLog('[IsolateJS] Búsqueda sin candidatos con $client.');
+            continue;
+          }
+          for (final c in candidates) {
+            final id = c['videoId'];
+            if (id is String && id.isNotEmpty) pool.putIfAbsent(id, () => c);
+          }
+
+          topCandidates = YtSearchMatcher.pickTopCandidates(
+            pool.values.toList(),
+            artist: rawArtist,
+            title: rawTitle,
+            durationSec: request.durationSeconds,
+          );
+          if (topCandidates.isNotEmpty) break;
+          sendLog(
+            '[IsolateJS] Ningún candidato superó el umbral de scoring (${pool.length} acumulados).',
+          );
+        }
+
+        // C12: último recurso antes de rendirse. Sin esto, un tema de nicho
+        // cuyo upload no confirma ni duración ni artista terminaba en
+        // `notFound` -> auto-skip, y el usuario simplemente no podía
+        // reproducirlo. El pase relajado exige más título a cambio de no
+        // exigir corroboración, y sigue descartando karaokes/covers/directos.
+        if (topCandidates.isEmpty && pool.isNotEmpty) {
+          topCandidates = YtSearchMatcher.pickTopCandidates(
+            pool.values.toList(),
+            artist: rawArtist,
+            title: rawTitle,
+            durationSec: request.durationSeconds,
+            relaxed: true,
+          );
+          if (topCandidates.isNotEmpty) {
+            sendLog(
+              '[IsolateJS] Match RELAJADO (sin confirmar duración ni artista): '
+              '${topCandidates.first.videoId} — "${topCandidates.first.title}" '
+              'por "${topCandidates.first.author}".',
+            );
           }
         }
 
@@ -404,6 +452,14 @@ class ExtractionIsolate {
             return result;
           }
           sendLog('[IsolateJS] Candidato ${candidate.videoId} no disponible, probando el siguiente...');
+        }
+
+        if (topCandidates.isEmpty) {
+          sendLog(
+            '[IsolateJS] Ningún candidato aceptable para "$rawArtist - $rawTitle" '
+            '(${pool.length} vistos en ${queries.length} búsquedas). '
+            'La pista se saltará.',
+          );
         }
       }
 

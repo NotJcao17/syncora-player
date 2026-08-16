@@ -69,6 +69,12 @@ class YtSearchMatcher {
   /// (artista repetido, "Official Video") pero descarta canciones distintas.
   static const int _minTitleOverlapPct = 50;
 
+  /// Umbral de título para el pase **relajado** (ver `relaxed` en
+  /// `_rankCandidates`). Más alto que el estricto a propósito: cuando no hay
+  /// corroboración de duración ni de artista, el título tiene que cargar solo
+  /// con toda la evidencia, así que se exige más solapamiento, no menos.
+  static const int _relaxedTitleOverlapPct = 70;
+
   /// C8: tolerancia de duración para considerarla "en rango" a efectos del
   /// umbral final de aceptación (ver `_rankCandidates`).
   static const int _durationToleranceSec = 20;
@@ -178,6 +184,7 @@ class YtSearchMatcher {
     required String artist,
     required String title,
     int? durationSec,
+    bool relaxed = false,
   }) {
     if (candidates.isEmpty) return const [];
 
@@ -200,7 +207,7 @@ class YtSearchMatcher {
 
       // C1: requisito de aceptación, no un simple sumando.
       final titleOverlap = _titleOverlap(title, normTitle);
-      if (titleOverlap < _minTitleOverlapPct) continue;
+      if (titleOverlap < (relaxed ? _relaxedTitleOverlapPct : _minTitleOverlapPct)) continue;
 
       final artistConfirmed = _artistConfirmed(artist, normAuthor, normTitle);
 
@@ -231,7 +238,11 @@ class YtSearchMatcher {
       // (permisivo y estricto a la vez: aceptaba cualquier candidato sin
       // penalizaciones porque el bonus de posición siempre sumaba algo, y
       // rechazaba remixes/directos legítimos por acumular penalizaciones).
-      if (!durationOk && !artistConfirmed) continue;
+      //
+      // En el pase relajado esta corroboración no se exige: es el último
+      // recurso antes de no reproducir nada (ver C12), y ahí la alternativa
+      // no es "sonar la canción correcta" sino "no sonar y saltar de pista".
+      if (!relaxed && !durationOk && !artistConfirmed) continue;
 
       // 2. Términos indeseados — DESCALIFICAN el candidato de plano, no
       // restan puntos. Un simple -80 puede quedar absorbido por duración
@@ -301,21 +312,41 @@ class YtSearchMatcher {
     required String artist,
     required String title,
     int? durationSec,
+    bool relaxed = false,
   }) {
-    final ranked = _rankCandidates(candidates, artist: artist, title: title, durationSec: durationSec);
+    final ranked = _rankCandidates(
+      candidates,
+      artist: artist,
+      title: title,
+      durationSec: durationSec,
+      relaxed: relaxed,
+    );
     return ranked.isEmpty ? null : ranked.first;
   }
 
   /// C6: top-[topN] candidatos que ya superaron el umbral de aceptación, para
   /// poder probar el siguiente si la extracción real del primero falla
   /// (vídeo privado/geobloqueado/age-gate) en vez de rendirse de inmediato.
+  ///
+  /// Con [relaxed] en `true` se aplica el pase de último recurso (C12): se
+  /// exige más solapamiento de título pero se deja de exigir corroboración
+  /// por duración o artista. Los términos indeseados (karaoke/cover/live…)
+  /// **siguen descalificando** igual que en el pase estricto — relajar el
+  /// umbral no debe llegar nunca al punto de reproducir un karaoke.
   static List<CandidateVideo> pickTopCandidates(
     List<Map<String, dynamic>> candidates, {
     required String artist,
     required String title,
     int? durationSec,
     int topN = 3,
+    bool relaxed = false,
   }) {
-    return _rankCandidates(candidates, artist: artist, title: title, durationSec: durationSec).take(topN).toList();
+    return _rankCandidates(
+      candidates,
+      artist: artist,
+      title: title,
+      durationSec: durationSec,
+      relaxed: relaxed,
+    ).take(topN).toList();
   }
 }

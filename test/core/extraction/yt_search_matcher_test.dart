@@ -619,6 +619,124 @@ void main() {
     });
   });
 
+  group('C12: pase relajado como último recurso (caso real de tema de nicho)', () {
+    // Caso reportado en vivo: "Sofia Giusti - Antes De Que Salga El Sol".
+    // El upload existe pero el canal no lleva el nombre del artista y la
+    // duración no viene en los resultados de búsqueda, así que no hay
+    // corroboración posible: el pase estricto lo rechazaba y la pista
+    // terminaba en `notFound` -> auto-skip, sin forma de reproducirla.
+    final nicheCandidates = <Map<String, dynamic>>[
+      {
+        'videoId': 'nicheUpload1',
+        'title': 'Antes De Que Salga El Sol',
+        'author': 'Canal Random De Musica',
+        'durationSec': null,
+      },
+    ];
+
+    test('estricto rechaza: sin duración ni artista confirmado no hay corroboración', () {
+      final best = YtSearchMatcher.pickBest(
+        nicheCandidates,
+        artist: 'Sofia Giusti',
+        title: 'Antes De Que Salga El Sol',
+        durationSec: 166,
+      );
+      expect(best, isNull);
+    });
+
+    test('relajado lo acepta: el título coincide al 100%', () {
+      final best = YtSearchMatcher.pickBest(
+        nicheCandidates,
+        artist: 'Sofia Giusti',
+        title: 'Antes De Que Salga El Sol',
+        durationSec: 166,
+        relaxed: true,
+      );
+      expect(best, isNotNull);
+      expect(best!.videoId, equals('nicheUpload1'));
+      expect(best.artistConfirmed, isFalse);
+    });
+
+    test('relajado NO acepta karaokes/covers: relajar no es rendirse', () {
+      final best = YtSearchMatcher.pickBest(
+        [
+          {
+            'videoId': 'karaokeNiche',
+            'title': 'Antes De Que Salga El Sol (Karaoke)',
+            'author': 'Canal De Karaoke',
+            'durationSec': null,
+          },
+        ],
+        artist: 'Sofia Giusti',
+        title: 'Antes De Que Salga El Sol',
+        durationSec: 166,
+        relaxed: true,
+      );
+      expect(best, isNull);
+    });
+
+    test('relajado exige MÁS título que el estricto (70% vs 50%)', () {
+      // 3 de 6 tokens = 50%: pasa el estricto (con corroboración de
+      // duración), pero no llega al 70% que exige el relajado.
+      final candidates = <Map<String, dynamic>>[
+        {
+          'videoId': 'halfTitle01',
+          'title': 'Antes De Que',
+          'author': 'Otro Canal',
+          'durationSec': 166,
+        },
+      ];
+
+      expect(
+        YtSearchMatcher.pickBest(
+          candidates,
+          artist: 'Sofia Giusti',
+          title: 'Antes De Que Salga El Sol',
+          durationSec: 166,
+        ),
+        isNotNull,
+        reason: 'estricto: 50% de título + duración exacta corrobora',
+      );
+      expect(
+        YtSearchMatcher.pickBest(
+          candidates,
+          artist: 'Sofia Giusti',
+          title: 'Antes De Que Salga El Sol',
+          durationSec: 166,
+          relaxed: true,
+        ),
+        isNull,
+        reason: 'relajado: sin corroboración se exige 70% de título',
+      );
+    });
+
+    test('el pase relajado sigue prefiriendo al candidato con artista confirmado', () {
+      final ranked = YtSearchMatcher.pickTopCandidates(
+        [
+          {
+            'videoId': 'randomChan1',
+            'title': 'Antes De Que Salga El Sol',
+            'author': 'Canal Random',
+            'durationSec': null,
+          },
+          {
+            'videoId': 'realArtist1',
+            'title': 'Antes De Que Salga El Sol',
+            'author': 'Sofia Giusti',
+            'durationSec': null,
+          },
+        ],
+        artist: 'Sofia Giusti',
+        title: 'Antes De Que Salga El Sol',
+        durationSec: 166,
+        relaxed: true,
+      );
+
+      expect(ranked.first.videoId, equals('realArtist1'));
+      expect(ranked.first.artistConfirmed, isTrue);
+    });
+  });
+
   group('pickTopCandidates: múltiples candidatos rankeados', () {
     test('devuelve varios candidatos ordenados por score y acotados a topN', () {
       final candidates = [
