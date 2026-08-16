@@ -543,8 +543,33 @@ extracción exitosa (`ub_y5t23VcE`) pero el audio que sonaba era el de otra canc
     fallo era completamente silencioso, que es justo por qué costó tanto diagnosticarlo).
       Tests: 6 casos nuevos en `test/core/extraction/yt_search_matcher_test.dart` reproduciendo el
       caso real (estricto rechaza / relajado acepta / relajado sigue rechazando karaokes / relajado
-      exige más título / el relajado sigue prefiriendo artista confirmado). 34 tests en ese archivo,
-      149 en la suite completa.
+      exige más título / el relajado sigue prefiriendo artista confirmado).
+
+- [x] **C13. El pase relajado de C12 elegía mal: hacía falta acotar de dónde salen sus candidatos.**
+      Tras C12 la pista de nicho ya no se saltaba, pero sonaba **otra canción**: un tema homónimo de
+      Nacha Pop (220s) en vez del pedido (~166s). Dos defectos del pase relajado, ambos por no
+      distinguir de qué búsqueda venía cada candidato:
+  - **Mezclaba los resultados de la query de solo-título con los demás.** Esa query existe para
+    ensanchar el pool del pase *estricto*, donde el artista o la duración protegen de un falso
+    positivo. En el relajado no hay nada que proteja, así que meter ahí 20 resultados de un título
+    genérico es exactamente cómo acaba ganando un homónimo. Se estaba tirando la señal más valiosa
+    disponible: **que YouTube devolvió ese vídeo para una búsqueda que incluía al artista**.
+  - **Ignoraba la duración por completo.** "No exigir corroboración por duración" (porque a menudo
+    la búsqueda ni la trae) se había implementado como "ignorar la duración incluso cuando se
+    conoce", y un desfase de 54s es evidencia de sobra de que es otra canción.
+      **Implementado:**
+  - Los resultados se guardan además por lotes, marcando qué queries llevaban el nombre del artista.
+    El pase relajado recorre **solo esos lotes**, del más específico al menos, y se queda con el
+    primero que dé algo. El pase estricto sigue viendo el pool completo (incluida la query de
+    solo-título), porque ahí la corroboración lo hace seguro.
+  - Guarda de duración en el relajado (`_relaxedMaxDurationDiffSec = 30`): si ambas duraciones se
+    conocen y difieren más de 30s, se descarta. Si la del candidato se desconoce (caso habitual en
+    resultados de búsqueda), no aplica — si aplicara, volveríamos al problema de C12.
+  - El log del match relajado ahora incluye título, canal y ambas duraciones, para poder juzgar de
+    un vistazo si el candidato elegido tiene sentido.
+      Tests: 3 casos más (rechaza homónimo con duración muy distinta / sigue aceptando cuando la
+      duración se desconoce / acepta desfase moderado ≤30s). 37 tests en ese archivo, 152 en la
+      suite completa.
 
 ---
 

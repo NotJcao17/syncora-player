@@ -710,6 +710,66 @@ void main() {
       );
     });
 
+    test('C13: relajado rechaza un homónimo de otro artista con duración muy distinta', () {
+      // Caso real: se coló "Antes De Que Salga El Sol" de Nacha Pop (220s)
+      // cuando lo pedido duraba ~166s. El título coincide al 100%, así que
+      // solo la duración puede delatarlo — el relajado la ignoraba del todo.
+      final best = YtSearchMatcher.pickBest(
+        [
+          {
+            'videoId': 'nachaPop001',
+            'title': 'Antes De Que Salga El Sol',
+            'author': 'Nacha Pop',
+            'durationSec': 220,
+          },
+        ],
+        artist: 'Sofia Giusti',
+        title: 'Antes De Que Salga El Sol',
+        durationSec: 166,
+        relaxed: true,
+      );
+      expect(best, isNull);
+    });
+
+    test('C13: relajado sigue aceptando si la duración se desconoce', () {
+      // La guarda de duración solo aplica cuando AMBAS se conocen: la
+      // búsqueda de YouTube a menudo no trae duración, y exigirla ahí
+      // volvería a dejar sin reproducir los temas de nicho (C12).
+      final best = YtSearchMatcher.pickBest(
+        [
+          {
+            'videoId': 'sinDuracion',
+            'title': 'Antes De Que Salga El Sol',
+            'author': 'Canal Random',
+            'durationSec': null,
+          },
+        ],
+        artist: 'Sofia Giusti',
+        title: 'Antes De Que Salga El Sol',
+        durationSec: 166,
+        relaxed: true,
+      );
+      expect(best, isNotNull);
+    });
+
+    test('C13: un desfase moderado (≤30s) sí se acepta en relajado', () {
+      final best = YtSearchMatcher.pickBest(
+        [
+          {
+            'videoId': 'desfase25s',
+            'title': 'Antes De Que Salga El Sol',
+            'author': 'Canal Random',
+            'durationSec': 191, // 25s de diferencia: otra masterización, no otra canción
+          },
+        ],
+        artist: 'Sofia Giusti',
+        title: 'Antes De Que Salga El Sol',
+        durationSec: 166,
+        relaxed: true,
+      );
+      expect(best, isNotNull);
+    });
+
     test('el pase relajado sigue prefiriendo al candidato con artista confirmado', () {
       final ranked = YtSearchMatcher.pickTopCandidates(
         [

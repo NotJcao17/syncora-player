@@ -365,7 +365,17 @@ class ExtractionIsolate {
         // tiraban al pasar al siguiente intento. Ahora el ranking siempre ve
         // la unión de todo lo encontrado hasta el momento.
         final pool = <String, Map<String, dynamic>>{};
+        // Lotes de resultados de queries que SÍ llevaban el nombre del
+        // artista, en orden de especificidad. Solo estos alimentan el pase
+        // relajado (C13): ahí no hay artista ni duración que corroboren, así
+        // que la única evidencia que queda es que YouTube devolvió ese vídeo
+        // *para una búsqueda que incluía al artista*. Mezclar los resultados
+        // de la query de solo-título tiraba esa señal a la basura y hacía
+        // ganar a un tema homónimo de otro artista.
+        final artistBatches = <List<Map<String, dynamic>>>[];
         List<CandidateVideo> topCandidates = const [];
+
+        final normPrimaryArtist = YtSearchMatcher.norm(primaryArtist);
 
         for (var i = 0; i < queries.length; i++) {
           final client = clients[i % clients.length];
@@ -381,10 +391,19 @@ class ExtractionIsolate {
             sendLog('[IsolateJS] Búsqueda sin candidatos con $client.');
             continue;
           }
+
+          final batch = <Map<String, dynamic>>[];
           for (final c in candidates) {
             final id = c['videoId'];
-            if (id is String && id.isNotEmpty) pool.putIfAbsent(id, () => c);
+            if (id is String && id.isNotEmpty) {
+              pool.putIfAbsent(id, () => c);
+              batch.add(c);
+            }
           }
+
+          final bearsArtist = normPrimaryArtist.isNotEmpty &&
+              YtSearchMatcher.norm(query).contains(normPrimaryArtist);
+          if (bearsArtist && batch.isNotEmpty) artistBatches.add(batch);
 
           topCandidates = YtSearchMatcher.pickTopCandidates(
             pool.values.toList(),
@@ -402,21 +421,26 @@ class ExtractionIsolate {
         // cuyo upload no confirma ni duración ni artista terminaba en
         // `notFound` -> auto-skip, y el usuario simplemente no podía
         // reproducirlo. El pase relajado exige más título a cambio de no
-        // exigir corroboración, y sigue descartando karaokes/covers/directos.
-        if (topCandidates.isEmpty && pool.isNotEmpty) {
-          topCandidates = YtSearchMatcher.pickTopCandidates(
-            pool.values.toList(),
-            artist: rawArtist,
-            title: rawTitle,
-            durationSec: request.durationSeconds,
-            relaxed: true,
-          );
-          if (topCandidates.isNotEmpty) {
-            sendLog(
-              '[IsolateJS] Match RELAJADO (sin confirmar duración ni artista): '
-              '${topCandidates.first.videoId} — "${topCandidates.first.title}" '
-              'por "${topCandidates.first.author}".',
+        // exigir corroboración, y sigue descartando karaokes/covers/directos
+        // y duraciones muy distintas.
+        if (topCandidates.isEmpty) {
+          for (final batch in artistBatches) {
+            final relaxedTop = YtSearchMatcher.pickTopCandidates(
+              batch,
+              artist: rawArtist,
+              title: rawTitle,
+              durationSec: request.durationSeconds,
+              relaxed: true,
             );
+            if (relaxedTop.isEmpty) continue;
+            topCandidates = relaxedTop;
+            final best = relaxedTop.first;
+            sendLog(
+              '[IsolateJS] Match RELAJADO (sin confirmar artista ni duración): '
+              '${best.videoId} — "${best.title}" por "${best.author}" '
+              '(${best.durationSec ?? "?"}s, esperado ${request.durationSeconds ?? "?"}s).',
+            );
+            break;
           }
         }
 

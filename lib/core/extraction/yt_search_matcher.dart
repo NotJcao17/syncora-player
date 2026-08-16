@@ -79,6 +79,14 @@ class YtSearchMatcher {
   /// umbral final de aceptación (ver `_rankCandidates`).
   static const int _durationToleranceSec = 20;
 
+  /// Tope de desfase de duración en el pase relajado. Ahí no se *exige*
+  /// corroboración por duración (a menudo la búsqueda ni la trae), pero si
+  /// ambas duraciones se conocen y difieren más que esto, es evidencia
+  /// suficiente de que es otra canción — no un upload distinto de la misma.
+  /// Caso real: un tema homónimo de otro artista, 220s contra ~166s
+  /// esperados, se colaba porque el relajado ignoraba la duración del todo.
+  static const int _relaxedMaxDurationDiffSec = 30;
+
   static const Map<String, String> _diacriticsFold = {
     'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a', 'ā': 'a', 'ă': 'a', 'ą': 'a',
     'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e', 'ē': 'e', 'ĕ': 'e', 'ė': 'e', 'ę': 'e', 'ě': 'e',
@@ -219,9 +227,11 @@ class YtSearchMatcher {
       // candidato fuera > 0, así que una pista sin duración conocida penalizaba
       // -50 a TODOS los candidatos.
       bool durationOk = false;
+      bool durationWildlyOff = false;
       if (durationSec != null && durationSec > 0 && candidateDuration != null && candidateDuration > 0) {
         final diff = (candidateDuration - durationSec).abs();
         durationOk = diff <= _durationToleranceSec;
+        durationWildlyOff = diff > _relaxedMaxDurationDiffSec;
         if (diff <= 3) {
           score += 100;
         } else if (diff <= 10) {
@@ -242,6 +252,9 @@ class YtSearchMatcher {
       // En el pase relajado esta corroboración no se exige: es el último
       // recurso antes de no reproducir nada (ver C12), y ahí la alternativa
       // no es "sonar la canción correcta" sino "no sonar y saltar de pista".
+      // Pero "no exigir duración" no es lo mismo que "ignorar la duración":
+      // si ambas se conocen y difieren demasiado, es otra canción (C13).
+      if (relaxed && durationWildlyOff) continue;
       if (!relaxed && !durationOk && !artistConfirmed) continue;
 
       // 2. Términos indeseados — DESCALIFICAN el candidato de plano, no
