@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
 import 'dart:isolate';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_js/flutter_js.dart';
 
@@ -121,7 +122,13 @@ class ExtractionIsolate {
     initMessage.mainSendPort.send(childReceivePort.sendPort);
 
     void sendLog(String msg) {
+      // `dev.log` desde un isolate secundario NO llega a la terminal de
+      // `flutter run` (solo a DevTools), así que todos estos mensajes eran
+      // invisibles en la práctica — a diferencia de los `[JS] ...`, que los
+      // imprime QuickJS directo a stdout. `debugPrint` sí sale en la
+      // terminal, que es donde se depura de verdad.
       dev.log(msg);
+      debugPrint(msg);
       initMessage.mainSendPort.send(ExtractionLogMessage(msg));
     }
 
@@ -348,16 +355,27 @@ class ExtractionIsolate {
         // solo como último recurso: para títulos genéricos (ej. "Antes De
         // Que Salga El Sol") devuelve sobre todo canciones homónimas de
         // otros artistas, así que no debe ser el segundo intento.
-        final queries = <String>[];
-        void addQuery(String q) {
+        final attempts = <(String query, String client)>[];
+        void addAttempt(String q, String client) {
           final t = q.trim();
-          if (t.isNotEmpty && !queries.contains(t)) queries.add(t);
+          if (t.isEmpty) return;
+          if (attempts.any((a) => a.$1 == t && a.$2 == client)) return;
+          attempts.add((t, client));
         }
 
-        addQuery('$baseQuery official audio');
-        addQuery(baseQuery);
-        addQuery(cleanTitle);
-        const clients = ['WEB', 'ANDROID', 'WEB'];
+        // El orden importa y está calibrado contra el caso real que rompió:
+        //  1. `artista título` en WEB es la que funcionaba antes de Fase C —
+        //     va primero por ser la más fiable, no la más adornada.
+        //  2. El hint "official audio" ayuda en temas conocidos pero estrecha
+        //     demasiado en los de nicho, así que va después, no antes.
+        //  3. ANDROID como cliente alterno: su parser falla ("Cannot cast
+        //     SearchMobileHeader") y cae a un parseo crudo que pierde la
+        //     duración, así que solo se usa si WEB no resolvió.
+        //  4. Título pelado, último recurso y solo para el pase estricto.
+        addAttempt(baseQuery, 'WEB');
+        addAttempt('$baseQuery official audio', 'WEB');
+        addAttempt(baseQuery, 'ANDROID');
+        addAttempt(cleanTitle, 'WEB');
 
         // Los candidatos se ACUMULAN entre intentos (dedup por videoId) en
         // vez de reemplazarse: antes, si el primer intento traía el vídeo
@@ -377,9 +395,9 @@ class ExtractionIsolate {
 
         final normPrimaryArtist = YtSearchMatcher.norm(primaryArtist);
 
-        for (var i = 0; i < queries.length; i++) {
-          final client = clients[i % clients.length];
-          final query = queries[i];
+        for (final attempt in attempts) {
+          final query = attempt.$1;
+          final client = attempt.$2;
           sendLog('[IsolateJS] Buscando match para "$query" con cliente $client...');
           final candidates = await _trySearchWithClient(
             query: query,
@@ -415,6 +433,18 @@ class ExtractionIsolate {
           sendLog(
             '[IsolateJS] Ningún candidato superó el umbral de scoring (${pool.length} acumulados).',
           );
+          // Volcado de lo que YouTube devolvió realmente: sin esto no hay
+          // forma de saber si el vídeo correcto ni siquiera está entre los
+          // candidatos o si está pero lo rechaza el umbral — la diferencia
+          // entre "ajustar el scoring" y "buscar en otro sitio".
+          var shown = 0;
+          for (final c in batch) {
+            if (shown++ >= 8) break;
+            sendLog(
+              '[IsolateJS]   cand: "${c['title']}" | canal="${c['author']}" '
+              '| ${c['durationSec'] ?? "?"}s | ${c['videoId']}',
+            );
+          }
         }
 
         // C12: último recurso antes de rendirse. Sin esto, un tema de nicho
@@ -481,7 +511,7 @@ class ExtractionIsolate {
         if (topCandidates.isEmpty) {
           sendLog(
             '[IsolateJS] Ningún candidato aceptable para "$rawArtist - $rawTitle" '
-            '(${pool.length} vistos en ${queries.length} búsquedas). '
+            '(${pool.length} vistos en ${attempts.length} búsquedas). '
             'La pista se saltará.',
           );
         }

@@ -814,21 +814,52 @@ globalThis.searchVideos = function(query, client, jsRequestId) {
         }
       }
 
-      // Intento 3: YouTube Music search si sigue sin resultados
-      if (results.length === 0 && yt.music && typeof yt.music.search === 'function') {
+      // Intento 3: YouTube Music. Antes solo corría si NO había ningún
+      // resultado; ahora también cuando hay pocos, y los añade a los que ya
+      // hubiera en vez de reemplazarlos. Motivo (caso real): un tema de
+      // nicho suele existir en YouTube solo como pista auto-generada de
+      // YouTube Music (canal "<Artista> - Topic"), y la búsqueda de vídeos
+      // normal devuelve 20 canciones homónimas de OTROS artistas — así que
+      // `results.length === 0` nunca se cumplía y jamás se llegaba a mirar
+      // donde sí estaba la canción.
+      if (results.length < 8 && yt.music && typeof yt.music.search === 'function') {
         try {
+          var seenMusic = {};
+          for (var q = 0; q < results.length; q++) seenMusic[results[q].videoId] = true;
+
           var musicSearch = await yt.music.search(query, { type: 'song' });
-          var songs = (musicSearch && musicSearch.songs) ? musicSearch.songs : [];
+          var shelf = (musicSearch && musicSearch.songs) ? musicSearch.songs : null;
+          var songs = [];
+          if (Array.isArray(shelf)) songs = shelf;
+          else if (shelf && Array.isArray(shelf.contents)) songs = shelf.contents;
+
+          var addedFromMusic = 0;
           for (var j = 0; j < songs.length; j++) {
             var s = songs[j];
-            if (s && s.id) {
-              results.push({
-                videoId: String(s.id),
-                title: (s.title && s.title.text) ? String(s.title.text) : (s.name || ''),
-                author: (s.artists && s.artists[0] && s.artists[0].name) ? String(s.artists[0].name) : '',
-                durationSec: (s.duration && typeof s.duration.seconds === 'number') ? s.duration.seconds : null
-              });
-            }
+            if (!s || !s.id) continue;
+            var sid = String(s.id);
+            if (seenMusic[sid]) continue;
+            seenMusic[sid] = true;
+
+            var sTitle = '';
+            if (s.title && s.title.text) sTitle = String(s.title.text);
+            else if (typeof s.title === 'string') sTitle = s.title;
+            else if (s.name) sTitle = String(s.name);
+
+            var sAuthor = '';
+            if (s.artists && s.artists[0] && s.artists[0].name) sAuthor = String(s.artists[0].name);
+            else if (s.author && s.author.name) sAuthor = String(s.author.name);
+
+            results.push({
+              videoId: sid,
+              title: sTitle,
+              author: sAuthor,
+              durationSec: (s.duration && typeof s.duration.seconds === 'number') ? s.duration.seconds : null
+            });
+            addedFromMusic++;
+          }
+          if (addedFromMusic > 0) {
+            console.log('[JS] searchVideos: +' + addedFromMusic + ' candidatos desde YouTube Music');
           }
         } catch (e3) {
           console.log('[JS searchVideos music fallback excepción] ' + (e3 ? e3.toString() : ''));
