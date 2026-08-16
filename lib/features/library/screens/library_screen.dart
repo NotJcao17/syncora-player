@@ -350,13 +350,20 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       description: playlistDescription,
     );
 
-    // Crear también la contraparte remota desde el principio. Antes el
-    // importador solo escribía en SQLite local (remoteId se quedaba en
-    // null); si más tarde se agregaba una sola canción a esa playlist desde
-    // otro lado (track_tile.dart sí crea remoto), la siguiente
-    // sincronización veía un remoto mucho más flaco que lo local y podaba
-    // casi toda la playlist importada. Esto la deja respaldada en la nube
-    // de una, sin depender de que alguien la "promueva" después.
+    // Crear también la contraparte remota desde el principio — pero OJO:
+    // `remoteId` de la playlist LOCAL no se escribe todavía aquí. Escribirlo
+    // apenas se crea el registro remoto (vacío) fue justo lo que causó un bug
+    // peor que el original: en cuanto la playlist local tiene `remoteId`,
+    // `playlist_detail_screen.dart` dispara `syncPlaylistDetail` automático
+    // al abrirla (`initState` -> `_loadPlaylistHeader`), y esa sync trata el
+    // remoto como fuente de verdad y poda lo local que no esté ahí. Si el
+    // usuario entraba a la playlist mientras el lote de canciones todavía se
+    // subía en segundo plano (import de 38 canciones = varios segundos),
+    // la sync veía un remoto a medio llenar y borraba lo que faltaba subir
+    // — reproducido en vivo, con caída inconsistente según en qué punto de
+    // la carrera aterrizaba cada vez. `remoteId` ahora se escribe en local
+    // recién AL FINAL, después de que local y remoto ya tengan las mismas
+    // pistas — así ninguna sync puede ver un remoto más flaco que lo local.
     String? remotePlaylistId;
     try {
       final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
@@ -365,12 +372,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         description: playlistDescription,
       );
       remotePlaylistId = created['id']?.toString();
-      if (remotePlaylistId != null && remotePlaylistId.isNotEmpty) {
-        final localPlaylist = await dao.getPlaylistById(playlistId);
-        if (localPlaylist != null) {
-          await dao.updatePlaylist(localPlaylist.copyWith(remoteId: Value(remotePlaylistId)));
-        }
-      }
     } catch (_) {}
 
     if (!context.mounted) return;
@@ -421,6 +422,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           'album_name': track.albumTitle,
                           'cover_url': track.coverUrl,
                           'duration_ms': track.durationSec * 1000,
+                          if (contributors.isNotEmpty)
+                            'contributors_json': SyncoraArtistRef.encodeList(contributors),
                         });
                       }
                     }
@@ -428,7 +431,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       try {
                         final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
                         await supabaseRepo.addTracksToPlaylist(remotePlaylistId, remoteTracksPayload);
-                      } catch (_) {}
+                        // Recién ahora, con local y remoto ya iguales, se
+                        // marca la playlist como respaldada — es la señal
+                        // que habilita la sincronización automática al
+                        // abrirla.
+                        final localPlaylist = await dao.getPlaylistById(playlistId);
+                        if (localPlaylist != null) {
+                          await dao.updatePlaylist(localPlaylist.copyWith(remoteId: Value(remotePlaylistId)));
+                        }
+                      } catch (_) {
+                        // Si la subida falla, la playlist se queda sin
+                        // remoteId — exactamente el estado local-only seguro
+                        // de antes de este fix (ninguna sync la toca).
+                      }
                     }
                   });
                 }

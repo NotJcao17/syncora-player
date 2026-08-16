@@ -125,6 +125,7 @@ class SyncService {
               coverUrl: trackMap['cover_url'] as String? ?? '',
               durationMs: (trackMap['duration_ms'] as num?)?.toInt() ?? 0,
               genre: trackMap['genre'] as String?,
+              contributorsJson: trackMap['contributors_json'] as String?,
             );
           }
         }
@@ -252,6 +253,7 @@ class SyncService {
             coverUrl: trackMap['cover_url'] as String? ?? '',
             durationMs: (trackMap['duration_ms'] as num?)?.toInt() ?? 0,
             genre: trackMap['genre'] as String?,
+            contributorsJson: trackMap['contributors_json'] as String?,
           );
         }
       }

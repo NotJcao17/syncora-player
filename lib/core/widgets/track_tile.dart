@@ -644,40 +644,88 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         durationMs: (widget.track.duration ?? Duration.zero).inMilliseconds,
         contributorsJson: SyncoraArtistRef.encodeList(contributors),
       );
-      var likedPlaylist = await dao.getLikedPlaylist();
-      if (likedPlaylist.remoteId == null) {
+      final likedPlaylist = await dao.getLikedPlaylist();
+      final wasLocalOnly = likedPlaylist.remoteId == null;
+      var likedRemoteId = likedPlaylist.remoteId;
+      final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+
+      if (likedRemoteId == null) {
         try {
-          final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
           final res = await supabaseRepo.getOrCreateLikedPlaylist();
-          final remoteId = res['id']?.toString();
-          if (remoteId != null && remoteId.isNotEmpty) {
-            await dao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(remoteId)));
-            likedPlaylist = await dao.getLikedPlaylist();
-          }
+          likedRemoteId = res['id']?.toString();
+          // `remoteId` NO se escribe en local todavía — mismo motivo que en
+          // "Agregar a playlist" más abajo: escribirlo antes de respaldar lo
+          // que ya había habilita sync automático contra un remoto vacío/a
+          // medias y termina podando "Tus me gusta" local.
         } catch (_) {}
       }
-      if (likedPlaylist.remoteId != null) {
+
+      // Si "Tus me gusta" era solo local (típico si el usuario acumuló likes
+      // antes de iniciar sesión, o antes de que existiera este respaldo) y
+      // recién le creamos su contraparte remota, hay que subir TODO el
+      // estado actual de una — `toggleLikeTrack` ya corrió arriba, así que
+      // esta lista ya incluye (o excluye) la pista que se acaba de tocar.
+      var likedBackfillOk = true;
+      if (wasLocalOnly && likedRemoteId != null) {
         try {
-          final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-          if (isLiked) {
-            await supabaseRepo.addTrackToPlaylist(likedPlaylist.remoteId!, {
-              'track_id': trackIdInt,
-              'artist_id': widget.track.artistId ?? 0,
-              'album_id': widget.track.albumId ?? 0,
-              'title': widget.track.title,
-              'artist_name': widget.track.artist,
-              'album_name': widget.track.album ?? '',
-              'cover_url': widget.track.coverUrl,
-              'duration_ms': (widget.track.duration ?? Duration.zero).inMilliseconds,
-              'genre': widget.track.genre,
-            });
-          } else {
-            await supabaseRepo.removeTrackFromPlaylist(likedPlaylist.remoteId!, trackIdInt);
+          final existingTracks = await dao.getTracksOrdered(likedPlaylist.id);
+          if (existingTracks.isNotEmpty) {
+            await supabaseRepo.addTracksToPlaylist(
+              likedRemoteId,
+              existingTracks
+                  .map((t) => {
+                        'track_id': t.trackId,
+                        'artist_id': t.artistId,
+                        'album_id': t.albumId,
+                        'title': t.title,
+                        'artist_name': t.artistName,
+                        'album_name': t.albumName,
+                        'cover_url': t.coverUrl,
+                        'duration_ms': t.durationMs,
+                        if (t.genre != null) 'genre': t.genre,
+                        if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
+                      })
+                  .toList(),
+            );
           }
         } catch (_) {
-          if (context.mounted) {
-            AppToast.show(context, message: 'La playlist ya no existe en la nube');
+          likedBackfillOk = false;
+        }
+      }
+
+      if (likedRemoteId != null) {
+        // Si era local-only, el backfill de arriba ya subió el estado
+        // completo (incluida esta pista) — no hace falta aplicar el cambio
+        // puntual encima, sería redundante.
+        if (!wasLocalOnly) {
+          try {
+            if (isLiked) {
+              await supabaseRepo.addTrackToPlaylist(likedRemoteId, {
+                'track_id': trackIdInt,
+                'artist_id': widget.track.artistId ?? 0,
+                'album_id': widget.track.albumId ?? 0,
+                'title': widget.track.title,
+                'artist_name': widget.track.artist,
+                'album_name': widget.track.album ?? '',
+                'cover_url': widget.track.coverUrl,
+                'duration_ms': (widget.track.duration ?? Duration.zero).inMilliseconds,
+                'genre': widget.track.genre,
+                if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
+              });
+            } else {
+              await supabaseRepo.removeTrackFromPlaylist(likedRemoteId, trackIdInt);
+            }
+          } catch (_) {
+            if (context.mounted) {
+              AppToast.show(context, message: 'La playlist ya no existe en la nube');
+            }
           }
+        }
+
+        if (wasLocalOnly && likedBackfillOk) {
+          try {
+            await dao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(likedRemoteId)));
+          } catch (_) {}
         }
       }
       if (context.mounted) {
@@ -735,22 +783,27 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                               isLiked: pl.isLiked,
                             );
                       remoteId = created['id']?.toString();
-                      if (remoteId != null && remoteId.isNotEmpty) {
-                        await dao.updatePlaylist(pl.copyWith(remoteId: Value(remoteId)));
-                      }
+                      // OJO: `remoteId` NO se escribe en la playlist local
+                      // todavía aquí — recién al final, después de que se
+                      // suban también las pistas existentes. Escribirlo de
+                      // una causó un bug real: en cuanto la playlist local
+                      // tiene `remoteId`, abrirla dispara sync automático
+                      // (`playlist_detail_screen.dart`), que trata el remoto
+                      // como fuente de verdad y poda lo local que no esté
+                      // ahí — y el remoto recién creado está vacío.
                     } catch (_) {}
                   }
 
-                  // Si la playlist era solo local (ej. importada desde CSV,
-                  // que no sube a Supabase) y recién le creamos su
-                  // contraparte remota, hay que subir TODAS sus pistas
-                  // existentes ahora, no solo la nueva que se está
-                  // agregando. Si no, la próxima sincronización ve un
-                  // remoto más flaco que lo local y PODA todo lo que no
+                  // Si la playlist era solo local (ej. importada desde CSV)
+                  // y recién le creamos su contraparte remota, hay que subir
+                  // TODAS sus pistas existentes ahora, no solo la nueva que
+                  // se está agregando. Si no, la próxima sincronización ve
+                  // un remoto más flaco que lo local y PODA todo lo que no
                   // esté ahí (`sync_service.dart`, `_syncPlaylistsAndTracks`
                   // trata el remoto como fuente de verdad) — borrando la
                   // playlist importada casi entera. Bug real reportado en
                   // vivo: se agregaba UNA canción y desaparecía el resto.
+                  var existingTracksUploadOk = true;
                   if (wasLocalOnly && remoteId != null) {
                     try {
                       final existingTracks = await dao.getTracksOrdered(pl.id);
@@ -768,12 +821,17 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                                     'cover_url': t.coverUrl,
                                     'duration_ms': t.durationMs,
                                     if (t.genre != null) 'genre': t.genre,
+                                    if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
                                   })
                               .toList(),
                         );
                       }
-                    } catch (_) {}
+                    } catch (_) {
+                      existingTracksUploadOk = false;
+                    }
                   }
+
+                  final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), widget.track);
 
                   if (remoteId != null) {
                     try {
@@ -787,6 +845,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                         'cover_url': widget.track.coverUrl,
                         'duration_ms': (widget.track.duration ?? Duration.zero).inMilliseconds,
                         'genre': widget.track.genre,
+                        if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
                       });
                     } catch (_) {
                       if (context.mounted) {
@@ -798,9 +857,22 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                       if (ctx.mounted) Navigator.pop(ctx);
                       return;
                     }
+
+                    // Recién ahora, con el remoto ya al día (pistas viejas +
+                    // la nueva), se marca la playlist local como respaldada
+                    // — es la señal que habilita la sincronización
+                    // automática al abrirla. Si la subida de las pistas
+                    // existentes falló arriba, se deja sin `remoteId` a
+                    // propósito: mejor quedarse local-only (seguro, ninguna
+                    // sync la toca) que marcarla sincronizada con un remoto
+                    // incompleto.
+                    if (wasLocalOnly && existingTracksUploadOk) {
+                      try {
+                        await dao.updatePlaylist(pl.copyWith(remoteId: Value(remoteId)));
+                      } catch (_) {}
+                    }
                   }
 
-                  final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), widget.track);
                   await dao.addTrackToPlaylist(
                     playlistId: pl.id,
                     trackId: trackIdInt,

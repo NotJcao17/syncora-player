@@ -686,11 +686,70 @@ propia discusión, no un parche dentro de esta sesión.
 `PlaylistTracks.contributorsJson` (columna añadida en Fase 0), como JSON de `List<{id, name}>` — ver
 `SyncoraArtistRef.encodeList`/`decodeList` en `player_models.dart`. `artistName`/`artistId` siguen
 guardando el nombre/id principal aplanado para compatibilidad con las pantallas que no decodifican
-la lista completa. **Nota:** el payload que se sube a Supabase (tanto el existente en `track_tile.dart`
-como el nuevo de este fix) no incluye `contributors_json` — no hay confirmación de que la tabla
-remota tenga esa columna, así que no se agregó por seguridad. Implica que, si algún día se restaura
-una playlist puramente desde Supabase (reinstalación, otro dispositivo), los colaboradores extra no
-sobrevivirían el viaje — solo el artista principal. Vale la pena revisarlo aparte si eso importa.
+la lista completa.
+
+#### Ronda 2 — el fix de la ronda 1 causó un bug peor, y colaboradores en Supabase
+
+Reportado en vivo: tras el fix de la ronda 1, agregar una canción desde otro lado ya no borraba la
+playlist — pero **entrar** a una playlist recién importada sí, de forma inconsistente (14/38, 0/10,
+32/38 en tres intentos). Al salir y volver a entrar, las pistas "borradas" reaparecían (en otro
+orden) — pista clave: eran podadas por una sync y luego re-agregadas por la siguiente, no perdidas.
+
+**Causa: el fix de la ronda 1 abrió una ventana de carrera nueva.** Escribir `remoteId` en la
+playlist local **inmediatamente** al crear su contraparte en Supabase (antes de subir las pistas)
+hace que `playlist_detail_screen.dart` dispare `syncPlaylistDetail` automático la primera vez que se
+abre (`initState` → `_loadPlaylistHeader`, guard `if (pl?.remoteId != null)`). Antes del fix de
+ronda 1, una playlist importada tenía `remoteId = null` y ese guard bloqueaba toda sync — a salvo
+por accidente. Al asignar `remoteId` de una, cualquier apertura de la playlist mientras el lote de
+pistas todavía viaja a Supabase (una importación de 38 canciones tarda varios segundos) dispara una
+sync que ve un remoto a medio llenar y poda lo local que aún no haya llegado — la inconsistencia
+reportada es exactamente en qué punto de esa carrera aterriza cada intento.
+
+**Arreglado con el principio correcto: `remoteId` es la señal de "ya sincronizado", así que solo se
+escribe en local cuando local y remoto YA son iguales — nunca antes.**
+- `library_screen.dart` (importación): crea la playlist remota pero guarda su id solo en una
+  variable local durante todo el import; recién al final, después de que el lote completo de pistas
+  se subió con éxito, escribe `remoteId` en la playlist local. Si la subida falla, la playlist queda
+  sin `remoteId` — el mismo estado local-only seguro de antes de la ronda 1.
+- `track_tile.dart` (diálogo "Agregar a playlist" y toggle de "me gusta"): mismo patrón. El
+  respaldo de las pistas existentes (backfill) ocurre ANTES de marcar `remoteId`; si el backfill
+  falla, tampoco se marca. Se detectó y arregló el mismo defecto en el flujo de "me gusta" (creaba
+  la playlist remota y le asignaba `remoteId` sin respaldar los likes locales previos), que no había
+  sido reportado en vivo pero es la misma clase de bug.
+
+**Colaboradores en Supabase (punto 2 del usuario, confirmado como importante):** se agregó la
+migración `supabase/migrations/20250001000006_playlist_tracks_contributors.sql`
+(`ALTER TABLE playlist_tracks ADD COLUMN contributors_json TEXT`) — **no aplicada automáticamente,
+requiere `supabase db push` o correrla manualmente contra el proyecto**, no se ejecutó por ser un
+cambio de schema en infraestructura compartida. Los 4 puntos que suben pistas a Supabase
+(`track_tile.dart` ×3, `library_screen.dart` ×1) ahora incluyen `contributors_json` en el payload
+cuando hay más de un colaborador, y `sync_service.dart` ahora lo lee de vuelta al bajar pistas
+remotas y lo pasa a `PlaylistDao.addTrackToPlaylist`. Sin la migración aplicada, Supabase rechazaría
+el campo desconocido — **hay que correr la migración antes de probar este punto**.
+
+Verificado: 153 tests, `flutter analyze` limpio (mismos infos preexistentes).
+
+#### Investigado, no arreglado: falso positivo en "unlock i" (búsqueda normal)
+
+Reportado como no-prioritario ("arréglalo solo si es fácil y sin riesgo"). Diagnóstico contra la API
+en vivo: "Insomnia" de "Unlocked" gana con `textScore = 100.0` (perfecto) sobre "Unlock It" de Charli
+xcx (`72.0`) y de Abra (`76.0`). Causa de fondo, no un bug puntual:
+- `textScore` calcula recall sobre la **unión** de tokens de título + artista — diseño intencional de
+  Fase A para queries combinadas tipo "imagine dragons believer". Aquí permite que "unlock" lo cubra
+  el artista ("Unlocked") y que "i" (token de UNA letra, típico de escritura a medio teclear) lo
+  cubra el título ("Insomnia") — dos partes de la query satisfechas por dos campos sin relación real
+  entre sí.
+- Encima, la canción correcta sale **penalizada**: su título real trae "(feat. Kim Petras and Jay
+  Park)", así que la precisión se diluye (3 de 10 tokens del título relevantes = 72), mientras que
+  "Insomnia"/"Unlocked" no tienen nada que diluir (1 token cada uno = precisión perfecta).
+- Solo pasa con el toggle Popular desactivado — con Popular activado, `isPopularTrack` probablemente
+  filtra "Insomnia" (rank más bajo) antes de que el usuario lo vea.
+
+**Por qué no se tocó:** no es un fix aislado — toca `textScore`, la fórmula compartida por *todo* el
+buscador, ya calibrada contra 34 casos reales ya validados (incluyendo varios que dependen
+explícitamente de la unión título+artista para recall). Cualquier ajuste ahí arriesga romper esos
+casos sin una ronda completa de re-validación, que es justo lo que el usuario pidió evitar. Queda
+documentado para retomarlo como tarea aparte y deliberada si vuelve a molestar.
 
 ---
 
