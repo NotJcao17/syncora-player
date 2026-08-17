@@ -320,6 +320,29 @@ class DeezerApi {
     });
   }
 
+  /// D1 (Fase D, búsqueda de colaboraciones): top tracks del artista pidiendo
+  /// explícitamente un límite alto. `/artist/{id}/top` sin `limit` en la URL
+  /// devuelve solo **5** resultados (confirmado contra la API en vivo) —
+  /// insuficiente para encontrar una colaboración que no esté entre los 5
+  /// temas más sonados del artista (ej. "Guess" de Charli xcx aparece bien
+  /// más abajo en su top). No comparte caché con [getArtistTopTracks] porque
+  /// el tamaño de la respuesta es distinto (evita que una llamada con límite
+  /// bajo deje en caché una lista corta que luego se devuelva para una
+  /// llamada que pidió más).
+  Future<List<DeezerTrack>> getArtistTopTracksExpanded(int id, {int limit = 100}) async {
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/artist/$id/top', queryParameters: {'limit': limit});
+      if (response.data == null || response.data['data'] is! List) return [];
+      final list = response.data['data'] as List;
+      final tracks = list
+          .where((item) => (item['duration'] as int? ?? 0) > 60 && item['type'] != 'podcast')
+          .map((item) => DeezerTrack.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList();
+      tracks.sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
+      return tracks;
+    });
+  }
+
   Future<List<DeezerAlbum>> getArtistAlbums(int id) async {
     return _rateLimiter.run(() async {
       final response = await _dio.get('/artist/$id/albums');

@@ -11,10 +11,13 @@ import '../utils/connectivity_service.dart';
 import '../utils/contributor_resolver.dart';
 import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
+import '../../data/models/deezer/deezer_track.dart';
 import '../../data/supabase/supabase_providers.dart';
 import '../../features/download/download_provider.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
+import '../../features/search/other_versions_search.dart';
+import '../../features/search/search_ranking.dart';
 import 'app_bottom_sheet.dart';
 import 'app_toast.dart';
 
@@ -575,6 +578,17 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                   ],
                 ),
               ),
+              if ((widget.track.artistId ?? 0) != 0)
+                PopupMenuItem(
+                  value: 'other_versions',
+                  child: Row(
+                    children: [
+                      Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.primary, size: 18),
+                      const SizedBox(width: 12),
+                      const Expanded(child: Text('Buscar otras versiones', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+                    ],
+                  ),
+                ),
               if (widget.onRemove != null)
                 PopupMenuItem(
                   value: 'remove',
@@ -631,6 +645,8 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       } else {
         AppToast.show(context, message: '"${widget.track.title}" agregada a la cola');
       }
+    } else if (value == 'other_versions') {
+      _showOtherVersionsModal(context);
     } else if (value == 'like') {
       final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), widget.track);
       final isLiked = await dao.toggleLikeTrack(
@@ -898,6 +914,64 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     );
   }
 
+  // D2 (Fase D, entrada 1): "Buscar otras versiones" desde el menú de una
+  // canción. A diferencia del fallback dentro del modal de Búsqueda
+  // Profunda (entrada 2), acá no hay ningún formulario — ya se tiene una
+  // canción válida (artista, título, álbum de referencia) y se dispara el
+  // crawl directamente.
+  void _showOtherVersionsModal(BuildContext context) {
+    final artistId = widget.track.artistId ?? 0;
+    if (artistId == 0) return;
+
+    final content = _OtherVersionsModalContent(
+      artistId: artistId,
+      title: widget.track.title,
+      referenceAlbumId: widget.track.albumId,
+      excludeTrackId: widget.track.deezerId,
+    );
+
+    // En desktop es una ventana central (Dialog) — nada de sheet arrastrable
+    // desde abajo, eso solo tiene sentido como gesto táctil en móvil.
+    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    if (isDesktop) {
+      showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: AppTheme.background,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 80, vertical: 48),
+          child: SizedBox(
+            width: 560,
+            height: 560,
+            child: Padding(padding: const EdgeInsets.all(20), child: content),
+          ),
+        ),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SizedBox(
+        height: MediaQuery.of(ctx).size.height * 0.7,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+          ),
+          child: content,
+        ),
+      ),
+    );
+  }
+
   void _showTrackOptionsMenu(BuildContext context, WidgetRef ref) async {
     final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
     final isLiked = await ref.read(playlistDaoProvider).isTrackLiked(trackIdInt);
@@ -936,6 +1010,15 @@ class _TrackTileState extends ConsumerState<TrackTile> {
               _handleOptionSelected(context, ref, 'playlist');
             },
           ),
+          if ((widget.track.artistId ?? 0) != 0)
+            _OptionItem(
+              icon: AppIcons.broken(SolarIcons.Magnifer),
+              label: 'Buscar otras versiones',
+              onTap: () {
+                Navigator.pop(context);
+                _handleOptionSelected(context, ref, 'other_versions');
+              },
+            ),
           if (widget.onRemove != null)
             _OptionItem(
               icon: AppIcons.broken(SolarIcons.TrashBinTrash),
@@ -947,6 +1030,131 @@ class _TrackTileState extends ConsumerState<TrackTile> {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// D2 (Fase D): contenido del modal de "Buscar otras versiones" — dispara el
+/// crawl acotado de discografía (`OtherVersionsSearch`) apenas se abre, sin
+/// formulario: ya se tiene artista/título/álbum de la canción desde la que
+/// se disparó. Solo el contenido: el contenedor (sheet en móvil, diálogo
+/// centrado en desktop) lo decide `_showOtherVersionsModal`.
+class _OtherVersionsModalContent extends ConsumerStatefulWidget {
+  final int artistId;
+  final String title;
+  final int? referenceAlbumId;
+  final int excludeTrackId;
+
+  const _OtherVersionsModalContent({
+    required this.artistId,
+    required this.title,
+    required this.referenceAlbumId,
+    required this.excludeTrackId,
+  });
+
+  @override
+  ConsumerState<_OtherVersionsModalContent> createState() => _OtherVersionsModalContentState();
+}
+
+class _OtherVersionsModalContentState extends ConsumerState<_OtherVersionsModalContent> {
+  bool _isLoading = true;
+  String? _error;
+  List<DeezerTrack> _results = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _search();
+  }
+
+  Future<void> _search() async {
+    final deezerApi = ref.read(deezerApiProvider);
+    try {
+      final tracks = await OtherVersionsSearch.searchByTitle(
+        deezerApi,
+        artistId: widget.artistId,
+        title: widget.title,
+        referenceAlbumId: widget.referenceAlbumId,
+      );
+      if (!mounted) return;
+      final filtered = tracks.where((t) => t.id != widget.excludeTrackId).toList();
+      setState(() {
+        _isLoading = false;
+        _results = SearchRanking.rankTracks(filtered, widget.title);
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = 'Error al buscar otras versiones.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                'Otras versiones de "${widget.title}"',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.primary),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            IconButton(
+              icon: Icon(AppIcons.broken(SolarIcons.CloseCircle), color: AppTheme.secondary),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Busca en la discografía cercana del artista otras versiones de esta '
+          'canción (colaboraciones, solistas, remixes) que el buscador normal no traiga.',
+          style: TextStyle(color: AppTheme.secondary, fontSize: 12),
+        ),
+        const SizedBox(height: 16),
+        Expanded(child: _buildBody()),
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(child: Text(_error!, style: const TextStyle(color: AppTheme.secondary)));
+    }
+    if (_results.isEmpty) {
+      return const Center(
+        child: Text(
+          'No se encontraron otras versiones en la discografía cercana.',
+          style: TextStyle(color: AppTheme.secondary),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+    return ListView.builder(
+      itemCount: _results.length,
+      itemBuilder: (ctx, i) {
+        final track = _results[i].toSyncoraTrack();
+        return TrackTile(
+          track: track,
+          onTap: () {
+            final syncoraTracks = _results.map((t) => t.toSyncoraTrack()).toList();
+            ref.read(syncoraPlayerControllerProvider.notifier).setQueue(syncoraTracks, startIndex: i);
+            Navigator.pop(context);
+          },
+          onAddToQueue: () => ref.read(syncoraPlayerControllerProvider.notifier).addToQueue(track),
+        );
+      },
     );
   }
 }

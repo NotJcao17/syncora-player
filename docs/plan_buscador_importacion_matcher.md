@@ -17,9 +17,14 @@
 - Las migraciones de Supabase están al día en producción (confirmado con
   `supabase migration list --linked`, `upToDate: true`) y el usuario confirmó en vivo que los tres
   bugs reportados quedaron resueltos.
-- **Lo único pendiente es Fase D** (búsqueda profunda: D1 colaboración, D2 buscar otras versiones,
-  D3 búsqueda exacta) — diseño ya discutido y acordado con el usuario, checklist abajo. Nada de Fase D
-  está implementado todavía.
+- **Fase D** (búsqueda profunda: D3 exacta, D1 colaboración, D2 buscar otras versiones) —
+  **completa y cerrada**. Implementada en orden D3 → D1 → D2 según lo acordado. Checklist con notas
+  de implementación en la sección "Fase D" más abajo. Probada en vivo por el usuario (casos reales:
+  Adele/Someone Like You en Exacta, Charli xcx/Billie Eilish en Colaboración) — 5 correcciones
+  puramente visuales encontradas y arregladas, documentadas en "Fase D — hallazgos de pruebas
+  manuales post-implementación". Confirmado por el usuario que todo funciona correctamente.
+  Verificado: suite completa de tests (173 tests, 0 fallos, incluye 3 archivos nuevos con fixtures
+  grabadas contra la API real), `flutter analyze` limpio (mismos infos preexistentes, ninguno nuevo).
 
 ## Contexto y diagnóstico
 
@@ -799,7 +804,7 @@ dos pestañas, **Exacta** (D3) y **Colaboración** (D1). D2 no es una pestaña: 
 disparable desde dos sitios distintos (ver abajo). Nada de esto se ejecuta automáticamente — todo
 cuesta peticiones y siempre lo decide el usuario.
 
-- [ ] **D3. Búsqueda exacta por artista + título** (pestaña "Exacta").
+- [x] **D3. Búsqueda exacta por artista + título** (pestaña "Exacta").
       Dos campos: Artista y Título. Usa la **misma cascada ya implementada y probada en Fase B**
       (`artist:"X" track:"Y"` → texto plano `"X Y"` → solo título).
   - **Refactor previo, no duplicar lógica:** extraer `PlaylistImportExportService._resolveTrack` /
@@ -815,8 +820,18 @@ cuesta peticiones y siempre lo decide el usuario.
   - Costo: **1-3 peticiones** (se corta en el primer tier que devuelva algo).
   - Tests: fixtures de la cascada con `artist:"Adele" track:"Someone Like You"` (el caso que el
     buscador normal no puede resolver, ya documentado como test de límite conocido en Fase A).
+      **Implementado tal cual.** `ExactTrackSearch.cascadeSearch` (`lib/features/search/exact_track_search.dart`)
+      recibe un callback `accept(List<DeezerTrack>)` por el que cada llamador decide cuándo un tier
+      alcanza — el importador exige `bestByDuration(...) != null` (mismo comportamiento de antes,
+      verificado sin cambios en `test/data/import_export_test.dart`); D3 acepta con solo
+      `list.isNotEmpty`. `PlaylistImportExportService._resolveTrack` quedó en ~10 líneas, delegando
+      al módulo. Fixture nueva capturada en vivo contra `/search/track?q=artist:"Adele" track:"Someone
+      Like You"` (`test/fixtures/exact_search/adele_someone_like_you_advanced.json`, 17 resultados,
+      llena de decoys tipo "Hello Adele Tribute"/"Made famous by Adele"/karaokes): confirma que la
+      sintaxis avanzada sí trae a la Adele real (id `1174603092`) y que `SearchRanking.rankTracks` la
+      deja primera pese al ruido. 9 tests en `test/features/search/exact_track_search_test.dart`.
 
-- [ ] **D1. Colaboraciones de 2 artistas** (pestaña "Colaboración").
+- [x] **D1. Colaboraciones de 2 artistas** (pestaña "Colaboración").
       Campos: Artista 1 / Artista 2. **5 peticiones en 2 tandas paralelas (~1s)** en vez de las ~10
       secuenciales del diseño viejo:
   1. Resolver ambos artistas en paralelo (2 req)
@@ -826,8 +841,23 @@ cuesta peticiones y siempre lo decide el usuario.
   - Aprovecha que `contributorsJson` ya se persiste (Fase 0) y que `DeezerTrack.contributorsList` ya
     viene deduplicado por id (A13).
   - Sin crawl de discografía por defecto.
+      **Implementado en `lib/features/search/collaboration_search.dart`.**
+      **Hallazgo verificado contra la API en vivo:** `/artist/{id}/top` **sin** `limit` en la URL
+      devuelve solo **5** resultados (no 25 como se asumía) — insuficiente para encontrar una
+      colaboración fuera del top 5 (ej. "Guess" de Charli xcx). Se agregó
+      `DeezerApi.getArtistTopTracksExpanded(id, {limit: 100})`, sin compartir caché con
+      `getArtistTopTracks` (evita que una respuesta corta quede cacheada para una llamada que pidió
+      más). `CollaborationSearch.trackHasArtist` matchea por id de `contributors` cuando está
+      disponible (top tracks sí lo trae completo, confirmado contra la API real) y cae a comparar
+      nombre normalizado contra artista principal/contribuidores/título cuando no (`/search` sin
+      sintaxis avanzada no trae `contributors` — mismo hallazgo de Fase A). Resultado final rankeado
+      con `SearchRanking.rankTracks` antes de mostrarse, para que colaboraciones reales (con `rank`
+      real) no queden enterradas bajo decoys de karaoke/tributo que también matchean por nombre.
+      Fixtures reales capturadas: top de Charli xcx y Billie Eilish (`limit=100`) + búsqueda de texto
+      plano "Charli xcx Billie Eilish" — las tres confirman que "Guess" aparece y se filtra
+      correctamente. 3 tests en `test/features/search/collaboration_search_test.dart`.
 
-- [ ] **D2. "Buscar otras versiones"** — el crawl acotado, como **escape manual**, nunca automático.
+- [x] **D2. "Buscar otras versiones"** — el crawl acotado, como **escape manual**, nunca automático.
       Una sola función compartida con **dos puntos de entrada**, porque son dos momentos distintos:
   - **Entrada 1 — acción en el menú de una canción** (`track_tile.dart`). Aquí no hay ningún fallo
     del que caer: el usuario ya tiene una canción válida y quiere otras versiones de ella (caso
@@ -843,10 +873,72 @@ cuesta peticiones y siempre lo decide el usuario.
     no error — de ahí que deba ser explícito y mostrar progreso en la UI.
   - Prioridad la más baja de las tres: el patrón "Guess" no se repitió en 10 pares probados, así que
     es una rareza de catálogo, no algo sistemático.
+      **Implementado en `lib/features/search/other_versions_search.dart`.** El caso "Guess" se
+      reprodujo end-to-end contra la API real como fixture de test: la versión solista (id
+      `2837358742`, título `"Guess"` a secas, 142s) vive en el álbum "Brat and it's the same but
+      there's three more songs so it's not" (`598319362`), **no listado como single propio** en
+      `/artist/{id}/albums` — solo alcanzable listando los tracks de ese álbum. Con la fecha de la
+      colaboración (`2024-08-01`) como referencia, ese álbum (`2024-06-10`, 52 días antes) queda
+      entre los 15 más cercanos de los 100 álbumes/singles de Charli xcx.
+      **Un cambio respecto al diseño original:** el criterio de filtro final (`matches:
+      bool Function(DeezerTrack)`) es un parámetro, no siempre "mismo título base" — necesario para
+      que la entrada 2 desde la pestaña "Colaboración" (D1) pueda reusar el mismo crawl filtrando por
+      "menciona al otro artista" (`CollaborationSearch.trackHasArtist`) en vez de por título, ya que
+      ahí no hay un título único que buscar. `searchByTitle` queda como azúcar sobre `search` para el
+      caso más común (entrada 1 y fallback desde D3). Referencia de fecha gratis cuando se conoce el
+      álbum de origen (se busca dentro de la propia lista de `getArtistAlbums` ya traída, sin
+      petición aparte). 8 tests en `test/features/search/other_versions_search_test.dart`, 2 contra
+      fixtures reales (lista de álbumes de Charli xcx + álbum completo con la versión solista).
 
-**Orden sugerido de implementación:** D3 primero (resuelve los casos ya confirmados en pruebas
+**UI:** modal único "Búsqueda Profunda" con pestañas Exacta/Colaboración
+(`lib/features/search/screens/search_screen.dart`), reemplazando el diseño viejo de cascada
+secuencial que ya vivía deshabilitado en el archivo (`_CascadeSearchModalSheet`, el botón tenía
+`onPressed: null`) — es justamente el diseño de ~10 peticiones secuenciales que este plan describe
+reemplazar. El botón "Búsqueda Profunda" queda habilitado. "Buscar más a fondo" (D2, entrada 2)
+aparece en ambas pestañas cuando hay menos de 3 resultados. "Buscar otras versiones" (D2, entrada 1)
+se agregó al menú de 3 puntos de `TrackTile` (desktop y móvil), condicionado a que la pista tenga
+`artistId` conocido.
+
+**Orden de implementación:** D3 primero (resuelve los casos ya confirmados en pruebas
 reales — Conqueror, Someone Like You — y el refactor compartido con Fase B es barato), luego D1
-(más UI pero lógica acotada), y D2 al final, solo si sigue haciendo falta.
+(más UI pero lógica acotada), y D2 al final. Seguido tal cual lo acordado.
+
+### Fase D — hallazgos de pruebas manuales post-implementación
+
+Encontrados por el usuario probando el modal en vivo (no en la sesión de diseño original), todos
+puramente visuales/UX — la lógica de D1/D2/D3 no se tocó, quedó igual que la validada con fixtures.
+
+- [x] **Colores fuera de paleta.** El botón "Búsqueda Profunda" y los íconos/botones dentro del modal
+      usaban `AppTheme.accent` (morado) — la app es monocromática (blanco/gris sobre fondo oscuro), y
+      ese color no se usa en ningún otro punto de la pantalla de búsqueda. Cambiado a `AppTheme.primary`
+      (blanco) en todos los puntos: botón de entrada, ícono del encabezado del modal, botones "Buscar" /
+      "Buscar colaboración" (ahora fondo blanco + texto `AppTheme.background`, mismo patrón que el resto
+      de CTAs primarios de la app, ej. `library_screen.dart`) y "Buscar más a fondo".
+- [x] **Sheet arrastrable en desktop.** El modal se abría siempre como `showModalBottomSheet`
+      (deslizable desde abajo, gesto pensado para táctil) incluso en pantallas de escritorio. Ahora
+      `_openDeepSearchModal` (y el equivalente en `track_tile.dart` para "Buscar otras versiones")
+      bifurca por ancho de pantalla (mismo umbral `isDesktop` de 768px ya usado en el resto de la
+      pantalla): ≥768px abre un `Dialog` centrado de tamaño fijo (640×680, o 560×560 para "Buscar
+      otras versiones"), sin gesto de arrastre; <768px sigue siendo el sheet de siempre. El contenido
+      (`_DeepSearchModalContent` / `_OtherVersionsModalContent`) quedó separado del contenedor
+      específicamente para poder reusarlo en ambos casos sin duplicar la lógica de cada pestaña.
+- [x] **Texto de explicación redundante.** Cada pestaña (Exacta, Colaboración) repetía una frase
+      explicando qué hacía, además de la explicación general ya visible en el encabezado del modal
+      ("Para cuando el buscador normal no encuentra algo..."). Se quitaron ambas frases de pestaña.
+- [x] **Enter solo buscaba desde el segundo campo.** `onSubmitted` estaba conectado únicamente al
+      campo Título (pestaña Exacta) y Artista 2 (pestaña Colaboración) — presionar Enter en el primer
+      campo (Artista / Artista 1) no disparaba la búsqueda. Se agregó `onSubmitted: (_) => _search()`
+      también al primer campo de cada pestaña.
+- [x] **Etiqueta flotante cortada al escribir.** Efecto secundario del punto anterior (quitar el texto
+      de explicación): al quedar el campo de texto como primer hijo directo de la pestaña,
+      `TabBarView` — que por dentro es un `PageView` y clipea a sus propios bordes
+      (`clipBehavior` por defecto) — cortaba la mitad superior de la etiqueta flotante ("Artista" /
+      "Título"), que normalmente asoma por encima del borde del `TextField` al enfocarlo. Se agregó un
+      `SizedBox(height: 8)` como primer hijo de cada pestaña para darle margen a la etiqueta antes del
+      borde clippeado de la vista.
+
+Verificado tras los 5 fixes: `flutter analyze` limpio (mismos infos preexistentes), 173 tests,
+0 fallos.
 
 ---
 

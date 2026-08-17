@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/models/deezer/deezer_track.dart';
+import '../../search/exact_track_search.dart';
 
 class RawImportTrack {
   final String title;
@@ -155,84 +156,20 @@ class PlaylistImportExportService {
     return results;
   }
 
-  // B5: quitar sufijos "(feat. X)" / "featuring X" / "with X" del título antes
-  // de armar la query — validado en el análisis original: es lo que hizo
-  // funcionar "Conqueror" de AURORA (el CSV trae el feat en el título, Deezer
-  // indexa la versión sin él bajo sintaxis avanzada). Solo se usa para
-  // construir queries; `RawImportTrack.title` (mostrado en el reporte) queda
-  // intacto.
-  static final RegExp _featSuffix = RegExp(
-    r'\s*[\(\[]?\s*-?\s*(feat\.?|featuring|ft\.?|with)\s+.*$',
-    caseSensitive: false,
-  );
-
-  String _queryTitle(String title) => title.replaceAll(_featSuffix, '').trim();
-
-  // B4: Spotify separa colaboradores con ";" (ej. "Gente De Zona;Marc
-  // Anthony"). El primero se usa como artista principal en la query avanzada;
-  // `RawImportTrack.artist` conserva la cadena completa para mostrarla tal
-  // cual en el reporte de no-matcheados.
-  String _primaryArtist(String artist) => artist.isEmpty ? '' : artist.split(';').first.trim();
-
-  // La sintaxis avanzada de Deezer usa comillas como delimitador de campo;
-  // quitarlas del valor evita romper la query si el título/artista ya trae
-  // comillas literales.
-  String _forQuery(String s) => s.replaceAll('"', '').trim();
-
-  /// Mejor candidato por cercanía de duración (decisión 6 del plan: nunca
-  /// coincidencia exacta, siempre tolerancia). Sin duración esperada, se
-  /// confía en el primero (ya viene rankeado por relevancia). Con duración
-  /// esperada, se exige estar dentro de [toleranceSec] para no quedarse con
-  /// una versión Live/Acústica/Remix que matchea el texto pero no la duración.
-  DeezerTrack? _bestByDuration(List<DeezerTrack> tracks, int? expectedMs, {required int toleranceSec}) {
-    if (tracks.isEmpty) return null;
-    if (expectedMs == null) return tracks.first;
-
-    DeezerTrack? best;
-    int bestDiff = 1 << 30;
-    final expectedSec = (expectedMs / 1000).round();
-    for (final t in tracks) {
-      final diff = (t.durationSec - expectedSec).abs();
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        best = t;
-      }
-    }
-    return (best != null && bestDiff <= toleranceSec) ? best : null;
-  }
-
   /// B2: cadena de fallback (decisión 5 del plan) — sintaxis avanzada precisa
   /// pero frágil ante typos/variantes de escritura, luego texto plano, luego
-  /// solo título como último recurso. Cada tier valida por duración (B3) antes
-  /// de aceptar, salvo el último, donde no hay mejor alternativa.
+  /// solo título como último recurso (`ExactTrackSearch.cascadeSearch`,
+  /// módulo compartido con D3 desde Fase D). Cada tier valida por duración
+  /// (B3) antes de aceptar, salvo el último, donde no hay mejor alternativa.
   Future<DeezerTrack?> _resolveTrack(RawImportTrack item) async {
-    final queryTitle = _queryTitle(item.title);
-    final primaryArtist = _primaryArtist(item.artist);
-
-    if (primaryArtist.isNotEmpty && queryTitle.isNotEmpty) {
-      try {
-        final advanced = 'artist:"${_forQuery(primaryArtist)}" track:"${_forQuery(queryTitle)}"';
-        final res = await _deezerApi.search(advanced, type: DeezerSearchType.track);
-        final best = _bestByDuration(res.tracks, item.durationMs, toleranceSec: 20);
-        if (best != null) return best;
-      } catch (_) {}
-    }
-
-    try {
-      final plain = primaryArtist.isNotEmpty ? '$primaryArtist $queryTitle' : queryTitle;
-      final res = await _deezerApi.search(plain, type: DeezerSearchType.track);
-      final best = _bestByDuration(res.tracks, item.durationMs, toleranceSec: 20);
-      if (best != null) return best;
-    } catch (_) {}
-
-    try {
-      final res = await _deezerApi.search(queryTitle, type: DeezerSearchType.track);
-      if (res.tracks.isNotEmpty) {
-        return _bestByDuration(res.tracks, item.durationMs, toleranceSec: 1 << 30) ?? res.tracks.first;
-      }
-    } catch (_) {}
-
-    return null;
+    final tracks = await ExactTrackSearch.cascadeSearch(
+      _deezerApi,
+      artist: item.artist,
+      title: item.title,
+      accept: (list) => ExactTrackSearch.bestByDuration(list, item.durationMs, toleranceSec: 20) != null,
+    );
+    if (tracks.isEmpty) return null;
+    return ExactTrackSearch.bestByDuration(tracks, item.durationMs, toleranceSec: 1 << 30) ?? tracks.first;
   }
 
   /// Process raw tracks sequentially against Deezer API with rate limiting
