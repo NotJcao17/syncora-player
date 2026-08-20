@@ -133,10 +133,9 @@ Para que el reproductor no se rompa si YouTube cambia sus firmas, se usará un e
 
 ### Tabla de Límites, Escalabilidad y Soluciones
 
-| Recurso (Supabase Free) | Límite Actual | Usuarios Aprox. Soportados | Solución al Escalar (Siguiente Paso) |
+| Recurso (Supabase Free) | Límite / Estado Actual | Usuarios Aprox. Soportados | Solución al Escalar (Siguiente Paso) |
 | :--- | :--- | :--- | :--- |
-| **Correos SMTP** | 2-3 correos por hora | ~10 a 20 registros diarios | Desactivar confirmación por correo temporalmente, o conectar Resend/SendGrid en Supabase (Costo: $0 a $15/mes). |
-| **Conexiones WebSockets** | 200 concurrentes | ~3,000 a 5,000 MAU | Apagar actualizaciones en tiempo real (Supabase Realtime) y cambiar a *Pull-to-refresh* o *REST GET* normal. |
+| **Sincronización (Sin WebSockets)** | **0 conexiones persistentes** (REST bajo demanda) | **~50,000+ MAU** (Ilimitado por cuota de sockets) | **✅ Implementado en Fase 5:** Se eliminaron las conexiones WebSocket de Supabase Realtime. La sincronización opera mediante *Pull-to-Refresh*, caché TTL de 5 min (`SyncCacheManager`), botones de refresco en Desktop e invalidación local por eventos. |
 | **Tamaño de BD (Postgres)**| 500 MB | ~10,000+ usuarios | Pagar el plan Pro de Supabase ($25/mes) que eleva el límite a 8GB. |
 | **Almacenamiento (Storage)**| 1 GB | Infinito | Como se usan CDNs de Deezer y avatares procedurales, no se almacenan archivos pesados de usuario. Límite irrelevante. |
 | **API Deezer** | 50 req / 5 seg por IP | Infinito | La petición se hace desde el celular del usuario, por ende **usa la IP del usuario, no nuestro servidor**. Cada usuario tiene su propio límite, evadiendo baneos globales. |
@@ -167,7 +166,7 @@ Para que el reproductor no se rompa si YouTube cambia sus firmas, se usará un e
 *   **Fase 2:** Audio State y Controles del SO. Implementar `audio_service` (Android) y `smtc_windows` (Windows) como la única fuente de la verdad del estado de reproducción, acoplados a los motores (`just_audio` / `media_kit`). Implementación de Skip Silence usando `silencedetect` de libmpv (Windows) y el flag de ExoPlayer para podcasts (Android).
 *   **Fase 3:** UI Core y Navegación. Esqueleto de la app, Rutas (GoRouter), Tema Premium (Paletas dinámicas), Mini-reproductor y Reproductor Fullscreen atados al estado de la Fase 2.
 *   **Fase 4:** Datos y Metadatos. Integración Deezer API (Buscador, Detalles). Implementación de la BD local (Drift) desnormalizada para caché rápido de la UI. Implementación del flujo de importación/exportación de playlists (CSV/TXT).
-*   **Fase 5:** Nube, Auth y Sincronización. Flujo de Autenticación Supabase. CRUD remoto de playlists, aplicación de políticas RLS mixtas (incluyendo el campo `is_public` desnormalizado en `playlist_tracks`) y sincronización bidireccional (Nube <-> Local).
+*   **Fase 5:** Nube, Auth y Sincronización. Flujo de Autenticación Supabase. CRUD remoto de playlists, aplicación de políticas RLS mixtas (incluyendo el campo `is_public` desnormalizado en `playlist_tracks`) y sincronización por demanda Pull-to-Refresh + Caché TTL 5 min (sin WebSockets).
 *   **Fase 6:** Motor Offline y Descargas Masivas. Implementación de la arquitectura JIT con `background_downloader` para evadir el Doze Mode, y Caché LRU de imágenes/audio.
 *   **Fase 7:** Experiencia Premium y IA. Cola reordenable drag & drop, Auto-Skip inteligente completo (UI + cola dinámica), Crossfade en **ambas plataformas** (Windows: instancias duales `media_kit`; Android: `CrossfadeAudioHandler` con dos `AudioPlayer`), Integración Gemini con flujo BYOK unificado (Edge Function), Estadísticas Wrapped.
 
