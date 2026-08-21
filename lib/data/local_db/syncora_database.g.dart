@@ -1938,6 +1938,17 @@ class $ListeningHistoryTable extends ListeningHistory
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _syncedAtMeta = const VerificationMeta(
+    'syncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> syncedAt = GeneratedColumn<DateTime>(
+    'synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1947,6 +1958,7 @@ class $ListeningHistoryTable extends ListeningHistory
     genre,
     listenedAt,
     durationListenedMs,
+    syncedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2010,6 +2022,12 @@ class $ListeningHistoryTable extends ListeningHistory
     } else if (isInserting) {
       context.missing(_durationListenedMsMeta);
     }
+    if (data.containsKey('synced_at')) {
+      context.handle(
+        _syncedAtMeta,
+        syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -2047,6 +2065,10 @@ class $ListeningHistoryTable extends ListeningHistory
         DriftSqlType.int,
         data['${effectivePrefix}duration_listened_ms'],
       )!,
+      syncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}synced_at'],
+      ),
     );
   }
 
@@ -2065,6 +2087,7 @@ class ListeningHistoryData extends DataClass
   final String? genre;
   final DateTime listenedAt;
   final int durationListenedMs;
+  final DateTime? syncedAt;
   const ListeningHistoryData({
     required this.id,
     required this.trackId,
@@ -2073,6 +2096,7 @@ class ListeningHistoryData extends DataClass
     this.genre,
     required this.listenedAt,
     required this.durationListenedMs,
+    this.syncedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2086,6 +2110,9 @@ class ListeningHistoryData extends DataClass
     }
     map['listened_at'] = Variable<DateTime>(listenedAt);
     map['duration_listened_ms'] = Variable<int>(durationListenedMs);
+    if (!nullToAbsent || syncedAt != null) {
+      map['synced_at'] = Variable<DateTime>(syncedAt);
+    }
     return map;
   }
 
@@ -2100,6 +2127,9 @@ class ListeningHistoryData extends DataClass
           : Value(genre),
       listenedAt: Value(listenedAt),
       durationListenedMs: Value(durationListenedMs),
+      syncedAt: syncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncedAt),
     );
   }
 
@@ -2116,6 +2146,7 @@ class ListeningHistoryData extends DataClass
       genre: serializer.fromJson<String?>(json['genre']),
       listenedAt: serializer.fromJson<DateTime>(json['listenedAt']),
       durationListenedMs: serializer.fromJson<int>(json['durationListenedMs']),
+      syncedAt: serializer.fromJson<DateTime?>(json['syncedAt']),
     );
   }
   @override
@@ -2129,6 +2160,7 @@ class ListeningHistoryData extends DataClass
       'genre': serializer.toJson<String?>(genre),
       'listenedAt': serializer.toJson<DateTime>(listenedAt),
       'durationListenedMs': serializer.toJson<int>(durationListenedMs),
+      'syncedAt': serializer.toJson<DateTime?>(syncedAt),
     };
   }
 
@@ -2140,6 +2172,7 @@ class ListeningHistoryData extends DataClass
     Value<String?> genre = const Value.absent(),
     DateTime? listenedAt,
     int? durationListenedMs,
+    Value<DateTime?> syncedAt = const Value.absent(),
   }) => ListeningHistoryData(
     id: id ?? this.id,
     trackId: trackId ?? this.trackId,
@@ -2148,6 +2181,7 @@ class ListeningHistoryData extends DataClass
     genre: genre.present ? genre.value : this.genre,
     listenedAt: listenedAt ?? this.listenedAt,
     durationListenedMs: durationListenedMs ?? this.durationListenedMs,
+    syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
   );
   ListeningHistoryData copyWithCompanion(ListeningHistoryCompanion data) {
     return ListeningHistoryData(
@@ -2162,6 +2196,7 @@ class ListeningHistoryData extends DataClass
       durationListenedMs: data.durationListenedMs.present
           ? data.durationListenedMs.value
           : this.durationListenedMs,
+      syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
     );
   }
 
@@ -2174,7 +2209,8 @@ class ListeningHistoryData extends DataClass
           ..write('albumId: $albumId, ')
           ..write('genre: $genre, ')
           ..write('listenedAt: $listenedAt, ')
-          ..write('durationListenedMs: $durationListenedMs')
+          ..write('durationListenedMs: $durationListenedMs, ')
+          ..write('syncedAt: $syncedAt')
           ..write(')'))
         .toString();
   }
@@ -2188,6 +2224,7 @@ class ListeningHistoryData extends DataClass
     genre,
     listenedAt,
     durationListenedMs,
+    syncedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -2199,7 +2236,8 @@ class ListeningHistoryData extends DataClass
           other.albumId == this.albumId &&
           other.genre == this.genre &&
           other.listenedAt == this.listenedAt &&
-          other.durationListenedMs == this.durationListenedMs);
+          other.durationListenedMs == this.durationListenedMs &&
+          other.syncedAt == this.syncedAt);
 }
 
 class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
@@ -2210,6 +2248,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
   final Value<String?> genre;
   final Value<DateTime> listenedAt;
   final Value<int> durationListenedMs;
+  final Value<DateTime?> syncedAt;
   const ListeningHistoryCompanion({
     this.id = const Value.absent(),
     this.trackId = const Value.absent(),
@@ -2218,6 +2257,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
     this.genre = const Value.absent(),
     this.listenedAt = const Value.absent(),
     this.durationListenedMs = const Value.absent(),
+    this.syncedAt = const Value.absent(),
   });
   ListeningHistoryCompanion.insert({
     this.id = const Value.absent(),
@@ -2227,6 +2267,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
     this.genre = const Value.absent(),
     this.listenedAt = const Value.absent(),
     required int durationListenedMs,
+    this.syncedAt = const Value.absent(),
   }) : trackId = Value(trackId),
        artistId = Value(artistId),
        albumId = Value(albumId),
@@ -2239,6 +2280,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
     Expression<String>? genre,
     Expression<DateTime>? listenedAt,
     Expression<int>? durationListenedMs,
+    Expression<DateTime>? syncedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2249,6 +2291,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
       if (listenedAt != null) 'listened_at': listenedAt,
       if (durationListenedMs != null)
         'duration_listened_ms': durationListenedMs,
+      if (syncedAt != null) 'synced_at': syncedAt,
     });
   }
 
@@ -2260,6 +2303,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
     Value<String?>? genre,
     Value<DateTime>? listenedAt,
     Value<int>? durationListenedMs,
+    Value<DateTime?>? syncedAt,
   }) {
     return ListeningHistoryCompanion(
       id: id ?? this.id,
@@ -2269,6 +2313,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
       genre: genre ?? this.genre,
       listenedAt: listenedAt ?? this.listenedAt,
       durationListenedMs: durationListenedMs ?? this.durationListenedMs,
+      syncedAt: syncedAt ?? this.syncedAt,
     );
   }
 
@@ -2296,6 +2341,9 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
     if (durationListenedMs.present) {
       map['duration_listened_ms'] = Variable<int>(durationListenedMs.value);
     }
+    if (syncedAt.present) {
+      map['synced_at'] = Variable<DateTime>(syncedAt.value);
+    }
     return map;
   }
 
@@ -2308,7 +2356,8 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
           ..write('albumId: $albumId, ')
           ..write('genre: $genre, ')
           ..write('listenedAt: $listenedAt, ')
-          ..write('durationListenedMs: $durationListenedMs')
+          ..write('durationListenedMs: $durationListenedMs, ')
+          ..write('syncedAt: $syncedAt')
           ..write(')'))
         .toString();
   }
@@ -4415,6 +4464,7 @@ typedef $$ListeningHistoryTableCreateCompanionBuilder =
       Value<String?> genre,
       Value<DateTime> listenedAt,
       required int durationListenedMs,
+      Value<DateTime?> syncedAt,
     });
 typedef $$ListeningHistoryTableUpdateCompanionBuilder =
     ListeningHistoryCompanion Function({
@@ -4425,6 +4475,7 @@ typedef $$ListeningHistoryTableUpdateCompanionBuilder =
       Value<String?> genre,
       Value<DateTime> listenedAt,
       Value<int> durationListenedMs,
+      Value<DateTime?> syncedAt,
     });
 
 class $$ListeningHistoryTableFilterComposer
@@ -4468,6 +4519,11 @@ class $$ListeningHistoryTableFilterComposer
 
   ColumnFilters<int> get durationListenedMs => $composableBuilder(
     column: $table.durationListenedMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4515,6 +4571,11 @@ class $$ListeningHistoryTableOrderingComposer
     column: $table.durationListenedMs,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ListeningHistoryTableAnnotationComposer
@@ -4550,6 +4611,9 @@ class $$ListeningHistoryTableAnnotationComposer
     column: $table.durationListenedMs,
     builder: (column) => column,
   );
+
+  GeneratedColumn<DateTime> get syncedAt =>
+      $composableBuilder(column: $table.syncedAt, builder: (column) => column);
 }
 
 class $$ListeningHistoryTableTableManager
@@ -4596,6 +4660,7 @@ class $$ListeningHistoryTableTableManager
                 Value<String?> genre = const Value.absent(),
                 Value<DateTime> listenedAt = const Value.absent(),
                 Value<int> durationListenedMs = const Value.absent(),
+                Value<DateTime?> syncedAt = const Value.absent(),
               }) => ListeningHistoryCompanion(
                 id: id,
                 trackId: trackId,
@@ -4604,6 +4669,7 @@ class $$ListeningHistoryTableTableManager
                 genre: genre,
                 listenedAt: listenedAt,
                 durationListenedMs: durationListenedMs,
+                syncedAt: syncedAt,
               ),
           createCompanionCallback:
               ({
@@ -4614,6 +4680,7 @@ class $$ListeningHistoryTableTableManager
                 Value<String?> genre = const Value.absent(),
                 Value<DateTime> listenedAt = const Value.absent(),
                 required int durationListenedMs,
+                Value<DateTime?> syncedAt = const Value.absent(),
               }) => ListeningHistoryCompanion.insert(
                 id: id,
                 trackId: trackId,
@@ -4622,6 +4689,7 @@ class $$ListeningHistoryTableTableManager
                 genre: genre,
                 listenedAt: listenedAt,
                 durationListenedMs: durationListenedMs,
+                syncedAt: syncedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

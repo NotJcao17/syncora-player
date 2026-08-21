@@ -215,25 +215,25 @@ El orden no es negociable en tres puntos:
 > Sin esto, Estadísticas no tiene datos y la personalización de Inicio sigue muerta (H-1).
 > Va primero para que el historial se acumule durante el resto de la fase.
 
-- [ ] **7.0.1** Arreglar la duplicación de sincronización (H-2) **antes** de activar el registro:
+- [x] **7.0.1** Arreglar la duplicación de sincronización (H-2) **antes** de activar el registro:
       añadir columna `syncedAt` (o `isSynced`) a la tabla Drift `ListeningHistory`; que
       `_syncListeningHistoryInternal()` seleccione solo las no sincronizadas y las marque tras
       insertar. Alternativa complementaria: clave natural única en Supabase
       (`user_id, track_id, listened_at`) + `upsert` con `onConflict`, como red de seguridad ante
       reinstalaciones.
-- [ ] **7.0.2** Registrar la escucha desde `SyncoraPlayerController`: acumular tiempo realmente
+- [x] **7.0.2** Registrar la escucha desde `SyncoraPlayerController`: acumular tiempo realmente
       reproducido de la pista actual y llamar a `recordEntry()` cuando se cumpla el umbral D-16
       (≥50% de la duración **o** ≥30s, lo que sea menor). Cuidar de **no** contabilizar dos veces
       la misma pista si el usuario retrocede y la vuelve a escuchar dentro de la misma sesión
       continua, y de que un `seek` manual no infle el tiempo acumulado.
-- [ ] **7.0.3** Rellenar `genre` en el registro. La tabla lo tiene (`ListeningHistory.genre`) pero
+- [x] **7.0.3** Rellenar `genre` en el registro. La tabla lo tiene (`ListeningHistory.genre`) pero
       `DeezerTrack` no siempre lo trae en los resultados de búsqueda — verificar de dónde sale hoy
       (probablemente requiere `/album/{id}` o el track enriquecido) y decidir: rellenar cuando esté
       disponible y dejar `NULL` si no, o resolverlo diferido. **Sin género no hay "top géneros"
       en Estadísticas**, así que esta decisión afecta directamente a 7.G.
-- [ ] **7.0.4** Verificar que las secciones personalizadas de Inicio (`home_providers.dart:36`)
+- [x] **7.0.4** Verificar que las secciones personalizadas de Inicio (`home_providers.dart:36`)
       empiezan a usar historial real en vez del fallback hardcodeado, una vez haya datos.
-- [ ] **7.0.5** Tests: umbral de registro (justo por debajo / justo por encima, pista corta <60s
+- [x] **7.0.5** Tests: umbral de registro (justo por debajo / justo por encima, pista corta <60s
       donde manda la regla de 30s), no-duplicación en sincronización, marca de sincronizado.
 
 ---

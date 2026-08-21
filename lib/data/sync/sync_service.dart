@@ -312,17 +312,30 @@ class SyncService {
     }
   }
 
+  // Fase 7.0.1: antes leía las últimas 100 entradas locales (sin importar si
+  // ya se habían subido) y las insertaba con un `.insert()` plano — cada
+  // sync reinsertaba las mismas filas. Ahora selecciona solo las pendientes
+  // (`syncedAt` nulo) y marca cada una como sincronizada únicamente tras un
+  // upsert remoto exitoso, entrada por entrada.
   Future<void> _syncListeningHistoryInternal() async {
-    final localHistory =
-        await _listeningHistoryDao.getRecentHistory(limit: 100);
-    for (final historyEntry in localHistory) {
-      await _historyRepo.insertListeningHistory(
-        trackId: historyEntry.trackId,
-        artistId: historyEntry.artistId,
-        albumId: historyEntry.albumId,
-        genre: historyEntry.genre,
-        durationListenedMs: historyEntry.durationListenedMs,
-      );
+    final pending = await _listeningHistoryDao.getUnsyncedHistory(limit: 100);
+    for (final historyEntry in pending) {
+      try {
+        await _historyRepo.insertListeningHistory(
+          trackId: historyEntry.trackId,
+          listenedAt: historyEntry.listenedAt,
+          artistId: historyEntry.artistId,
+          albumId: historyEntry.albumId,
+          genre: historyEntry.genre,
+          durationListenedMs: historyEntry.durationListenedMs,
+        );
+        await _listeningHistoryDao.markSynced(historyEntry.id);
+      } catch (_) {
+        // No marcar como sincronizada: se reintentará en el próximo sync.
+        // Se detiene el resto del lote porque un fallo aquí suele ser de
+        // red/auth y afectaría igual a las entradas restantes.
+        break;
+      }
     }
   }
 }

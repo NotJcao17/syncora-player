@@ -166,6 +166,107 @@ void main() {
       final likedLocal = await db.playlistDao.getLikedPlaylist();
       expect(likedLocal.remoteId, equals('liked_1'));
     });
+
+    // Fase 7.0.1/7.0.5: la sincronización de historial ya no debe reinsertar
+    // en cada corrida las mismas filas (bug H-2 del plan de Fase 7).
+    group('_syncListeningHistoryInternal (historial de escucha)', () {
+      test('solo sube entradas no sincronizadas y las marca tras subir con éxito', () async {
+        final mockHistoryRepo = MockSupabaseHistoryRepository();
+        final mockSyncService = SyncService(
+          playlistRepo: MockSupabasePlaylistRepository(),
+          albumRepo: SupabaseAlbumRepository(),
+          historyRepo: mockHistoryRepo,
+          playlistDao: db.playlistDao,
+          savedAlbumDao: db.savedAlbumDao,
+          listeningHistoryDao: db.listeningHistoryDao,
+          cacheManager: cacheManager,
+        );
+
+        await db.listeningHistoryDao.recordEntry(
+          trackId: 1,
+          artistId: 10,
+          albumId: 100,
+          durationListenedMs: 40000,
+        );
+        await db.listeningHistoryDao.recordEntry(
+          trackId: 2,
+          artistId: 20,
+          albumId: 200,
+          durationListenedMs: 35000,
+        );
+
+        await mockSyncService.syncListeningHistory();
+
+        expect(mockHistoryRepo.insertedTrackIds, equals([1, 2]));
+
+        final stillUnsynced = await db.listeningHistoryDao.getUnsyncedHistory();
+        expect(stillUnsynced, isEmpty);
+      });
+
+      test('no reenvía (ni duplica) entradas que ya fueron sincronizadas en una corrida anterior',
+          () async {
+        final mockHistoryRepo = MockSupabaseHistoryRepository();
+        final mockSyncService = SyncService(
+          playlistRepo: MockSupabasePlaylistRepository(),
+          albumRepo: SupabaseAlbumRepository(),
+          historyRepo: mockHistoryRepo,
+          playlistDao: db.playlistDao,
+          savedAlbumDao: db.savedAlbumDao,
+          listeningHistoryDao: db.listeningHistoryDao,
+          cacheManager: cacheManager,
+        );
+
+        await db.listeningHistoryDao.recordEntry(
+          trackId: 1,
+          artistId: 10,
+          albumId: 100,
+          durationListenedMs: 40000,
+        );
+
+        // Primera sincronización: sube y marca la entrada.
+        await mockSyncService.syncListeningHistory();
+        expect(mockHistoryRepo.insertedTrackIds, equals([1]));
+
+        // Nueva entrada local, distinta de la ya sincronizada.
+        await db.listeningHistoryDao.recordEntry(
+          trackId: 2,
+          artistId: 20,
+          albumId: 200,
+          durationListenedMs: 35000,
+        );
+
+        // Segunda sincronización: solo debe subir la entrada nueva, la
+        // anterior (ya marcada) no debe reenviarse.
+        await mockSyncService.syncListeningHistory();
+        expect(mockHistoryRepo.insertedTrackIds, equals([1, 2]));
+      });
+
+      test('si la subida falla, la entrada NO se marca como sincronizada (se reintenta después)',
+          () async {
+        final mockHistoryRepo = MockSupabaseHistoryRepository()..shouldFail = true;
+        final mockSyncService = SyncService(
+          playlistRepo: MockSupabasePlaylistRepository(),
+          albumRepo: SupabaseAlbumRepository(),
+          historyRepo: mockHistoryRepo,
+          playlistDao: db.playlistDao,
+          savedAlbumDao: db.savedAlbumDao,
+          listeningHistoryDao: db.listeningHistoryDao,
+          cacheManager: cacheManager,
+        );
+
+        await db.listeningHistoryDao.recordEntry(
+          trackId: 1,
+          artistId: 10,
+          albumId: 100,
+          durationListenedMs: 40000,
+        );
+
+        await mockSyncService.syncListeningHistory();
+
+        final stillUnsynced = await db.listeningHistoryDao.getUnsyncedHistory();
+        expect(stillUnsynced.length, 1, reason: 'un fallo de subida no debe marcar la entrada como sincronizada');
+      });
+    });
   });
 }
 
@@ -187,5 +288,25 @@ class MockSupabasePlaylistRepository extends SupabasePlaylistRepository {
   @override
   Future<void> deletePlaylist(String id) async {
     deletedPlaylistIds.add(id);
+  }
+}
+
+class MockSupabaseHistoryRepository extends SupabaseHistoryRepository {
+  final List<int> insertedTrackIds = [];
+  bool shouldFail = false;
+
+  @override
+  Future<void> insertListeningHistory({
+    required int trackId,
+    required DateTime listenedAt,
+    int? artistId,
+    int? albumId,
+    String? genre,
+    int? durationListenedMs,
+  }) async {
+    if (shouldFail) {
+      throw Exception('Simulated network failure');
+    }
+    insertedTrackIds.add(trackId);
   }
 }

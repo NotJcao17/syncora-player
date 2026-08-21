@@ -66,6 +66,11 @@ class ListeningHistory extends Table {
   TextColumn get genre => text().nullable()();
   DateTimeColumn get listenedAt => dateTime().withDefault(currentDateAndTime)();
   IntColumn get durationListenedMs => integer()();
+  // Fase 7.0.1: marca de sincronización con Supabase. NULL = pendiente de subir.
+  // Se rellena con la fecha/hora local tras un `insert`/`upsert` exitoso en
+  // `SyncService._syncListeningHistoryInternal()`, para no re-enviar (y
+  // duplicar) filas ya sincronizadas en cada sync.
+  DateTimeColumn get syncedAt => dateTime().nullable()();
 }
 
 // Pistas descargadas localmente (Fase 6 — Device-specific)
@@ -99,7 +104,7 @@ class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -128,6 +133,9 @@ class SyncoraDatabase extends _$SyncoraDatabase {
         if (from < 4) {
           await m.addColumn(playlistTracks, playlistTracks.contributorsJson);
           await m.addColumn(downloadedTracks, downloadedTracks.contributorsJson);
+        }
+        if (from < 5) {
+          await m.addColumn(listeningHistory, listeningHistory.syncedAt);
         }
       },
     );

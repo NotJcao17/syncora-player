@@ -9,6 +9,7 @@ import '../../core/extraction/models/extraction_result.dart';
 import '../../core/extraction/retry_policy.dart';
 import '../../data/apis/deezer_api.dart';
 import '../../data/local_db/daos/downloaded_track_dao.dart';
+import '../../data/local_db/daos/listening_history_dao.dart';
 import '../../data/models/deezer/deezer_track.dart';
 
 import 'audio_engine/audio_engine_state.dart';
@@ -100,17 +101,20 @@ class SyncoraPlayerController extends ChangeNotifier {
     required ExtractionService extractionService,
     DeezerApi? deezerApi,
     DownloadedTrackDao? downloadedTrackDao,
+    ListeningHistoryDao? listeningHistoryDao,
     bool Function()? isConnectedGetter,
   })  : _engine = engine, // ignore: prefer_initializing_formals
         _extractionService = extractionService, // ignore: prefer_initializing_formals
         _deezerApi = deezerApi, // ignore: prefer_initializing_formals
         _downloadedTrackDao = downloadedTrackDao,
+        _listeningHistoryDao = listeningHistoryDao,
         _isConnectedGetter = isConnectedGetter;
 
   final AudioEngine _engine;
   final ExtractionService _extractionService;
   final DeezerApi? _deezerApi;
   final DownloadedTrackDao? _downloadedTrackDao;
+  final ListeningHistoryDao? _listeningHistoryDao;
   final bool Function()? _isConnectedGetter;
   final RetryPolicy _retryPolicy = RetryPolicy();
   final PlayerSessionStorage _sessionStorage = PlayerSessionStorage();
@@ -315,6 +319,10 @@ class SyncoraPlayerController extends ChangeNotifier {
     try {
       // Si llevamos >3s reproduciéndola y NO es doble tap rápido, reiniciar la pista actual.
       if (!isDoubleTap && _state.engine.position.inSeconds > 3) {
+        // Reinicio explícito del usuario: es un intento de escucha nuevo,
+        // no la continuación del anterior (Fase 7.0 — hallazgo de revisión).
+        final current = _state.currentTrack;
+        if (current != null) _beginListenTracking(current);
         await _engine.seek(Duration.zero);
         return;
       }
@@ -622,10 +630,108 @@ bool get _isTestEnv {
   // puede sobrescribir en silencio la pista que el usuario eligió después.
   int _playGeneration = 0;
 
+  // ----------------------------------------------------------------------
+  // Registro de historial de escucha (Fase 7.0.2)
+  // ----------------------------------------------------------------------
+  //
+  // Mide tiempo de audio REALMENTE reproducido (no wall-clock ni
+  // `position` final - inicial) sumando únicamente los avances "naturales" y
+  // pequeños de `engine.position` entre actualizaciones consecutivas del
+  // motor mientras está reproduciendo. Un seek (adelante o atrás) produce un
+  // salto de posición mayor a `_maxNaturalPositionJump` y se ignora — así un
+  // seek de 0:10 a 3:00 no suma como 2:50 de escucha real, y retroceder a
+  // repetir un fragmento ya escuchado simplemente sigue sumando tiempo real
+  // (no hay "doble conteo" que evitar ahí: lo que se evita es volver a
+  // llamar recordEntry() para la misma instancia de reproducción una vez que
+  // ya se disparó, vía `_listenRecorded`). Pausar no acumula nada porque solo
+  // se suma cuando `engineState.playing` es true; reanudar continúa desde la
+  // posición donde se pausó sin perder lo ya acumulado.
+  static const Duration _maxNaturalPositionJump = Duration(seconds: 3);
+
+  SyncoraTrack? _listenTrackedTrack;
+  Duration _listenAccumulated = Duration.zero;
+  bool _listenRecorded = false;
+  Duration? _listenLastPosition;
+
+  /// Debe llamarse con la pista que está a punto de empezar a sonar (o que
+  /// se reinicia desde el principio), antes de tocar el motor. **Siempre**
+  /// reinicia el acumulado incondicionalmente: cada llamada representa un
+  /// intento de escucha nuevo (pista distinta, reinicio explícito del
+  /// usuario, o una vuelta nueva de la misma pista en un loop), nunca la
+  /// continuación de uno anterior. Un reintento de extracción tras un error
+  /// (`_retryPolicy`) también pasa por aquí, pero como ningún audio llegó a
+  /// sonar en el intento fallido, `_listenAccumulated` ya estaba en cero —
+  /// reiniciar es un no-op en ese caso, no una pérdida de progreso real.
+  void _beginListenTracking(SyncoraTrack newTrack) {
+    _listenTrackedTrack = newTrack;
+    _listenAccumulated = Duration.zero;
+    _listenRecorded = false;
+    _listenLastPosition = null;
+  }
+
+  /// Suma al acumulado el avance natural de posición reportado por el motor
+  /// y dispara el registro en cuanto se cruza el umbral D-16 (≥50% de la
+  /// duración o ≥30s, lo que sea menor).
+  void _trackListenProgress(AudioEngineState engineState) {
+    final track = _listenTrackedTrack;
+    if (track == null) {
+      _listenLastPosition = null;
+      return;
+    }
+    if (_listenRecorded) return;
+
+    final newPos = engineState.position;
+    if (_listenLastPosition != null && engineState.playing) {
+      final delta = newPos - _listenLastPosition!;
+      if (delta > Duration.zero && delta <= _maxNaturalPositionJump) {
+        _listenAccumulated += delta;
+      }
+    }
+    _listenLastPosition = newPos;
+
+    if (_listenAccumulated >= _listenThresholdFor(track)) {
+      _listenRecorded = true;
+      _recordListenEntry(track, _listenAccumulated);
+    }
+  }
+
+  Duration _listenThresholdFor(SyncoraTrack track) {
+    const absoluteMin = Duration(seconds: 30);
+    final duration = track.duration ?? Duration.zero;
+    if (duration <= Duration.zero) return absoluteMin;
+    final half = Duration(milliseconds: duration.inMilliseconds ~/ 2);
+    return half < absoluteMin ? half : absoluteMin;
+  }
+
+  Future<void> _recordListenEntry(SyncoraTrack track, Duration accumulated) async {
+    final dao = _listeningHistoryDao;
+    if (dao == null) return;
+    try {
+      await dao.recordEntry(
+        trackId: track.deezerId,
+        artistId: track.artistId ?? 0,
+        albumId: track.albumId ?? 0,
+        durationListenedMs: accumulated.inMilliseconds,
+        // Fase 7.0.3: el género no viene en el flujo normal de reproducción
+        // (ni /search ni /artist/{id}/top de Deezer lo traen en DeezerTrack;
+        // solo /album/{id} lo trae, y llamarlo por cada escucha sería una
+        // petición extra cara y sin caché por cada canción reproducida). Se
+        // propaga tal cual venga ya en la pista (hoy, en la práctica, casi
+        // siempre null) en vez de forzar esa llamada — deja NULL explícito
+        // y el camino abierto para cuando exista una fuente barata.
+        genre: track.genre,
+      );
+    } catch (e) {
+      _log('[Listen] Error registrando escucha en el historial: $e');
+    }
+  }
+
   /// Núcleo: resuelve la URL de la pista actual o carga el archivo local si está descargado.
   Future<void> playCurrent() async {
     final track = _state.currentTrack;
     if (track == null) return;
+
+    _beginListenTracking(track);
 
     final myGeneration = ++_playGeneration;
     bool isStale() => myGeneration != _playGeneration;
@@ -766,6 +872,8 @@ bool get _isTestEnv {
     final wasError = _state.engine.processingState == AudioProcessingState.error;
     final isNowError = engineState.processingState == AudioProcessingState.error;
 
+    _trackListenProgress(engineState);
+
     _state = _state.copyWith(engine: engineState);
     _notify();
 
@@ -796,7 +904,22 @@ bool get _isTestEnv {
   }
 
   Future<void> _onComplete() async {
+    // Completar naturalmente implica haber sonado el 100% de la pista, así
+    // que en la inmensa mayoría de los casos el umbral D-16 ya se cruzó
+    // durante `_trackListenProgress` (llamado en cada tick de posición). Esta
+    // llamada extra es una red de seguridad para pistas muy cortas o motores
+    // que no emiten un último tick de posición justo antes de completar —
+    // por eso lee `_engine.position` en vivo en vez de reutilizar
+    // `_state.engine` (que ya fue procesado por el último tick y no
+    // capturaría nada nuevo).
+    _trackListenProgress(_state.engine.copyWith(position: _engine.position));
+
     if (_state.repeatMode == SyncoraRepeatMode.one) {
+      // Repetir es una vuelta nueva, no la continuación de la anterior — sin
+      // esto, una pista en repeat-one solo se registraba en su primera
+      // vuelta (Fase 7.0 — hallazgo de revisión).
+      final current = _state.currentTrack;
+      if (current != null) _beginListenTracking(current);
       await _engine.seek(Duration.zero);
       await _engine.play();
       return;
@@ -850,6 +973,10 @@ bool get _isTestEnv {
 
   @override
   void dispose() {
+    // Última oportunidad de registrar la escucha en curso si ya cruzó el
+    // umbral antes de que se cierre la app/controlador. Lee la posición en
+    // vivo (ver `_onComplete`) para que esto sea una red de seguridad real.
+    _trackListenProgress(_state.engine.copyWith(position: _engine.position));
     _disposed = true;
     _engineSub?.cancel();
     _completionSub?.cancel();

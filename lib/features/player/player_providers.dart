@@ -37,12 +37,14 @@ final syncoraPlayerControllerProvider =
   final extractionService = ref.watch(extractionServiceProvider);
   final deezerApi = ref.watch(deezerApiProvider);
   final downloadedTrackDao = ref.watch(downloadedTrackDaoProvider);
+  final listeningHistoryDao = ref.watch(listeningHistoryDaoProvider);
 
   final controller = SyncoraPlayerController(
     engine: engine,
     extractionService: extractionService,
     deezerApi: deezerApi,
     downloadedTrackDao: downloadedTrackDao,
+    listeningHistoryDao: listeningHistoryDao,
     isConnectedGetter: () => ref.read(isConnectedProvider).value ?? true,
   );
 
