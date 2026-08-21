@@ -14,6 +14,9 @@ de verdad de arquitectura, stack, metodología de trabajo y reglas del proyecto.
 
 ## Otros documentos relevantes
 
+- `docs/plan_fase_7.md` — plan y decisiones de diseño de la **Fase 7** (cola dual, radio/cola
+  infinita, funciones de IA con Gemini, auto-skip, crossfade, estadísticas Wrapped). Leer antes de
+  tocar cualquier cosa de la Fase 7.
 - `docs/plan_buscador_importacion_matcher.md` — plan y estado del buscador/importación/matcher de
   YouTube (Fases 0/A/B/C/D).
 - `docs/fases/` — documentos de contexto y decisiones de arquitectura por fase.

@@ -51,9 +51,23 @@ Este documento sirve como un Checklist para garantizar que cada fase cumpla con 
     - **Estrés:** Descargar una playlist de +300 canciones de golpe.
 
 ## Fase 7: Experiencia Premium y IA
+
+> Plan detallado: `docs/plan_fase_7.md`.
+
 - [ ] **Automatizado (IA):** Algoritmo de reordenamiento de cola (verificar que el índice se actualiza matemáticamente). Tests de las Edge Functions (con mocks). **Test del flujo BYOK unificado:** verificar que la Edge Function recibe el header `X-User-AI-Key` y lo usa para llamar a Gemini (mock) sin guardarlo ni loguearlo.
+    - **Cola dual:** agregar 2 pistas manuales seguidas respeta FIFO; cambiar shuffle↔normal **no** toca la cola manual; cambiar de playlist **no** toca la cola manual; "anterior" tras consumir una manual vuelve a esa manual; las pistas consumidas se eliminan de la cola; restaurar sesión reconstruye ambas colas.
+    - **Radio/cola infinita:** muestreo ponderado por frecuencia, deduplicación, filtro de `rank`, y completado con `/related` cuando hay menos de 5 artistas distintos (fixtures grabadas, sin llamadas en vivo).
+    - **Registro de historial (7.0):** umbral de escucha (justo por debajo/encima; pista corta <60s donde manda la regla de 30s) y **no-duplicación al sincronizar** (regresión de `_syncListeningHistoryInternal`).
+    - **Estadísticas:** ventanas móviles de 7/30 días, suma correcta de 12 meses, y usuario con menos de 12 meses de historial (el Anual debe funcionar igual).
 - [ ] **Humano (Rápido):** Arrastrar y soltar una canción en la cola. Ingresar un texto en el buscador IA. **Activar Crossfade en una pista descargada en Windows y verificar la transición suave. Hacer lo mismo en Android.**
+    - Agregar canciones a la cola manual, cambiar de playlist y verificar que **siguen ahí**.
+    - Generar una playlist con IA y **cancelar** en la vista previa: verificar que **no se escribió nada** en la BD.
 - [ ] **Final/Complejo:** 
-    - Auto-skip al límite: Tener 3 canciones seguidas no disponibles en YT y verificar que la app salte velozmente a la 4ta sin congelarse.
-    - Forzar manualmente el Cron Job mensual en la base de datos y verificar que agrupe los datos de escucha sin romper historiales actuales.
+    - Auto-skip al límite: Tener 3 canciones seguidas no disponibles en YT y verificar que la app salte velozmente a la 4ta sin congelarse. **Con el guard de cascada (7.C.3), el comportamiento esperado ahora es que se detenga y avise tras la 3ra, no que siga saltando.**
+    - Forzar manualmente el Cron Job mensual en la base de datos y verificar que agrupe los datos de escucha sin romper historiales actuales. **Verificar el orden: agrega el mes ANTES de podar a 90 días.**
     - **BYOK vs. Llave compartida:** Activar modo BYOK, ejecutar una petición de IA y verificar que la respuesta llega correctamente y la llave nunca aparece en logs de Supabase.
+    - **Radio infinita con playlist de 1 solo artista:** dejar sonar hasta que se agote la cola y verificar que no repite en bucle al mismo artista (debe tirar de `/related`).
+    - **Modificar playlist con IA (quitar):** dar una instrucción ambigua y verificar que la vista previa permite revisar/desmarcar antes de borrar, y que cancelar no borra nada.
+    - **Límite de cuentas (7.H):** bajar temporalmente `max_accounts` al número actual de usuarios e intentar registrarse **por correo y por Google** — ambas vías deben rechazarse con el mensaje amigable, no con un error genérico. Restaurar el valor después.
+    - **Modo local (7.I):** entrar sin cuenta, crear playlists **con el WiFi apagado** (debe permitirlo), cerrar y reabrir la app (el modo local persiste), y verificar que no aparecen botones de IA/compartir/sincronizar.
+    - **Migración local → cuenta (7.I.10):** con biblioteca local ya creada, registrarse y subirla; verificar que sube completa y que reintentar tras un corte no duplica playlists.
