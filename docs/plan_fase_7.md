@@ -132,6 +132,47 @@ aprovecha la misma fase para cablear también el aviso del guard 403/red que que
 Fase 1 — no es una decisión nueva, es completar una que ya estaba cerrada y que resultó estar a
 medio implementar.
 
+### H-7. El modelo Gemini y la forma de llamar a la API cambiaron desde que se escribió el plan (verificado al planear 7.E)
+
+Antes de implementar 7.E se verificó contra `ai.google.dev` (navegador, agosto 2026) lo que el plan
+ya advertía que había que revisar ("no hardcodear sin verificar"). Dos cambios reales:
+
+1. **`gemini-3.1-flash-lite` ya tiene fecha de baja anunciada: 7 de mayo de 2027**, con
+   `gemini-3.5-flash-lite` como reemplazo recomendado explícito (lanzado 21 de julio de 2026, sin
+   fecha de baja anunciada). La decisión D-13 elige el **nivel** "Flash-Lite" (costo/velocidad para
+   generación estructurada, no razonamiento complejo), no la versión exacta — así que el modelo a
+   usar es **`gemini-3.5-flash-lite`**, no `gemini-3.1-flash-lite` (que ya es la versión saliente
+   de ese mismo nivel).
+2. **La API de Gemini migró a la "API de Interactions"** (`v1beta/interactions`), presentada como
+   GA y recomendada para "todos los modelos y funciones más recientes" — reemplaza al endpoint
+   clásico `generateContent`/`contents`/`candidates[0].content.parts[0].text`. Forma confirmada
+   (capturada de un ejemplo real de la documentación):
+   ```
+   POST https://generativelanguage.googleapis.com/v1beta/interactions
+   Header: x-goog-api-key: <API_KEY>
+   Body: {
+     "model": "gemini-3.5-flash-lite",
+     "input": "<prompt>",
+     "response_format": {
+       "type": "text",
+       "mime_type": "application/json",
+       "schema": { ...JSON Schema... }
+     }
+   }
+   ```
+   La respuesta expone el texto estructurado vía `output_text` (equivalente al viejo
+   `candidates[0].content.parts[0].text`). El BYOK (header `x-goog-api-key` con la key del
+   usuario) mapea igual de bien a este endpoint que al viejo.
+
+→ La Edge Function de 7.E debe implementarse contra la API de Interactions con
+`gemini-3.5-flash-lite`, no contra `generateContent` con `gemini-3.1-flash-lite` como el plan
+originalmente esbozaba. No se verificaron en esta sesión los límites RPM/RPD/TPM exactos del free
+tier para `gemini-3.5-flash-lite` (la tabla de límites de la documentación no cargó los valores por
+nivel al navegarla) — la fila de la tabla de abajo con los valores de `gemini-3.1-flash-lite` queda
+como referencia de orden de magnitud, no como cifra exacta vigente; vale la pena que quien
+implemente 7.E la revise una vez más contra AI Studio/la cuenta real antes de fijar los umbrales de
+rate-limit de 7.E.3.
+
 ---
 
 ## Datos verificados en la sesión (Gemini y Deezer)
@@ -415,32 +456,34 @@ El orden no es negociable en tres puntos:
 
 ### Tareas
 
-- [ ] **7.E.1** Crear `supabase/functions/` y la función de IA. Definir si es **una** función con
+- [x] **7.E.1** Crear `supabase/functions/` y la función de IA. Definir si es **una** función con
       un parámetro de "acción" o **una por caso de uso** — recomendación: **una sola función** con
       acción, para no duplicar la lógica de auth, rate limit, BYOK y saneamiento cuatro veces.
-- [ ] **7.E.2** Migración SQL: tabla de rate limit por usuario (contador + ventana).
-- [ ] **7.E.3** Implementar el rate limit por usuario (N llamadas/hora), con mensaje de error claro
+- [x] **7.E.2** Migración SQL: tabla de rate limit por usuario (contador + ventana).
+- [x] **7.E.3** Implementar el rate limit por usuario (N llamadas/hora), con mensaje de error claro
       y accionable en la UI, no un fallo genérico.
-- [ ] **7.E.3b** Distinguir en la UI **dos** casos de error distintos, cada uno con su propio
+- [x] **7.E.3b** Distinguir en la UI **dos** casos de error distintos, cada uno con su propio
       mensaje (la función debe devolver un código de error diferenciado, no un 500 genérico, para
-      que el cliente sepa cuál mostrar):
+      que el cliente sepa cuál mostrar) — el contrato (códigos `rate_limited_user`/
+      `shared_quota_exhausted` + mensajes) está completo en 7.E; la UI que los muestra en pantalla
+      se cablea cuando la Fase 7.F construya las pantallas que invocan la función.
   - **Rate limit personal** (este usuario hizo muchas peticiones seguidas): mensaje de "espera un
     momento", sin mencionar la llave compartida.
   - **Cuota diaria compartida agotada** (RPD de la llave de la plataforma se acabó para todos, ver
     §4.1): *"La IA gratuita de la app se agotó por hoy — ingresa tu propia API key gratuita de
     Gemini para seguir usando esta función"*, con un botón directo al campo de BYOK de 7.E.8. La
     cuota diaria de Gemini se resetea a medianoche hora del Pacífico.
-- [ ] **7.E.4** Definir los `response_schema` de las 4 funciones (D-6), incluido el schema
+- [x] **7.E.4** Definir los `response_schema` de las 4 funciones (D-6), incluido el schema
       restringido a IDs existentes para "quitar" (D-7).
-- [ ] **7.E.5** Saneamiento anti-inyección de la entrada del usuario y separación clara entre
+- [x] **7.E.5** Saneamiento anti-inyección de la entrada del usuario y separación clara entre
       instrucciones del sistema y datos del usuario en el prompt.
-- [ ] **7.E.6** Confirmar el identificador del modelo vigente contra AI Studio antes de fijarlo.
+- [x] **7.E.6** Confirmar el identificador del modelo vigente contra AI Studio antes de fijarlo.
       Dejarlo en una constante/variable de entorno de la función, **no** disperso por el código.
-- [ ] **7.E.7** Cliente Dart: servicio que invoca la Edge Function, adjunta el JWT, y adjunta
+- [x] **7.E.7** Cliente Dart: servicio que invoca la Edge Function, adjunta el JWT, y adjunta
       `X-User-AI-Key` si el usuario configuró llave propia.
-- [ ] **7.E.8** UI de BYOK en Configuración: campo para pegar la llave, guardado en
+- [x] **7.E.8** UI de BYOK en Configuración: campo para pegar la llave, guardado en
       `flutter_secure_storage`, opción de borrarla, y aviso de qué implica.
-- [ ] **7.E.9** Tests con mocks (pedidos explícitamente en `matriz_de_pruebas.md` Fase 7):
+- [x] **7.E.9** Tests con mocks (pedidos explícitamente en `matriz_de_pruebas.md` Fase 7):
       **verificar que la Edge Function recibe `X-User-AI-Key`, la usa para llamar a Gemini, y no
       la guarda ni la loguea.** Además: rate limit dispara correctamente, y la función nunca
       ejecuta mutaciones.

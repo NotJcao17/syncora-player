@@ -71,6 +71,7 @@ dependencies:
   connectivity_plus: ^6.1.4
   url_launcher: ^6.3.2
   background_downloader: ^9.5.7
+  flutter_secure_storage: ^10.3.1
 
 dev_dependencies:
   flutter_test:

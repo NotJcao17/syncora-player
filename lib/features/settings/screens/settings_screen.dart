@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/cache/cover_cache_service.dart';
 import '../../../core/theme/app_icons.dart';
@@ -10,6 +11,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
+import '../../../data/services/ai_key_storage.dart';
 import '../../auth/auth_provider.dart';
 
 import '../../download/download_provider.dart';
@@ -371,6 +373,11 @@ class SettingsScreen extends ConsumerWidget {
 
 
           const SizedBox(height: 24),
+          _buildSectionHeader('INTELIGENCIA ARTIFICIAL'),
+          const SizedBox(height: 8),
+          _buildCard(child: const _AiByokSection()),
+
+          const SizedBox(height: 24),
           _buildSectionHeader('ACERCA DE'),
           const SizedBox(height: 8),
 
@@ -563,5 +570,189 @@ class SettingsScreen extends ConsumerWidget {
 
   void _showComingSoon(BuildContext context) {
     AppToast.show(context, message: 'Próximamente');
+  }
+}
+
+/// Fase 7.E.8 -- UI de BYOK ("Bring Your Own Key") para las funciones de IA
+/// de la Fase 7.F. Campo para pegar la llave propia de Gemini (guardada en
+/// `flutter_secure_storage` vía [AiKeyStorage], nunca en un provider en
+/// memoria plano ni en la BD -- Documento Maestro §4.3 punto 3), botón para
+/// borrarla, y una explicación breve de qué implica.
+class _AiByokSection extends ConsumerStatefulWidget {
+  const _AiByokSection();
+
+  @override
+  ConsumerState<_AiByokSection> createState() => _AiByokSectionState();
+}
+
+class _AiByokSectionState extends ConsumerState<_AiByokSection> {
+  final _controller = TextEditingController();
+  bool _obscure = true;
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final value = _controller.text.trim();
+    if (value.isEmpty) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(aiKeyStorageProvider).setKey(value);
+      _controller.clear();
+      ref.invalidate(aiByokKeyPresentProvider);
+      if (mounted) {
+        AppToast.show(context, message: 'Llave de Gemini guardada en este dispositivo');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _delete() async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(aiKeyStorageProvider).deleteKey();
+      ref.invalidate(aiByokKeyPresentProvider);
+      if (mounted) {
+        AppToast.show(context, message: 'Llave de Gemini borrada');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _openGeminiKeyPage() async {
+    final uri = Uri.parse('https://aistudio.google.com/apikey');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (mounted) {
+        AppToast.show(context, message: 'No se pudo abrir el enlace');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasKeyAsync = ref.watch(aiByokKeyPresentProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: AppTheme.primary, size: 22),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Tu propia llave de Gemini',
+                    style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 15),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Las funciones de IA de Syncora usan una cuota gratuita compartida entre toda la app. '
+                    'Si traes tu propia llave gratuita de Gemini, tus peticiones dejan de contar contra ese '
+                    'límite compartido. La llave nunca sale de este dispositivo, salvo hacia la función de IA '
+                    'en cada petición -- nunca se guarda en la nube ni en ningún otro lado.',
+                    style: TextStyle(color: AppTheme.secondary, fontSize: 12, height: 1.4),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        hasKeyAsync.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
+            ),
+          ),
+          error: (_, _) => const Text(
+            'No se pudo leer el almacenamiento seguro del dispositivo',
+            style: TextStyle(color: AppTheme.secondary, fontSize: 12),
+          ),
+          data: (hasKey) {
+            if (hasKey) {
+              return Row(
+                children: [
+                  Icon(AppIcons.broken(SolarIcons.CheckCircle), color: Colors.greenAccent, size: 18),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Llave guardada en este dispositivo',
+                      style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _busy ? null : _delete,
+                    child: const Text('Borrar', style: TextStyle(color: Colors.redAccent)),
+                  ),
+                ],
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _controller,
+                  obscureText: _obscure,
+                  style: const TextStyle(color: AppTheme.primary, fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'Pega tu API key de Gemini',
+                    hintStyle: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                    filled: true,
+                    fillColor: AppTheme.surfaceActive,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        AppIcons.broken(_obscure ? SolarIcons.Eye : SolarIcons.EyeClosed),
+                        color: AppTheme.secondary,
+                        size: 18,
+                      ),
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: _busy ? null : _openGeminiKeyPage,
+                      style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                      child: const Text('Consigue una llave gratuita', style: TextStyle(color: AppTheme.primary, fontSize: 12)),
+                    ),
+                    const Spacer(),
+                    ElevatedButton(
+                      onPressed: _busy ? null : _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      child: Text('Guardar', style: TextStyle(color: AppTheme.background)),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
   }
 }
