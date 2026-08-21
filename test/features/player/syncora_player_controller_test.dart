@@ -70,17 +70,27 @@ class FakeAudioEngine implements AudioEngine {
     ));
   }
 
+  // Fase 7.D: tracking de llamadas para verificar delegación exacta desde
+  // `CrossfadeAudioEngine` (ver crossfade_audio_engine_test.dart) — mismo
+  // patrón que `lastUrl`/`setUrlCallCount` de arriba, para `setLocalSource`.
+  String? lastLocalSourcePath;
+  int setLocalSourceCallCount = 0;
+
   @override
   Future<void> setLocalSource(String path) async {
+    lastLocalSourcePath = path;
+    setLocalSourceCallCount++;
     emitState(_state.copyWith(
       processingState: AudioProcessingState.ready,
       duration: const Duration(seconds: 180),
     ));
   }
 
+  int playCallCount = 0;
 
   @override
   Future<void> play() async {
+    playCallCount++;
     emitState(_state.copyWith(playing: true));
   }
 
@@ -97,8 +107,11 @@ class FakeAudioEngine implements AudioEngine {
     emitState(_state.copyWith(playing: false));
   }
 
+  int stopCallCount = 0;
+
   @override
   Future<void> stop() async {
+    stopCallCount++;
     emitState(_state.copyWith(
       playing: false,
       processingState: AudioProcessingState.idle,
@@ -110,8 +123,11 @@ class FakeAudioEngine implements AudioEngine {
     emitState(_state.copyWith(position: position));
   }
 
+  int setSpeedCallCount = 0;
+
   @override
   Future<void> setSpeed(double speed) async {
+    setSpeedCallCount++;
     emitState(_state.copyWith(speed: speed));
   }
 
@@ -120,8 +136,38 @@ class FakeAudioEngine implements AudioEngine {
     emitState(_state.copyWith(volume: volume));
   }
 
+  // Fase 7.D: tracking para verificar que `CrossfadeAudioEngine` propaga
+  // Skip Silence al motor entrante (bug corregido en revisión de código:
+  // `_standby` nunca lo recibía mientras dormía).
+  bool? lastSkipSilence;
+  int setSkipSilenceCallCount = 0;
+
   @override
-  Future<void> setSkipSilenceEnabled(bool enabled) async {}
+  Future<void> setSkipSilenceEnabled(bool enabled) async {
+    lastSkipSilence = enabled;
+    setSkipSilenceCallCount++;
+  }
+
+  // Fase 7.D: stub sin fade real — solo registra la llamada (path/duration)
+  // para que los tests de crossfade en el controlador puedan verificar que
+  // se invocó en vez de la secuencia normal de stop+load+play. El fade de
+  // verdad se prueba contra `CrossfadeAudioEngine` (que sí envuelve motores
+  // reales/fake) en su propio archivo de test.
+  String? lastCrossfadePath;
+  Duration? lastCrossfadeDuration;
+  int crossfadeCallCount = 0;
+
+  @override
+  Future<void> crossfadeToLocalSource(String path, Duration duration) async {
+    crossfadeCallCount++;
+    lastCrossfadePath = path;
+    lastCrossfadeDuration = duration;
+    emitState(_state.copyWith(
+      processingState: AudioProcessingState.ready,
+      duration: const Duration(seconds: 180),
+      playing: true,
+    ));
+  }
 
   @override
   void dispose() {
@@ -1726,6 +1772,226 @@ void main() {
 
       offlineController.dispose();
       await db.close();
+    });
+  });
+
+  // Fase 7.D: crossfade entre pistas descargadas/cacheadas localmente
+  // (Pitfall #17 — nunca en streaming, solo local-a-local). Estas pruebas
+  // verifican la DECISIÓN del controlador (¿corresponde crossfade o la
+  // transición normal de siempre?), no el fade en sí — eso se prueba contra
+  // `CrossfadeAudioEngine` en `test/features/player/audio_engine/
+  // crossfade_audio_engine_test.dart`. Aquí `engine` es un `FakeAudioEngine`
+  // plano (sin el wrapper) para aislar la lógica de las 4 condiciones del
+  // controlador.
+  group('SyncoraPlayerController — crossfade (Fase 7.D)', () {
+    late FakeAudioEngine engine;
+    late TestableExtractionService extractionService;
+    late SyncoraDatabase db;
+
+    Future<void> seedDownloaded(SyncoraTrack track) async {
+      await db.downloadedTrackDao.insertOrUpdate(DownloadedTracksCompanion.insert(
+        trackId: track.deezerId,
+        artistId: 0,
+        albumId: 0,
+        title: track.title,
+        artistName: track.artist,
+        albumName: '',
+        coverUrl: '',
+        localAudioPath: '/fake/${track.id}.mp3',
+        durationMs: 1000,
+        downloadState: const Value(2),
+      ));
+    }
+
+    setUp(() {
+      engine = FakeAudioEngine();
+      extractionService = TestableExtractionService();
+      db = SyncoraDatabase(NativeDatabase.memory());
+    });
+
+    tearDown(() async {
+      await db.close();
+    });
+
+    SyncoraPlayerController buildController(Duration crossfadeDuration) {
+      final controller = SyncoraPlayerController(
+        engine: engine,
+        extractionService: extractionService,
+        downloadedTrackDao: db.downloadedTrackDao,
+        crossfadeDurationGetter: () => crossfadeDuration,
+      );
+      controller.init();
+      return controller;
+    }
+
+    test('setting > 0 + pista actual y siguiente descargadas -> usa crossfadeToLocalSource, no stop+load+play',
+        () async {
+      final t1 = const SyncoraTrack(id: 't1', title: 'Uno');
+      final t2 = const SyncoraTrack(id: 't2', title: 'Dos');
+      await seedDownloaded(t1);
+      await seedDownloaded(t2);
+
+      final controller = buildController(const Duration(seconds: 4));
+      addTearDown(controller.dispose);
+
+      await controller.setQueue([t1, t2], autoplay: true);
+      expect(controller.state.currentTrack?.id, 't1');
+      expect(engine.crossfadeCallCount, 0);
+      final stopsAfterFirstTrack = engine.stopCallCount;
+
+      await controller.skipToNext();
+
+      expect(controller.state.currentTrack?.id, 't2');
+      expect(engine.crossfadeCallCount, 1);
+      expect(engine.lastCrossfadePath, '/fake/t2.mp3');
+      expect(engine.lastCrossfadeDuration, const Duration(seconds: 4));
+      expect(engine.stopCallCount, stopsAfterFirstTrack,
+          reason: 'el crossfade reemplaza la secuencia stop()+setLocalSource()+play(): no debe haber un stop() extra');
+    });
+
+    test('setting en "off" (Duration.zero) -> transición normal, nunca crossfade', () async {
+      final t1 = const SyncoraTrack(id: 't1', title: 'Uno');
+      final t2 = const SyncoraTrack(id: 't2', title: 'Dos');
+      await seedDownloaded(t1);
+      await seedDownloaded(t2);
+
+      final controller = buildController(Duration.zero);
+      addTearDown(controller.dispose);
+
+      await controller.setQueue([t1, t2], autoplay: true);
+      final stopsAfterFirstTrack = engine.stopCallCount;
+
+      await controller.skipToNext();
+
+      expect(controller.state.currentTrack?.id, 't2');
+      expect(engine.crossfadeCallCount, 0);
+      expect(engine.stopCallCount, greaterThan(stopsAfterFirstTrack),
+          reason: 'sin crossfade, la transición normal sí pasa por stop()');
+    });
+
+    test('la pista SIGUIENTE no está descargada -> transición normal, nunca crossfade', () async {
+      final t1 = const SyncoraTrack(id: 't1', title: 'Uno');
+      final t2 = const SyncoraTrack(id: 't2', title: 'Dos (sin descargar)');
+      await seedDownloaded(t1);
+      // t2 no se descarga: se resolvería por streaming.
+
+      final controller = buildController(const Duration(seconds: 4));
+      addTearDown(controller.dispose);
+
+      await controller.setQueue([t1, t2], autoplay: true);
+      await controller.skipToNext();
+
+      expect(controller.state.currentTrack?.id, 't2');
+      expect(engine.crossfadeCallCount, 0);
+    });
+
+    test('la pista ACTUAL vino de streaming -> nunca crossfade, aunque la siguiente sí esté descargada '
+        '(Pitfall #17: nunca local-a-streaming ni streaming-a-local)', () async {
+      final t1 = const SyncoraTrack(id: 't1', title: 'Uno (streaming)');
+      final t2 = const SyncoraTrack(id: 't2', title: 'Dos');
+      // t1 no se descarga: se reproduce por streaming (TestableExtractionService
+      // resuelve con éxito cualquier id no marcado como forcedError/notFound).
+      await seedDownloaded(t2);
+
+      final controller = buildController(const Duration(seconds: 4));
+      addTearDown(controller.dispose);
+
+      await controller.setQueue([t1, t2], autoplay: true);
+      expect(controller.state.currentTrack?.id, 't1');
+      expect(controller.state.engine.playing, isTrue,
+          reason: 'condición 4 del crossfade (motor reproduciendo algo) debe cumplirse igual, '
+              'para aislar que lo que bloquea acá es la condición 3 (origen local)');
+
+      await controller.skipToNext();
+
+      expect(controller.state.currentTrack?.id, 't2');
+      expect(engine.crossfadeCallCount, 0);
+    });
+
+    // P0 (revisión de código): el diseño original solo podía crossfade-ar
+    // si el usuario tocaba "siguiente" a mano mientras la pista sonaba —
+    // nunca en el flujo natural de una playlist, que es el caso de uso
+    // principal. Este test cubre exactamente ESO: nadie llama a
+    // skipToNext/skipToPrevious/playFromQueue, solo se simulan los ticks
+    // de posición que el motor emitiría solo mientras la pista suena.
+    test(
+        'crossfade PREVENTIVO: se dispara cuando el tiempo restante de la pista actual cae por '
+        'debajo de la duración configurada, SIN que el usuario toque nada', () async {
+      final t1 = const SyncoraTrack(id: 't1', title: 'Uno');
+      final t2 = const SyncoraTrack(id: 't2', title: 'Dos');
+      await seedDownloaded(t1);
+      await seedDownloaded(t2);
+
+      final controller = buildController(const Duration(seconds: 4));
+      addTearDown(controller.dispose);
+
+      await controller.setQueue([t1, t2], autoplay: true);
+      expect(controller.state.currentTrack?.id, 't1');
+      expect(controller.state.engine.playing, isTrue);
+      // FakeAudioEngine.setLocalSource siempre emite duration=180s (ver su
+      // definición más arriba en este archivo).
+      expect(controller.state.engine.duration, const Duration(seconds: 180));
+      expect(engine.crossfadeCallCount, 0);
+
+      // Tick de posición a 176s de 180s -> quedan exactamente 4s, igual al
+      // umbral configurado. Nadie llamó a ningún método de skip manual.
+      engine.emitState(controller.state.engine.copyWith(position: const Duration(seconds: 176)));
+      await pumpEventQueue();
+
+      expect(controller.state.currentTrack?.id, 't2',
+          reason: 'debe avanzar solo, disparado por el propio tick de posición');
+      expect(engine.crossfadeCallCount, 1);
+      expect(engine.lastCrossfadePath, '/fake/t2.mp3');
+      expect(engine.lastCrossfadeDuration, const Duration(seconds: 4));
+    });
+
+    test(
+        'crossfade PREVENTIVO: no se dispara dos veces para la misma pista (ticks repetidos dentro '
+        'de la ventana no duplican el intento)', () async {
+      final t1 = const SyncoraTrack(id: 't1', title: 'Uno');
+      final t2 = const SyncoraTrack(id: 't2', title: 'Dos');
+      await seedDownloaded(t1);
+      await seedDownloaded(t2);
+
+      final controller = buildController(const Duration(seconds: 4));
+      addTearDown(controller.dispose);
+
+      await controller.setQueue([t1, t2], autoplay: true);
+
+      // Varios ticks seguidos, todos dentro de la ventana de crossfade.
+      engine.emitState(controller.state.engine.copyWith(position: const Duration(seconds: 177)));
+      await pumpEventQueue();
+      engine.emitState(controller.state.engine.copyWith(position: const Duration(seconds: 178)));
+      await pumpEventQueue();
+      engine.emitState(controller.state.engine.copyWith(position: const Duration(seconds: 179)));
+      await pumpEventQueue();
+
+      expect(controller.state.currentTrack?.id, 't2');
+      expect(engine.crossfadeCallCount, 1,
+          reason: 'una vez que se avanzó a t2, los ticks siguientes ya no pertenecen a la pista '
+              'que disparó el intento original');
+    });
+
+    test(
+        'crossfade PREVENTIVO: usa como duración real del fade el mínimo entre la configurada y '
+        'lo que en verdad queda de la pista saliente', () async {
+      final t1 = const SyncoraTrack(id: 't1', title: 'Uno');
+      final t2 = const SyncoraTrack(id: 't2', title: 'Dos');
+      await seedDownloaded(t1);
+      await seedDownloaded(t2);
+
+      // Configurado a 6s, pero al momento del tick solo quedan 2s reales.
+      final controller = buildController(const Duration(seconds: 6));
+      addTearDown(controller.dispose);
+
+      await controller.setQueue([t1, t2], autoplay: true);
+      engine.emitState(controller.state.engine.copyWith(position: const Duration(seconds: 178)));
+      await pumpEventQueue();
+
+      expect(engine.crossfadeCallCount, 1);
+      expect(engine.lastCrossfadeDuration, const Duration(seconds: 2),
+          reason: 'el fade no debe extenderse más allá de lo que realmente queda de la pista '
+              'saliente, para no llegar a su EOF natural a mitad del fade');
     });
   });
 

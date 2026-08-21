@@ -93,6 +93,15 @@ class FakeAudioEngine implements AudioEngine {
   @override
   Future<void> setSkipSilenceEnabled(bool enabled) async {}
 
+  // Fase 7.D: stub sin fade real, solo para cumplir el contrato AudioEngine
+  // en este fake (mini_player_test no ejercita crossfade).
+  @override
+  Future<void> crossfadeToLocalSource(String path, Duration duration) async {
+    await stop();
+    await setLocalSource(path);
+    await play();
+  }
+
   @override
   Future<void> dispose() async {
     await _stateController.close();

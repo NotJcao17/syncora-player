@@ -226,6 +226,24 @@ class SettingsScreen extends ConsumerWidget {
                   },
                 ),
                 const Divider(height: 24, color: AppTheme.surfaceHover),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final crossfadeDuration = ref.watch(crossfadeDurationProvider);
+                    return _buildCrossfadeSelector(
+                      value: crossfadeDuration,
+                      onChanged: (val) {
+                        ref.read(crossfadeDurationProvider.notifier).state = val;
+                        AppToast.show(
+                          context,
+                          message: val == Duration.zero
+                              ? 'Crossfade desactivado'
+                              : 'Crossfade: ${val.inSeconds}s',
+                        );
+                      },
+                    );
+                  },
+                ),
+                const Divider(height: 24, color: AppTheme.surfaceHover),
                 _buildActionTile(
                   icon: AppIcons.broken(SolarIcons.Tuning),
                   title: 'Ecualizador',
@@ -437,6 +455,75 @@ class SettingsScreen extends ConsumerWidget {
           onChanged: onChanged,
           activeTrackColor: AppTheme.primary,
           activeThumbColor: AppTheme.background,
+        ),
+      ],
+    );
+  }
+
+  /// Selector de duración de crossfade (Fase 7.D.5): off / 2s / 4s / 6s.
+  /// No hay un patrón de selector múltiple ya existente en esta pantalla
+  /// (solo `_buildSwitchTile`, on/off) — se sigue el mismo estilo visual
+  /// (icono + título + subtítulo a la izquierda) con una fila de píldoras a
+  /// la derecha en vez de un `Switch`.
+  Widget _buildCrossfadeSelector({
+    required Duration value,
+    required ValueChanged<Duration> onChanged,
+  }) {
+    const options = [
+      Duration.zero,
+      Duration(seconds: 2),
+      Duration(seconds: 4),
+      Duration(seconds: 6),
+    ];
+
+    String labelFor(Duration d) => d == Duration.zero ? 'Off' : '${d.inSeconds}s';
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(AppIcons.broken(SolarIcons.Soundwave), color: AppTheme.primary, size: 22),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Crossfade',
+                style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 15),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Transición suave entre canciones descargadas',
+                style: TextStyle(color: AppTheme.secondary, fontSize: 12),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: options.map((option) {
+                  final selected = option == value;
+                  return GestureDetector(
+                    onTap: () => onChanged(option),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: selected ? AppTheme.primary : AppTheme.surfaceActive,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        labelFor(option),
+                        style: TextStyle(
+                          color: selected ? AppTheme.background : AppTheme.secondary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
         ),
       ],
     );

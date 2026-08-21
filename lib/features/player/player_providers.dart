@@ -23,6 +23,12 @@ import 'syncora_player_controller.dart';
 /// (`lib/features/download/download_provider.dart`).
 final radioEnabledProvider = StateProvider<bool>((ref) => true);
 
+/// Duración del crossfade (Fase 7.D.5, off / 2s / 4s / 6s en Configuración).
+/// `Duration.zero` == "off" (default, conservador). Mismo patrón
+/// no-persistido que `radioEnabledProvider`/`downloadWifiOnlyProvider` — el
+/// proyecto todavía no tiene `shared_preferences`.
+final crossfadeDurationProvider = StateProvider<Duration>((ref) => Duration.zero);
+
 AudioHandler? _globalAndroidAudioHandler;
 
 bool get _isTestEnv {
@@ -41,7 +47,9 @@ bool get _isTestEnv {
 /// `smtc_windows` en Windows).
 final syncoraPlayerControllerProvider =
     ChangeNotifierProvider<SyncoraPlayerController>((ref) {
-  final engine = createAudioEngine();
+  final engine = createAudioEngine(
+    fadeDurationGetter: () => ref.read(crossfadeDurationProvider),
+  );
   final extractionService = ref.watch(extractionServiceProvider);
   final deezerApi = ref.watch(deezerApiProvider);
   final downloadedTrackDao = ref.watch(downloadedTrackDaoProvider);
@@ -57,6 +65,7 @@ final syncoraPlayerControllerProvider =
     radioService: radioService,
     isConnectedGetter: () => ref.read(isConnectedProvider).value ?? true,
     radioEnabledGetter: () => ref.read(radioEnabledProvider),
+    crossfadeDurationGetter: () => ref.read(crossfadeDurationProvider),
   );
 
   controller.init();

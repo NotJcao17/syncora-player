@@ -102,6 +102,19 @@ class JustAudioEngine implements AudioEngine {
     await _player.setSkipSilenceEnabled(enabled);
   }
 
+  /// Fallback SIN fade real (Fase 7.D): esta implementación cruda nunca se
+  /// usa directamente para crossfade en producción — [CrossfadeAudioEngine]
+  /// envuelve dos instancias de [AudioEngine] (sean cuales sean) y es donde
+  /// vive el fade paralelo de verdad. Este método solo existe para que
+  /// [JustAudioEngine] siga cumpliendo el contrato [AudioEngine] si algo lo
+  /// invoca directo (ej. en tests); equivale a una transición normal.
+  @override
+  Future<void> crossfadeToLocalSource(String path, Duration duration) async {
+    await stop();
+    await setLocalSource(path);
+    await play();
+  }
+
   // --- Transformadores de eventos nativos -> [AudioEngineState] -----------
 
   void _onPlayerState(PlayerState s) {

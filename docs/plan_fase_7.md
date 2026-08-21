@@ -372,17 +372,25 @@ El orden no es negociable en tres puntos:
 > Restringido a **pistas descargadas/cacheadas** (Pitfall #17). El diseño técnico ya está definido
 > en el Documento Maestro §2.4 y no se cambió en esta sesión.
 
-- [ ] **7.D.1** **Windows (`media_kit`):** instancias duales con fade-in/fade-out paralelo vía el
-      control de volumen de cada instancia.
-- [ ] **7.D.2** **Android (`just_audio`):** `CrossfadeAudioHandler` que administra dos
-      `AudioPlayer` simultáneos y el fade cruzado.
-- [ ] **7.D.3** Abstracción común en `AudioEngine` para que el controlador no tenga que saber de
-      qué plataforma se trata.
-- [ ] **7.D.4** Guard explícito: si la siguiente pista **no** está descargada, no intentar
-      crossfade (transición normal). Verificar contra `DownloadedTrackDao` igual que ya hace
-      `playCurrent()`.
-- [ ] **7.D.5** Ajuste de duración del crossfade en Configuración (off / 2s / 4s / 6s), con off
-      por defecto o un valor conservador.
+- [x] **7.D.1** **Windows (`media_kit`):** instancias duales con fade-in/fade-out paralelo vía el
+      control de volumen de cada instancia. Implementado dentro de `CrossfadeAudioEngine` (ver
+      7.D.3) — no hizo falta código específico de plataforma, el wrapper agnóstico cubre Windows
+      con dos `MediaKitEngine` igual que cubre Android.
+- [x] **7.D.2** **Android (`just_audio`):** dos `AudioPlayer` simultáneos y el fade cruzado. Mismo
+      mecanismo que 7.D.1: `CrossfadeAudioEngine` envuelve dos `JustAudioEngine` sin código
+      específico de plataforma (se descartó un `CrossfadeAudioHandler` separado por ser
+      redundante con el wrapper genérico ya agnóstico).
+- [x] **7.D.3** Abstracción común en `AudioEngine` para que el controlador no tenga que saber de
+      qué plataforma se trata. `CrossfadeAudioEngine` (`lib/features/player/audio_engine/
+      crossfade_audio_engine.dart`) implementa `AudioEngine` envolviendo dos instancias del motor
+      real (`createEngine` factory), con `_standby` perezoso. Ver `docs/fases/fase_7_d.md`.
+- [x] **7.D.4** Guard explícito: si la siguiente pista **no** está descargada, no intentar
+      crossfade (transición normal). Verificado contra `DownloadedTrackDao` en
+      `_playCurrentInternal()`, junto con las otras 3 condiciones (setting > 0, pista actual
+      también local, motor reproduciendo algo).
+- [x] **7.D.5** Ajuste de duración del crossfade en Configuración (off / 2s / 4s / 6s), off por
+      defecto. `crossfadeDurationProvider` en `player_providers.dart` + selector de píldoras nuevo
+      en `settings_screen.dart`.
 - [ ] **7.D.6** Prueba humana obligatoria (`matriz_de_pruebas.md` Fase 7): activar crossfade en una
       pista descargada en Windows y verificar la transición; repetir en Android.
 

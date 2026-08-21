@@ -10,6 +10,7 @@ import '../../core/extraction/retry_policy.dart';
 import '../../data/apis/deezer_api.dart';
 import '../../data/local_db/daos/downloaded_track_dao.dart';
 import '../../data/local_db/daos/listening_history_dao.dart';
+import '../../data/local_db/syncora_database.dart' show DownloadedTrack;
 import '../../data/models/deezer/deezer_track.dart';
 
 import 'audio_engine/audio_engine_state.dart';
@@ -163,6 +164,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     RadioService? radioService,
     bool Function()? isConnectedGetter,
     bool Function()? radioEnabledGetter,
+    Duration Function()? crossfadeDurationGetter,
   })  : _engine = engine, // ignore: prefer_initializing_formals
         _extractionService = extractionService, // ignore: prefer_initializing_formals
         _deezerApi = deezerApi, // ignore: prefer_initializing_formals
@@ -170,7 +172,8 @@ class SyncoraPlayerController extends ChangeNotifier {
         _listeningHistoryDao = listeningHistoryDao,
         _radioService = radioService,
         _isConnectedGetter = isConnectedGetter,
-        _radioEnabledGetter = radioEnabledGetter;
+        _radioEnabledGetter = radioEnabledGetter,
+        _crossfadeDurationGetter = crossfadeDurationGetter;
 
   final AudioEngine _engine;
   final ExtractionService _extractionService;
@@ -180,6 +183,30 @@ class SyncoraPlayerController extends ChangeNotifier {
   final RadioService? _radioService;
   final bool Function()? _isConnectedGetter;
   final bool Function()? _radioEnabledGetter;
+
+  /// Duración configurada de crossfade (Fase 7.D.5, Configuración:
+  /// off/2s/4s/6s). `null` o `Duration.zero` == "off" — mismo default
+  /// conservador que `crossfadeDurationProvider`.
+  final Duration Function()? _crossfadeDurationGetter;
+
+  /// ¿La pista que está sonando AHORA MISMO se cargó desde descarga local
+  /// (en vez de streaming)? Se actualiza justo después de arrancar
+  /// reproducción con éxito desde cada camino en `_playCurrentInternal`, y
+  /// se lee al llegar de nuevo a ese método para la pista SIGUIENTE, ANTES
+  /// de sobreescribirlo — es la condición 3 del crossfade (Fase 7.D):
+  /// nunca crossfade desde/hacia streaming (Pitfall #17).
+  bool _currentPlaybackIsLocal = false;
+
+  /// Id de la pista para la que ya se intentó (con éxito o no) el
+  /// crossfade PREVENTIVO (Fase 7.D, rediseño) — evita reevaluar/disparar
+  /// de nuevo en cada tick de posición mientras el tiempo restante siga
+  /// bajo el umbral configurado. Comparar contra `_state.currentTrack?.id`
+  /// en cada chequeo equivale a "resetear" el flag en todo punto que
+  /// cambia `currentTrack` (setQueue/_advance/_retreat/playFromQueue/
+  /// restauración de sesión/el propio crossfade preventivo) sin tener que
+  /// acordarse de tocar cada uno de esos sitios por separado.
+  String? _crossfadeAttemptedForTrackId;
+
   final RetryPolicy _retryPolicy = RetryPolicy();
   final PlayerSessionStorage _sessionStorage = PlayerSessionStorage();
 
@@ -803,6 +830,28 @@ bool get _isTestEnv {
     return updated;
   }
 
+  /// Espía, de SOLO LECTURA (sin mutar `_state`), cuál sería la próxima
+  /// pista si se avanzara ahora mismo — misma prioridad que [_advance]
+  /// (manual antes que automática, D-1). Si ambas colas están vacías,
+  /// devuelve `null` incluso cuando repeat-all podría regenerar la
+  /// automática desde `originalContextTracks` — esa regeneración es una
+  /// MUTACIÓN real (además de potencialmente mezclar con shuffle), así que
+  /// no se puede "espiar" sin comprometerse; solo [_advance] la ejecuta de
+  /// verdad, cuando el avance ya es definitivo.
+  ///
+  /// Fase 7.D (rediseño): [_advance] y el chequeo preventivo de crossfade
+  /// (`_maybeCrossfadeProactively`) comparten esta única función para no
+  /// duplicar la lógica de prioridad manual-antes-que-auto en dos sitios.
+  (SyncoraTrack, QueueOrigin)? _peekNext() {
+    if (_state.manualQueue.isNotEmpty) {
+      return (_state.manualQueue.first, QueueOrigin.manual);
+    }
+    if (_state.autoQueue.isNotEmpty) {
+      return (_state.autoQueue.first, QueueOrigin.auto);
+    }
+    return null;
+  }
+
   /// Avanza a la siguiente pista respetando D-1 (manual antes que
   /// automática) y D-3 (regenerar la automática desde el contexto si
   /// repeat-all agotó ambas colas). Muta `_state`
@@ -813,46 +862,69 @@ bool get _isTestEnv {
   ///
   /// Devuelve `false` si no hay ninguna pista siguiente disponible.
   bool _advance() {
-    SyncoraTrack? next;
-    QueueOrigin? nextOrigin;
-
-    if (_state.manualQueue.isNotEmpty) {
-      next = _state.manualQueue.first;
-      nextOrigin = QueueOrigin.manual;
-    } else if (_state.autoQueue.isNotEmpty) {
-      next = _state.autoQueue.first;
-      nextOrigin = QueueOrigin.auto;
-    } else if (_state.repeatMode == SyncoraRepeatMode.all && _state.originalContextTracks.isNotEmpty) {
+    var peeked = _peekNext();
+    if (peeked == null &&
+        _state.repeatMode == SyncoraRepeatMode.all &&
+        _state.originalContextTracks.isNotEmpty) {
+      // Ambas colas agotadas pero hay repeat-all: acá sí se ejecuta la
+      // regeneración real (a diferencia de [_peekNext], que nunca la hace)
+      // y se vuelve a espiar ahora que `autoQueue` ya tiene contenido.
       final regenerated = List<SyncoraTrack>.from(_state.originalContextTracks);
       if (_state.shuffle) regenerated.shuffle();
       _state = _state.copyWith(autoQueue: List.unmodifiable(regenerated));
-      if (_state.autoQueue.isNotEmpty) {
-        next = _state.autoQueue.first;
-        nextOrigin = QueueOrigin.auto;
-      }
+      peeked = _peekNext();
     }
+    if (peeked == null) return false;
 
-    if (next == null || nextOrigin == null) return false;
+    final (next, nextOrigin) = peeked;
+    // `peeked` es siempre el primero de su cola (ver [_peekNext]) y no hay
+    // ningún `await` entre el peek y este punto, así que sigue estando ahí
+    // — [_commitAdvanceTo] lo remueve por id, lo que en este caso coincide
+    // exactamente con removerlo por posición (índice 0).
+    _commitAdvanceTo(next, nextOrigin);
+    return true;
+  }
 
+  /// Aplica la mutación de "avanzar a [track]" (empujar la actual al
+  /// historial, sacar [track] de su cola de [origin], actualizar
+  /// `currentTrack`/`currentOrigin`) — el núcleo compartido detrás de
+  /// [_advance].
+  ///
+  /// Fase 7.D (rediseño): el crossfade preventivo también usa esto
+  /// directamente (no pasando por [_advance]) porque necesita confirmar el
+  /// avance hacia una pista EXACTA que ya peekeó y verificó como
+  /// descargada — pueden haber pasado varios ticks entre ese peek y este
+  /// punto (el chequeo de descarga es async), tiempo en el que la cola
+  /// pudo reordenarse desde la pantalla de Cola. Por eso remueve por **id**
+  /// en vez de por posición: si [track] ya no está en su cola de origen
+  /// (la quitaron mientras tanto), igual se confirma como `currentTrack`
+  /// (el motor ya se comprometió a reproducirla) pero no se toca la cola
+  /// de más.
+  void _commitAdvanceTo(SyncoraTrack track, QueueOrigin origin) {
     final newHistory = _pushHistory(_state.history, _state.currentTrack, _state.currentOrigin);
 
     List<SyncoraTrack> newManual = _state.manualQueue;
     List<SyncoraTrack> newAuto = _state.autoQueue;
-    if (nextOrigin == QueueOrigin.manual) {
-      newManual = List<SyncoraTrack>.from(_state.manualQueue)..removeAt(0);
+    if (origin == QueueOrigin.manual) {
+      final idx = _state.manualQueue.indexWhere((t) => t.id == track.id);
+      if (idx != -1) {
+        newManual = List<SyncoraTrack>.from(_state.manualQueue)..removeAt(idx);
+      }
     } else {
-      newAuto = List<SyncoraTrack>.from(_state.autoQueue)..removeAt(0);
+      final idx = _state.autoQueue.indexWhere((t) => t.id == track.id);
+      if (idx != -1) {
+        newAuto = List<SyncoraTrack>.from(_state.autoQueue)..removeAt(idx);
+      }
     }
 
     _state = _state.copyWith(
-      currentTrack: next,
-      currentOrigin: nextOrigin,
+      currentTrack: track,
+      currentOrigin: origin,
       manualQueue: List.unmodifiable(newManual),
       autoQueue: List.unmodifiable(newAuto),
       history: List.unmodifiable(newHistory),
       clearError: true,
     );
-    return true;
   }
 
   /// Retrocede a la última pista del historial (D-3): al volver desde una
@@ -1205,6 +1277,127 @@ bool get _isTestEnv {
     }
   }
 
+  // ----------------------------------------------------------------------
+  // Crossfade PREVENTIVO (Fase 7.D, rediseño post-revisión de código)
+  // ----------------------------------------------------------------------
+  //
+  // El diseño original solo podía disparar un crossfade si el usuario
+  // saltaba a mano ("siguiente") mientras la pista actual seguía sonando —
+  // nunca en el flujo natural de una playlist, que es el caso de uso
+  // principal (dejar sonar un álbum completo). Causa raíz: la condición
+  // "el motor está reproduciendo algo" se evaluaba DESPUÉS de que la pista
+  // llegara a su fin natural (`_onComplete()` → `skipToNext()` →
+  // `_playCurrentInternal()`), momento en el que el motor ya reporta
+  // `playing: false` y, aunque no lo reportara, ya no queda audio de la
+  // pista saliente que desvanecer — un crossfade real tiene que EMPEZAR
+  // antes del final, no reaccionar después.
+  //
+  // Esto se resuelve monitoreando la posición en cada tick de
+  // `_onEngineState` (`_maybeCrossfadeProactively`) y disparando la
+  // transición en cuanto el tiempo restante de la pista actual cae por
+  // debajo de la duración configurada — sin esperar a que el usuario haga
+  // nada. El camino de skip MANUAL (usuario toca "siguiente" con tiempo de
+  // sobra) sigue funcionando exactamente igual que antes, en
+  // `_playCurrentInternal`, con la duración configurada completa.
+
+  /// Revisa en cada tick de posición si corresponde disparar un crossfade
+  /// PREVENTIVO: la pista actual es local (Pitfall #17), hay crossfade
+  /// configurado (> 0), el motor está reproduciendo, y el tiempo restante
+  /// de la pista actual ya cayó por debajo (o igual) de esa duración.
+  void _maybeCrossfadeProactively(AudioEngineState engineState) {
+    final current = _state.currentTrack;
+    if (current == null) return;
+    if (_crossfadeAttemptedForTrackId == current.id) return; // ya se intentó para esta pista
+    if (!_currentPlaybackIsLocal) return; // Pitfall #17: nunca desde streaming
+    if (!engineState.playing) return;
+
+    final crossfadeDuration = _crossfadeDurationGetter?.call() ?? Duration.zero;
+    if (crossfadeDuration <= Duration.zero) return; // setting "off"
+    if (engineState.duration <= Duration.zero) return; // duración aún desconocida
+
+    final remaining = engineState.duration - engineState.position;
+    if (remaining > crossfadeDuration || remaining <= Duration.zero) return;
+
+    final peeked = _peekNext();
+    if (peeked == null) return;
+    final (nextTrack, nextOrigin) = peeked;
+
+    // Síncrono, ANTES de cualquier `await`: evita que el próximo tick de
+    // posición (que puede llegar antes de que resuelva el chequeo async de
+    // descarga de abajo) dispare un segundo intento en paralelo para la
+    // MISMA pista.
+    _crossfadeAttemptedForTrackId = current.id;
+
+    // La duración real del fade es el mínimo entre la configurada y lo que
+    // en verdad queda de la pista saliente en este instante — así el fade
+    // termina justo cuando la pista vieja habría terminado de forma
+    // natural, sin que el motor saliente llegue a su propio EOF a mitad
+    // del fade (lo que dispararía una completion espuria).
+    final actualFadeDuration = remaining < crossfadeDuration ? remaining : crossfadeDuration;
+
+    unawaited(_runProactiveCrossfade(current.id, nextTrack, nextOrigin, actualFadeDuration));
+  }
+
+  /// Ejecuta el intento de crossfade preventivo ya decidido por
+  /// [_maybeCrossfadeProactively]: verifica que la pista siguiente esté
+  /// descargada localmente (guard 7.D.4, mismo chequeo al
+  /// `DownloadedTrackDao` que usa `_playCurrentInternal`) y, si lo está,
+  /// confirma el avance en el estado y dispara la transición real en el
+  /// motor.
+  Future<void> _runProactiveCrossfade(
+    String triggeringTrackId,
+    SyncoraTrack nextTrack,
+    QueueOrigin nextOrigin,
+    Duration fadeDuration,
+  ) async {
+    // Mismo punto de disparo de radio/cola infinita (Fase 7.B) que
+    // `playCurrent()` — este camino también consume de `autoQueue` (vía
+    // `_commitAdvanceTo`) si termina avanzando, así que debe revisar igual
+    // si corresponde rellenarla. `finally` para cubrir todos los caminos de
+    // retorno (siguiente no descargada, intento obsoleto, éxito).
+    try {
+      final trackDeezerId = int.tryParse(nextTrack.id) ?? nextTrack.id.hashCode.abs();
+      DownloadedTrack? downloaded;
+      if (_downloadedTrackDao != null && trackDeezerId > 0) {
+        try {
+          downloaded = await _downloadedTrackDao.getByTrackId(trackDeezerId);
+        } catch (e) {
+          _log('[Crossfade] Error verificando descarga local de la siguiente pista: $e');
+        }
+      }
+
+      // Si mientras se resolvía el chequeo de descarga la pista actual ya
+      // cambió por otra vía (skip manual, error del motor, etc.), este
+      // intento quedó obsoleto — no debe pisar lo que sea que esté sonando
+      // ahora.
+      if (_state.currentTrack?.id != triggeringTrackId) return;
+
+      final nextIsLocal =
+          downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty;
+      if (!nextIsLocal) return; // 7.D.4: sin descarga no hay crossfade
+
+      // Confirma el avance en el estado (por id, no por posición — pueden
+      // haber pasado varios ticks desde el peek original si el chequeo de
+      // descarga tardó) y dispara la transición real. `crossfadeToLocalSource`
+      // ya resuelve rápido (el swap interno del motor ocurre de inmediato al
+      // arrancar el fade, no al terminar el ramp de volumen), así que esto
+      // no bloquea al usuario por toda la duración del fade.
+      _commitAdvanceTo(nextTrack, nextOrigin);
+      _beginListenTracking(nextTrack);
+      _onPlaybackStartedSuccessfully();
+      _currentPlaybackIsLocal = true;
+      _notify();
+      _saveSession();
+
+      final localPath = downloaded.localAudioPath;
+      _log('[Crossfade] Preventivo (${fadeDuration.inMilliseconds}ms) hacia pista local: $localPath');
+      await _engine.crossfadeToLocalSource(localPath, fadeDuration);
+      _saveSession();
+    } finally {
+      _maybeFetchRadio();
+    }
+  }
+
   /// Núcleo: resuelve la URL de la pista actual o carga el archivo local si está descargado.
   ///
   /// Punto de disparo de radio/cola infinita (Fase 7.B): al final de este
@@ -1230,38 +1423,81 @@ bool get _isTestEnv {
     final myGeneration = ++_playGeneration;
     bool isStale() => myGeneration != _playGeneration;
 
-    // Detener inmediatamente cualquier audio previo con micro fade-out para evitar audio bleed/clics
-    await _microFadeOut();
-    await _engine.stop();
+    // Fase 7.D (crossfade): hay que saber si corresponde un crossfade ANTES
+    // de decidir si se hace el stop()/micro fade-out abrupto de siempre —
+    // el crossfade reemplaza esa secuencia por completo (condiciones 1-4
+    // más abajo). Se capturan aquí, antes de tocar nada, la condición 3
+    // (¿la pista que suena AHORA vino de descarga local?) y la condición 4
+    // (¿el motor está reproduciendo algo?) porque ambas se pisan/cambian
+    // más abajo en este mismo método.
+    final previousPlaybackWasLocal = _currentPlaybackIsLocal;
+    final wasEnginePlaying = _state.engine.playing;
+    // Revisión de código: resetear explícitamente al principio de CADA
+    // intento de reproducción, no solo actualizarlo en los caminos de
+    // éxito de más abajo — si este intento falla o cae en un camino que no
+    // lo toca explícitamente (ej. ExtractionFailure), no debe quedar con
+    // el valor de una pista N-2 que ya no representa lo que el motor está
+    // haciendo ahora.
+    _currentPlaybackIsLocal = false;
 
     final trackDeezerId = int.tryParse(track.id) ?? track.id.hashCode.abs();
 
-    // 1. Verificar si existe descarga local (state == 2)
+    // 1. Verificar si existe descarga local (state == 2) — se resuelve ANTES
+    // del stop()/micro fade-out incondicional para poder decidir si
+    // corresponde crossfade (condición 2: la pista NUEVA está descargada).
+    DownloadedTrack? downloaded;
     if (_downloadedTrackDao != null && trackDeezerId > 0) {
       try {
-        final downloaded = await _downloadedTrackDao.getByTrackId(trackDeezerId);
-        if (isStale()) return;
-        if (downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty) {
-          _log('[Play] Pista local descargada encontrada: ${downloaded.localAudioPath}. Cargando sin pasar por ExtractionIsolate.');
-          _onPlaybackStartedSuccessfully();
-          await _engine.setLocalSource(downloaded.localAudioPath);
-
-          if (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0) {
-            final targetPos = Duration(seconds: _restoredPositionSeconds!);
-            _restoredPositionSeconds = null;
-            await _engine.seek(targetPos);
-          }
-
-          await _engine.play();
-          _saveSession();
-          return;
-        }
+        downloaded = await _downloadedTrackDao.getByTrackId(trackDeezerId);
       } catch (e) {
         _log('[Play] Error verificando descarga local: $e');
       }
     }
+    if (isStale()) return;
 
-    // 2. Sin descarga local: verificar conectividad a internet
+    final newTrackIsLocal =
+        downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty;
+
+    // Condición 1: setting de duración de crossfade > 0 (no "off").
+    final crossfadeDuration = _crossfadeDurationGetter?.call() ?? Duration.zero;
+    final shouldCrossfade = crossfadeDuration > Duration.zero &&
+        newTrackIsLocal && // condición 2
+        previousPlaybackWasLocal && // condición 3: nunca crossfade desde/hacia streaming (Pitfall #17)
+        wasEnginePlaying; // condición 4: no tiene sentido crossfade desde silencio/idle
+
+    if (!shouldCrossfade) {
+      // Detener inmediatamente cualquier audio previo con micro fade-out para evitar audio bleed/clics
+      await _microFadeOut();
+      await _engine.stop();
+    }
+
+    // 2. Pista descargada localmente: cargar directo, sin pasar por el
+    // ExtractionIsolate (con o sin crossfade, según se decidió arriba).
+    if (newTrackIsLocal) {
+      final localPath = downloaded.localAudioPath;
+      _onPlaybackStartedSuccessfully();
+      _currentPlaybackIsLocal = true;
+
+      if (shouldCrossfade) {
+        _log('[Play] Crossfade (${crossfadeDuration.inSeconds}s) hacia pista local descargada: $localPath');
+        await _engine.crossfadeToLocalSource(localPath, crossfadeDuration);
+      } else {
+        _log('[Play] Pista local descargada encontrada: $localPath. Cargando sin pasar por ExtractionIsolate.');
+        await _engine.setLocalSource(localPath);
+
+        if (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0) {
+          final targetPos = Duration(seconds: _restoredPositionSeconds!);
+          _restoredPositionSeconds = null;
+          await _engine.seek(targetPos);
+        }
+
+        await _engine.play();
+      }
+      _saveSession();
+      return;
+    }
+
+    // 3. Sin descarga local: verificar conectividad a internet
     final isConnected = _isConnectedGetter?.call() ?? true;
     if (!isConnected) {
       _log('[Play] Sin conexión y la canción no está descargada: ejecutando salto silencioso.');
@@ -1269,7 +1505,7 @@ bool get _isTestEnv {
       return;
     }
 
-    // 3. Flujo normal de extracción de YouTube
+    // 4. Flujo normal de extracción de YouTube
     String targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)
         ? track.youtubeVideoId!
         : track.id;
@@ -1293,6 +1529,11 @@ bool get _isTestEnv {
         _log('[Play] URL resuelta, cargando en el motor...');
         _retryPolicy.reset(track.id); // extracción exitosa: resetear contador
         _onPlaybackStartedSuccessfully();
+        // Fase 7.D (condición 3 del crossfade): esta pista arranca desde
+        // streaming, no desde descarga local — la próxima vez que se llegue
+        // aquí para la SIGUIENTE pista, este flag debe reflejar que la
+        // actual no califica como origen local para un crossfade.
+        _currentPlaybackIsLocal = false;
         try {
           await _engine.setUrl(streamUrl, headers: headers);
 
@@ -1420,6 +1661,11 @@ bool get _isTestEnv {
       _lastSavedPositionSeconds = currentPosSec;
       _saveSession();
     }
+
+    // Fase 7.D (rediseño): revisa en cada tick si corresponde disparar un
+    // crossfade preventivo antes de que la pista actual llegue a su fin
+    // natural — ver docstring de `_maybeCrossfadeProactively`.
+    _maybeCrossfadeProactively(engineState);
 
     // El motor nativo puede reportar un error de reproducción sin pasar por
     // ExtractionFailure (ej. MediaKitEngine detecta un EOF sin haber sonado

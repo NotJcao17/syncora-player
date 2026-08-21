@@ -107,6 +107,28 @@ abstract class AudioEngine {
   /// `silencedetect` de libmpv y ejecuta un seek al primer sample de audio.
   Future<void> setSkipSilenceEnabled(bool enabled);
 
+  /// Transición con crossfade hacia [path] (SIEMPRE archivo local descargado,
+  /// nunca streaming). Ambas pistas suenan superpuestas durante [duration]:
+  /// fade-out de la que suena ahora + fade-in de la nueva, en paralelo. Al
+  /// terminar, la nueva pista queda como la reproducción activa del motor.
+  ///
+  /// Restringido a local-a-local (Pitfall #17): el llamador (
+  /// [SyncoraPlayerController]) nunca debe invocar esto para una URL de
+  /// streaming. La implementación real del fade vive en
+  /// [CrossfadeAudioEngine] (que envuelve dos instancias de este motor); las
+  /// implementaciones "crudas" (`MediaKitEngine`/`JustAudioEngine`) solo
+  /// tienen un fallback sin fade real, ver sus propios docstrings.
+  /// Nota de implementación (Fase 7.D, rediseño post-revisión): en
+  /// [CrossfadeAudioEngine] este método resuelve RÁPIDO — solo espera a que
+  /// el motor entrante quede cargado y reproduciendo, y el swap de cuál
+  /// instancia es la "activa" del wrapper ya se decide ahí mismo. El fade
+  /// de volumen (los pasos de 50ms hasta la duración pedida) sigue
+  /// corriendo en segundo plano sin bloquear al llamador — el guard de
+  /// transición del controlador (`_isTransitioning`) no debe quedar
+  /// inutilizable por toda la duración del fade (Pitfall descubierto en
+  /// revisión de código).
+  Future<void> crossfadeToLocalSource(String path, Duration duration);
+
   /// Posición actual (snapshot). Para UI reactiva usar [stateStream].
   Duration get position;
   Duration get duration;
