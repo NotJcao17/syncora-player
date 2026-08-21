@@ -14,10 +14,13 @@ import 'package:window_manager/window_manager.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../data/local_db/syncora_database.dart';
 import '../../features/auth/auth_provider.dart';
+import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
+import '../../features/player/syncora_player_controller.dart';
 import '../../features/player/widgets/mini_player.dart';
 import '../../features/player/widgets/queue_view.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_toast.dart';
 import '../widgets/offline_banner.dart';
 
 /// Layout adaptativo de la aplicación (Móvil vs Desktop calcado de los mockups HTML).
@@ -68,6 +71,49 @@ class _AppShellState extends ConsumerState<AppShell> {
     final isMobileLandscape = isDesktop && size.shortestSide < 600;
     final selectedIndex = _calculateSelectedIndex();
     final isQueueOpen = ref.watch(isQueueOpenProvider);
+
+    // Fase 7.C (toast de auto-skip lógico) + H-6 (aviso de pausa por
+    // 403/red persistente, diseñado en la Fase 1 pero nunca cableado a la
+    // UI). AppShell envuelve toda la app y siempre está montado, así que es
+    // el punto de escucha natural (ver docs/plan_fase_7.md, hallazgo H-6).
+    // `PlayerNotice.id` es monotónico: comparar contra el `id` anterior es
+    // lo que evita repetir el mismo aviso en cada rebuild sin necesidad de
+    // "limpiar" el campo después de mostrarlo.
+    ref.listen<SyncoraPlayerState>(playerStateProvider, (previous, next) {
+      final notice = next.notice;
+      if (notice == null) return;
+      if (previous?.notice?.id == notice.id) return;
+
+      switch (notice.kind) {
+        case PlayerNoticeKind.logicalSkip:
+          // 7.C.1: "{título} no disponible — saltada". Nunca se dispara
+          // para el skip manual del usuario ni para el salto silencioso
+          // offline — ninguno de los dos pasa por _handleExtractionError.
+          AppToast.show(context, message: notice.message);
+          break;
+        case PlayerNoticeKind.cascadeGuard:
+          // 7.C.3: guard de cascada tras 3 fallos lógicos seguidos. El
+          // motor ya quedó pausado; "Reintentar" resetea el contador y
+          // vuelve a intentar avanzar. No tocar nada equivale a "pausar".
+          AppToast.show(
+            context,
+            message: notice.message,
+            actionLabel: 'Reintentar',
+            onAction: () {
+              ref.read(syncoraPlayerControllerProvider.notifier).resumeAfterCascadeGuard();
+            },
+            duration: const Duration(seconds: 6),
+          );
+          break;
+        case PlayerNoticeKind.persistentError:
+          // H-6: pausa por error persistente (403/red) tras 1 reintento —
+          // la pausa ya funcionaba desde la Fase 1, este aviso es lo que
+          // faltaba conectar. Mensaje propio del controlador, distinto al
+          // de logicalSkip (acá no hubo ningún skip).
+          AppToast.show(context, message: notice.message, duration: const Duration(seconds: 5));
+          break;
+      }
+    });
 
     final childWidget = isDesktop
         ? _buildDesktopLayout(context, selectedIndex, isQueueOpen, isMobileLandscape)

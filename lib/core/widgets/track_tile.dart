@@ -83,7 +83,22 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     final isDownloadedLocal = (downloadedTrack?.downloadState == 2) || widget.isDownloaded;
     final isDownloadingLocal = downloadedTrack?.downloadState == 1;
 
-    final isPlayable = isConnected || isDownloadedLocal;
+    // Fase 7.C.2 (D-21): pistas que el auto-skip lógico ya marcó como rotas
+    // esta sesión (fallo notFound/unknownError, ver syncora_player_controller
+    // ._handleExtractionError) se atenúan igual que las no descargadas sin
+    // conexión — mismo tratamiento visual, tercera condición.
+    final unavailableThisSession = ref.watch(unavailableTrackIdsProvider);
+    final isMarkedUnavailableThisSession = unavailableThisSession.contains(widget.track.id);
+
+    // Revisión de código (bug real, corregido): una descarga local siempre
+    // es reproducible, sin importar la marca de sesión — `_playCurrentInternal`
+    // carga el archivo local directo (`setLocalSource`), nunca vuelve a
+    // pasar por extracción, así que el motivo por el que se marcó la pista
+    // (fallo de catálogo) ya no aplica una vez descargada. Antes
+    // `isMarkedUnavailableThisSession` pesaba igual que la conexión y podía
+    // dejar una pista ya descargada inutilizable en la UI. La marca de
+    // sesión solo importa cuando NO hay descarga local.
+    final isPlayable = isDownloadedLocal || (isConnected && !isMarkedUnavailableThisSession);
 
     const activeColor = Color(0xFF22C55E);
 
@@ -158,7 +173,16 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         child: InkWell(
           onTap: () {
             if (!isPlayable) {
-              AppToast.show(context, message: 'No disponible sin conexión');
+              // Si llegamos acá, isDownloadedLocal ya es falso (una
+              // descarga local siempre es reproducible, ver isPlayable
+              // arriba) — el único motivo posible es falta de conexión o la
+              // marca de sesión, priorizando conexión como razón principal
+              // (si ni siquiera hay red, eso es lo que el usuario necesita
+              // saber, más allá de si además está marcada).
+              final message = isConnected
+                  ? 'No disponible en este dispositivo'
+                  : 'No disponible sin conexión';
+              AppToast.show(context, message: message);
               return;
             }
             if (isPlayingActive) {

@@ -84,8 +84,16 @@ class FakeAudioEngine implements AudioEngine {
     emitState(_state.copyWith(playing: true));
   }
 
+  // Revisión de código: `expect(engine.playing, isFalse)` por sí solo pasa
+  // trivialmente si nada llegó a reproducirse nunca (el estado inicial ya
+  // es `playing: false`) — no distingue "se pausó de verdad" de "nunca sonó
+  // nada". Contar llamadas reales a pause() permite verificar que el guard
+  // 403/H-6 y el guard de cascada (7.C.3) de verdad invocan al motor.
+  int pauseCallCount = 0;
+
   @override
   Future<void> pause() async {
+    pauseCallCount++;
     emitState(_state.copyWith(playing: false));
   }
 
@@ -1335,6 +1343,389 @@ void main() {
       await pumpEventQueue();
 
       expect(radioService.callCount, 0);
+    });
+  });
+
+  // Fase 7.C: Auto-Skip inteligente completo (auto-skip lógico, ver
+  // docs/plan_fase_7.md). Cubre 7.C.1 (toast), 7.C.2 (marcado gris de
+  // sesión, D-21), 7.C.3 (guard de cascada) y 7.C.4 (integración con la cola
+  // dual, ya construida/probada en 7.A — acá solo se confirma que un fallo
+  // en la cola MANUAL no descoloca la automática). También cubre H-6 (aviso
+  // de pausa por error persistente 403/red, que ya funcionaba pero nunca
+  // llegaba a la UI).
+  group('SyncoraPlayerController — Auto-Skip inteligente (Fase 7.C) + H-6', () {
+    late FakeAudioEngine engine;
+    late TestableExtractionService extractionService;
+    late SyncoraPlayerController controller;
+
+    setUp(() {
+      engine = FakeAudioEngine();
+      extractionService = TestableExtractionService();
+      controller = SyncoraPlayerController(
+        engine: engine,
+        extractionService: extractionService,
+      );
+      controller.init();
+    });
+
+    tearDown(() {
+      controller.dispose();
+    });
+
+    test('7.C.1/7.C.2: 1 fallo lógico aislado dispara el aviso logicalSkip, marca la pista '
+        'en gris y salta a la siguiente', () async {
+      final tracks = [
+        const SyncoraTrack(id: 'not_found_track', title: 'Rota'),
+        const SyncoraTrack(id: 'track2', title: 'Track 2'),
+      ];
+
+      await controller.setQueue(tracks, autoplay: true);
+
+      expect(controller.state.currentTrack?.id, 'track2', reason: 'debe saltar automáticamente');
+      expect(controller.state.notice, isNotNull);
+      expect(controller.state.notice!.kind, PlayerNoticeKind.logicalSkip);
+      expect(controller.state.notice!.message, 'Rota no disponible — saltada');
+      expect(controller.state.unavailableTrackIds, contains('not_found_track'),
+          reason: '7.C.2/D-21: la pista rota debe quedar marcada de sesión');
+      expect(controller.state.unavailableTrackIds.contains('track2'), isFalse,
+          reason: 'la pista que sí resolvió no debe marcarse');
+    });
+
+    test('7.C.3: 3 fallos lógicos seguidos detienen el auto-skip, pausan el motor y disparan '
+        'el aviso de guard de cascada', () async {
+      final chain = [
+        const SyncoraTrack(id: 'bad1', title: 'Bad 1'),
+        const SyncoraTrack(id: 'bad2', title: 'Bad 2'),
+        const SyncoraTrack(id: 'bad3', title: 'Bad 3'),
+        const SyncoraTrack(id: 'good', title: 'Good'),
+      ];
+      extractionService.notFoundIds.addAll(['bad1', 'bad2', 'bad3']);
+
+      await controller.setQueue(chain, autoplay: true);
+
+      expect(controller.state.currentTrack?.id, 'bad3',
+          reason: 'se detiene EN la 3ra pista fallida, no sigue saltando hacia "good"');
+      expect(controller.state.engine.playing, isFalse, reason: 'el motor debe quedar pausado');
+      // Revisión de código: `engine.playing` en `isFalse` por sí solo pasa
+      // trivialmente si nunca sonó nada (estado inicial). Verificar que
+      // pause() se llamó de verdad distingue "se pausó" de "nunca arrancó".
+      expect(engine.pauseCallCount, 1, reason: 'el guard debe pausar el motor explícitamente');
+      expect(controller.state.notice, isNotNull);
+      expect(controller.state.notice!.kind, PlayerNoticeKind.cascadeGuard);
+      expect(controller.state.autoQueue.map((t) => t.id).toList(), ['good'],
+          reason: '"good" nunca se toca: el guard corta la cadena antes de llegar a ella');
+      expect(controller.state.unavailableTrackIds, containsAll(['bad1', 'bad2', 'bad3']));
+    });
+
+    test('7.C.3: resumeAfterCascadeGuard() ("Reintentar") resetea el contador y avanza una vez más',
+        () async {
+      final chain = [
+        const SyncoraTrack(id: 'bad1', title: 'Bad 1'),
+        const SyncoraTrack(id: 'bad2', title: 'Bad 2'),
+        const SyncoraTrack(id: 'bad3', title: 'Bad 3'),
+        const SyncoraTrack(id: 'good', title: 'Good'),
+      ];
+      extractionService.notFoundIds.addAll(['bad1', 'bad2', 'bad3']);
+      await controller.setQueue(chain, autoplay: true);
+      expect(controller.state.currentTrack?.id, 'bad3'); // guard activo
+
+      await controller.resumeAfterCascadeGuard();
+
+      expect(controller.state.currentTrack?.id, 'good');
+      expect(controller.state.engine.playing, isTrue);
+    });
+
+    // Revisión de código (bug real, corregido): resumeAfterCascadeGuard()
+    // reseteaba el contador ANTES de pasar por el guard de reentrada de
+    // skipToNext(). Un segundo tap en "Reintentar" mientras la cascada del
+    // primero sigue en vuelo quedaba bloqueado por el guard de
+    // _isTransitioning (correcto), PERO ya había reseteado el contador a 0
+    // de todos modos — si esa cascada en vuelo ya había acumulado fallos
+    // reales (no solo el bad3 original, sino nuevos fallos posteriores al
+    // "Reintentar"), ese progreso real se borraba en silencio, dándole a la
+    // cascada 3 fallos MÁS de margen de los que le corresponden. Un solo
+    // tap (sin nada pendiente) no alcanza para exhibir el bug, porque
+    // skipToNext() YA resetea el contador él mismo tras pasar su guard —
+    // hace falta que el segundo tap llegue MIENTRAS el contador de la
+    // cascada del primero ya es != 0, para que el reset de más sea
+    // observable.
+    test('7.C.3: un segundo tap en "Reintentar" mientras la cascada del primero sigue en vuelo NO '
+        'debe borrar el progreso real de fallos ya acumulado', () async {
+      final chain = [
+        const SyncoraTrack(id: 'bad1', title: 'Bad 1'),
+        const SyncoraTrack(id: 'bad2', title: 'Bad 2'),
+        const SyncoraTrack(id: 'bad3', title: 'Bad 3'),
+        const SyncoraTrack(id: 'badA', title: 'Bad A'),
+        const SyncoraTrack(id: 'badB', title: 'Bad B'),
+        const SyncoraTrack(id: 'badC', title: 'Bad C'),
+        const SyncoraTrack(id: 'good', title: 'Good'),
+      ];
+      extractionService.notFoundIds.addAll(['bad1', 'bad2', 'bad3', 'badA', 'badB', 'badC']);
+      await controller.setQueue(chain, autoplay: true);
+      expect(controller.state.currentTrack?.id, 'bad3'); // guard activo tras bad1/bad2/bad3
+
+      // Retiene la resolución de 'badB' para poder inyectar el segundo tap
+      // justo en medio de la cascada nueva que dispara el primer
+      // "Reintentar" — después de que badA ya falló (contador real=1) pero
+      // antes de que badB resuelva.
+      final heldB = extractionService.holdResolution('badB');
+      final firstResume = controller.resumeAfterCascadeGuard(); // resetea a 0 -> badA falla (contador=1) -> badB pendiente
+      await pumpEventQueue();
+
+      // Segundo tap mientras badB sigue pendiente: el guard _isTransitioning
+      // de skipToNext() lo descarta correctamente (no dispara una extracción
+      // de más), pero el bug original reseteaba el contador ANTES de llegar
+      // a ese guard, borrando el "1" real que badA ya había acumulado.
+      await controller.resumeAfterCascadeGuard();
+
+      heldB.complete(const ExtractionFailure(
+        requestId: 'req_badB',
+        error: ExtractionError.notFound,
+        message: 'Track not found',
+      ));
+      await firstResume;
+      await pumpEventQueue();
+
+      // Con el fix: badA(1) + badB(2) + badC(3) alcanza el umbral EN badC ->
+      // el guard se dispara de nuevo ahí, nunca llega a "good".
+      // Con el bug: el reset de más del segundo tap deja badA(1) -> [borrado
+      // a 0 por el segundo tap] -> badB(1) + badC(2) -> el guard NO se
+      // dispara y la cadena sigue hasta "good".
+      expect(controller.state.currentTrack?.id, 'badC',
+          reason: 'debe detenerse en badC (3er fallo real de esta cascada nueva: badA+badB+badC), '
+              'no seguir de largo hasta "good" por culpa de un reset de más');
+      expect(controller.state.engine.playing, isFalse);
+      expect(controller.state.notice?.kind, PlayerNoticeKind.cascadeGuard);
+      expect(extractionService.extractCount, 6,
+          reason: 'bad1+bad2+bad3+badA+badB+badC = 6; el segundo tap no debe haber disparado una '
+              'séptima llamada a extractUrl (fue descartado por el guard)');
+    });
+
+    // Revisión de código (bug real, corregido): el test original intercalaba
+    // un `skipToNext()` manual entre el éxito y los dos fallos siguientes —
+    // pero `skipToNext()` YA resetea el contador por sí mismo (es un entry
+    // point manual), así que ese test pasaba igual aunque el reset real (el
+    // que debería dispararse por la extracción exitosa en
+    // `_onPlaybackStartedSuccessfully`) no existiera — confirmado por
+    // mutación quitando ese reset. Reescrito para que TODA la cadena
+    // (fallo→éxito→fallo→fallo→éxito) ocurra sin pasar por NINGÚN entry
+    // point público: el avance desde la pista exitosa usa
+    // `engine.emitError()`, que dispara `_advanceAndPlay()` directamente
+    // desde `_onEngineState` (mismo camino que el test 9 del grupo base),
+    // sin tocar el contador él mismo — a diferencia de skipToNext().
+    test('7.C.3: el contador se resetea al reproducir algo con éxito entre fallos, sin depender '
+        'del reset de ningún entry point manual (falla, éxito, falla, falla no debe activar el '
+        'guard con solo 2 fallos "reales")', () async {
+      final chain = [
+        const SyncoraTrack(id: 'bad1', title: 'Bad 1'),
+        const SyncoraTrack(id: 'good1', title: 'Good 1'),
+        const SyncoraTrack(id: 'bad2', title: 'Bad 2'),
+        const SyncoraTrack(id: 'bad3', title: 'Bad 3'),
+        const SyncoraTrack(id: 'good2', title: 'Good 2'),
+      ];
+      extractionService.notFoundIds.addAll(['bad1', 'bad2', 'bad3']);
+
+      await controller.setQueue(chain, autoplay: true);
+      // bad1 falla (cascada interna, contador=1) -> good1 resuelve y
+      // reproduce con éxito: debe resetear el contador él mismo, sin ayuda
+      // de ningún entry point manual.
+      expect(controller.state.currentTrack?.id, 'good1');
+      expect(controller.state.engine.playing, isTrue);
+
+      // Avanza SOLO vía _onEngineState (error del motor -> _advanceAndPlay()
+      // directo), nunca vía skipToNext()/playFromQueue()/setQueue() — esos
+      // resetearían el contador por su cuenta y enmascararían si el reset
+      // real (el que se está probando acá) funciona o no.
+      engine.emitError();
+      await pumpEventQueue();
+
+      // Si el reset de good1 NO hubiera funcionado, el contador arrastrado
+      // (1) + bad2(2) + bad3(3) alcanzaría el umbral EN bad3 y el guard
+      // cortaría la cadena ahí, sin llegar nunca a good2.
+      expect(controller.state.currentTrack?.id, 'good2',
+          reason: 'solo 2 fallos "reales" tras el reset -> no debe activar el guard');
+      expect(controller.state.engine.playing, isTrue);
+      expect(controller.state.notice?.kind, isNot(PlayerNoticeKind.cascadeGuard),
+          reason: 'el guard nunca debió dispararse en esta cadena');
+    });
+
+    // Revisión de código (bug real, corregido): _playCurrentInternal tiene
+    // DOS caminos de éxito — extracción online y descarga local — y el
+    // reset del contador solo vivía en el de extracción. Una descarga local
+    // reproducida con éxito ENTRE dos fallos lógicos no rompía la racha.
+    test('7.C.3: una descarga local reproducida con éxito entre fallos también resetea el '
+        'contador (no solo la extracción online)', () async {
+      final db = SyncoraDatabase(NativeDatabase.memory());
+      final localEngine = FakeAudioEngine();
+      final localController = SyncoraPlayerController(
+        engine: localEngine,
+        extractionService: extractionService,
+        downloadedTrackDao: db.downloadedTrackDao,
+      );
+      localController.init();
+
+      const downloadedTrack = SyncoraTrack(id: 'local_good', title: 'Local Good');
+      await db.downloadedTrackDao.insertOrUpdate(DownloadedTracksCompanion.insert(
+        trackId: downloadedTrack.deezerId,
+        artistId: 0,
+        albumId: 0,
+        title: downloadedTrack.title,
+        artistName: downloadedTrack.artist,
+        albumName: '',
+        coverUrl: '',
+        localAudioPath: '/fake/${downloadedTrack.id}.mp3',
+        durationMs: 1000,
+        downloadState: const Value(2),
+      ));
+
+      final chain = [
+        const SyncoraTrack(id: 'bad1', title: 'Bad 1'),
+        const SyncoraTrack(id: 'bad2', title: 'Bad 2'),
+        downloadedTrack,
+        const SyncoraTrack(id: 'bad3', title: 'Bad 3'),
+        const SyncoraTrack(id: 'good_final', title: 'Good Final'),
+      ];
+      extractionService.notFoundIds.addAll(['bad1', 'bad2', 'bad3']);
+
+      await localController.setQueue(chain, autoplay: true).timeout(const Duration(seconds: 5));
+      await pumpEventQueue();
+
+      // Una reproducción exitosa (local o extraída) no auto-avanza por sí
+      // sola — se queda sonando. Para seguir probando la cadena hacia
+      // adelante (bad3, luego good_final) sin pasar por ningún entry point
+      // manual (que resetearía el contador por su cuenta y volvería a
+      // enmascarar el bug, igual que en el test de arriba), se usa
+      // `emitError()`: dispara `_advanceAndPlay()` directo desde
+      // `_onEngineState`, sin tocar el contador él mismo.
+      expect(localController.state.currentTrack?.id, 'local_good');
+      expect(localController.state.engine.playing, isTrue);
+      localEngine.emitError();
+      await pumpEventQueue();
+
+      expect(localController.state.currentTrack?.id, 'good_final',
+          reason: 'si el reset de la descarga local no funcionara, bad2(2)+bad3(3) alcanzaría el '
+              'umbral en bad3 y el guard cortaría la cadena ahí, sin llegar a good_final');
+      expect(localController.state.notice?.kind, isNot(PlayerNoticeKind.cascadeGuard));
+
+      localController.dispose();
+      await db.close();
+    });
+
+    // Revisión de código (bug real, corregido): skipToPrevious() era el
+    // único entry point manual que no reseteaba el contador (setQueue/
+    // playFromQueue/skipToNext sí lo hacían). El aviso/marcado gris debe
+    // seguir aplicando igual venga de "siguiente" o "anterior" (eso no
+    // cambia) — lo que se prueba acá es que el CONTADOR no arrastre una
+    // cascada vieja de "siguiente" hacia una sesión de escucha iniciada
+    // con "anterior".
+    test('7.C.3: skipToPrevious() también resetea el contador — sin esto, retroceder desde un '
+        'guard activo y volver a fallar re-dispara el guard con un conteo viejo en vez de '
+        'arrancar limpio', () async {
+      final chain = [
+        const SyncoraTrack(id: 'bad1', title: 'Bad 1'),
+        const SyncoraTrack(id: 'bad2', title: 'Bad 2'),
+        const SyncoraTrack(id: 'bad3', title: 'Bad 3'),
+        const SyncoraTrack(id: 'good', title: 'Good'),
+      ];
+      extractionService.notFoundIds.addAll(['bad1', 'bad2', 'bad3']);
+      await controller.setQueue(chain, autoplay: true);
+      expect(controller.state.currentTrack?.id, 'bad3'); // guard activo: contador=3, motor pausado
+
+      // "Anterior" desde el guard: la posición nunca avanzó de 0 (bad3
+      // jamás llegó a sonar), así que no es un reinicio — retrocede de
+      // verdad al historial, a bad2, y lo reintenta. bad2 sigue en
+      // notFoundIds: vuelve a fallar. Si skipToPrevious() NO reseteara el
+      // contador, este fallo aislado (que normalmente sería el primero de
+      // una cascada nueva) heredaría el 3 de antes y re-dispararía el guard
+      // de inmediato, sin darle a la cadena la chance de llegar a "good".
+      await controller.skipToPrevious();
+
+      expect(controller.state.currentTrack?.id, 'good',
+          reason: 'con el reset, bad2(1)+bad3(2) no alcanzan el umbral -> la cadena llega a "good"');
+      expect(controller.state.engine.playing, isTrue);
+    });
+
+    test('7.C.4: un fallo lógico en la cola MANUAL no descoloca la automática (D-1 se respeta)',
+        () async {
+      final auto1 = const SyncoraTrack(id: 'auto1', title: 'Auto 1');
+      final auto2 = const SyncoraTrack(id: 'auto2', title: 'Auto 2');
+      final manualBad = const SyncoraTrack(id: 'manual_bad', title: 'Manual Rota');
+      extractionService.notFoundIds.add('manual_bad');
+
+      await controller.setQueue([auto1, auto2], autoplay: true); // current=auto1, autoQueue=[auto2]
+      controller.addToQueue(manualBad); // manualQueue=[manual_bad]
+
+      await controller.skipToNext(); // D-1: la manual precede -> intenta manual_bad, falla, cae a auto2
+
+      expect(controller.state.currentTrack?.id, 'auto2',
+          reason: 'tras el fallo de la manual, debe caer en la automática intacta');
+      expect(controller.state.currentOrigin, QueueOrigin.auto);
+      expect(controller.state.manualQueue, isEmpty,
+          reason: 'manual_bad se consumió (se eliminó de SU cola de origen) al fallar');
+      expect(controller.state.autoQueue, isEmpty,
+          reason: 'auto2 pasó a currentTrack; la automática no perdió nada de más');
+      expect(controller.state.unavailableTrackIds, contains('manual_bad'));
+    });
+
+    test('H-6: error rateLimited persistente dispara el aviso persistentError, NO marca la pista '
+        'en gris ni dispara el toast de auto-skip lógico', () async {
+      extractionService.forcedError = ExtractionError.rateLimited;
+
+      await controller.setQueue(
+        const [SyncoraTrack(id: 'track1', title: 'Track 1')],
+        autoplay: true,
+      );
+
+      expect(controller.state.engine.playing, isFalse);
+      // Revisión de código: distingue "se pausó de verdad" de "nunca sonó
+      // nada" (ver comentario equivalente en el test del guard de cascada).
+      expect(engine.pauseCallCount, 1, reason: 'el guard 403/red debe pausar el motor explícitamente');
+      expect(controller.state.notice, isNotNull);
+      expect(controller.state.notice!.kind, PlayerNoticeKind.persistentError);
+      expect(controller.state.notice!.kind, isNot(PlayerNoticeKind.logicalSkip));
+      expect(controller.state.unavailableTrackIds, isEmpty,
+          reason: 'H-6 es un caso distinto de 7.C: no es un auto-skip, la pista no está rota, '
+              'solo pausada');
+    });
+
+    test('el skip manual del usuario (skipToNext sin fallo) NO dispara ningún aviso', () async {
+      final tracks = [
+        const SyncoraTrack(id: 't1', title: 'T1'),
+        const SyncoraTrack(id: 't2', title: 'T2'),
+      ];
+      await controller.setQueue(tracks, autoplay: true);
+      await controller.skipToNext();
+
+      expect(controller.state.currentTrack?.id, 't2');
+      expect(controller.state.notice, isNull);
+      expect(controller.state.unavailableTrackIds, isEmpty);
+    });
+
+    test('el salto silencioso offline (_skipSilently) NO dispara ningún aviso ni marca nada en gris',
+        () async {
+      final db = SyncoraDatabase(NativeDatabase.memory());
+      final offlineController = SyncoraPlayerController(
+        engine: FakeAudioEngine(),
+        extractionService: TestableExtractionService(),
+        downloadedTrackDao: db.downloadedTrackDao,
+        isConnectedGetter: () => false,
+      );
+      offlineController.init();
+
+      final tracks = [
+        const SyncoraTrack(id: 'off1', title: 'Off 1'),
+        const SyncoraTrack(id: 'off2', title: 'Off 2'),
+      ];
+      await offlineController.setQueue(tracks, autoplay: true).timeout(const Duration(seconds: 5));
+      await pumpEventQueue();
+
+      expect(offlineController.state.currentTrack, isNull,
+          reason: 'ninguna está descargada: el salto silencioso termina en "nada sonando"');
+      expect(offlineController.state.notice, isNull);
+      expect(offlineController.state.unavailableTrackIds, isEmpty);
+
+      offlineController.dispose();
+      await db.close();
     });
   });
 

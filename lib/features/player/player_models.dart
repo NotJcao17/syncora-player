@@ -211,3 +211,52 @@ class HistoryEntry {
     );
   }
 }
+
+/// Tipo de aviso puntual que el controlador expone a la UI (Fase 7.C +
+/// hallazgo H-6). Todos son **solo de sesión** (D-21): viven en
+/// [SyncoraPlayerState], nunca se persisten en [PlayerSessionData], y se
+/// resetean solos al reiniciar la app junto con el resto del estado inicial.
+enum PlayerNoticeKind {
+  /// Auto-skip lógico (7.C.1): la pista no se pudo resolver en el catálogo
+  /// (`ExtractionError.notFound`/`unknownError`) estando online, y el
+  /// controlador ya saltó automáticamente a la siguiente. Toast:
+  /// "{título} no disponible — saltada".
+  logicalSkip,
+
+  /// Guard de cascada (7.C.3): 3 fallos lógicos seguidos, sin ningún éxito
+  /// de reproducción entre medio, detuvieron el auto-skip (no sigue
+  /// saltando solo) y dejaron el motor pausado.
+  cascadeGuard,
+
+  /// Error persistente (403/red) tras 1 reintento (H-6): la pausa inmediata
+  /// ya funcionaba desde la Fase 1 (guard anti-bucle), pero el aviso visual
+  /// que la acompaña nunca llegó a conectarse a ningún widget. Mensaje
+  /// distinto al de [logicalSkip] — nunca dice "no disponible — saltada",
+  /// porque acá no hubo ningún skip, solo una pausa.
+  persistentError,
+}
+
+/// Aviso puntual del reproductor para la UI (Fase 7.C + H-6). Cada instancia
+/// representa UN evento — [id] es monotónico dentro de la vida del
+/// controlador (ver `_noticeCounter` en `SyncoraPlayerController`) para que
+/// la UI pueda distinguir "evento nuevo" de "el mismo estado, solo un
+/// rebuild", incluso en el caso poco probable de que dos eventos distintos
+/// terminen con el mismo [message].
+@immutable
+class PlayerNotice {
+  final int id;
+  final PlayerNoticeKind kind;
+  final String message;
+
+  /// Solo relevante para [PlayerNoticeKind.logicalSkip]: título de la pista
+  /// saltada, por si la UI quiere usarlo aparte del texto ya armado en
+  /// [message].
+  final String? trackTitle;
+
+  const PlayerNotice({
+    required this.id,
+    required this.kind,
+    required this.message,
+    this.trackTitle,
+  });
+}

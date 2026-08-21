@@ -115,6 +115,23 @@ Inspeccionando el código para planear el modo sin cuenta (7.I), tres hallazgos:
 - **El router ya tiene el gate en un solo lugar:** `app_router.dart:59` redirige a `/auth` si
   `currentUser == null`. Es exactamente el punto donde entra el modo local.
 
+### H-6. `lastError`/`lastErrorMessage` del controlador nunca llegan a la UI (descubierto al planear 7.C)
+
+Al implementar la Fase 7.C (toast de auto-skip lógico) se verificó que `SyncoraPlayerState.lastError`/
+`lastErrorMessage` — el campo que la Fase 1 diseñó para el "aviso visual" de la pausa por 403
+persistente (Documento Maestro §2.3, guard anti-bucle) — **no tiene ningún consumidor en la UI**:
+`grep` de `lastError`/`lastErrorMessage` en `lib/` solo encuentra el propio
+`syncora_player_controller.dart` donde se escribe, y no existe ningún `ref.listen` sobre el estado
+del reproductor en toda la app. La "pausa inmediata" del guard 403 sí funciona (el motor se detiene
+de verdad), pero el "aviso visual" que la acompaña, pese a estar en el diseño desde la Fase 1, nunca
+se conectó a ningún widget — el usuario ve la música detenerse sin explicación.
+
+→ Como 7.C necesita exactamente el mismo mecanismo (escuchar cambios de `lastError`/
+`lastErrorMessage` y mostrar feedback al usuario) para el toast nuevo de auto-skip lógico, se
+aprovecha la misma fase para cablear también el aviso del guard 403/red que quedó pendiente desde
+Fase 1 — no es una decisión nueva, es completar una que ya estaba cerrada y que resultó estar a
+medio implementar.
+
 ---
 
 ## Datos verificados en la sesión (Gemini y Deezer)
@@ -333,17 +350,17 @@ El orden no es negociable en tres puntos:
 > **No** toca la política de 403/red (máx. 1 reintento → pausa, Fase 1, ya cerrada) ni el
 > skip silencioso offline (`_skipSilently`, Fase 6, ya cerrado).
 
-- [ ] **7.C.1** Toast al auto-saltar por error lógico: *"{título} no disponible — saltada"*.
+- [x] **7.C.1** Toast al auto-saltar por error lógico: *"{título} no disponible — saltada"*.
       **Solo** en este caso: ni en el skip por red (que ya tiene su flujo de pausa+aviso) ni en el
       skip manual del usuario.
-- [ ] **7.C.2** Marcar la pista en gris en la cola/lista. Estado **de sesión, no persistido**
+- [x] **7.C.2** Marcar la pista en gris en la cola/lista. Estado **de sesión, no persistido**
       (D-21).
-- [ ] **7.C.3** Guard de cascada: si fallan **3 pistas seguidas por error lógico**, detener el
+- [x] **7.C.3** Guard de cascada: si fallan **3 pistas seguidas por error lógico**, detener el
       auto-skip y mostrar un aviso resumen con opción de continuar o pausar. Evita vaciar una
       playlist entera en silencio cuando hay muchos matches rotos.
-- [ ] **7.C.4** Cablear el salto al modelo de cola dual (7.A): saber de qué cola vino la pista
+- [x] **7.C.4** Cablear el salto al modelo de cola dual (7.A): saber de qué cola vino la pista
       fallida, eliminarla de la correcta y no romper el FIFO de la manual.
-- [ ] **7.C.5** Tests: 1 fallo aislado → salta y avisa; 3 seguidos → se detiene; el contador se
+- [x] **7.C.5** Tests: 1 fallo aislado → salta y avisa; 3 seguidos → se detiene; el contador se
       resetea al reproducir algo correctamente; fallo en cola manual no descoloca la automática.
 
 **Descartado a propósito:** acción "Corregir coincidencia de YT" dentro del toast (simplicidad).

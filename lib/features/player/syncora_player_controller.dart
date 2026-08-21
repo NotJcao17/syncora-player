@@ -67,6 +67,20 @@ class SyncoraPlayerState {
   final ExtractionError? lastError;
   final String? lastErrorMessage;
 
+  /// Ids de pista marcadas "no disponible esta sesión" tras un fallo lógico
+  /// de extracción (Fase 7.C.2, D-21). **Solo de sesión, nunca persistido**:
+  /// vive en memoria dentro de este estado, así que se resetea solo al
+  /// reiniciar el controlador (la app) — nunca se escribe en
+  /// `PlayerSessionData`/`PlayerSessionStorage` a propósito.
+  final Set<String> unavailableTrackIds;
+
+  /// Último aviso puntual del reproductor para la UI (Fase 7.C + H-6). A
+  /// diferencia de [lastError]/[lastErrorMessage] (que se limpian al
+  /// avanzar con éxito, ver `_advance()`), este campo NUNCA se limpia solo
+  /// — es un registro de "último evento", y la UI lo consume comparando
+  /// [PlayerNotice.id] contra el de la emisión anterior (ver `app_shell.dart`).
+  final PlayerNotice? notice;
+
   const SyncoraPlayerState({
     this.currentTrack,
     this.currentOrigin,
@@ -81,6 +95,8 @@ class SyncoraPlayerState {
     this.activeContextId,
     this.lastError,
     this.lastErrorMessage,
+    this.unavailableTrackIds = const {},
+    this.notice,
   });
 
   static const SyncoraPlayerState initial = SyncoraPlayerState();
@@ -103,6 +119,8 @@ class SyncoraPlayerState {
     ExtractionError? lastError,
     String? lastErrorMessage,
     bool clearError = false,
+    Set<String>? unavailableTrackIds,
+    PlayerNotice? notice,
   }) {
     return SyncoraPlayerState(
       currentTrack: clearCurrentTrack ? null : (currentTrack ?? this.currentTrack),
@@ -119,6 +137,8 @@ class SyncoraPlayerState {
       lastError: clearError ? null : (lastError ?? this.lastError),
       lastErrorMessage:
           clearError ? null : (lastErrorMessage ?? this.lastErrorMessage),
+      unavailableTrackIds: unavailableTrackIds ?? this.unavailableTrackIds,
+      notice: notice ?? this.notice,
     );
   }
 }
@@ -173,6 +193,59 @@ class SyncoraPlayerController extends ChangeNotifier {
 
   /// Evita disparar fetches de radio concurrentes (Fase 7.B).
   bool _isFetchingRadio = false;
+
+  /// Umbral del guard de cascada de auto-skip lógico (7.C.3): al llegar a
+  /// esta cantidad de fallos lógicos SEGUIDOS (sin ningún éxito de
+  /// reproducción entre medio), el auto-skip se detiene en vez de seguir
+  /// saltando solo — evita vaciar una playlist entera en silencio cuando hay
+  /// muchos matches rotos en fila.
+  static const int _cascadeGuardThreshold = 3;
+
+  /// Contador del guard de cascada (7.C.3). Se incrementa en cada fallo
+  /// lógico (notFound/unknownError) que toma la rama de auto-skip dentro de
+  /// `_handleExtractionError`. Se resetea a 0 en el mismo punto donde ya se
+  /// resetea `_retryPolicy` por éxito de extracción (reproducción lograda),
+  /// y también en los puntos de entrada donde el usuario interviene
+  /// manualmente (`skipToNext` público, `playFromQueue`, `setQueue`) para no
+  /// arrastrar un conteo viejo a una sesión de escucha distinta. La cascada
+  /// interna de `_handleExtractionError`/`_advanceAndPlay` NUNCA pasa por
+  /// esos puntos de entrada (ver docstring de `_advanceAndPlay`), así que
+  /// resetear ahí nunca pisa un conteo en curso.
+  int _consecutiveLogicalFailures = 0;
+
+  /// Punto único de "reproducción lograda" (7.C.3, revisión de código: bug
+  /// real corregido). `_playCurrentInternal` tiene DOS caminos de éxito —
+  /// extracción online (`ExtractionSuccess`) y descarga local (que retorna
+  /// antes de llegar siquiera al bloque de extracción) — y ambos rompen por
+  /// igual una racha de fallos lógicos. Antes el reset solo vivía en el
+  /// branch de `ExtractionSuccess`: una descarga local reproducida con
+  /// éxito ENTRE dos fallos lógicos no lo rompía, así que el guard de
+  /// cascada podía dispararse con fallos separados por una reproducción
+  /// real (ej. cola `[bad1, bad2, descargada, bad3]` disparaba el guard en
+  /// bad3 con solo 3 fallos, ninguno consecutivo de verdad). Factorizado
+  /// para que ambos caminos de éxito llamen al mismo punto.
+  void _onPlaybackStartedSuccessfully() {
+    _consecutiveLogicalFailures = 0;
+  }
+
+  /// Contador monotónico de [PlayerNotice] (Fase 7.C + H-6): cada aviso
+  /// nuevo que el controlador expone a la UI recibe un id distinto, para que
+  /// la UI pueda distinguir "evento nuevo" de "el mismo estado, solo un
+  /// rebuild" (ver docstring de `SyncoraPlayerState.notice`).
+  int _noticeCounter = 0;
+
+  PlayerNotice _nextNotice({
+    required PlayerNoticeKind kind,
+    required String message,
+    String? trackTitle,
+  }) {
+    return PlayerNotice(
+      id: ++_noticeCounter,
+      kind: kind,
+      message: message,
+      trackTitle: trackTitle,
+    );
+  }
 
   /// Contador monotónico de "sesión de contexto" (Fase 7.B, revisión: bug
   /// #1). Se incrementa en CADA llamada a [setQueue] (con o sin
@@ -234,6 +307,10 @@ class SyncoraPlayerController extends ChangeNotifier {
     String? activeContextId,
   }) async {
     _restoredPositionSeconds = null;
+    // 7.C.3: setQueue() es una intervención del usuario (nuevo contexto de
+    // escucha) — no debe arrastrar un conteo de fallos lógicos de la sesión
+    // de escucha anterior (ver docstring de `_consecutiveLogicalFailures`).
+    _consecutiveLogicalFailures = 0;
     // Cada llamada a setQueue() es una sesión de contexto nueva (Fase 7.B,
     // revisión: bug #1) — incrementa en AMBAS ramas (tracks.isEmpty incluida)
     // para que un lote de radio en vuelo, originado antes de este cambio de
@@ -250,6 +327,10 @@ class SyncoraPlayerController extends ChangeNotifier {
         manualQueue: _state.manualQueue,
         history: List.unmodifiable(newHistory),
         clearContext: true,
+        // D-21: el marcado "no disponible esta sesión" es de sesión, no de
+        // contexto — vaciar la cola no debe "olvidar" pistas ya marcadas
+        // rotas mientras la app siga abierta.
+        unavailableTrackIds: _state.unavailableTrackIds,
       );
       _notify();
       _saveSession();
@@ -295,6 +376,9 @@ class SyncoraPlayerController extends ChangeNotifier {
   Future<void> playFromQueue(QueueOrigin origin, int index) async {
     if (_isTransitioning) return;
     _isTransitioning = true;
+    // 7.C.3: elegir una pista de la cola a mano es una intervención del
+    // usuario — no debe arrastrar un conteo de fallos lógicos viejo.
+    _consecutiveLogicalFailures = 0;
     try {
       await _playFromQueueInternal(origin, index);
     } finally {
@@ -355,11 +439,37 @@ class SyncoraPlayerController extends ChangeNotifier {
   Future<void> skipToNext() async {
     if (_isTransitioning) return;
     _isTransitioning = true;
+    // 7.C.3: un skip manual del usuario (botón "siguiente", o el llamador
+    // interno _onComplete()/resumeAfterCascadeGuard() tras una reproducción
+    // lograda o una intervención explícita) no debe arrastrar un conteo de
+    // fallos lógicos de una cadena de auto-skip anterior — la cascada
+    // interna nunca pasa por este método público (ver docstring de
+    // _advanceAndPlay), así que resetear acá nunca pisa un conteo en curso.
+    _consecutiveLogicalFailures = 0;
     try {
       await _advanceAndPlay();
     } finally {
       _isTransitioning = false;
     }
+  }
+
+  /// Acción "Reintentar" del aviso de guard de cascada (7.C.3): intenta
+  /// avanzar una vez más a través del [skipToNext] público (guardado por
+  /// [_isTransitioning] como cualquier otro skip iniciado por el usuario).
+  ///
+  /// Revisión de código (bug real, corregido): el reset del contador NO se
+  /// hace acá antes de llamar a [skipToNext] — [skipToNext] ya lo resetea
+  /// él mismo, pero recién DESPUÉS de pasar su propio guard de reentrada
+  /// (`if (_isTransitioning) return;`). Resetear acá primero rompía esa
+  /// garantía: si el usuario tocaba "Reintentar" dos veces rápido mientras
+  /// la cascada seguía en vuelo, el segundo tap no hacía nada útil (el
+  /// guard de [skipToNext] lo descartaba) pero YA había reseteado el
+  /// contador a 0 — la cascada en curso necesitaba entonces 3 fallos MÁS
+  /// para volver a dispararse, pudiendo posponerse indefinidamente a fuerza
+  /// de taps repetidos. Delegar el reset por completo a [skipToNext] cierra
+  /// ese hueco.
+  Future<void> resumeAfterCascadeGuard() async {
+    await skipToNext();
   }
 
   /// Núcleo de "avanzar y reproducir", SIN el guard de [skipToNext]. Existe
@@ -462,6 +572,13 @@ class SyncoraPlayerController extends ChangeNotifier {
   Future<void> skipToPrevious() async {
     if (_isTransitioning) return;
     _isTransitioning = true;
+    // 7.C.3: mismo criterio que los demás entry points manuales
+    // (skipToNext/playFromQueue/setQueue) — "anterior" también puede
+    // terminar en _handleExtractionError si la pista anterior falla (el
+    // aviso/marcado gris debe seguir aplicando igual, eso no cambia), pero
+    // no debe arrastrar el conteo de una cadena de auto-skip previa hacia
+    // "siguiente".
+    _consecutiveLogicalFailures = 0;
     try {
       final now = DateTime.now();
       final isDoubleTap = _lastPrevTapTime != null && now.difference(_lastPrevTapTime!) < const Duration(milliseconds: 1500);
@@ -1126,6 +1243,7 @@ bool get _isTestEnv {
         if (isStale()) return;
         if (downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty) {
           _log('[Play] Pista local descargada encontrada: ${downloaded.localAudioPath}. Cargando sin pasar por ExtractionIsolate.');
+          _onPlaybackStartedSuccessfully();
           await _engine.setLocalSource(downloaded.localAudioPath);
 
           if (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0) {
@@ -1174,6 +1292,7 @@ bool get _isTestEnv {
       case ExtractionSuccess(:final streamUrl, :final headers):
         _log('[Play] URL resuelta, cargando en el motor...');
         _retryPolicy.reset(track.id); // extracción exitosa: resetear contador
+        _onPlaybackStartedSuccessfully();
         try {
           await _engine.setUrl(streamUrl, headers: headers);
 
@@ -1215,9 +1334,43 @@ bool get _isTestEnv {
     }
 
     if (error == ExtractionError.notFound || error == ExtractionError.unknownError) {
+      _consecutiveLogicalFailures++;
+      // 7.C.2 (D-21): marcado de sesión, nunca persistido — nueva instancia
+      // de Set, nunca mutación in-place (mismo patrón que las colas).
+      final updatedUnavailable = Set<String>.from(_state.unavailableTrackIds)..add(track.id);
+
+      if (_consecutiveLogicalFailures >= _cascadeGuardThreshold) {
+        // 7.C.3: guard de cascada — NO se llama a _advanceAndPlay() de
+        // nuevo (eso seguiría saltando pistas rotas en silencio). Se
+        // pausa el motor, igual que el guard 403/red, y se deja un aviso
+        // resumen para que la UI ofrezca continuar o pausar.
+        _log('[Play] Guard de cascada: $_consecutiveLogicalFailures fallos lógicos seguidos '
+            '— deteniendo auto-skip.');
+        await _engine.pause();
+        _state = _state.copyWith(
+          lastError: error,
+          lastErrorMessage: message,
+          unavailableTrackIds: Set.unmodifiable(updatedUnavailable),
+          notice: _nextNotice(
+            kind: PlayerNoticeKind.cascadeGuard,
+            message: 'Varias canciones seguidas no están disponibles. '
+                'Auto-skip detenido.',
+          ),
+        );
+        _notify();
+        _saveSession();
+        return;
+      }
+
       _state = _state.copyWith(
         lastError: error,
         lastErrorMessage: message,
+        unavailableTrackIds: Set.unmodifiable(updatedUnavailable),
+        notice: _nextNotice(
+          kind: PlayerNoticeKind.logicalSkip,
+          message: '${track.title} no disponible — saltada',
+          trackTitle: track.title,
+        ),
       );
       _notify();
       // Cascada interna (posiblemente ya anidada dentro de un skipToNext()
@@ -1235,9 +1388,19 @@ bool get _isTestEnv {
 
     _log('[Play] Pausa inmediata por $error persistente (guard 403).');
     await _engine.pause();
+    final resolvedMessage = message ?? 'Reproducción pausada por error persistente.';
     _state = _state.copyWith(
       lastError: error,
-      lastErrorMessage: message ?? 'Reproducción pausada por error persistente.',
+      lastErrorMessage: resolvedMessage,
+      // H-6: la pausa por 403/red persistente ya funcionaba desde la Fase 1,
+      // pero el aviso visual que la acompaña nunca llegó a conectarse a
+      // ningún widget — cablear el mismo mecanismo de `notice` que 7.C usa
+      // para el toast de auto-skip lógico, con su propio tipo (nunca dice
+      // "no disponible — saltada": acá no hubo skip, solo una pausa).
+      notice: _nextNotice(
+        kind: PlayerNoticeKind.persistentError,
+        message: resolvedMessage,
+      ),
     );
     _notify();
     _saveSession();

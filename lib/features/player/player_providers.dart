@@ -112,5 +112,12 @@ final currentTrackProvider = Provider<SyncoraTrack?>((ref) =>
 final playerStateProvider = Provider<SyncoraPlayerState>((ref) =>
     ref.watch(syncoraPlayerControllerProvider).state);
 
+/// Selector reactivo: ids de pista marcadas "no disponible esta sesión"
+/// (Fase 7.C.2, D-21). Deriva de `SyncoraPlayerState.unavailableTrackIds`,
+/// que vive en memoria dentro del controlador — se resetea solo al
+/// reiniciar la app (D-21 se cumple gratis, sin persistencia aparte).
+final unavailableTrackIdsProvider = Provider<Set<String>>((ref) =>
+    ref.watch(playerStateProvider).unavailableTrackIds);
+
 /// StateProvider para controlar la apertura del panel de cola de reproducción en escritorio
 final isQueueOpenProvider = StateProvider<bool>((ref) => false);
