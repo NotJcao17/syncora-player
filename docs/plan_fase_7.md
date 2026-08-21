@@ -302,26 +302,26 @@ El orden no es negociable en tres puntos:
 | Filtro de calidad | `rank` ≥ el mismo umbral de "búsqueda popular" (`SearchRanking.popularTrackMinScore`, rank ~300k) |
 | Selección de semillas | **Muestreo aleatorio ponderado por frecuencia** (no top-N fijo) |
 
-- [ ] **7.B.1** Añadir a `DeezerApi` (`lib/data/apis/deezer_api.dart`) los endpoints
+- [x] **7.B.1** Añadir a `DeezerApi` (`lib/data/apis/deezer_api.dart`) los endpoints
       `/artist/{id}/radio` y `/artist/{id}/related`, reusando la caché LRU genérica `_LruCache`
       que ya existe ahí.
-- [ ] **7.B.2** Servicio de radio: cuenta frecuencia de artistas en el contexto actual
+- [x] **7.B.2** Servicio de radio: cuenta frecuencia de artistas en el contexto actual
       (playlist/cola), muestrea 5 semillas ponderadas por frecuencia, pide sus radios en
       **paralelo** (`Future.wait`, como ya se hizo en A11 del plan del buscador).
-- [ ] **7.B.3** Pipeline "dirigido por cuota": filtrar por rank → deduplicar contra la cola actual,
+- [x] **7.B.3** Pipeline "dirigido por cuota": filtrar por rank → deduplicar contra la cola actual,
       la playlist de origen y las últimas N reproducidas → si no se llega a 25, seguir tirando de
       más artistas (siguientes por frecuencia, o `/related` de los ya elegidos) hasta completar o
       agotar fuentes razonables. Pedir con buffer para no quedarse corto tras filtrar.
-- [ ] **7.B.4** Cubrir explícitamente los casos límite de variedad de artistas:
+- [x] **7.B.4** Cubrir explícitamente los casos límite de variedad de artistas:
   - **1 solo artista** (álbum): radio del artista + `/related` para no repetir siempre lo mismo
   - **2-4 artistas**: usar los que hay + completar con `/related`
   - **Muchos artistas** (playlist variada): el muestreo ponderado ya lo resuelve
   - **Cola vacía / sin contexto**: fallback a `/radio/genres` o charts
-- [ ] **7.B.5** Anexar el lote **al final de la cola automática**, en segundo plano, sin tocar la
+- [x] **7.B.5** Anexar el lote **al final de la cola automática**, en segundo plano, sin tocar la
       manual ni interrumpir la reproducción.
-- [ ] **7.B.6** Toggle en Configuración para desactivarlo (`settings_screen.dart` ya tiene el
+- [x] **7.B.6** Toggle en Configuración para desactivarlo (`settings_screen.dart` ya tiene el
       patrón de `SwitchListTile`, es trivial). Por defecto **ON**.
-- [ ] **7.B.7** Tests con fixtures grabadas de `/artist/{id}/radio` y `/related` (mismo patrón que
+- [x] **7.B.7** Tests con fixtures grabadas de `/artist/{id}/radio` y `/related` (mismo patrón que
       `test/fixtures/deezer_search/`): muestreo ponderado, deduplicación, filtro de rank,
       completado de semillas cuando hay menos de 5 artistas.
 

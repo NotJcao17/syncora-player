@@ -5,9 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:syncora_player/core/extraction/extraction_service.dart';
 import 'package:syncora_player/core/extraction/models/extraction_request.dart';
 import 'package:syncora_player/core/extraction/models/extraction_result.dart';
+import 'package:syncora_player/data/apis/deezer_api.dart';
 import 'package:syncora_player/data/local_db/syncora_database.dart';
 import 'package:syncora_player/features/player/audio_engine/audio_engine_state.dart';
 import 'package:syncora_player/features/player/player_models.dart';
+import 'package:syncora_player/features/player/radio/radio_service.dart';
 import 'package:syncora_player/features/player/session/player_session_storage.dart';
 import 'package:syncora_player/features/player/syncora_player_controller.dart';
 
@@ -186,6 +188,50 @@ class TestableExtractionService implements ExtractionService {
   @override
   void dispose() {
     _logController.close();
+  }
+}
+
+/// Fake de [RadioService] (Fase 7.B): sobreescribe [generateBatch] para no
+/// hacer ninguna llamada de red real. `RadioService` es una clase concreta
+/// (no una interfaz), así que extenderla y sobreescribir el único método
+/// con I/O es el equivalente directo a `FakeAudioEngine`/
+/// `TestableExtractionService` de este mismo archivo.
+class FakeRadioService extends RadioService {
+  FakeRadioService({this.nextBatch = const []});
+
+  /// Lote que devolverá `generateBatch` la próxima vez que se llame (salvo
+  /// que haya una resolución retenida vía [holdNextBatch]).
+  List<SyncoraTrack> nextBatch;
+  int callCount = 0;
+  List<SyncoraTrack>? lastContextTracks;
+  Set<String>? lastExcludeIds;
+  Completer<List<SyncoraTrack>>? _held;
+
+  /// Retiene la resolución de la próxima llamada a `generateBatch` hasta que
+  /// el test complete el `Completer` devuelto — reproduce a voluntad la
+  /// carrera de "el lote llega tarde, después de que el usuario ya cambió
+  /// de contexto" (mismo patrón que `TestableExtractionService.holdResolution`
+  /// en este archivo).
+  Completer<List<SyncoraTrack>> holdNextBatch() {
+    final completer = Completer<List<SyncoraTrack>>();
+    _held = completer;
+    return completer;
+  }
+
+  @override
+  Future<List<SyncoraTrack>> generateBatch({
+    required List<SyncoraTrack> contextTracks,
+    required Set<String> excludeIds,
+  }) async {
+    callCount++;
+    lastContextTracks = contextTracks;
+    lastExcludeIds = excludeIds;
+    final held = _held;
+    if (held != null) {
+      _held = null;
+      return held.future;
+    }
+    return nextBatch;
   }
 }
 
@@ -972,6 +1018,323 @@ void main() {
               'manual_good se consumió al reproducirse');
       expect(controller.state.autoQueue.map((t) => t.id).toList(), ['auto2'],
           reason: 'la automática no debe tocarse en absoluto mientras la manual tenga un candidato');
+    });
+  });
+
+  // Fase 7.B: radio / cola infinita (sin IA, D-10). El disparo vive al final
+  // de playCurrent() (vía finally, ver _maybeFetchRadio en el controlador),
+  // así que basta con avanzar la reproducción con una autoQueue corta para
+  // ejercitarlo — no hace falta instrumentar cada método que toca la cola
+  // por separado.
+  group('SyncoraPlayerController — radio / cola infinita (Fase 7.B)', () {
+    late FakeAudioEngine engine;
+    late TestableExtractionService extractionService;
+    late FakeRadioService radioService;
+
+    SyncoraPlayerController buildController({bool radioEnabled = true}) {
+      return SyncoraPlayerController(
+        engine: engine,
+        extractionService: extractionService,
+        radioService: radioService,
+        radioEnabledGetter: () => radioEnabled,
+      );
+    }
+
+    setUp(() {
+      engine = FakeAudioEngine();
+      extractionService = TestableExtractionService();
+      radioService = FakeRadioService();
+    });
+
+    test('se dispara cuando autoQueue queda en <=5 tras un avance y anexa el lote sin tocar manualQueue',
+        () async {
+      final controller = buildController();
+      controller.init();
+      addTearDown(controller.dispose);
+
+      radioService.nextBatch = const [
+        SyncoraTrack(id: 'radio1', title: 'Radio 1'),
+        SyncoraTrack(id: 'radio2', title: 'Radio 2'),
+      ];
+
+      final tracks = [
+        const SyncoraTrack(id: 'c1', title: 'C1', artistId: 1),
+        const SyncoraTrack(id: 'c2', title: 'C2', artistId: 1),
+      ]; // current=c1, autoQueue=[c2] (1 <= 5: dispara en el playCurrent de setQueue)
+
+      // setQueue primero: con nada sonando, addToQueue promovería la pista a
+      // currentTrack en vez de dejarla en manualQueue (P0.3, ver test de
+      // arriba) — se agrega DESPUÉS para aislar el comportamiento "no toca
+      // manualQueue" de la radio, no el de promoción.
+      await controller.setQueue(tracks, autoplay: true);
+      controller.addToQueue(const SyncoraTrack(id: 'manual1', title: 'Manual'));
+      await pumpEventQueue();
+
+      expect(radioService.callCount, 1);
+      expect(controller.state.autoQueue.map((t) => t.id).toList(), ['c2', 'radio1', 'radio2'],
+          reason: 'el lote se anexa AL FINAL de autoQueue');
+      expect(controller.state.manualQueue.map((t) => t.id).toList(), ['manual1'],
+          reason: 'la radio nunca toca la cola manual (D-1)');
+    });
+
+    test('no dispara si el toggle de Configuración está desactivado', () async {
+      final controller = buildController(radioEnabled: false);
+      controller.init();
+      addTearDown(controller.dispose);
+
+      radioService.nextBatch = const [SyncoraTrack(id: 'radio1', title: 'Radio 1')];
+      final tracks = [
+        const SyncoraTrack(id: 'c1', title: 'C1', artistId: 1),
+        const SyncoraTrack(id: 'c2', title: 'C2', artistId: 1),
+      ];
+
+      await controller.setQueue(tracks, autoplay: true);
+      await pumpEventQueue();
+
+      expect(radioService.callCount, 0);
+      expect(controller.state.autoQueue.map((t) => t.id).toList(), ['c2']);
+    });
+
+    test('no dispara si autoQueue todavía tiene más de 5 pistas', () async {
+      final controller = buildController();
+      controller.init();
+      addTearDown(controller.dispose);
+
+      radioService.nextBatch = const [SyncoraTrack(id: 'radio1', title: 'Radio 1')];
+      final tracks = List.generate(
+        8,
+        (i) => SyncoraTrack(id: 'c$i', title: 'C$i', artistId: 1),
+      ); // current=c0, autoQueue tiene 7 pistas (> 5)
+
+      await controller.setQueue(tracks, autoplay: true);
+      await pumpEventQueue();
+
+      expect(radioService.callCount, 0);
+      expect(controller.state.autoQueue.length, 7);
+    });
+
+    test('un fetch ya en curso no dispara uno segundo en paralelo (guard _isFetchingRadio)', () async {
+      final controller = buildController();
+      controller.init();
+      addTearDown(controller.dispose);
+
+      final hold = radioService.holdNextBatch();
+      final tracks = [
+        const SyncoraTrack(id: 'c1', title: 'C1', artistId: 1),
+        const SyncoraTrack(id: 'c2', title: 'C2', artistId: 1),
+      ];
+      await controller.setQueue(tracks, autoplay: true); // dispara el primer fetch, queda retenido
+      await pumpEventQueue();
+      expect(radioService.callCount, 1);
+
+      // Otra transición mientras el primer fetch sigue pendiente: no debe
+      // disparar un segundo fetch en paralelo.
+      await controller.skipToNext();
+      await pumpEventQueue();
+      expect(radioService.callCount, 1, reason: 'el guard _isFetchingRadio evita fetches concurrentes');
+
+      hold.complete(const [SyncoraTrack(id: 'radioX', title: 'Radio X')]);
+      await pumpEventQueue();
+    });
+
+    test('un lote que llega tarde tras un cambio de contexto (activeContextId) se descarta en silencio',
+        () async {
+      final controller = buildController();
+      controller.init();
+      addTearDown(controller.dispose);
+
+      final hold = radioService.holdNextBatch();
+      final tracksA = [
+        const SyncoraTrack(id: 'a1', title: 'A1', artistId: 1),
+        const SyncoraTrack(id: 'a2', title: 'A2', artistId: 1),
+      ];
+      await controller.setQueue(tracksA, autoplay: true, activeContextId: 'ctx_a');
+      await pumpEventQueue();
+      expect(radioService.callCount, 1, reason: 'el primer setQueue ya dispara el fetch (autoQueue=1<=5)');
+
+      // El usuario cambia de contexto ANTES de que el fetch retenido resuelva.
+      // (El guard _isFetchingRadio ya bloquearía un segundo disparo de
+      // cualquier forma mientras el primero sigue pendiente; se deja
+      // autoQueue > 5 aquí para que el escenario sea realista incluso si
+      // ese guard cambiara de implementación.)
+      final tracksB = [
+        const SyncoraTrack(id: 'b1', title: 'B1', artistId: 2),
+        const SyncoraTrack(id: 'b2', title: 'B2', artistId: 2),
+        const SyncoraTrack(id: 'b3', title: 'B3', artistId: 2),
+        const SyncoraTrack(id: 'b4', title: 'B4', artistId: 2),
+        const SyncoraTrack(id: 'b5', title: 'B5', artistId: 2),
+        const SyncoraTrack(id: 'b6', title: 'B6', artistId: 2),
+        const SyncoraTrack(id: 'b7', title: 'B7', artistId: 2),
+      ]; // autoQueue queda con 6 pistas (> 5).
+      await controller.setQueue(tracksB, autoplay: true, activeContextId: 'ctx_b');
+      await pumpEventQueue();
+
+      // Ahora resuelve el fetch viejo, originado para ctx_a.
+      hold.complete(const [SyncoraTrack(id: 'stale_radio', title: 'Stale')]);
+      await pumpEventQueue();
+
+      expect(
+        controller.state.autoQueue.any((t) => t.id == 'stale_radio'),
+        isFalse,
+        reason: 'el lote se originó para ctx_a; el contexto activo ya es ctx_b, debe descartarse',
+      );
+      expect(controller.state.activeContextId, 'ctx_b');
+    });
+
+    // Revisión independiente de 7.B, bug #1: comparar `activeContextId` no
+    // protegía nada en el caso común, porque la mayoría de los `setQueue()`
+    // de la app (búsqueda, inicio, artista, track_tile) lo pasan en `null`
+    // — `null != null` nunca es verdadero. El fix usa un contador
+    // `_contextGeneration` que se incrementa en TODO `setQueue()`, tenga o
+    // no `activeContextId`.
+    test('un lote que llega tarde tras cambiar de contexto SIN activeContextId (ambos null) también se descarta',
+        () async {
+      final controller = buildController();
+      controller.init();
+      addTearDown(controller.dispose);
+
+      final hold = radioService.holdNextBatch();
+      final tracksA = [
+        const SyncoraTrack(id: 'a1', title: 'A1', artistId: 1),
+        const SyncoraTrack(id: 'a2', title: 'A2', artistId: 1),
+      ];
+      await controller.setQueue(tracksA, autoplay: true); // sin activeContextId (null)
+      await pumpEventQueue();
+      expect(radioService.callCount, 1);
+
+      // El usuario reproduce otra canción desde búsqueda (también sin
+      // activeContextId) ANTES de que el fetch retenido resuelva — el
+      // escenario exacto reportado en la revisión.
+      final tracksB = [
+        const SyncoraTrack(id: 'b1', title: 'B1', artistId: 2),
+        const SyncoraTrack(id: 'b2', title: 'B2', artistId: 2),
+      ];
+      await controller.setQueue(tracksB, autoplay: true); // también sin activeContextId (null)
+      await pumpEventQueue();
+
+      hold.complete(const [SyncoraTrack(id: 'stale_radio', title: 'Stale')]);
+      await pumpEventQueue();
+
+      expect(
+        controller.state.autoQueue.any((t) => t.id == 'stale_radio'),
+        isFalse,
+        reason: 'con `activeContextId` nulo en ambos setQueue, "null != null" nunca detectaba el '
+            'cambio de contexto — el contador de generación sí debe detectarlo',
+      );
+      expect(controller.state.currentTrack?.id, 'b1');
+    });
+
+    // Contraparte del test anterior: el fix no debe ser tan agresivo que
+    // descarte lotes válidos al simplemente avanzar dentro del MISMO
+    // contexto (_advance()/skipToNext() no incrementan _contextGeneration).
+    test('un lote que resuelve mientras se avanza DENTRO del mismo contexto (misma playlist) sí se anexa',
+        () async {
+      final controller = buildController();
+      controller.init();
+      addTearDown(controller.dispose);
+
+      final hold = radioService.holdNextBatch();
+      final tracks = [
+        const SyncoraTrack(id: 'p1', title: 'P1', artistId: 1),
+        const SyncoraTrack(id: 'p2', title: 'P2', artistId: 1),
+      ];
+      await controller.setQueue(tracks, autoplay: true, activeContextId: 'ctx_p');
+      await pumpEventQueue();
+      expect(radioService.callCount, 1);
+
+      // Avanza dentro de la MISMA playlist (no un setQueue nuevo) mientras
+      // el fetch sigue pendiente.
+      await controller.skipToNext();
+      await pumpEventQueue();
+
+      hold.complete(const [SyncoraTrack(id: 'radio_ok', title: 'Radio OK')]);
+      await pumpEventQueue();
+
+      expect(controller.state.autoQueue.any((t) => t.id == 'radio_ok'), isTrue,
+          reason: 'avanzar dentro del mismo contexto no debe invalidar un lote en vuelo');
+    });
+
+    // Revisión independiente de 7.B, bug #2: faltaba incluir el historial de
+    // reproducción en el set de exclusión, así que la radio podía reofrecer
+    // una pista que el usuario ya escuchó y dejó atrás.
+    test('el set de exclusión enviado a generateBatch incluye el historial de reproducción', () async {
+      final controller = buildController();
+      controller.init();
+      addTearDown(controller.dispose);
+
+      final tracks = [
+        const SyncoraTrack(id: 'h1', title: 'H1', artistId: 1),
+        const SyncoraTrack(id: 'h2', title: 'H2', artistId: 1),
+        const SyncoraTrack(id: 'h3', title: 'H3', artistId: 1),
+      ];
+      await controller.setQueue(tracks, autoplay: true); // current=h1, autoQueue=[h2,h3] (2<=5: dispara ya)
+      await pumpEventQueue();
+      expect(radioService.callCount, 1);
+
+      // Avanzar deja a h1 en el historial; el siguiente disparo de radio
+      // debe excluirlo.
+      await controller.skipToNext(); // current=h2, history=[h1]
+      await pumpEventQueue();
+
+      expect(radioService.lastExcludeIds, isNotNull);
+      expect(radioService.lastExcludeIds, contains('h1'),
+          reason: 'h1 ya está en el historial (fue reproducida y consumida) — no debe reofrecerse');
+    });
+
+    // Revisión independiente de 7.B, bug #3: el toggle de Configuración debe
+    // apagar TODO el auto-relleno de autoQueue, no solo _maybeFetchRadio —
+    // _tryAutoplay (el mecanismo de Autoplay previo a 7.B, disparado cuando
+    // AMBAS colas se agotan del todo) no consultaba el toggle.
+    test('el toggle de radio desactivado también apaga el Autoplay de recomendaciones (_tryAutoplay)', () async {
+      final controller = SyncoraPlayerController(
+        engine: engine,
+        extractionService: extractionService,
+        // DeezerApi real, pero el toggle debe cortar ANTES de tocar la red
+        // — si esto llegara a hacer una petición real, el test sería lento/
+        // flaky; el hecho de que no lo sea confirma que el guard corta a
+        // tiempo.
+        deezerApi: DeezerApi(),
+        radioService: radioService,
+        radioEnabledGetter: () => false,
+      );
+      controller.init();
+      addTearDown(controller.dispose);
+
+      await controller.setQueue(
+        const [SyncoraTrack(id: 'only1', title: 'Only 1')],
+        autoplay: true,
+      ); // current=only1, ambas colas quedan vacías, sin repeat-all
+
+      await controller.skipToNext(); // se agotan ambas colas -> intenta Autoplay -> debe abortar por el toggle
+      await pumpEventQueue();
+
+      expect(controller.state.currentTrack?.id, 'only1',
+          reason: 'sin autoplay, no hay a dónde avanzar: currentTrack se queda como estaba');
+      expect(controller.state.engine.playing, isFalse, reason: 'sin nada más que reproducir, el motor se pausa');
+    });
+
+    // Revisión independiente de 7.B, bug #5: sin este guard, cada cambio de
+    // pista mientras el usuario está offline disparaba 5 peticiones de red
+    // condenadas de antemano.
+    test('no dispara ningún fetch de radio si el usuario está offline', () async {
+      final controller = SyncoraPlayerController(
+        engine: engine,
+        extractionService: extractionService,
+        radioService: radioService,
+        radioEnabledGetter: () => true,
+        isConnectedGetter: () => false,
+      );
+      controller.init();
+      addTearDown(controller.dispose);
+
+      final tracks = [
+        const SyncoraTrack(id: 'o1', title: 'O1', artistId: 1),
+        const SyncoraTrack(id: 'o2', title: 'O2', artistId: 1),
+      ];
+      await controller.setQueue(tracks, autoplay: true);
+      await pumpEventQueue();
+
+      expect(radioService.callCount, 0);
     });
   });
 

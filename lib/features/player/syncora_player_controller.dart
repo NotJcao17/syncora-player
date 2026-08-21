@@ -14,6 +14,7 @@ import '../../data/models/deezer/deezer_track.dart';
 
 import 'audio_engine/audio_engine_state.dart';
 import 'player_models.dart';
+import 'radio/radio_service.dart';
 import 'session/player_session_storage.dart';
 
 /// Snapshot inmutable del estado completo del reproductor (cola dual +
@@ -139,25 +140,53 @@ class SyncoraPlayerController extends ChangeNotifier {
     DeezerApi? deezerApi,
     DownloadedTrackDao? downloadedTrackDao,
     ListeningHistoryDao? listeningHistoryDao,
+    RadioService? radioService,
     bool Function()? isConnectedGetter,
+    bool Function()? radioEnabledGetter,
   })  : _engine = engine, // ignore: prefer_initializing_formals
         _extractionService = extractionService, // ignore: prefer_initializing_formals
         _deezerApi = deezerApi, // ignore: prefer_initializing_formals
         _downloadedTrackDao = downloadedTrackDao,
         _listeningHistoryDao = listeningHistoryDao,
-        _isConnectedGetter = isConnectedGetter;
+        _radioService = radioService,
+        _isConnectedGetter = isConnectedGetter,
+        _radioEnabledGetter = radioEnabledGetter;
 
   final AudioEngine _engine;
   final ExtractionService _extractionService;
   final DeezerApi? _deezerApi;
   final DownloadedTrackDao? _downloadedTrackDao;
   final ListeningHistoryDao? _listeningHistoryDao;
+  final RadioService? _radioService;
   final bool Function()? _isConnectedGetter;
+  final bool Function()? _radioEnabledGetter;
   final RetryPolicy _retryPolicy = RetryPolicy();
   final PlayerSessionStorage _sessionStorage = PlayerSessionStorage();
 
   /// Cupo máximo de la pila de historial (D-3).
   static const int _historyCap = 50;
+
+  /// Umbral de disparo de radio/cola infinita (Fase 7.B, D-10): cuando
+  /// `autoQueue` baja a esta cantidad de pistas o menos, se genera un lote
+  /// nuevo en segundo plano.
+  static const int _radioTriggerThreshold = 5;
+
+  /// Evita disparar fetches de radio concurrentes (Fase 7.B).
+  bool _isFetchingRadio = false;
+
+  /// Contador monotónico de "sesión de contexto" (Fase 7.B, revisión: bug
+  /// #1). Se incrementa en CADA llamada a [setQueue] (con o sin
+  /// `activeContextId` — la mayoría de los call sites de la app, búsqueda/
+  /// inicio/artista/track_tile, no pasan ninguno, así que comparar
+  /// `activeContextId` no detectaba nada en el caso común: `null != null`
+  /// siempre es falso). NO se incrementa en `_advance()`/`_retreat()`/
+  /// `playFromQueue()` — avanzar dentro del MISMO contexto (siguiente pista
+  /// de la misma playlist) sigue siendo una sesión válida para un lote de
+  /// radio que estaba en vuelo. Es al nivel de "sesión de contexto", no al
+  /// nivel de pista individual como `_playGeneration` (que sí cambia en
+  /// cada pista y descartaría casi todos los lotes válidos si se
+  /// reutilizara aquí).
+  int _contextGeneration = 0;
 
   StreamSubscription<AudioEngineState>? _engineSub;
   StreamSubscription<void>? _completionSub;
@@ -205,6 +234,11 @@ class SyncoraPlayerController extends ChangeNotifier {
     String? activeContextId,
   }) async {
     _restoredPositionSeconds = null;
+    // Cada llamada a setQueue() es una sesión de contexto nueva (Fase 7.B,
+    // revisión: bug #1) — incrementa en AMBAS ramas (tracks.isEmpty incluida)
+    // para que un lote de radio en vuelo, originado antes de este cambio de
+    // contexto, se descarte al resolver.
+    _contextGeneration++;
     if (tracks.isEmpty) {
       await _microFadeOut();
       await _engine.stop();
@@ -355,8 +389,15 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// Dispara Autoplay al agotarse ambas colas (sin repeat-all disponible).
   /// Las recomendaciones se anexan al final de [SyncoraPlayerState.autoQueue]
   /// y se sigue el flujo normal de avance — nunca se toca la manual.
+  ///
+  /// Revisión de 7.B (bug #3): el toggle de Configuración de radio debe
+  /// apagar TODO el auto-relleno de `autoQueue`, no solo
+  /// [_maybeFetchRadio]. Sin este chequeo, desactivar el toggle no evitaba
+  /// que Autoplay (el mecanismo previo a 7.B) siguiera anexando
+  /// recomendaciones de Deezer al vaciarse ambas colas del todo.
   Future<bool> _tryAutoplay() async {
     if (_deezerApi == null) return false;
+    if (!(_radioEnabledGetter?.call() ?? true)) return false;
     final seedTrack = _state.currentTrack;
     if (seedTrack == null) return false;
 
@@ -957,11 +998,116 @@ bool get _isTestEnv {
     }
   }
 
+  // ----------------------------------------------------------------------
+  // Radio / cola infinita (Fase 7.B, D-10 — sin IA, solo Deezer)
+  // ----------------------------------------------------------------------
+
+  /// Revisa si corresponde generar un lote de radio y, si es así, lo dispara
+  /// en segundo plano (nunca con `await` desde aquí — el llamador no debe
+  /// bloquearse). No-op si no hay [_radioService] inyectado, si el toggle de
+  /// Configuración está desactivado, si ya hay un fetch en curso, si
+  /// `autoQueue` todavía tiene más de [_radioTriggerThreshold] pistas, o si
+  /// no hay conexión (revisión: bug #5 — evita 5 peticiones condenadas de
+  /// antemano en cada cambio de pista mientras el usuario está offline).
+  void _maybeFetchRadio() {
+    final service = _radioService;
+    if (service == null) return;
+    if (_isFetchingRadio) return;
+    if (!(_radioEnabledGetter?.call() ?? true)) return;
+    if (_state.autoQueue.length > _radioTriggerThreshold) return;
+    if (_isConnectedGetter?.call() == false) return;
+
+    _isFetchingRadio = true;
+    // Snapshot de la "sesión de contexto" en el momento del disparo (ver
+    // _fetchRadioBatch): si el usuario cambia de contexto antes de que
+    // resuelva, el resultado se descarta en silencio para no anexar un lote
+    // que ya no corresponde. Revisión (bug #1): NO se usa `activeContextId`
+    // para esto — la mayoría de los `setQueue()` de la app (búsqueda,
+    // inicio, artista, track_tile) lo pasan en `null`, así que comparar
+    // `activeContextId` no detectaba nada en el caso común (`null != null`
+    // siempre es falso). `_contextGeneration` sí cambia en cada `setQueue()`
+    // tenga o no `activeContextId`.
+    final requestGeneration = _contextGeneration;
+    final contextTracks = _state.originalContextTracks;
+    final excludeIds = <String>{
+      ..._state.manualQueue.map((t) => t.id),
+      ..._state.autoQueue.map((t) => t.id),
+      ..._state.originalContextTracks.map((t) => t.id),
+      // Revisión (bug #2): faltaba el historial — sin esto la radio podía
+      // reofrecer una pista que el usuario ya escuchó y dejó atrás.
+      ..._state.history.map((h) => h.track.id),
+      if (_state.currentTrack != null) _state.currentTrack!.id,
+    };
+
+    unawaited(_fetchRadioBatch(
+      service: service,
+      contextTracks: contextTracks,
+      excludeIds: excludeIds,
+      requestGeneration: requestGeneration,
+    ));
+  }
+
+  /// Genera el lote de radio con I/O real y lo anexa al final de
+  /// `autoQueue` (nunca toca `manualQueue`, nunca interrumpe la
+  /// reproducción). Un fallo de red aquí nunca debe afectar la reproducción
+  /// en curso — se registra con `_log(...)` y no se relanza.
+  Future<void> _fetchRadioBatch({
+    required RadioService service,
+    required List<SyncoraTrack> contextTracks,
+    required Set<String> excludeIds,
+    required int requestGeneration,
+  }) async {
+    try {
+      final batch = await service.generateBatch(
+        contextTracks: contextTracks,
+        excludeIds: excludeIds,
+      );
+      if (_disposed || batch.isEmpty) return;
+
+      // Condición de carrera del modelo de cola dual: si por el tiempo que
+      // tardó el fetch el usuario ya arrancó una sesión de contexto nueva
+      // (otro setQueue(), con o sin activeContextId), este lote ya no
+      // corresponde a la petición que lo originó — se descarta en silencio.
+      // Avanzar dentro del MISMO contexto (siguiente pista de la misma
+      // playlist, _advance()/_retreat()/playFromQueue()) NO incrementa
+      // _contextGeneration, así que el lote sigue siendo válido en ese caso.
+      if (_contextGeneration != requestGeneration) {
+        _log('[Radio] Lote descartado: el usuario ya inició una sesión de contexto nueva.');
+        return;
+      }
+
+      final updatedAuto = List<SyncoraTrack>.from(_state.autoQueue)..addAll(batch);
+      _state = _state.copyWith(autoQueue: List.unmodifiable(updatedAuto));
+      _log('[Radio] ${batch.length} pistas de radio añadidas a la cola automática.');
+      _notify();
+      _saveSession();
+    } catch (e) {
+      _log('[Radio] Error generando lote de radio: $e');
+    } finally {
+      _isFetchingRadio = false;
+    }
+  }
+
   /// Núcleo: resuelve la URL de la pista actual o carga el archivo local si está descargado.
+  ///
+  /// Punto de disparo de radio/cola infinita (Fase 7.B): al final de este
+  /// método (vía `finally`, para cubrir TODOS sus caminos de retorno —
+  /// descarga local, error de extracción, éxito) se revisa si `autoQueue`
+  /// quedó en `_radioTriggerThreshold` pistas o menos y, si es así, se
+  /// dispara `_maybeFetchRadio()` SIN esperarlo: nunca debe bloquear la
+  /// reproducción en curso.
   Future<void> playCurrent() async {
     final track = _state.currentTrack;
     if (track == null) return;
 
+    try {
+      await _playCurrentInternal(track);
+    } finally {
+      _maybeFetchRadio();
+    }
+  }
+
+  Future<void> _playCurrentInternal(SyncoraTrack track) async {
     _beginListenTracking(track);
 
     final myGeneration = ++_playGeneration;

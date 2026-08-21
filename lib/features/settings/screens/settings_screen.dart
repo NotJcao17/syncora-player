@@ -207,6 +207,25 @@ class SettingsScreen extends ConsumerWidget {
                   },
                 ),
                 const Divider(height: 24, color: AppTheme.surfaceHover),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final radioEnabled = ref.watch(radioEnabledProvider);
+                    return _buildSwitchTile(
+                      icon: AppIcons.broken(SolarIcons.Radio),
+                      title: 'Radio / cola infinita',
+                      subtitle: 'Sigue añadiendo canciones parecidas cuando la cola se acorta',
+                      value: radioEnabled,
+                      onChanged: (val) {
+                        ref.read(radioEnabledProvider.notifier).state = val;
+                        AppToast.show(
+                          context,
+                          message: val ? 'Radio activada' : 'Radio desactivada',
+                        );
+                      },
+                    );
+                  },
+                ),
+                const Divider(height: 24, color: AppTheme.surfaceHover),
                 _buildActionTile(
                   icon: AppIcons.broken(SolarIcons.Tuning),
                   title: 'Ecualizador',

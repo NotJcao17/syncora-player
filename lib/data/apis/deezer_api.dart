@@ -73,9 +73,22 @@ class DeezerApi {
   final _LruCache<String, DeezerSearchResult> _searchCache = _LruCache(maxSize: 10);
   final _LruCache<int, List<DeezerTrack>> _topTracksCache = _LruCache(maxSize: 20);
   final _LruCache<int, DeezerTrack> _trackCache = _LruCache(maxSize: 30);
+  final _LruCache<int, List<DeezerTrack>> _artistRadioCache = _LruCache(maxSize: 20);
+  final _LruCache<int, List<DeezerArtist>> _artistRelatedCache = _LruCache(maxSize: 20);
 
   DeezerApi({Dio? dio, RateLimiter? rateLimiter})
-      : _dio = dio ?? Dio(BaseOptions(baseUrl: 'https://api.deezer.com')),
+      : _dio = dio ??
+            Dio(BaseOptions(
+              baseUrl: 'https://api.deezer.com',
+              // Revisión de 7.B (bug #5): sin timeouts, un socket colgado
+              // (ej. cambio de red en móvil a medio fetch) dejaba cualquier
+              // `await` sobre este Dio sin resolver nunca — en el caso de
+              // radio, eso trababa `_isFetchingRadio` en `true` el resto de
+              // la sesión. Cambio general de robustez para toda la API, no
+              // solo para radio.
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 15),
+            )),
         _rateLimiter = rateLimiter ?? RateLimiter();
 
   Future<DeezerSearchResult> search(String query, {DeezerSearchType type = DeezerSearchType.all}) async {
@@ -417,6 +430,50 @@ class DeezerApi {
           .toList();
       tracks.sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
       return tracks;
+    });
+  }
+
+  /// Radio "inteligente" curada por Deezer, sembrada en el artista [artistId]
+  /// (Fase 7.B, D-10: radio/cola infinita sin IA). Mismo filtro de calidad
+  /// (duración/podcast) y orden por `rank` que el resto de endpoints de
+  /// tracks de este archivo.
+  Future<List<DeezerTrack>> getArtistRadio(int artistId) async {
+    final cached = _artistRadioCache.get(artistId);
+    if (cached != null) return cached;
+
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/artist/$artistId/radio');
+      if (response.data == null || response.data['data'] is! List) return [];
+      final list = response.data['data'] as List;
+      final tracks = list
+          .where((item) => (item['duration'] as int? ?? 0) > 60 && item['type'] != 'podcast')
+          .map((item) => DeezerTrack.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList();
+      tracks.sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
+      _artistRadioCache.put(artistId, tracks);
+      return tracks;
+    });
+  }
+
+  /// Artistas relacionados/similares al artista [artistId] (Fase 7.B).
+  ///
+  /// Pese al nombre, `/artist/{id}/related` de Deezer devuelve **artistas**,
+  /// no pistas — verificado contra la API en vivo (agosto 2026, ver
+  /// `docs/plan_fase_7.md` 7.B.1). Se usa para completar semillas de radio
+  /// cuando el contexto activo tiene menos de 5 artistas distintos.
+  Future<List<DeezerArtist>> getArtistRelated(int artistId) async {
+    final cached = _artistRelatedCache.get(artistId);
+    if (cached != null) return cached;
+
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/artist/$artistId/related');
+      if (response.data == null || response.data['data'] is! List) return [];
+      final list = response.data['data'] as List;
+      final artists = list
+          .map((item) => DeezerArtist.fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList();
+      _artistRelatedCache.put(artistId, artists);
+      return artists;
     });
   }
 

@@ -13,7 +13,15 @@ import 'audio_engine/audio_engine_factory.dart';
 import 'os_controls/syncora_audio_handler.dart';
 import 'os_controls/windows_media_controls.dart';
 import 'player_models.dart';
+import 'radio/radio_service.dart';
 import 'syncora_player_controller.dart';
+
+/// Toggle de Configuración para radio/cola infinita (Fase 7.B, D-10):
+/// activada por defecto. Como el proyecto todavía no tiene
+/// `shared_preferences`, no persiste entre reinicios — mismo comportamiento
+/// (no una regresión) que `downloadWifiOnlyProvider`
+/// (`lib/features/download/download_provider.dart`).
+final radioEnabledProvider = StateProvider<bool>((ref) => true);
 
 AudioHandler? _globalAndroidAudioHandler;
 
@@ -38,6 +46,7 @@ final syncoraPlayerControllerProvider =
   final deezerApi = ref.watch(deezerApiProvider);
   final downloadedTrackDao = ref.watch(downloadedTrackDaoProvider);
   final listeningHistoryDao = ref.watch(listeningHistoryDaoProvider);
+  final radioService = RadioService(deezerApi: deezerApi);
 
   final controller = SyncoraPlayerController(
     engine: engine,
@@ -45,7 +54,9 @@ final syncoraPlayerControllerProvider =
     deezerApi: deezerApi,
     downloadedTrackDao: downloadedTrackDao,
     listeningHistoryDao: listeningHistoryDao,
+    radioService: radioService,
     isConnectedGetter: () => ref.read(isConnectedProvider).value ?? true,
+    radioEnabledGetter: () => ref.read(radioEnabledProvider),
   );
 
   controller.init();
