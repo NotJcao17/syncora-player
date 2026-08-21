@@ -738,10 +738,10 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             itemBuilder: (ctx, i) {
                               final track = syncoraTracks[i];
                               final playlistTrack = tracks[i];
-                              final isPlayingTrack = currentTrack?.id == track.id &&
-                                  (playerState.queue.length == syncoraTracks.length
-                                      ? playerState.currentIndex == i
-                                      : (playerState.currentIndex == i || syncoraTracks.indexWhere((t) => t.id == currentTrack?.id) == i));
+                              // Fase 7.A: el modelo de cola dual ya no tiene un índice estable
+                              // sobre "la cola" para desambiguar duplicados dentro de la misma
+                              // playlist (regresión aceptada y documentada, ver plan_fase_7.md).
+                              final isPlayingTrack = currentTrack?.id == track.id;
 
                               return TrackTile(
                                 track: track,

@@ -9,12 +9,12 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
-import '../../../core/widgets/track_tile.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
 import '../syncora_player_controller.dart';
 import '../widgets/lyrics_sheet.dart';
+import '../widgets/queue_view.dart';
 
 /// Reproductor Fullscreen Inmersivo con soporte para Karaoke sincronizado y Me Gusta persistente.
 class PlayerFullscreenScreen extends ConsumerStatefulWidget {
@@ -397,7 +397,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                       ),
                       IconButton(
                         icon: Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), size: 22, color: AppTheme.secondary),
-                        onPressed: () => _showQueueSheet(context, state, controller),
+                        onPressed: () => QueueView.showSheet(context),
                         tooltip: 'Ver cola',
                       ),
                     ],
@@ -421,94 +421,6 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     );
   }
 
-  void _showQueueSheet(
-    BuildContext context,
-    SyncoraPlayerState state,
-    SyncoraPlayerController controller,
-  ) {
-    AppBottomSheet.show(
-      context: context,
-      title: 'Cola de Reproducción (${state.queue.length})',
-      child: state.queue.isEmpty
-          ? const Padding(
-              padding: EdgeInsets.all(24.0),
-              child: Text('La cola está vacía', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.secondary)),
-            )
-          : Consumer(
-              builder: (ctx, ref, _) {
-                final currentState = ref.watch(playerStateProvider);
-                final queue = currentState.queue;
-                final currentIndex = currentState.currentIndex;
-
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '${queue.length} canciones en total',
-                            style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
-                          ),
-                          TextButton.icon(
-                            onPressed: () {
-                              controller.clearQueue();
-                              Navigator.pop(ctx);
-                            },
-                            icon: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), size: 16, color: AppTheme.secondary),
-                            label: const Text('Limpiar cola', style: TextStyle(color: AppTheme.secondary, fontSize: 12)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Flexible(
-                      child: ReorderableListView.builder(
-                        shrinkWrap: true,
-                        itemCount: queue.length,
-                        // ignore: deprecated_member_use
-                        onReorder: (oldIndex, newIndex) {
-                          controller.reorderQueue(oldIndex, newIndex);
-                        },
-                        itemBuilder: (ctx, i) {
-                          final track = queue[i];
-                          final isCurrent = i == currentIndex;
-                          return Dismissible(
-                            key: ValueKey('queue_${track.id}_$i'),
-                            direction: DismissDirection.endToStart,
-                            onDismissed: (_) {
-                              controller.removeFromQueue(i);
-                            },
-                            background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 16),
-                              color: Colors.red.withValues(alpha: 0.2),
-                              child: const Icon(Icons.delete, color: Colors.red),
-                            ),
-                            child: TrackTile(
-                              key: ValueKey('tile_${track.id}_$i'),
-                              track: track,
-                              index: i,
-                              isPlaying: isCurrent,
-                              onTap: () {
-                                controller.skipToQueueIndex(i);
-                                Navigator.pop(ctx);
-                              },
-                              onRemove: () {
-                                controller.removeFromQueue(i);
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-    );
-  }
 
   void _showTrackOptionsMenu(BuildContext context, SyncoraTrack track) {
     final controller = ref.read(syncoraPlayerControllerProvider.notifier);

@@ -38,8 +38,15 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
       mediaItem.add(null);
     }
 
-    // 2. Queue
-    final queueItems = state.queue.map(_toMediaItem).toList();
+    // 2. Queue: vista combinada de solo-lectura para el SO (Fase 7.A —
+    // modelo dual). El índice 0 siempre es la pista actual; luego la manual
+    // completa, luego la automática.
+    final combinedQueue = <SyncoraTrack>[
+      if (track != null) track,
+      ...state.manualQueue,
+      ...state.autoQueue,
+    ];
+    final queueItems = combinedQueue.map(_toMediaItem).toList();
     queue.add(queueItems);
 
     // 3. PlaybackState
@@ -64,7 +71,7 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
         updatePosition: engineState.position,
         bufferedPosition: engineState.bufferedPosition,
         speed: engineState.speed,
-        queueIndex: state.currentIndex >= 0 ? state.currentIndex : null,
+        queueIndex: track != null ? 0 : null,
       ),
     );
   }
@@ -119,8 +126,36 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> skipToPrevious() => _controller.skipToPrevious();
 
+  /// Traduce un índice de la vista combinada expuesta al SO (ver
+  /// [_onControllerChanged]) a `(origen, índice dentro de esa cola)`.
+  /// Devuelve `null` si el índice no corresponde a ninguna pista real de las
+  /// colas (ej. cae en la posición reservada a la pista actual cuando SÍ hay
+  /// una sonando, o queda fuera de rango).
+  ///
+  /// P1.7 (bug corregido): la vista combinada solo antepone `currentTrack`
+  /// cuando `state.currentTrack != null` (ver [_onControllerChanged]) — la
+  /// traducción anterior asumía SIEMPRE que el índice 0 era la actual, sin
+  /// importar si de verdad había algo sonando, produciendo un offset
+  /// corrido en 1 cuando `currentTrack` era `null`. Esta función comparte la
+  /// MISMA condición (`hasCurrent`) que arma la lista, para que construcción
+  /// y traducción nunca diverjan (P2.1).
+  (QueueOrigin, int)? _resolveCombinedIndex(int index) {
+    final state = _controller.state;
+    final hasCurrent = state.currentTrack != null;
+    if (hasCurrent && index <= 0) return null; // 0 es la actual, no-op
+    final offset = hasCurrent ? index - 1 : index;
+    if (offset < 0) return null;
+    final manualLength = state.manualQueue.length;
+    if (offset < manualLength) return (QueueOrigin.manual, offset);
+    return (QueueOrigin.auto, offset - manualLength);
+  }
+
   @override
-  Future<void> skipToQueueItem(int index) => _controller.playIndex(index);
+  Future<void> skipToQueueItem(int index) async {
+    final resolved = _resolveCombinedIndex(index);
+    if (resolved == null) return;
+    await _controller.playFromQueue(resolved.$1, resolved.$2);
+  }
 
   @override
   Future<void> onTaskRemoved() async {

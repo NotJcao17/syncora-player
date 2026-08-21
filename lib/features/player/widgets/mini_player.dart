@@ -5,15 +5,14 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
-import '../../../core/widgets/track_tile.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
 import '../syncora_player_controller.dart';
+import 'queue_view.dart';
 
 /// Mini-reproductor siempre visible si hay una pista activa (Diseño pixel-perfect de image2.png / index.html mockup).
 class MiniPlayer extends ConsumerWidget {
@@ -341,7 +340,7 @@ class MiniPlayer extends ConsumerWidget {
                         if (isDesktop) {
                           ref.read(isQueueOpenProvider.notifier).state = !ref.read(isQueueOpenProvider);
                         } else {
-                          _showQueueSheet(context, ref);
+                          QueueView.showSheet(context);
                         }
                       },
                       tooltip: 'Cola de reproducción',
@@ -399,37 +398,6 @@ class MiniPlayer extends ConsumerWidget {
     );
   }
 
-  void _showQueueSheet(BuildContext context, WidgetRef ref) {
-    final state = ref.read(playerStateProvider);
-    final queue = state.queue;
-    final currentIndex = state.currentIndex;
-
-    AppBottomSheet.show(
-      context: context,
-      title: 'Cola de Reproducción (${queue.length})',
-      child: queue.isEmpty
-          ? const Padding(
-              padding: EdgeInsets.all(24.0),
-              child: Text('La cola está vacía', textAlign: TextAlign.center),
-            )
-          : ListView.builder(
-              itemCount: queue.length,
-              itemBuilder: (ctx, i) {
-                final track = queue[i];
-                final isCurrent = i == currentIndex;
-                return TrackTile(
-                  track: track,
-                  index: i,
-                  isPlaying: isCurrent,
-                  onTap: () {
-                    ref.read(syncoraPlayerControllerProvider.notifier).skipToQueueIndex(i);
-                    Navigator.pop(ctx);
-                  },
-                );
-              },
-            ),
-    );
-  }
 }
 
 class _MiniPlayerHeartButton extends ConsumerStatefulWidget {

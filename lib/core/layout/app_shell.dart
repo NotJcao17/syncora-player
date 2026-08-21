@@ -16,6 +16,7 @@ import '../../data/local_db/syncora_database.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../features/player/player_providers.dart';
 import '../../features/player/widgets/mini_player.dart';
+import '../../features/player/widgets/queue_view.dart';
 import '../theme/app_theme.dart';
 import '../widgets/offline_banner.dart';
 
@@ -371,8 +372,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                           ),
                         ),
                         const Divider(color: AppTheme.surfaceActive, height: 1),
-                        Expanded(
-                          child: _buildQueueList(ref),
+                        const Expanded(
+                          child: QueueView(),
                         ),
                       ],
                     ),
@@ -399,66 +400,6 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   }
 
-  Widget _buildQueueList(WidgetRef ref) {
-    final state = ref.watch(playerStateProvider);
-    final queue = state.queue;
-    final currentIndex = state.currentIndex;
-
-    if (queue.isEmpty) {
-      return const Center(
-        child: Text(
-          'La cola está vacía',
-          style: TextStyle(color: AppTheme.secondary),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: queue.length,
-      itemBuilder: (ctx, i) {
-        final track = queue[i];
-        final isCurrent = i == currentIndex;
-
-        return ListTile(
-          leading: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: CachedNetworkImage(
-              imageUrl: track.coverUrl,
-              width: 40,
-              height: 40,
-              fit: BoxFit.cover,
-              errorWidget: (_, _, _) => Container(
-                color: AppTheme.surfaceHover,
-                child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 16),
-              ),
-            ),
-          ),
-          title: Text(
-            track.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: isCurrent ? AppTheme.primary : AppTheme.primary.withValues(alpha: 0.9),
-              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-              fontSize: 13,
-            ),
-          ),
-          subtitle: Text(
-            track.artist,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppTheme.secondary, fontSize: 11),
-          ),
-          trailing: isCurrent
-              ? Icon(AppIcons.broken(SolarIcons.Chart), color: AppTheme.primary, size: 16)
-              : null,
-          onTap: () {
-            ref.read(syncoraPlayerControllerProvider.notifier).skipToQueueIndex(i);
-          },
-        );
-      },
-    );
-  }
 }
 
 /// Barra de título personalizada para Windows (Estilo Spotify, frameless con controles de ventana y área de arrastre)

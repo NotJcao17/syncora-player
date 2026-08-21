@@ -244,43 +244,43 @@ El orden no es negociable en tres puntos:
 
 ### Modelo de datos
 
-- [ ] **7.A.1** Rediseñar `SyncoraPlayerState`: separar `autoQueue` y `manualQueue` (o una lista
+- [x] **7.A.1** Rediseñar `SyncoraPlayerState`: separar `autoQueue` y `manualQueue` (o una lista
       única con un flag `isManual` por entrada — evaluar cuál rompe menos el código existente).
       La pista actual sale de la manual si hay algo ahí, si no, de la automática.
-- [ ] **7.A.2** Pila de historial de reproducción (D-3) para "anterior": las pistas consumidas
+- [x] **7.A.2** Pila de historial de reproducción (D-3) para "anterior": las pistas consumidas
       salen de su cola y entran a la pila, sin importar su origen.
-- [ ] **7.A.3** Materializar la cola automática: hoy el shuffle se resuelve al vuelo en
+- [x] **7.A.3** Materializar la cola automática: hoy el shuffle se resuelve al vuelo en
       `_nextIndex()` (`:807`). Con el modelo nuevo, cambiar shuffle↔normal **regenera la cola
       automática** a partir del contexto activo (`activeContextId`), sin tocar la manual.
-- [ ] **7.A.4** Cambiar de playlist regenera la automática, conserva la manual.
-- [ ] **7.A.5** `addToQueue()` (`:369`) pasa a insertar en la cola manual respetando FIFO (D-2),
+- [x] **7.A.4** Cambiar de playlist regenera la automática, conserva la manual.
+- [x] **7.A.5** `addToQueue()` (`:369`) pasa a insertar en la cola manual respetando FIFO (D-2),
       no `add()` al final de la lista global.
-- [ ] **7.A.6** Migrar `PlayerSessionStorage` al nuevo modelo (persiste y restaura ambas colas +
+- [x] **7.A.6** Migrar `PlayerSessionStorage` al nuevo modelo (persiste y restaura ambas colas +
       la pila de historial). Cuidar la compatibilidad con sesiones guardadas del formato viejo:
       lo más simple y seguro es **descartar la sesión antigua** si no matchea el formato nuevo,
       en vez de intentar migrarla.
-- [ ] **7.A.7** Adaptar `_skipSilently()` (`:579`, Fase 6): el bucle iterativo debe recorrer ambas
+- [x] **7.A.7** Adaptar `_skipSilently()` (`:579`, Fase 6): el bucle iterativo debe recorrer ambas
       colas en el orden correcto de reproducción.
-- [ ] **7.A.8** Adaptar los controles del SO (`os_controls/`) que exponen la cola al sistema.
+- [x] **7.A.8** Adaptar los controles del SO (`os_controls/`) que exponen la cola al sistema.
 
 ### UI de cola
 
-- [ ] **7.A.9** Pantalla/hoja de cola con las dos secciones visualmente diferenciadas
+- [x] **7.A.9** Pantalla/hoja de cola con las dos secciones visualmente diferenciadas
       ("A continuación" manual / "Siguiente de {playlist}" automática), según el Documento Maestro
       §2.1.5 (vista superpuesta en móvil, sidebar derecho colapsable en PC).
-- [ ] **7.A.10** Drag & drop para reordenar (el ítem del alcance oficial). Definir si se permite
+- [x] **7.A.10** Drag & drop para reordenar (el ítem del alcance oficial). Definir si se permite
       arrastrar entre secciones o solo dentro de cada una — **recomendación: solo dentro de cada
       sección**, mover una pista automática al bloque manual es semánticamente confuso.
-- [ ] **7.A.11** Deslizar a la izquierda para eliminar; deslizar a la derecha (en listas) para
+- [x] **7.A.11** Deslizar a la izquierda para eliminar; deslizar a la derecha (en listas) para
       agregar a la cola; botón "Editar" con selección múltiple (eliminar / mover arriba) — todo
       del Documento Maestro §2.1.5.
-- [ ] **7.A.12** Empty states, tanto de la manual vacía como de la cola completa vacía.
+- [x] **7.A.12** Empty states, tanto de la manual vacía como de la cola completa vacía.
 
 ### Tests
 
-- [ ] **7.A.13** El algoritmo de reordenamiento (índices se actualizan correctamente) — está
+- [x] **7.A.13** El algoritmo de reordenamiento (índices se actualizan correctamente) — está
       explícitamente pedido en `matriz_de_pruebas.md` como test automatizado de Fase 7.
-- [ ] **7.A.14** Casos: agregar 2 manuales seguidas → orden FIFO; cambiar shuffle no toca la
+- [x] **7.A.14** Casos: agregar 2 manuales seguidas → orden FIFO; cambiar shuffle no toca la
       manual; cambiar de playlist no toca la manual; "anterior" tras consumir una manual vuelve a
       esa manual; consumir pistas las elimina de la cola; restaurar sesión reconstruye ambas colas.
 

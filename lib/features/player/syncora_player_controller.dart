@@ -16,13 +16,42 @@ import 'audio_engine/audio_engine_state.dart';
 import 'player_models.dart';
 import 'session/player_session_storage.dart';
 
-/// Snapshot inmutable del estado completo del reproductor (cola + reproducción).
+/// Snapshot inmutable del estado completo del reproductor (cola dual +
+/// reproducción).
 ///
-/// Es el modelo que consumirá la UI en la Fase 3 (mini-player, fullscreen).
+/// Modelo de cola dual (Fase 7.A, ver `docs/plan_fase_7.md` D-1/D-2/D-3):
+/// - [manualQueue]: lo que el usuario agregó explícitamente ("reproducir a
+///   continuación" / "agregar a la cola"). FIFO, sobrevive a cambios de
+///   shuffle/playlist, nunca la tocan las funciones de IA.
+/// - [autoQueue]: regenerable, viene del contexto activo
+///   (playlist/álbum/etc. — ver [originalContextTracks]).
+/// - En cada avance, la manual se prioriza sobre la automática (D-1).
+/// - [history]: pila única de reproducción (sin importar de qué cola vino
+///   la pista) para "anterior" (D-3), acotada a 50 entradas.
 @immutable
 class SyncoraPlayerState {
-  final List<SyncoraTrack> queue;
-  final int currentIndex;
+  /// Pista activa (null si no suena nada). Ya no se deriva de un índice
+  /// sobre una lista plana — es un campo propio.
+  final SyncoraTrack? currentTrack;
+
+  /// De qué cola provino [currentTrack] (null si no suena nada).
+  final QueueOrigin? currentOrigin;
+
+  /// Cola manual, FIFO (D-2).
+  final List<SyncoraTrack> manualQueue;
+
+  /// Cola automática, regenerable desde [originalContextTracks].
+  final List<SyncoraTrack> autoQueue;
+
+  /// Snapshot inmutable del contexto activo completo (la playlist/álbum tal
+  /// como se pasó a [setQueue]), usado para regenerar [autoQueue] al
+  /// togglear shuffle o al hacer loop con repeat-all.
+  final List<SyncoraTrack> originalContextTracks;
+
+  /// Pila de historial de reproducción único (D-3): más reciente al final,
+  /// acotada a 50 entradas (se descarta la más antigua al superar el cupo).
+  final List<HistoryEntry> history;
+
   final AudioEngineState engine;
   final SyncoraRepeatMode repeatMode;
   final bool shuffle;
@@ -32,20 +61,18 @@ class SyncoraPlayerState {
   bool get isShuffle => shuffle;
   bool get isSkipSilence => skipSilence;
 
-  /// Pista activa (null si la cola está vacía).
-  SyncoraTrack? get currentTrack =>
-      (currentIndex >= 0 && currentIndex < queue.length)
-          ? queue[currentIndex]
-          : null;
-
   /// Último error de extracción relevante (403 / red / not found). Lo usa la UI
   /// para mostrar un mensaje (Pitfalls #11 y #14: pausa inmediata, no bucle).
   final ExtractionError? lastError;
   final String? lastErrorMessage;
 
   const SyncoraPlayerState({
-    this.queue = const [],
-    this.currentIndex = -1,
+    this.currentTrack,
+    this.currentOrigin,
+    this.manualQueue = const [],
+    this.autoQueue = const [],
+    this.originalContextTracks = const [],
+    this.history = const [],
     this.engine = AudioEngineState.initial,
     this.repeatMode = SyncoraRepeatMode.off,
     this.shuffle = false,
@@ -58,8 +85,14 @@ class SyncoraPlayerState {
   static const SyncoraPlayerState initial = SyncoraPlayerState();
 
   SyncoraPlayerState copyWith({
-    List<SyncoraTrack>? queue,
-    int? currentIndex,
+    SyncoraTrack? currentTrack,
+    bool clearCurrentTrack = false,
+    QueueOrigin? currentOrigin,
+    bool clearCurrentOrigin = false,
+    List<SyncoraTrack>? manualQueue,
+    List<SyncoraTrack>? autoQueue,
+    List<SyncoraTrack>? originalContextTracks,
+    List<HistoryEntry>? history,
     AudioEngineState? engine,
     SyncoraRepeatMode? repeatMode,
     bool? shuffle,
@@ -71,8 +104,12 @@ class SyncoraPlayerState {
     bool clearError = false,
   }) {
     return SyncoraPlayerState(
-      queue: queue ?? this.queue,
-      currentIndex: currentIndex ?? this.currentIndex,
+      currentTrack: clearCurrentTrack ? null : (currentTrack ?? this.currentTrack),
+      currentOrigin: clearCurrentOrigin ? null : (currentOrigin ?? this.currentOrigin),
+      manualQueue: manualQueue ?? this.manualQueue,
+      autoQueue: autoQueue ?? this.autoQueue,
+      originalContextTracks: originalContextTracks ?? this.originalContextTracks,
+      history: history ?? this.history,
       engine: engine ?? this.engine,
       repeatMode: repeatMode ?? this.repeatMode,
       shuffle: shuffle ?? this.shuffle,
@@ -119,6 +156,9 @@ class SyncoraPlayerController extends ChangeNotifier {
   final RetryPolicy _retryPolicy = RetryPolicy();
   final PlayerSessionStorage _sessionStorage = PlayerSessionStorage();
 
+  /// Cupo máximo de la pila de historial (D-3).
+  static const int _historyCap = 50;
+
   StreamSubscription<AudioEngineState>? _engineSub;
   StreamSubscription<void>? _completionSub;
   StreamSubscription<String>? _engineLogSub;
@@ -150,8 +190,14 @@ class SyncoraPlayerController extends ChangeNotifier {
   // API pública de control y gestión de cola
   // ----------------------------------------------------------------------
 
-  /// Reemplaza la cola completa y (opcionalmente) arranca la reproducción
-  /// desde [index].
+  /// Reemplaza el contexto activo (playlist/álbum/etc.) y (opcionalmente)
+  /// arranca la reproducción desde [startIndex].
+  ///
+  /// Comportamiento (D-1): [originalContextTracks] se snapshotea completo,
+  /// [autoQueue] se reemplaza por lo que sigue de [startIndex] en adelante
+  /// (lo anterior se descarta, nunca sonó). **`manualQueue` NO se toca** —
+  /// sobrevive a cualquier cambio de contexto, y sigue teniendo prioridad
+  /// sobre la automática nueva en cuanto se agote.
   Future<void> setQueue(
     List<SyncoraTrack> tracks, {
     int startIndex = 0,
@@ -162,19 +208,34 @@ class SyncoraPlayerController extends ChangeNotifier {
     if (tracks.isEmpty) {
       await _microFadeOut();
       await _engine.stop();
+      final newHistory = _pushHistory(_state.history, _state.currentTrack, _state.currentOrigin);
       _state = SyncoraPlayerState.initial.copyWith(
         skipSilence: _state.skipSilence,
         repeatMode: _state.repeatMode,
         shuffle: _state.shuffle,
+        manualQueue: _state.manualQueue,
+        history: List.unmodifiable(newHistory),
         clearContext: true,
       );
       _notify();
       _saveSession();
       return;
     }
+
+    final clampedStart = startIndex.clamp(0, tracks.length - 1);
+    final newCurrent = tracks[clampedStart];
+    final rest = tracks.sublist(clampedStart + 1);
+    // P1.6: si shuffle ya estaba activo, la autoQueue resultante debe salir
+    // mezclada — no solo la que se regenera al togglear shuffle después.
+    final newAuto = _state.shuffle ? (List<SyncoraTrack>.from(rest)..shuffle()) : rest;
+    final newHistory = _pushHistory(_state.history, _state.currentTrack, _state.currentOrigin);
+
     _state = _state.copyWith(
-      queue: List.unmodifiable(tracks),
-      currentIndex: startIndex,
+      currentTrack: newCurrent,
+      currentOrigin: QueueOrigin.auto,
+      autoQueue: List.unmodifiable(newAuto),
+      originalContextTracks: List.unmodifiable(tracks),
+      history: List.unmodifiable(newHistory),
       activeContextId: activeContextId,
       clearContext: activeContextId == null,
       clearError: true,
@@ -186,11 +247,45 @@ class SyncoraPlayerController extends ChangeNotifier {
     }
   }
 
-  /// Reproduce la pista en [index] de la cola actual.
-  Future<void> playIndex(int index) async {
-    if (index < 0 || index >= _state.queue.length) return;
+  /// Salta directo a la pista en [index] de la cola [origin]. Las pistas
+  /// anteriores a [index] en esa cola se descartan (nunca sonaron, no van a
+  /// [SyncoraPlayerState.history]); las posteriores quedan intactas. La
+  /// pista actual (si había una) sí va al historial, igual que en cualquier
+  /// avance.
+  ///
+  /// Participa del guard [_isTransitioning] (P1.8) para que dos taps rápidos
+  /// sobre la cola (o un tap que coincide con un skip en curso) no muten las
+  /// colas dos veces en paralelo. `_skipSilently()` llama a la variante
+  /// interna sin guard porque ya corre anidada dentro de una transición en
+  /// curso (bloquearla ahí causaría un deadlock lógico).
+  Future<void> playFromQueue(QueueOrigin origin, int index) async {
+    if (_isTransitioning) return;
+    _isTransitioning = true;
+    try {
+      await _playFromQueueInternal(origin, index);
+    } finally {
+      _isTransitioning = false;
+    }
+  }
+
+  Future<void> _playFromQueueInternal(QueueOrigin origin, int index) async {
+    final sourceQueue = origin == QueueOrigin.manual ? _state.manualQueue : _state.autoQueue;
+    if (index < 0 || index >= sourceQueue.length) return;
+
     _restoredPositionSeconds = null;
-    _state = _state.copyWith(currentIndex: index, clearError: true);
+
+    final target = sourceQueue[index];
+    final remaining = sourceQueue.sublist(index + 1);
+    final newHistory = _pushHistory(_state.history, _state.currentTrack, _state.currentOrigin);
+
+    _state = _state.copyWith(
+      currentTrack: target,
+      currentOrigin: origin,
+      manualQueue: origin == QueueOrigin.manual ? List.unmodifiable(remaining) : _state.manualQueue,
+      autoQueue: origin == QueueOrigin.auto ? List.unmodifiable(remaining) : _state.autoQueue,
+      history: List.unmodifiable(newHistory),
+      clearError: true,
+    );
     _notify();
     _saveSession();
     await playCurrent();
@@ -220,43 +315,57 @@ class SyncoraPlayerController extends ChangeNotifier {
     _saveSession();
   }
 
+  /// Entrada pública (tap del usuario / botón del SO). Participa del guard
+  /// [_isTransitioning] real (P1.8): un segundo tap mientras la transición
+  /// anterior sigue en curso se ignora en vez de correr en paralelo.
   Future<void> skipToNext() async {
-    if (_isTransitioning) {
-      _isTransitioning = false;
-    }
+    if (_isTransitioning) return;
     _isTransitioning = true;
     try {
-      final next = _computeNextIndex(autoAdvance: true);
-      if (next == null) {
-        // Fin de la cola sin repeat: intentar Autoplay con Deezer recommendations
-        final handledAutoplay = await _tryAutoplay();
-        if (!handledAutoplay) {
-          await _engine.pause();
-          _saveSession();
-        }
-        return;
-      }
-      _state = _state.copyWith(currentIndex: next, clearError: true);
-      _notify();
-      _saveSession();
-      await playCurrent();
+      await _advanceAndPlay();
     } finally {
       _isTransitioning = false;
     }
   }
 
+  /// Núcleo de "avanzar y reproducir", SIN el guard de [skipToNext]. Existe
+  /// por separado porque cadenas de fallos internas (notFound consecutivos
+  /// en `_handleExtractionError`, error del motor en `_onEngineState`) deben
+  /// poder encadenar varios avances aunque ya estén corriendo anidadas
+  /// dentro de un `skipToNext()` guardado — si llamaran al `skipToNext()`
+  /// público, el guard las bloquearía a sí mismas (deadlock lógico) y la
+  /// cascada de auto-skip se trabaría en el primer fallo.
+  Future<void> _advanceAndPlay() async {
+    final advanced = _advance();
+    if (!advanced) {
+      // Fin de ambas colas sin repeat-all posible: intentar Autoplay con
+      // recomendaciones de Deezer antes de rendirse.
+      final handledAutoplay = await _tryAutoplay();
+      if (!handledAutoplay) {
+        await _engine.pause();
+        _saveSession();
+      }
+      return;
+    }
+    _notify();
+    _saveSession();
+    await playCurrent();
+  }
 
-  /// Dispara Autoplay al llegar al final de la cola
+  /// Dispara Autoplay al agotarse ambas colas (sin repeat-all disponible).
+  /// Las recomendaciones se anexan al final de [SyncoraPlayerState.autoQueue]
+  /// y se sigue el flujo normal de avance — nunca se toca la manual.
   Future<bool> _tryAutoplay() async {
-    if (_deezerApi == null || _state.queue.isEmpty) return false;
+    if (_deezerApi == null) return false;
+    final seedTrack = _state.currentTrack;
+    if (seedTrack == null) return false;
 
-    final lastTrack = _state.queue.last;
-    int? deezerTrackId = int.tryParse(lastTrack.id);
+    int? deezerTrackId = int.tryParse(seedTrack.id);
 
     // Si el ID no es un int válido, buscar la canción en Deezer para obtener su ID
     if (deezerTrackId == null) {
       try {
-        final searchRes = await _deezerApi.search('${lastTrack.artist} ${lastTrack.title}');
+        final searchRes = await _deezerApi.search('${seedTrack.artist} ${seedTrack.title}');
         if (searchRes.tracks.isNotEmpty) {
           deezerTrackId = searchRes.tracks.first.id;
         }
@@ -280,8 +389,13 @@ class SyncoraPlayerController extends ChangeNotifier {
 
     if (recommendations.isEmpty) return false;
 
-    // Convertir a SyncoraTrack y filtrar canciones que ya están en la cola
-    final existingIds = _state.queue.map((t) => t.id).toSet();
+    // Convertir a SyncoraTrack y filtrar canciones que ya están en alguna
+    // cola o son la propia semilla, para no repetir.
+    final existingIds = <String>{
+      seedTrack.id,
+      ..._state.manualQueue.map((t) => t.id),
+      ..._state.autoQueue.map((t) => t.id),
+    };
     final newTracks = recommendations
         .map((t) => t.toSyncoraTrack())
         .where((t) => !existingIds.contains(t.id))
@@ -290,33 +404,28 @@ class SyncoraPlayerController extends ChangeNotifier {
     if (newTracks.isEmpty) return false;
 
     _log('[Autoplay] ${newTracks.length} pistas similares añadidas a la cola automáticamente.');
-    final updatedQueue = List<SyncoraTrack>.from(_state.queue)..addAll(newTracks);
-    final nextIndex = _state.currentIndex + 1;
+    final updatedAuto = List<SyncoraTrack>.from(_state.autoQueue)..addAll(newTracks);
+    _state = _state.copyWith(autoQueue: List.unmodifiable(updatedAuto));
 
-    _state = _state.copyWith(
-      queue: List.unmodifiable(updatedQueue),
-      currentIndex: nextIndex,
-      clearError: true,
-    );
+    final advanced = _advance();
+    if (!advanced) return false; // no debería pasar: acabamos de anexar pistas
+
     _notify();
     _saveSession();
     await playCurrent();
     return true;
   }
 
-
   DateTime? _lastPrevTapTime;
 
   Future<void> skipToPrevious() async {
-    final now = DateTime.now();
-    final isDoubleTap = _lastPrevTapTime != null && now.difference(_lastPrevTapTime!) < const Duration(milliseconds: 1500);
-    _lastPrevTapTime = now;
-
-    if (_isTransitioning) {
-      _isTransitioning = false;
-    }
+    if (_isTransitioning) return;
     _isTransitioning = true;
     try {
+      final now = DateTime.now();
+      final isDoubleTap = _lastPrevTapTime != null && now.difference(_lastPrevTapTime!) < const Duration(milliseconds: 1500);
+      _lastPrevTapTime = now;
+
       // Si llevamos >3s reproduciéndola y NO es doble tap rápido, reiniciar la pista actual.
       if (!isDoubleTap && _state.engine.position.inSeconds > 3) {
         // Reinicio explícito del usuario: es un intento de escucha nuevo,
@@ -326,12 +435,11 @@ class SyncoraPlayerController extends ChangeNotifier {
         await _engine.seek(Duration.zero);
         return;
       }
-      final prev = _computePrevIndex();
-      if (prev == null) {
+      final retreated = _retreat();
+      if (!retreated) {
         await _engine.seek(Duration.zero);
         return;
       }
-      _state = _state.copyWith(currentIndex: prev, clearError: true);
       _notify();
       _saveSession();
       await playCurrent();
@@ -339,7 +447,6 @@ class SyncoraPlayerController extends ChangeNotifier {
       _isTransitioning = false;
     }
   }
-
 
   void setRepeatMode(SyncoraRepeatMode mode) {
     _state = _state.copyWith(repeatMode: mode);
@@ -356,62 +463,58 @@ class SyncoraPlayerController extends ChangeNotifier {
     setRepeatMode(next);
   }
 
-  /// Inserta la pista inmediatamente después de la pista actual [currentIndex].
+  /// Inserta la pista al FRENTE de la cola manual ("reproducir a
+  /// continuación") — se reproducirá antes que cualquier otra pista manual
+  /// ya en cola (D-1/D-2). Si no había nada sonando, la promueve de
+  /// inmediato a `currentTrack` (sin arrancar reproducción — deja el estado
+  /// "listo, pausado", igual que el comportamiento viejo que solo fijaba
+  /// `currentIndex` sin forzar autoplay) para que no quede inalcanzable
+  /// dentro de la cola.
   void playNext(SyncoraTrack track) {
-    if (_state.queue.isEmpty || _state.currentIndex < 0) {
-      _state = _state.copyWith(
-        queue: List.unmodifiable([track]),
-        currentIndex: 0,
-      );
-    } else {
-      final updatedQueue = List<SyncoraTrack>.from(_state.queue);
-      final insertIndex = _state.currentIndex + 1;
-      updatedQueue.insert(insertIndex, track);
-      _state = _state.copyWith(queue: List.unmodifiable(updatedQueue));
+    final updated = List<SyncoraTrack>.from(_state.manualQueue)..insert(0, track);
+    _state = _state.copyWith(manualQueue: List.unmodifiable(updated));
+    if (_state.currentTrack == null) {
+      _advance();
     }
     _notify();
     _saveSession();
   }
 
-  /// Agrega una pista al final de la cola actual.
+  /// Agrega una pista al FINAL de la cola manual (FIFO, D-2): agregar A y
+  /// luego B reproduce A, luego B. Mismo tratamiento que [playNext] cuando
+  /// no había nada sonando (ver ahí).
   void addToQueue(SyncoraTrack track) {
-    final updatedQueue = List<SyncoraTrack>.from(_state.queue)..add(track);
-    final newIndex = _state.currentIndex < 0 ? 0 : _state.currentIndex;
-    _state = _state.copyWith(
-      queue: List.unmodifiable(updatedQueue),
-      currentIndex: newIndex,
-    );
+    final updated = List<SyncoraTrack>.from(_state.manualQueue)..add(track);
+    _state = _state.copyWith(manualQueue: List.unmodifiable(updated));
+    if (_state.currentTrack == null) {
+      _advance();
+    }
     _notify();
     _saveSession();
   }
 
-  /// Reordena elementos en la cola asegurando la integridad de [currentIndex].
-  void reorderQueue(int oldIndex, int newIndex) {
-    if (oldIndex < 0 || oldIndex >= _state.queue.length) return;
+  /// Reordena elementos SOLO dentro de la cola [origin] — no se permite
+  /// arrastrar entre secciones (7.A.10).
+  void reorderQueue(QueueOrigin origin, int oldIndex, int newIndex) {
+    final source = origin == QueueOrigin.manual ? _state.manualQueue : _state.autoQueue;
+    if (oldIndex < 0 || oldIndex >= source.length) return;
+
     int targetIndex = newIndex;
     if (oldIndex < targetIndex) {
       targetIndex -= 1;
     }
-    if (targetIndex < 0 || targetIndex >= _state.queue.length) return;
+    if (targetIndex < 0 || targetIndex >= source.length) return;
     if (oldIndex == targetIndex) return;
 
-    final updated = List<SyncoraTrack>.from(_state.queue);
+    final updated = List<SyncoraTrack>.from(source);
     final track = updated.removeAt(oldIndex);
     updated.insert(targetIndex, track);
 
-    int newCurrentIndex = _state.currentIndex;
-    if (_state.currentIndex == oldIndex) {
-      newCurrentIndex = targetIndex;
-    } else if (oldIndex < _state.currentIndex && targetIndex >= _state.currentIndex) {
-      newCurrentIndex = _state.currentIndex - 1;
-    } else if (oldIndex > _state.currentIndex && targetIndex <= _state.currentIndex) {
-      newCurrentIndex = _state.currentIndex + 1;
+    if (origin == QueueOrigin.manual) {
+      _state = _state.copyWith(manualQueue: List.unmodifiable(updated));
+    } else {
+      _state = _state.copyWith(autoQueue: List.unmodifiable(updated));
     }
-
-    _state = _state.copyWith(
-      queue: List.unmodifiable(updated),
-      currentIndex: newCurrentIndex,
-    );
     _notify();
     _saveSession();
   }
@@ -444,78 +547,70 @@ bool get _isTestEnv {
     }
   }
 
-  /// Elimina una pista de la cola sin romper la reproducción en curso.
-  Future<void> removeFromQueue(int index) async {
-    if (index < 0 || index >= _state.queue.length) return;
+  /// Elimina una pista de la cola [origin] sin afectar `currentTrack` ni el
+  /// historial — nunca estuvo sonando.
+  void removeFromQueue(QueueOrigin origin, int index) {
+    final source = origin == QueueOrigin.manual ? _state.manualQueue : _state.autoQueue;
+    if (index < 0 || index >= source.length) return;
 
-    if (_state.queue.length == 1) {
-      await _microFadeOut();
-      await _engine.stop();
-      _state = _state.copyWith(
-        queue: const [],
-        currentIndex: -1,
-      );
-      _notify();
-      _saveSession();
-      return;
-    }
-
-    final updated = List<SyncoraTrack>.from(_state.queue)..removeAt(index);
-    final currentIdx = _state.currentIndex;
-
-    if (index < currentIdx) {
-      _state = _state.copyWith(
-        queue: List.unmodifiable(updated),
-        currentIndex: currentIdx - 1,
-      );
-      _notify();
-      _saveSession();
-    } else if (index > currentIdx) {
-      _state = _state.copyWith(
-        queue: List.unmodifiable(updated),
-      );
-      _notify();
-      _saveSession();
+    final updated = List<SyncoraTrack>.from(source)..removeAt(index);
+    if (origin == QueueOrigin.manual) {
+      _state = _state.copyWith(manualQueue: List.unmodifiable(updated));
     } else {
-      // Se elimina la pista que está sonando actualmente
-      int nextIdx = index;
-      if (nextIdx >= updated.length) {
-        nextIdx = updated.length - 1;
-      }
-      _state = _state.copyWith(
-        queue: List.unmodifiable(updated),
-        currentIndex: nextIdx,
-        clearError: true,
-      );
-      _notify();
-      _saveSession();
-      await playCurrent();
-    }
-  }
-
-  /// Limpia las canciones siguientes en la cola (cola próxima).
-  void clearQueue() {
-    if (_state.currentIndex < 0 || _state.queue.isEmpty) {
-      _state = _state.copyWith(queue: const [], currentIndex: -1);
-    } else {
-      final remaining = _state.queue.sublist(0, _state.currentIndex + 1);
-      _state = _state.copyWith(queue: List.unmodifiable(remaining));
+      _state = _state.copyWith(autoQueue: List.unmodifiable(updated));
     }
     _notify();
     _saveSession();
   }
 
-  /// Alias de playIndex para saltar a un índice de la cola.
-  Future<void> skipToQueueIndex(int index) => playIndex(index);
+  /// Vacía ambas colas (manual y automática) Y `originalContextTracks` —
+  /// sin esto último, un repeat-all posterior "resucitaría" el contexto que
+  /// el usuario acaba de limpiar explícitamente (P0.4). No toca
+  /// `currentTrack` ni el historial.
+  void clearQueue() {
+    _state = _state.copyWith(
+      manualQueue: const [],
+      autoQueue: const [],
+      originalContextTracks: const [],
+    );
+    _notify();
+    _saveSession();
+  }
 
   void setShuffle(bool enabled) {
-    _state = _state.copyWith(shuffle: enabled);
+    final reordered = _reorderAutoQueueForShuffle(enabled);
+    _state = _state.copyWith(shuffle: enabled, autoQueue: List.unmodifiable(reordered));
     _notify();
     _saveSession();
   }
 
   void toggleShuffle() {
     setShuffle(!_state.shuffle);
+  }
+
+  /// Reordena `autoQueue` in-place al cambiar shuffle↔normal.
+  ///
+  /// P0.1 (bug corregido): la versión anterior DERIVABA la nueva `autoQueue`
+  /// filtrando `originalContextTracks` — cualquier pista de `autoQueue` que
+  /// no viniera de ahí (ej. las recomendaciones que anexa `_tryAutoplay()`)
+  /// desaparecía por completo al togglear shuffle. Ahora se reordena/mezcla
+  /// la `autoQueue` **actual** directamente: con shuffle, se mezcla tal
+  /// cual; sin shuffle, se usa `originalContextTracks` solo como orden
+  /// canónico para las pistas que vienen de ahí, preservando cualquier
+  /// extra en su orden relativo actual, al final. Compara por `.id` porque
+  /// `SyncoraTrack` no tiene `==` de valor.
+  List<SyncoraTrack> _reorderAutoQueueForShuffle(bool shuffle) {
+    final current = List<SyncoraTrack>.from(_state.autoQueue);
+    if (shuffle) {
+      current.shuffle();
+      return current;
+    }
+
+    final currentIds = current.map((t) => t.id).toSet();
+    final canonical = _state.originalContextTracks.where((t) => currentIds.contains(t.id)).toList();
+    final canonicalIds = canonical.map((t) => t.id).toSet();
+    final extras = current.where((t) => !canonicalIds.contains(t.id)).toList();
+    return [...canonical, ...extras];
   }
 
   Future<void> setSkipSilence(bool enabled) async {
@@ -533,6 +628,111 @@ bool get _isTestEnv {
   }
 
   // ----------------------------------------------------------------------
+  // Lógica interna de avance/retroceso de cola (Fase 7.A)
+  // ----------------------------------------------------------------------
+
+  /// Empuja [track] (con su [origin]) al historial, respetando el cupo de
+  /// [_historyCap] (descarta la entrada más antigua al superarlo). `null` en
+  /// [origin] se trata como `auto` (no debería ocurrir en la práctica, es
+  /// una red de seguridad). Si [track] es `null` (nada sonaba), no hace nada.
+  List<HistoryEntry> _pushHistory(List<HistoryEntry> history, SyncoraTrack? track, QueueOrigin? origin) {
+    if (track == null) return history;
+    final updated = List<HistoryEntry>.from(history)
+      ..add(HistoryEntry(track, origin ?? QueueOrigin.auto));
+    if (updated.length > _historyCap) {
+      updated.removeAt(0);
+    }
+    return updated;
+  }
+
+  /// Avanza a la siguiente pista respetando D-1 (manual antes que
+  /// automática) y D-3 (regenerar la automática desde el contexto si
+  /// repeat-all agotó ambas colas). Muta `_state`
+  /// (currentTrack/currentOrigin/colas/historial) pero **no** notifica,
+  /// guarda sesión ni llama a [playCurrent] — el llamador decide (
+  /// [skipToNext] reproduce de inmediato; `_skipSilently` itera sin
+  /// reproducir hasta encontrar una pista descargada).
+  ///
+  /// Devuelve `false` si no hay ninguna pista siguiente disponible.
+  bool _advance() {
+    SyncoraTrack? next;
+    QueueOrigin? nextOrigin;
+
+    if (_state.manualQueue.isNotEmpty) {
+      next = _state.manualQueue.first;
+      nextOrigin = QueueOrigin.manual;
+    } else if (_state.autoQueue.isNotEmpty) {
+      next = _state.autoQueue.first;
+      nextOrigin = QueueOrigin.auto;
+    } else if (_state.repeatMode == SyncoraRepeatMode.all && _state.originalContextTracks.isNotEmpty) {
+      final regenerated = List<SyncoraTrack>.from(_state.originalContextTracks);
+      if (_state.shuffle) regenerated.shuffle();
+      _state = _state.copyWith(autoQueue: List.unmodifiable(regenerated));
+      if (_state.autoQueue.isNotEmpty) {
+        next = _state.autoQueue.first;
+        nextOrigin = QueueOrigin.auto;
+      }
+    }
+
+    if (next == null || nextOrigin == null) return false;
+
+    final newHistory = _pushHistory(_state.history, _state.currentTrack, _state.currentOrigin);
+
+    List<SyncoraTrack> newManual = _state.manualQueue;
+    List<SyncoraTrack> newAuto = _state.autoQueue;
+    if (nextOrigin == QueueOrigin.manual) {
+      newManual = List<SyncoraTrack>.from(_state.manualQueue)..removeAt(0);
+    } else {
+      newAuto = List<SyncoraTrack>.from(_state.autoQueue)..removeAt(0);
+    }
+
+    _state = _state.copyWith(
+      currentTrack: next,
+      currentOrigin: nextOrigin,
+      manualQueue: List.unmodifiable(newManual),
+      autoQueue: List.unmodifiable(newAuto),
+      history: List.unmodifiable(newHistory),
+      clearError: true,
+    );
+    return true;
+  }
+
+  /// Retrocede a la última pista del historial (D-3): al volver desde una
+  /// pista manual, regresa a esa pista manual, no a la automática. La pista
+  /// actual (si había una) vuelve al FRENTE de SU PROPIA cola de origen, así
+  /// "siguiente" tras un "anterior" reproduce la misma pista de la que
+  /// veníamos. Igual que [_advance], no notifica ni reproduce.
+  ///
+  /// Devuelve `false` si el historial está vacío.
+  bool _retreat() {
+    if (_state.history.isEmpty) return false;
+
+    final newHistory = List<HistoryEntry>.from(_state.history);
+    final entry = newHistory.removeLast();
+
+    List<SyncoraTrack> newManual = _state.manualQueue;
+    List<SyncoraTrack> newAuto = _state.autoQueue;
+    final current = _state.currentTrack;
+    if (current != null) {
+      if (_state.currentOrigin == QueueOrigin.manual) {
+        newManual = List<SyncoraTrack>.from(_state.manualQueue)..insert(0, current);
+      } else {
+        newAuto = List<SyncoraTrack>.from(_state.autoQueue)..insert(0, current);
+      }
+    }
+
+    _state = _state.copyWith(
+      currentTrack: entry.track,
+      currentOrigin: entry.origin,
+      manualQueue: List.unmodifiable(newManual),
+      autoQueue: List.unmodifiable(newAuto),
+      history: List.unmodifiable(newHistory),
+      clearError: true,
+    );
+    return true;
+  }
+
+  // ----------------------------------------------------------------------
   // Lógica interna & Persistencia de Sesión
   // ----------------------------------------------------------------------
 
@@ -540,8 +740,12 @@ bool get _isTestEnv {
 
   void _saveSession() {
     _sessionStorage.saveSession(
-      queue: _state.queue,
-      currentIndex: _state.currentIndex,
+      currentTrack: _state.currentTrack,
+      currentOrigin: _state.currentOrigin,
+      manualQueue: _state.manualQueue,
+      autoQueue: _state.autoQueue,
+      originalContextTracks: _state.originalContextTracks,
+      history: _state.history,
       positionSeconds: _state.engine.position.inSeconds,
       repeatMode: _state.repeatMode,
       shuffle: _state.shuffle,
@@ -551,20 +755,29 @@ bool get _isTestEnv {
 
   Future<void> _restoreSession() async {
     final session = await _sessionStorage.loadSession();
-    if (session == null || session.queue.isEmpty) return;
+    if (session == null) return;
+    if (session.currentTrack == null && session.manualQueue.isEmpty && session.autoQueue.isEmpty) {
+      return;
+    }
 
-    final restoredIndex = (session.currentIndex >= 0 && session.currentIndex < session.queue.length)
-        ? session.currentIndex
-        : 0;
-
-    _restoredPositionSeconds = session.positionSeconds;
-    final restoredDuration = (restoredIndex >= 0 && restoredIndex < session.queue.length)
-        ? session.queue[restoredIndex].duration ?? Duration.zero
-        : Duration.zero;
+    // P2: solo tiene sentido "recordar" una posición a restaurar si hay una
+    // pista a la que aplicarla — sin esto, una sesión con manualQueue no
+    // vacía pero currentTrack null (ej. tras un setQueue([]) guardado)
+    // dejaba `_restoredPositionSeconds` seteado sin destino.
+    if (session.currentTrack != null) {
+      _restoredPositionSeconds = session.positionSeconds;
+    }
+    final restoredDuration = session.currentTrack?.duration ?? Duration.zero;
 
     _state = _state.copyWith(
-      queue: List.unmodifiable(session.queue),
-      currentIndex: restoredIndex,
+      currentTrack: session.currentTrack,
+      clearCurrentTrack: session.currentTrack == null,
+      currentOrigin: session.currentOrigin,
+      clearCurrentOrigin: session.currentOrigin == null,
+      manualQueue: List.unmodifiable(session.manualQueue),
+      autoQueue: List.unmodifiable(session.autoQueue),
+      originalContextTracks: List.unmodifiable(session.originalContextTracks),
+      history: List.unmodifiable(session.history),
       repeatMode: session.repeatMode,
       shuffle: session.shuffle,
       activeContextId: session.activeContextId,
@@ -578,44 +791,62 @@ bool get _isTestEnv {
       clearError: true,
     );
     _notify();
-    _log('[Session] Sesión restaurada: ${session.queue.length} pistas en cola, posición: ${session.positionSeconds}s (pausado)');
+    _log('[Session] Sesión restaurada: ${session.manualQueue.length + session.autoQueue.length} '
+        'pistas en cola, posición: ${session.positionSeconds}s (pausado)');
   }
 
-  final Set<int> _skippedIndicesOffline = {};
-
-  /// Salto silencioso automático cuando se intenta reproducir una pista no descargada estando offline.
+  /// Salto silencioso automático cuando se intenta reproducir una pista no
+  /// descargada estando offline (Fase 6, adaptado al modelo dual en 7.A).
+  ///
+  /// P0.2 (bug corregido): la versión anterior llamaba a `_advance()` en
+  /// cada iteración de prueba — eso consumía de verdad las colas (incluida
+  /// la MANUAL, violando D-1: una pista manual sin descargar quedaba
+  /// eliminada para siempre solo por probarla) y mandaba cada intento
+  /// fallido al historial pese a nunca haber sonado. Ahora el bucle es de
+  /// solo-lectura mientras evalúa candidatos: recorre `manualQueue` primero
+  /// (D-1), luego `autoQueue`, y solo muta el estado UNA VEZ que encuentra
+  /// un candidato realmente descargado, vía `_playFromQueueInternal` (que ya
+  /// descarta correctamente lo anterior al índice encontrado sin tocar el
+  /// historial, porque esas pistas nunca sonaron). Si ninguna cola tiene
+  /// nada descargado, el estado queda "nada sonando" (`currentTrack` null)
+  /// en vez de apuntar a una pista que nunca va a reproducirse.
   Future<void> _skipSilently() async {
-    while (true) {
-      final next = _computeNextIndex(autoAdvance: true);
-      if (next == null || _skippedIndicesOffline.contains(next)) {
-        _skippedIndicesOffline.clear();
-        await _engine.stop();
-        _state = _state.copyWith(
-          clearError: true,
-        );
-        _notify();
-        _saveSession();
-        return;
-      }
+    final evaluatedIds = <String>{};
 
-      _skippedIndicesOffline.add(next);
-      _state = _state.copyWith(currentIndex: next, clearError: true);
-      _notify();
-      _saveSession();
-
-      final track = _state.currentTrack;
-      if (track != null && _downloadedTrackDao != null) {
-        final trackDeezerId = int.tryParse(track.id) ?? track.id.hashCode.abs();
-        try {
-          final downloaded = await _downloadedTrackDao.getByTrackId(trackDeezerId);
-          if (downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty) {
-            _log('[OfflineSkip] Pista descargada encontrada a la posición $next: ${track.title}');
-            await playCurrent();
-            return;
-          }
-        } catch (_) {}
+    Future<bool> isDownloaded(SyncoraTrack track) async {
+      if (_downloadedTrackDao == null) return false;
+      // No repetir la consulta al DAO para el mismo id dentro de este mismo
+      // bucle (ej. la misma pista agregada dos veces a la cola).
+      if (!evaluatedIds.add(track.id)) return false;
+      final trackDeezerId = int.tryParse(track.id) ?? track.id.hashCode.abs();
+      try {
+        final downloaded = await _downloadedTrackDao.getByTrackId(trackDeezerId);
+        return downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty;
+      } catch (_) {
+        return false;
       }
     }
+
+    for (var i = 0; i < _state.manualQueue.length; i++) {
+      if (await isDownloaded(_state.manualQueue[i])) {
+        _log('[OfflineSkip] Pista manual descargada encontrada: ${_state.manualQueue[i].title}');
+        await _playFromQueueInternal(QueueOrigin.manual, i);
+        return;
+      }
+    }
+
+    for (var i = 0; i < _state.autoQueue.length; i++) {
+      if (await isDownloaded(_state.autoQueue[i])) {
+        _log('[OfflineSkip] Pista automática descargada encontrada: ${_state.autoQueue[i].title}');
+        await _playFromQueueInternal(QueueOrigin.auto, i);
+        return;
+      }
+    }
+
+    await _engine.stop();
+    _state = _state.copyWith(clearError: true, clearCurrentTrack: true, clearCurrentOrigin: true);
+    _notify();
+    _saveSession();
   }
 
 
@@ -749,7 +980,6 @@ bool get _isTestEnv {
         if (isStale()) return;
         if (downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty) {
           _log('[Play] Pista local descargada encontrada: ${downloaded.localAudioPath}. Cargando sin pasar por ExtractionIsolate.');
-          _skippedIndicesOffline.clear();
           await _engine.setLocalSource(downloaded.localAudioPath);
 
           if (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0) {
@@ -774,9 +1004,6 @@ bool get _isTestEnv {
       await _skipSilently();
       return;
     }
-
-    _skippedIndicesOffline.clear();
-
 
     // 3. Flujo normal de extracción de YouTube
     String targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)
@@ -847,7 +1074,9 @@ bool get _isTestEnv {
         lastErrorMessage: message,
       );
       _notify();
-      await skipToNext();
+      // Cascada interna (posiblemente ya anidada dentro de un skipToNext()
+      // guardado) — usa el núcleo sin guard, ver _advanceAndPlay().
+      await _advanceAndPlay();
       return;
     }
 
@@ -899,7 +1128,11 @@ bool get _isTestEnv {
         lastErrorMessage: 'El motor de audio no pudo reproducir esta pista.',
       );
       _notify();
-      skipToNext();
+      // Puede dispararse mientras un skipToNext()/playFromQueue() guardado
+      // ya está en curso (ej. el motor reporta error justo al cargar la
+      // pista nueva) — usa el núcleo sin guard, igual que en
+      // _handleExtractionError.
+      _advanceAndPlay();
     }
   }
 
@@ -925,34 +1158,6 @@ bool get _isTestEnv {
       return;
     }
     await skipToNext();
-  }
-
-  /// Calcula el siguiente índice respetando shuffle y repeat.
-  int? _computeNextIndex({required bool autoAdvance}) {
-    final queue = _state.queue;
-    if (queue.isEmpty) return null;
-
-    if (_state.shuffle) {
-      if (queue.length == 1) {
-        return _state.repeatMode == SyncoraRepeatMode.off ? null : 0;
-      }
-      final rnd = DateTime.now().microsecondsSinceEpoch % queue.length;
-      return rnd == _state.currentIndex ? (rnd + 1) % queue.length : rnd;
-    }
-
-    final next = _state.currentIndex + 1;
-    if (next < queue.length) return next;
-    if (_state.repeatMode == SyncoraRepeatMode.all) return 0;
-    return null;
-  }
-
-  int? _computePrevIndex() {
-    final queue = _state.queue;
-    if (queue.isEmpty) return null;
-    final prev = _state.currentIndex - 1;
-    if (prev >= 0) return prev;
-    if (_state.repeatMode == SyncoraRepeatMode.all) return queue.length - 1;
-    return null;
   }
 
   void _notify() {
@@ -986,4 +1191,3 @@ bool get _isTestEnv {
     super.dispose();
   }
 }
-

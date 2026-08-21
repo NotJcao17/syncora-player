@@ -181,3 +181,33 @@ class SyncoraTrack {
 
 /// Modo de repetición expuesto al reproductor.
 enum SyncoraRepeatMode { off, one, all }
+
+/// De qué cola provino una pista: la manual (agregada explícitamente por el
+/// usuario, FIFO, D-2) o la automática (regenerable desde el contexto activo).
+enum QueueOrigin { manual, auto }
+
+/// Entrada de la pila de historial de reproducción (D-3): registra tanto la
+/// pista como de qué cola provino, para que "anterior" pueda devolverla a su
+/// cola de origen intacta.
+@immutable
+class HistoryEntry {
+  final SyncoraTrack track;
+  final QueueOrigin origin;
+  const HistoryEntry(this.track, this.origin);
+
+  Map<String, dynamic> toJson() => {
+        'track': track.toJson(),
+        'origin': origin.name,
+      };
+
+  factory HistoryEntry.fromJson(Map<String, dynamic> json) {
+    final originName = json['origin'] as String? ?? 'auto';
+    return HistoryEntry(
+      SyncoraTrack.fromJson(json['track'] as Map<String, dynamic>),
+      QueueOrigin.values.firstWhere(
+        (e) => e.name == originName,
+        orElse: () => QueueOrigin.auto,
+      ),
+    );
+  }
+}
