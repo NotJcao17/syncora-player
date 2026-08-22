@@ -1,9 +1,14 @@
 import 'dart:async';
 import 'package:csv/csv.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/contributor_resolver.dart';
 import '../../../data/apis/deezer_api.dart';
+import '../../../data/local_db/daos/playlist_dao.dart';
 import '../../../data/models/deezer/deezer_track.dart';
+import '../../../data/supabase/supabase_playlist_repository.dart';
+import '../../player/player_models.dart';
 import '../../search/exact_track_search.dart';
 
 class RawImportTrack {
@@ -200,6 +205,100 @@ class PlaylistImportExportService {
       // Pitfall #4 & #22: 200ms pause between sequential requests
       await Future.delayed(const Duration(milliseconds: 200));
     }
+  }
+
+  /// D-8 / Fase 7.F.1, punto 3 -- secuencia canónica de inserción de una
+  /// playlist ya resuelta contra Deezer (título/descripción + pistas ya
+  /// matcheadas), compartida por **ambos** flujos que crean una playlist a
+  /// partir de sugerencias externas: la importación CSV/TXT
+  /// (`library_screen.dart#_importPlaylistFromFile`) y "Crear playlist con
+  /// IA" (7.F.1). Antes de esta extracción cada flujo tenía su propia copia
+  /// de este código -- ahora es literalmente el mismo, evitando que diverjan.
+  ///
+  /// Orden estricto (NO reordenar, ver el comentario largo que originalmente
+  /// vivía en `library_screen.dart` explicando la condición de carrera real
+  /// que motivó este orden):
+  ///   1. Crear la playlist local (`dao.createPlaylist`).
+  ///   2. Crear la contraparte remota (`supabaseRepo.createPlaylist`) --
+  ///      **sin** escribir todavía `remoteId` en la playlist local.
+  ///   3. Por cada pista matcheada: resolver colaboradores
+  ///      (`resolveDeezerTrackContributors`), insertarla en local
+  ///      (`dao.addTrackToPlaylist`) y acumular su payload remoto.
+  ///   4. Subir el lote remoto de una sola vez (`supabaseRepo.addTracksToPlaylist`).
+  ///   5. Recién ahora, con local y remoto ya iguales, marcar `remoteId` en
+  ///      la playlist local -- es la señal que habilita la sincronización
+  ///      automática al abrirla (`playlist_detail_screen.dart`). Si se
+  ///      escribiera antes (ej. justo tras el paso 2), una sync disparada
+  ///      mientras las pistas todavía se suben vería un remoto a medio
+  ///      llenar y podaría lo local que aún no llegó a subirse -- bug real,
+  ///      ya reproducido y arreglado una vez.
+  ///
+  /// Si la subida remota falla (red, RLS, etc.), la playlist queda
+  /// local-only (sin `remoteId`) -- exactamente el estado seguro de antes de
+  /// este fix, que ninguna sincronización toca.
+  ///
+  /// Devuelve el id **local** (Drift) de la playlist creada, para que el
+  /// llamador pueda navegar a ella si quiere.
+  Future<int> createPlaylistWithMatchedTracks({
+    required String title,
+    String? description,
+    required List<DeezerTrack> matchedTracks,
+    required PlaylistDao dao,
+    required DeezerApi deezerApi,
+    required SupabasePlaylistRepository supabaseRepo,
+  }) async {
+    final playlistId = await dao.createPlaylist(title: title, description: description);
+
+    String? remotePlaylistId;
+    try {
+      final created = await supabaseRepo.createPlaylist(title: title, description: description);
+      remotePlaylistId = created['id']?.toString();
+    } catch (_) {}
+
+    final remoteTracksPayload = <Map<String, dynamic>>[];
+    for (final track in matchedTracks) {
+      final contributors = await resolveDeezerTrackContributors(deezerApi, track);
+      await dao.addTrackToPlaylist(
+        playlistId: playlistId,
+        trackId: track.id,
+        artistId: track.artistId,
+        albumId: track.albumId,
+        title: track.title,
+        artistName: track.artistName,
+        albumName: track.albumTitle,
+        coverUrl: track.coverUrl,
+        durationMs: track.durationSec * 1000,
+        contributorsJson: SyncoraArtistRef.encodeList(contributors),
+      );
+      if (remotePlaylistId != null) {
+        remoteTracksPayload.add({
+          'track_id': track.id,
+          'artist_id': track.artistId,
+          'album_id': track.albumId,
+          'title': track.title,
+          'artist_name': track.artistName,
+          'album_name': track.albumTitle,
+          'cover_url': track.coverUrl,
+          'duration_ms': track.durationSec * 1000,
+          if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
+        });
+      }
+    }
+
+    if (remotePlaylistId != null && remoteTracksPayload.isNotEmpty) {
+      try {
+        await supabaseRepo.addTracksToPlaylist(remotePlaylistId, remoteTracksPayload);
+        final localPlaylist = await dao.getPlaylistById(playlistId);
+        if (localPlaylist != null) {
+          await dao.updatePlaylist(localPlaylist.copyWith(remoteId: Value(remotePlaylistId)));
+        }
+      } catch (_) {
+        // Si la subida falla, la playlist se queda sin remoteId -- estado
+        // local-only seguro, ninguna sync la toca.
+      }
+    }
+
+    return playlistId;
   }
 
   /// Export tracks to CSV string format: title,artist,album,duration_ms

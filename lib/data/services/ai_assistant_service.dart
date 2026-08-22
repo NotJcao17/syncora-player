@@ -157,15 +157,25 @@ class AiAssistantService {
 
   // --- Azúcar tipada por acción (lista para el uso de la Fase 7.F) ---------
 
+  /// [contextTracks] tiene doble uso en esta acción (Fase 7.F.1), distinguido
+  /// por la clave `params['isRefinement']` (ver `prompts.ts#create_playlist`,
+  /// que documenta ambos casos):
+  ///  - Sin `isRefinement`: la playlist de referencia elegida por el usuario
+  ///    ("basado en una playlist mía", D-11) -- inspiración de estilo.
+  ///  - Con `params: {'isRefinement': true, ...}`: el borrador actual (tras
+  ///    ediciones locales del usuario) que "afinar con IA" pide revisar según
+  ///    el ajuste en [prompt].
   Future<Map<String, dynamic>> createPlaylist({
     String? prompt,
     Map<String, dynamic>? params,
     int? count,
+    List<Map<String, dynamic>>? contextTracks,
   }) {
     return invoke(AiAction.createPlaylist, {
       if (prompt != null) 'prompt': prompt,
       if (params != null) 'params': params,
       if (count != null) 'count': count,
+      if (contextTracks != null) 'contextTracks': contextTracks,
     });
   }
 

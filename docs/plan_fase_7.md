@@ -494,27 +494,31 @@ El orden no es negociable en tres puntos:
 
 Las 4 funciones, todas sobre la infraestructura de 7.E, todas con vista previa antes de aplicar.
 
+> **Estado:** 7.F.1 cerrada, commiteada y pusheada (ver `docs/fases/fase_7_f.md` para el detalle:
+> arquitectura, bugs encontrados en revisión independiente y corregidos). 7.F.2/7.F.3/7.F.4 no
+> están iniciadas — ver "Estado actual" en `CLAUDE.md` para el punto exacto de retoma.
+
 ### 7.F.1 — Crear playlist con IA
 
 Entrada: botón con ícono `stars-broken` en **Biblioteca**, junto a "crear playlist".
 
-- [ ] Entrada primaria: caja de texto libre.
-- [ ] Panel de parámetros **opcional y colapsado**: cantidad de canciones (presets 25/50/100/200,
+- [x] Entrada primaria: caja de texto libre.
+- [x] Panel de parámetros **opcional y colapsado**: cantidad de canciones (presets 25/50/100/200,
       tope duro 300), máximo por artista, tags de género/mood, slider familiaridad↔descubrimiento,
       slider nicho↔popular, y selector **"basado en una playlist mía"** (D-11: solo playlists
       propias). Texto y parámetros son combinables, no excluyentes.
-- [ ] Aplicar los límites numéricos en código tras la respuesta (D-5): pedir ~30% de más, filtrar
+- [x] Aplicar los límites numéricos en código tras la respuesta (D-5): pedir ~30% de más, filtrar
       por máximo-por-artista, recortar al número exacto pedido.
-- [ ] Pedir nombre y descripción de la playlist **en la misma llamada** (sale gratis, no consume
+- [x] Pedir nombre y descripción de la playlist **en la misma llamada** (sale gratis, no consume
       otra petición).
-- [ ] Matching a Deezer de cada `{title, artist}` sugerido, **reutilizando la cadena de fallback ya
+- [x] Matching a Deezer de cada `{title, artist}` sugerido, **reutilizando la cadena de fallback ya
       construida para importación CSV** (`playlist_import_export_service.dart`:
       `artist:"X" track:"Y"` → texto plano → solo título, con validación por duración). No
       reimplementar.
-- [ ] Vista previa: lista con portadas, +/- por canción (**edición local, sin coste**), y botón
+- [x] Vista previa: lista con portadas, +/- por canción (**edición local, sin coste**), y botón
       "afinar con IA" que sí gasta una petición reenviando el historial de turnos.
-- [ ] Al confirmar: insertar con el mismo flujo de la importación CSV (D-8).
-- [ ] Manejo de "no encontradas en Deezer": reportar cuáles no matchearon, como ya hace la
+- [x] Al confirmar: insertar con el mismo flujo de la importación CSV (D-8).
+- [x] Manejo de "no encontradas en Deezer": reportar cuáles no matchearon, como ya hace la
       importación (B6 del plan del buscador).
 
 ### 7.F.2 — Crear cola con IA

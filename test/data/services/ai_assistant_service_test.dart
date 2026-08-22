@@ -106,6 +106,29 @@ void main() {
         expect(body['count'], equals(25));
       });
 
+      test('createPlaylist (7.F.1) manda contextTracks cuando se pasa (playlist de referencia o afinar)', () async {
+        Object? capturedBody;
+        final service = AiAssistantService(
+          keyStorage: FakeAiKeyStorage(),
+          invoke: (functionName, {headers = const {}, body}) async {
+            capturedBody = body;
+            return const FunctionResponse(status: 200, data: {'action': 'create_playlist', 'result': {'playlistName': 'x', 'description': 'y', 'tracks': <Map<String, dynamic>>[]}});
+          },
+        );
+
+        await service.createPlaylist(
+          prompt: 'menos canciones lentas',
+          params: {'isRefinement': true},
+          contextTracks: [
+            {'id': '1', 'title': 'A', 'artist': 'B'},
+          ],
+        );
+
+        final body = capturedBody as Map<String, dynamic>;
+        expect(body['contextTracks'], isA<List>());
+        expect(body['params'], equals({'isRefinement': true}));
+      });
+
       test('modifyPlaylistRemove manda contextTracks con ids', () async {
         Object? capturedBody;
         final service = AiAssistantService(
