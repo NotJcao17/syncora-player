@@ -757,27 +757,27 @@ julio, justo cuando el usuario espera lo más reciente.)
 
 ### Tareas
 
-- [ ] **7.G.1** Migración SQL: tabla `user_stats_monthly` (usuario + mes) con minutos totales,
+- [x] **7.G.1** Migración SQL: tabla `user_stats_monthly` (usuario + mes) con minutos totales,
       **top 50 artistas con sus minutos**, **top 50 canciones con sus minutos**, y todos los
       géneros. Guardar `{id, minutos}` en JSONB — **no** nombres ni portadas (eso se resuelve con
       el caché de metadata de Deezer que ya existe), lo que mantiene la fila en ~4 KB.
       El top 50 es lo que permite un Anual razonablemente preciso al sumar 12 meses; se acepta el
       margen de error de un artista que quede fuera del top 50 de algún mes (invisible para el
       usuario en una función de este tipo).
-- [ ] **7.G.2** Cron mensual con `pg_cron`: agregar el mes recién cerrado a `user_stats_monthly`
+- [x] **7.G.2** Cron mensual con `pg_cron`: agregar el mes recién cerrado a `user_stats_monthly`
       y **después** podar `listening_history` a >90 días. **El orden importa** — nunca al revés.
-- [ ] **7.G.3** Queries de agregación para Semanal y Mensual sobre datos crudos (misma query,
+- [x] **7.G.3** Queries de agregación para Semanal y Mensual sobre datos crudos (misma query,
       distinta ventana).
-- [ ] **7.G.4** Rollup de Anual (suma de las últimas 12 filas) y Desde-el-inicio (suma de todas).
-- [ ] **7.G.5** Pantalla de Estadísticas con 3 pestañas (Semanal / Mensual / Anual) + acción
+- [x] **7.G.4** Rollup de Anual (suma de las últimas 12 filas) y Desde-el-inicio (suma de todas).
+- [x] **7.G.5** Pantalla de Estadísticas con 3 pestañas (Semanal / Mensual / Anual) + acción
       "Desde el inicio". Empty states para usuarios sin historial suficiente, y loading states
       tipo skeleton (Documento Maestro §10, antipatrón 3).
-- [ ] **7.G.6** Entrada desde **Inicio**: tarjeta de estadísticas resumidas ("Tus minutos esta
+- [x] **7.G.6** Entrada desde **Inicio**: tarjeta de estadísticas resumidas ("Tus minutos esta
       semana: X — Ver más"). Ya estaba prevista en el Documento Maestro §2.1.1
       ("estadísticas resumidas" en contenido destacado).
-- [ ] **7.G.7** Tarjetas imprimibles tipo stories: renderizar con `RepaintBoundary.toImage()` y
+- [x] **7.G.7** Tarjetas imprimibles tipo stories: renderizar con `RepaintBoundary.toImage()` y
       compartir con `share_plus`. **Solo exportar imagen** (D-20), sin URL pública.
-- [ ] **7.G.8** Tests de las agregaciones: umbral de escucha, ventanas de 7/30 días, suma correcta
+- [x] **7.G.8** Tests de las agregaciones: umbral de escucha, ventanas de 7/30 días, suma correcta
       de 12 meses, caso de usuario con menos de 12 meses de historial (D-18).
 
 ---

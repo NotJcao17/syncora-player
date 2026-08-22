@@ -18,6 +18,7 @@ import '../../features/player/screens/player_fullscreen_screen.dart';
 import '../../features/search/screens/artist_detail_screen.dart';
 import '../../features/search/screens/search_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
+import '../../features/stats/screens/stats_screen.dart';
 import '../layout/app_shell.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -165,6 +166,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/downloads',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: DownloadsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/stats',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: StatsScreen(),
             ),
           ),
 

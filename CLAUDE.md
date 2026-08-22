@@ -63,10 +63,26 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 
 ### Estado actual (última actualización: 2026-08-22)
 
-**Cerradas, commiteadas y pusheadas a `master`** (ver `docs/fases/fase_7_{0,a,b,c,d,e,f,h,i}.md`
-para el detalle de cada una): **7.0, 7.A, 7.B, 7.C, 7.D, 7.E, 7.F.1, 7.F.2, 7.F.3, 7.F.4, 7.H,
-7.I**. Todas con `flutter analyze` limpio y la suite de tests en verde en el momento de cerrarlas
-(332 tests al cerrar 7.I — 313 al cerrar 7.H; +19 en 7.I).
+**Fase 7 completa.** Cerradas, commiteadas y pusheadas a `master` (ver
+`docs/fases/fase_7_{0,a,b,c,d,e,f,g,h,i}.md` para el detalle de cada una): **7.0, 7.A, 7.B, 7.C,
+7.D, 7.E, 7.F.1, 7.F.2, 7.F.3, 7.F.4, 7.H, 7.I, 7.G**. Todas con `flutter analyze` limpio y la
+suite de tests en verde en el momento de cerrarlas (343 tests al cerrar 7.G — 332 al cerrar 7.I;
++11 en 7.G).
+
+7.G ("Estadísticas y Wrapped") fue la última fase del plan. Pantalla de Estadísticas con 4 vistas
+(Semanal/Mensual sobre `listening_history` crudo; Anual/Desde-el-inicio sobre el nuevo agregado
+`user_stats_monthly`, D-17), gateada por modo local según 7.I.6 (Anual y Desde-el-inicio ocultas,
+no deshabilitadas, sin cuenta), tarjetas Wrapped tipo stories compartibles como imagen (D-20), y
+entrada resumida desde Inicio (7.G.6). Toda la lógica de agregación vive en funciones puras
+testeables (`StatsCalculator.fromRawEntries`/`rollupMonthlyRows`, mismo patrón que
+`computeCanEdit`/`computeAuthRedirect` de 7.I), sin invariantes de riesgo real (no toca cola ni
+auth), así que se revisó por el propio orquestador leyendo el diff directamente, sin subagente de
+revisión separado — mismo criterio que 7.F.3/7.F.4. Sin hallazgos que corregir. Detalle completo en
+`docs/fases/fase_7_g.md`, incluido el SQL exacto de `cron.schedule(...)` pendiente de correr
+manualmente una vez habilitada la extensión `pg_cron` desde el Dashboard (mismo patrón de paso
+manual que el hook de 7.H y la Edge Function de 7.E) — la función de agregación
+(`aggregate_monthly_listening_stats()`, con `LEFT JOIN LATERAL` por usuario) nunca corrió contra
+Postgres real, vale la pena revisarla antes de confiar en el cron en producción.
 
 7.I (modo local / sin cuenta, D-23 a D-25) fue la fase de mayor superficie de la Fase 7 hasta
 ahora — toca `auth`, routing, y gating de edición en ~6 pantallas. Revisión independiente en
@@ -130,8 +146,9 @@ las 4 hojas de IA — el resto del esqueleto (`setState`/`mounted`/manejo de pas
 abstraer, es puro cableado de UI con más costo de abstracción que ahorro real. Sin bugs encontrados
 en la revisión de este sub-bloque. Detalle completo en `docs/fases/fase_7_f.md`.
 
-**Siguiente fase a implementar: 7.G (Estadísticas y Wrapped) — última fase de la Fase 7.** Ver su
-sección en `docs/plan_fase_7.md`. El orden no negociable (7.I antes que 7.G) ya se cumplió.
+**La Fase 7 está completa — no queda ninguna fase pendiente de implementar en `docs/plan_fase_7.md`.**
+Lo que sigue son pasos manuales de infraestructura (ver abajo) y las pruebas humanas de
+`docs/matriz_de_pruebas.md`.
 
 **Hallazgos verificados durante la Fase 7 que no estaban en el plan original** (ya documentados
 como H-6 a H-8 en `docs/plan_fase_7.md`, sección de hallazgos — no volver a descubrirlos): el aviso
@@ -141,14 +158,18 @@ Gemini y la forma de llamar a su API cambiaron desde que se escribió el plan �
 `gemini-3.1-flash-lite`/`generateContent` (ya implementado así en 7.E); el intercalado "cada 3"
 fijo de 7.F.2 (D-9) dejaba las sugerencias sobrantes en bloque, corregido a paso adaptativo.
 
-**Pasos manuales acumulados, pendientes para el desarrollador humano** (ninguno bloquea seguir
-implementando fases del cliente Flutter, pero si se quiere probar IA de verdad hacen falta):
-aplicar la migración `20250001000008_ai_rate_limits.sql`, desplegar la Edge Function
-(`supabase functions deploy ai-assistant`), configurar el secreto `GEMINI_API_KEY`, y correr
-`deno test`/`deno check` sobre `supabase/functions/ai-assistant/` (Deno no está disponible en el
-entorno del agente, esos tests nunca se ejecutaron, solo se escribieron). Detalle completo en
-`docs/fases/fase_7_e.md`. También sigue pendiente 7.D.6 (prueba humana de crossfade en Windows y
-Android, ver `docs/fases/fase_7_d.md`).
+**Pasos manuales acumulados, pendientes para el desarrollador humano** (ninguno bloquea el trabajo
+de código, pero hacen falta para probar la Fase 7 de punta a punta contra Supabase real):
+aplicar las migraciones `20250001000008_ai_rate_limits.sql` a `...000010_user_stats_monthly.sql`
+(no aplicadas todavía contra un proyecto real); desplegar la Edge Function (`supabase functions
+deploy ai-assistant`), configurar el secreto `GEMINI_API_KEY`, y correr `deno test`/`deno check`
+sobre `supabase/functions/ai-assistant/` (Deno no está disponible en el entorno del agente, esos
+tests nunca se ejecutaron, solo se escribieron) — detalle en `docs/fases/fase_7_e.md`; activar el
+Auth Hook "Before User Created" de 7.H en el dashboard y probar ambos caminos de registro contra un
+proyecto real — detalle en `docs/fases/fase_7_h.md`; habilitar `pg_cron` y programar
+`aggregate_monthly_listening_stats()` de 7.G (SQL exacto en `docs/fases/fase_7_g.md`), cuya
+sintaxis (`LEFT JOIN LATERAL` por usuario) tampoco corrió nunca contra Postgres real. También sigue
+pendiente 7.D.6 (prueba humana de crossfade en Windows y Android, ver `docs/fases/fase_7_d.md`).
 
 ## Otros documentos relevantes
 

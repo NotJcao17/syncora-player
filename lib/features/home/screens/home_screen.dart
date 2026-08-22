@@ -12,6 +12,7 @@ import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/skeleton_box.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../player/player_providers.dart';
+import '../../stats/stats_providers.dart';
 import '../home_providers.dart';
 
 /// Pantalla Principal conectada a Deezer API real y datos personalizados del usuario.
@@ -123,6 +124,52 @@ class HomeScreen extends ConsumerWidget {
                     ],
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // Fase 7.G.6: tarjeta compacta de estadísticas semanales (Documento
+          // Maestro §2.1.1). Sin tarjeta si no hay datos (usuario nuevo), en
+          // vez de mostrarla en 0 -- evita ruido visual en el primer uso.
+          SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+            sliver: SliverToBoxAdapter(
+              child: Consumer(
+                builder: (context, ref, _) {
+                  final weeklyAsync = ref.watch(weeklyStatsProvider);
+                  final snapshot = weeklyAsync.value;
+                  if (snapshot == null || snapshot.isEmpty) return const SizedBox.shrink();
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Material(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () => context.push('/stats'),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          child: Row(
+                            children: [
+                              Icon(AppIcons.broken(SolarIcons.Chart), color: AppTheme.accent, size: 22),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Tus minutos esta semana: ${snapshot.totalMinutes}',
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ),
+                              Text('Ver más', style: Theme.of(context).textTheme.labelMedium),
+                              const SizedBox(width: 4),
+                              Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),

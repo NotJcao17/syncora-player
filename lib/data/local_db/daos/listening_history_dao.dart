@@ -44,6 +44,13 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
   Future<void> markSynced(int id) => (update(listeningHistory)..where((t) => t.id.equals(id)))
       .write(ListeningHistoryCompanion(syncedAt: Value(DateTime.now())));
 
+  /// Fase 7.G.3: entradas crudas de una ventana de días, sin límite
+  /// artificial (a diferencia de [getTopArtistIds], que sí limita a 100) --
+  /// Estadísticas necesita exactitud sobre la ventana completa, no una
+  /// muestra.
+  Future<List<ListeningHistoryData>> getEntriesSince(DateTime cutoff) =>
+      (select(listeningHistory)..where((t) => t.listenedAt.isBiggerOrEqualValue(cutoff))).get();
+
   /// Obtiene los IDs de los artistas más escuchados por el usuario según su historial
   Future<List<int>> getTopArtistIds({int limit = 5}) async {
     final history = await getRecentHistory(limit: 100);
