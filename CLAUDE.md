@@ -37,7 +37,38 @@ y el plan basta para retomar sin perder nada importante:
   una revisión de código no puede resolver con confianza, o cualquier acción destructiva/
   irreversible. Fuera de eso, seguir de fase en fase sin esperar aprobación en cada una.
 
+### Eficiencia de tokens (agregado tras cerrar 7.F.1/7.F.2 — el ritmo de esas dos fases no es
+sostenible, consumieron ~80% de una ventana de 5 horas)
+
+Cada subagente arranca en frío y re-lee una porción del repo antes de hacer nada — ese costo fijo
+se paga cada vez que se lanza uno. 7.F.1 y 7.F.2 lanzaron un agente implementador + un agente de
+revisión independiente por sub-bloque (uno de ellos incluso se relanzó por un error de
+`isolation: "worktree"` que no ve cambios sin commitear — un run entero desperdiciado), más
+numerosas corridas de la suite completa de tests. Total: tres llamadas a subagente ya sumaron solo
+ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto de la Fase 7:
+
+- **Revisión independiente solo para riesgo real, no por sub-bloque.** Reservar un subagente de
+  revisión separado (Opus si toca `syncora_player_controller.dart`/D-1, Sonnet en el resto) para
+  cambios que toquen invariantes de riesgo real: cola manual/automática (D-1), auth, o lo que la
+  Edge Function escribe/valida server-side. Para UI o lógica de bajo riesgo (ej. el modo "quitar"
+  de 7.F.3, restringido por schema a IDs existentes — D-7 — así que estructuralmente no puede
+  inventar nada; o 7.F.4 completa), el propio orquestador revisa el diff directamente leyendo los
+  archivos, como se hizo con 7.E, en vez de lanzar otro agente.
+- **Agrupar sub-bloques pequeños en una sola tanda de implementación**, en vez de un round-trip de
+  agente por cada uno — 7.F.3 y 7.F.4 son buenos candidatos a implementarse juntos.
+- **Un solo `flutter test` completo por fase, justo antes de comitear.** Durante la iteración/
+  debugging, correr solo el archivo de test específico que se está arreglando
+  (`flutter test test/ruta/al/archivo_test.dart`), nunca la suite entera repetidamente. Recordar
+  también el bloqueo de Windows: nunca dos invocaciones de `flutter test`/`flutter analyze`/
+  `flutter build` en paralelo (colisionan por un lock real sobre `sqlite3.dll` en
+  `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
+  reintentar en un loop.
+
 ### Estado actual (última actualización: 2026-08-21)
+
+> Corte deliberado de sesión aquí (no un `/compact`): el usuario pidió parar tras cerrar 7.F.2 por
+> consumo de tokens y pidió aplicar la sección "Eficiencia de tokens" de arriba desde la próxima
+> sesión en adelante — léela antes de retomar.
 
 **Cerradas, commiteadas y pusheadas a `master`** (cada una con revisión independiente aplicada y
 bugs encontrados corregidos — ver `docs/fases/fase_7_{0,a,b,c,d,e,f}.md` para el detalle de cada
