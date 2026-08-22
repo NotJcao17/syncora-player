@@ -10,7 +10,11 @@ import '../../auth/auth_provider.dart';
 /// Modal bottom sheet para la selección de avatar basado en Dicebear seeds.
 class AvatarSelectorSheet extends ConsumerStatefulWidget {
   final String? currentSeed;
-  final ValueChanged<String>? onAvatarSelected;
+  // Fase 7.I.4: `Future<void> Function` (no `ValueChanged`, que es
+  // síncrono) para poder `await`ar el guardado local sin que quede como un
+  // "fire and forget" cuyo error, si lo hay, se pierde como excepción de
+  // Future sin capturar (hallazgo de la revisión independiente).
+  final Future<void> Function(String seed)? onAvatarSelected;
 
   const AvatarSelectorSheet({
     super.key,
@@ -48,7 +52,7 @@ class AvatarSelectorSheet extends ConsumerStatefulWidget {
   static Future<void> show(
     BuildContext context, {
     String? currentSeed,
-    ValueChanged<String>? onAvatarSelected,
+    Future<void> Function(String seed)? onAvatarSelected,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -93,7 +97,7 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
             .update({'avatar_seed': seed}).eq('id', userId);
         ref.invalidate(profileProvider);
       }
-      widget.onAvatarSelected?.call(seed);
+      await widget.onAvatarSelected?.call(seed);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -121,12 +125,16 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
         userId = Supabase.instance.client.auth.currentUser?.id ?? '';
       } catch (_) {}
     }
-    if (userId.isEmpty) {
-      userId = 'default';
-    }
+    // Fase 7.I.4: en modo local no hay `userId` -- el slot "tu avatar único"
+    // usa la semilla local ya generada (`currentSeed`, pasada por
+    // `settings_screen.dart`) en vez de caer siempre en el mismo
+    // `'default'` genérico para todo el mundo sin cuenta.
+    final placeholderSeed = userId.isNotEmpty
+        ? userId
+        : (widget.currentSeed != null && widget.currentSeed!.isNotEmpty ? widget.currentSeed! : 'default');
 
     final effectiveSeeds = AvatarSelectorSheet.avatarSeeds.map((seed) {
-      return seed == 'USER_UUID_PLACEHOLDER' ? userId : seed;
+      return seed == 'USER_UUID_PLACEHOLDER' ? placeholderSeed : seed;
     }).toList();
 
     return Container(

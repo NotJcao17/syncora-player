@@ -15,6 +15,7 @@ import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/models/deezer/deezer_album.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/sync/sync_service.dart';
+import '../../auth/local_mode_provider.dart';
 import '../../download/widgets/download_header_button.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
 
@@ -153,6 +154,9 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
     final currentTrack = ref.watch(currentTrackProvider);
     final isPlaying = ref.watch(isPlayingProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 768;
+    // Fase 7.I.8: control de sincronización manual, oculto en modo local
+    // (guardar/quitar álbumes ya funciona 100% local sin este botón).
+    final isLocalMode = ref.watch(localModeProvider);
 
     if (_isLoading) {
       return const Scaffold(
@@ -205,7 +209,9 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
             Positioned.fill(
               child: RefreshIndicator(
                 onRefresh: () async {
-                  await ref.read(syncServiceProvider).syncSavedAlbums(force: true);
+                  if (!isLocalMode) {
+                    await ref.read(syncServiceProvider).syncSavedAlbums(force: true);
+                  }
                   await _loadAlbumData();
                 },
                 child: SingleChildScrollView(
@@ -407,7 +413,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                             ),
                             const SizedBox(width: 16),
                           ],
-                          if (isDesktop) ...[
+                          if (isDesktop && !isLocalMode) ...[
                             IconButton(
                               icon: const Icon(Icons.refresh),
                               color: AppTheme.secondary,

@@ -11,7 +11,9 @@ import 'package:smtc_windows/smtc_windows.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'app.dart';
+import 'features/auth/local_mode_provider.dart';
 import 'features/auth/services/auth_deep_link_errors.dart';
+import 'features/auth/services/local_mode_storage.dart';
 
 Future<void> _handleAuthDeepLink(Uri rawUri) async {
   final rawString = rawUri.toString().trim();
@@ -166,9 +168,49 @@ void main() async {
     });
   }
 
+  // Fase 7.I.1: precargar el modo local ANTES de `runApp` -- `localModeProvider`
+  // se lee de forma síncrona en el `redirect` de `app_router.dart` (GoRouter
+  // no permite un redirect asíncrono ahí), así que el valor persistido tiene
+  // que estar listo desde el primer frame, no cargarse después vía
+  // `FutureProvider`.
+  final localModeStorage = SecureLocalModeStorage();
+  bool initialLocalMode = false;
+  try {
+    initialLocalMode = await localModeStorage.getIsLocalMode();
+  } catch (_) {}
+
+  // Hallazgo de la revisión independiente de 7.I: si la app se cerró (o
+  // crasheó) a mitad de `_migrateLocalLibrary` (`auth_screen.dart`), el
+  // `finally` que limpia el flag de modo local nunca llegó a correr -- el
+  // flag persistido queda en `true` con una sesión real ya establecida
+  // (Supabase también persiste su sesión en disco, independiente de esto).
+  // Sin este chequeo, `computeAuthRedirect` no rebota a nadie (`hasUser`
+  // manda), pero el resto de la UI (Configuración, `library_screen.dart`,
+  // `app_shell.dart`) queda mostrando el estado "modo local" para un
+  // usuario que en realidad ya tiene cuenta -- sin "Cerrar sesión" visible
+  // y sin forma de llegar a `/auth` (`computeAuthRedirect` rebota `/auth`
+  // a `/` porque `hasUser == true`). Se autocorrige acá: si ya hay sesión
+  // real, el flag persistido es obsoleto, se descarta antes de inyectarlo.
+  // (Las playlists locales que hubieran quedado a mitad de subir no se
+  // pierden -- quedan como playlists local-only normales, ya un estado
+  // soportado, ver H-5 -- pero no se reintenta su migración automáticamente
+  // tras este punto.)
+  if (initialLocalMode) {
+    try {
+      if (Supabase.instance.client.auth.currentUser != null) {
+        initialLocalMode = false;
+        await localModeStorage.setLocalMode(false);
+      }
+    } catch (_) {}
+  }
+
   runApp(
-    const ProviderScope(
-      child: SyncoraApp(),
+    ProviderScope(
+      overrides: [
+        localModeStorageProvider.overrideWithValue(localModeStorage),
+        localModeProvider.overrideWith(() => LocalModeNotifier(initialLocalMode)),
+      ],
+      child: const SyncoraApp(),
     ),
   );
 }

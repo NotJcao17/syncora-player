@@ -8,6 +8,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/navigation/app_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../data/apis/deezer_provider.dart';
+import '../../../data/local_db/database_provider.dart';
+import '../../../data/supabase/supabase_providers.dart';
+import '../../library/import_export/playlist_import_export_service.dart';
+import '../local_mode_provider.dart';
 import '../services/account_limit_error.dart';
 import '../services/auth_deep_link_errors.dart';
 import '../services/desktop_auth_service.dart';
@@ -32,11 +37,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   // Fase 7.H.4: cupo de 250 cuentas alcanzado (D-22), detectado con
   // `looksLikeAccountLimitError` (`account_limit_error.dart`). Se distingue
   // del resto de errores de auth para mostrar un mensaje propio en el
-  // `build()` de abajo, no un error genérico ni un "inténtalo más tarde" --
-  // el botón "usar sin cuenta" del plan (7.I) todavía no se agrega ahí a
-  // propósito: 7.I (modo local) no está implementado en este punto de la
-  // fase, se cablea cuando exista.
+  // `build()` de abajo, no un error genérico ni un "inténtalo más tarde".
+  // El botón "usar sin cuenta" vive en `_buildLocalModeButton` (7.I.3).
   bool _accountLimitReached = false;
+  bool _isMigrating = false;
   StreamSubscription<AuthState>? _authSubscription;
   StreamSubscription<String>? _deepLinkErrorSubscription;
 
@@ -54,9 +58,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       }
 
       _authSubscription =
-          Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+          Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
         if (data.session != null && mounted) {
-          ref.read(appRouterProvider).go('/');
+          // Fase 7.I.10 (D-25): si el usuario estaba en modo local y recién
+          // se creó una sesión real (se registró/inició sesión desde acá),
+          // es el momento de subir su biblioteca local antes de navegar --
+          // después de esto ya no hay forma fácil de distinguir "acabo de
+          // migrar" de "siempre tuve cuenta".
+          if (ref.read(localModeProvider)) {
+            await _migrateLocalLibrary();
+          }
+          if (mounted) ref.read(appRouterProvider).go('/');
         }
       });
 
@@ -99,6 +111,51 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   bool _isTestEnvironment() {
     return Platform.environment.containsKey('FLUTTER_TEST');
+  }
+
+  /// Fase 7.I.3 (D-23): "Usar sin cuenta". No requiere red ni Supabase --
+  /// solo marca el modo local y navega. `localModeProvider` está `watch`eado
+  /// por `appRouterProvider`, así que el redirect se reevalúa apenas cambia
+  /// el estado; el `go('/')` explícito es solo para no depender del timing
+  /// exacto de esa reconstrucción.
+  Future<void> _useWithoutAccount() async {
+    await ref.read(localModeProvider.notifier).enable();
+    if (mounted) ref.read(appRouterProvider).go('/');
+  }
+
+  /// Fase 7.I.10 (D-25): sube la biblioteca local (playlists + álbumes
+  /// guardados) a la cuenta recién creada. Migración one-way, best-effort --
+  /// si falla a mitad de camino, el usuario sigue teniendo su biblioteca
+  /// intacta en Drift local. La recuperación real ante un fallo/crash a
+  /// mitad de la migración es un reintento automático al próximo arranque
+  /// de la app (`main.dart`, ver comentario ahí) -- no un botón manual en
+  /// Configuración, que dejaría de tener a dónde apuntar apenas hay sesión
+  /// (`computeAuthRedirect` ya no deja volver a `/auth` con `hasUser`).
+  ///
+  /// Guardado con [_isMigrating] contra reentrancia (hallazgo de la
+  /// revisión independiente): dos eventos de sesión nueva casi seguidos
+  /// (ej. el listener de `onAuthStateChange` disparando más de una vez)
+  /// podían lanzar dos migraciones concurrentes y subir todo duplicado.
+  Future<void> _migrateLocalLibrary() async {
+    if (!mounted || _isMigrating) return;
+    setState(() => _isMigrating = true);
+    try {
+      final service = PlaylistImportExportService(ref.read(deezerApiProvider));
+      await service.migrateLocalPlaylistsToAccount(
+        dao: ref.read(playlistDaoProvider),
+        supabaseRepo: ref.read(supabasePlaylistRepositoryProvider),
+      );
+      await service.migrateLocalSavedAlbumsToAccount(
+        savedAlbumDao: ref.read(savedAlbumDaoProvider),
+        supabaseAlbumRepo: ref.read(supabaseAlbumRepositoryProvider),
+      );
+    } catch (_) {
+      // Best-effort -- lo que no se subió queda local, sin `remoteId`, y
+      // se retoma solo en el próximo arranque (ver `main.dart`).
+    } finally {
+      await ref.read(localModeProvider.notifier).disable();
+      if (mounted) setState(() => _isMigrating = false);
+    }
   }
 
   Future<void> _handleGoogleSignIn() async {
@@ -232,7 +289,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF181C27),
-      body: Center(
+      // Fase 7.I.10: overlay simple durante la migración local -> cuenta --
+      // dura lo que tarde subir la biblioteca (potencialmente varias
+      // playlists), el usuario necesita saber que algo está pasando en vez
+      // de ver la pantalla de login congelada tras crear la cuenta.
+      body: _isMigrating
+          ? const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: AppTheme.primary),
+                  SizedBox(height: 16),
+                  Text(
+                    'Subiendo tu biblioteca local a la nube...',
+                    style: TextStyle(color: AppTheme.secondary, fontSize: 13),
+                  ),
+                ],
+              ),
+            )
+          : Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
           child: Container(
@@ -692,6 +767,52 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       ),
                     ],
                   ),
+                ),
+
+                // Fase 7.I.3 (D-23): "Usar sin cuenta" -- opción de primera
+                // clase, no letra chica escondida: mismo tamaño de texto y
+                // ubicación visible que el resto del flujo, con una
+                // explicación honesta de la contrapartida (sin sync, sin
+                // respaldo, sin IA) en vez de solo el botón pelado.
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Divider(color: AppTheme.surfaceActive, thickness: 1),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'o',
+                        style: TextStyle(
+                          color: AppTheme.muted,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const Expanded(
+                      child: Divider(color: AppTheme.surfaceActive, thickness: 1),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton(
+                  onPressed: _isLoading ? null : _useWithoutAccount,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.secondary,
+                    side: const BorderSide(color: AppTheme.surfaceActive),
+                    minimumSize: const Size.fromHeight(46),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Usar sin cuenta', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Tu biblioteca se guarda solo en este dispositivo. Sin sincronización, sin respaldo '
+                  'y sin funciones de IA.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppTheme.muted, fontSize: 11, height: 1.4),
                 ),
               ],
             ),

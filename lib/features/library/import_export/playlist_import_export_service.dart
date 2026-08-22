@@ -6,8 +6,10 @@ import 'package:flutter/foundation.dart';
 import '../../../core/utils/contributor_resolver.dart';
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/local_db/daos/playlist_dao.dart';
+import '../../../data/local_db/daos/saved_album_dao.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_track.dart';
+import '../../../data/supabase/supabase_album_repository.dart';
 import '../../../data/supabase/supabase_playlist_repository.dart';
 import '../../player/player_models.dart';
 import '../../search/exact_track_search.dart';
@@ -407,6 +409,116 @@ class PlaylistImportExportService {
     }
     for (final track in tracksToRemove) {
       await dao.removeTrackEntry(track.id);
+    }
+  }
+
+  /// Fase 7.I.10 (D-25) -- migración local -> cuenta: sube todas las
+  /// playlists locales que todavía no tienen `remoteId` a la nube, tras
+  /// registrarse desde el modo local. Solo procesa playlists **sin**
+  /// `remoteId`, lo que la hace segura de reintentar sin duplicar
+  /// (7.I.16): lo que ya se subió en un intento anterior quedó con
+  /// `remoteId` y este método ya no lo vuelve a tocar. Cada playlist se
+  /// procesa en su propio `try/catch` para que el fallo de una no aborte
+  /// las demás.
+  Future<void> migrateLocalPlaylistsToAccount({
+    required PlaylistDao dao,
+    required SupabasePlaylistRepository supabaseRepo,
+  }) async {
+    final localPlaylists = await dao.getAllPlaylists();
+    final pending = localPlaylists.where((p) => p.remoteId == null).toList();
+    if (pending.isEmpty) return;
+
+    // Hallazgo de la revisión independiente: si esta función ya se corrió
+    // antes y falló DESPUÉS de crear la playlist remota pero ANTES de
+    // marcar `remoteId` local (ej. la subida de tracks falló a mitad de
+    // camino), un reintento con el `createPlaylist` ciego de antes creaba
+    // una playlist remota duplicada. Se busca primero por título entre las
+    // playlists remotas ya existentes del usuario antes de crear una
+    // nueva -- cache de una sola consulta, solo se pide si hace falta.
+    List<Map<String, dynamic>>? remotePlaylistsCache;
+    Future<List<Map<String, dynamic>>> remotePlaylists() async {
+      return remotePlaylistsCache ??= await supabaseRepo.fetchUserPlaylists();
+    }
+
+    for (final playlist in pending) {
+      try {
+        String? remoteId;
+        if (playlist.isLiked) {
+          // Hallazgo de la revisión independiente: `createPlaylist(isLiked:
+          // true)` a ciegas puede crear una SEGUNDA "Tus me gusta" si la
+          // cuenta ya tenía una (ej. el usuario local inició sesión en una
+          // cuenta EXISTENTE, no una recién creada) -- el dedup de
+          // `_syncPlaylistsAndTracks` conservaría solo una de las dos
+          // arbitrariamente, pudiendo borrar justo la que trae los likes
+          // locales recién subidos. `getOrCreateLikedPlaylist()` reusa la
+          // liked remota existente si ya hay una.
+          final likedRemote = await supabaseRepo.getOrCreateLikedPlaylist();
+          remoteId = likedRemote['id']?.toString();
+        } else {
+          final existing = (await remotePlaylists())
+              .where((p) => p['is_liked'] != true && p['title'] == playlist.title)
+              .firstOrNull;
+          remoteId = existing?['id']?.toString();
+          remoteId ??= (await supabaseRepo.createPlaylist(
+            title: playlist.title,
+            description: playlist.description,
+            isPublic: playlist.isPublic,
+            isLiked: false,
+          ))['id']
+              ?.toString();
+        }
+        if (remoteId == null || remoteId.isEmpty) continue;
+
+        final tracks = await dao.getTracksOrdered(playlist.id);
+        final payload = tracks
+            .map((t) => {
+                  'track_id': t.trackId,
+                  'artist_id': t.artistId,
+                  'album_id': t.albumId,
+                  'title': t.title,
+                  'artist_name': t.artistName,
+                  'album_name': t.albumName,
+                  'cover_url': t.coverUrl,
+                  'duration_ms': t.durationMs,
+                  if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
+                })
+            .toList();
+        if (payload.isNotEmpty) {
+          await supabaseRepo.addTracksToPlaylist(remoteId, payload);
+        }
+
+        await dao.updatePlaylist(playlist.copyWith(remoteId: Value(remoteId)));
+      } catch (_) {
+        // Esta playlist se reintenta en la próxima llamada -- las que ya
+        // llevan `remoteId` de un intento previo no se tocan (idempotente).
+      }
+    }
+  }
+
+  /// Fase 7.I.10 -- complemento de [migrateLocalPlaylistsToAccount]: sube
+  /// los álbumes guardados localmente. A diferencia de las playlists, no
+  /// hace falta rastrear "ya migrado" -- `SupabaseAlbumRepository.saveAlbum`
+  /// hace `upsert(onConflict: 'user_id,album_id')`, así que repetir esta
+  /// llamada en un reintento no duplica nada por construcción. Hallazgo de
+  /// la revisión independiente: sin este método, el primer `syncLibrary`
+  /// tras crear la cuenta podaba (borraba) todos los álbumes guardados
+  /// locales que no existieran en el (todavía vacío) remoto.
+  Future<void> migrateLocalSavedAlbumsToAccount({
+    required SavedAlbumDao savedAlbumDao,
+    required SupabaseAlbumRepository supabaseAlbumRepo,
+  }) async {
+    final localAlbums = await savedAlbumDao.getAllSavedAlbums();
+    for (final album in localAlbums) {
+      try {
+        await supabaseAlbumRepo.saveAlbum({
+          'album_id': album.albumId,
+          'title': album.title,
+          'artist_name': album.artistName,
+          'cover_url': album.coverUrl,
+        });
+      } catch (_) {
+        // Se reintenta en la próxima llamada; upsert hace el resto seguro.
+      }
     }
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/auth_provider.dart';
+import '../../auth/local_mode_provider.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
@@ -54,7 +55,13 @@ class HomeScreen extends ConsumerWidget {
                           builder: (ctx) {
                             final profileAsync = ref.watch(profileProvider);
                             final user = ref.watch(currentUserProvider);
-                            final seed = profileAsync.value?['avatar_seed'] as String? ?? user?.id ?? 'default';
+                            final isLocalMode = ref.watch(localModeProvider);
+                            // 7.I.4: seed local en vez de `profiles.avatar_seed`
+                            // (que no existe sin cuenta) cuando aplica.
+                            final localSeedAsync = isLocalMode ? ref.watch(localAvatarSeedProvider) : null;
+                            final seed = isLocalMode
+                                ? (localSeedAsync?.value ?? 'default')
+                                : (profileAsync.value?['avatar_seed'] as String? ?? user?.id ?? 'default');
                             final avatarUrl = 'https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=$seed';
 
                             return GestureDetector(

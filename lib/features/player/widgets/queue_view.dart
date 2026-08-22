@@ -8,6 +8,7 @@ import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/track_tile.dart';
+import '../../auth/local_mode_provider.dart';
 import '../ai_queue/ai_create_queue_sheet.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
@@ -177,20 +178,25 @@ class _QueueViewState extends ConsumerState<QueueView> {
     // tiene usarlo.
     if (current == null && manual.isEmpty && auto.isEmpty) {
       final isConnected = ref.watch(isConnectedProvider).value ?? true;
+      // 7.I: la IA necesita el JWT del usuario -- sin cuenta no hay botón
+      // que ofrecer acá (D-24), solo el mensaje base del empty state.
+      final isLocalMode = ref.watch(localModeProvider);
       return EmptyStateWidget(
         title: 'La cola está vacía',
         message: 'Agrega canciones con "Reproducir a continuación" o "Agregar a la cola" desde cualquier lista.',
-        action: OutlinedButton.icon(
-          onPressed: isConnected
-              ? () => showAiCreateQueueSheet(context, ref)
-              : () => AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.'),
-          icon: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), size: 16),
-          label: const Text('Crear cola con IA'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppTheme.primary,
-            side: const BorderSide(color: AppTheme.surfaceHover),
-          ),
-        ),
+        action: isLocalMode
+            ? null
+            : OutlinedButton.icon(
+                onPressed: isConnected
+                    ? () => showAiCreateQueueSheet(context, ref)
+                    : () => AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.'),
+                icon: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), size: 16),
+                label: const Text('Crear cola con IA'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.primary,
+                  side: const BorderSide(color: AppTheme.surfaceHover),
+                ),
+              ),
       );
     }
 
@@ -258,6 +264,9 @@ class _QueueViewState extends ConsumerState<QueueView> {
     // tooltip/toast explicando por qué en vez de un botón muerto sin
     // explicación.
     final isConnected = ref.watch(isConnectedProvider).value ?? true;
+    // 7.I: sin cuenta, ninguna de las dos entradas de IA de acá aplica --
+    // se ocultan (D-24), no solo se deshabilitan.
+    final isLocalMode = ref.watch(localModeProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -295,43 +304,44 @@ class _QueueViewState extends ConsumerState<QueueView> {
               ),
             ],
           ),
-          Row(
-            children: [
-              Tooltip(
-                message: isConnected ? 'Crear cola con IA' : 'Sin conexión',
-                child: IconButton(
-                  // D-14: mismo ícono (`StarsMinimalistic`) en los 4 puntos
-                  // de entrada de IA de la Fase 7.F.
+          if (!isLocalMode)
+            Row(
+              children: [
+                Tooltip(
+                  message: isConnected ? 'Crear cola con IA' : 'Sin conexión',
+                  child: IconButton(
+                    // D-14: mismo ícono (`StarsMinimalistic`) en los 4 puntos
+                    // de entrada de IA de la Fase 7.F.
+                    icon: Icon(
+                      AppIcons.broken(SolarIcons.StarsMinimalistic),
+                      color: isConnected ? AppTheme.primary : AppTheme.muted,
+                      size: 18,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: isConnected
+                        ? () => showAiCreateQueueSheet(context, ref)
+                        : () => AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.'),
+                  ),
+                ),
+                // D-9 / atajo "✨ Mejorar esta cola": prellena basada-en-cola-
+                // actual + intercalar + 25 y dispara directo, sin abrir el
+                // panel completo.
+                TextButton.icon(
+                  onPressed: isConnected
+                      ? () => showAiCreateQueueSheet(context, ref, autoImprove: true)
+                      : () => AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.'),
                   icon: Icon(
                     AppIcons.broken(SolarIcons.StarsMinimalistic),
+                    size: 14,
                     color: isConnected ? AppTheme.primary : AppTheme.muted,
-                    size: 18,
                   ),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: isConnected
-                      ? () => showAiCreateQueueSheet(context, ref)
-                      : () => AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.'),
+                  label: Text(
+                    'Mejorar esta cola',
+                    style: TextStyle(color: isConnected ? AppTheme.primary : AppTheme.muted, fontSize: 12),
+                  ),
                 ),
-              ),
-              // D-9 / atajo "✨ Mejorar esta cola": prellena basada-en-cola-
-              // actual + intercalar + 25 y dispara directo, sin abrir el
-              // panel completo.
-              TextButton.icon(
-                onPressed: isConnected
-                    ? () => showAiCreateQueueSheet(context, ref, autoImprove: true)
-                    : () => AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.'),
-                icon: Icon(
-                  AppIcons.broken(SolarIcons.StarsMinimalistic),
-                  size: 14,
-                  color: isConnected ? AppTheme.primary : AppTheme.muted,
-                ),
-                label: Text(
-                  'Mejorar esta cola',
-                  style: TextStyle(color: isConnected ? AppTheme.primary : AppTheme.muted, fontSize: 12),
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
           if (_editMode && hasSelection) ...[
             const SizedBox(height: 4),
             Row(

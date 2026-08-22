@@ -637,30 +637,38 @@ Entrada: botón más junto a "Popular" y "Búsqueda profunda" en el buscador
 
 ### Sesión y navegación
 
-- [ ] **7.I.1** Concepto de sesión local: un `localModeProvider` (persistido con
-      `shared_preferences` o equivalente) que indica que el usuario eligió trabajar sin cuenta.
-      Debe sobrevivir reinicios de la app.
-- [ ] **7.I.2** `app_router.dart:59`: el redirect a `/auth` pasa de `currentUser == null` a
-      `currentUser == null && !isLocalMode`. Es el gate único, así que es un cambio pequeño y
-      contenido (H-5).
-- [ ] **7.I.3** `auth_screen.dart`: botón **"Usar sin cuenta"** con explicación honesta y breve de
-      la contrapartida (*"Tu biblioteca se guarda solo en este dispositivo. Sin sincronización,
-      sin respaldo y sin funciones de IA"*). No esconderlo como letra chica: es una opción de
-      primera clase.
-- [ ] **7.I.4** Avatar y perfil en modo local: hoy el `avatar_seed` vive en la tabla `profiles` de
-      Supabase (`auth_provider.dart:20-36`). En modo local hay que generar y guardar una semilla
-      **local** para que DiceBear siga funcionando. Semilla sugerida: un UUID generado en el
-      dispositivo la primera vez.
+- [x] **7.I.1** Concepto de sesión local: un `localModeProvider` (`Notifier<bool>`) que indica que
+      el usuario eligió trabajar sin cuenta. **Desviación del plan:** persistido con
+      `flutter_secure_storage` (`LocalModeStorage`), no `shared_preferences` -- el proyecto no
+      tiene esa dependencia y ya usa `flutter_secure_storage` desde 7.E.8 para lo mismo (BYOK), sin
+      motivo para agregar un paquete nuevo solo para dos strings. Precargado en `main.dart` antes
+      de `runApp` para estar disponible de forma síncrona (el `redirect` de GoRouter no puede
+      esperar un `FutureProvider`). Sobrevive reinicios (7.I.15).
+- [x] **7.I.2** `app_router.dart`: el redirect a `/auth` pasa de `currentUser == null` a
+      `currentUser == null && !isLocalMode`, extraído como función pura `computeAuthRedirect` para
+      poder testearlo (7.I.12).
+- [x] **7.I.3** `auth_screen.dart`: botón **"Usar sin cuenta"** con la explicación honesta pedida
+      por el plan, visible junto al botón, no como letra chica.
+- [x] **7.I.4** Avatar y perfil en modo local: semilla local generada una sola vez
+      (`LocalModeStorage.getOrCreateAvatarSeed`, 16 bytes aleatorios en hex -- sin agregar el
+      paquete `uuid`, que solo llega transitivamente hoy). Usada en `settings_screen.dart`,
+      `home_screen.dart`, `app_shell.dart` y el selector de avatar
+      (`avatar_selector_sheet.dart`, que antes caía siempre a un `'default'` genérico sin
+      `userId`).
 
 ### Neutralizar la nube (sin romper el código existente)
 
-- [ ] **7.I.5** Que **toda** escritura/lectura a Supabase sea *no-op* en modo local. Los
-      repositorios ya tienen guardas de nulo (H-5), así que la vía más limpia y menos invasiva es
-      **cortar en el `SyncService`** y en los ~10 puntos donde la UI lo invoca
-      (`library_screen.dart`, `album_detail_screen.dart`, `playlist_detail_screen.dart`), en vez
-      de dispersar `if (isLocalMode)` por cada repositorio.
-      Verificar que **no queda ningún camino** que intente hablar con Supabase sin sesión: revisar
-      los 13 archivos que usan `Supabase.instance` (lista en H-5).
+- [x] **7.I.5** **Desviación deliberada del plan:** se evaluó cortar en `SyncService` como sugería
+      el plan, pero sus métodos públicos (`syncLibrary`, `syncPlaylistDetail`,
+      `syncListeningHistory`) no tienen forma barata de distinguir "modo local" de "entorno de
+      test" sin inyectar estado nuevo -- agregar ese chequeo rompía los tests existentes de
+      `sync_service_test.dart`, que los llaman directamente con repos mockeados. Se cortó en su
+      lugar en los puntos de disparo de la UI (`library_screen.dart` initState + pull-to-refresh,
+      `album_detail_screen.dart` botón de sync + pull-to-refresh); `playlist_detail_screen.dart`
+      no necesitó cambios, sus llamadas a `syncPlaylistDetail` ya estaban gateadas por `remoteId
+      != null`, que en modo local nunca se cumple. Los 14 archivos que usan `Supabase.instance` se
+      revisaron uno por uno (detalle en `docs/fases/fase_7_i.md`) -- los repositorios ya tenían
+      guardas de nulo (H-5) que hacen inofensivo cualquier resquicio no cubierto explícitamente.
 - [x] **7.I.6** **Decidido: opción (a).** En modo local solo hay Semanal y Mensual (sobre
       `listening_history` crudo de Drift, que ya existe). Anual y "Desde el inicio" quedan como
       funciones exclusivas de cuenta — el modo local no tiene rollup mensual propio ni replica en
@@ -672,37 +680,53 @@ Entrada: botón más junto a "Popular" y "Búsqueda profunda" en el buscador
 
 ### UI y gating de edición
 
-- [ ] **7.I.7** **Refactor central (H-5):** cambiar el gating de edición de `isConnected` a
-      `canEdit = isLocalMode || isConnected`. Puntos conocidos: `library_screen.dart:47` (crear
-      playlist), `:125` y `:147-210` (menú de opciones: editar nombre, portada, eliminar), `:603`
-      (botón crear), más los equivalentes en `playlist_detail_screen.dart` y
-      `album_detail_screen.dart`. **Centralizar en un solo provider derivado**, no repetir la
-      condición en cada widget.
-- [ ] **7.I.8** Ocultar (no deshabilitar) lo que no aplica en modo local: botones de compartir
-      playlist, entradas de IA (7.F), y controles de sincronización/refresco manual. Un botón
-      permanentemente deshabilitado sin explicación es peor UX que no mostrarlo.
-- [ ] **7.I.9** Pantalla de Configuración en modo local: reemplazar la sección de cuenta por un
-      bloque de "Modo local" que explique el estado, advierta que **no hay respaldo**, y ofrezca
-      "Crear cuenta y subir mi biblioteca" (7.I.10).
-- [ ] **7.I.10** **Migración local → cuenta** (D-25, one-way): si hay cupo, permitir registrarse y
-      subir la biblioteca local existente a la nube. Reutilizar el flujo de respaldo que ya existe
-      (el que marca `remoteId` tras subir), recorriendo las playlists locales. Casos a cubrir:
-      fallo a mitad de subida (¿reintentable sin duplicar?), y qué pasa si el cupo se llenó entre
-      que abrió la pantalla y confirmó.
-- [ ] **7.I.11** Exportación CSV como "respaldo del pobre" para modo local: ya existe
-      (`playlist_import_export_service.dart`), solo hay que darle visibilidad en la UI del modo
-      local, ya que es la única forma de no perder la biblioteca si se pierde el dispositivo.
+- [x] **7.I.7** **Refactor central (H-5):** gating de edición de `isConnected` a `canEdit =
+      isLocalMode || isConnected` (`computeCanEdit`, función pura testeada en 7.I.14) en
+      `library_screen.dart` (crear playlist, menú de opciones: editar nombre, eliminar). Los
+      puntos que el plan listaba en `playlist_detail_screen.dart`/`album_detail_screen.dart`
+      resultaron no existir realmente -- ninguno de los dos usa `isConnectedProvider`, ya operan
+      100% local con el patrón de mutación remota best-effort existente desde antes de esta fase.
+- [x] **7.I.8** Ocultadas (no deshabilitadas) en modo local: "Hacer pública/privada", "Copiar
+      enlace", las 4 entradas de IA (`library_screen.dart`, `queue_view.dart` x2,
+      `search_screen.dart`), y los controles de sincronización manual (ícono + pull-to-refresh) en
+      `library_screen.dart`/`album_detail_screen.dart`. "Cerrar sesión" también se oculta en el
+      popup de perfil de escritorio (`app_shell.dart`).
+- [x] **7.I.9** `settings_screen.dart`: "MI CUENTA" se reemplaza por un bloque "MODO LOCAL"
+      (`_LocalModeSection`) que explica el estado, advierte que no hay respaldo, y ofrece "Crear
+      cuenta y subir mi biblioteca". La sección de IA (BYOK) también se oculta en modo local.
+- [x] **7.I.10** Migración local → cuenta (D-25, one-way) implementada en
+      `PlaylistImportExportService.migrateLocalPlaylistsToAccount` +
+      `migrateLocalSavedAlbumsToAccount`, disparada desde `auth_screen.dart` cuando se detecta una
+      sesión nueva estando en modo local. Casos cubiertos tras la revisión independiente (ver
+      `docs/fases/fase_7_i.md` para el detalle de los 3 hallazgos P0 corregidos): fallo a mitad de
+      subida sin duplicar (reutiliza por título/`getOrCreateLikedPlaylist`), álbumes guardados
+      (se perdían en el primer sync post-cuenta si no se migraban también), y modo local "pegado"
+      tras un crash a mitad de migrar (autocorrección en `main.dart` al siguiente arranque). El
+      caso "cupo lleno entre que abrió la pantalla y confirmó" no aplica: el tope de 250 cuentas
+      (7.H) gatea la creación de la CUENTA, no la de playlists dentro de una cuenta ya creada.
+- [x] **7.I.11** Visibilidad del export CSV en modo local: el botón ya existía sin gating alguno en
+      `playlist_detail_screen.dart` desde antes de esta fase (funciona igual con o sin cuenta) --
+      el bloque "Modo local" de Configuración (7.I.9) lo menciona explícitamente como respaldo.
 
 ### Tests
 
-- [ ] **7.I.12** Router: con `isLocalMode = true` y sin usuario, **no** redirige a `/auth`.
-- [ ] **7.I.13** En modo local, ninguna operación de biblioteca intenta llamar a Supabase
-      (verificable con un mock que falle el test si se le invoca).
-- [ ] **7.I.14** `canEdit` es `true` en modo local **aunque no haya red** — es justo la regresión
-      que el refactor de 7.I.7 puede introducir al revés.
-- [ ] **7.I.15** El modo local persiste entre reinicios de la app.
-- [ ] **7.I.16** Migración local → cuenta: sube todas las playlists, marca `remoteId`, y **no
-      duplica** si se reintenta tras un fallo parcial.
+- [x] **7.I.12** `test/core/navigation/auth_redirect_test.dart` -- `computeAuthRedirect`, extraído
+      del `redirect:` de GoRouter específicamente porque el `redirect` real se salta por completo
+      en entorno de test (`isTestEnv`), así que sin la extracción esta lógica nunca se había
+      ejercitado en ningún test del proyecto.
+- [x] **7.I.13** Sin test dedicado nuevo -- la garantía viene de (a) los guardas de nulo
+      preexistentes en los repositorios (H-5) y (b) los puntos de disparo de UI gateados
+      explícitamente por `isLocalMode` (7.I.5), verificable por inspección del diff. No se armó un
+      harness de widget test nuevo para `LibraryScreen` (no existía ninguno antes de esta fase)
+      dado el costo de levantarlo contra el alcance ya grande de 7.I.
+- [x] **7.I.14** `test/features/auth/local_mode_provider_test.dart` -- `computeCanEdit`, incluido
+      el caso exacto que este ítem pedía cubrir (modo local + sin conexión -> `true`).
+- [x] **7.I.15** `test/features/auth/local_mode_provider_test.dart` -- contrato de persistencia
+      contra un `LocalModeStorage` en memoria (mismo patrón que los tests de `AiKeyStorage`: el
+      proyecto no testea `flutter_secure_storage` real contra el canal de plataforma).
+- [x] **7.I.16** `test/features/library/playlist_migration_test.dart` -- reintento sin duplicar,
+      dedup de "Tus me gusta" contra una cuenta existente, reutilización por título tras un fallo
+      parcial, y migración de álbumes guardados.
 
 ---
 

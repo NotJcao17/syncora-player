@@ -18,6 +18,7 @@ import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/sync/sync_service.dart';
+import '../../auth/local_mode_provider.dart';
 import '../../download/download_provider.dart';
 import '../import_export/playlist_import_export_service.dart';
 import '../ai_playlist/ai_create_playlist_sheet.dart';
@@ -39,13 +40,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(syncServiceProvider).syncLibrary(force: false);
-    });
+    // Fase 7.I.5 (D-24): en modo local no hay nada que sincronizar -- los
+    // repositorios de Supabase ya devuelven vacío sin red sin sesión (H-5),
+    // así que esto ya era inofensivo, pero saltarlo explícitamente es más
+    // claro y evita el `Future.microtask` innecesario.
+    if (!ref.read(localModeProvider)) {
+      Future.microtask(() {
+        ref.read(syncServiceProvider).syncLibrary(force: false);
+      });
+    }
   }
 
-  void _showCreatePlaylistDialog(BuildContext context, bool isConnected) {
-    if (!isConnected) {
+  void _showCreatePlaylistDialog(BuildContext context, bool canEdit) {
+    if (!canEdit) {
       AppToast.show(context, message: 'Sin conexión. No se pueden crear playlists offline.');
       return;
     }
@@ -123,7 +130,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     );
   }
 
-  void _showPlaylistOptionsMenu(BuildContext context, Playlist playlist, bool isConnected) {
+  void _showPlaylistOptionsMenu(BuildContext context, Playlist playlist, bool canEdit, bool isLocalMode) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppTheme.surface,
@@ -145,79 +152,87 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 ),
               ),
               ListTile(
-                leading: Icon(AppIcons.broken(SolarIcons.PenNewSquare), color: isConnected ? AppTheme.primary : AppTheme.muted),
-                title: Text('Editar nombre', style: TextStyle(color: isConnected ? AppTheme.primary : AppTheme.muted)),
-                enabled: isConnected,
+                leading: Icon(AppIcons.broken(SolarIcons.PenNewSquare), color: canEdit ? AppTheme.primary : AppTheme.muted),
+                title: Text('Editar nombre', style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted)),
+                enabled: canEdit,
                 onTap: () {
                   Navigator.pop(ctx);
                   _showEditPlaylistDialog(context, playlist);
                 },
               ),
-              ListTile(
-                leading: Icon(
-                  AppIcons.broken(playlist.isPublic ? SolarIcons.Lock : SolarIcons.Global),
-                  color: isConnected ? AppTheme.primary : AppTheme.muted,
-                ),
-                title: Text(
-                  playlist.isPublic ? 'Hacer privada' : 'Hacer pública',
-                  style: TextStyle(color: isConnected ? AppTheme.primary : AppTheme.muted),
-                ),
-                enabled: isConnected,
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final newPublic = !playlist.isPublic;
-                  final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                  final dao = ref.read(playlistDaoProvider);
-                  String? remoteId = playlist.remoteId;
-                  if (remoteId == null) {
-                    try {
-                      final supabaseRes = await supabaseRepo.createPlaylist(
-                        title: playlist.title,
-                        description: playlist.description,
-                        isPublic: newPublic,
-                        isLiked: playlist.isLiked,
+              // Fase 7.I.8: "Hacer pública/privada" y "Copiar enlace" son
+              // conceptos de compartir -- no aplican sin nube (D-24), se
+              // ocultan en modo local en vez de mostrarse deshabilitados.
+              if (!isLocalMode) ...[
+                ListTile(
+                  leading: Icon(
+                    AppIcons.broken(playlist.isPublic ? SolarIcons.Lock : SolarIcons.Global),
+                    color: canEdit ? AppTheme.primary : AppTheme.muted,
+                  ),
+                  title: Text(
+                    playlist.isPublic ? 'Hacer privada' : 'Hacer pública',
+                    style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted),
+                  ),
+                  enabled: canEdit,
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final newPublic = !playlist.isPublic;
+                    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                    final dao = ref.read(playlistDaoProvider);
+                    String? remoteId = playlist.remoteId;
+                    if (remoteId == null) {
+                      try {
+                        final supabaseRes = await supabaseRepo.createPlaylist(
+                          title: playlist.title,
+                          description: playlist.description,
+                          isPublic: newPublic,
+                          isLiked: playlist.isLiked,
+                        );
+                        remoteId = supabaseRes['id']?.toString();
+                      } catch (_) {}
+                    } else {
+                      try {
+                        await supabaseRepo.updatePlaylist(remoteId, isPublic: newPublic);
+                      } catch (_) {}
+                    }
+                    await dao.updatePlaylist(playlist.copyWith(
+                      isPublic: newPublic,
+                      remoteId: Value(remoteId),
+                    ));
+                    if (context.mounted) {
+                      AppToast.show(
+                        context,
+                        message: newPublic ? 'Playlist marcada como pública' : 'Playlist marcada como privada',
                       );
-                      remoteId = supabaseRes['id']?.toString();
-                    } catch (_) {}
-                  } else {
-                    try {
-                      await supabaseRepo.updatePlaylist(remoteId, isPublic: newPublic);
-                    } catch (_) {}
-                  }
-                  await dao.updatePlaylist(playlist.copyWith(
-                    isPublic: newPublic,
-                    remoteId: Value(remoteId),
-                  ));
-                  if (context.mounted) {
-                    AppToast.show(
-                      context,
-                      message: newPublic ? 'Playlist marcada como pública' : 'Playlist marcada como privada',
-                    );
-                  }
-                },
-              ),
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: Icon(AppIcons.broken(SolarIcons.LinkMinimalistic), color: AppTheme.primary),
+                  title: const Text('Copiar enlace', style: TextStyle(color: AppTheme.primary)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    Clipboard.setData(ClipboardData(text: 'syncoraplayer://playlist/${playlist.remoteId ?? playlist.id}'));
+                    AppToast.show(context, message: 'Enlace copiado al portapapeles');
+                  },
+                ),
+                // 7.I: las 4 funciones de IA necesitan el JWT del usuario --
+                // no funcionan sin cuenta, se ocultan (no se deshabilitan)
+                // en modo local.
+                ListTile(
+                  leading: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: canEdit ? AppTheme.primary : AppTheme.muted),
+                  title: Text('Modificar con IA', style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted)),
+                  enabled: canEdit,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    showAiModifyPlaylistSheet(context, ref, playlist);
+                  },
+                ),
+              ],
               ListTile(
-                leading: Icon(AppIcons.broken(SolarIcons.LinkMinimalistic), color: AppTheme.primary),
-                title: const Text('Copiar enlace', style: TextStyle(color: AppTheme.primary)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Clipboard.setData(ClipboardData(text: 'syncoraplayer://playlist/${playlist.remoteId ?? playlist.id}'));
-                  AppToast.show(context, message: 'Enlace copiado al portapapeles');
-                },
-              ),
-              ListTile(
-                leading: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: isConnected ? AppTheme.primary : AppTheme.muted),
-                title: Text('Modificar con IA', style: TextStyle(color: isConnected ? AppTheme.primary : AppTheme.muted)),
-                enabled: isConnected,
-                onTap: () {
-                  Navigator.pop(ctx);
-                  showAiModifyPlaylistSheet(context, ref, playlist);
-                },
-              ),
-              ListTile(
-                leading: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), color: isConnected ? Colors.redAccent : AppTheme.muted),
-                title: Text('Eliminar playlist', style: TextStyle(color: isConnected ? Colors.redAccent : AppTheme.muted)),
-                enabled: isConnected,
+                leading: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), color: canEdit ? Colors.redAccent : AppTheme.muted),
+                title: Text('Eliminar playlist', style: TextStyle(color: canEdit ? Colors.redAccent : AppTheme.muted)),
+                enabled: canEdit,
                 onTap: () async {
                   Navigator.pop(ctx);
                   try {
@@ -491,6 +506,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final playlistDao = ref.watch(playlistDaoProvider);
     final savedAlbumDao = ref.watch(savedAlbumDaoProvider);
     final isConnected = ref.watch(isConnectedProvider).value ?? true;
+    // Fase 7.I.7 (D-24): el gating de edición pasa de `isConnected` a
+    // `canEdit = isLocalMode || isConnected` -- refactor central de 7.I
+    // (H-5). `isLocalMode` además oculta (no deshabilita, 7.I.8) lo que
+    // directamente no aplica sin cuenta: IA, compartir, sync manual.
+    final isLocalMode = ref.watch(localModeProvider);
+    final canEdit = ref.watch(canEditProvider);
 
     return SafeArea(
       child: Column(
@@ -517,7 +538,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 ),
                 Row(
                   children: [
-                    if (isDesktop)
+                    // 7.I.8: control de sincronización manual, oculto en
+                    // modo local (no hay nube con la que sincronizar).
+                    if (isDesktop && !isLocalMode)
                       IconButton(
                         icon: const Icon(Icons.refresh),
                         color: AppTheme.primary,
@@ -548,30 +571,33 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         onPressed: () => context.push('/search'),
                       ),
                     ),
-                    Tooltip(
-                      message: isConnected ? 'Crear playlist con IA' : 'Sin conexión',
-                      child: IconButton(
-                        // D-14: mismo ícono (`StarsMinimalistic`) en los 4
-                        // puntos de entrada de IA de la Fase 7.F.
-                        icon: Icon(
-                          AppIcons.broken(SolarIcons.StarsMinimalistic),
-                          color: isConnected ? AppTheme.primary : AppTheme.muted,
-                          size: 20,
+                    // 7.I.8: las 4 funciones de IA necesitan el JWT del
+                    // usuario -- se ocultan (no se deshabilitan) sin cuenta.
+                    if (!isLocalMode)
+                      Tooltip(
+                        message: isConnected ? 'Crear playlist con IA' : 'Sin conexión',
+                        child: IconButton(
+                          // D-14: mismo ícono (`StarsMinimalistic`) en los 4
+                          // puntos de entrada de IA de la Fase 7.F.
+                          icon: Icon(
+                            AppIcons.broken(SolarIcons.StarsMinimalistic),
+                            color: isConnected ? AppTheme.primary : AppTheme.muted,
+                            size: 20,
+                          ),
+                          onPressed: isConnected ? () => showAiCreatePlaylistSheet(context, ref) : () {
+                            AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.');
+                          },
                         ),
-                        onPressed: isConnected ? () => showAiCreatePlaylistSheet(context, ref) : () {
-                          AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.');
-                        },
                       ),
-                    ),
                     Tooltip(
-                      message: isConnected ? 'Crear playlist' : 'Sin conexión',
+                      message: canEdit ? 'Crear playlist' : 'Sin conexión',
                       child: IconButton(
                         icon: Icon(
                           AppIcons.broken(SolarIcons.AddCircle),
-                          color: isConnected ? AppTheme.primary : AppTheme.muted,
+                          color: canEdit ? AppTheme.primary : AppTheme.muted,
                           size: 22,
                         ),
-                        onPressed: () => _showCreatePlaylistDialog(context, isConnected),
+                        onPressed: () => _showCreatePlaylistDialog(context, canEdit),
                       ),
                     ),
                   ],
@@ -623,6 +649,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
+                if (isLocalMode) return;
                 await ref.read(syncServiceProvider).syncLibrary(force: true);
                 await ref.read(syncServiceProvider).syncSavedAlbums(force: true);
               },
@@ -949,7 +976,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                           if (!isLiked)
                                             IconButton(
                                               icon: Icon(AppIcons.broken(SolarIcons.MenuDots), color: AppTheme.secondary, size: 20),
-                                              onPressed: () => _showPlaylistOptionsMenu(context, playlist, isConnected),
+                                              onPressed: () => _showPlaylistOptionsMenu(context, playlist, canEdit, isLocalMode),
                                             ),
                                         ],
                                       ),

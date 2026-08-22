@@ -14,6 +14,7 @@ import 'package:window_manager/window_manager.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../data/local_db/syncora_database.dart';
 import '../../features/auth/auth_provider.dart';
+import '../../features/auth/local_mode_provider.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
 import '../../features/player/syncora_player_controller.dart';
@@ -455,8 +456,14 @@ class _CustomTitleBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final isLocalMode = ref.watch(localModeProvider);
     final profileAsync = ref.watch(profileProvider);
-    final seed = profileAsync.value?['avatar_seed'] ?? user?.id ?? 'default-seed';
+    // 7.I.4: en modo local no hay `profiles.avatar_seed` -- se usa la
+    // semilla local generada por `LocalModeStorage.getOrCreateAvatarSeed()`.
+    final localSeedAsync = isLocalMode ? ref.watch(localAvatarSeedProvider) : null;
+    final seed = isLocalMode
+        ? (localSeedAsync?.value ?? 'default-seed')
+        : (profileAsync.value?['avatar_seed'] ?? user?.id ?? 'default-seed');
 
     return Container(
       height: 38,
@@ -491,7 +498,12 @@ class _CustomTitleBar extends ConsumerWidget {
               ),
             ),
           ),
-          if (user != null)
+          // Fase 7.I: en modo local no hay `user`, pero sigue habiendo una
+          // Configuración a la que llegar desde desktop (antes este popup
+          // -- y con él, la única entrada de escritorio a Configuración --
+          // desaparecía por completo sin cuenta). "Cerrar sesión" sí se
+          // oculta (7.I.8): no hay sesión que cerrar.
+          if (user != null || isLocalMode)
             PopupMenuButton<String>(
               tooltip: 'Mi Perfil',
               color: AppTheme.surface,
@@ -518,16 +530,17 @@ class _CustomTitleBar extends ConsumerWidget {
                     ],
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(AppIcons.broken(SolarIcons.Logout), color: Colors.redAccent, size: 18),
-                      const SizedBox(width: 10),
-                      const Text('Cerrar sesión', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
-                    ],
+                if (!isLocalMode)
+                  PopupMenuItem(
+                    value: 'logout',
+                    child: Row(
+                      children: [
+                        Icon(AppIcons.broken(SolarIcons.Logout), color: Colors.redAccent, size: 18),
+                        const SizedBox(width: 10),
+                        const Text('Cerrar sesión', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
+                      ],
+                    ),
                   ),
-                ),
               ],
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),

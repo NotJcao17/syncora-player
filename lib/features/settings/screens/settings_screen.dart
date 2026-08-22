@@ -13,6 +13,7 @@ import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../../data/services/ai_key_storage.dart';
 import '../../auth/auth_provider.dart';
+import '../../auth/local_mode_provider.dart';
 
 import '../../download/download_provider.dart';
 import '../../player/player_providers.dart';
@@ -23,12 +24,25 @@ import '../../profile/widgets/avatar_selector_sheet.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
-  void _openAvatarSelector(BuildContext context) {
+  void _openAvatarSelector(BuildContext context, WidgetRef ref, {required bool isLocalMode, required String currentSeed}) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => const AvatarSelectorSheet(),
+      builder: (ctx) => AvatarSelectorSheet(
+        currentSeed: currentSeed,
+        // Fase 7.I.4: en modo local no hay tabla `profiles` donde
+        // `AvatarSelectorSheet` pueda escribir el seed elegido (su propio
+        // update a Supabase ya se salta solo, porque `userId` queda vacío
+        // sin sesión) -- este callback es el único lugar que persiste la
+        // elección en modo local.
+        onAvatarSelected: isLocalMode
+            ? (seed) async {
+                await ref.read(localModeStorageProvider).setAvatarSeed(seed);
+                ref.invalidate(localAvatarSeedProvider);
+              }
+            : null,
+      ),
     );
   }
 
@@ -39,8 +53,15 @@ class SettingsScreen extends ConsumerWidget {
     final isDesktop = MediaQuery.of(context).size.width >= 768;
     final currentUser = ref.watch(currentUserProvider);
     final profileAsync = ref.watch(profileProvider);
+    // Fase 7.I.9: sección de cuenta reemplazada por el bloque de "Modo
+    // local" cuando aplica (D-24 -- el modo local es un estado de sesión,
+    // no de red, así que se decide con este flag, no con `isConnected`).
+    final isLocalMode = ref.watch(localModeProvider);
+    final localSeedAsync = isLocalMode ? ref.watch(localAvatarSeedProvider) : null;
 
-    final String seed = profileAsync.value?['avatar_seed'] ?? currentUser?.id ?? 'default-seed';
+    final String seed = isLocalMode
+        ? (localSeedAsync?.value ?? 'default-seed')
+        : (profileAsync.value?['avatar_seed'] ?? currentUser?.id ?? 'default-seed');
     final String avatarUrl = 'https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=$seed';
     final String userEmail = currentUser?.email ?? 'usuario@syncora.com';
 
@@ -74,6 +95,14 @@ class SettingsScreen extends ConsumerWidget {
           vertical: 16,
         ),
         children: [
+          if (isLocalMode) ...[
+            _buildSectionHeader('MODO LOCAL'),
+            const SizedBox(height: 8),
+            _LocalModeSection(
+              avatarUrl: avatarUrl,
+              onEditAvatar: () => _openAvatarSelector(context, ref, isLocalMode: true, currentSeed: seed),
+            ),
+          ] else ...[
           _buildSectionHeader('MI CUENTA'),
           const SizedBox(height: 8),
           // Tarjeta Perfil
@@ -81,7 +110,7 @@ class SettingsScreen extends ConsumerWidget {
             child: Row(
               children: [
                 GestureDetector(
-                  onTap: () => _openAvatarSelector(context),
+                  onTap: () => _openAvatarSelector(context, ref, isLocalMode: false, currentSeed: seed),
                   child: Stack(
                     children: [
                       ClipRRect(
@@ -142,7 +171,7 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 OutlinedButton(
-                  onPressed: () => _openAvatarSelector(context),
+                  onPressed: () => _openAvatarSelector(context, ref, isLocalMode: false, currentSeed: seed),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppTheme.surfaceHover),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -187,6 +216,7 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
+          ],
 
           const SizedBox(height: 24),
           _buildSectionHeader('REPRODUCCIÓN'),
@@ -372,10 +402,14 @@ class SettingsScreen extends ConsumerWidget {
           ),
 
 
-          const SizedBox(height: 24),
-          _buildSectionHeader('INTELIGENCIA ARTIFICIAL'),
-          const SizedBox(height: 8),
-          _buildCard(child: const _AiByokSection()),
+          // Fase 7.I: las funciones de IA necesitan el JWT del usuario --
+          // no funcionan sin cuenta (D-24), la sección entera se oculta.
+          if (!isLocalMode) ...[
+            const SizedBox(height: 24),
+            _buildSectionHeader('INTELIGENCIA ARTIFICIAL'),
+            const SizedBox(height: 8),
+            _buildCard(child: const _AiByokSection()),
+          ],
 
           const SizedBox(height: 24),
           _buildSectionHeader('ACERCA DE'),
@@ -570,6 +604,122 @@ class SettingsScreen extends ConsumerWidget {
 
   void _showComingSoon(BuildContext context) {
     AppToast.show(context, message: 'Próximamente');
+  }
+}
+
+/// Fase 7.I.9 -- reemplaza la sección "MI CUENTA" cuando el usuario está en
+/// modo local (D-23/D-24): explica el estado sin esconderlo como letra
+/// chica (mismo texto honesto que ya usa el botón "Usar sin cuenta" de
+/// `auth_screen.dart`), y ofrece "Crear cuenta y subir mi biblioteca"
+/// (7.I.10) y la mención de exportar CSV como respaldo (7.I.11 -- el botón
+/// real ya existe en cada playlist, `playlist_detail_screen.dart`, esto
+/// solo le da visibilidad para quien está en modo local).
+class _LocalModeSection extends StatelessWidget {
+  final String avatarUrl;
+  final VoidCallback onEditAvatar;
+
+  const _LocalModeSection({required this.avatarUrl, required this.onEditAvatar});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: AppTheme.surfaceShadow,
+          ),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: onEditAvatar,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    color: AppTheme.surfaceActive,
+                    child: SvgPicture.network(
+                      avatarUrl,
+                      fit: BoxFit.cover,
+                      placeholderBuilder: (_) => Container(
+                        color: AppTheme.surfaceHover,
+                        child: Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.muted, size: 32),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Modo local', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
+                    SizedBox(height: 2),
+                    Text('Sin cuenta en la nube', style: TextStyle(color: AppTheme.secondary, fontSize: 13)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0x26F59E0B),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
+          ),
+          child: const Text(
+            'Tu biblioteca se guarda solo en este dispositivo. No hay sincronización entre dispositivos '
+            'ni respaldo en la nube. Si pierdes el dispositivo, pierdes tu biblioteca -- exporta tus '
+            'playlists a CSV (botón "Exportar" en cada una) como respaldo mientras tanto.',
+            style: TextStyle(color: Color(0xFFFBBF24), fontSize: 12, fontWeight: FontWeight.w500, height: 1.4),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: AppTheme.surfaceShadow,
+          ),
+          child: InkWell(
+            onTap: () => context.push('/auth'),
+            borderRadius: BorderRadius.circular(8),
+            child: Row(
+              children: [
+                Icon(AppIcons.broken(SolarIcons.CloudUpload), color: AppTheme.primary, size: 22),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Crear cuenta y subir mi biblioteca',
+                        style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 15),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Sube tus playlists locales a la nube (si hay cupo disponible)',
+                        style: TextStyle(color: AppTheme.secondary, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 18),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

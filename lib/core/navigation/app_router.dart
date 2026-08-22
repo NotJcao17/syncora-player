@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/auth_provider.dart';
+import '../../features/auth/local_mode_provider.dart';
 import '../../features/auth/screens/auth_screen.dart';
 import '../../features/download/screens/downloads_screen.dart';
 import '../../features/home/screens/home_screen.dart';
@@ -39,9 +40,39 @@ class GoRouterRefreshStream extends ChangeNotifier {
   }
 }
 
+/// Fase 7.I.2/7.I.12 -- decisión de redirect de auth, extraída como función
+/// pura para poder testearla sin GoRouter/Supabase: el `redirect` real de
+/// abajo se salta por completo en entorno de test (`isTestEnv`), así que
+/// sin esta extracción la lógica de gate nunca se ejercita en ningún test
+/// (los tests de router existentes navegan libremente porque el bypass ya
+/// las deja pasar, no porque el gate las deje pasar).
+///
+/// D-24: `hasUser == false && isLocalMode == false` es la única condición
+/// que fuerza `/auth` -- el modo local es un gate adicional al de sesión,
+/// no un reemplazo.
+String? computeAuthRedirect({
+  required bool hasUser,
+  required bool isLocalMode,
+  required String location,
+}) {
+  final isAuthRoute = location == '/auth';
+
+  if (!hasUser && !isLocalMode && !isAuthRoute) {
+    return '/auth';
+  }
+  if (hasUser && isAuthRoute) {
+    return '/';
+  }
+  return null;
+}
+
 /// Provider de Riverpod para GoRouter.
 final appRouterProvider = Provider<GoRouter>((ref) {
   final currentUser = ref.watch(currentUserProvider);
+  // Fase 7.I.2: `ref.watch` (no `read`) para que tocar "Usar sin cuenta" en
+  // `auth_screen.dart` reconstruya este provider y el redirect se
+  // reevalúe de inmediato, mismo mecanismo que ya usa `currentUser`.
+  final isLocalMode = ref.watch(localModeProvider);
   final isTestEnv = Platform.environment.containsKey('FLUTTER_TEST');
 
   return GoRouter(
@@ -53,16 +84,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      final location = state.uri.path;
-      final isAuthRoute = location == '/auth';
-
-      if (currentUser == null && !isAuthRoute) {
-        return '/auth';
-      }
-      if (currentUser != null && isAuthRoute) {
-        return '/';
-      }
-      return null;
+      return computeAuthRedirect(
+        hasUser: currentUser != null,
+        isLocalMode: isLocalMode,
+        location: state.uri.path,
+      );
     },
     routes: [
       // Auth Screen fuera del Shell (pantalla completa sin bottom nav / sidebar)

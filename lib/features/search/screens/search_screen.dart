@@ -14,6 +14,7 @@ import '../../../data/apis/deezer_provider.dart';
 import '../../../data/models/deezer/deezer_album.dart';
 import '../../../data/models/deezer/deezer_artist.dart';
 import '../../../data/models/deezer/deezer_track.dart';
+import '../../auth/local_mode_provider.dart';
 import '../../player/player_providers.dart';
 import '../ai_lyric_search/ai_lyric_search_sheet.dart';
 import '../collaboration_search.dart';
@@ -107,6 +108,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final searchState = ref.watch(searchProvider);
     final searchNotifier = ref.read(searchProvider.notifier);
     final isDesktop = MediaQuery.of(context).size.width >= 768;
+    // 7.I: la búsqueda por letra necesita el JWT del usuario -- se oculta
+    // sin cuenta (D-24), no solo se deshabilita.
+    final isLocalMode = ref.watch(localModeProvider);
 
     return SafeArea(
       child: Column(
@@ -169,36 +173,38 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        // Fase 7.F.4: buscar canción por fragmento de letra
-                        // con IA -- mismo estilo compacto que el toggle
-                        // "Popular" de al lado (D-14: ícono `StarsMinimalistic`
-                        // consistente en los 4 puntos de entrada de IA).
-                        Tooltip(
-                          message: 'Buscar por letra con IA',
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () => showAiLyricSearchSheet(context, ref),
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: AppTheme.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppTheme.secondary.withValues(alpha: 0.4),
-                                  width: 1.2,
+                        if (!isLocalMode) ...[
+                          const SizedBox(width: 8),
+                          // Fase 7.F.4: buscar canción por fragmento de letra
+                          // con IA -- mismo estilo compacto que el toggle
+                          // "Popular" de al lado (D-14: ícono `StarsMinimalistic`
+                          // consistente en los 4 puntos de entrada de IA).
+                          Tooltip(
+                            message: 'Buscar por letra con IA',
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () => showAiLyricSearchSheet(context, ref),
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.surface,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppTheme.secondary.withValues(alpha: 0.4),
+                                    width: 1.2,
+                                  ),
                                 ),
-                              ),
-                              child: Icon(
-                                AppIcons.broken(SolarIcons.StarsMinimalistic),
-                                size: 18,
-                                color: AppTheme.secondary,
+                                child: Icon(
+                                  AppIcons.broken(SolarIcons.StarsMinimalistic),
+                                  size: 18,
+                                  color: AppTheme.secondary,
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                         const SizedBox(width: 8),
                         // Botón para Búsqueda Profunda (Fase D): exacta artista+título
                         // (D3) y colaboraciones entre 2 artistas (D1) — para cuando el

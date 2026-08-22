@@ -63,10 +63,26 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 
 ### Estado actual (última actualización: 2026-08-22)
 
-**Cerradas, commiteadas y pusheadas a `master`** (ver `docs/fases/fase_7_{0,a,b,c,d,e,f,h}.md` para
-el detalle de cada una): **7.0, 7.A, 7.B, 7.C, 7.D, 7.E, 7.F.1, 7.F.2, 7.F.3, 7.F.4, 7.H**. Todas
-con `flutter analyze` limpio y la suite de tests en verde en el momento de cerrarlas (313 tests al
-cerrar 7.H — 309 al cerrar 7.F.4, sin tests nuevos ahí; +4 en 7.H).
+**Cerradas, commiteadas y pusheadas a `master`** (ver `docs/fases/fase_7_{0,a,b,c,d,e,f,h,i}.md`
+para el detalle de cada una): **7.0, 7.A, 7.B, 7.C, 7.D, 7.E, 7.F.1, 7.F.2, 7.F.3, 7.F.4, 7.H,
+7.I**. Todas con `flutter analyze` limpio y la suite de tests en verde en el momento de cerrarlas
+(332 tests al cerrar 7.I — 313 al cerrar 7.H; +19 en 7.I).
+
+7.I (modo local / sin cuenta, D-23 a D-25) fue la fase de mayor superficie de la Fase 7 hasta
+ahora — toca `auth`, routing, y gating de edición en ~6 pantallas. Revisión independiente en
+**Opus** con effort alto (excepción pre-aprobada explícitamente por el plan solo para esta fase).
+Encontró **3 hallazgos P0 de pérdida de datos real**, ya corregidos: la migración local → cuenta
+no subía álbumes guardados, así que el primer `syncLibrary` tras crear la cuenta los podaba por
+completo; `createPlaylist(isLiked: true)` a ciegas podía crear una segunda "Tus me gusta" al
+iniciar sesión en una cuenta ya existente, con el dedup del sync borrando arbitrariamente una de
+las dos (corregido con `getOrCreateLikedPlaylist`); y el modo local podía quedar "pegado" (con
+sesión real pero flag de modo local todavía en `true`, sin salida) si la app crasheaba a mitad de
+migrar (corregido con autocorrección en `main.dart` al siguiente arranque). Más 3 P1 (reentrancia
+de la migración, duplicado de playlist en un reintento tras fallo parcial, 4 entradas de IA que
+seguían visibles fuera de `library_screen.dart`) y 1 P2 cosmético, todos corregidos. Desviación
+deliberada del plan: 7.I.5 (sync no-op) se cortó en los puntos de disparo de la UI en vez de en
+`SyncService`, porque tocar ese servicio rompía los tests existentes que lo llaman directamente con
+repos mockeados. Detalle completo en `docs/fases/fase_7_i.md`.
 
 7.H (límite de 250 cuentas, D-22) tocó `auth` — categoría de riesgo real de la metodología — así
 que sí se lanzó un subagente de revisión independiente (Sonnet), a diferencia de 7.F.3/7.F.4.
@@ -114,14 +130,8 @@ las 4 hojas de IA — el resto del esqueleto (`setState`/`mounted`/manejo de pas
 abstraer, es puro cableado de UI con más costo de abstracción que ahorro real. Sin bugs encontrados
 en la revisión de este sub-bloque. Detalle completo en `docs/fases/fase_7_f.md`.
 
-**Siguiente fase a implementar: 7.I (modo local / sin cuenta).** Ver su sección en
-`docs/plan_fase_7.md` y H-5 (hallazgos de código relevantes, leer antes de empezar). Al
-implementarla, recordar cablear el botón "usar sin cuenta" pendiente de 7.H.4 en el banner de cupo
-lleno de `auth_screen.dart` (nota ya dejada en el código).
-
-**Todavía no iniciadas:** 7.I (modo local), 7.G (estadísticas). Orden no negociable: 7.I antes que
-7.G (ver plan). La revisión independiente de 7.I puede usar effort high (excepción ya prevista por
-la propia regla de "menos revisiones", no una excepción a ella).
+**Siguiente fase a implementar: 7.G (Estadísticas y Wrapped) — última fase de la Fase 7.** Ver su
+sección en `docs/plan_fase_7.md`. El orden no negociable (7.I antes que 7.G) ya se cumplió.
 
 **Hallazgos verificados durante la Fase 7 que no estaban en el plan original** (ya documentados
 como H-6 a H-8 en `docs/plan_fase_7.md`, sección de hallazgos — no volver a descubrirlos): el aviso
