@@ -15,6 +15,7 @@ import '../../../data/models/deezer/deezer_album.dart';
 import '../../../data/models/deezer/deezer_artist.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../player/player_providers.dart';
+import '../ai_lyric_search/ai_lyric_search_sheet.dart';
 import '../collaboration_search.dart';
 import '../exact_track_search.dart';
 import '../other_versions_search.dart';
@@ -164,6 +165,36 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                 AppIcons.bold(SolarIcons.Fire),
                                 size: 18,
                                 color: searchState.popularOnly ? AppTheme.background : AppTheme.secondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Fase 7.F.4: buscar canción por fragmento de letra
+                        // con IA -- mismo estilo compacto que el toggle
+                        // "Popular" de al lado (D-14: ícono `StarsMinimalistic`
+                        // consistente en los 4 puntos de entrada de IA).
+                        Tooltip(
+                          message: 'Buscar por letra con IA',
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () => showAiLyricSearchSheet(context, ref),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppTheme.secondary.withValues(alpha: 0.4),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Icon(
+                                AppIcons.broken(SolarIcons.StarsMinimalistic),
+                                size: 18,
+                                color: AppTheme.secondary,
                               ),
                             ),
                           ),

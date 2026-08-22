@@ -510,10 +510,11 @@ El orden no es negociable en tres puntos:
 
 Las 4 funciones, todas sobre la infraestructura de 7.E, todas con vista previa antes de aplicar.
 
-> **Estado:** 7.F.1 y 7.F.2 cerradas, commiteadas y pusheadas (ver `docs/fases/fase_7_f.md` para el
-> detalle de cada una: arquitectura, bugs encontrados en revisión independiente y corregidos).
-> 7.F.3/7.F.4 no están iniciadas — ver "Estado actual" en `CLAUDE.md` para el punto exacto de
-> retoma.
+> **Estado:** 7.F.1, 7.F.2, 7.F.3 y 7.F.4 cerradas, commiteadas y pusheadas (ver
+> `docs/fases/fase_7_f.md` para el detalle de cada una: arquitectura, bugs encontrados y
+> corregidos). 7.F.3/7.F.4 se implementaron juntas en una sola tanda (metodología de eficiencia de
+> tokens de `CLAUDE.md`) y revisadas por el propio orquestador leyendo el diff directamente, sin
+> subagente separado (ninguna toca invariantes de riesgo real como D-1/cola o auth).
 
 ### 7.F.1 — Crear playlist con IA
 
@@ -558,12 +559,12 @@ Entrada: botón en la **pantalla/hoja de cola**.
 
 Entrada: opción en el menú de 3 puntos de la playlist.
 
-- [ ] **Modo quitar:** se manda la playlist completa como `{id, title, artist}`; el schema
+- [x] **Modo quitar:** se manda la playlist completa como `{id, title, artist}`; el schema
       restringe la salida a **IDs existentes** (D-7). Cero llamadas a Deezer. Vista previa con
       checkboxes premarcados antes de borrar.
-- [ ] **Modo agregar:** mismo flujo que 7.F.1, con la playlist actual como contexto. Tope 100 por
+- [x] **Modo agregar:** mismo flujo que 7.F.1, con la playlist actual como contexto. Tope 100 por
       operación.
-- [ ] Ambos modos terminan en vista previa confirmable; el `DELETE`/`INSERT` lo hace el cliente
+- [x] Ambos modos terminan en vista previa confirmable; el `DELETE`/`INSERT` lo hace el cliente
       (D-12).
 
 ### 7.F.4 — Buscar canción por fragmento de letra
@@ -571,11 +572,11 @@ Entrada: opción en el menú de 3 puntos de la playlist.
 Entrada: botón más junto a "Popular" y "Búsqueda profunda" en el buscador
 (`search_screen.dart:148` tiene el patrón del toggle).
 
-- [ ] El usuario pega un fragmento de letra; la función devuelve las coincidencias más probables
+- [x] El usuario pega un fragmento de letra; la función devuelve las coincidencias más probables
       con schema `{songs: [{title, artist}]}`.
-- [ ] Cada resultado se busca en Deezer y se muestra **como un resultado de búsqueda normal**, con
+- [x] Cada resultado se busca en Deezer y se muestra **como un resultado de búsqueda normal**, con
       portada y todo, para que el usuario pueda reproducir/agregar sin fricción.
-- [ ] Empty state propio ("no identificamos ninguna canción con ese fragmento").
+- [x] Empty state propio ("no identificamos ninguna canción con ese fragmento").
 
 ---
 

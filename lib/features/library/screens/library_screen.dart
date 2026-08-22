@@ -21,6 +21,7 @@ import '../../../data/sync/sync_service.dart';
 import '../../download/download_provider.dart';
 import '../import_export/playlist_import_export_service.dart';
 import '../ai_playlist/ai_create_playlist_sheet.dart';
+import '../ai_playlist/ai_modify_playlist_sheet.dart';
 
 /// Pantalla de Biblioteca conectada a Drift local, Supabase y servicio de Import/Export.
 class LibraryScreen extends ConsumerStatefulWidget {
@@ -202,6 +203,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   Navigator.pop(ctx);
                   Clipboard.setData(ClipboardData(text: 'syncoraplayer://playlist/${playlist.remoteId ?? playlist.id}'));
                   AppToast.show(context, message: 'Enlace copiado al portapapeles');
+                },
+              ),
+              ListTile(
+                leading: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: isConnected ? AppTheme.primary : AppTheme.muted),
+                title: Text('Modificar con IA', style: TextStyle(color: isConnected ? AppTheme.primary : AppTheme.muted)),
+                enabled: isConnected,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  showAiModifyPlaylistSheet(context, ref, playlist);
                 },
               ),
               ListTile(

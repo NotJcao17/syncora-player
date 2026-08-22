@@ -21,10 +21,7 @@ y el plan basta para retomar sin perder nada importante:
 - **Orden de fases:** estricto, el que define el plan (7.0 → 7.A → ... → 7.G). No reordenar ni
   paralelizar fases que dependen entre sí.
 - **Un subagente por fase**, con contexto acotado a esa fase (no el plan completo).
-- **Modelos:** Sonnet, effort high, para el orquestador y para **todas** las fases de
-  implementación. **Excepción única:** la revisión de código independiente de las fases **7.A**
-  (cola dual) y **7.I** (modo local) va en **Opus medium/high** — son las dos de mayor riesgo de
-  regresión. El resto de las revisiones de código, en Sonnet.
+- **Modelos:** Sonnet, effort medium.
 - **Revisión independiente obligatoria** entre fases (subagente de `code-review` separado del que
   implementó), antes de dar la fase por cerrada.
 - **Tests automatizados como gate de cada fase** — no pruebas manuales a medio camino; las
@@ -48,7 +45,7 @@ numerosas corridas de la suite completa de tests. Total: tres llamadas a subagen
 ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto de la Fase 7:
 
 - **Revisión independiente solo para riesgo real, no por sub-bloque.** Reservar un subagente de
-  revisión separado (Opus si toca `syncora_player_controller.dart`/D-1, Sonnet en el resto) para
+  revisión separado para
   cambios que toquen invariantes de riesgo real: cola manual/automática (D-1), auth, o lo que la
   Edge Function escribe/valida server-side. Para UI o lógica de bajo riesgo (ej. el modo "quitar"
   de 7.F.3, restringido por schema a IDs existentes — D-7 — así que estructuralmente no puede
@@ -64,16 +61,12 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
-### Estado actual (última actualización: 2026-08-21)
+### Estado actual (última actualización: 2026-08-22)
 
-> Corte deliberado de sesión aquí (no un `/compact`): el usuario pidió parar tras cerrar 7.F.2 por
-> consumo de tokens y pidió aplicar la sección "Eficiencia de tokens" de arriba desde la próxima
-> sesión en adelante — léela antes de retomar.
-
-**Cerradas, commiteadas y pusheadas a `master`** (cada una con revisión independiente aplicada y
-bugs encontrados corregidos — ver `docs/fases/fase_7_{0,a,b,c,d,e,f}.md` para el detalle de cada
-una): **7.0, 7.A, 7.B, 7.C, 7.D, 7.E, 7.F.1, 7.F.2**. Todas con `flutter analyze` limpio y la suite
-de tests en verde en el momento de cerrarlas (309 tests al cerrar 7.F.2).
+**Cerradas, commiteadas y pusheadas a `master`** (ver `docs/fases/fase_7_{0,a,b,c,d,e,f}.md` para
+el detalle de cada una): **7.0, 7.A, 7.B, 7.C, 7.D, 7.E, 7.F.1, 7.F.2, 7.F.3, 7.F.4**. Todas con
+`flutter analyze` limpio y la suite de tests en verde en el momento de cerrarlas (309 tests al
+cerrar 7.F.4 — sin tests nuevos en 7.F.3/7.F.4, ver razón en `docs/fases/fase_7_f.md`).
 
 7.F.1 ("Crear playlist con IA") quedó con 3 bugs reales encontrados y corregidos por el
 orquestador antes de la revisión (churn de suscripciones Drift por crear un `Stream` inline en
@@ -97,13 +90,21 @@ en el caso de uso principal, corregido a paso adaptativo (**hallazgo H-8** en
 7.F.1/7.F.2, `addPostFrameCallback` sin guarda de `mounted`, muestreo de contexto que podía
 descartar la pista actual). Detalle completo de ambos sub-bloques en `docs/fases/fase_7_f.md`.
 
-**Siguiente sub-bloque a implementar: 7.F.3 (modificar playlist con IA).** Ver su sección en
-`docs/plan_fase_7.md`. Antes de implementarlo, evaluar extraer el esqueleto `_generate` → matching
-compartido entre 7.F.1 y 7.F.2 (~80 líneas casi idénticas en cada hoja) — 7.F.3 lo necesitaría por
-tercera vez si no se extrae ahora.
+7.F.3 ("Modificar playlist con IA") y 7.F.4 ("Buscar canción por fragmento de letra") se
+implementaron juntas en una sola tanda (metodología de eficiencia de tokens, ambas son chicas) y
+revisadas por el propio orquestador leyendo el diff directamente, sin subagente de revisión
+separado — ninguna toca invariantes de riesgo real (D-1/cola o auth). Antes de implementarlas se
+extrajo el parseo `result['tracks']`/`result['songs']` y el recorte D-5 a la cantidad exacta
+(duplicados casi línea por línea en 7.F.1/7.F.2) a dos métodos estáticos nuevos en
+`playlist_import_export_service.dart` (`parseTrackSuggestions`, `trimToCount`), usados ahora por
+las 4 hojas de IA — el resto del esqueleto (`setState`/`mounted`/manejo de pasos) se dejó sin
+abstraer, es puro cableado de UI con más costo de abstracción que ahorro real. Sin bugs encontrados
+en la revisión de este sub-bloque. Detalle completo en `docs/fases/fase_7_f.md`.
 
-**Todavía no iniciadas:** 7.F.3, 7.F.4 (buscar por fragmento de letra), 7.H (límite de cuentas),
-7.I (modo local), 7.G (estadísticas). Orden no negociable: 7.I antes que 7.G (ver plan).
+**Siguiente fase a implementar: 7.H (límite de cuentas).** Ver su sección en `docs/plan_fase_7.md`.
+
+**Todavía no iniciadas:** 7.H (límite de cuentas), 7.I (modo local), 7.G (estadísticas). Orden no
+negociable: 7.I antes que 7.G (ver plan).
 
 **Hallazgos verificados durante la Fase 7 que no estaban en el plan original** (ya documentados
 como H-6 a H-8 en `docs/plan_fase_7.md`, sección de hallazgos — no volver a descubrirlos): el aviso

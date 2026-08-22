@@ -178,6 +178,20 @@ class SupabasePlaylistRepository {
         .eq('track_id', trackId);
   }
 
+  /// Variante en lote de [removeTrackFromPlaylist] -- una sola petición para
+  /// varias pistas (Fase 7.F.3, modo "quitar con IA", donde puede haber
+  /// decenas de una vez), en vez de una por pista.
+  Future<void> removeTracksFromPlaylist(String playlistId, List<int> trackIds) async {
+    if (trackIds.isEmpty) return;
+    final client = _client;
+    if (client == null) return;
+    await client
+        .from('playlist_tracks')
+        .delete()
+        .eq('playlist_id', playlistId)
+        .inFilter('track_id', trackIds);
+  }
+
   Future<void> reorderTracks(
     String playlistId,
     List<String> trackIdsInOrder,

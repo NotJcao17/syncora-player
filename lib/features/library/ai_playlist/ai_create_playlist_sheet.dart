@@ -171,13 +171,6 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
     return result;
   }
 
-  List<DeezerTrack> _trimToCount(List<DeezerTrack> tracks, int? exact) {
-    // D-5: si no se llegó al número exacto, se muestra lo que haya, nunca
-    // se falla por quedar corto.
-    if (exact == null || tracks.length <= exact) return tracks;
-    return tracks.sublist(0, exact);
-  }
-
   Future<void> _submitForm() async {
     if (_isSubmitting) return;
     final prompt = _promptController.text.trim();
@@ -284,20 +277,7 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
 
     final name = (result['playlistName'] as String?)?.trim();
     final desc = (result['description'] as String?)?.trim();
-    final tracksRaw = result['tracks'];
-
-    final rawTracks = <RawImportTrack>[];
-    if (tracksRaw is List) {
-      for (final entry in tracksRaw) {
-        if (entry is Map) {
-          final title = (entry['title'] as String?)?.trim() ?? '';
-          final artist = (entry['artist'] as String?)?.trim() ?? '';
-          if (title.isNotEmpty) {
-            rawTracks.add(RawImportTrack(title: title, artist: artist));
-          }
-        }
-      }
-    }
+    final rawTracks = PlaylistImportExportService.parseTrackSuggestions(result['tracks']);
 
     if (name != null && name.isNotEmpty) _nameController.text = name;
     if (desc != null) _descController.text = desc;
@@ -354,7 +334,7 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
     if (!mounted) return;
 
     var filtered = _applyMaxPerArtist(matched, _maxPerArtist);
-    filtered = _trimToCount(filtered, _requestedExactCount);
+    filtered = PlaylistImportExportService.trimToCount(filtered, _requestedExactCount);
 
     setState(() {
       _allMatched = filtered;

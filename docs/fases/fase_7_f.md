@@ -204,3 +204,103 @@ Sus 5 tests existentes pasan sin modificarlos.
 
 Ninguno bloqueante. Antes de implementar 7.F.3, evaluar extraer el esqueleto `_generate` → matching
 compartido entre 7.F.1 y 7.F.2 (ver punto de "duplicación" en Componentes) para no triplicarlo.
+
+## 📋 7.F.3 — Modificar playlist con IA / 7.F.4 — Buscar por fragmento de letra
+
+Implementadas juntas en una sola tanda (metodología de eficiencia de tokens de `CLAUDE.md`: ambas
+son chicas, no vale el costo fijo de arranque de un agente por cada una). Revisadas por el propio
+orquestador leyendo el diff directamente — ninguna toca invariantes de riesgo real (D-1/cola de
+`syncora_player_controller.dart` o auth), así que no se lanzó un subagente de revisión separado.
+
+### Extracción compartida (evaluada antes de empezar, según lo pedido)
+
+Se extrajo la parte realmente idéntica del esqueleto `_generate` → matching de 7.F.1/7.F.2 — el
+parseo de `result['tracks']`/`result['songs']` (`{title, artist}` → `RawImportTrack`) y el recorte
+D-5 a la cantidad exacta pedida — a dos métodos estáticos nuevos en
+`playlist_import_export_service.dart`: `PlaylistImportExportService.parseTrackSuggestions(...)` y
+`.trimToCount(...)`. 7.F.1 y 7.F.2 se actualizaron para usarlos (eliminando su copia local de cada
+uno) y 7.F.3/7.F.4 los reusan desde el primer día. **No** se extrajo el resto del esqueleto (la
+orquestación `setState`/`mounted`/manejo de pasos de cada `State`): es puro cableado de UI atado al
+`enum _Step` particular de cada hoja, con costo de abstracción mayor que el ahorro real — igual que
+7.F.2 ya reusa `processImport` y los widgets de `ai_generation_steps.dart` para la parte que sí es
+código, no solo boilerplate.
+
+### Componentes
+
+- **`ai_modify_playlist_sheet.dart`** (nuevo, 7.F.3) — un solo `AppBottomSheet` con dos modos
+  elegidos por `ChoiceChip` en el propio formulario (no una pantalla de selección aparte):
+  - **Quitar** (D-7): manda la playlist completa `{id, title, artist}` como contexto a
+    `modify_playlist_remove`; el `response_schema` del servidor ya restringe la salida a
+    `trackId` existentes desde 7.E, así que no hace falta ninguna validación extra del lado del
+    cliente contra IDs inventados — **cero llamadas a Deezer**. La vista previa opera directo sobre
+    `PlaylistTrack` locales con `CheckboxListTile` premarcados (todos los que la IA señaló empiezan
+    marcados; el usuario desmarca los que quiere conservar). Confirmar llama al nuevo
+    `PlaylistImportExportService.removeTracksFromPlaylist(...)`, que borra en Drift
+    (`dao.removeTrackEntry`) y en bloque en Supabase vía el nuevo
+    `SupabasePlaylistRepository.removeTracksFromPlaylist(playlistId, List<int> trackIds)`
+    (`.inFilter('track_id', ...)`, una sola petición en vez de una por pista).
+  - **Agregar**: mismo esqueleto que 7.F.1/7.F.2 (`modify_playlist_add`, tope 100 por D-5/schema)
+    con la playlist actual como contexto, matcheo vía `processImport` reusado, vista previa con
+    `AiMatchedTrackList` (mismo widget compartido de `ai_generation_steps.dart`). Confirmar llama al
+    nuevo `PlaylistImportExportService.addMatchedTracksToExistingPlaylist(...)`, que replica el
+    bucle de inserción de `createPlaylistWithMatchedTracks` (D-8) pero sobre una playlist que ya
+    existe — no la crea, no toca su `remoteId`.
+  - Entrada: `ListTile` nuevo ("Modificar con IA") en `_showPlaylistOptionsMenu`
+    (`library_screen.dart`) — el menú de 3 puntos real del proyecto vive ahí, no en
+    `playlist_detail_screen.dart` (esa pantalla usa botones de icono sueltos, sin menú). Gateado por
+    `isConnected` con el mismo patrón visual (`AppTheme.muted`, `enabled: isConnected`) que el resto
+    de las entradas del menú — la Edge Function necesita el JWT.
+- **`ai_lyric_search_sheet.dart`** (nuevo, 7.F.4) — flujo más corto que los otros tres: no termina
+  en vista previa confirmable, porque no escribe nada. `form → callingAi → matching → results`.
+  Llama a `lyricSearch(lyricFragment: ...)`, parsea `result['songs']` con el mismo
+  `parseTrackSuggestions` compartido, matchea contra Deezer con `processImport` (mismo mecanismo que
+  el resto), y muestra los matcheados con el `TrackTile` genérico de `core/widgets/track_tile.dart`
+  (el mismo componente que usa `_buildSongsSection` del buscador normal) — tap reproduce
+  (`setQueue`), botón agrega a la cola (`addToQueue`), sin paso de confirmación intermedio, tal como
+  pide el plan ("como un resultado de búsqueda normal"). Empty state propio si `songs` viene vacío o
+  ninguna sugerencia matchea en Deezer.
+  - Entrada: ícono nuevo junto al toggle "Popular" y el botón "Búsqueda Profunda" en
+    `search_screen.dart`, mismo tamaño/estilo cuadrado de 40×40 que el toggle "Popular" de al lado
+    (D-14: ícono `StarsMinimalistic`, sin gating de conexión explícito en el propio botón — el
+    servicio ya maneja el error de red igual que las otras 3 entradas).
+- **`supabase_playlist_repository.dart`** — método nuevo `removeTracksFromPlaylist` (ver arriba).
+- **`playlist_import_export_service.dart`** — métodos nuevos `parseTrackSuggestions`,
+  `trimToCount`, `addMatchedTracksToExistingPlaylist`, `removeTracksFromPlaylist` (todos descritos
+  arriba).
+
+### Revisión (orquestador, sin subagente separado)
+
+Releído el diff completo contra las firmas reales de `PlaylistDao`/`SupabasePlaylistRepository`
+(`getTracksOrdered`, `removeTrackEntry`, `addTrackToPlaylist`, tipos de `Playlist`/`PlaylistTrack`)
+antes de correr los tests, sin encontrar discrepancias — confirmado además por `flutter analyze`
+limpio. Puntos verificados a propósito por ser los de más riesgo de este sub-bloque concreto:
+
+- **D-7 realmente se cumple del lado del cliente también:** aunque el servidor ya restringe
+  `idsToRemove` a IDs existentes por schema, el cliente además filtra `tracks.where((t) =>
+  ids.contains(t.trackId.toString()))` antes de mostrar la vista previa — si la IA devolviera un id
+  fuera de contexto por algún motivo, simplemente no aparecería en la lista a borrar, no crashea ni
+  se cuela.
+- **Doble-tap:** mismo flag `_isSubmitting` que 7.F.1/7.F.2 en ambas hojas nuevas.
+- **`mounted` antes de cualquier `ref.read` tras un `await`:** aplicado en los mismos puntos que la
+  revisión independiente de 7.F.1/7.F.2 ya señaló como el patrón correcto (justo después del
+  `await` a la Edge Function y al `await` a Drift en `_submit`, antes de cualquier otro uso de
+  `ref`/`context`).
+- **Playlist local-only (`remoteId == null`):** tanto `addMatchedTracksToExistingPlaylist` como
+  `removeTracksFromPlaylist` reciben `remotePlaylistId` nullable y simplemente saltan el lado
+  remoto si es `null` — no lanzan, no dejan la playlist en un estado a medias.
+
+No se encontraron bugs que corregir en esta pasada.
+
+### Verificación de pruebas
+
+- `flutter analyze`: limpio (28 lints `info` preexistentes, sin relación con este cambio — mismo
+  baseline que 7.F.1/7.F.2).
+- `flutter test`: **309 tests, 0 fallos** (suite completa, una sola corrida antes de comitear). No
+  se agregaron tests de widget nuevos para 7.F.3/7.F.4 en esta pasada (los 4 métodos nuevos de
+  `PlaylistImportExportService`/`SupabasePlaylistRepository` son extracciones/variantes directas de
+  código ya cubierto — `createPlaylistWithMatchedTracks`, `addTracksToPlaylist` — sin lógica de
+  negocio nueva más allá de plumbing de client-side DELETE/INSERT que D-12 ya exige).
+
+### Pendiente
+
+Ninguno bloqueante. Sigue 7.H (límite de cuentas).

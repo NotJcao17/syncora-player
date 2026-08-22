@@ -208,19 +208,7 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
       return;
     }
 
-    final tracksRaw = result['tracks'];
-    final rawTracks = <RawImportTrack>[];
-    if (tracksRaw is List) {
-      for (final entry in tracksRaw) {
-        if (entry is Map) {
-          final title = (entry['title'] as String?)?.trim() ?? '';
-          final artist = (entry['artist'] as String?)?.trim() ?? '';
-          if (title.isNotEmpty) {
-            rawTracks.add(RawImportTrack(title: title, artist: artist));
-          }
-        }
-      }
-    }
+    final rawTracks = PlaylistImportExportService.parseTrackSuggestions(result['tracks']);
 
     if (rawTracks.isEmpty) {
       if (!mounted) return;
@@ -272,9 +260,7 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
 
     if (!mounted) return;
 
-    // D-5: recortar al número exacto pedido tras matchear, nunca fallar si
-    // vino corto.
-    final trimmed = matched.length > _count ? matched.sublist(0, _count) : matched;
+    final trimmed = PlaylistImportExportService.trimToCount(matched, _count);
 
     setState(() {
       _allMatched = trimmed;

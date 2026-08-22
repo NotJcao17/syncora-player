@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/utils/contributor_resolver.dart';
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/local_db/daos/playlist_dao.dart';
+import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/supabase/supabase_playlist_repository.dart';
 import '../../player/player_models.dart';
@@ -60,6 +61,35 @@ class PlaylistImportExportService {
   final DeezerApi _deezerApi;
 
   PlaylistImportExportService(this._deezerApi);
+
+  /// Fase 7.F.3 -- parseo de `result['tracks']` (o `result['songs']` para
+  /// `lyric_search`) compartido entre las 4 hojas de IA que reciben ese
+  /// mismo shape `{title, artist}` de la Edge Function (7.F.1, 7.F.2, 7.F.3
+  /// modo agregar, 7.F.4) -- antes de esta extracción cada una tenía su
+  /// propia copia del mismo bucle.
+  static List<RawImportTrack> parseTrackSuggestions(dynamic tracksRaw) {
+    final result = <RawImportTrack>[];
+    if (tracksRaw is List) {
+      for (final entry in tracksRaw) {
+        if (entry is Map) {
+          final title = (entry['title'] as String?)?.trim() ?? '';
+          final artist = (entry['artist'] as String?)?.trim() ?? '';
+          if (title.isNotEmpty) {
+            result.add(RawImportTrack(title: title, artist: artist));
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  /// D-5: recorta al número exacto pedido tras matchear contra Deezer, sin
+  /// fallar si vino corto -- compartido entre 7.F.1, 7.F.2 y 7.F.3 (modo
+  /// agregar).
+  static List<DeezerTrack> trimToCount(List<DeezerTrack> tracks, int? exact) {
+    if (exact == null || tracks.length <= exact) return tracks;
+    return tracks.sublist(0, exact);
+  }
 
   /// Parse CSV or TXT file contents into a list of RawImportTrack objects
   List<RawImportTrack> parseFileContent(String fileContent) {
@@ -299,6 +329,85 @@ class PlaylistImportExportService {
     }
 
     return playlistId;
+  }
+
+  /// Fase 7.F.3, modo "agregar" -- mismo bucle de inserción por pista que
+  /// [createPlaylistWithMatchedTracks] (pasos 3-4, D-8), pero sobre una
+  /// playlist que **ya existe**: no la crea, no toca su `remoteId` actual.
+  /// Si la playlist es local-only ([remotePlaylistId] `null`), solo escribe
+  /// en Drift.
+  Future<void> addMatchedTracksToExistingPlaylist({
+    required int playlistId,
+    required String? remotePlaylistId,
+    required List<DeezerTrack> matchedTracks,
+    required PlaylistDao dao,
+    required DeezerApi deezerApi,
+    required SupabasePlaylistRepository supabaseRepo,
+  }) async {
+    final remoteTracksPayload = <Map<String, dynamic>>[];
+    for (final track in matchedTracks) {
+      final contributors = await resolveDeezerTrackContributors(deezerApi, track);
+      await dao.addTrackToPlaylist(
+        playlistId: playlistId,
+        trackId: track.id,
+        artistId: track.artistId,
+        albumId: track.albumId,
+        title: track.title,
+        artistName: track.artistName,
+        albumName: track.albumTitle,
+        coverUrl: track.coverUrl,
+        durationMs: track.durationSec * 1000,
+        contributorsJson: SyncoraArtistRef.encodeList(contributors),
+      );
+      if (remotePlaylistId != null) {
+        remoteTracksPayload.add({
+          'track_id': track.id,
+          'artist_id': track.artistId,
+          'album_id': track.albumId,
+          'title': track.title,
+          'artist_name': track.artistName,
+          'album_name': track.albumTitle,
+          'cover_url': track.coverUrl,
+          'duration_ms': track.durationSec * 1000,
+          if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
+        });
+      }
+    }
+
+    if (remotePlaylistId != null && remoteTracksPayload.isNotEmpty) {
+      try {
+        await supabaseRepo.addTracksToPlaylist(remotePlaylistId, remoteTracksPayload);
+      } catch (_) {
+        // Igual que createPlaylistWithMatchedTracks: si la subida remota
+        // falla, lo local ya quedó insertado -- se queda desincronizado
+        // hasta la próxima sync, no se pierde el trabajo del usuario.
+      }
+    }
+  }
+
+  /// Fase 7.F.3, modo "quitar" -- borra en bloque las entradas ya
+  /// confirmadas por el usuario en la vista previa (D-12: el DELETE lo
+  /// ejecuta el cliente; la IA solo sugirió cuáles, siempre restringida a
+  /// ids ya existentes en la playlist por el `response_schema`, D-7).
+  Future<void> removeTracksFromPlaylist({
+    required int playlistId,
+    required String? remotePlaylistId,
+    required List<PlaylistTrack> tracksToRemove,
+    required PlaylistDao dao,
+    required SupabasePlaylistRepository supabaseRepo,
+  }) async {
+    if (tracksToRemove.isEmpty) return;
+    if (remotePlaylistId != null) {
+      try {
+        await supabaseRepo.removeTracksFromPlaylist(
+          remotePlaylistId,
+          tracksToRemove.map((t) => t.trackId).toList(),
+        );
+      } catch (_) {}
+    }
+    for (final track in tracksToRemove) {
+      await dao.removeTrackEntry(track.id);
+    }
   }
 
   /// Export tracks to CSV string format: title,artist,album,duration_ms
