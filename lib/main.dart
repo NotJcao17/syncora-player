@@ -11,6 +11,7 @@ import 'package:smtc_windows/smtc_windows.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'app.dart';
+import 'features/auth/services/auth_deep_link_errors.dart';
 
 Future<void> _handleAuthDeepLink(Uri rawUri) async {
   final rawString = rawUri.toString().trim();
@@ -24,6 +25,23 @@ Future<void> _handleAuthDeepLink(Uri rawUri) async {
     if (parsed != null) {
       targetUri = parsed;
     }
+  }
+
+  // Fase 7.H.5 (hallazgo de la revisión independiente): si el callback de
+  // OAuth trae un error (`error`/`error_description`, en query o fragment
+  // según el flujo), no hay sesión que extraer -- avisar por
+  // `authDeepLinkErrors` en vez de caer en el camino de abajo, que solo
+  // sabe buscar tokens/código y se queda en silencio si no encuentra
+  // ninguno. Cubre, entre otros, el rechazo del hook "Before User Created"
+  // por cupo de cuentas lleno (7.H.2) en Android/iOS.
+  final fragmentParams =
+      targetUri.fragment.isNotEmpty ? Uri.splitQueryString(targetUri.fragment) : const <String, String>{};
+  final errorCode = targetUri.queryParameters['error'] ?? fragmentParams['error'];
+  final errorDescription = targetUri.queryParameters['error_description'] ?? fragmentParams['error_description'];
+  if (errorCode != null && errorCode.isNotEmpty) {
+    debugPrint('⚠️ Deep link de OAuth con error: $errorCode ($errorDescription)');
+    authDeepLinkErrors.add(errorDescription ?? errorCode);
+    return;
   }
 
   try {

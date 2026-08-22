@@ -8,6 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/navigation/app_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../services/account_limit_error.dart';
+import '../services/auth_deep_link_errors.dart';
 import '../services/desktop_auth_service.dart';
 
 /// Pantalla de Autenticación para Syncora Player.
@@ -27,7 +29,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
+  // Fase 7.H.4: cupo de 250 cuentas alcanzado (D-22), detectado con
+  // `looksLikeAccountLimitError` (`account_limit_error.dart`). Se distingue
+  // del resto de errores de auth para mostrar un mensaje propio en el
+  // `build()` de abajo, no un error genérico ni un "inténtalo más tarde" --
+  // el botón "usar sin cuenta" del plan (7.I) todavía no se agrega ahí a
+  // propósito: 7.I (modo local) no está implementado en este punto de la
+  // fase, se cablea cuando exista.
+  bool _accountLimitReached = false;
   StreamSubscription<AuthState>? _authSubscription;
+  StreamSubscription<String>? _deepLinkErrorSubscription;
 
   @override
   void initState() {
@@ -48,6 +59,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           ref.read(appRouterProvider).go('/');
         }
       });
+
+      // Fase 7.H.5: en Android/iOS el resultado del login con Google llega
+      // por un deep link procesado en `main.dart`, fuera de esta pantalla
+      // -- si ese callback trae un error (ej. cupo de cuentas lleno, 7.H.2)
+      // en vez de una sesión, `main.dart` lo publica acá en vez de dejarlo
+      // desaparecer en silencio.
+      _deepLinkErrorSubscription = authDeepLinkErrors.stream.listen((message) {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          if (looksLikeAccountLimitError(message)) {
+            _accountLimitReached = true;
+          } else {
+            _errorMessage = message;
+          }
+        });
+      });
     }
   }
 
@@ -63,6 +91,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _deepLinkErrorSubscription?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -76,6 +105,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _accountLimitReached = false;
     });
 
     try {
@@ -100,9 +130,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         });
       }
     } catch (e) {
+      // El flujo de Windows (`DesktopAuthService`) envuelve el error que
+      // Supabase devuelve en el redirect de OAuth (incluido el rechazo del
+      // hook) en una `AuthException` propia -- ver `desktop_auth_service.dart`.
+      final rawMessage = e is AuthException ? e.message : e.toString();
       if (mounted) {
         setState(() {
-          _errorMessage = 'Error al iniciar sesión con Google: ${e.toString()}';
+          if (looksLikeAccountLimitError(rawMessage)) {
+            _accountLimitReached = true;
+          } else {
+            _errorMessage = 'Error al iniciar sesión con Google: $rawMessage';
+          }
         });
       }
     } finally {
@@ -122,6 +160,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _accountLimitReached = false;
     });
 
     final email = _emailController.text.trim();
@@ -146,7 +185,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     } on AuthException catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.message;
+          if (looksLikeAccountLimitError(e.message)) {
+            _accountLimitReached = true;
+          } else {
+            _errorMessage = e.message;
+          }
         });
       }
     } catch (e) {
@@ -258,6 +301,49 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
+
+                // Fase 7.H.4: cupo de cuentas lleno -- mensaje propio, no un
+                // error genérico ni un "inténtalo más tarde". El botón
+                // "usar sin cuenta" del plan (7.I) todavía no se agrega acá
+                // a propósito: 7.I (modo local) no está implementado en
+                // este punto de la fase, y un botón que no lleva a ningún
+                // lado sería peor que no mostrarlo -- se cablea en 7.I.3
+                // cuando exista `localModeProvider`/la pantalla real.
+                if (_accountLimitReached) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0x26F59E0B),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.people_outline,
+                          color: Color(0xFFF59E0B),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            accountLimitMessage,
+                            style: const TextStyle(
+                              color: Color(0xFFFBBF24),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
 
                 // Alerta de Error (si existe)
                 if (_errorMessage != null) ...[
@@ -372,6 +458,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             setState(() {
                               _selectedTabIndex = 0;
                               _errorMessage = null;
+                              _accountLimitReached = false;
                             });
                           },
                           child: AnimatedContainer(
@@ -403,6 +490,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             setState(() {
                               _selectedTabIndex = 1;
                               _errorMessage = null;
+                              _accountLimitReached = false;
                             });
                           },
                           child: AnimatedContainer(

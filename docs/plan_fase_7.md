@@ -586,27 +586,36 @@ Entrada: botón más junto a "Popular" y "Búsqueda profunda" en el buscador
 > sin presupuesto, sostenido en planes gratuitos; el techo del free tier de Supabase es
 > ~340 usuarios típicos a 10 años, y 250 deja margen para la incertidumbre de la estimación.
 
-- [ ] **7.H.1** Migración SQL: tabla de configuración de una sola fila (ej. `app_config`) con
+- [x] **7.H.1** Migración SQL: tabla de configuración de una sola fila (ej. `app_config`) con
       `max_accounts INTEGER` (valor inicial **250**). **No hardcodear el tope** — la gracia es
       poder subirlo con un `UPDATE` desde el dashboard sin tocar código ni redesplegar.
-- [ ] **7.H.2** Implementar el Auth Hook **"Before User Created"** que cuenta `auth.users` y
+- [x] **7.H.2** Implementar el Auth Hook **"Before User Created"** que cuenta `auth.users` y
       rechaza el registro si `count >= max_accounts`. Puede ser una función de Postgres (más
       simple, sin deploy aparte) o una Edge Function. **Recomendación: función de Postgres**, ya
       que solo necesita contar filas y no hay razón para pagar el arranque de una Edge Function.
-- [ ] **7.H.3** Configurar el hook en el dashboard de Supabase (Authentication → Hooks). Es
-      configuración de proyecto, **no** viaja en las migraciones — documentar el paso para no
-      perderlo si se recrea el proyecto.
-- [ ] **7.H.4** Manejo del rechazo en el cliente (`auth_screen.dart`): mensaje amigable
-      explicando que las cuentas con nube están llenas + **botón directo a "usar sin cuenta"**
-      (7.I). No un error genérico ni un "inténtalo más tarde".
+- [x] **7.H.3** Configurar el hook en el dashboard de Supabase (Authentication → Hooks). Es
+      configuración de proyecto, **no** viaja en las migraciones — documentado el paso en
+      `docs/fases/fase_7_h.md` para no perderlo si se recrea el proyecto.
+- [x] **7.H.4** Manejo del rechazo en el cliente (`auth_screen.dart`): mensaje amigable
+      explicando que las cuentas con nube están llenas. No un error genérico ni un "inténtalo más
+      tarde". **Botón directo a "usar sin cuenta" (7.I) deliberadamente diferido**: 7.I no existe
+      todavía en el código en este punto de la fase, así que no hay destino real al que apuntar —
+      se cablea en 7.I.3. Ver nota en `auth_screen.dart` y en `docs/fases/fase_7_h.md`.
       ⚠️ **Bug conocido de la plataforma:** al rechazar con mensaje personalizado, el hook puede
       devolver `"Invalid payload sent to hook"` genérico en vez del texto propio (issue abierto de
-      Supabase). El cliente **debe reconocer también ese error genérico** como "cupo lleno". Probar
-      explícitamente este camino, no asumir que el mensaje personalizado llega.
-- [ ] **7.H.5** Verificar que el hook cubre **ambas vías de registro**: correo/contraseña **y**
-      Google OAuth. Es fácil probar solo la primera y descubrir tarde que OAuth se salta el tope.
-- [ ] **7.H.6** Documentar en `docs/` el procedimiento de operación para el desarrollador
-      (ver "Operación: ver y administrar cuentas" al final de este documento).
+      Supabase). El cliente **reconoce también ese error genérico** como "cupo lleno"
+      (`looksLikeAccountLimitError`).
+- [x] **7.H.5** El hook (contrato de Supabase Auth Hooks, verificado contra la documentación
+      agosto 2026) se aplica tanto a correo/contraseña como a OAuth por diseño de la plataforma.
+      Del lado del cliente, ambos caminos de registro reconocen el rechazo: correo/contraseña vía
+      `AuthException` en `_handleSubmitForm`, y Google OAuth en **ambas** plataformas —
+      `DesktopAuthService`/Windows y, tras un hallazgo real de la revisión independiente, también
+      Android/iOS (el resultado de OAuth ahí llega por un deep link fuera de `auth_screen.dart`;
+      ver `auth_deep_link_errors.dart`). **Pendiente de todos modos probar contra un proyecto real**
+      (no automatizable sin un Supabase real) — ver pasos manuales en `docs/fases/fase_7_h.md`.
+- [x] **7.H.6** Documentado en `docs/fases/fase_7_h.md` el detalle de implementación y los pasos
+      manuales para el desarrollador; la operación día a día ya vivía en la sección "Operación: ver
+      y administrar cuentas" al final de este documento.
 
 ---
 

@@ -63,10 +63,23 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 
 ### Estado actual (última actualización: 2026-08-22)
 
-**Cerradas, commiteadas y pusheadas a `master`** (ver `docs/fases/fase_7_{0,a,b,c,d,e,f}.md` para
-el detalle de cada una): **7.0, 7.A, 7.B, 7.C, 7.D, 7.E, 7.F.1, 7.F.2, 7.F.3, 7.F.4**. Todas con
-`flutter analyze` limpio y la suite de tests en verde en el momento de cerrarlas (309 tests al
-cerrar 7.F.4 — sin tests nuevos en 7.F.3/7.F.4, ver razón en `docs/fases/fase_7_f.md`).
+**Cerradas, commiteadas y pusheadas a `master`** (ver `docs/fases/fase_7_{0,a,b,c,d,e,f,h}.md` para
+el detalle de cada una): **7.0, 7.A, 7.B, 7.C, 7.D, 7.E, 7.F.1, 7.F.2, 7.F.3, 7.F.4, 7.H**. Todas
+con `flutter analyze` limpio y la suite de tests en verde en el momento de cerrarlas (313 tests al
+cerrar 7.H — 309 al cerrar 7.F.4, sin tests nuevos ahí; +4 en 7.H).
+
+7.H (límite de 250 cuentas, D-22) tocó `auth` — categoría de riesgo real de la metodología — así
+que sí se lanzó un subagente de revisión independiente (Sonnet), a diferencia de 7.F.3/7.F.4.
+Encontró y ya se corrigió: un hueco real donde el rechazo del hook por cupo lleno (y cualquier
+otro error de OAuth) desaparecía en silencio en Android/iOS porque el resultado de
+`signInWithOAuth` ahí llega por un deep link fuera de `auth_screen.dart` (corregido con un bridge
+nuevo, `auth_deep_link_errors.dart`); un fail-open en la función SQL del hook si la fila de
+`app_config` llegara a faltar (corregido con fallback a 250); y una nota documentada (sin cambio de
+código) sobre el acoplamiento del mensaje genérico de error de hooks si se agrega un segundo hook
+en el futuro. El botón "usar sin cuenta" que el plan original pedía junto al mensaje de cupo lleno
+se dejó deliberadamente fuera: 7.I (modo local) todavía no existe en el código en este punto, así
+que no hay destino real al que apuntar — se cablea en 7.I.3. Detalle completo en
+`docs/fases/fase_7_h.md`.
 
 7.F.1 ("Crear playlist con IA") quedó con 3 bugs reales encontrados y corregidos por el
 orquestador antes de la revisión (churn de suscripciones Drift por crear un `Stream` inline en
@@ -101,10 +114,14 @@ las 4 hojas de IA — el resto del esqueleto (`setState`/`mounted`/manejo de pas
 abstraer, es puro cableado de UI con más costo de abstracción que ahorro real. Sin bugs encontrados
 en la revisión de este sub-bloque. Detalle completo en `docs/fases/fase_7_f.md`.
 
-**Siguiente fase a implementar: 7.H (límite de cuentas).** Ver su sección en `docs/plan_fase_7.md`.
+**Siguiente fase a implementar: 7.I (modo local / sin cuenta).** Ver su sección en
+`docs/plan_fase_7.md` y H-5 (hallazgos de código relevantes, leer antes de empezar). Al
+implementarla, recordar cablear el botón "usar sin cuenta" pendiente de 7.H.4 en el banner de cupo
+lleno de `auth_screen.dart` (nota ya dejada en el código).
 
-**Todavía no iniciadas:** 7.H (límite de cuentas), 7.I (modo local), 7.G (estadísticas). Orden no
-negociable: 7.I antes que 7.G (ver plan).
+**Todavía no iniciadas:** 7.I (modo local), 7.G (estadísticas). Orden no negociable: 7.I antes que
+7.G (ver plan). La revisión independiente de 7.I puede usar effort high (excepción ya prevista por
+la propia regla de "menos revisiones", no una excepción a ella).
 
 **Hallazgos verificados durante la Fase 7 que no estaban en el plan original** (ya documentados
 como H-6 a H-8 en `docs/plan_fase_7.md`, sección de hallazgos — no volver a descubrirlos): el aviso
