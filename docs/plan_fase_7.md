@@ -173,6 +173,22 @@ como referencia de orden de magnitud, no como cifra exacta vigente; vale la pena
 implemente 7.E la revise una vez más contra AI Studio/la cuenta real antes de fijar los umbrales de
 rate-limit de 7.E.3.
 
+### H-8. "Intercalar 1 cada 3" (D-9) con paso fijo deja las sugerencias sobrantes en un solo bloque al final (verificado en la revisión independiente de 7.F.2)
+
+El plan (7.F.2) especifica el intercalado como "1 sugerida cada ~3" sin definir qué pasa cuando hay
+más sugerencias que huecos disponibles a ese paso fijo. La implementación inicial usaba
+literalmente ese paso fijo (`_aiInterleaveEvery = 3`), y con los defaults del propio atajo "✨
+Mejorar esta cola" (D-9: 25 sugerencias) contra una `autoQueue` típica bastante más corta, el
+resultado no se parecía a un intercalado real: con una `autoQueue` de 20 pistas se intercalaban 6 y
+las otras 19 quedaban pegadas en un solo bloque al final — justo el caso de uso principal de la
+función, no un borde raro.
+
+→ `interleaveIntoAutoQueue` (`syncora_player_controller.dart`) se corrigió a un **paso adaptativo**
+(`autoQueue.length ~/ tracks.length`, mínimo 1) que reparte las sugerencias a lo largo de toda la
+cola automática existente en vez de un paso fijo — solo queda un bloque residual al final cuando
+hay estructuralmente más sugerencias que huecos posibles (`autoQueue` muy corta). Detalle completo
+y ejemplo numérico en `docs/fases/fase_7_f.md`, sección 7.F.2.
+
 ---
 
 ## Datos verificados en la sesión (Gemini y Deezer)
@@ -494,9 +510,10 @@ El orden no es negociable en tres puntos:
 
 Las 4 funciones, todas sobre la infraestructura de 7.E, todas con vista previa antes de aplicar.
 
-> **Estado:** 7.F.1 cerrada, commiteada y pusheada (ver `docs/fases/fase_7_f.md` para el detalle:
-> arquitectura, bugs encontrados en revisión independiente y corregidos). 7.F.2/7.F.3/7.F.4 no
-> están iniciadas — ver "Estado actual" en `CLAUDE.md` para el punto exacto de retoma.
+> **Estado:** 7.F.1 y 7.F.2 cerradas, commiteadas y pusheadas (ver `docs/fases/fase_7_f.md` para el
+> detalle de cada una: arquitectura, bugs encontrados en revisión independiente y corregidos).
+> 7.F.3/7.F.4 no están iniciadas — ver "Estado actual" en `CLAUDE.md` para el punto exacto de
+> retoma.
 
 ### 7.F.1 — Crear playlist con IA
 
@@ -525,14 +542,15 @@ Entrada: botón con ícono `stars-broken` en **Biblioteca**, junto a "crear play
 
 Entrada: botón en la **pantalla/hoja de cola**.
 
-- [ ] Toggle: cola **nueva** vs. **basada en la playlist/cola actual**.
-- [ ] Toggle: **intercalar** con la cola automática (1 sugerida cada ~3, el antiguo "Smart
-      Shuffle") vs. **añadir como cola manual**.
-- [ ] Dropdown de cantidad: 10 / 25 / 50 / 100 (tope 100). Por defecto **25**.
-- [ ] Atajo "✨ Mejorar esta cola" (D-9): prellena basada-en-cola-actual + intercalar + 25 y
+- [x] Toggle: cola **nueva** vs. **basada en la playlist/cola actual**.
+- [x] Toggle: **intercalar** con la cola automática (1 sugerida cada ~3, el antiguo "Smart
+      Shuffle") vs. **añadir como cola manual**. Ver H-8: el paso de intercalado terminó siendo
+      adaptativo, no un "cada 3" fijo.
+- [x] Dropdown de cantidad: 10 / 25 / 50 / 100 (tope 100). Por defecto **25**.
+- [x] Atajo "✨ Mejorar esta cola" (D-9): prellena basada-en-cola-actual + intercalar + 25 y
       dispara directo, sin abrir el panel completo.
-- [ ] La cola manual **nunca** se toca (D-1).
-- [ ] Contexto: mandar la playlist/cola actual completa. **No hace falta resumir ni filtrar** salvo
+- [x] La cola manual **nunca** se toca (D-1).
+- [x] Contexto: mandar la playlist/cola actual completa. **No hace falta resumir ni filtrar** salvo
       un tope de seguridad absurdo (>2.000-3.000 pistas), donde se muestrean los artistas/géneros
       más frecuentes.
 

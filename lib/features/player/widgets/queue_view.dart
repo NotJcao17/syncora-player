@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/track_tile.dart';
+import '../ai_queue/ai_create_queue_sheet.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
 
@@ -166,10 +169,28 @@ class _QueueViewState extends ConsumerState<QueueView> {
     // P1.10: el empty state completo solo aplica cuando NO suena nada Y
     // ambas colas están vacías — antes se mostraba aunque siguiera sonando
     // una pista, porque solo se miraban las colas.
+    //
+    // Fase 7.F.2: con la cola totalmente vacía es exactamente el caso de uso
+    // principal del modo "cola nueva" (sin contexto que ofrecer) -- sin este
+    // botón de acción, el único punto de entrada de "Crear cola con IA"
+    // (el de `_buildToolbar`) quedaba inalcanzable justo cuando más sentido
+    // tiene usarlo.
     if (current == null && manual.isEmpty && auto.isEmpty) {
-      return const EmptyStateWidget(
+      final isConnected = ref.watch(isConnectedProvider).value ?? true;
+      return EmptyStateWidget(
         title: 'La cola está vacía',
         message: 'Agrega canciones con "Reproducir a continuación" o "Agregar a la cola" desde cualquier lista.',
+        action: OutlinedButton.icon(
+          onPressed: isConnected
+              ? () => showAiCreateQueueSheet(context, ref)
+              : () => AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.'),
+          icon: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), size: 16),
+          label: const Text('Crear cola con IA'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppTheme.primary,
+            side: const BorderSide(color: AppTheme.surfaceHover),
+          ),
+        ),
       );
     }
 
@@ -232,6 +253,11 @@ class _QueueViewState extends ConsumerState<QueueView> {
   Widget _buildToolbar(int totalCount, bool hasSelection) {
     final controller = ref.read(syncoraPlayerControllerProvider.notifier);
     final selectionCount = _selectedManual.length + _selectedAuto.length;
+    // Fase 7.F.2: mismo patrón de gating que los otros 3 puntos de entrada
+    // de IA (`library_screen.dart`) -- deshabilitado sin conexión, con
+    // tooltip/toast explicando por qué en vez de un botón muerto sin
+    // explicación.
+    final isConnected = ref.watch(isConnectedProvider).value ?? true;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -266,6 +292,43 @@ class _QueueViewState extends ConsumerState<QueueView> {
                     label: const Text('Limpiar cola', style: TextStyle(color: AppTheme.secondary, fontSize: 12)),
                   ),
                 ],
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Tooltip(
+                message: isConnected ? 'Crear cola con IA' : 'Sin conexión',
+                child: IconButton(
+                  // D-14: mismo ícono (`StarsMinimalistic`) en los 4 puntos
+                  // de entrada de IA de la Fase 7.F.
+                  icon: Icon(
+                    AppIcons.broken(SolarIcons.StarsMinimalistic),
+                    color: isConnected ? AppTheme.primary : AppTheme.muted,
+                    size: 18,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: isConnected
+                      ? () => showAiCreateQueueSheet(context, ref)
+                      : () => AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.'),
+                ),
+              ),
+              // D-9 / atajo "✨ Mejorar esta cola": prellena basada-en-cola-
+              // actual + intercalar + 25 y dispara directo, sin abrir el
+              // panel completo.
+              TextButton.icon(
+                onPressed: isConnected
+                    ? () => showAiCreateQueueSheet(context, ref, autoImprove: true)
+                    : () => AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.'),
+                icon: Icon(
+                  AppIcons.broken(SolarIcons.StarsMinimalistic),
+                  size: 14,
+                  color: isConnected ? AppTheme.primary : AppTheme.muted,
+                ),
+                label: Text(
+                  'Mejorar esta cola',
+                  style: TextStyle(color: isConnected ? AppTheme.primary : AppTheme.muted, fontSize: 12),
+                ),
               ),
             ],
           ),

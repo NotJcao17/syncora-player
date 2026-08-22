@@ -41,8 +41,8 @@ y el plan basta para retomar sin perder nada importante:
 
 **Cerradas, commiteadas y pusheadas a `master`** (cada una con revisión independiente aplicada y
 bugs encontrados corregidos — ver `docs/fases/fase_7_{0,a,b,c,d,e,f}.md` para el detalle de cada
-una): **7.0, 7.A, 7.B, 7.C, 7.D, 7.E, 7.F.1**. Todas con `flutter analyze` limpio y la suite de
-tests en verde en el momento de cerrarlas (296 tests al cerrar 7.F.1).
+una): **7.0, 7.A, 7.B, 7.C, 7.D, 7.E, 7.F.1, 7.F.2**. Todas con `flutter analyze` limpio y la suite
+de tests en verde en el momento de cerrarlas (309 tests al cerrar 7.F.2).
 
 7.F.1 ("Crear playlist con IA") quedó con 3 bugs reales encontrados y corregidos por el
 orquestador antes de la revisión (churn de suscripciones Drift por crear un `Stream` inline en
@@ -51,24 +51,36 @@ cada rebuild, un `Timer` interno de Drift que quedaba pendiente en tests sin
 `aiKeyStorageProvider`), más 4 hallazgos de la revisión independiente (Sonnet) ya corregidos: falta
 de cobertura de test en el camino exitoso (agregada), doble-tap posible en "Crear con IA"
 (agregado flag `_isSubmitting`), mensaje de validación que prometía más de lo que exigía (agregado
-`_hasAnyParamSet`), y un carácter soft-hyphen suelto en `prompts.ts`. Detalle completo en
-`docs/fases/fase_7_f.md`.
+`_hasAnyParamSet`), y un carácter soft-hyphen suelto en `prompts.ts`.
 
-**Siguiente sub-bloque a implementar: 7.F.2 (crear cola con IA).** Ver su sección en
-`docs/plan_fase_7.md`. Puede reusar bastante de lo construido en 7.F.1 (el widget de vista previa
-de sugerencias, el matching contra Deezer, el patrón de inserción canónica) — revisar si conviene
-extraer algo compartido antes de implementarlo, en vez de duplicar.
+7.F.2 ("Crear cola con IA") se implementó reusando piezas de 7.F.1 (widgets de progreso/vista
+previa extraídos a `lib/core/widgets/ai_generation_steps.dart`, compartidos por ambas). Su
+revisión independiente fue en **Opus** (no Sonnet) porque toca `syncora_player_controller.dart` —
+mismo criterio de riesgo que justificó Opus para 7.A. Encontró y ya se corrigió: un borde real
+donde `interleaveIntoAutoQueue` podía violar D-1 (promovía una pista de la cola manual a "sonando
+ahora" tras restaurar una sesión con `currentTrack` null y `manualQueue` no vacía — cubierto con un
+test dedicado, para lo que el controller ganó un `sessionStorage` inyectable solo para tests); el
+paso de intercalado "cada 3" fijo del plan dejaba las sugerencias sobrantes en un bloque al final
+en el caso de uso principal, corregido a paso adaptativo (**hallazgo H-8** en
+`docs/plan_fase_7.md`); y 3 P2 menores (`ref.read` antes de chequear `mounted` en ambos archivos
+7.F.1/7.F.2, `addPostFrameCallback` sin guarda de `mounted`, muestreo de contexto que podía
+descartar la pista actual). Detalle completo de ambos sub-bloques en `docs/fases/fase_7_f.md`.
 
-**Todavía no iniciadas:** 7.F.2, 7.F.3 (modificar playlist con IA), 7.F.4 (buscar por fragmento de
-letra), 7.H (límite de cuentas), 7.I (modo local), 7.G (estadísticas). Orden no negociable: 7.I
-antes que 7.G (ver plan).
+**Siguiente sub-bloque a implementar: 7.F.3 (modificar playlist con IA).** Ver su sección en
+`docs/plan_fase_7.md`. Antes de implementarlo, evaluar extraer el esqueleto `_generate` → matching
+compartido entre 7.F.1 y 7.F.2 (~80 líneas casi idénticas en cada hoja) — 7.F.3 lo necesitaría por
+tercera vez si no se extrae ahora.
+
+**Todavía no iniciadas:** 7.F.3, 7.F.4 (buscar por fragmento de letra), 7.H (límite de cuentas),
+7.I (modo local), 7.G (estadísticas). Orden no negociable: 7.I antes que 7.G (ver plan).
 
 **Hallazgos verificados durante la Fase 7 que no estaban en el plan original** (ya documentados
-como H-6/H-7 en `docs/plan_fase_7.md`, sección de hallazgos — no volver a descubrirlos): el aviso
+como H-6 a H-8 en `docs/plan_fase_7.md`, sección de hallazgos — no volver a descubrirlos): el aviso
 visual del guard 403/red de Fase 1 nunca tenía consumidor en la UI (arreglado en 7.C); el modelo
 Gemini y la forma de llamar a su API cambiaron desde que se escribió el plan — usar
 `gemini-3.5-flash-lite` sobre la API de Interactions (`v1beta/interactions`), no
-`gemini-3.1-flash-lite`/`generateContent` (ya implementado así en 7.E).
+`gemini-3.1-flash-lite`/`generateContent` (ya implementado así en 7.E); el intercalado "cada 3"
+fijo de 7.F.2 (D-9) dejaba las sugerencias sobrantes en bloque, corregido a paso adaptativo.
 
 **Pasos manuales acumulados, pendientes para el desarrollador humano** (ninguno bloquea seguir
 implementando fases del cliente Flutter, pero si se quiere probar IA de verdad hacen falta):

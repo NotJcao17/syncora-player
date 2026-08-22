@@ -165,6 +165,12 @@ class SyncoraPlayerController extends ChangeNotifier {
     bool Function()? isConnectedGetter,
     bool Function()? radioEnabledGetter,
     Duration Function()? crossfadeDurationGetter,
+    // Inyectable solo para tests (ver `syncora_player_controller_test.dart`,
+    // grupo "Fase 7.F.2" -- un doble que devuelve una sesión restaurada con
+    // `currentTrack: null` y `manualQueue` no vacía, el único camino
+    // alcanzable en la app real hacia ese estado, del que dependen las
+    // pruebas de regresión de D-1 sobre `interleaveIntoAutoQueue`).
+    PlayerSessionStorage? sessionStorage,
   })  : _engine = engine, // ignore: prefer_initializing_formals
         _extractionService = extractionService, // ignore: prefer_initializing_formals
         _deezerApi = deezerApi, // ignore: prefer_initializing_formals
@@ -173,7 +179,8 @@ class SyncoraPlayerController extends ChangeNotifier {
         _radioService = radioService,
         _isConnectedGetter = isConnectedGetter,
         _radioEnabledGetter = radioEnabledGetter,
-        _crossfadeDurationGetter = crossfadeDurationGetter;
+        _crossfadeDurationGetter = crossfadeDurationGetter,
+        _sessionStorage = sessionStorage ?? PlayerSessionStorage();
 
   final AudioEngine _engine;
   final ExtractionService _extractionService;
@@ -208,7 +215,7 @@ class SyncoraPlayerController extends ChangeNotifier {
   String? _crossfadeAttemptedForTrackId;
 
   final RetryPolicy _retryPolicy = RetryPolicy();
-  final PlayerSessionStorage _sessionStorage = PlayerSessionStorage();
+  final PlayerSessionStorage _sessionStorage;
 
   /// Cupo máximo de la pila de historial (D-3).
   static const int _historyCap = 50;
@@ -672,6 +679,76 @@ class SyncoraPlayerController extends ChangeNotifier {
     final updated = List<SyncoraTrack>.from(_state.manualQueue)..add(track);
     _state = _state.copyWith(manualQueue: List.unmodifiable(updated));
     if (_state.currentTrack == null) {
+      _advance();
+    }
+    _notify();
+    _saveSession();
+  }
+
+  /// Fase 7.F.2 -- "Crear cola con IA", modo "añadir como cola manual":
+  /// agrega varias pistas ya resueltas contra Deezer al FINAL de la cola
+  /// manual de una sola vez, en el orden dado (FIFO, D-2) -- equivalente a
+  /// llamar [addToQueue] una vez por pista, pero en una sola mutación/
+  /// notificación en vez de una por pista. Mismo tratamiento que
+  /// [addToQueue] cuando no había nada sonando (promueve la primera a
+  /// `currentTrack`, sin autoplay).
+  void addAllToQueue(List<SyncoraTrack> tracks) {
+    if (tracks.isEmpty) return;
+    final updated = List<SyncoraTrack>.from(_state.manualQueue)..addAll(tracks);
+    _state = _state.copyWith(manualQueue: List.unmodifiable(updated));
+    if (_state.currentTrack == null) {
+      _advance();
+    }
+    _notify();
+    _saveSession();
+  }
+
+  /// Fase 7.F.2 -- "Crear cola con IA", modo "intercalar" (D-9): mezcla
+  /// [tracks] (ya resueltas contra Deezer) DENTRO de la cola automática
+  /// existente -- nunca toca `manualQueue` (D-1).
+  ///
+  /// El paso de intercalado es ADAPTATIVO (`autoQueue.length ~/
+  /// tracks.length`, mínimo 1), no un "cada 3" fijo: con un paso fijo, en el
+  /// caso de uso principal (atajo "Mejorar esta cola" -> 25 sugerencias
+  /// contra una `autoQueue` típica bastante más corta) casi todo el sobrante
+  /// terminaba pegado en un solo bloque al final, sin ninguna sensación de
+  /// intercalado real (hallazgo de la revisión independiente de 7.F.2, no
+  /// estaba en el plan original). El paso adaptativo reparte las
+  /// sugerencias a lo largo de TODA la cola automática existente; solo
+  /// queda un bloque residual al final cuando hay estructuralmente más
+  /// sugerencias que huecos posibles (`autoQueue` muy corta).
+  void interleaveIntoAutoQueue(List<SyncoraTrack> tracks) {
+    if (tracks.isEmpty) return;
+    final current = _state.autoQueue;
+    final result = <SyncoraTrack>[];
+    if (current.isEmpty) {
+      result.addAll(tracks);
+    } else {
+      final stride = (current.length ~/ tracks.length).clamp(1, current.length);
+      var suggestionIndex = 0;
+      for (var i = 0; i < current.length; i++) {
+        result.add(current[i]);
+        if ((i + 1) % stride == 0 && suggestionIndex < tracks.length) {
+          result.add(tracks[suggestionIndex]);
+          suggestionIndex++;
+        }
+      }
+      while (suggestionIndex < tracks.length) {
+        result.add(tracks[suggestionIndex]);
+        suggestionIndex++;
+      }
+    }
+    _state = _state.copyWith(autoQueue: List.unmodifiable(result));
+    // D-1: si no hay nada sonando, arrancar reproducción es un efecto
+    // esperado (mismo tratamiento que `addToQueue`/`addAllToQueue`) -- pero
+    // SOLO si la cola manual también está vacía. Con `manualQueue` no vacía
+    // (ej. tras restaurar una sesión con `currentTrack` null pero pistas
+    // pendientes en "A continuación", ver `_restoreSession`), `_advance()`
+    // promovería una pista de la cola manual del usuario a "sonando ahora"
+    // como efecto secundario de una operación de IA sobre la automática --
+    // exactamente lo que D-1 prohíbe. La manual mantiene su prioridad
+    // normal de reproducción intacta para cuando el usuario sí le dé play.
+    if (_state.currentTrack == null && _state.manualQueue.isEmpty) {
       _advance();
     }
     _notify();

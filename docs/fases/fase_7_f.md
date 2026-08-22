@@ -106,3 +106,101 @@ matching en vez de en paralelo con su inicio — sin efecto visible, ya que `pla
 Ninguno bloqueante. 7.F.2 (crear cola con IA) y 7.F.3 (modificar playlist con IA) pueden reusar el
 widget de vista previa de sugerencias, el matching contra Deezer, y el patrón de inserción canónica
 construidos aquí — revisar si conviene extraer algo compartido antes de duplicar al implementarlos.
+
+---
+
+## 📋 7.F.2 — Crear cola con IA
+
+### Resumen
+
+Segunda función de IA, sobre la infraestructura de 7.E y reusando piezas de 7.F.1. Formulario
+(prompt libre, toggle cola-nueva/basada-en-cola-actual, toggle intercalar/cola-manual, dropdown de
+cantidad 10/25/50/100 default 25) → generación → matching contra Deezer → vista previa → aplicar.
+El atajo "✨ Mejorar esta cola" (D-9) prellena basada-en-cola-actual + intercalar + 25 y dispara
+directo sin mostrar el formulario.
+
+### Componentes
+
+- **`ai_create_queue_sheet.dart`** (nuevo, `lib/features/player/ai_queue/`) — el flujo completo,
+  mismo patrón de un solo `AppBottomSheet` con pasos internos que 7.F.1.
+- **`ai_generation_steps.dart`** (nuevo, `lib/core/widgets/`) — los widgets de progreso/vista previa
+  de 7.F.1 (`AiGeneratingIndicator`, `AiMatchingProgress`, `AiMatchedTrackList`,
+  `AiUnmatchedSuggestionsSection`) extraídos a un archivo compartido; 7.F.1 se refactorizó para
+  usarlos también, con su comportamiento/apariencia verificados idénticos en la revisión (ver
+  abajo). `_clampInt`, el enum `_Step`, `_kHardCountCap` y el estilo de `ChoiceChip` siguen
+  duplicados entre las dos hojas y el esqueleto `_generate` → matching (~80 líneas) también —
+  **7.F.3 lo va a necesitar por tercera vez; extraerlo antes de esa fase, no después.**
+- **`syncora_player_controller.dart`** — dos métodos nuevos: `addAllToQueue(List<SyncoraTrack>)`
+  (agregado en lote al final de la manual, FIFO D-2) e `interleaveIntoAutoQueue(List<SyncoraTrack>)`
+  (D-9, ver algoritmo abajo). También ganó un `sessionStorage` inyectable opcional en el
+  constructor (default `PlayerSessionStorage()` real, igual que antes) — solo para poder testear
+  con un doble el único camino real hacia `currentTrack == null` con `manualQueue` no vacía (una
+  sesión restaurada), que motivó el fix de D-1 de abajo.
+- **`queue_view.dart`** — botón "Crear cola con IA" + atajo "Mejorar esta cola" en la toolbar, y un
+  botón de entrada en el estado vacío (`EmptyStateWidget` ya tenía slot `action`): sin él, la
+  entrada de IA quedaba inalcanzable justo en el caso de uso principal ("cola nueva" con la cola
+  totalmente vacía). Mismo patrón D-14 (ícono `stars-broken`, bold mientras genera) y gating de
+  conexión que los otros 3 puntos de entrada.
+
+### Revisión independiente y bugs corregidos
+
+Revisado por un subagente **Opus** (no Sonnet como el resto de 7.F): los cambios de
+`syncora_player_controller.dart` tocan el mismo invariante D-1 (cola manual vs. automática) que
+justificó Opus para la revisión de 7.A, mismo criterio de riesgo. No encontró ningún P0. P1/P2
+encontrados y corregidos:
+
+1. **(P1) `interleaveIntoAutoQueue` podía violar D-1 en un borde real** — el método documentaba
+   "nunca toca `manualQueue`", pero su `_advance()` de conveniencia (arrancar reproducción si no
+   había nada sonando) no distinguía "no hay nada sonando porque todo está vacío" de "no hay nada
+   sonando pero la cola manual del usuario tiene pistas esperando" (el estado documentado en el
+   propio código como alcanzable tras `_restoreSession` — una sesión restaurada con `currentTrack`
+   null y `manualQueue` no vacía). En ese borde, "Mejorar esta cola" promovía una pista de "A
+   continuación" del usuario a "sonando ahora" sin que lo pidiera. Corregido: el auto-arranque de
+   conveniencia ahora exige `manualQueue` también vacía, no solo `currentTrack == null`.
+   Regresión cubierta con un test dedicado que reproduce el estado real (vía el `sessionStorage`
+   inyectable mencionado arriba + un doble de `PlayerSessionStorage` que devuelve esa sesión).
+2. **(P1) Paso de intercalado fijo dejaba las sugerencias sobrantes en un bloque al final** — ver
+   **H-8** en `docs/plan_fase_7.md`. Corregido con paso adaptativo
+   (`autoQueue.length ~/ tracks.length`, mínimo 1):
+   ```
+   autoQueue=[a1,a2,a3,a4,a5] (5), sugerencias=[ai1,ai2] (2) -> paso = 5~/2 = 2
+   resultado: [a1, a2, ai1, a3, a4, ai2, a5]   (antes, paso fijo 3: [a1,a2,a3,ai1,a4,a5,ai2])
+   ```
+   Con pocas sugerencias contra una `autoQueue` abundante, el paso resultante es más disperso que
+   un "cada 3" fijo (correcto: no hay razón para amontonar todas las sugerencias al principio). Con
+   una `autoQueue` muy corta frente a muchas sugerencias, sigue quedando un bloque residual al
+   final — inevitable, no hay estructuralmente huecos suficientes para repartir todo.
+3. **(P2) `ref.read(deezerApiProvider)` antes del chequeo de `mounted`** en `_matchAndSettle` —
+   copiado literal de la misma forma en 7.F.1. Si el usuario cierra la hoja mientras la IA está
+   respondiendo (`await service.createQueue/createPlaylist(...)`), `ref` ya no es seguro de usar al
+   volver. Corregido en **ambos** archivos (7.F.2 y 7.F.1, aunque 7.F.1 ya estaba cerrada — es el
+   mismo bug real, no una reapertura de sus decisiones).
+4. **(P2) `addPostFrameCallback` sin guarda de `mounted`** en el modo `autoImprove` — corregido.
+5. **(P2) `_buildQueueContext` podía descartar la pista actual al muestrear** por encima del tope de
+   seguridad (>3000 pistas): el muestreo por frecuencia de artista no preservaba `currentTrack`, la
+   pista más relevante para "continuá desde acá". Corregido preservándola siempre, fuera del
+   muestreo.
+
+**No corregido, documentado como límite conocido:** `_Step.applying` es un paso que nunca llega a
+renderizarse (`_apply()` no tiene ningún `await`, así que el spinner asociado es inalcanzable) —
+cosmético, no afecta el comportamiento, se deja para una limpieza futura junto con la extracción
+compartida del punto de "duplicación" arriba. Tampoco hay deduplicación de sugerencias de la IA
+contra la cola existente (mismo hueco que 7.F.1); no crashea, solo puede mostrar una pista
+repetida.
+
+**Refactor de `ai_create_playlist_sheet.dart` (fase 7.F.1, ya cerrada):** confirmado fiel línea por
+línea contra el original — mismo padding, alturas, íconos (`bold` vs `broken` por D-14), colores, y
+el `_showUnmatched` que pasó al `State` del widget extraído mantiene la misma vida útil práctica.
+Sus 5 tests existentes pasan sin modificarlos.
+
+### Verificación de pruebas
+
+- `flutter analyze`: limpio (28 lints `info` preexistentes, sin relación con este cambio).
+- `flutter test`: **309 tests, 0 fallos** (suite completa) — 12 tests nuevos del implementador (5
+  de `ai_create_queue_sheet_test.dart`, 7 de controller) más 1 test reescrito y 1 agregado durante
+  la corrección de los P1 de la revisión.
+
+### Pendiente
+
+Ninguno bloqueante. Antes de implementar 7.F.3, evaluar extraer el esqueleto `_generate` → matching
+compartido entre 7.F.1 y 7.F.2 (ver punto de "duplicación" en Componentes) para no triplicarlo.

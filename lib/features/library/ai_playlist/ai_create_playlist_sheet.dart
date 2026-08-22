@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/ai_generation_steps.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../data/apis/deezer_provider.dart';
@@ -84,7 +84,6 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
   List<DeezerTrack> _allMatched = const [];
   final Set<int> _excludedTrackIds = {};
   List<RawImportTrack> _unmatched = const [];
-  bool _showUnmatched = false;
 
   // D-11 / selector de playlist de referencia -- creado una sola vez (no
   // inline en el build de `_buildReferencePlaylistPicker`): un `Stream`
@@ -314,12 +313,18 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
   }
 
   Future<void> _matchAndSettle(List<RawImportTrack> rawTracks) async {
+    // El llamador (`_generate`) llega hasta acá recién después de un
+    // `await service.createPlaylist(...)` real -- si el usuario cerró la
+    // hoja mientras esa llamada estaba en curso, `ref` ya no es seguro de
+    // usar (el `ConsumerState` fue descartado). El chequeo tiene que ser lo
+    // primero, antes de cualquier `ref.read` (mismo bug que 7.F.2 encontró
+    // en su propia copia de este patrón, revisión independiente).
+    if (!mounted) return;
     final deezerApi = ref.read(deezerApiProvider);
     final service = PlaylistImportExportService(deezerApi);
     final matched = <DeezerTrack>[];
     final unmatched = <RawImportTrack>[];
 
-    if (!mounted) return;
     setState(() {
       _step = _Step.matching;
       _matchTotal = rawTracks.length;
@@ -637,58 +642,17 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
 
   // --- Paso 2: generando con IA -------------------------------------------
 
-  Widget _buildGenerating() {
-    return SizedBox(
-      height: 260,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // D-14: variante bold del ícono mientras la generación está en curso.
-            Icon(AppIcons.bold(SolarIcons.StarsMinimalistic), color: AppTheme.primary, size: 40),
-            const SizedBox(height: 16),
-            const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.primary),
-            ),
-            const SizedBox(height: 16),
-            const Text('Generando sugerencias con IA...', style: TextStyle(color: AppTheme.secondary, fontSize: 13)),
-          ],
-        ),
-      ),
-    );
-  }
+  // D-14: variante bold del ícono mientras la generación está en curso
+  // (compartido con 7.F.2, ver `core/widgets/ai_generation_steps.dart`).
+  Widget _buildGenerating() => const AiGeneratingIndicator();
 
   // --- Paso 3: matching contra Deezer -------------------------------------
 
-  Widget _buildMatching() {
-    final ratio = _matchTotal == 0 ? 0.0 : _matchCurrent / _matchTotal;
-    return SizedBox(
-      height: 220,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Buscando canciones en Deezer...', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 16),
-            LinearProgressIndicator(value: ratio, backgroundColor: AppTheme.surfaceHover, color: AppTheme.primary),
-            const SizedBox(height: 12),
-            Text('Buscando pista $_matchCurrent de $_matchTotal...', style: const TextStyle(color: AppTheme.secondary, fontSize: 13)),
-            const SizedBox(height: 6),
-            Text(
-              _matchCurrentName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildMatching() => AiMatchingProgress(
+        current: _matchCurrent,
+        total: _matchTotal,
+        currentTrackName: _matchCurrentName,
+      );
 
   // --- Paso 4: vista previa ------------------------------------------------
 
@@ -728,43 +692,14 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
         ),
         const Divider(color: AppTheme.surfaceHover, height: 1),
         Flexible(
-          child: ListView.builder(
-            shrinkWrap: true,
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            itemCount: _allMatched.length,
-            itemBuilder: (context, index) {
-              final track = _allMatched[index];
-              final excluded = _excludedTrackIds.contains(track.id);
-              return Opacity(
-                opacity: excluded ? 0.4 : 1.0,
-                child: ListTile(
-                  dense: true,
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: track.coverUrl.isNotEmpty
-                          ? CachedNetworkImage(imageUrl: track.coverUrl, fit: BoxFit.cover)
-                          : Container(color: AppTheme.surfaceHover),
-                    ),
-                  ),
-                  title: Text(track.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w600)),
-                  subtitle: Text(track.artistName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
-                  trailing: IconButton(
-                    icon: Icon(
-                      AppIcons.broken(excluded ? SolarIcons.AddCircle : SolarIcons.CloseCircle),
-                      color: excluded ? Colors.greenAccent : Colors.redAccent,
-                      size: 20,
-                    ),
-                    onPressed: () => _toggleTrack(track),
-                  ),
-                ),
-              );
-            },
+          child: AiMatchedTrackList(
+            tracks: _allMatched,
+            excludedTrackIds: _excludedTrackIds,
+            onToggle: _toggleTrack,
           ),
         ),
-        if (_unmatched.isNotEmpty) _buildUnmatchedSection(),
+        if (_unmatched.isNotEmpty)
+          AiUnmatchedSuggestionsSection(labels: _unmatched.map((u) => u.toString()).toList()),
         if (_refinePanelOpen) _buildRefinePanel(),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
@@ -807,50 +742,6 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildUnmatchedSection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: () => setState(() => _showUnmatched = !_showUnmatched),
-            child: Row(
-              children: [
-                Icon(AppIcons.broken(SolarIcons.DangerTriangle), color: Colors.orangeAccent, size: 16),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${_unmatched.length} sugerencias no se encontraron en Deezer',
-                    style: const TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                Icon(AppIcons.broken(_showUnmatched ? SolarIcons.AltArrowUp : SolarIcons.AltArrowDown), color: AppTheme.secondary, size: 16),
-              ],
-            ),
-          ),
-          if (_showUnmatched)
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 120),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _unmatched.length,
-                itemBuilder: (context, i) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Text(
-                    _unmatched[i].toString(),
-                    style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 

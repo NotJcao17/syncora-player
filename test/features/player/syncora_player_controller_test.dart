@@ -245,6 +245,46 @@ class TestableExtractionService implements ExtractionService {
   }
 }
 
+/// Doble de [PlayerSessionStorage] (Fase 7.F.2): reproduce, sin tocar el
+/// filesystem, el único estado real por el que `currentTrack` puede ser
+/// null con `manualQueue` no vacía -- una sesión restaurada tras un
+/// `setQueue([])` guardado (ver el comentario de `_restoreSession` en
+/// `syncora_player_controller.dart`). `PlayerSessionStorage` no es una
+/// interfaz, pero sus métodos son subclasseables.
+class _FakeRestoredSessionStorage extends PlayerSessionStorage {
+  final List<SyncoraTrack> manualQueue;
+  _FakeRestoredSessionStorage({required this.manualQueue});
+
+  @override
+  Future<PlayerSessionData?> loadSession() async {
+    return PlayerSessionData(
+      currentTrack: null,
+      currentOrigin: null,
+      manualQueue: manualQueue,
+      autoQueue: const [],
+      originalContextTracks: const [],
+      history: const [],
+      positionSeconds: 0,
+      repeatMode: SyncoraRepeatMode.off,
+      shuffle: false,
+    );
+  }
+
+  @override
+  Future<void> saveSession({
+    required SyncoraTrack? currentTrack,
+    required QueueOrigin? currentOrigin,
+    required List<SyncoraTrack> manualQueue,
+    required List<SyncoraTrack> autoQueue,
+    required List<SyncoraTrack> originalContextTracks,
+    required List<HistoryEntry> history,
+    required int positionSeconds,
+    required SyncoraRepeatMode repeatMode,
+    required bool shuffle,
+    String? activeContextId,
+  }) async {}
+}
+
 /// Fake de [RadioService] (Fase 7.B): sobreescribe [generateBatch] para no
 /// hacer ninguna llamada de red real. `RadioService` es una clase concreta
 /// (no una interfaz), así que extenderla y sobreescribir el único método
@@ -963,6 +1003,152 @@ void main() {
       expect(controller.state.autoQueue, isEmpty, reason: 'track2 (anterior al índice) se descarta, no queda en cola');
       expect(controller.state.history.map((h) => h.track.id).toList(), ['track1'],
           reason: 'la pista que sí sonaba (track1) sí va al historial');
+    });
+  });
+
+  group('SyncoraPlayerController — "Crear cola con IA" (Fase 7.F.2)', () {
+    late FakeAudioEngine engine;
+    late TestableExtractionService extractionService;
+    late SyncoraPlayerController controller;
+
+    final testTracks = [
+      const SyncoraTrack(id: 'track1', title: 'Track 1'),
+      const SyncoraTrack(id: 'track2', title: 'Track 2'),
+      const SyncoraTrack(id: 'track3', title: 'Track 3'),
+    ];
+
+    setUp(() {
+      engine = FakeAudioEngine();
+      extractionService = TestableExtractionService();
+      controller = SyncoraPlayerController(
+        engine: engine,
+        extractionService: extractionService,
+      );
+      controller.init();
+    });
+
+    tearDown(() {
+      controller.dispose();
+    });
+
+    test('addAllToQueue agrega todas al final de la manual, en una sola mutación, respetando FIFO (D-2)',
+        () async {
+      await controller.setQueue(testTracks, autoplay: false); // current=track1
+      controller.addToQueue(const SyncoraTrack(id: 'existing', title: 'Existing'));
+
+      controller.addAllToQueue([
+        const SyncoraTrack(id: 'ai1', title: 'AI 1'),
+        const SyncoraTrack(id: 'ai2', title: 'AI 2'),
+      ]);
+
+      expect(controller.state.manualQueue.map((t) => t.id).toList(), ['existing', 'ai1', 'ai2']);
+      expect(controller.state.autoQueue.map((t) => t.id).toList(), ['track2', 'track3'],
+          reason: 'D-1: nunca toca la automática');
+    });
+
+    test('addAllToQueue con lista vacía es un no-op', () async {
+      await controller.setQueue(testTracks, autoplay: false);
+      controller.addAllToQueue(const []);
+      expect(controller.state.manualQueue, isEmpty);
+    });
+
+    test('addAllToQueue promueve la primera a currentTrack si no había nada sonando', () {
+      controller.addAllToQueue([
+        const SyncoraTrack(id: 'a', title: 'A'),
+        const SyncoraTrack(id: 'b', title: 'B'),
+      ]);
+      expect(controller.state.currentTrack?.id, 'a');
+      expect(controller.state.manualQueue.map((t) => t.id).toList(), ['b']);
+    });
+
+    test('interleaveIntoAutoQueue reparte las sugerencias con paso adaptativo (D-9), sin tocar la manual',
+        () async {
+      final sixTracks = List.generate(6, (i) => SyncoraTrack(id: 'a$i', title: 'A$i'));
+      await controller.setQueue(sixTracks, autoplay: false); // current=a0, autoQueue=[a1..a5] (5 pistas)
+      controller.addToQueue(const SyncoraTrack(id: 'manual1', title: 'Manual'));
+
+      controller.interleaveIntoAutoQueue([
+        const SyncoraTrack(id: 'ai1', title: 'AI 1'),
+        const SyncoraTrack(id: 'ai2', title: 'AI 2'),
+      ]);
+
+      // autoQueue previa: [a1,a2,a3,a4,a5] (5 pistas), 2 sugerencias -> paso
+      // adaptativo = 5~/2 = 2 (no el fijo "cada 3" del plan original: con
+      // paso fijo la 2da sugerencia quedaba pegada en bloque al final en
+      // vez de repartida -- hallazgo de la revisión de 7.F.2). Se inserta
+      // una sugerida cada 2 pistas automáticas, ambas quedan intercaladas.
+      expect(controller.state.autoQueue.map((t) => t.id).toList(),
+          ['a1', 'a2', 'ai1', 'a3', 'a4', 'ai2', 'a5']);
+      expect(controller.state.manualQueue.map((t) => t.id).toList(), ['manual1'],
+          reason: 'D-1: intercalar nunca toca la cola manual');
+    });
+
+    test(
+        'interleaveIntoAutoQueue tras restaurar una sesión con currentTrack null y manualQueue no '
+        'vacía NO promueve una pista manual a "sonando ahora" (D-1, hallazgo de revisión de 7.F.2)',
+        () async {
+      // Reproduce el estado documentado en `_restoreSession`
+      // (`syncora_player_controller.dart`): una sesión restaurada puede
+      // tener `manualQueue` no vacía con `currentTrack` null (ej. tras un
+      // `setQueue([])` guardado). Antes del fix, el `_advance()` de
+      // conveniencia de `interleaveIntoAutoQueue` (pensado para arrancar
+      // algo si no había nada sonando) ignoraba ese caso y promovía la
+      // primera pista de la cola MANUAL del usuario a "sonando ahora" como
+      // efecto secundario de una operación de IA sobre la automática --
+      // justo lo que D-1 prohíbe. `PlayerSessionStorage` no es mockeable
+      // por interfaz (es una clase concreta que escribe a disco), pero sí
+      // es subclasseable -- `_FakeRestoredSessionStorage` sobreescribe
+      // `loadSession()` para reproducir exactamente ese estado sin tocar el
+      // filesystem.
+      final restoredController = SyncoraPlayerController(
+        engine: FakeAudioEngine(),
+        extractionService: TestableExtractionService(),
+        sessionStorage: _FakeRestoredSessionStorage(
+          manualQueue: const [SyncoraTrack(id: 'manual1', title: 'Manual')],
+        ),
+      );
+      restoredController.init();
+      await pumpEventQueue(); // deja correr `_restoreSession()` (async, no-await desde `init()`)
+
+      expect(restoredController.state.currentTrack, isNull,
+          reason: 'precondición del escenario reportado: nada sonando tras restaurar');
+      expect(restoredController.state.manualQueue.map((t) => t.id).toList(), ['manual1'],
+          reason: 'precondición del escenario reportado: la manual restaurada no está vacía');
+
+      restoredController.interleaveIntoAutoQueue([
+        const SyncoraTrack(id: 'ai1', title: 'AI 1'),
+      ]);
+
+      expect(restoredController.state.manualQueue.map((t) => t.id).toList(), ['manual1'],
+          reason: 'D-1: intercalar con IA nunca toca/consume la cola manual del usuario');
+      expect(restoredController.state.currentTrack, isNull,
+          reason: 'D-1: intercalar con IA no debe promover una pista manual a "sonando ahora"');
+
+      restoredController.dispose();
+    });
+
+    test('interleaveIntoAutoQueue con autoQueue vacía anexa todas las sugerencias al final', () async {
+      await controller.setQueue([testTracks.first], autoplay: false); // autoQueue queda vacía
+      controller.interleaveIntoAutoQueue([
+        const SyncoraTrack(id: 'ai1', title: 'AI 1'),
+        const SyncoraTrack(id: 'ai2', title: 'AI 2'),
+      ]);
+      expect(controller.state.autoQueue.map((t) => t.id).toList(), ['ai1', 'ai2']);
+    });
+
+    test('interleaveIntoAutoQueue con lista vacía es un no-op', () async {
+      await controller.setQueue(testTracks, autoplay: false);
+      controller.interleaveIntoAutoQueue(const []);
+      expect(controller.state.autoQueue.map((t) => t.id).toList(), ['track2', 'track3']);
+    });
+
+    test('interleaveIntoAutoQueue promueve la primera pista a currentTrack si no había nada sonando', () {
+      controller.interleaveIntoAutoQueue([
+        const SyncoraTrack(id: 'ai1', title: 'AI 1'),
+        const SyncoraTrack(id: 'ai2', title: 'AI 2'),
+      ]);
+      expect(controller.state.currentTrack?.id, 'ai1');
+      expect(controller.state.autoQueue.map((t) => t.id).toList(), ['ai2']);
     });
   });
 
