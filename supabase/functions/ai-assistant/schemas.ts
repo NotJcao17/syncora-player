@@ -8,9 +8,22 @@
 // Gemini rechazaba el schema en el 100% de las llamadas, con la llave
 // compartida y con BYOK por igual -- el mismo síntoma en ambos casos tenía
 // sentido porque el bug no dependía de la llave, sino del cuerpo enviado.
-// Estas formas las reutiliza también la Fase 7.F, así que se mantienen
-// estables y simples: `{title, artist}` es lo mínimo que necesita el
-// matching contra Deezer (D-8), nunca ids ni portadas inventadas.
+//
+// Corrección #2 (misma sesión, mismo síntoma): tras arreglar el `type` en
+// mayúscula, Gemini seguía rechazando el 100% de las llamadas, ahora con
+// `400 INVALID_ARGUMENT` genérico (sin detalle de qué campo). Verificado
+// contra la documentación real (`ai.google.dev/api/generate-content`) que
+// `type`/`properties`/`items`/`required` sí son campos confirmados del tipo
+// `Schema` -- pero no se pudo confirmar (ni descartar) que `minItems`/
+// `maxItems` lo sean, y son los únicos dos campos presentes en las 4
+// acciones SIN excepción -- el candidato más probable a una falla universal.
+// Se quitan acá: D-5 ya recorta el resultado al número exacto pedido de
+// forma programática después de la respuesta ("nunca confiar en el prompt/
+// schema solo"), así que nunca fueron necesarios para la corrección, solo
+// una pista adicional para el modelo. `enum` se mantiene -- es needed para
+// D-7 (que Gemini no pueda inventar un id a borrar) y si el problema
+// hubiera sido `enum`, solo `modify_playlist_remove` habría fallado, no las
+// 4 acciones por igual.
 import type { AiAction } from "./actions.ts";
 
 export interface JsonSchema {
@@ -19,8 +32,6 @@ export interface JsonSchema {
   items?: JsonSchema;
   required?: string[];
   enum?: string[];
-  minItems?: number;
-  maxItems?: number;
 }
 
 const TRACK_SUGGESTION_SCHEMA: JsonSchema = {
@@ -32,14 +43,13 @@ const TRACK_SUGGESTION_SCHEMA: JsonSchema = {
   required: ["title", "artist"],
 };
 
-function tracksListSchema(maxItems: number): JsonSchema {
+function tracksListSchema(): JsonSchema {
   return {
     type: "OBJECT",
     properties: {
       tracks: {
         type: "ARRAY",
         items: TRACK_SUGGESTION_SCHEMA,
-        maxItems,
       },
     },
     required: ["tracks"],
@@ -54,7 +64,6 @@ const CREATE_PLAYLIST_SCHEMA: JsonSchema = {
     tracks: {
       type: "ARRAY",
       items: TRACK_SUGGESTION_SCHEMA,
-      maxItems: 400, // D-5: tope duro de la UI es 300 + margen del ~30% pedido de más.
     },
   },
   required: ["playlistName", "description", "tracks"],
@@ -66,7 +75,6 @@ const LYRIC_SEARCH_SCHEMA: JsonSchema = {
     songs: {
       type: "ARRAY",
       items: TRACK_SUGGESTION_SCHEMA,
-      maxItems: 10,
     },
   },
   required: ["songs"],
@@ -86,7 +94,6 @@ function modifyPlaylistRemoveSchema(existingIds: string[]): JsonSchema {
       idsToRemove: {
         type: "ARRAY",
         items: { type: "STRING", enum: existingIds },
-        maxItems: existingIds.length,
       },
     },
     required: ["idsToRemove"],
@@ -95,16 +102,19 @@ function modifyPlaylistRemoveSchema(existingIds: string[]): JsonSchema {
 
 /**
  * Construye el `response_schema` para una acción. `existingIds` solo se usa
- * (y es obligatorio) para `modify_playlist_remove`.
+ * (y es obligatorio) para `modify_playlist_remove`. Los topes numéricos
+ * (25/50/100/300, D-5) ya no viajan en el schema (ver nota de arriba) --
+ * se aplican programáticamente sobre la respuesta en
+ * `playlist_import_export_service.dart` (`trimToCount`).
  */
 export function buildResponseSchema(action: AiAction, existingIds?: string[]): JsonSchema {
   switch (action) {
     case "create_playlist":
       return CREATE_PLAYLIST_SCHEMA;
     case "create_queue":
-      return tracksListSchema(130); // tope UI 100 + margen D-5.
+      return tracksListSchema();
     case "modify_playlist_add":
-      return tracksListSchema(130); // tope UI 100 por operación (7.F.3) + margen D-5.
+      return tracksListSchema();
     case "modify_playlist_remove":
       return modifyPlaylistRemoveSchema(existingIds ?? []);
     case "lyric_search":

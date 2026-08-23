@@ -159,25 +159,35 @@ class _YearlyTab extends ConsumerWidget {
       error: (_, _) => const _StatsEmptyState(),
       data: (snapshot) {
         if (snapshot.isEmpty) return const _StatsEmptyState();
+        // Padding horizontal ya lo pone `_StatsContent` (bug real de
+        // pruebas manuales: texto pegado al borde derecho) -- solo
+        // vertical acá para no duplicarlo.
         return ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           children: [
             _StatsContent(snapshot: snapshot, showGenres: true, showMostActiveMonth: true),
-            const SizedBox(height: 24),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const _WrappedStoriesScreen()),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  const SizedBox(height: 24),
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const _WrappedStoriesScreen()),
+                    ),
+                    icon: Icon(AppIcons.broken(SolarIcons.Chart), size: 18),
+                    label: const Text('Ver Wrapped'),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const _AllTimeScreen()),
+                    ),
+                    icon: Icon(AppIcons.broken(SolarIcons.Calendar), size: 18),
+                    label: const Text('Ver desde el inicio'),
+                  ),
+                ],
               ),
-              icon: Icon(AppIcons.broken(SolarIcons.Chart), size: 18),
-              label: const Text('Ver Wrapped'),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const _AllTimeScreen()),
-              ),
-              icon: Icon(AppIcons.broken(SolarIcons.Calendar), size: 18),
-              label: const Text('Ver desde el inicio'),
             ),
           ],
         );
@@ -205,7 +215,7 @@ class _AllTimeScreen extends ConsumerWidget {
         data: (snapshot) {
           if (snapshot.isEmpty) return const _StatsEmptyState();
           return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            padding: const EdgeInsets.symmetric(vertical: 16),
             children: [
               _StatsContent(snapshot: snapshot, showGenres: true, showMostActiveMonth: false),
             ],
@@ -281,8 +291,15 @@ class _StatsContent extends ConsumerWidget {
     final artistsAsync = ref.watch(enrichedArtistsProvider(snapshot.topArtists));
     final tracksAsync = ref.watch(enrichedTracksProvider(snapshot.topTracks));
 
+    // Bug real (pruebas manuales): sin padding horizontal acá Y con
+    // `ListTile(contentPadding: EdgeInsets.zero)` en cada fila de abajo, el
+    // texto de la derecha (minutos, reproducciones) quedaba pegado literal
+    // al borde de la pantalla -- las otras vistas (Anual/Desde el inicio)
+    // no lo sufrían porque las envuelve un `ListView` con 20px de padding
+    // propio; Semanal/Mensual pasan por `_RawStatsTab`, que no envuelve
+    // nada.
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       physics: const NeverScrollableScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

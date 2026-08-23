@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -50,8 +48,6 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final playerState = ref.watch(playerStateProvider);
-    final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final isDesktop = MediaQuery.of(context).size.width >= 768;
     final currentUser = ref.watch(currentUserProvider);
     final profileAsync = ref.watch(profileProvider);
@@ -227,56 +223,17 @@ class SettingsScreen extends ConsumerWidget {
           _buildCard(
             child: Column(
               children: [
-                // Deshabilitado en Windows (pruebas manuales, post-Fase 7):
-                // el filtro `af=lavfi=[silencedetect...]` de libmpv rompe la
-                // reproducción por completo al terminar la pista, incluso
-                // con el guard de detección de fallo ya agregado -- el
-                // build "minimal audio" de `media_kit_libs_windows_audio`
-                // parece no soportar el puente lavfi de forma confiable en
-                // tiempo real, más allá de que la propiedad se "acepte" al
-                // asignarla. Oculto hasta poder depurarlo con acceso real a
-                // un dispositivo Windows. Android usa un mecanismo total y
-                // completamente distinto (flag nativo de ExoPlayer, sin
-                // libmpv de por medio) y no se vio afectado.
-                if (!kIsWeb && Platform.isWindows) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        Icon(AppIcons.broken(SolarIcons.Scissors), color: AppTheme.muted, size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Omitir silencios (Skip Silence)',
-                                  style: TextStyle(color: AppTheme.muted, fontSize: 14, fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 2),
-                              Text('No disponible por ahora en Windows',
-                                  style: TextStyle(color: AppTheme.muted, fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 24, color: AppTheme.surfaceHover),
-                ] else ...[
-                  _buildSwitchTile(
-                    icon: AppIcons.broken(SolarIcons.Scissors),
-                    title: 'Omitir silencios (Skip Silence)',
-                    subtitle: 'Elimina partes en silencio al inicio y final',
-                    value: playerState.isSkipSilence,
-                    onChanged: (val) {
-                      controller.setSkipSilence(val);
-                      AppToast.show(
-                        context,
-                        message: val ? 'Skip Silence activado' : 'Skip Silence desactivado',
-                      );
-                    },
-                  ),
-                  const Divider(height: 24, color: AppTheme.surfaceHover),
-                ],
+                // Función quitada por completo (decisión del usuario, pruebas
+                // manuales post-Fase 7): en Windows, el filtro
+                // `af=lavfi=[silencedetect...]` de libmpv rompía la
+                // reproducción por completo al terminar la pista, incluso con
+                // el guard de detección de fallo ya agregado -- dos intentos
+                // de arreglo no lo resolvieron. Nunca se confirmó si Android
+                // (mecanismo nativo de ExoPlayer, sin libmpv de por medio)
+                // tenía el mismo problema o no, así que se sacó la opción
+                // para las dos plataformas en vez de dejarla a medias. El
+                // motor (`MediaKitEngine._applySilenceFilter`) ya es un no-op
+                // seguro si algo llegara a invocarlo igual.
                 Consumer(
                   builder: (context, ref, _) {
                     final radioEnabled = ref.watch(radioEnabledProvider);

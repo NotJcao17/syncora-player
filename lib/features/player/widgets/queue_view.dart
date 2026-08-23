@@ -336,19 +336,36 @@ class _QueueViewState extends ConsumerState<QueueView> {
             ),
           if (_editMode && hasSelection) ...[
             const SizedBox(height: 4),
-            Row(
+            // Bug real (pruebas manuales): en modo edición, esta fila tenía
+            // que convivir con "Editar"/"Limpiar cola" en un ancho angosto
+            // (la hoja de cola) -- un `Row` sin envolver overflowaba en
+            // cuanto había texto suficiente ("Eliminar seleccionadas (N)" +
+            // "Mover arriba"). `Wrap` baja a una segunda línea en vez de
+            // desbordar horizontalmente.
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 TextButton.icon(
                   onPressed: _deleteSelected,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   icon: const Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
                   label: Text(
                     'Eliminar seleccionadas ($selectionCount)',
                     style: const TextStyle(color: Colors.redAccent, fontSize: 12),
                   ),
                 ),
-                const SizedBox(width: 8),
                 TextButton.icon(
                   onPressed: _moveSelectedToTop,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   icon: Icon(AppIcons.broken(SolarIcons.AltArrowUp), size: 16, color: AppTheme.primary),
                   label: const Text('Mover arriba', style: TextStyle(color: AppTheme.primary, fontSize: 12)),
                 ),
