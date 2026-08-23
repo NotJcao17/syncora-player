@@ -1,7 +1,4 @@
 // Fase 7.E.9 -- tests de la lógica pura de saneamiento/armado de prompt.
-// NOTA: no se ejecutaron con `deno test` en la sesión que los escribió
-// (Deno CLI no estaba disponible en el entorno) -- ver resumen final de la
-// tarea para el detalle. Revisar con `deno test` antes de confiar en ellos.
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { MAX_FREE_TEXT_LENGTH, buildInteractionInput, capArray, sanitizeFreeText } from "./sanitize.ts";
 

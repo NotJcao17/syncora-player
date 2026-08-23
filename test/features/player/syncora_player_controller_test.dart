@@ -968,31 +968,29 @@ void main() {
       expect(controller.state.history, isEmpty);
     });
 
-    test('clearQueue vacía ambas colas sin tocar currentTrack ni historial', () async {
-      await controller.setQueue(testTracks, autoplay: true);
+    test('clearQueue vacía solo la cola manual, sin tocar autoQueue, currentTrack ni historial', () async {
+      await controller.setQueue(testTracks, autoplay: true); // current=track1, autoQueue=[track2,track3]
       controller.addToQueue(const SyncoraTrack(id: 'm1', title: 'M1'));
 
       controller.clearQueue();
 
       expect(controller.state.manualQueue, isEmpty);
-      expect(controller.state.autoQueue, isEmpty);
+      expect(controller.state.autoQueue.map((t) => t.id).toList(), ['track2', 'track3']);
       expect(controller.state.currentTrack?.id, 'track1');
     });
 
-    // P0.4: sin limpiar `originalContextTracks`, un repeat-all posterior
-    // "resucitaba" el contexto que el usuario acaba de limpiar a propósito.
-    test('clearQueue también limpia originalContextTracks: repeat-all ya no resucita lo limpiado (P0.4)', () async {
+    // D-1: la cola automática (lo que sigue del contexto/playlist activo)
+    // nunca debe vaciarse por "Limpiar cola" -- solo lo agregado a mano.
+    test('clearQueue no toca originalContextTracks: repeat-all sigue pudiendo regenerar la auto', () async {
       await controller.setQueue(testTracks, autoplay: true); // current=track1, autoQueue=[track2,track3]
       controller.setRepeatMode(SyncoraRepeatMode.all);
 
       controller.clearQueue();
-      expect(controller.state.originalContextTracks, isEmpty);
+      expect(controller.state.originalContextTracks, isNotEmpty);
 
-      await controller.skipToNext(); // ambas colas y el contexto están vacíos: no hay a dónde avanzar
-      expect(controller.state.autoQueue, isEmpty,
-          reason: 'repeat-all no debe regenerar nada desde un contexto ya limpiado');
-      expect(controller.state.currentTrack?.id, 'track1',
-          reason: 'sin nada a lo que avanzar, currentTrack se queda como estaba');
+      await controller.skipToNext();
+      expect(controller.state.currentTrack?.id, 'track2',
+          reason: 'la cola automática sigue intacta tras clearQueue, ajena a la manual');
     });
 
     test('playFromQueue descarta las pistas anteriores al índice (nunca sonaron, no van a historial)', () async {

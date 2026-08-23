@@ -29,10 +29,12 @@ class TrackTile extends ConsumerStatefulWidget {
   final bool isDownloaded;
   final bool isAvailable;
   final bool showAlbum;
+  final bool showDuration;
   final VoidCallback? onTap;
   final VoidCallback? onAddToQueue;
   final VoidCallback? onMorePressed;
   final VoidCallback? onRemove;
+  final String removeLabel;
 
   const TrackTile({
     super.key,
@@ -42,10 +44,12 @@ class TrackTile extends ConsumerStatefulWidget {
     this.isDownloaded = false,
     this.isAvailable = true,
     this.showAlbum = false,
+    this.showDuration = true,
     this.onTap,
     this.onAddToQueue,
     this.onMorePressed,
     this.onRemove,
+    this.removeLabel = 'Eliminar de la playlist',
   });
 
   @override
@@ -311,7 +315,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                 const SizedBox(width: 12),
 
                 // Duración en Desktop
-                if (isDesktop && widget.track.duration != null) ...[
+                if (isDesktop && widget.showDuration && widget.track.duration != null) ...[
                   SizedBox(
                     width: 50,
                     child: Text(
@@ -620,7 +624,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                     children: [
                       Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: AppTheme.primary, size: 18),
                       const SizedBox(width: 12),
-                      const Text('Eliminar de la playlist', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+                      Text(widget.removeLabel, style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
@@ -666,7 +670,6 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     } else if (value == 'queue') {
       if (widget.onAddToQueue != null) {
         widget.onAddToQueue!();
-      } else {
         AppToast.show(context, message: '"${widget.track.title}" agregada a la cola');
       }
     } else if (value == 'other_versions') {
@@ -1046,7 +1049,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
           if (widget.onRemove != null)
             _OptionItem(
               icon: AppIcons.broken(SolarIcons.TrashBinTrash),
-              label: 'Eliminar de la playlist',
+              label: widget.removeLabel,
               onTap: () {
                 Navigator.pop(context);
                 _handleOptionSelected(context, ref, 'remove');

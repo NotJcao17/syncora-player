@@ -212,20 +212,49 @@ class MediaKitEngine implements AudioEngine {
 
   Future<void> _applySilenceFilter() async {
     final native = _player.platform;
-    if (native is NativePlayer) {
+    if (native is! NativePlayer) return;
+    const filter = 'lavfi=[silencedetect=noise=-50dB:duration=0.3]';
+    try {
       // Filtro de ffmpeg para detectar silencios (Pitfall #7). NO usar
       // scaletempo (es de velocidad, no de detección de silencio).
-      await native.setProperty(
-        'af',
-        'lavfi=[silencedetect=noise=-50dB:duration=0.3]',
+      await native.setProperty('af', filter);
+      // `mpv_set_property_string` no propaga su código de error al binding
+      // Dart (media_kit 1.2.6 lo descarta) — un filtro `af` rechazado por
+      // libmpv no lanza excepción acá. `media_kit_libs_windows_audio` es un
+      // build "minimal audio" de libmpv/ffmpeg que podría no traer
+      // compilado el puente lavfi/libavfilter que usa este filtro; la única
+      // señal disponible es leer la propiedad de vuelta para confirmar que
+      // realmente se aplicó.
+      final applied = await native.getProperty('af');
+      if (!applied.contains('silencedetect')) {
+        throw StateError('libmpv no aceptó el filtro af (leído: "$applied")');
+      }
+    } catch (e) {
+      // Un filtro `af` que libmpv no puede construir puede dejar la cadena
+      // de audio en un estado roto para TODA la sesión (no solo esta
+      // pista) si se sigue reintentando en cada pista siguiente — por eso
+      // se desactiva acá en vez de solo loguear, así ninguna pista
+      // posterior vuelve a intentar aplicarlo.
+      _skipSilence = false;
+      _logStreamController.add(
+        // Prefijo estable (`[SkipSilenceAutoDisabled]`) a propósito: es lo
+        // único que le llega al controlador (`syncora_player_controller.dart`
+        // escucha `logStream`) para enterarse de que este motor apagó el
+        // filtro por su cuenta — sin esto, `SyncoraPlayerState.skipSilence`
+        // se queda en `true` para siempre y el toggle de Configuración
+        // miente sobre el estado real.
+        '[SkipSilenceAutoDisabled] [MediaKit] Skip Silence desactivado automáticamente — no se pudo aplicar el filtro af (posible build de libmpv sin soporte lavfi). Error: $e',
       );
     }
   }
 
   Future<void> _removeSilenceFilter() async {
     final native = _player.platform;
-    if (native is NativePlayer) {
+    if (native is! NativePlayer) return;
+    try {
       await native.setProperty('af', '');
+    } catch (e) {
+      _logStreamController.add('[MediaKit] Error al remover el filtro af: $e');
     }
   }
 

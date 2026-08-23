@@ -36,7 +36,12 @@ export function sanitizeFreeText(raw: unknown, maxLength = MAX_FREE_TEXT_LENGTH)
   // línea repetidos que a veces se usan para "empujar" el system prompt
   // fuera de la ventana de atención) sin destruir saltos de línea simples,
   // que sí son legítimos en un fragmento de letra de varias líneas.
-  const normalized = raw.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+  const normalized = raw
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
   return normalized.length > maxLength ? normalized.slice(0, maxLength) : normalized;
 }
 

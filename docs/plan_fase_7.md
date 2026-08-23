@@ -173,6 +173,21 @@ como referencia de orden de magnitud, no como cifra exacta vigente; vale la pena
 implemente 7.E la revise una vez más contra AI Studio/la cuenta real antes de fijar los umbrales de
 rate-limit de 7.E.3.
 
+> ⚠️ **CORRECCIÓN (pruebas manuales post-Fase 7, 2026-08-23): el punto 2 de arriba era falso.**
+> No existe ninguna "API de Interactions" pública de Gemini en `v1beta/interactions` — nunca se
+> verificó realmente contra la documentación real, pese a lo que este hallazgo afirmaba. Desplegada
+> contra el proyecto real, **cada** llamada a Gemini fallaba con un error HTTP, tanto con la llave
+> compartida como con BYOK (el usuario reportó "la IA no está disponible" para las 4 funciones, sin
+> excepción). `gemini.ts` se corrigió para usar el endpoint real y estable de Gemini,
+> `v1beta/models/{model}:generateContent`, con salida estructurada vía
+> `generationConfig.responseMimeType: "application/json"` + `responseSchema` (equivalente moderno
+> del viejo `response_schema` suelto), leyendo el resultado de
+> `candidates[0].content.parts[0].text` en vez de un inexistente `output_text`. El punto 1 (versión
+> del modelo, `gemini-3.5-flash-lite`) no tiene evidencia en contra y se dejó igual. Ningún test de
+> `deno test` había ejercitado la llamada HTTP real contra Gemini (todos mockean `fetch`), así que
+> esto nunca se detectó hasta la primera prueba manual real con una cuenta y una API key reales.
+> Corregido en `supabase/functions/ai-assistant/gemini.ts`, redesplegado contra el proyecto real.
+
 ### H-8. "Intercalar 1 cada 3" (D-9) con paso fijo deja las sugerencias sobrantes en un solo bloque al final (verificado en la revisión independiente de 7.F.2)
 
 El plan (7.F.2) especifica el intercalado como "1 sugerida cada ~3" sin definir qué pasa cuando hay

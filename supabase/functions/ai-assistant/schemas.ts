@@ -1,8 +1,8 @@
-// Fase 7.E.4 -- `response_schema` de las 5 acciones, en el subconjunto de
-// JSON Schema que acepta la API de Interactions de Gemini (string / number /
-// integer / boolean / object / array / null, con enum, format, required,
-// properties, items, minItems/maxItems, minimum/maximum -- ver H-7 en
-// docs/plan_fase_7.md). Estas formas las reutiliza también la Fase 7.F, así
+// Fase 7.E.4 -- `responseSchema` de las 5 acciones, en el subconjunto de
+// JSON Schema que acepta `generationConfig.responseSchema` de Gemini (string
+// / number / integer / boolean / object / array / null, con enum, format,
+// required, properties, items, minItems/maxItems, minimum/maximum -- ver H-7
+// en docs/plan_fase_7.md). Estas formas las reutiliza también la Fase 7.F, así
 // que se mantienen estables y simples: `{title, artist}` es lo mínimo que
 // necesita el matching contra Deezer (D-8), nunca ids ni portadas inventadas.
 import type { AiAction } from "./actions.ts";
@@ -127,10 +127,10 @@ function isTrackSuggestionArray(value: unknown): value is TrackSuggestion[] {
 /**
  * Verificación de forma (no un validador de JSON Schema completo) de que la
  * salida de Gemini realmente cumple el contrato esperado para `action`.
- * Defensa en profundidad: el `response_schema` ya se lo pedimos a Gemini,
- * pero la API de Interactions es best-effort del lado del modelo, así que
- * nunca se confía ciegamente en `output_text` sin revalidar del lado
- * servidor antes de reenviarlo al cliente.
+ * Defensa en profundidad: el `responseSchema` ya se lo pedimos a Gemini,
+ * pero cumplirlo es best-effort del lado del modelo, así que nunca se
+ * confía ciegamente en el texto de salida sin revalidar del lado servidor
+ * antes de reenviarlo al cliente.
  */
 export function validateAiOutput(action: AiAction, output: unknown): boolean {
   if (typeof output !== "object" || output === null) return false;

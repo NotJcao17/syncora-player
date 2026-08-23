@@ -70,7 +70,7 @@ export function mapGeminiError(error: unknown, usingSharedKey: boolean): Respons
     );
   }
 
-  // Cualquier otro fallo (red, timeout, JSON inválido de `output_text`,
+  // Cualquier otro fallo (red, timeout, JSON inválido del texto de salida,
   // etc.) se trata como respuesta de IA inválida/no disponible, nunca como
   // 500 genérico.
   return errorResponse(

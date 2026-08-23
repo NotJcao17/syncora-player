@@ -248,6 +248,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
                               AppToast.show(context, message: 'Descarga eliminada');
                             }
                           },
+                          onAddToQueue: () => controller.addToQueue(track),
                         ),
                       );
                     },

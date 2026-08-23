@@ -203,21 +203,16 @@ class _QueueViewState extends ConsumerState<QueueView> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildToolbar(manual.length + auto.length, hasSelection),
+        _buildToolbar(hasSelection),
         Flexible(
           child: CustomScrollView(
             slivers: [
               if (current != null) SliverToBoxAdapter(child: _buildNowPlaying(current)),
-              SliverToBoxAdapter(child: _buildSectionHeader('A continuación', manual.length)),
-              if (manual.isEmpty)
-                SliverToBoxAdapter(
-                  child: _buildSectionEmptyMessage(
-                    'No has agregado canciones a la cola. Usa "Reproducir a continuación" o "Agregar a la cola" desde el menú de una canción.',
-                  ),
-                )
-              else
+              if (manual.isNotEmpty) ...[
+                SliverToBoxAdapter(child: _buildSectionHeader('A continuación', manual.length)),
                 _buildSectionSliver(QueueOrigin.manual, manual),
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              ],
               SliverToBoxAdapter(child: _buildSectionHeader('Siguiente de ${_contextLabel(activeContextId)}', auto.length)),
               if (auto.isEmpty)
                 SliverToBoxAdapter(child: _buildSectionEmptyMessage('No hay más canciones en la reproducción automática.'))
@@ -250,13 +245,19 @@ class _QueueViewState extends ConsumerState<QueueView> {
             ),
           ),
           const SizedBox(height: 4),
-          TrackTile(track: track, isPlaying: true),
+          TrackTile(
+            track: track,
+            isPlaying: true,
+            showDuration: false,
+            onRemove: () => ref.read(syncoraPlayerControllerProvider.notifier).skipToNext(),
+            removeLabel: 'Saltar esta canción',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildToolbar(int totalCount, bool hasSelection) {
+  Widget _buildToolbar(bool hasSelection) {
     final controller = ref.read(syncoraPlayerControllerProvider.notifier);
     final selectionCount = _selectedManual.length + _selectedAuto.length;
     // Fase 7.F.2: mismo patrón de gating que los otros 3 puntos de entrada
@@ -274,58 +275,39 @@ class _QueueViewState extends ConsumerState<QueueView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
-                '$totalCount canciones en cola',
-                style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
+              TextButton.icon(
+                onPressed: _toggleEditMode,
+                icon: Icon(
+                  _editMode ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.Pen),
+                  size: 16,
+                  color: AppTheme.secondary,
+                ),
+                label: Text(
+                  _editMode ? 'Listo' : 'Editar',
+                  style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
+                ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton.icon(
-                    onPressed: _toggleEditMode,
-                    icon: Icon(
-                      _editMode ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.Pen),
-                      size: 16,
-                      color: AppTheme.secondary,
-                    ),
-                    label: Text(
-                      _editMode ? 'Listo' : 'Editar',
-                      style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: () => controller.clearQueue(),
-                    icon: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), size: 16, color: AppTheme.secondary),
-                    label: const Text('Limpiar cola', style: TextStyle(color: AppTheme.secondary, fontSize: 12)),
-                  ),
-                ],
+              TextButton.icon(
+                onPressed: () => controller.clearQueue(),
+                icon: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), size: 16, color: AppTheme.secondary),
+                label: const Text('Limpiar cola', style: TextStyle(color: AppTheme.secondary, fontSize: 12)),
               ),
             ],
           ),
           if (!isLocalMode)
             Row(
               children: [
-                Tooltip(
-                  message: isConnected ? 'Crear cola con IA' : 'Sin conexión',
-                  child: IconButton(
-                    // D-14: mismo ícono (`StarsMinimalistic`) en los 4 puntos
-                    // de entrada de IA de la Fase 7.F.
-                    icon: Icon(
-                      AppIcons.broken(SolarIcons.StarsMinimalistic),
-                      color: isConnected ? AppTheme.primary : AppTheme.muted,
-                      size: 18,
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    onPressed: isConnected
-                        ? () => showAiCreateQueueSheet(context, ref)
-                        : () => AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.'),
-                  ),
-                ),
                 // D-9 / atajo "✨ Mejorar esta cola": prellena basada-en-cola-
                 // actual + intercalar + 25 y dispara directo, sin abrir el
-                // panel completo.
+                // panel completo. Único punto de entrada de IA visible en el
+                // toolbar (antes coexistía con un `IconButton` suelto que
+                // abría el mismo panel completo y se percibía como
+                // duplicado -- el panel completo sigue accesible desde el
+                // `EmptyStateWidget` cuando la cola está totalmente vacía, y
+                // este atajo igual pasa por el paso de vista previa
+                // confirmable/cancelable antes de aplicar nada, D-12).
                 TextButton.icon(
                   onPressed: isConnected
                       ? () => showAiCreateQueueSheet(context, ref, autoImprove: true)
@@ -422,7 +404,12 @@ class _QueueViewState extends ConsumerState<QueueView> {
                     ),
                     Expanded(
                       child: IgnorePointer(
-                        child: TrackTile(track: track, index: i),
+                        child: TrackTile(
+                          track: track,
+                          showDuration: false,
+                          onAddToQueue: () => controller.addToQueue(track),
+                          removeLabel: 'Quitar de la cola',
+                        ),
                       ),
                     ),
                   ],
@@ -443,37 +430,63 @@ class _QueueViewState extends ConsumerState<QueueView> {
       itemBuilder: (ctx, i) {
         final track = tracks[i];
         final itemKey = keys[i];
-        return ReorderableDelayedDragStartListener(
+        // Bug real (pruebas manuales): envolver la fila ENTERA con el
+        // listener de reorder mientras también es un `Dismissible` de la
+        // misma fila hace que ambos gestos (drag-largo vs. swipe
+        // horizontal) compitan por la misma área táctil y uno quede
+        // inutilizable. El listener ahora envuelve solo el ícono de
+        // "agarre" — el resto de la fila queda libre para su propio swipe.
+        return Row(
           key: itemKey,
-          index: i,
-          child: Dismissible(
-            key: ValueKey('${itemKey.value}_dismiss'),
-            direction: DismissDirection.endToStart,
-            onDismissed: (_) {
-              controller.removeFromQueue(origin, i);
-            },
-            background: Container(
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.only(right: 16),
-              color: Colors.red.withValues(alpha: 0.2),
-              child: const Icon(Icons.delete, color: Colors.red),
-            ),
-            child: TrackTile(
-              track: track,
+          children: [
+            ReorderableDragStartListener(
               index: i,
-              onTap: () {
-                // P1.11: cerrar la hoja de inmediato (síncrono) y disparar
-                // playFromQueue sin esperarlo — antes se hacía `await` sobre
-                // playFromQueue (puede tardar por extracción de red) ANTES
-                // de cerrar, así que si el usuario cerraba la hoja a mano
-                // mientras tanto, el pop tardío podía cerrar la pantalla
-                // equivocada.
-                widget.onTrackSelected?.call();
-                controller.playFromQueue(origin, i);
-              },
-              onRemove: () => controller.removeFromQueue(origin, i),
+              // Documento Maestro §10 (antipatrón 5): área táctil mínima
+              // 48x48dp. Sin este `SizedBox`, `Padding` sola solo aporta su
+              // propio tamaño (34x18) como área de arranque de drag, porque
+              // `Row` (CrossAxisAlignment.center por defecto) no estira sus
+              // hijos a la altura de la fila.
+              child: SizedBox(
+                width: 48,
+                height: 48,
+                child: Center(
+                  child: Icon(AppIcons.broken(SolarIcons.Sort), color: AppTheme.muted, size: 18),
+                ),
+              ),
             ),
-          ),
+            Expanded(
+              child: Dismissible(
+                key: ValueKey('${itemKey.value}_dismiss'),
+                direction: DismissDirection.endToStart,
+                onDismissed: (_) {
+                  controller.removeFromQueue(origin, i);
+                },
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 16),
+                  color: Colors.red.withValues(alpha: 0.2),
+                  child: const Icon(Icons.delete, color: Colors.red),
+                ),
+                child: TrackTile(
+                  track: track,
+                  showDuration: false,
+                  onTap: () {
+                    // P1.11: cerrar la hoja de inmediato (síncrono) y
+                    // disparar playFromQueue sin esperarlo — antes se hacía
+                    // `await` sobre playFromQueue (puede tardar por
+                    // extracción de red) ANTES de cerrar, así que si el
+                    // usuario cerraba la hoja a mano mientras tanto, el pop
+                    // tardío podía cerrar la pantalla equivocada.
+                    widget.onTrackSelected?.call();
+                    controller.playFromQueue(origin, i);
+                  },
+                  onRemove: () => controller.removeFromQueue(origin, i),
+                  onAddToQueue: () => controller.addToQueue(track),
+                  removeLabel: 'Quitar de la cola',
+                ),
+              ),
+            ),
+          ],
         );
       },
     );

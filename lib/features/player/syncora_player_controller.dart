@@ -825,16 +825,14 @@ bool get _isTestEnv {
     _saveSession();
   }
 
-  /// Vacía ambas colas (manual y automática) Y `originalContextTracks` —
-  /// sin esto último, un repeat-all posterior "resucitaría" el contexto que
-  /// el usuario acaba de limpiar explícitamente (P0.4). No toca
-  /// `currentTrack` ni el historial.
+  /// Vacía solo la cola manual (D-1: lo que el usuario agregó a mano) —
+  /// nunca la automática ni `originalContextTracks`. La cola automática
+  /// sigue avanzando con el contexto/playlist activo; limpiarla también no
+  /// es lo que el botón "Limpiar cola" promete, y requeriría que el usuario
+  /// cambie explícitamente de contexto (D-1). No toca `currentTrack` ni el
+  /// historial.
   void clearQueue() {
-    _state = _state.copyWith(
-      manualQueue: const [],
-      autoQueue: const [],
-      originalContextTracks: const [],
-    );
+    _state = _state.copyWith(manualQueue: const []);
     _notify();
     _saveSession();
   }
@@ -1806,6 +1804,17 @@ bool get _isTestEnv {
     // isolate de extracción, que sí llaman a `dev.log` directamente.
     dev.log(msg, name: 'SyncoraPlayer');
     if (!_logController.isClosed) _logController.add(msg);
+
+    // `MediaKitEngine` puede apagar Skip Silence por su cuenta si libmpv
+    // rechaza el filtro `af` (ver docstring de `_applySilenceFilter`) — sin
+    // este chequeo, `_state.skipSilence` se queda en `true` para siempre y
+    // el toggle de Configuración sigue mostrando "activado" aunque el motor
+    // ya lo haya desactivado internamente. No requiere cambiar el contrato
+    // de `AudioEngine`: se apoya en el `logStream` que ya existía.
+    if (msg.contains('[SkipSilenceAutoDisabled]') && _state.skipSilence) {
+      _state = _state.copyWith(skipSilence: false);
+      _notify();
+    }
   }
 
   @override

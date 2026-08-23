@@ -236,7 +236,7 @@ void main() {
     expect(find.text('Crear cola con IA'), findsOneWidget);
   });
 
-  testWidgets('con la cola no vacía, el toolbar muestra el botón de IA y el atajo "Mejorar esta cola"',
+  testWidgets('con la cola no vacía, el toolbar muestra el atajo "Mejorar esta cola"',
       (tester) async {
     final controller = buildController();
     await controller.setQueue(
@@ -246,7 +246,12 @@ void main() {
     await tester.pumpWidget(buildHarness(controller));
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('Crear cola con IA'), findsOneWidget);
+    // El `IconButton` suelto que abría el mismo sheet sin `autoImprove` se
+    // quitó (pruebas manuales: dos botones de IA pegados se veían
+    // redundantes) -- "Mejorar esta cola" queda como único punto de entrada
+    // visible en el toolbar; el panel completo sigue accesible desde el
+    // `EmptyStateWidget` cuando la cola está vacía.
+    expect(find.byTooltip('Crear cola con IA'), findsNothing);
     expect(find.text('Mejorar esta cola'), findsOneWidget);
   });
 
