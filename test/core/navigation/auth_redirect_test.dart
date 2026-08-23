@@ -38,16 +38,26 @@ void main() {
       );
     });
 
-    test('con usuario, en /auth -> redirige a / (login/registro exitoso)', () {
+    test('con usuario, en /auth, sin modo local -> redirige a / (login/registro exitoso)', () {
       expect(
         computeAuthRedirect(hasUser: true, isLocalMode: false, location: '/auth'),
         '/',
       );
-      // Con usuario Y modo local (ej. justo tras migrar, 7.I.10, antes de
-      // que se limpie el flag) el resultado es el mismo -- `hasUser` manda.
+    });
+
+    // Bug real corregido en pruebas manuales: con usuario Y modo local
+    // todavía activo (justo tras iniciar sesión, antes de que
+    // `auth_screen.dart` termine de migrar/descartar los datos locales y
+    // llame `disable()`), el router NO debe sacar al usuario de `/auth` --
+    // antes lo hacía (`hasUser` mandaba sin más condición), lo que ganaba la
+    // carrera contra el listener de `auth_screen.dart` y dejaba el flag de
+    // modo local pegado en `true` para siempre con una sesión real ya
+    // creada. Es `auth_screen.dart` quien navega una vez que resolvió los
+    // datos locales.
+    test('con usuario Y modo local todavía activo, en /auth -> NO redirige (evita la carrera con auth_screen.dart)', () {
       expect(
         computeAuthRedirect(hasUser: true, isLocalMode: true, location: '/auth'),
-        '/',
+        isNull,
       );
     });
 

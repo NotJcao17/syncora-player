@@ -16,6 +16,7 @@ import '../local_mode_provider.dart';
 import '../services/account_limit_error.dart';
 import '../services/auth_deep_link_errors.dart';
 import '../services/desktop_auth_service.dart';
+import '../services/new_account_heuristic.dart';
 
 /// Pantalla de Autenticación para Syncora Player.
 class AuthScreen extends ConsumerStatefulWidget {
@@ -41,8 +42,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   // El botón "usar sin cuenta" vive en `_buildLocalModeButton` (7.I.3).
   bool _accountLimitReached = false;
   bool _isMigrating = false;
+  // El overlay de `_isMigrating` se usa para dos operaciones opuestas
+  // (subir la biblioteca local vs. descartarla): sin esto le decía
+  // "Subiendo tu biblioteca local a la nube..." a alguien que en realidad
+  // está viendo cómo se borra.
+  bool _isDiscarding = false;
+  // Guarda de reentrancia para todo el bloque de resolución de datos
+  // locales: dos eventos de sesión casi seguidos podían apilar dos
+  // diálogos de confirmación / dos pasadas de borrado.
+  bool _isResolvingLocalData = false;
   StreamSubscription<AuthState>? _authSubscription;
   StreamSubscription<String>? _deepLinkErrorSubscription;
+  // Distingue "me estoy registrando" (subir mi biblioteca local a la cuenta
+  // nueva) de "estoy iniciando sesión en una cuenta que ya existe" (avisar y
+  // descartar lo local, la nube manda). `null` = no se sabe de antemano
+  // (Google: Supabase no le dice al cliente si fue alta o login: se resuelve
+  // con [_looksLikeNewAccount] cuando llega la sesión). Se resetea al
+  // arrancar cada intento nuevo para no arrastrar el de un intento previo.
+  bool? _isSignUpAttempt;
 
   @override
   void initState() {
@@ -59,16 +76,60 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
       _authSubscription =
           Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-        if (data.session != null && mounted) {
-          // Fase 7.I.10 (D-25): si el usuario estaba en modo local y recién
-          // se creó una sesión real (se registró/inició sesión desde acá),
-          // es el momento de subir su biblioteca local antes de navegar --
+        final session = data.session;
+        if (session != null && mounted) {
+          // Fase 7.I.10 (D-25) + corrección post-Fase-7 (pruebas manuales):
+          // si el usuario estaba en modo local y recién se creó una sesión
+          // real, hay que resolver los datos locales ANTES de navegar --
           // después de esto ya no hay forma fácil de distinguir "acabo de
-          // migrar" de "siempre tuve cuenta".
+          // iniciar sesión" de "siempre tuve cuenta". Dos caminos, según si
+          // la cuenta es nueva o ya existía (nunca se había definido esto
+          // antes -- ver docstring de [_handleLocalDataOnLogin]).
+          //
+          // `shouldNavigate` en `false` significa que el usuario canceló el
+          // descarte de datos locales -- ya se cerró la sesión de vuelta
+          // adentro de `_handleLocalDataOnLogin`, así que NO hay que navegar
+          // a `/` (nos quedamos en `/auth`, todavía en modo local).
+          var shouldNavigate = true;
           if (ref.read(localModeProvider)) {
-            await _migrateLocalLibrary();
+            // El notifier es global y sobrevive a esta pantalla; se captura
+            // ANTES de cualquier `await` porque `ref` no se puede tocar una
+            // vez que el `State` se destruyó. `appRouterProvider` ya no se
+            // reconstruye al llegar la sesión (era la causa del bug real,
+            // ver su docstring), así que hoy la pantalla debería seguir
+            // viva -- pero de esto depende que el usuario no quede sin
+            // salida, así que no se apoya en eso.
+            final localMode = ref.read(localModeProvider.notifier);
+            // `_isSignUpAttempt == true` (pestaña Registro) no se toma como
+            // palabra: un `signUp` sobre un correo que ya existe puede
+            // devolver sesión de la cuenta vieja, y ahí migrar a ciegas es
+            // exactamente lo que este bloque intenta evitar. Solo el login
+            // explícito ("no es alta") se acepta sin verificar.
+            final isNewAccount = _isSignUpAttempt == false
+                ? false
+                : looksLikeNewAccount(
+                    createdAt: session.user.createdAt,
+                    lastSignInAt: session.user.lastSignInAt,
+                  );
+            try {
+              shouldNavigate = await _handleLocalDataOnLogin(isNewAccount: isNewAccount);
+            } catch (_) {
+              shouldNavigate = true;
+            }
+            // Red de seguridad del bug real: quedar con sesión creada y el
+            // flag de modo local todavía en `true` no tiene salida desde la
+            // UI. Cualquier camino que no sea "el usuario canceló" tiene que
+            // terminar sí o sí fuera de modo local, aunque el paso previo
+            // haya fallado o esta pantalla ya no exista. `disable()` es
+            // idempotente, así que repetirlo tras un camino que ya lo hizo
+            // no tiene costo.
+            if (shouldNavigate) {
+              try {
+                await localMode.disable();
+              } catch (_) {}
+            }
           }
-          if (mounted) ref.read(appRouterProvider).go('/');
+          if (mounted && shouldNavigate) ref.read(appRouterProvider).go('/');
         }
       });
 
@@ -158,12 +219,185 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     }
   }
 
+  /// Nunca se había definido qué hacer con los datos del modo local al
+  /// iniciar sesión en una cuenta que YA existe (a diferencia de registrarse,
+  /// donde [_migrateLocalLibrary] los sube) -- decisión tomada tras pruebas
+  /// manuales reales: una cuenta nueva absorbe lo local (nada que perder,
+  /// la cuenta nace vacía); una cuenta existente, en cambio, ya tiene su
+  /// propia biblioteca en la nube -- mezclarla a ciegas con lo local
+  /// (coincidencia de títulos, ver `migrateLocalPlaylistsToAccount`) puede
+  /// crear playlists duplicadas por coincidencia de nombre. Se le avisa al
+  /// usuario y se descarta lo local a favor de lo que ya hay en la nube.
+  ///
+  /// Devuelve `false` si el usuario canceló (ya se cerró la sesión de vuelta
+  /// acá adentro) -- el llamador no debe navegar a `/` en ese caso.
+  Future<bool> _handleLocalDataOnLogin({required bool isNewAccount}) async {
+    // Reentrante: la pasada que ya está en curso es la que decide y navega.
+    if (_isResolvingLocalData) return false;
+    _isResolvingLocalData = true;
+    try {
+      if (isNewAccount) {
+        await _migrateLocalLibrary();
+        return true;
+      }
+
+      bool hasLocalData;
+      try {
+        hasLocalData = await _hasAnyLocalLibraryData();
+      } catch (_) {
+        // No se pudo determinar si hay algo que perder -> no se borra nada.
+        // Las playlists local-only sobreviven al sync (solo se podan las que
+        // ya tienen `remoteId`), así que el usuario las sigue viendo y puede
+        // decidir él; lo que no puede pasar es quedarse en modo local.
+        hasLocalData = false;
+      }
+      if (!hasLocalData) return true;
+
+      // Sin pantalla viva no hay dónde mostrar el diálogo. Salir de modo
+      // local sin borrar nada es el resultado seguro: el usuario conserva
+      // sus datos y queda con su cuenta usable, en vez de trabado.
+      if (!mounted) return true;
+
+      final shouldDiscard = await _confirmDiscardLocalData();
+      if (shouldDiscard != true) {
+        try {
+          await Supabase.instance.client.auth.signOut();
+        } catch (_) {
+          if (mounted) {
+            setState(() {
+              _errorMessage = 'No se pudo revertir el inicio de sesión. '
+                  'Cierra sesión desde Configuración si quieres seguir sin cuenta.';
+            });
+          }
+          // Con la sesión todavía viva, quedarse en modo local es
+          // justamente el estado sin salida del bug -- se continúa.
+          return true;
+        }
+        return false;
+      }
+
+      await _discardLocalLibraryAndDisableLocalMode();
+      return true;
+    } finally {
+      _isResolvingLocalData = false;
+    }
+  }
+
+  /// Playlists no-"Tus me gusta" (cualquiera cuenta), o "Tus me gusta" con
+  /// al menos una canción, o algún álbum guardado -- lo mínimo para
+  /// considerar que hay algo real que el usuario perdería si se descarta en
+  /// silencio. Evita mostrar el diálogo de advertencia a alguien que apenas
+  /// probó el modo local sin guardar nada todavía.
+  Future<bool> _hasAnyLocalLibraryData() async {
+    final dao = ref.read(playlistDaoProvider);
+    final savedAlbumDao = ref.read(savedAlbumDaoProvider);
+    final playlists = await dao.getAllPlaylists();
+    if (playlists.any((p) => !p.isLiked)) return true;
+
+    final liked = await dao.getLikedPlaylist();
+    final likedTracks = await dao.getTracksOrdered(liked.id);
+    if (likedTracks.isNotEmpty) return true;
+
+    final albums = await savedAlbumDao.getAllSavedAlbums();
+    return albums.isNotEmpty;
+  }
+
+  Future<bool?> _confirmDiscardLocalData() {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Esta cuenta ya tiene datos en la nube',
+          style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Estabas usando el modo local con tus propias playlists y álbumes guardados. '
+          'Si continúas, esos datos locales se van a borrar de este dispositivo y se '
+          'reemplazan por los de la cuenta con la que acabas de iniciar sesión. '
+          'Esta acción no se puede deshacer.',
+          style: TextStyle(color: AppTheme.secondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar, seguir en modo local'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Borrar datos locales y continuar', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Borra la biblioteca local (pistas de todas las playlists; las playlists
+  /// no-"Tus me gusta" enteras -- la de "Tus me gusta" es una fila reservada
+  /// que se vacía pero no se borra; álbumes guardados) antes de salir de
+  /// modo local -- a partir de ahí, los puntos de sincronización normales de
+  /// la app (ya gateados por `isLocalMode`, 7.I.5) traen la biblioteca real
+  /// de la cuenta al aterrizar en `/`.
+  ///
+  /// Las pistas se borran a mano incluso en las playlists que se eliminan
+  /// enteras: el `ON DELETE CASCADE` declarado en `PlaylistTracks` NO se
+  /// aplica en runtime, porque la base nunca ejecuta `PRAGMA foreign_keys =
+  /// ON` (sqlite3 la trae apagada por defecto). Sin esto, cada
+  /// `deletePlaylist` dejaba las filas de `playlist_tracks` huérfanas en
+  /// disco -- invisibles en la UI, pero contradiciendo lo que el diálogo le
+  /// promete al usuario ("tus datos locales se van a borrar").
+  Future<void> _discardLocalLibraryAndDisableLocalMode() async {
+    // Los DAOs se resuelven antes de cualquier `await`: `ref` no se puede
+    // usar si esta pantalla se destruye a mitad del borrado, y el borrado
+    // ya confirmado por el usuario no debería quedar a medias por eso.
+    final dao = ref.read(playlistDaoProvider);
+    final savedAlbumDao = ref.read(savedAlbumDaoProvider);
+    if (mounted) {
+      setState(() {
+        _isMigrating = true;
+        _isDiscarding = true;
+      });
+    }
+    try {
+      final playlists = await dao.getAllPlaylists();
+      for (final playlist in playlists) {
+        final tracks = await dao.getTracksOrdered(playlist.id);
+        for (final track in tracks) {
+          await dao.removeTrackEntry(track.id);
+        }
+        if (!playlist.isLiked) {
+          await dao.deletePlaylist(playlist.id);
+        }
+      }
+
+      final albums = await savedAlbumDao.getAllSavedAlbums();
+      for (final album in albums) {
+        await savedAlbumDao.removeSavedAlbum(album.albumId);
+      }
+    } catch (_) {
+      // Best-effort -- el usuario ya confirmó que quiere descartar; lo que
+      // no se pudo borrar queda local-only, un estado ya soportado (H-5).
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isMigrating = false;
+          _isDiscarding = false;
+        });
+      }
+    }
+  }
+
   Future<void> _handleGoogleSignIn() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
       _accountLimitReached = false;
     });
+    // Google no distingue alta de login del lado del cliente -- se resuelve
+    // con la heurística de `_looksLikeNewAccount` cuando llegue la sesión.
+    _isSignUpAttempt = null;
 
     try {
       if (!_isTestEnvironment()) {
@@ -227,12 +461,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       if (!_isTestEnvironment()) {
         if (_selectedTabIndex == 0) {
           // Login
+          _isSignUpAttempt = false;
           await Supabase.instance.client.auth.signInWithPassword(
             email: email,
             password: password,
           );
         } else {
           // Registro -> auto-login tras signUp
+          _isSignUpAttempt = true;
           await Supabase.instance.client.auth.signUp(
             email: email,
             password: password,
@@ -294,15 +530,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       // playlists), el usuario necesita saber que algo está pasando en vez
       // de ver la pantalla de login congelada tras crear la cuenta.
       body: _isMigrating
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: AppTheme.primary),
-                  SizedBox(height: 16),
+                  const CircularProgressIndicator(color: AppTheme.primary),
+                  const SizedBox(height: 16),
                   Text(
-                    'Subiendo tu biblioteca local a la nube...',
-                    style: TextStyle(color: AppTheme.secondary, fontSize: 13),
+                    _isDiscarding
+                        ? 'Borrando tu biblioteca local...'
+                        : 'Subiendo tu biblioteca local a la nube...',
+                    style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
                   ),
                 ],
               ),
