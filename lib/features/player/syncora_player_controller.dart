@@ -214,6 +214,39 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// acordarse de tocar cada uno de esos sitios por separado.
   String? _crossfadeAttemptedForTrackId;
 
+  /// Guard SINCRÓNICO de "hay un crossfade en curso" (bug real reportado en
+  /// pruebas manuales post-Fase 7: con crossfade activado, al terminar una
+  /// canción el reproductor saltaba ~6 pistas de golpe).
+  ///
+  /// `_crossfadeAttemptedForTrackId` NO alcanzaba: compara contra
+  /// `_state.currentTrack?.id`, pero `_runProactiveCrossfade` llama a
+  /// `_commitAdvanceTo(next)` ANTES de `crossfadeToLocalSource(...)`, y ese
+  /// método todavía tarda varios `await` (cargar y arrancar el motor
+  /// entrante) en hacer el swap interno de cuál motor es el activo. Durante
+  /// esa ventana — y después, durante todo el ramp de volumen — los ticks de
+  /// posición seguían llegando del motor SALIENTE, con su posición ya a
+  /// pocos segundos del EOF, mientras `currentTrack` ya era la pista
+  /// siguiente: la comparación por id daba "todavía no se intentó" y
+  /// disparaba OTRO crossfade preventivo, que avanzaba la cola otra vez, y
+  /// así un avance por tick hasta que la cola se quedaba sin pistas
+  /// descargadas. Como el wrapper solo tiene DOS motores, esa cascada además
+  /// reusaba como motor "entrante" el mismo motor que estaba sonando, lo que
+  /// explica el corte abrupto y el "suena un pedazo de la anterior y después
+  /// la nueva" en vez de un fundido cruzado real.
+  bool _isCrossfading = false;
+
+  /// Generación del crossfade dueño de [_isCrossfading]: la liberación
+  /// diferida del guard (programada para cuando el ramp de volumen del motor
+  /// debería haber terminado) solo aplica si sigue siendo la vigente — así
+  /// una transición nueva (skip manual, error, otra pista) nunca queda con
+  /// el guard liberado por el temporizador de una transición anterior.
+  int _crossfadeGeneration = 0;
+
+  /// Margen sobre la duración del fade antes de liberar [_isCrossfading]:
+  /// el ramp del motor avanza en pasos de 50ms y cada paso espera al motor
+  /// nativo, así que termina siempre un poco después de la duración nominal.
+  static const Duration _crossfadeSettleMargin = Duration(milliseconds: 400);
+
   final RetryPolicy _retryPolicy = RetryPolicy();
   final PlayerSessionStorage _sessionStorage;
 
@@ -1382,9 +1415,22 @@ bool get _isTestEnv {
   void _maybeCrossfadeProactively(AudioEngineState engineState) {
     final current = _state.currentTrack;
     if (current == null) return;
+    // Guard sincrónico primero que nada: mientras haya un crossfade en
+    // vuelo, los ticks que llegan no son confiables como "tiempo restante de
+    // la pista actual" (pueden venir del motor saliente, o del entrante con
+    // una posición vieja todavía sin actualizar) — ver docstring de
+    // [_isCrossfading].
+    if (_isCrossfading) return;
+    // Una transición iniciada por el usuario (o por la cascada de error) ya
+    // está decidiendo qué suena a continuación: no arrancar un crossfade
+    // preventivo en paralelo con ella.
+    if (_isTransitioning) return;
     if (_crossfadeAttemptedForTrackId == current.id) return; // ya se intentó para esta pista
     if (!_currentPlaybackIsLocal) return; // Pitfall #17: nunca desde streaming
     if (!engineState.playing) return;
+    // Con repeat-one la pista se vuelve a reproducir entera (`_onComplete`):
+    // avanzar de cola con un crossfade preventivo rompería ese modo.
+    if (_state.repeatMode == SyncoraRepeatMode.one) return;
 
     final crossfadeDuration = _crossfadeDurationGetter?.call() ?? Duration.zero;
     if (crossfadeDuration <= Duration.zero) return; // setting "off"
@@ -1402,6 +1448,8 @@ bool get _isTestEnv {
     // descarga de abajo) dispare un segundo intento en paralelo para la
     // MISMA pista.
     _crossfadeAttemptedForTrackId = current.id;
+    _isCrossfading = true;
+    final fadeGen = ++_crossfadeGeneration;
 
     // La duración real del fade es el mínimo entre la configurada y lo que
     // en verdad queda de la pista saliente en este instante — así el fade
@@ -1410,7 +1458,23 @@ bool get _isTestEnv {
     // del fade (lo que dispararía una completion espuria).
     final actualFadeDuration = remaining < crossfadeDuration ? remaining : crossfadeDuration;
 
-    unawaited(_runProactiveCrossfade(current.id, nextTrack, nextOrigin, actualFadeDuration));
+    unawaited(_runProactiveCrossfade(current.id, nextTrack, nextOrigin, actualFadeDuration, fadeGen));
+  }
+
+  /// Libera [_isCrossfading] solo si [fadeGen] sigue siendo la generación
+  /// vigente — ver docstring de [_crossfadeGeneration].
+  void _releaseCrossfadeGuard(int fadeGen) {
+    if (_disposed) return;
+    if (fadeGen != _crossfadeGeneration) return;
+    _isCrossfading = false;
+  }
+
+  /// Invalida cualquier crossfade en curso (y su liberación diferida del
+  /// guard) porque otra cosa acaba de tomar el control de qué suena: un skip
+  /// manual, `playFromQueue`, `setQueue`, la cascada de auto-skip, etc.
+  void _abandonCrossfadeGuard() {
+    _crossfadeGeneration++;
+    _isCrossfading = false;
   }
 
   /// Ejecuta el intento de crossfade preventivo ya decidido por
@@ -1424,7 +1488,16 @@ bool get _isTestEnv {
     SyncoraTrack nextTrack,
     QueueOrigin nextOrigin,
     Duration fadeDuration,
+    int fadeGen,
   ) async {
+    // Se pone en `true` solo cuando el motor ya se comprometió con la
+    // transición: a partir de ahí el guard NO se libera de inmediato sino
+    // recién cuando el ramp de volumen debería haber terminado (ver más
+    // abajo). En cualquier otro camino de salida (siguiente no descargada,
+    // intento obsoleto, excepción antes de llamar al motor) se libera ya
+    // mismo — si no, un solo intento fallido dejaría el crossfade preventivo
+    // apagado para el resto de la sesión.
+    var engineHandoffStarted = false;
     // Mismo punto de disparo de radio/cola infinita (Fase 7.B) que
     // `playCurrent()` — este camino también consume de `autoQueue` (vía
     // `_commitAdvanceTo`) si termina avanzando, así que debe revisar igual
@@ -1466,9 +1539,27 @@ bool get _isTestEnv {
 
       final localPath = downloaded.localAudioPath;
       _log('[Crossfade] Preventivo (${fadeDuration.inMilliseconds}ms) hacia pista local: $localPath');
-      await _engine.crossfadeToLocalSource(localPath, fadeDuration);
+      engineHandoffStarted = true;
+      try {
+        await _engine.crossfadeToLocalSource(localPath, fadeDuration);
+      } catch (e) {
+        // Si el motor falló, no hay ningún ramp corriendo que esperar: el
+        // swap interno ocurre DESPUÉS de cargar y arrancar el entrante, así
+        // que el que sigue sonando es el saliente y su EOF natural (a
+        // segundos de acá) es lo único que puede reanudar la reproducción.
+        // Diferir la liberación del guard se comería justo esa completion y
+        // dejaría el reproductor mudo.
+        _releaseCrossfadeGuard(fadeGen);
+        _log('[Crossfade] Falló el crossfade preventivo hacia $localPath: $e');
+        return;
+      }
+      unawaited(
+        Future<void>.delayed(fadeDuration + _crossfadeSettleMargin)
+            .then((_) => _releaseCrossfadeGuard(fadeGen)),
+      );
       _saveSession();
     } finally {
+      if (!engineHandoffStarted) _releaseCrossfadeGuard(fadeGen);
       _maybeFetchRadio();
     }
   }
@@ -1497,6 +1588,12 @@ bool get _isTestEnv {
 
     final myGeneration = ++_playGeneration;
     bool isStale() => myGeneration != _playGeneration;
+
+    // Este camino (skip manual, playFromQueue, setQueue, reintentos, cascada
+    // de auto-skip) toma el control de qué suena: cualquier crossfade
+    // preventivo anterior deja de ser dueño del guard, así el usuario nunca
+    // queda con el crossfade preventivo bloqueado por una transición vieja.
+    _abandonCrossfadeGuard();
 
     // Fase 7.D (crossfade): hay que saber si corresponde un crossfade ANTES
     // de decidir si se hace el stop()/micro fade-out abrupto de siempre —
@@ -1555,7 +1652,27 @@ bool get _isTestEnv {
 
       if (shouldCrossfade) {
         _log('[Play] Crossfade (${crossfadeDuration.inSeconds}s) hacia pista local descargada: $localPath');
-        await _engine.crossfadeToLocalSource(localPath, crossfadeDuration);
+        // Mismo guard que el camino preventivo: mientras el ramp de volumen
+        // corre en segundo plano, el motor saliente sigue emitiendo ticks
+        // con su posición cerca del EOF aunque `currentTrack` ya sea la
+        // pista nueva — sin esto, un skip manual hecho cerca del final de la
+        // canción también podía encadenar avances de cola (mismo bug de la
+        // cascada, disparado a mano en vez de solo).
+        _isCrossfading = true;
+        final fadeGen = ++_crossfadeGeneration;
+        try {
+          await _engine.crossfadeToLocalSource(localPath, crossfadeDuration);
+        } catch (_) {
+          // Mismo motivo que en `_runProactiveCrossfade`: si el motor falló
+          // no hay ramp que esperar, y mantener el guard puesto se comería la
+          // completion del motor que siga sonando.
+          _releaseCrossfadeGuard(fadeGen);
+          rethrow;
+        }
+        unawaited(
+          Future<void>.delayed(crossfadeDuration + _crossfadeSettleMargin)
+              .then((_) => _releaseCrossfadeGuard(fadeGen)),
+        );
       } else {
         _log('[Play] Pista local descargada encontrada: $localPath. Cargando sin pasar por ExtractionIsolate.');
         await _engine.setLocalSource(localPath);
@@ -1776,6 +1893,18 @@ bool get _isTestEnv {
     // `_state.engine` (que ya fue procesado por el último tick y no
     // capturaría nada nuevo).
     _trackListenProgress(_state.engine.copyWith(position: _engine.position));
+
+    // Con un crossfade en curso, el avance de cola YA se hizo al arrancar el
+    // fade: la única completion que puede llegar acá es la del motor
+    // saliente terminando su propia pista (normalmente el wrapper ya no
+    // escucha sus streams, pero hay una ventana entre `_commitAdvanceTo` y
+    // el swap interno del motor en la que sí). Atenderla dispararía un
+    // segundo avance para la misma transición — parte de la cascada de
+    // "saltó 6 canciones" del reporte de pruebas manuales.
+    if (_isCrossfading) {
+      _log('[Crossfade] Fin de pista ignorado: llegó del motor saliente con un crossfade en curso.');
+      return;
+    }
 
     if (_state.repeatMode == SyncoraRepeatMode.one) {
       // Repetir es una vuelta nueva, no la continuación de la anterior — sin

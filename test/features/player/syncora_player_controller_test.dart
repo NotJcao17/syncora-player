@@ -2177,6 +2177,143 @@ void main() {
           reason: 'el fade no debe extenderse más allá de lo que realmente queda de la pista '
               'saliente, para no llegar a su EOF natural a mitad del fade');
     });
+
+    // Bug real de pruebas manuales (Windows, crossfade activado): "al
+    // terminar una canción salta como 6 canciones". Con solo DOS pistas en la
+    // cola el bug era invisible (tras avanzar a t2 no quedaba ninguna
+    // siguiente que peekear), por eso ninguno de los tests de arriba lo
+    // detectó. Con la cola llena, cada tick de posición que seguía llegando
+    // del motor SALIENTE (con su posición ya cerca del EOF) mientras
+    // `currentTrack` era la pista nueva disparaba otro crossfade preventivo,
+    // encadenando un avance de cola por tick.
+    test(
+        'crossfade PREVENTIVO: los ticks del motor saliente que siguen llegando DESPUÉS de avanzar '
+        'no encadenan más avances (no salta varias pistas de golpe)', () async {
+      const tracks = [
+        SyncoraTrack(id: 't1', title: 'Uno'),
+        SyncoraTrack(id: 't2', title: 'Dos'),
+        SyncoraTrack(id: 't3', title: 'Tres'),
+        SyncoraTrack(id: 't4', title: 'Cuatro'),
+        SyncoraTrack(id: 't5', title: 'Cinco'),
+        SyncoraTrack(id: 't6', title: 'Seis'),
+      ];
+      for (final t in tracks) {
+        await seedDownloaded(t);
+      }
+
+      final controller = buildController(const Duration(seconds: 4));
+      addTearDown(controller.dispose);
+
+      await controller.setQueue(tracks, autoplay: true);
+      expect(controller.state.currentTrack?.id, 't1');
+
+      // Tick que dispara el crossfade preventivo hacia t2.
+      engine.emitState(controller.state.engine.copyWith(position: const Duration(seconds: 176)));
+      await pumpEventQueue();
+      expect(controller.state.currentTrack?.id, 't2');
+      expect(engine.crossfadeCallCount, 1);
+
+      // Ticks siguientes con la posición del motor saliente (todavía cerca de
+      // su EOF): el ramp de volumen sigue corriendo y el motor no terminó de
+      // entregar la pista nueva.
+      for (final ms in [176500, 177000, 177500, 178000, 178500, 179000]) {
+        engine.emitState(controller.state.engine.copyWith(position: Duration(milliseconds: ms)));
+        await pumpEventQueue();
+      }
+
+      expect(controller.state.currentTrack?.id, 't2',
+          reason: 'un solo avance por transición: los ticks del motor saliente no deben '
+              'encadenar más crossfades');
+      expect(engine.crossfadeCallCount, 1);
+      expect(controller.state.autoQueue.map((t) => t.id).toList(), ['t3', 't4', 't5', 't6'],
+          reason: 'la cola solo debe haber perdido la pista a la que se avanzó');
+    });
+
+    // Segunda mitad de la cascada: el fin natural de la pista SALIENTE puede
+    // llegar mientras el crossfade ya avanzó la cola por su cuenta. Atenderlo
+    // sería un segundo avance para la misma transición.
+    test(
+        'crossfade PREVENTIVO: el fin de pista del motor saliente durante el fade no dispara un '
+        'segundo avance', () async {
+      const tracks = [
+        SyncoraTrack(id: 't1', title: 'Uno'),
+        SyncoraTrack(id: 't2', title: 'Dos'),
+        SyncoraTrack(id: 't3', title: 'Tres'),
+      ];
+      for (final t in tracks) {
+        await seedDownloaded(t);
+      }
+
+      final controller = buildController(const Duration(seconds: 4));
+      addTearDown(controller.dispose);
+
+      await controller.setQueue(tracks, autoplay: true);
+      engine.emitState(controller.state.engine.copyWith(position: const Duration(seconds: 176)));
+      await pumpEventQueue();
+      expect(controller.state.currentTrack?.id, 't2');
+
+      engine.triggerCompletion();
+      await pumpEventQueue();
+
+      expect(controller.state.currentTrack?.id, 't2',
+          reason: 'el avance de esta transición ya lo hizo el crossfade al arrancar el fade');
+      expect(engine.crossfadeCallCount, 1);
+    });
+
+    // El guard de la cascada no puede ser permanente: si quedara pegado, el
+    // crossfade preventivo dejaría de funcionar para el resto de la sesión
+    // (y `_onComplete` dejaría de avanzar la cola, trabando el reproductor).
+    test('crossfade PREVENTIVO: el guard se libera al terminar el fade y la pista siguiente '
+        'también puede crossfade-ar', () async {
+      const tracks = [
+        SyncoraTrack(id: 't1', title: 'Uno'),
+        SyncoraTrack(id: 't2', title: 'Dos'),
+        SyncoraTrack(id: 't3', title: 'Tres'),
+      ];
+      for (final t in tracks) {
+        await seedDownloaded(t);
+      }
+
+      final controller = buildController(const Duration(milliseconds: 200));
+      addTearDown(controller.dispose);
+
+      await controller.setQueue(tracks, autoplay: true);
+      engine.emitState(
+          controller.state.engine.copyWith(position: const Duration(milliseconds: 179850)));
+      await pumpEventQueue();
+      expect(controller.state.currentTrack?.id, 't2');
+      expect(engine.crossfadeCallCount, 1);
+
+      // Más allá de la duración del fade + el margen de asentamiento.
+      await Future<void>.delayed(const Duration(milliseconds: 800));
+
+      engine.emitState(
+          controller.state.engine.copyWith(position: const Duration(milliseconds: 179850)));
+      await pumpEventQueue();
+
+      expect(controller.state.currentTrack?.id, 't3');
+      expect(engine.crossfadeCallCount, 2);
+    });
+
+    test('crossfade PREVENTIVO: con repeat-one no avanza de cola (la pista se repite entera)',
+        () async {
+      const t1 = SyncoraTrack(id: 't1', title: 'Uno');
+      const t2 = SyncoraTrack(id: 't2', title: 'Dos');
+      await seedDownloaded(t1);
+      await seedDownloaded(t2);
+
+      final controller = buildController(const Duration(seconds: 4));
+      addTearDown(controller.dispose);
+
+      await controller.setQueue([t1, t2], autoplay: true);
+      controller.setRepeatMode(SyncoraRepeatMode.one);
+
+      engine.emitState(controller.state.engine.copyWith(position: const Duration(seconds: 176)));
+      await pumpEventQueue();
+
+      expect(controller.state.currentTrack?.id, 't1');
+      expect(engine.crossfadeCallCount, 0);
+    });
   });
 
   // Fase 7.A.6: esquema nuevo de sesión persistida (currentTrack/currentOrigin

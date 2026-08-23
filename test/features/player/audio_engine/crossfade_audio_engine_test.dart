@@ -212,6 +212,68 @@ void main() {
           );
     });
 
+    // Bug real de pruebas manuales: "la barra de volumen empieza desde
+    // abajo". La UI lee `state.engine.volume` para el slider; el ramp del
+    // fade escribe volúmenes intermedios (arrancando en 0) en el motor que
+    // acaba de pasar a ser el activo, y esas escrituras se reenviaban tal
+    // cual.
+    test('el volumen que el wrapper reporta hacia afuera es el canónico, no el del ramp interno',
+        () async {
+      await engine.setVolume(0.6);
+
+      final reported = <double>[];
+      engine.stateStream.listen((s) => reported.add(s.volume));
+
+      await engine.crossfadeToLocalSource('/local/next.mp3', const Duration(milliseconds: 200));
+      await engine.debugAwaitFadeSettled();
+      await pumpEventQueue();
+
+      expect(reported, isNotEmpty);
+      for (final v in reported) {
+        expect(v, closeTo(0.6, 0.0001),
+            reason: 'ningún estado reenviado a la UI debe exponer el volumen intermedio del fade');
+      }
+      // El motor entrante SÍ recibió el ramp real (el fundido de verdad
+      // ocurrió): lo que se oculta es solo el reporte hacia afuera.
+      expect(volumeHistories[1].first, 0.0);
+      expect(volumeHistories[1].last, closeTo(0.6, 0.0001));
+    });
+
+    test('una transición NORMAL a mitad del fade detiene el motor saliente y restaura el volumen '
+        'canónico en el activo', () async {
+      await engine.setVolume(0.8);
+      await engine.crossfadeToLocalSource('/local/next.mp3', const Duration(seconds: 4));
+      // Deja correr algunos pasos del ramp para que el entrante quede a
+      // volumen parcial y el saliente todavía sonando.
+      await Future.delayed(const Duration(milliseconds: 120));
+
+      final outgoing = createdEngines[0];
+      final incoming = createdEngines[1];
+      final stopsBefore = outgoing.stopCallCount;
+
+      await engine.setLocalSource('/local/manual_skip.mp3');
+      await pumpEventQueue();
+
+      expect(outgoing.stopCallCount, greaterThan(stopsBefore),
+          reason: 'el motor saliente no puede quedarse reproduciendo su pista en paralelo con la '
+              'transición nueva');
+      expect(volumeHistories[1].last, closeTo(0.8, 0.0001),
+          reason: 'la pista nueva no debe arrancar al volumen parcial donde se cortó el ramp');
+      expect(incoming.lastLocalSourcePath, '/local/manual_skip.mp3');
+    });
+
+    test('con crossfade configurado, _standby se pre-crea al cargar un archivo local (la latencia '
+        'de arranque del motor no se paga a mitad del fade)', () async {
+      fadeDurationSetting = const Duration(seconds: 4);
+
+      await engine.setLocalSource('/local/a.mp3');
+
+      expect(createdEngines.length, 2,
+          reason: 'con el setting activado conviene tener el segundo motor listo antes de cruzar');
+      expect(createdEngines[1].setLocalSourceCallCount, 0,
+          reason: 'pre-crear no debe cargar nada todavía en el motor de reserva');
+    });
+
     test('dispose() a mitad de un fade no deja timers corriendo ni futures pendientes', () async {
       unawaited(engine.crossfadeToLocalSource('/local/next.mp3', const Duration(seconds: 4)));
       // Deja que arranque el ramp en background sin esperar a que termine.

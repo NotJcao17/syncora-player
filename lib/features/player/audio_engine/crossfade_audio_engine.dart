@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'audio_engine_state.dart';
 
@@ -101,12 +102,48 @@ class CrossfadeAudioEngine implements AudioEngine {
   /// de temporizadores reales.
   Completer<void>? _pendingFadeCompleter;
 
+  /// Piso del ramp de volumen al descontarle el tiempo de preparación del
+  /// motor entrante (ver [crossfadeToLocalSource]).
+  static const Duration _minFadeDuration = Duration(milliseconds: 250);
+
+  /// Hallazgo real de revisión independiente (F-1): `_pendingFadeCompleter`
+  /// recién se asigna al FINAL de [crossfadeToLocalSource], después de ~6
+  /// `await` sobre el motor entrante (crear el `Player`, setVolume/setSpeed/
+  /// setSkipSilenceEnabled, setLocalSource, play). Si una transición NORMAL
+  /// (`setUrl`/`setLocalSource`/`pause`/`stop`/`seek`, vía
+  /// [_settleFadeBeforeNormalTransition]) cae en esa ventana, no encuentra
+  /// ningún fade "pendiente" que cerrar -- pero `_active` TODAVÍA es el
+  /// motor saliente (el swap ocurre recién después de esos `await`s), así
+  /// que la transición normal termina cargando la pista nueva en el motor
+  /// que está a punto de pasar a `_standby`, y el swap del crossfade lo pisa
+  /// igual acto seguido: suena la pista equivocada, con un fade fantasma.
+  /// Este `Completer` cubre exactamente esa ventana de "setup en curso" --
+  /// [_settleFadeBeforeNormalTransition] espera a que se resuelva ANTES de
+  /// decidir qué hacer, así nunca hay ambigüedad sobre cuál motor es
+  /// `_active` en el momento de actuar.
+  Completer<void>? _setupCompleter;
+
+  /// El volumen que el wrapper reporta hacia afuera es SIEMPRE el canónico
+  /// (el que el usuario pidió), nunca el volumen físico instantáneo del
+  /// motor activo.
+  ///
+  /// Bug real reportado en pruebas manuales: "la barra de volumen empieza
+  /// desde abajo". El ramp de crossfade escribe un volumen nuevo en el motor
+  /// entrante cada 50ms, arrancando en 0 — y como el swap de `_active` ocurre
+  /// al principio del fade, esas escrituras se reenviaban tal cual a la UI,
+  /// que lee `state.engine.volume` para el slider. El resultado era el slider
+  /// deslizándose solo de 0 al valor del usuario en cada transición. El
+  /// volumen del ramp es un detalle interno de implementación del fundido: el
+  /// nivel que el usuario eligió no cambió en ningún momento.
+  AudioEngineState _withCanonicalVolume(AudioEngineState s) =>
+      s.volume == _canonicalVolume ? s : s.copyWith(volume: _canonicalVolume);
+
   void _resubscribeTo(AudioEngine engine) {
     _activeStateSub?.cancel();
     _activeCompletionSub?.cancel();
     _activeLogSub?.cancel();
     _activeStateSub = engine.stateStream.listen((s) {
-      if (!_stateController.isClosed) _stateController.add(s);
+      if (!_stateController.isClosed) _stateController.add(_withCanonicalVolume(s));
     });
     _activeCompletionSub = engine.completionStream.listen((_) {
       if (!_completionController.isClosed) _completionController.add(null);
@@ -132,23 +169,99 @@ class CrossfadeAudioEngine implements AudioEngine {
   Duration get duration => _active.duration;
 
   @override
-  Future<void> setUrl(String url, {Map<String, String>? headers}) =>
-      _active.setUrl(url, headers: headers);
+  Future<void> setUrl(String url, {Map<String, String>? headers}) async {
+    await _settleFadeBeforeNormalTransition();
+    return _active.setUrl(url, headers: headers);
+  }
 
   @override
-  Future<void> setLocalSource(String path) => _active.setLocalSource(path);
+  Future<void> setLocalSource(String path) async {
+    await _settleFadeBeforeNormalTransition();
+    _prewarmStandbyIfCrossfadeEnabled();
+    return _active.setLocalSource(path);
+  }
+
+  /// Cierra a mano un fade que siga en vuelo cuando llega una transición
+  /// NORMAL (el usuario saltó de pista a mitad del fundido, o la pista
+  /// siguiente no era local y se resolvió por streaming).
+  ///
+  /// Sin esto quedaban dos rastros audibles del fade abortado: (1) el motor
+  /// saliente seguía reproduciendo su pista, porque solo `_runBackgroundFade`
+  /// lo detiene al terminar y el bucle se corta antes de llegar ahí — dos
+  /// pistas sonando a la vez de forma permanente; (2) el motor entrante (ya
+  /// `_active`) se quedaba con el volumen parcial del paso del ramp donde se
+  /// cortó, así que la pista nueva arrancaba a un volumen arbitrario más bajo
+  /// que el que el usuario tenía puesto.
+  Future<void> _settleFadeBeforeNormalTransition() async {
+    // F-1: si un crossfade está a mitad de preparar su motor entrante
+    // (`_active` todavía no cambió), esperar a que termine de reclamarlo
+    // antes de decidir nada -- si no, esta transición normal actuaría sobre
+    // el motor equivocado.
+    final setup = _setupCompleter;
+    if (setup != null && !setup.isCompleted) {
+      await setup.future;
+    }
+
+    final pending = _pendingFadeCompleter;
+    if (pending == null) return;
+    _fadeGeneration++;
+    if (!pending.isCompleted) pending.complete();
+    _pendingFadeCompleter = null;
+    try {
+      await _standby?.stop();
+    } catch (_) {}
+    try {
+      await _active.setVolume(_canonicalVolume);
+    } catch (_) {}
+  }
+
+  /// Crea `_standby` por adelantado (sin cargar nada en él) la primera vez
+  /// que suena un archivo local con el crossfade activado.
+  ///
+  /// Sigue siendo perezoso para quien nunca activa la función — pero, si está
+  /// activada, construir la segunda instancia nativa DENTRO de
+  /// [crossfadeToLocalSource] metía toda la latencia de arranque del motor
+  /// (en Windows, un `Player` de libmpv completo) entre el instante en que el
+  /// controlador decide cruzar y el instante en que el ramp de volumen
+  /// realmente empieza. Como el fade preventivo dura exactamente lo que le
+  /// queda a la pista saliente, esa demora se comía el final del fundido: la
+  /// pista vieja llegaba a su fin real con la nueva todavía a medio subir —
+  /// justo el "suena un pedazo de la anterior y después la nueva" del reporte
+  /// de pruebas manuales.
+  void _prewarmStandbyIfCrossfadeEnabled() {
+    if (_standby != null) return;
+    if (_fadeDurationGetter() <= Duration.zero) return;
+    try {
+      _standby = _createEngine();
+    } catch (_) {}
+  }
 
   @override
   Future<void> play() => _active.play();
 
+  // `pause`/`stop`/`seek` también tienen que cerrar el fade en vuelo: sin
+  // esto, el motor SALIENTE no lo detiene nadie hasta que el ramp llegue
+  // solo a su último paso, así que pausar o parar a mitad de un cruce dejaba
+  // la pista anterior sonando igual (el usuario para la música y sigue
+  // escuchando audio). `_settleFadeBeforeNormalTransition` no cuesta nada
+  // cuando no hay ningún fade pendiente.
   @override
-  Future<void> pause() => _active.pause();
+  Future<void> pause() async {
+    await _settleFadeBeforeNormalTransition();
+    return _active.pause();
+  }
 
   @override
-  Future<void> stop() => _active.stop();
+  Future<void> stop() async {
+    await _settleFadeBeforeNormalTransition();
+    return _active.stop();
+  }
 
   @override
-  Future<void> seek(Duration position) => _active.seek(position);
+  Future<void> seek(Duration position) async {
+    await _settleFadeBeforeNormalTransition();
+    return _active.seek(position);
+  }
 
   @override
   Future<void> setSpeed(double speed) {
@@ -208,25 +321,73 @@ class CrossfadeAudioEngine implements AudioEngine {
     }
     _pendingFadeCompleter = null;
 
-    _standby ??= _createEngine();
-    final incoming = _standby!;
-    final outgoing = _active;
+    // F-1: marca el inicio de la ventana en la que `_active` todavía es el
+    // motor SALIENTE pero ya está "comprometido" con este crossfade -- ver
+    // docstring de [_setupCompleter]. Se resuelve recién después del swap,
+    // nunca antes, y siempre (éxito o excepción) vía el `finally` de abajo.
+    final setupCompleter = Completer<void>();
+    _setupCompleter = setupCompleter;
 
-    // Punto 2: valores canónicos al motor entrante ANTES de que suene.
-    await incoming.setVolume(0.0);
-    await incoming.setSpeed(_canonicalSpeed);
-    await incoming.setSkipSilenceEnabled(_canonicalSkipSilence);
-    await incoming.setLocalSource(path);
-    await incoming.play();
+    try {
+      final setupClock = Stopwatch()..start();
 
-    // Punto 3: swap inmediato — el wrapper ya "es" el motor entrante para
-    // cualquier llamador externo a partir de aquí.
-    _active = incoming;
-    _standby = outgoing;
-    _resubscribeTo(_active);
+      _standby ??= _createEngine();
+      final incoming = _standby!;
+      final outgoing = _active;
 
-    final effectiveDuration =
+      // Punto 2: valores canónicos al motor entrante ANTES de que suene.
+      await incoming.setVolume(0.0);
+      await incoming.setSpeed(_canonicalSpeed);
+      await incoming.setSkipSilenceEnabled(_canonicalSkipSilence);
+      await incoming.setLocalSource(path);
+      await incoming.play();
+
+      // Punto 3: swap inmediato — el wrapper ya "es" el motor entrante para
+      // cualquier llamador externo a partir de aquí.
+      _active = incoming;
+      _standby = outgoing;
+      _resubscribeTo(_active);
+      // El swap ya pasó -- `_active` es correcto a partir de acá, así que
+      // cualquier `_settleFadeBeforeNormalTransition` esperando puede seguir
+      // ya mismo, sin necesidad de esperar también a que termine el resto
+      // (cálculo de duración + arranque del ramp, que no cambian de nuevo
+      // cuál motor es cuál).
+      if (!setupCompleter.isCompleted) setupCompleter.complete();
+      await _crossfadeBody(outgoing, incoming, duration, setupClock);
+    } finally {
+      if (!setupCompleter.isCompleted) setupCompleter.complete();
+    }
+  }
+
+  /// Resto de [crossfadeToLocalSource] tras el swap (cálculo de duración
+  /// efectiva + arranque del ramp en background).
+  Future<void> _crossfadeBody(
+    AudioEngine outgoing,
+    AudioEngine incoming,
+    Duration duration,
+    Stopwatch setupClock,
+  ) async {
+    final requestedDuration =
         duration > Duration.zero ? duration : _fadeDurationGetter();
+
+    // La duración pedida se cuenta desde el instante en que el controlador
+    // DECIDIÓ cruzar, no desde acá: cargar y arrancar el motor entrante ya
+    // consumió parte de esa ventana. En el crossfade preventivo la duración
+    // pedida es exactamente lo que le queda de audio a la pista saliente, así
+    // que si el ramp durara la duración completa terminaría DESPUÉS del fin
+    // real de la pista vieja — el saliente se queda mudo por su cuenta a
+    // mitad del fundido y lo que se oye es un corte, no un cruce (síntoma
+    // reportado en pruebas manuales). Descontar el tiempo de preparación
+    // mantiene el final del ramp alineado con el final real de la pista
+    // saliente. Nunca se acorta por debajo de [_minFadeDuration]: un ramp de
+    // pocos milisegundos suena igual que un corte seco.
+    setupClock.stop();
+    final compensated = requestedDuration - setupClock.elapsed;
+    final floor =
+        requestedDuration < _minFadeDuration ? requestedDuration : _minFadeDuration;
+    final effectiveDuration = requestedDuration <= Duration.zero
+        ? Duration.zero
+        : (compensated < floor ? floor : compensated);
 
     if (effectiveDuration <= Duration.zero) {
       // Guard defensivo: el controlador ya solo llama a este método con
@@ -286,10 +447,18 @@ class CrossfadeAudioEngine implements AudioEngine {
         if (isStale()) return;
         currentStep++;
         final t = (currentStep / totalSteps).clamp(0.0, 1.0);
+        // Curva de potencia constante (equal-power), no lineal: con dos
+        // rampas lineales opuestas, en el punto medio cada pista está a la
+        // mitad de amplitud y la suma percibida cae ~3 dB — un bache de
+        // volumen audible justo en el medio del cruce, que refuerza la
+        // sensación de "corte" en vez de fundido. `cos`/`sin` mantienen
+        // constante la potencia total durante todo el cruce.
+        final outVol = t >= 1.0 ? 0.0 : math.cos(t * math.pi / 2) * _canonicalVolume;
+        final inVol = t >= 1.0 ? _canonicalVolume : math.sin(t * math.pi / 2) * _canonicalVolume;
         try {
-          await outgoing.setVolume(((1.0 - t) * _canonicalVolume).clamp(0.0, _canonicalVolume));
+          await outgoing.setVolume(outVol.clamp(0.0, _canonicalVolume));
           if (isStale()) return;
-          await incoming.setVolume((t * _canonicalVolume).clamp(0.0, _canonicalVolume));
+          await incoming.setVolume(inVol.clamp(0.0, _canonicalVolume));
         } catch (_) {
           // Un motor puede fallar a mitad de fade — no debe tumbar el
           // bucle, solo se ignora ese paso y se sigue hacia el final.
