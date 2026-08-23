@@ -23,12 +23,16 @@ Syncora Player is an open-source, native music player for **Windows and Android*
 
 The core philosophy: **privacy-first, open source, premium design, zero cost to the user.**
 
+> **A note on scale:** Syncora Player is a non-commercial hobby project running entirely on free-tier infrastructure. Streaming, downloads, and the fully offline/no-account mode are **unlimited** for everyone. Cloud accounts (sync across devices, AI features) are capped at the **first 250 signups**, to stay within the free database tier — the cap can be raised anytime without a redeploy if the project outgrows it. See [Documento_Maestro.md §4.5](docs/Documento_Maestro.md#45-límite-de-cuentas-y-modo-sin-cuenta-decisión-de-producto) for the full rationale.
+
 ---
 
 ## ✨ Features
 
 ### Core
-- 🎵 **Stream public audio** — no account required, no ads
+- 🎵 **Stream public audio** — no account required, no ads, no limits
+- 📴 **Fully offline / local mode** — build and edit playlists without ever creating an account (unlimited)
+- ☁️ **Optional cloud account** for sync across devices and AI features — open to the **first 250 signups** while the project runs on free-tier infrastructure
 - 📚 **Personal playlists** with cloud sync across devices
 - 📥 **Download for offline playback** (selectable audio quality)
 - ❤️ Liked songs playlist and offline mode

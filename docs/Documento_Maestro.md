@@ -4,6 +4,12 @@
 **Repositorio:** `https://github.com/NotJcao17/syncora-player.git`  
 **Objetivo:** Reproductor de música nativo (Windows/Android) 100% gratuito, privado, enfocado en resiliencia y diseño premium.
 
+**Nota de escala:** streaming, descargas y uso 100% local/sin cuenta son **ilimitados** para
+cualquier usuario. Solo la **cuenta con nube** (sincronización entre dispositivos, funciones de
+IA) está limitada a los **primeros 250 registros** — es un proyecto hobby, sin fines de lucro y
+sostenido en planes gratuitos (ver §4.5). El tope se puede subir en cualquier momento con un
+`UPDATE` en la base de datos, sin redeploy, si el proyecto crece.
+
 ---
 
 ## 1. Metodología de Trabajo y Delegación
@@ -35,7 +41,7 @@
 *   **1.5 Cola de Reproducción:** Vista superpuesta. Drag & drop para ordenar, deslizar izquierda para eliminar, deslizar derecha (en listas) para agregar a cola. Botón "Editar" para selección múltiple (eliminar o mover arriba).
     *   **Modelo de cola dual (definido en Fase 7):** una **cola automática** (generada del contexto activo, se regenera al cambiar shuffle↔normal o de playlist) y una **cola manual** (lo que el usuario agrega explícitamente; se reproduce primero, en orden **FIFO**, y **sobrevive** a los cambios de la automática — ni siquiera las funciones de IA la tocan). Las pistas ya reproducidas **se eliminan** de la cola; el botón "anterior" usa una **pila de historial única**, así que al retroceder desde una pista manual se vuelve a esa pista manual (difiere de Spotify a propósito).
 *   **1.6 Detalle de Artista:** Info de Deezer, canciones más escuchadas, discografía.
-*   **1.7 Playlist/Álbum:** Portada (default: cuadrícula generada automáticamente con las primeras 4 portadas **distintas** de la lista, o color/degradado a elección del usuario), nombre, autor, duración, número de canciones. Botones rápidos: aleatorio, descargar, play, guardar, menú 3 puntos (editar, eliminar, compartir pública/privada, agregar a otra). Lista de pistas con mini menú (3 puntos: agregar a playlist, agregar a cola, descargar pista, ver álbum, ver artista, **corregir coincidencia de YT / fix match**, compartir).
+*   **1.7 Playlist/Álbum:** Portada (default: cuadrícula generada automáticamente con las primeras 4 portadas **distintas** de la lista, o color/degradado a elección del usuario), nombre, autor, duración, número de canciones. Botones rápidos: aleatorio, descargar, play, guardar, menú 3 puntos (editar, eliminar, compartir pública/privada, agregar a otra). Lista de pistas con mini menú (3 puntos: agregar a playlist, agregar a cola, descargar pista, ver álbum, ver artista, compartir).
 *   **1.8 Estadísticas (Wrapped):** Resumen de uso, top canciones, géneros, artistas, minutos. Tarjetas imprimibles tipo stories.
 *   **1.9 Configuración:** Descarga solo con WiFi, visualizador de almacenamiento, borrar caché/descargas, selector de avatar predefinido, temporizador de apagado (sleep timer). Políticas de privacidad y legales.
 
@@ -84,7 +90,6 @@
     *   **Windows (`media_kit`):** Investigar instancias duales de `media_kit` con fade-in/fade-out paralelo usando el control de volumen de cada instancia.
     *   **Android (`just_audio`):** `just_audio` soporta crossfade nativo usando dos `AudioPlayer` simultáneos; diseñar un `CrossfadeAudioHandler` que administre ambas instancias y el fade cruzado. Ambas plataformas deben quedar cubiertas en la Fase 7.
 *   ~~Smart Shuffle (aleatorio con sugerencias).~~ → **Absorbido** como el toggle "intercalar con la cola automática" dentro de *Crear cola con IA* (ver `plan_fase_7.md`, decisión D-9). Se descartó como función separada porque un disparo automático y recurrente quemaría el presupuesto de RPD de Gemini; como acción explícita del usuario no hay ese riesgo.
-*   Bloqueo de artistas/canciones.
 *   Búsqueda por género.
 *   Descubrimiento musical vía previews de Deezer (30s).
 *   Compartir playlists (solo lectura).
@@ -257,16 +262,23 @@ a 5 años, ~340 a 10 años, con margen de incertidumbre) ya es bajo por diseño,
 limitar activamente el número de cuentas** en vez de descubrir el límite de forma reactiva cuando
 la app deje de funcionar para alguien.
 
-> ✅ **Decidido e incorporado a la Fase 7** (`plan_fase_7.md`, fases 7.H y 7.I). Lo de abajo es la
-> justificación; el checklist de implementación vive en el plan.
+**El límite aplica solo a la cuenta con nube, nunca al uso de la app.** Streaming, búsqueda,
+descargas offline y el modo local/sin cuenta completo (§4.6) son y seguirán siendo **ilimitados**
+para cualquier usuario, incluso después de que se llenen los 250 registros. Lo único que se
+restringe es la sincronización entre dispositivos y las funciones de IA, que dependen de una
+identidad respaldada por Supabase.
 
-- [ ] **Límite recomendado: 250 cuentas.** Es ~25-30% por debajo del techo teórico a 10 años
+> ✅ **Decidido e implementado en la Fase 7** (`plan_fase_7.md`, fases 7.H y 7.I — cerradas y
+> aplicadas contra el proyecto real). Lo de abajo es la justificación; el checklist de
+> implementación vive en el plan.
+
+- [x] **Límite recomendado: 250 cuentas.** Es ~25-30% por debajo del techo teórico a 10 años
       (~340), dejando margen para: (a) la incertidumbre propia de una estimación no medida, (b) el
       egress de base de datos (recurso #2 de la tabla anterior, todavía sin medir), y (c) que la
       mezcla real de usuarios sea más pesada que el perfil "típico" modelado. Es fácil de subir
       más adelante si los datos reales muestran más margen del esperado, o si algún día se paga el
       plan Pro (eleva el techo a ~6,500) — es preferible partir conservador.
-- [ ] **Mecanismo:** Supabase Auth Hook **"Before User Created"** (función de Postgres o Edge
+- [x] **Mecanismo:** Supabase Auth Hook **"Before User Created"** (función de Postgres o Edge
       Function invocada antes de que la cuenta se cree), que cuenta `auth.users` y rechaza el
       registro si ya se alcanzó el tope, devolviendo un error legible al cliente. Guardar el tope
       en una tabla de configuración de una sola fila (no hardcodeado), para poder subirlo con un
@@ -276,11 +288,11 @@ la app deje de funcionar para alguien.
       (issue abierto de Supabase). El cliente debe reconocer también ese error genérico como "cupo
       lleno" y mostrar el mensaje amigable igual, sin depender de que el texto personalizado llegue
       bien.
-- [ ] Mensaje al usuario cuando se alcanza el tope: explicar que las cuentas con nube están
+- [x] Mensaje al usuario cuando se alcanza el tope: explicar que las cuentas con nube están
       llenas, y **ofrecer el modo sin cuenta** (ver abajo) como alternativa siempre disponible, no
       un simple "inténtalo más tarde".
 
-### 4.6 Modo sin cuenta / local (propuesta, pendiente de confirmar alcance)
+### 4.6 Modo sin cuenta / local (implementado, Fase 7.I)
 
 Pregunta planteada: si se limita el número de cuentas, ¿puede alguien seguir usando la app sin
 cuenta, 100% local, cuando el cupo esté lleno? **Sí es viable**, y encaja con la arquitectura
@@ -399,8 +411,6 @@ El esquema relacional (reflejado tanto en Supabase como en Drift SQLite) constar
     *   ⚠️ **Consistencia de `is_public`:** Un trigger de PostgreSQL (`playlist_tracks_sync_is_public`) debe actualizar automáticamente `is_public` en todas las filas de `playlist_tracks` cuando cambia el campo `is_public` en la tabla `playlists`. Sin este trigger, el valor desnormalizado quedará desincronizado al hacer privada una playlist que era pública.
 *   **`saved_albums`**: `id`, `user_id` (FK), `album_id` (Deezer), `title`, `artist_name`, `cover_url`, `added_at`.
 *   **`folders`**: `id`, `user_id` (FK), `name`, `order_index`, `created_at`.
-*   **`yt_matches`**: `track_id` (PK), `youtube_video_id`, `corrected_at` (Persiste las correcciones manuales de coincidencias de YouTube permanentemente).
-*   **`blocked_items`**: `id`, `user_id` (FK), `item_type` (enum: artist/track), `item_id`.
 *   **`listening_history`**: `id`, `user_id`, `track_id`, `artist_id` (NUEVO), `album_id` (NUEVO), `genre` (NUEVO), `listened_at`, `duration_listened`. *(Nota de Escalabilidad: Un Cron Job mensual 'pg_cron' en Supabase agregará esta data cruda a una tabla `user_stats_monthly` y borrará filas mayores a 90 días para no saturar los 500MB).*
     *   ⚠️ **El orden del cron importa:** primero agregar el mes cerrado a `user_stats_monthly`, **después** podar a >90 días. Nunca al revés.
     *   **Criterio de registro (Fase 7):** una escucha se registra si supera el **50% de la duración o 30 segundos**, lo que sea menor. Sin ese umbral, una canción saltada a los 3 segundos contaminaría el top.
@@ -463,3 +473,42 @@ El diseño debe verse intencional y humano. Se evitarán estas "señales delator
 3.  **La Falacia del "Happy Path":** El diseño generado por IA suele ignorar los bordes (edge cases). **Regla estricta UX:** Cada pantalla debe tener explícitamente diseñados sus **Empty States** (qué pasa si no hay playlists), **Error States** (qué pasa si no hay internet), y **Loading States** (Skeleton loaders en lugar de simples spinners circulares).
 4.  **Botones sin Consecuencia (UX sin lógica):** La IA a menudo añade botones que se ven bien pero no hacen nada. Cada botón en la UI debe estar justificado y atado a la lógica de negocio o estado del reproductor.
 5.  **Falta de Accesibilidad:** Evitar textos gris claro sobre fondos blancos/negros. Asegurar contraste y áreas de toque (touch targets) de mínimo 48x48dp para móviles.
+
+---
+
+## 11. Fase 8 (pendiente de planear)
+
+> La Fase 7 cerró el plan de implementación tal como estaba definido hasta el punto anterior de
+> este documento. Al revisar `Documento_Maestro.md` completo contra el código real (no solo contra
+> checklists de fases) salieron a la luz algunas funciones que quedaron descritas en §2/§8 desde el
+> diseño original pero **nunca se implementaron** — se habían perdido de vista precisamente porque
+> nunca fueron un checkbox en ningún plan de fase.
+>
+> **Esta sección es solo una lista de alcance, todavía no un plan.** Falta decidir metodología de
+> ejecución (¿una fase monolítica o varias sub-fases independientes?, ¿orden?, ¿qué amerita revisión
+> independiente según el criterio de riesgo ya usado en Fase 7?) antes de empezar a implementar
+> cualquiera de estos puntos. Se planeará después de terminar las pruebas manuales y correcciones de
+> la Fase 7.
+
+### Alcance de la Fase 8
+
+- **Sistema OTA completo para el motor de extracción.** Hoy `youtubei.bundle.js` viaja únicamente
+  como asset local empaquetado en la app (`lib/core/extraction/js_bundle_loader.dart` lo carga con
+  `rootBundle.loadString`, sin ninguna descarga remota) — actualizarlo requiere recompilar y
+  republicar la app, exactamente lo que el diseño original (§3, "Arquitectura de Extracción")
+  buscaba evitar. Falta construir: el bucket de Supabase Storage, la firma Ed25519 del bundle en CI
+  y su validación en runtime antes de ejecutarlo en QuickJS, el pipeline de GitHub Actions que
+  compila/firma/sube el bundle en cada parche, y mover la jerarquía de clientes de fallback (hoy
+  hardcodeada en `extraction_isolate.dart`) a config remota actualizable por OTA (deuda anotada
+  desde `docs/fases/fase_1.md`).
+- **Carpetas para playlists.** §2.1.3 ("Ordenar por carpetas") y §8 (tabla `folders`) las describen,
+  pero la tabla `folders` nunca se creó en ninguna migración y no hay ningún código de carpetas en
+  `lib`. Hoy solo existe "fijar" (`isPinned`), no organización jerárquica.
+- **Búsqueda por género**, integrada en las tarjetas de la pantalla del buscador. §2.4 la menciona;
+  no existe ningún filtro ni endpoint de búsqueda por género hoy.
+- **Descubrimiento musical vía previews de Deezer (30s).** El campo `previewUrl` ya se parsea y se
+  guarda en el modelo de cada track (viene directo del JSON de Deezer), pero no se reproduce en
+  ningún lado de la UI — falta el mecanismo de reproducción de preview en sí.
+- **Lanzamientos nuevos de artistas escuchados**, personalizados. Lo que existe hoy
+  (`DeezerApi.getNewReleases()`) es el chart global de Deezer (`/chart/0/albums`), no una lista
+  filtrada a los artistas que el usuario realmente escucha.
