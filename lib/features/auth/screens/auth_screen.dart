@@ -336,15 +336,28 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   /// Borra la biblioteca local (pistas de todas las playlists; las playlists
   /// no-"Tus me gusta" enteras -- la de "Tus me gusta" es una fila reservada
-  /// que se vacía pero no se borra; álbumes guardados) antes de salir de
-  /// modo local -- a partir de ahí, los puntos de sincronización normales de
-  /// la app (ya gateados por `isLocalMode`, 7.I.5) traen la biblioteca real
-  /// de la cuenta al aterrizar en `/`.
+  /// que se vacía pero no se borra; álbumes guardados; historial de escucha
+  /// local completo) antes de salir de modo local -- a partir de ahí, los
+  /// puntos de sincronización normales de la app (ya gateados por
+  /// `isLocalMode`, 7.I.5) traen la biblioteca real de la cuenta al aterrizar
+  /// en `/`.
   ///
-  /// Las pistas se borran a mano incluso en las playlists que se eliminan
-  /// enteras: el `ON DELETE CASCADE` declarado en `PlaylistTracks` NO se
-  /// aplica en runtime, porque la base nunca ejecuta `PRAGMA foreign_keys =
-  /// ON` (sqlite3 la trae apagada por defecto). Sin esto, cada
+  /// El historial de escucha se borra también (decisión del usuario, no solo
+  /// las playlists/álbumes): sin esto, `syncListeningHistory()` sube igual
+  /// las escuchas acumuladas en modo local en el próximo sync, contaminando
+  /// las estadísticas y el Wrapped de una cuenta que no es de donde salieron.
+  ///
+  /// Las descargas locales (`DownloadedTracks`) NO se tocan a propósito: son
+  /// específicas del dispositivo por diseño (Fase 6), nunca se sincronizan
+  /// con ninguna cuenta, y borrarlas destruiría archivos de audio reales ya
+  /// descargados sin que el usuario lo haya pedido explícitamente -- a
+  /// diferencia de playlists/álbumes/historial, conservarlas no contamina ni
+  /// mezcla nada de la cuenta con la que se acaba de iniciar sesión.
+  ///
+  /// Las pistas de playlist se borran a mano incluso en las playlists que se
+  /// eliminan enteras: el `ON DELETE CASCADE` declarado en `PlaylistTracks`
+  /// NO se aplica en runtime, porque la base nunca ejecuta `PRAGMA
+  /// foreign_keys = ON` (sqlite3 la trae apagada por defecto). Sin esto, cada
   /// `deletePlaylist` dejaba las filas de `playlist_tracks` huérfanas en
   /// disco -- invisibles en la UI, pero contradiciendo lo que el diálogo le
   /// promete al usuario ("tus datos locales se van a borrar").
@@ -354,6 +367,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     // ya confirmado por el usuario no debería quedar a medias por eso.
     final dao = ref.read(playlistDaoProvider);
     final savedAlbumDao = ref.read(savedAlbumDaoProvider);
+    final historyDao = ref.read(listeningHistoryDaoProvider);
     if (mounted) {
       setState(() {
         _isMigrating = true;
@@ -376,6 +390,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       for (final album in albums) {
         await savedAlbumDao.removeSavedAlbum(album.albumId);
       }
+
+      await historyDao.deleteAll();
     } catch (_) {
       // Best-effort -- el usuario ya confirmó que quiere descartar; lo que
       // no se pudo borrar queda local-only, un estado ya soportado (H-5).

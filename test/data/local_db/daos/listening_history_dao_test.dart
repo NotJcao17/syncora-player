@@ -96,5 +96,29 @@ void main() {
       expect(topArtists.first, 10, reason: 'el artista más escuchado debe ir primero');
       expect(topArtists, contains(20));
     });
+
+    // Usada al descartar datos de modo local sobre una cuenta existente
+    // (`auth_screen.dart`) -- debe borrar TODO, sincronizado o no, para que
+    // nada se filtre hacia la cuenta ajena en el próximo sync.
+    test('deleteAll borra entradas sincronizadas y sin sincronizar por igual', () async {
+      final id1 = await db.listeningHistoryDao.recordEntry(
+        trackId: 1,
+        artistId: 10,
+        albumId: 100,
+        durationListenedMs: 40000,
+      );
+      await db.listeningHistoryDao.recordEntry(
+        trackId: 2,
+        artistId: 20,
+        albumId: 200,
+        durationListenedMs: 35000,
+      );
+      await db.listeningHistoryDao.markSynced(id1);
+
+      final deletedCount = await db.listeningHistoryDao.deleteAll();
+
+      expect(deletedCount, 2);
+      expect(await db.listeningHistoryDao.getRecentHistory(), isEmpty);
+    });
   });
 }

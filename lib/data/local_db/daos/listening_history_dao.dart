@@ -51,6 +51,14 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
   Future<List<ListeningHistoryData>> getEntriesSince(DateTime cutoff) =>
       (select(listeningHistory)..where((t) => t.listenedAt.isBiggerOrEqualValue(cutoff))).get();
 
+  /// Borra TODO el historial local, sin importar si ya se sincronizó.
+  /// Usado exclusivamente al descartar datos de modo local sobre una cuenta
+  /// existente (`auth_screen.dart`, `_discardLocalLibraryAndDisableLocalMode`):
+  /// sin esto, el historial local acumulado se sube igual en el próximo
+  /// `syncListeningHistory()` y contamina las estadísticas/Wrapped de una
+  /// cuenta que no es de donde salieron esas escuchas.
+  Future<int> deleteAll() => delete(listeningHistory).go();
+
   /// Obtiene los IDs de los artistas más escuchados por el usuario según su historial
   Future<List<int>> getTopArtistIds({int limit = 5}) async {
     final history = await getRecentHistory(limit: 100);
