@@ -13,39 +13,45 @@ final supabaseStatsRepositoryProvider = Provider<SupabaseStatsRepository>((ref) 
 
 /// Fase 7.G.3: Semanal, sobre datos crudos de `listening_history`
 /// (últimos 7 días), disponible con o sin cuenta (7.I.6).
-final weeklyStatsProvider = FutureProvider<StatsSnapshot>((ref) async {
+///
+/// `StreamProvider` en vez de `FutureProvider` (bug real de pruebas
+/// manuales: no se actualizaba sola al escuchar canciones nuevas) --
+/// `watchEntriesSince` reemite cada vez que la tabla cambia.
+final weeklyStatsProvider = StreamProvider<StatsSnapshot>((ref) {
   final dao = ref.watch(listeningHistoryDaoProvider);
-  final entries = await dao.getEntriesSince(weekCutoff(DateTime.now()));
-  return StatsCalculator.fromRawEntries(
-    entries
-        .map((e) => RawListenEntry(
-              artistId: e.artistId,
-              trackId: e.trackId,
-              genre: e.genre,
-              durationListenedMs: e.durationListenedMs,
-            ))
-        .toList(),
-    topN: 5,
-  );
+  return dao.watchEntriesSince(weekCutoff(DateTime.now())).map(
+        (entries) => StatsCalculator.fromRawEntries(
+          entries
+              .map((e) => RawListenEntry(
+                    artistId: e.artistId,
+                    trackId: e.trackId,
+                    genre: e.genre,
+                    durationListenedMs: e.durationListenedMs,
+                  ))
+              .toList(),
+          topN: 5,
+        ),
+      );
 });
 
 /// Fase 7.G.3: Mensual, sobre datos crudos (últimos 30 días) -- no confundir
 /// con `user_stats_monthly` (D-17): esa tabla guarda meses YA cerrados, acá
 /// se necesita el mes en curso.
-final monthlyStatsProvider = FutureProvider<StatsSnapshot>((ref) async {
+final monthlyStatsProvider = StreamProvider<StatsSnapshot>((ref) {
   final dao = ref.watch(listeningHistoryDaoProvider);
-  final entries = await dao.getEntriesSince(monthCutoff(DateTime.now()));
-  return StatsCalculator.fromRawEntries(
-    entries
-        .map((e) => RawListenEntry(
-              artistId: e.artistId,
-              trackId: e.trackId,
-              genre: e.genre,
-              durationListenedMs: e.durationListenedMs,
-            ))
-        .toList(),
-    topN: 10,
-  );
+  return dao.watchEntriesSince(monthCutoff(DateTime.now())).map(
+        (entries) => StatsCalculator.fromRawEntries(
+          entries
+              .map((e) => RawListenEntry(
+                    artistId: e.artistId,
+                    trackId: e.trackId,
+                    genre: e.genre,
+                    durationListenedMs: e.durationListenedMs,
+                  ))
+              .toList(),
+          topN: 10,
+        ),
+      );
 });
 
 /// Fase 7.G.4: Anual (D-18: ventana móvil de los últimos 12 meses, no un

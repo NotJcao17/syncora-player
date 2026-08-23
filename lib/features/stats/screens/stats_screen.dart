@@ -79,8 +79,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> with SingleTickerProv
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _RawStatsTab(provider: weeklyStatsProvider, topN: 5, showGenres: false),
-                  _RawStatsTab(provider: monthlyStatsProvider, topN: 10, showGenres: true),
+                  _RawStatsTab(asyncSnapshot: ref.watch(weeklyStatsProvider), showGenres: false),
+                  _RawStatsTab(asyncSnapshot: ref.watch(monthlyStatsProvider), showGenres: true),
                   isLocalMode ? const _LocalOnlyNotice() : const _YearlyTab(),
                 ],
               ),
@@ -123,17 +123,19 @@ class _LocalOnlyNotice extends StatelessWidget {
   }
 }
 
-class _RawStatsTab extends ConsumerWidget {
-  final FutureProvider<StatsSnapshot> provider;
-  final int topN;
+// `StatelessWidget` (no `ConsumerWidget`) porque Semanal/Mensual pasaron a
+// `StreamProvider` (bug real: no se actualizaban solos al escuchar
+// canciones nuevas) -- el `AsyncValue` ya viene resuelto por el `ref.watch`
+// del `build()` de `_StatsScreenState`, así que esta vista no necesita `ref`
+// propio.
+class _RawStatsTab extends StatelessWidget {
+  final AsyncValue<StatsSnapshot> asyncSnapshot;
   final bool showGenres;
 
-  const _RawStatsTab({required this.provider, required this.topN, required this.showGenres});
+  const _RawStatsTab({required this.asyncSnapshot, required this.showGenres});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncSnapshot = ref.watch(provider);
-
+  Widget build(BuildContext context) {
     return asyncSnapshot.when(
       loading: () => const _StatsLoadingSkeleton(),
       error: (_, _) => const _StatsEmptyState(),

@@ -48,8 +48,16 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
   /// artificial (a diferencia de [getTopArtistIds], que sí limita a 100) --
   /// Estadísticas necesita exactitud sobre la ventana completa, no una
   /// muestra.
-  Future<List<ListeningHistoryData>> getEntriesSince(DateTime cutoff) =>
-      (select(listeningHistory)..where((t) => t.listenedAt.isBiggerOrEqualValue(cutoff))).get();
+  ///
+  /// `.watch()` en vez de `.get()` (bug real de pruebas manuales: la
+  /// tarjeta de "Tus minutos esta semana" de Inicio y las vistas Semanal/
+  /// Mensual de Estadísticas usaban un `FutureProvider` que se calculaba una
+  /// sola vez y quedaba cacheado, sin nada que lo invalidara cuando
+  /// `recordEntry()` insertaba una escucha nueva) -- Drift reemite
+  /// automáticamente cada vez que `listening_history` cambia, sin necesidad
+  /// de invalidar el provider a mano desde el controlador del reproductor.
+  Stream<List<ListeningHistoryData>> watchEntriesSince(DateTime cutoff) =>
+      (select(listeningHistory)..where((t) => t.listenedAt.isBiggerOrEqualValue(cutoff))).watch();
 
   /// Borra TODO el historial local, sin importar si ya se sincronizó.
   /// Usado exclusivamente al descartar datos de modo local sobre una cuenta

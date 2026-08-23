@@ -64,9 +64,17 @@ export function mapGeminiError(error: unknown, usingSharedKey: boolean): Respons
         "La IA no está disponible en este momento. Intenta de nuevo en unos minutos.",
       );
     }
+    // Diagnóstico (post-Fase-7, mientras se termina de confirmar el fix del
+    // tipado de `responseSchema` en mayúscula): el cuerpo crudo de Gemini
+    // NUNCA contiene la llave (ver `gemini.ts`, `GeminiHttpError` solo
+    // guarda `status`/`bodyText` de la respuesta) -- solo aparece con BYOK,
+    // nunca con la llave compartida, para no exponer detalle interno a
+    // quien no puso su propia llave. Recortado por las dudas ante un cuerpo
+    // de error inesperadamente largo.
+    const detail = error.bodyText.length > 300 ? error.bodyText.substring(0, 300) : error.bodyText;
     return errorResponse(
       "byok_upstream_error",
-      "Tu llave de Gemini devolvió un error al procesar la solicitud. Verifica que sea válida.",
+      `Tu llave de Gemini devolvió un error al procesar la solicitud: ${detail}`,
     );
   }
 

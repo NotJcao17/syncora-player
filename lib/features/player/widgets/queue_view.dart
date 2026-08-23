@@ -279,6 +279,11 @@ class _QueueViewState extends ConsumerState<QueueView> {
             children: [
               TextButton.icon(
                 onPressed: _toggleEditMode,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 icon: Icon(
                   _editMode ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.Pen),
                   size: 16,
@@ -291,6 +296,11 @@ class _QueueViewState extends ConsumerState<QueueView> {
               ),
               TextButton.icon(
                 onPressed: () => controller.clearQueue(),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 icon: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), size: 16, color: AppTheme.secondary),
                 label: const Text('Limpiar cola', style: TextStyle(color: AppTheme.secondary, fontSize: 12)),
               ),
@@ -426,6 +436,19 @@ class _QueueViewState extends ConsumerState<QueueView> {
       // ignore: deprecated_member_use
       onReorder: (oldIndex, newIndex) {
         controller.reorderQueue(origin, oldIndex, newIndex);
+      },
+      // Bug real (pruebas manuales): `SliverReorderableList` usado directo
+      // (a diferencia de `ReorderableListView`, que sí trae un
+      // `proxyDecorator` por defecto) no envuelve en `Material` la fila que
+      // se está arrastrando -- el `InkWell` de `TrackTile` dentro de esa
+      // fila tiraba "No Material widget found" apenas se soltaba el drag,
+      // porque el proxy vive en el `Overlay` de arriba de todo, sin
+      // ancestro `Material` propio.
+      proxyDecorator: (child, index, animation) {
+        return Material(
+          type: MaterialType.transparency,
+          child: child,
+        );
       },
       itemBuilder: (ctx, i) {
         final track = tracks[i];

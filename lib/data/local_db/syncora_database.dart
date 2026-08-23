@@ -147,7 +147,23 @@ QueryExecutor _openConnection() {
     // Pitfall #6: Web bypass to prevent native crashes in Chrome testing
     return NativeDatabase.memory();
   }
-  
+
+  // Bug real (pruebas manuales, post-Fase 7): `weeklyStatsProvider`/
+  // `monthlyStatsProvider` (7.G) pasaron de `FutureProvider` a
+  // `StreamProvider` sobre un `.watch()` de Drift -- en tests de widget que
+  // arman la app completa (`widget_test.dart`, `app_router_test.dart`), esa
+  // suscripción sobre la conexión real (sin `closeStreamsSynchronously`)
+  // dejaba un `Timer` pendiente al cerrar el árbol de widgets, y
+  // `flutter_test` falla el test entero por eso (invariante estricta de
+  // `TestWidgetsFlutterBinding`). Ya era un gotcha conocido del proyecto en
+  // tests puntuales que arman su propia `SyncoraDatabase` (ver
+  // `ai_create_queue_sheet_test.dart`) -- acá se resuelve en la fuente para
+  // que cualquier test que arme la app completa lo herede gratis, en vez de
+  // tener que repetir el mismo workaround en cada archivo de test nuevo.
+  if (Platform.environment.containsKey('FLUTTER_TEST')) {
+    return DatabaseConnection(NativeDatabase.memory(), closeStreamsSynchronously: true);
+  }
+
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'syncora_local.sqlite'));

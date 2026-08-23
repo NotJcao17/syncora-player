@@ -120,5 +120,32 @@ void main() {
       expect(deletedCount, 2);
       expect(await db.listeningHistoryDao.getRecentHistory(), isEmpty);
     });
+
+    // Bug real (pruebas manuales): la tarjeta "Tus minutos esta semana" de
+    // Inicio no se actualizaba tras escuchar canciones nuevas -- corregido
+    // pasando el provider de `.get()` (una sola vez) a `.watch()`. Este test
+    // verifica el contrato reactivo en el que se apoya ese fix, sin
+    // necesitar Riverpod: el stream debe reemitir solo con la entrada nueva
+    // incluida, no quedarse en el primer valor.
+    test('watchEntriesSince reemite cada vez que se registra una escucha nueva', () async {
+      final cutoff = DateTime.now().subtract(const Duration(days: 7));
+      final stream = db.listeningHistoryDao.watchEntriesSince(cutoff);
+      final emissions = <int>[];
+      final sub = stream.listen((entries) => emissions.add(entries.length));
+      addTearDown(sub.cancel);
+
+      await pumpEventQueue();
+      expect(emissions, [0], reason: 'primera emisión: tabla vacía dentro de la ventana');
+
+      await db.listeningHistoryDao.recordEntry(
+        trackId: 1,
+        artistId: 10,
+        albumId: 100,
+        durationListenedMs: 40000,
+      );
+      await pumpEventQueue();
+
+      expect(emissions, [0, 1], reason: 'el stream debe reemitir solo, sin que nadie lo invalide a mano');
+    });
   });
 }

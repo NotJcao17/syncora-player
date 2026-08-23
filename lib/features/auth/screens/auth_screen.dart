@@ -11,6 +11,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/supabase/supabase_providers.dart';
+import '../../../data/sync/sync_service.dart';
 import '../../library/import_export/playlist_import_export_service.dart';
 import '../local_mode_provider.dart';
 import '../services/account_limit_error.dart';
@@ -129,7 +130,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               } catch (_) {}
             }
           }
-          if (mounted && shouldNavigate) ref.read(appRouterProvider).go('/');
+          if (mounted && shouldNavigate) {
+            // Bug real (pruebas manuales): tras iniciar sesión, Inicio/
+            // Biblioteca se quedaban con lo que hubiera en Drift hasta que
+            // el usuario entrara a Biblioteca y tirara de la lista a mano --
+            // nada disparaba un sync apenas hay sesión nueva. `force: true`
+            // porque el caché TTL de 5 min (`SyncCacheManager`) no tiene
+            // forma de saber que la sesión cambió; `unawaited` porque
+            // Inicio/Biblioteca ya leen Drift de forma reactiva (`.watch()`)
+            // -- no hace falta bloquear la navegación esperando la red.
+            final syncService = ref.read(syncServiceProvider);
+            unawaited(syncService.syncLibrary(force: true));
+            unawaited(syncService.syncSavedAlbums(force: true));
+            ref.read(appRouterProvider).go('/');
+          }
         }
       });
 

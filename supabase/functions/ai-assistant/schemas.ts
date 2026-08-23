@@ -1,10 +1,16 @@
-// Fase 7.E.4 -- `responseSchema` de las 5 acciones, en el subconjunto de
-// JSON Schema que acepta `generationConfig.responseSchema` de Gemini (string
-// / number / integer / boolean / object / array / null, con enum, format,
-// required, properties, items, minItems/maxItems, minimum/maximum -- ver H-7
-// en docs/plan_fase_7.md). Estas formas las reutiliza también la Fase 7.F, así
-// que se mantienen estables y simples: `{title, artist}` es lo mínimo que
-// necesita el matching contra Deezer (D-8), nunca ids ni portadas inventadas.
+// Fase 7.E.4 -- `responseSchema` de las 5 acciones. NO es JSON Schema
+// estándar pese al nombre del tipo de abajo: Gemini expone `Schema` como
+// serialización JSON de un proto con un enum `Type`
+// (STRING/NUMBER/INTEGER/BOOLEAN/ARRAY/OBJECT/NULL), así que los valores de
+// `type` van en MAYÚSCULA -- corrección real (pruebas manuales): con los
+// valores en minúscula ("object"/"string"/"array", la convención de JSON
+// Schema estándar que parecía razonable al escribir esto originalmente),
+// Gemini rechazaba el schema en el 100% de las llamadas, con la llave
+// compartida y con BYOK por igual -- el mismo síntoma en ambos casos tenía
+// sentido porque el bug no dependía de la llave, sino del cuerpo enviado.
+// Estas formas las reutiliza también la Fase 7.F, así que se mantienen
+// estables y simples: `{title, artist}` es lo mínimo que necesita el
+// matching contra Deezer (D-8), nunca ids ni portadas inventadas.
 import type { AiAction } from "./actions.ts";
 
 export interface JsonSchema {
@@ -18,20 +24,20 @@ export interface JsonSchema {
 }
 
 const TRACK_SUGGESTION_SCHEMA: JsonSchema = {
-  type: "object",
+  type: "OBJECT",
   properties: {
-    title: { type: "string" },
-    artist: { type: "string" },
+    title: { type: "STRING" },
+    artist: { type: "STRING" },
   },
   required: ["title", "artist"],
 };
 
 function tracksListSchema(maxItems: number): JsonSchema {
   return {
-    type: "object",
+    type: "OBJECT",
     properties: {
       tracks: {
-        type: "array",
+        type: "ARRAY",
         items: TRACK_SUGGESTION_SCHEMA,
         maxItems,
       },
@@ -41,12 +47,12 @@ function tracksListSchema(maxItems: number): JsonSchema {
 }
 
 const CREATE_PLAYLIST_SCHEMA: JsonSchema = {
-  type: "object",
+  type: "OBJECT",
   properties: {
-    playlistName: { type: "string" },
-    description: { type: "string" },
+    playlistName: { type: "STRING" },
+    description: { type: "STRING" },
     tracks: {
-      type: "array",
+      type: "ARRAY",
       items: TRACK_SUGGESTION_SCHEMA,
       maxItems: 400, // D-5: tope duro de la UI es 300 + margen del ~30% pedido de más.
     },
@@ -55,10 +61,10 @@ const CREATE_PLAYLIST_SCHEMA: JsonSchema = {
 };
 
 const LYRIC_SEARCH_SCHEMA: JsonSchema = {
-  type: "object",
+  type: "OBJECT",
   properties: {
     songs: {
-      type: "array",
+      type: "ARRAY",
       items: TRACK_SUGGESTION_SCHEMA,
       maxItems: 10,
     },
@@ -75,11 +81,11 @@ const LYRIC_SEARCH_SCHEMA: JsonSchema = {
  */
 function modifyPlaylistRemoveSchema(existingIds: string[]): JsonSchema {
   return {
-    type: "object",
+    type: "OBJECT",
     properties: {
       idsToRemove: {
-        type: "array",
-        items: { type: "string", enum: existingIds },
+        type: "ARRAY",
+        items: { type: "STRING", enum: existingIds },
         maxItems: existingIds.length,
       },
     },
