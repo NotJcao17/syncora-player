@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -197,6 +198,15 @@ class _TrackTileState extends ConsumerState<TrackTile> {
               ref.read(syncoraPlayerControllerProvider.notifier).play();
             }
           },
+          onLongPress: () {
+            HapticFeedback.mediumImpact();
+            FocusManager.instance.primaryFocus?.unfocus();
+            if (widget.onMorePressed != null) {
+              widget.onMorePressed!();
+            } else if (!isDesktop) {
+              _showTrackOptionsMenu(context, ref);
+            }
+          },
           borderRadius: BorderRadius.circular(8),
           child: Container(
             decoration: BoxDecoration(
@@ -341,30 +351,35 @@ class _TrackTileState extends ConsumerState<TrackTile> {
   );
 
 
-    // Tarea 7: Swipe para agregar a la cola en móvil
+    // Swipe a la cola en móvil (umbral 40-50% con retorno suave y haptic feedback)
     if (isMobile && widget.onAddToQueue != null) {
       return Dismissible(
         key: Key('track_dismiss_${widget.track.id}_${widget.index}'),
         direction: DismissDirection.startToEnd,
+        dismissThresholds: const {
+          DismissDirection.startToEnd: 0.4,
+        },
+        movementDuration: const Duration(milliseconds: 200),
         confirmDismiss: (direction) async {
+          HapticFeedback.mediumImpact();
           widget.onAddToQueue!();
           AppToast.show(context, message: '"${widget.track.title}" agregada a la cola');
-          return false; // Retornar false para no eliminar visualmente la canción de la lista
+          return false; // Retornar false para no eliminar la canción de la lista
         },
         background: Container(
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.only(left: 20),
           decoration: BoxDecoration(
-            color: AppTheme.surfaceActive,
+            color: AppTheme.accent.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
-              Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary, size: 20),
-              const SizedBox(width: 8),
+              Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary, size: 22),
+              const SizedBox(width: 10),
               const Text(
-                'Agregar a cola',
-                style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600),
+                'Agregar a la cola',
+                style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700, fontSize: 13),
               ),
             ],
           ),
@@ -783,6 +798,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
   }
 
   void _showAddToPlaylistDialog(BuildContext context, WidgetRef ref) async {
+    FocusManager.instance.primaryFocus?.unfocus();
     final dao = ref.read(playlistDaoProvider);
     final playlists = await dao.getAllPlaylists();
 
@@ -947,6 +963,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
   // canción válida (artista, título, álbum de referencia) y se dispara el
   // crawl directamente.
   void _showOtherVersionsModal(BuildContext context) {
+    FocusManager.instance.primaryFocus?.unfocus();
     final artistId = widget.track.artistId ?? 0;
     if (artistId == 0) return;
 
@@ -1000,6 +1017,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
   }
 
   void _showTrackOptionsMenu(BuildContext context, WidgetRef ref) async {
+    FocusManager.instance.primaryFocus?.unfocus();
     final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
     final isLiked = await ref.read(playlistDaoProvider).isTrackLiked(trackIdInt);
 

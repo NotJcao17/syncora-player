@@ -163,6 +163,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: '/home',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: HomeScreen(),
+            ),
+          ),
+          GoRoute(
             path: '/search',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: SearchScreen(),

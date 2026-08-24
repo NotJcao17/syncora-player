@@ -215,279 +215,293 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                   }
                   await _loadAlbumData();
                 },
-                child: SingleChildScrollView(
+                child: CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).padding.top + 56,
-                    left: isDesktop ? 32 : 12,
-                    right: isDesktop ? 32 : 12,
-                    bottom: 40,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 8),
-
-                      if (isDesktop)
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                  slivers: [
+                    SliverPadding(
+                      padding: EdgeInsets.only(
+                        top: MediaQuery.of(context).padding.top + 56,
+                        left: isDesktop ? 32 : 12,
+                        right: isDesktop ? 32 : 12,
+                      ),
+                      sliver: SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 220,
-                              height: 220,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: AppTheme.glowShadow,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: CachedNetworkImage(
-                                  imageUrl: album.coverUrl,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 28),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                            const SizedBox(height: 8),
+
+                            if (isDesktop)
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  const Text(
-                                    'ÁLBUM',
-                                    style: TextStyle(
-                                      color: AppTheme.secondary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 1.5,
+                                  Container(
+                                    width: 220,
+                                    height: 220,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: AppTheme.glowShadow,
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: CachedNetworkImage(
+                                        imageUrl: album.coverUrl,
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
+                                  const SizedBox(width: 28),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'ÁLBUM',
+                                          style: TextStyle(
+                                            color: AppTheme.secondary,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 1.5,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          album.title,
+                                          style: const TextStyle(
+                                            color: AppTheme.primary,
+                                            fontSize: 44,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: -1,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 14),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              album.artistName,
+                                              style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
+                                            ),
+                                            Text(
+                                              '  •  ${album.releaseDate}  •  ${album.tracks.length} canciones, $totalDurationStr',
+                                              style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Center(
+                                    child: Container(
+                                      width: 180,
+                                      height: 180,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: AppTheme.glowHighShadow,
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: CachedNetworkImage(
+                                          imageUrl: album.coverUrl,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
                                   Text(
                                     album.title,
+                                    textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       color: AppTheme.primary,
-                                      fontSize: 44,
+                                      fontSize: 28,
                                       fontWeight: FontWeight.w900,
-                                      letterSpacing: -1,
+                                      letterSpacing: -0.5,
                                     ),
                                   ),
-                                  const SizedBox(height: 14),
+                                  const SizedBox(height: 10),
                                   Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
                                         album.artistName,
                                         style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
                                       ),
                                       Text(
-                                        '  •  ${album.releaseDate}  •  ${album.tracks.length} canciones, $totalDurationStr',
+                                        ' • ${album.tracks.length} canciones, $totalDurationStr',
                                         style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        )
-                      else
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Center(
-                              child: Container(
-                                width: 180,
-                                height: 180,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: AppTheme.glowHighShadow,
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: CachedNetworkImage(
-                                    imageUrl: album.coverUrl,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                            ),
+
                             const SizedBox(height: 16),
-                            Text(
-                              album.title,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: AppTheme.primary,
-                                fontSize: 28,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.5,
+
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  if (syncoraTracks.isNotEmpty) ...[
+                                    _HeaderPlayButton(
+                                      isPlaying: showPauseHeader,
+                                      isLoading: isCurrentContext &&
+                                          (playerState.engine.processingState == AudioProcessingState.loading ||
+                                           playerState.engine.processingState == AudioProcessingState.buffering),
+                                      onPressed: () {
+                                        if (showPauseHeader) {
+                                          controller.pause();
+                                        } else if (isCurrentContext) {
+                                          controller.play();
+                                        } else {
+                                          controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: albumContextId);
+                                          controller.play();
+                                        }
+                                      },
+                                    ),
+                                    const SizedBox(width: 12),
+                                    DownloadHeaderButton(
+                                      title: album.title,
+                                      tracks: syncoraTracks,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Consumer(
+                                      builder: (context, ref, _) {
+                                        final playerState = ref.watch(playerStateProvider);
+                                        final isShuffle = playerState.isShuffle;
+
+                                        return IconButton(
+                                          icon: Padding(
+                                            padding: const EdgeInsets.only(top: 2.0),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
+                                                  color: isShuffle ? Colors.white : AppTheme.secondary,
+                                                  size: 22,
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Container(
+                                                  width: 4,
+                                                  height: 4,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color: isShuffle ? Colors.white : Colors.transparent,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            if (isCurrentContext) {
+                                              controller.toggleShuffle();
+                                            } else {
+                                              controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: albumContextId);
+                                              if (!isShuffle) {
+                                                controller.toggleShuffle();
+                                              }
+                                              controller.play();
+                                            }
+                                          },
+                                          tooltip: 'Aleatorio',
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(width: 16),
+                                  ],
+                                  if (isDesktop && !isLocalMode) ...[
+                                    IconButton(
+                                      icon: const Icon(Icons.refresh),
+                                      color: AppTheme.secondary,
+                                      onPressed: () async {
+                                        await ref.read(syncServiceProvider).syncSavedAlbums(force: true);
+                                        await _loadAlbumData();
+                                      },
+                                      tooltip: 'Sincronizar álbumes guardados',
+                                    ),
+                                    const SizedBox(width: 16),
+                                  ],
+                                  IconButton(
+                                    icon: Icon(
+                                      _isSaved ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
+                                      color: _isSaved ? AppTheme.primary : AppTheme.secondary,
+                                      size: 24,
+                                    ),
+                                    onPressed: _toggleSaveAlbum,
+                                    tooltip: _isSaved ? 'Eliminar de guardados' : 'Guardar álbum',
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  album.artistName,
-                                  style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
-                                ),
-                                Text(
-                                  ' • ${album.tracks.length} canciones, $totalDurationStr',
-                                  style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                                ),
-                              ],
-                            ),
+
+                            const SizedBox(height: 20),
                           ],
                         ),
-
-                      const SizedBox(height: 16),
-
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-
-                          if (syncoraTracks.isNotEmpty) ...[
-                            _HeaderPlayButton(
-                              isPlaying: showPauseHeader,
-                              isLoading: isCurrentContext &&
-                                  (playerState.engine.processingState == AudioProcessingState.loading ||
-                                   playerState.engine.processingState == AudioProcessingState.buffering),
-                              onPressed: () {
-                                if (showPauseHeader) {
-                                  controller.pause();
-                                } else if (isCurrentContext) {
-                                  controller.play();
-                                } else {
-                                  controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: albumContextId);
-                                  controller.play();
-                                }
-                              },
-                            ),
-                            const SizedBox(width: 12),
-                            DownloadHeaderButton(
-                              title: album.title,
-                              tracks: syncoraTracks,
-                            ),
-                            const SizedBox(width: 12),
-                            Consumer(
-
-                              builder: (context, ref, _) {
-                                final playerState = ref.watch(playerStateProvider);
-                                final isShuffle = playerState.isShuffle;
-
-                                return IconButton(
-                                  icon: Padding(
-                                    padding: const EdgeInsets.only(top: 2.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
-                                          color: isShuffle ? Colors.white : AppTheme.secondary,
-                                          size: 22,
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Container(
-                                          width: 4,
-                                          height: 4,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: isShuffle ? Colors.white : Colors.transparent,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    if (isCurrentContext) {
-                                      controller.toggleShuffle();
-                                    } else {
-                                      controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: albumContextId);
-                                      if (!isShuffle) {
-                                        controller.toggleShuffle();
-                                      }
-                                      controller.play();
-                                    }
-                                  },
-                                  tooltip: 'Aleatorio',
-                                );
-                              },
-                            ),
-                            const SizedBox(width: 16),
-                          ],
-                          if (isDesktop && !isLocalMode) ...[
-                            IconButton(
-                              icon: const Icon(Icons.refresh),
-                              color: AppTheme.secondary,
-                              onPressed: () async {
-                                await ref.read(syncServiceProvider).syncSavedAlbums(force: true);
-                                await _loadAlbumData();
-                              },
-                              tooltip: 'Sincronizar álbumes guardados',
-                            ),
-                            const SizedBox(width: 16),
-                          ],
-                          IconButton(
-                            icon: Icon(
-                              _isSaved ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
-                              color: _isSaved ? AppTheme.primary : AppTheme.secondary,
-                              size: 24,
-                            ),
-                            onPressed: _toggleSaveAlbum,
-                            tooltip: _isSaved ? 'Eliminar de guardados' : 'Guardar álbum',
-                          ),
-                        ],
                       ),
                     ),
 
-
-                    const SizedBox(height: 20),
-
-                    if (isDesktop && syncoraTracks.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 28, child: Text('#', style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
-                            const SizedBox(width: 8),
-                            const Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(left: 60), child: Text('TÍTULO', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)))),
-                            const SizedBox(width: 16),
-                            const Expanded(flex: 2, child: Text('ÁLBUM', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2))),
-                            const SizedBox(width: 12),
-                            SizedBox(width: 50, child: Align(alignment: Alignment.centerRight, child: Icon(AppIcons.broken(SolarIcons.ClockCircle), color: AppTheme.secondary, size: 16))),
-                            const SizedBox(width: 52),
-                          ],
+                    if (isDesktop && syncoraTracks.isNotEmpty)
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                child: Row(
+                                  children: [
+                                    const SizedBox(width: 28, child: Text('#', style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+                                    const SizedBox(width: 8),
+                                    const Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(left: 60), child: Text('TÍTULO', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)))),
+                                    const SizedBox(width: 16),
+                                    const Expanded(flex: 2, child: Text('ÁLBUM', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2))),
+                                    const SizedBox(width: 12),
+                                    SizedBox(width: 50, child: Align(alignment: Alignment.centerRight, child: Icon(AppIcons.broken(SolarIcons.ClockCircle), color: AppTheme.secondary, size: 16))),
+                                    const SizedBox(width: 52),
+                                  ],
+                                ),
+                              ),
+                              const Divider(height: 12, color: AppTheme.surfaceHover),
+                            ],
+                          ),
                         ),
                       ),
-                      const Divider(height: 12, color: AppTheme.surfaceHover),
-                    ],
 
-                    ListView.builder(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: syncoraTracks.length,
-                      itemBuilder: (ctx, i) {
-                        final track = syncoraTracks[i];
-                        final isPlayingTrack = currentTrack?.id == track.id;
+                    SliverPadding(
+                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12),
+                      sliver: SliverList.builder(
+                        itemCount: syncoraTracks.length,
+                        itemBuilder: (ctx, i) {
+                          final track = syncoraTracks[i];
+                          final isPlayingTrack = currentTrack?.id == track.id;
 
-                        return TrackTile(
-                          track: track,
-                          index: i,
-                          isPlaying: isPlayingTrack,
-                          showAlbum: true,
-                          onTap: () {
-                            controller.setQueue(syncoraTracks, startIndex: i, activeContextId: albumContextId);
-                          },
-                          onAddToQueue: () => controller.addToQueue(track),
-                        );
-                      },
+                          return TrackTile(
+                            track: track,
+                            index: i,
+                            isPlaying: isPlayingTrack,
+                            showAlbum: true,
+                            onTap: () {
+                              controller.setQueue(syncoraTracks, startIndex: i, activeContextId: albumContextId);
+                            },
+                            onAddToQueue: () => controller.addToQueue(track),
+                          );
+                        },
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: 40),
                     ),
                   ],
                 ),
-              ),
             ),
           ),
 
@@ -568,18 +582,27 @@ class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
             color: AppTheme.primary,
             boxShadow: _isHovered ? AppTheme.glowHighShadow : AppTheme.glowShadow,
           ),
-          child: IconButton(
-            icon: widget.isLoading
-                ? LoadingAnimationWidget.threeArchedCircle(
-                    color: AppTheme.background,
-                    size: 26,
-                  )
-                : Icon(
-                    widget.isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.outline(SolarIcons.Play),
-                    color: AppTheme.background,
-                    size: 26,
-                  ),
-            onPressed: widget.onPressed,
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: IconButton(
+              style: IconButton.styleFrom(
+                shape: const CircleBorder(),
+                padding: EdgeInsets.zero,
+              ),
+              icon: widget.isLoading
+                  ? LoadingAnimationWidget.threeArchedCircle(
+                      color: AppTheme.background,
+                      size: 26,
+                    )
+                  : Icon(
+                      widget.isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.outline(SolarIcons.Play),
+                      color: AppTheme.background,
+                      size: 26,
+                    ),
+              onPressed: widget.onPressed,
+            ),
           ),
         ),
       ),

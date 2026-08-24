@@ -368,9 +368,18 @@ class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
             color: AppTheme.primary,
             boxShadow: _isHovered ? AppTheme.glowHighShadow : AppTheme.glowShadow,
           ),
-          child: IconButton(
-            icon: Icon(AppIcons.outline(SolarIcons.Play), color: AppTheme.background, size: 26),
-            onPressed: widget.onPressed,
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: IconButton(
+              style: IconButton.styleFrom(
+                shape: const CircleBorder(),
+                padding: EdgeInsets.zero,
+              ),
+              icon: Icon(AppIcons.outline(SolarIcons.Play), color: AppTheme.background, size: 26),
+              onPressed: widget.onPressed,
+            ),
           ),
         ),
       ),

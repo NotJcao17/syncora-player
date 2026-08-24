@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
@@ -72,6 +73,17 @@ class AppTheme {
     return ThemeData.dark().copyWith(
       scaffoldBackgroundColor: background,
       primaryColor: primary,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+          systemNavigationBarColor: background,
+          systemNavigationBarIconBrightness: Brightness.light,
+        ),
+      ),
       colorScheme: const ColorScheme.dark(
         surface: surface,
         primary: primary,

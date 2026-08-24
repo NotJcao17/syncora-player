@@ -172,10 +172,10 @@ class AiAssistantService {
     List<Map<String, dynamic>>? contextTracks,
   }) {
     return invoke(AiAction.createPlaylist, {
-      if (prompt != null) 'prompt': prompt,
-      if (params != null) 'params': params,
-      if (count != null) 'count': count,
-      if (contextTracks != null) 'contextTracks': contextTracks,
+      'prompt': ?prompt,
+      'params': ?params,
+      'count': ?count,
+      'contextTracks': ?contextTracks,
     });
   }
 
@@ -186,10 +186,10 @@ class AiAssistantService {
     int? count,
   }) {
     return invoke(AiAction.createQueue, {
-      if (prompt != null) 'prompt': prompt,
-      if (contextTracks != null) 'contextTracks': contextTracks,
-      if (interleave != null) 'interleave': interleave,
-      if (count != null) 'count': count,
+      'prompt': ?prompt,
+      'contextTracks': ?contextTracks,
+      'interleave': ?interleave,
+      'count': ?count,
     });
   }
 
@@ -212,9 +212,9 @@ class AiAssistantService {
     int? count,
   }) {
     return invoke(AiAction.modifyPlaylistAdd, {
-      if (prompt != null) 'prompt': prompt,
-      if (contextTracks != null) 'contextTracks': contextTracks,
-      if (count != null) 'count': count,
+      'prompt': ?prompt,
+      'contextTracks': ?contextTracks,
+      'count': ?count,
     });
   }
 

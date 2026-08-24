@@ -43,9 +43,8 @@ import 'audio_engine_state.dart';
 class CrossfadeAudioEngine implements AudioEngine {
   CrossfadeAudioEngine({
     required AudioEngine Function() createEngine,
-    required Duration Function() fadeDurationGetter,
+    required this._fadeDurationGetter,
   })  : _createEngine = createEngine,
-        _fadeDurationGetter = fadeDurationGetter,
         _active = createEngine() {
     _resubscribeTo(_active);
   }

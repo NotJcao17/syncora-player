@@ -17,9 +17,8 @@ import '../player_models.dart';
 /// [generateBatch] hace I/O real, de forma más delgada y sin cobertura
 /// exhaustiva — igual que `DeezerApi` mismo no tiene tests hoy.
 class RadioService {
-  RadioService({DeezerApi? deezerApi, math.Random? random})
-      : _deezerApi = deezerApi,
-        _random = random ?? math.Random();
+  RadioService({this._deezerApi, math.Random? random})
+      : _random = random ?? math.Random();
 
   final DeezerApi? _deezerApi;
   final math.Random _random;

@@ -59,6 +59,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   // En desktop es una ventana central (Dialog) — nada de sheet arrastrable
   // desde abajo, eso solo tiene sentido como gesto táctil en móvil.
   void _openDeepSearchModal(BuildContext context) {
+    FocusManager.instance.primaryFocus?.unfocus();
     final isDesktop = MediaQuery.of(context).size.width >= 768;
 
     if (isDesktop) {
@@ -185,7 +186,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             message: 'Buscar por letra con IA',
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
-                              onTap: () => showAiLyricSearchSheet(context, ref),
+                              onTap: () {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                showAiLyricSearchSheet(context, ref);
+                              },
                               child: Container(
                                 width: 40,
                                 height: 40,
@@ -370,6 +374,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildExploreCategories(bool isDesktop) {
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,6 +401,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               final cat = _categories[i];
               return InkWell(
                 onTap: () {
+                  FocusManager.instance.primaryFocus?.unfocus();
                   _searchController.text = cat['name'] as String;
                   ref.read(searchProvider.notifier).setQuery(cat['name'] as String);
                 },
@@ -473,6 +479,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
 
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -526,7 +533,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             return Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: GestureDetector(
-                onTap: () => context.push('/artist/${artist.id}'),
+                onTap: () {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  context.push('/artist/${artist.id}');
+                },
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -615,6 +625,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               track: track,
               isPlaying: isPlaying,
               onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
                 controller.setQueue(syncoraTracks, startIndex: i);
               },
               onAddToQueue: () => controller.addToQueue(track),
@@ -648,7 +659,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   title: album.title,
                   subtitle: album.artistName,
                   coverUrl: album.coverUrl,
-                  onTap: () => context.push('/album/${album.id}'),
+                  onTap: () {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                    context.push('/album/${album.id}');
+                  },
                 ),
               );
             },

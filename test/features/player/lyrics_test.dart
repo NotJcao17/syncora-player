@@ -3,13 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:syncora_player/data/apis/lrclib_api.dart';
 import 'package:syncora_player/data/apis/lrclib_provider.dart';
-import 'package:syncora_player/features/player/audio_engine/audio_engine_state.dart';
 import 'package:syncora_player/features/player/player_models.dart';
 import 'package:syncora_player/features/player/player_providers.dart';
 import 'package:syncora_player/features/player/syncora_player_controller.dart';
 import 'package:syncora_player/features/player/widgets/desktop_lyrics_view.dart';
 import 'package:syncora_player/features/player/widgets/lyrics_sheet.dart';
-
 import 'mini_player_test.dart';
 
 class FakeLrcLibApi implements LRCLibApi {

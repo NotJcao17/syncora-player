@@ -347,365 +347,370 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         await ref.read(syncServiceProvider).syncPlaylistDetail(playlist.remoteId!, force: true);
                       }
                     },
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.only(
-                        top: MediaQuery.of(context).padding.top + 56,
-                        left: isDesktop ? 32 : 12,
-                        right: isDesktop ? 32 : 12,
-                        bottom: 40,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 8),
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.only(
+                          top: MediaQuery.of(context).padding.top + 56,
+                          left: isDesktop ? 32 : 12,
+                          right: isDesktop ? 32 : 12,
+                        ),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 8),
 
-                          if (isDesktop)
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Container(
-                                  width: 220,
-                                  height: 220,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: AppTheme.glowShadow,
-                                  ),
-                                  child: PlaylistCoverWidget(
-                                    coverUrl: playlist.coverUrl,
-                                    playlistId: playlist.id,
-                                    tracks: syncoraTracks,
-                                    isLiked: isLiked,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
+                              if (isDesktop)
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Container(
+                                      width: 220,
+                                      height: 220,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: AppTheme.glowShadow,
+                                      ),
+                                      child: PlaylistCoverWidget(
+                                        coverUrl: playlist.coverUrl,
+                                        playlistId: playlist.id,
+                                        tracks: syncoraTracks,
+                                        isLiked: isLiked,
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 28),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'PLAYLIST',
+                                            style: TextStyle(
+                                              color: AppTheme.secondary,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 1.5,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            playlist.title,
+                                            style: const TextStyle(
+                                              color: AppTheme.primary,
+                                              fontSize: 44,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: -1,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            playlist.description ?? 'Sin descripción',
+                                            style: const TextStyle(color: AppTheme.secondary, fontSize: 14),
+                                          ),
+                                          const SizedBox(height: 14),
+                                          Text(
+                                            '${tracks.length} canciones',
+                                            style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              else
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Center(
+                                      child: Container(
+                                        width: 180,
+                                        height: 180,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(20),
+                                          boxShadow: AppTheme.glowHighShadow,
+                                        ),
+                                        child: PlaylistCoverWidget(
+                                          coverUrl: playlist.coverUrl,
+                                          playlistId: playlist.id,
+                                          tracks: syncoraTracks,
+                                          isLiked: isLiked,
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      playlist.title,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: AppTheme.primary,
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      playlist.description ?? 'Sin descripción',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      '${tracks.length} canciones',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 28),
-                                Expanded(
+
+                              const SizedBox(height: 16),
+
+                              // Actions row
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
+                                  children: [
+                                    if (syncoraTracks.isNotEmpty) ...[
+                                      _HeaderPlayButton(
+                                        isPlaying: showPauseHeader,
+                                        isLoading: isCurrentContext &&
+                                            (playerState.engine.processingState == AudioProcessingState.loading ||
+                                             playerState.engine.processingState == AudioProcessingState.buffering),
+                                        onPressed: () {
+                                          if (showPauseHeader) {
+                                            controller.pause();
+                                          } else if (isCurrentContext) {
+                                            controller.play();
+                                          } else {
+                                            controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: playlistContextId);
+                                            controller.play();
+                                          }
+                                        },
+                                      ),
+                                      const SizedBox(width: 8),
+                                      DownloadHeaderButton(
+                                        title: playlist.title,
+                                        tracks: syncoraTracks,
+                                      ),
+                                      const SizedBox(width: 12),
+                                    ],
+
+                                    if (isDesktop && playlist.remoteId != null) ...[
+                                      IconButton(
+                                        icon: const Icon(Icons.refresh),
+                                        color: AppTheme.secondary,
+                                        onPressed: () {
+                                          if (playlist.remoteId != null) {
+                                            ref.read(syncServiceProvider).syncPlaylistDetail(playlist.remoteId!, force: true);
+                                          }
+                                        },
+                                        tooltip: 'Sincronizar playlist',
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: _showAddSongsSearch ? AppTheme.surfaceHover : AppTheme.surface,
+                                        foregroundColor: AppTheme.primary,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      ),
+                                      onPressed: () {
+                                        setState(() => _showAddSongsSearch = !_showAddSongsSearch);
+                                      },
+                                      icon: Icon(_showAddSongsSearch ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.AddCircle), size: 18),
+                                      label: Text(_showAddSongsSearch ? 'Cerrar buscador' : 'Agregar canciones', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      icon: Icon(AppIcons.broken(SolarIcons.Export), color: AppTheme.secondary, size: 22),
+                                      onPressed: () => _exportPlaylist(tracks),
+                                      tooltip: 'Exportar playlist (CSV)',
+                                    ),
+                                    const SizedBox(width: 8),
+                                    if (!isLiked)
+                                      IconButton(
+                                        icon: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), color: AppTheme.secondary, size: 20),
+                                        onPressed: () async {
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            builder: (ctx) => AlertDialog(
+                                              backgroundColor: AppTheme.surface,
+                                              title: const Text('¿Eliminar playlist?', style: TextStyle(color: AppTheme.primary)),
+                                              content: const Text('Esta acción no se puede deshacer.', style: TextStyle(color: AppTheme.secondary)),
+                                              actions: [
+                                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                                                ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                                  onPressed: () => Navigator.pop(ctx, true),
+                                                  child: const Text('Eliminar'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirm == true) {
+                                            await _executeRemoteMutation(() async {
+                                              if (playlist.remoteId != null) {
+                                                final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                                                await supabaseRepo.deletePlaylist(playlist.remoteId!);
+                                              }
+                                            });
+                                            if (!playlist.isLiked) {
+                                              await playlistDao.deletePlaylist(playlist.id);
+                                            }
+                                            if (context.mounted && context.canPop()) context.pop();
+                                          }
+                                        },
+                                        tooltip: 'Eliminar playlist',
+                                      ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // Buscador inline de canciones para agregar a esta playlist
+                              if (_showAddSongsSearch || tracks.isEmpty) ...[
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.surface,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: AppTheme.surfaceHover),
+                                  ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       const Text(
-                                        'PLAYLIST',
-                                        style: TextStyle(
-                                          color: AppTheme.secondary,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 1.5,
+                                        'Buscar canciones para agregar',
+                                        style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 16),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      TextField(
+                                        controller: _addSongsController,
+                                        onChanged: (val) => _performAddSongsSearch(val),
+                                        style: const TextStyle(color: AppTheme.primary),
+                                        decoration: InputDecoration(
+                                          hintText: 'Escribe nombre de canción o artista...',
+                                          hintStyle: TextStyle(color: AppTheme.secondary.withValues(alpha: 0.7)),
+                                          prefixIcon: Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.secondary, size: 18),
+                                          suffixIcon: _isSearchingSongs
+                                              ? const Padding(
+                                                  padding: EdgeInsets.all(12),
+                                                  child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary)),
+                                                )
+                                              : (_addSongsController.text.isNotEmpty
+                                                  ? IconButton(
+                                                      icon: Icon(AppIcons.broken(SolarIcons.CloseCircle), color: AppTheme.secondary, size: 18),
+                                                      onPressed: () {
+                                                        _addSongsController.clear();
+                                                        _performAddSongsSearch('');
+                                                      },
+                                                    )
+                                                  : null),
+                                          filled: true,
+                                          fillColor: AppTheme.background,
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                                         ),
                                       ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        playlist.title,
-                                        style: const TextStyle(
-                                          color: AppTheme.primary,
-                                          fontSize: 44,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: -1,
+                                      if (_searchResults.isNotEmpty) ...[
+                                        const SizedBox(height: 12),
+                                        ListView.builder(
+                                          shrinkWrap: true,
+                                          physics: const NeverScrollableScrollPhysics(),
+                                          itemCount: _searchResults.length > 8 ? 8 : _searchResults.length,
+                                          itemBuilder: (ctx, i) {
+                                            final track = _searchResults[i];
+                                            return ListTile(
+                                              contentPadding: EdgeInsets.zero,
+                                              leading: ClipRRect(
+                                                borderRadius: BorderRadius.circular(6),
+                                                child: CachedNetworkImage(imageUrl: track.coverUrl, width: 40, height: 40, fit: BoxFit.cover),
+                                              ),
+                                              title: Text(track.title, style: const TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                              subtitle: Text(track.artistName, style: const TextStyle(color: AppTheme.secondary, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                              trailing: IconButton(
+                                                icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
+                                                onPressed: () async {
+                                                  final ok = await _executeRemoteMutation(() async {
+                                                    String? remoteId = playlist.remoteId;
+                                                    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                                                    if (remoteId == null) {
+                                                      final res = await supabaseRepo.createPlaylist(
+                                                        title: playlist.title,
+                                                        description: playlist.description,
+                                                        isPublic: playlist.isPublic,
+                                                        isLiked: playlist.isLiked,
+                                                      );
+                                                      remoteId = res['id']?.toString();
+                                                      if (remoteId != null) {
+                                                        await playlistDao.updatePlaylist(playlist.copyWith(remoteId: Value(remoteId)));
+                                                      }
+                                                    }
+
+                                                    if (remoteId != null) {
+                                                      await supabaseRepo.addTrackToPlaylist(remoteId, {
+                                                        'track_id': track.id,
+                                                        'artist_id': track.artistId,
+                                                        'album_id': track.albumId,
+                                                        'title': track.title,
+                                                        'artist_name': track.artistName,
+                                                        'album_name': track.albumTitle,
+                                                        'cover_url': track.coverUrl,
+                                                        'duration_ms': track.durationSec * 1000,
+                                                      });
+                                                    }
+                                                  });
+
+                                                  if (!ok) return;
+
+                                                  final currentPl = await playlistDao.getPlaylistById(playlist.id);
+                                                  if (currentPl == null) return;
+
+                                                  final contributors = await resolveDeezerTrackContributors(
+                                                    ref.read(deezerApiProvider),
+                                                    track,
+                                                  );
+                                                  await playlistDao.addTrackToPlaylist(
+                                                    playlistId: playlist.id,
+                                                    trackId: track.id,
+                                                    artistId: track.artistId,
+                                                    albumId: track.albumId,
+                                                    title: track.title,
+                                                    artistName: track.artistName,
+                                                    albumName: track.albumTitle,
+                                                    coverUrl: track.coverUrl,
+                                                    durationMs: track.durationSec * 1000,
+                                                    contributorsJson: SyncoraArtistRef.encodeList(contributors),
+                                                  );
+                                                  if (!context.mounted) return;
+                                                  AppToast.show(context, message: '"${track.title}" agregada a la playlist');
+                                                },
+                                              ),
+                                            );
+                                          },
                                         ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        playlist.description ?? 'Sin descripción',
-                                        style: const TextStyle(color: AppTheme.secondary, fontSize: 14),
-                                      ),
-                                      const SizedBox(height: 14),
-                                      Text(
-                                        '${tracks.length} canciones',
-                                        style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                                      ),
+                                      ],
                                     ],
                                   ),
                                 ),
-                              ],
-                            )
-                          else
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Center(
-                                  child: Container(
-                                    width: 180,
-                                    height: 180,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: AppTheme.glowHighShadow,
-                                    ),
-                                    child: PlaylistCoverWidget(
-                                      coverUrl: playlist.coverUrl,
-                                      playlistId: playlist.id,
-                                      tracks: syncoraTracks,
-                                      isLiked: isLiked,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                  ),
-                                ),
                                 const SizedBox(height: 16),
-                                Text(
-                                  playlist.title,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: AppTheme.primary,
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  playlist.description ?? 'Sin descripción',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  '${tracks.length} canciones',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                                ),
                               ],
-                            ),
-
-                          const SizedBox(height: 16),
-
-                          // Actions row
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
-
-                            children: [
-                              if (syncoraTracks.isNotEmpty) ...[
-                                _HeaderPlayButton(
-                                  isPlaying: showPauseHeader,
-                                  isLoading: isCurrentContext &&
-                                      (playerState.engine.processingState == AudioProcessingState.loading ||
-                                       playerState.engine.processingState == AudioProcessingState.buffering),
-                                  onPressed: () {
-                                    if (showPauseHeader) {
-                                      controller.pause();
-                                    } else if (isCurrentContext) {
-                                      controller.play();
-                                    } else {
-                                      controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: playlistContextId);
-                                      controller.play();
-                                    }
-                                  },
-                                ),
-                                const SizedBox(width: 8),
-                                DownloadHeaderButton(
-                                  title: playlist.title,
-                                  tracks: syncoraTracks,
-                                ),
-                                const SizedBox(width: 12),
-                              ],
-
-                              if (isDesktop && playlist.remoteId != null) ...[
-                                IconButton(
-                                  icon: const Icon(Icons.refresh),
-                                  color: AppTheme.secondary,
-                                  onPressed: () {
-                                    if (playlist.remoteId != null) {
-                                      ref.read(syncServiceProvider).syncPlaylistDetail(playlist.remoteId!, force: true);
-                                    }
-                                  },
-                                  tooltip: 'Sincronizar playlist',
-                                ),
-                                const SizedBox(width: 8),
-                              ],
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _showAddSongsSearch ? AppTheme.surfaceHover : AppTheme.surface,
-                                foregroundColor: AppTheme.primary,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              ),
-                              onPressed: () {
-                                setState(() => _showAddSongsSearch = !_showAddSongsSearch);
-                              },
-                              icon: Icon(_showAddSongsSearch ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.AddCircle), size: 18),
-                              label: Text(_showAddSongsSearch ? 'Cerrar buscador' : 'Agregar canciones', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: Icon(AppIcons.broken(SolarIcons.Export), color: AppTheme.secondary, size: 22),
-                              onPressed: () => _exportPlaylist(tracks),
-                              tooltip: 'Exportar playlist (CSV)',
-                            ),
-                            const SizedBox(width: 8),
-                            if (!isLiked)
-                              IconButton(
-                                icon: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), color: AppTheme.secondary, size: 20),
-                                onPressed: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      backgroundColor: AppTheme.surface,
-                                      title: const Text('¿Eliminar playlist?', style: TextStyle(color: AppTheme.primary)),
-                                      content: const Text('Esta acción no se puede deshacer.', style: TextStyle(color: AppTheme.secondary)),
-                                      actions: [
-                                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-                                        ElevatedButton(
-                                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                          onPressed: () => Navigator.pop(ctx, true),
-                                          child: const Text('Eliminar'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    await _executeRemoteMutation(() async {
-                                      if (playlist.remoteId != null) {
-                                        final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                                        await supabaseRepo.deletePlaylist(playlist.remoteId!);
-                                      }
-                                    });
-                                    if (!playlist.isLiked) {
-                                      await playlistDao.deletePlaylist(playlist.id);
-                                    }
-                                    if (context.mounted && context.canPop()) context.pop();
-                                  }
-                                },
-                                tooltip: 'Eliminar playlist',
-                              ),
-                          ],
+                              const SizedBox(height: 16),
+                            ],
+                          ),
                         ),
                       ),
 
-
-                        const SizedBox(height: 12),
-
-                        // Buscador inline de canciones para agregar a esta playlist
-                        if (_showAddSongsSearch || tracks.isEmpty) ...[
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppTheme.surface,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppTheme.surfaceHover),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Buscar canciones para agregar',
-                                  style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 16),
-                                ),
-                                const SizedBox(height: 12),
-                                TextField(
-                                  controller: _addSongsController,
-                                  onChanged: (val) => _performAddSongsSearch(val),
-                                  style: const TextStyle(color: AppTheme.primary),
-                                  decoration: InputDecoration(
-                                    hintText: 'Escribe nombre de canción o artista...',
-                                    hintStyle: TextStyle(color: AppTheme.secondary.withValues(alpha: 0.7)),
-                                    prefixIcon: Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.secondary, size: 18),
-                                    suffixIcon: _isSearchingSongs
-                                        ? const Padding(
-                                            padding: EdgeInsets.all(12),
-                                            child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary)),
-                                          )
-                                        : (_addSongsController.text.isNotEmpty
-                                            ? IconButton(
-                                                icon: Icon(AppIcons.broken(SolarIcons.CloseCircle), color: AppTheme.secondary, size: 18),
-                                                onPressed: () {
-                                                  _addSongsController.clear();
-                                                  _performAddSongsSearch('');
-                                                },
-                                              )
-                                            : null),
-                                    filled: true,
-                                    fillColor: AppTheme.background,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                                  ),
-                                ),
-                                if (_searchResults.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-                                  ListView.builder(
-                                    shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    itemCount: _searchResults.length > 8 ? 8 : _searchResults.length,
-                                    itemBuilder: (ctx, i) {
-                                      final track = _searchResults[i];
-                                      return ListTile(
-                                        contentPadding: EdgeInsets.zero,
-                                        leading: ClipRRect(
-                                          borderRadius: BorderRadius.circular(6),
-                                          child: CachedNetworkImage(imageUrl: track.coverUrl, width: 40, height: 40, fit: BoxFit.cover),
-                                        ),
-                                        title: Text(track.title, style: const TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                        subtitle: Text(track.artistName, style: const TextStyle(color: AppTheme.secondary, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                        trailing: IconButton(
-                                          icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
-                                          onPressed: () async {
-                                            final ok = await _executeRemoteMutation(() async {
-                                              String? remoteId = playlist.remoteId;
-                                              final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                                              if (remoteId == null) {
-                                                final res = await supabaseRepo.createPlaylist(
-                                                  title: playlist.title,
-                                                  description: playlist.description,
-                                                  isPublic: playlist.isPublic,
-                                                  isLiked: playlist.isLiked,
-                                                );
-                                                remoteId = res['id']?.toString();
-                                                if (remoteId != null) {
-                                                  await playlistDao.updatePlaylist(playlist.copyWith(remoteId: Value(remoteId)));
-                                                }
-                                              }
-
-                                              if (remoteId != null) {
-                                                await supabaseRepo.addTrackToPlaylist(remoteId, {
-                                                  'track_id': track.id,
-                                                  'artist_id': track.artistId,
-                                                  'album_id': track.albumId,
-                                                  'title': track.title,
-                                                  'artist_name': track.artistName,
-                                                  'album_name': track.albumTitle,
-                                                  'cover_url': track.coverUrl,
-                                                  'duration_ms': track.durationSec * 1000,
-                                                });
-                                              }
-                                            });
-
-                                            if (!ok) return;
-
-                                            final currentPl = await playlistDao.getPlaylistById(playlist.id);
-                                            if (currentPl == null) return;
-
-                                            final contributors = await resolveDeezerTrackContributors(
-                                              ref.read(deezerApiProvider),
-                                              track,
-                                            );
-                                            await playlistDao.addTrackToPlaylist(
-                                              playlistId: playlist.id,
-                                              trackId: track.id,
-                                              artistId: track.artistId,
-                                              albumId: track.albumId,
-                                              title: track.title,
-                                              artistName: track.artistName,
-                                              albumName: track.albumTitle,
-                                              coverUrl: track.coverUrl,
-                                              durationMs: track.durationSec * 1000,
-                                              contributorsJson: SyncoraArtistRef.encodeList(contributors),
-                                            );
-                                            if (!context.mounted) return;
-                                            AppToast.show(context, message: '"${track.title}" agregada a la playlist');
-                                          },
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                        const SizedBox(height: 16),
-
-                        if (tracks.isEmpty && !_showAddSongsSearch)
-                          const Padding(
+                      if (tracks.isEmpty && !_showAddSongsSearch)
+                        const SliverToBoxAdapter(
+                          child: Padding(
                             padding: EdgeInsets.symmetric(vertical: 20),
                             child: Center(
                               child: Text(
@@ -714,37 +719,42 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                 style: TextStyle(color: AppTheme.secondary, height: 1.5),
                               ),
                             ),
-                          )
-                        else ...[
-                          if (isDesktop && syncoraTracks.isNotEmpty) ...[
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              child: Row(
+                          ),
+                        )
+                      else ...[
+                        if (isDesktop && syncoraTracks.isNotEmpty)
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32),
+                            sliver: SliverToBoxAdapter(
+                              child: Column(
                                 children: [
-                                  const SizedBox(width: 28, child: Text('#', style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
-                                  const SizedBox(width: 8),
-                                  const Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(left: 60), child: Text('TÍTULO', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)))),
-                                  const SizedBox(width: 16),
-                                  const Expanded(flex: 2, child: Text('ÁLBUM', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2))),
-                                  const SizedBox(width: 12),
-                                  SizedBox(width: 50, child: Align(alignment: Alignment.centerRight, child: Icon(AppIcons.broken(SolarIcons.ClockCircle), color: AppTheme.secondary, size: 16))),
-                                  const SizedBox(width: 52),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    child: Row(
+                                      children: [
+                                        const SizedBox(width: 28, child: Text('#', style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+                                        const SizedBox(width: 8),
+                                        const Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(left: 60), child: Text('TÍTULO', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)))),
+                                        const SizedBox(width: 16),
+                                        const Expanded(flex: 2, child: Text('ÁLBUM', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2))),
+                                        const SizedBox(width: 12),
+                                        SizedBox(width: 50, child: Align(alignment: Alignment.centerRight, child: Icon(AppIcons.broken(SolarIcons.ClockCircle), color: AppTheme.secondary, size: 16))),
+                                        const SizedBox(width: 52),
+                                      ],
+                                    ),
+                                  ),
+                                  const Divider(height: 12, color: AppTheme.surfaceHover),
                                 ],
                               ),
                             ),
-                            const Divider(height: 12, color: AppTheme.surfaceHover),
-                          ],
-                          ListView.builder(
-                            padding: EdgeInsets.zero,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
+                          ),
+                        SliverPadding(
+                          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12),
+                          sliver: SliverList.builder(
                             itemCount: syncoraTracks.length,
                             itemBuilder: (ctx, i) {
                               final track = syncoraTracks[i];
                               final playlistTrack = tracks[i];
-                              // Fase 7.A: el modelo de cola dual ya no tiene un índice estable
-                              // sobre "la cola" para desambiguar duplicados dentro de la misma
-                              // playlist (regresión aceptada y documentada, ver plan_fase_7.md).
                               final isPlayingTrack = currentTrack?.id == track.id;
 
                               return TrackTile(
@@ -772,9 +782,12 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                               );
                             },
                           ),
-                        ],
+                        ),
                       ],
-                    ),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 40),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -860,18 +873,27 @@ class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
             color: AppTheme.primary,
             boxShadow: _isHovered ? AppTheme.glowHighShadow : AppTheme.glowShadow,
           ),
-          child: IconButton(
-            icon: widget.isLoading
-                ? LoadingAnimationWidget.threeArchedCircle(
-                    color: AppTheme.background,
-                    size: 26,
-                  )
-                : Icon(
-                    widget.isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.outline(SolarIcons.Play),
-                    color: AppTheme.background,
-                    size: 26,
-                  ),
-            onPressed: widget.onPressed,
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: IconButton(
+              style: IconButton.styleFrom(
+                shape: const CircleBorder(),
+                padding: EdgeInsets.zero,
+              ),
+              icon: widget.isLoading
+                  ? LoadingAnimationWidget.threeArchedCircle(
+                      color: AppTheme.background,
+                      size: 26,
+                    )
+                  : Icon(
+                      widget.isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.outline(SolarIcons.Play),
+                      color: AppTheme.background,
+                      size: 26,
+                    ),
+              onPressed: widget.onPressed,
+            ),
           ),
         ),
       ),

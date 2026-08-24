@@ -60,12 +60,17 @@ class DownloadBatchResult {
 }
 
 class DownloadService {
-  final DownloadedTrackDao _dao;
-  final ExtractionService _extractionService;
-  final CoverCacheService _coverCacheService;
+  final DownloadedTrackDao dao;
+  final ExtractionService extractionService;
+  final CoverCacheService coverCacheService;
   // ignore: unused_field
-  final Ref _ref;
+  final Ref ref;
 
+  DownloadedTrackDao get _dao => dao;
+  ExtractionService get _extractionService => extractionService;
+  CoverCacheService get _coverCacheService => coverCacheService;
+  // ignore: unused_element
+  Ref get _ref => ref;
 
   bool _isWifiOnly = true;
   final StreamController<DownloadProgress> _progressController =
@@ -74,14 +79,11 @@ class DownloadService {
   final Map<int, bool> _activeCancelTokens = {};
 
   DownloadService({
-    required DownloadedTrackDao dao,
-    required ExtractionService extractionService,
-    required CoverCacheService coverCacheService,
-    required Ref ref,
-  })  : _dao = dao,
-        _extractionService = extractionService,
-        _coverCacheService = coverCacheService,
-        _ref = ref;
+    required this.dao,
+    required this.extractionService,
+    required this.coverCacheService,
+    required this.ref,
+  });
 
   Stream<DownloadProgress> get progressStream => _progressController.stream;
 

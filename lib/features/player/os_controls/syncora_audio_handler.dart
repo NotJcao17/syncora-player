@@ -26,7 +26,7 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     action: MediaAction.custom,
   );
 
-  SyncoraAudioHandler(this._controller, {PlaylistDao? playlistDao}) : _playlistDao = playlistDao {
+  SyncoraAudioHandler(this._controller, {this._playlistDao}) {
     _controller.addListener(_onControllerChanged);
     _onControllerChanged(); // Estado inicial
   }

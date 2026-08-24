@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/player/player_providers.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 
@@ -31,22 +33,38 @@ abstract class AppToast {
       final keyboardHeight = mediaQuery.viewInsets.bottom;
       final paddingBottom = mediaQuery.padding.bottom;
 
+      bool isFullscreenOrNoShell = false;
+      try {
+        final location = GoRouterState.of(context).matchedLocation;
+        isFullscreenOrNoShell = location == '/player' || location == '/auth';
+      } catch (_) {}
+
+      bool hasActiveMiniPlayer = false;
+      try {
+        final container = ProviderScope.containerOf(context, listen: false);
+        final currentTrack = container.read(currentTrackProvider);
+        hasActiveMiniPlayer = currentTrack != null;
+      } catch (_) {}
+
       double bottomMargin = 104.0;
       if (!isDesktop) {
         if (keyboardHeight > 0) {
           bottomMargin = keyboardHeight + 16.0;
+        } else if (isFullscreenOrNoShell) {
+          // En reproductor a pantalla completa o sin shell: pegado al borde inferior + 16px
+          bottomMargin = 16.0 + paddingBottom;
+        } else if (hasActiveMiniPlayer) {
+          // Con mini-reproductor activo: por encima del mini-reproductor
+          bottomMargin = 144.0 + paddingBottom;
         } else {
-          bool isFullscreenPlayer = false;
-          try {
-            final location = GoRouterState.of(context).matchedLocation;
-            isFullscreenPlayer = location == '/player';
-          } catch (_) {}
-
-          if (isFullscreenPlayer) {
-            bottomMargin = 24.0 + paddingBottom;
-          } else {
-            bottomMargin = 152.0 + paddingBottom;
-          }
+          // Con mini-reproductor oculto: pegado sobre la barra de navegación
+          bottomMargin = 72.0 + paddingBottom;
+        }
+      } else {
+        if (isFullscreenOrNoShell) {
+          bottomMargin = 24.0;
+        } else {
+          bottomMargin = hasActiveMiniPlayer ? 104.0 : 32.0;
         }
       }
 
