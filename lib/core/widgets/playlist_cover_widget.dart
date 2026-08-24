@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,7 +10,8 @@ import '../../features/player/player_models.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 
-/// Portada de Playlist dinámica con fallback y cuadrícula 2x2 autogenerada.
+/// Portada de Playlist dinámica con fallback, cuadrícula 2x2 autogenerada,
+/// degradados y colores predefinidos o portadas personalizadas.
 class PlaylistCoverWidget extends ConsumerWidget {
   final String? coverUrl;
   final int? playlistId;
@@ -20,6 +23,28 @@ class PlaylistCoverWidget extends ConsumerWidget {
   final BoxFit fit;
   final int? memCacheWidth;
   final int? memCacheHeight;
+
+  static const List<LinearGradient> presetGradients = [
+    LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF9333EA)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFEF4444)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    LinearGradient(colors: [Color(0xFF10B981), Color(0xFF06B6D4)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    LinearGradient(colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    LinearGradient(colors: [Color(0xFFD97706), Color(0xFFB45309)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    LinearGradient(colors: [Color(0xFF14B8A6), Color(0xFF0F766E)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFF4C1D95)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+  ];
+
+  static const List<Color> presetColors = [
+    Color(0xFF1DB954), // Spotify Green
+    Color(0xFF3B82F6), // Blue
+    Color(0xFF8B5CF6), // Purple
+    Color(0xFFEC4899), // Pink
+    Color(0xFFEF4444), // Red
+    Color(0xFFF59E0B), // Amber
+    Color(0xFF10B981), // Emerald
+    Color(0xFF64748B), // Slate
+  ];
 
   const PlaylistCoverWidget({
     super.key,
@@ -56,16 +81,57 @@ class PlaylistCoverWidget extends ConsumerWidget {
         ),
       );
     }
-    // 2. Si tiene portada personalizada explicita -> mostrar imagen
+    // 2. Si tiene portada personalizada explícita (degradado, color, archivo local o URL)
     else if (coverUrl != null && coverUrl!.isNotEmpty) {
-      content = CachedNetworkImage(
-        imageUrl: coverUrl!,
-        fit: fit,
-        memCacheWidth: memCacheWidth ?? 400,
-        memCacheHeight: memCacheHeight ?? 400,
-        placeholder: (context, url) => Container(color: AppTheme.surfaceHover),
-        errorWidget: (context, url, error) => _buildFallbackIcon(),
-      );
+      final cover = coverUrl!;
+      if (cover.startsWith('gradient:')) {
+        final index = int.tryParse(cover.substring('gradient:'.length)) ?? 0;
+        final gradient = presetGradients[index % presetGradients.length];
+        content = Container(
+          decoration: BoxDecoration(gradient: gradient),
+          child: Center(
+            child: Icon(
+              AppIcons.broken(SolarIcons.MusicNote),
+              color: Colors.white.withValues(alpha: 0.9),
+              size: (width != null && width! < 100) ? 28 : 56,
+            ),
+          ),
+        );
+      } else if (cover.startsWith('color:')) {
+        final hexStr = cover.substring('color:'.length).replaceAll('#', '');
+        final intVal = int.tryParse(hexStr.length == 6 ? 'FF$hexStr' : hexStr, radix: 16) ?? 0xFF1DB954;
+        content = Container(
+          color: Color(intVal),
+          child: Center(
+            child: Icon(
+              AppIcons.broken(SolarIcons.MusicNote),
+              color: Colors.white.withValues(alpha: 0.9),
+              size: (width != null && width! < 100) ? 28 : 56,
+            ),
+          ),
+        );
+      } else if (!kIsWeb && (cover.startsWith('/') || cover.contains(':\\') || cover.startsWith('file:'))) {
+        final filePath = cover.startsWith('file://') ? cover.replaceFirst('file://', '') : cover;
+        final file = File(filePath);
+        if (file.existsSync()) {
+          content = Image.file(
+            file,
+            fit: fit,
+            errorBuilder: (context, error, stackTrace) => _buildFallbackIcon(),
+          );
+        } else {
+          content = _buildFallbackIcon();
+        }
+      } else {
+        content = CachedNetworkImage(
+          imageUrl: cover,
+          fit: fit,
+          memCacheWidth: memCacheWidth ?? 400,
+          memCacheHeight: memCacheHeight ?? 400,
+          placeholder: (context, url) => Container(color: AppTheme.surfaceHover),
+          errorWidget: (context, url, error) => _buildFallbackIcon(),
+        );
+      }
     }
     // 3. Si se pasaron pistas directamente -> construir grid 2x2 o fallback
     else if (tracks != null) {

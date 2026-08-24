@@ -276,9 +276,9 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                         const SizedBox(height: 14),
                                         Row(
                                           children: [
-                                            Text(
-                                              album.artistName,
-                                              style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
+                                            _HoverableArtistLink(
+                                              artistName: album.artistName,
+                                              artistId: album.artistId,
                                             ),
                                             Text(
                                               '  •  ${album.releaseDate}  •  ${album.tracks.length} canciones, $totalDurationStr',
@@ -327,9 +327,9 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Text(
-                                        album.artistName,
-                                        style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
+                                      _HoverableArtistLink(
+                                        artistName: album.artistName,
+                                        artistId: album.artistId,
                                       ),
                                       Text(
                                         ' • ${album.tracks.length} canciones, $totalDurationStr',
@@ -603,6 +603,50 @@ class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
                     ),
               onPressed: widget.onPressed,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HoverableArtistLink extends StatefulWidget {
+  final String artistName;
+  final int artistId;
+
+  const _HoverableArtistLink({
+    required this.artistName,
+    required this.artistId,
+  });
+
+  @override
+  State<_HoverableArtistLink> createState() => _HoverableArtistLinkState();
+}
+
+class _HoverableArtistLinkState extends State<_HoverableArtistLink> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isClickable = widget.artistId != 0;
+    return MouseRegion(
+      cursor: isClickable ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: (_) {
+        if (isClickable) setState(() => _isHovered = true);
+      },
+      onExit: (_) {
+        if (isClickable) setState(() => _isHovered = false);
+      },
+      child: GestureDetector(
+        onTap: isClickable ? () => context.push('/artist/${widget.artistId}') : null,
+        child: Text(
+          widget.artistName,
+          style: TextStyle(
+            color: AppTheme.primary,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            decoration: (isClickable && _isHovered) ? TextDecoration.underline : TextDecoration.none,
+            decorationColor: AppTheme.primary,
           ),
         ),
       ),

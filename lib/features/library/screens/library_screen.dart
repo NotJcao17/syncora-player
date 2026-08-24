@@ -36,19 +36,90 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   String _selectedFilter = 'Playlists';
   final List<String> _filters = const ['Playlists', 'Álbumes', 'Descargados'];
 
+  bool _showLocalSearch = false;
+  final TextEditingController _localSearchController = TextEditingController();
+  String _localSearchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    // Fase 7.I.5 (D-24): en modo local no hay nada que sincronizar -- los
-    // repositorios de Supabase ya devuelven vacío sin red sin sesión (H-5),
-    // así que esto ya era inofensivo, pero saltarlo explícitamente es más
-    // claro y evita el `Future.microtask` innecesario.
     if (!ref.read(localModeProvider)) {
       Future.microtask(() {
         ref.read(syncServiceProvider).syncLibrary(force: false);
+        ref.read(syncServiceProvider).syncSavedAlbums(force: false);
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _localSearchController.dispose();
+    super.dispose();
+  }
+
+  void _showImportExportTutorial(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(AppIcons.broken(SolarIcons.QuestionCircle), color: AppTheme.primary, size: 24),
+            const SizedBox(width: 10),
+            const Text('Guía de Importación & Exportación', style: TextStyle(color: AppTheme.primary, fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: SizedBox(
+          width: 480,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Text(
+                  'Cómo importar playlists desde Spotify (Exportify):',
+                  style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  '1. Abre tu navegador e ingresa a exportify.net\n'
+                  '2. Inicia sesión con tu cuenta de Spotify.\n'
+                  '3. Haz clic en "Export" junto a la playlist que deseas importar para descargar el archivo CSV.\n'
+                  '4. En Syncora, presiona el botón "Importar" en tu Biblioteca y selecciona el archivo CSV descargado.\n'
+                  '5. Syncora buscará y añadirá automáticamente todas tus canciones.',
+                  style: TextStyle(color: AppTheme.secondary, fontSize: 13, height: 1.45),
+                ),
+                Divider(color: AppTheme.surfaceHover, height: 28),
+                Text(
+                  'Cómo exportar a Spotify / Apple Music / Deezer:',
+                  style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  '1. Abre cualquier playlist en Syncora y presiona "Exportar playlist (CSV)".\n'
+                  '2. El archivo CSV se guardará en tu carpeta de Descargas/Documentos.\n'
+                  '3. Ingresa a tunemymusic.com o soundiiz.com en tu navegador.\n'
+                  '4. Selecciona "Subir archivo / CSV" como origen y elige tu plataforma destino (Spotify, Apple Music, Deezer, etc.).\n'
+                  '5. ¡Tus canciones se transferirán automáticamente!',
+                  style: TextStyle(color: AppTheme.secondary, fontSize: 13, height: 1.45),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: AppTheme.background,
+            ),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Entendido', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showCreatePlaylistDialog(BuildContext context, bool canEdit) {
@@ -160,9 +231,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   _showEditPlaylistDialog(context, playlist);
                 },
               ),
-              // Fase 7.I.8: "Hacer pública/privada" y "Copiar enlace" son
-              // conceptos de compartir -- no aplican sin nube (D-24), se
-              // ocultan en modo local en vez de mostrarse deshabilitados.
               if (!isLocalMode) ...[
                 ListTile(
                   leading: Icon(
@@ -216,9 +284,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                     AppToast.show(context, message: 'Enlace copiado al portapapeles');
                   },
                 ),
-                // 7.I: las 4 funciones de IA necesitan el JWT del usuario --
-                // no funcionan sin cuenta, se ocultan (no se deshabilitan)
-                // en modo local.
                 ListTile(
                   leading: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: canEdit ? AppTheme.primary : AppTheme.muted),
                   title: Text('Modificar con IA', style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted)),
@@ -235,6 +300,25 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 enabled: canEdit,
                 onTap: () async {
                   Navigator.pop(ctx);
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (dCtx) => AlertDialog(
+                      backgroundColor: AppTheme.surface,
+                      title: const Text('¿Eliminar playlist?', style: TextStyle(color: AppTheme.primary)),
+                      content: const Text('Esta acción no se puede deshacer.', style: TextStyle(color: AppTheme.secondary)),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancelar')),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                          onPressed: () => Navigator.pop(dCtx, true),
+                          child: const Text('Eliminar'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirm != true) return;
+
                   try {
                     final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
                     if (playlist.remoteId != null) {
@@ -270,10 +354,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           children: [
             TextField(
               controller: titleController,
-              autofocus: true,
               style: const TextStyle(color: AppTheme.primary),
               decoration: const InputDecoration(
-                labelText: 'Nombre de la playlist',
+                labelText: 'Nombre',
                 labelStyle: TextStyle(color: AppTheme.secondary),
                 enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.surfaceHover)),
                 focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.primary)),
@@ -303,31 +386,30 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               foregroundColor: AppTheme.background,
             ),
             onPressed: () async {
-              final newTitle = titleController.text.trim();
-              if (newTitle.isNotEmpty) {
-                final newDesc = descController.text.trim().isEmpty ? null : descController.text.trim();
-                String? remoteId = playlist.remoteId;
-                try {
-                  final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                  if (remoteId == null) {
-                    final supabaseRes = await supabaseRepo.createPlaylist(
-                      title: newTitle,
-                      description: newDesc,
-                      isPublic: playlist.isPublic,
-                      isLiked: playlist.isLiked,
-                    );
-                    remoteId = supabaseRes['id']?.toString();
-                  } else {
-                    await supabaseRepo.updatePlaylist(remoteId, title: newTitle, description: newDesc);
-                  }
-                } catch (_) {}
+              final title = titleController.text.trim();
+              if (title.isNotEmpty) {
+                final description = descController.text.trim().isEmpty ? null : descController.text.trim();
                 final dao = ref.read(playlistDaoProvider);
                 await dao.updatePlaylist(playlist.copyWith(
-                  title: newTitle,
-                  description: Value(newDesc),
-                  remoteId: Value(remoteId),
+                  title: title,
+                  description: Value(description),
                 ));
+
+                if (playlist.remoteId != null) {
+                  try {
+                    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                    await supabaseRepo.updatePlaylist(
+                      playlist.remoteId!,
+                      title: title,
+                      description: description,
+                    );
+                  } catch (_) {}
+                }
+
                 if (ctx.mounted) Navigator.of(ctx).pop();
+                if (context.mounted) {
+                  AppToast.show(context, message: 'Playlist actualizada');
+                }
               }
             },
             child: const Text('Guardar', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -394,13 +476,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
                 if (isDone) {
                   Future.microtask(() {
-                    // D-8/7.F.1 punto 3: secuencia canónica de inserción
-                    // (crear local -> crear remoto -> insertar pistas ->
-                    // subir lote -> marcar remoteId al final) extraída a
-                    // `PlaylistImportExportService.createPlaylistWithMatchedTracks`,
-                    // compartida con el flujo de "Crear playlist con IA"
-                    // (7.F.1) para que ambos usen exactamente el mismo
-                    // código, no una copia.
                     return service.createPlaylistWithMatchedTracks(
                       title: playlistTitle,
                       description: playlistDescription,
@@ -452,7 +527,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           const Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'No encontradas:',
+                              'Canciones no encontradas:',
                               style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -506,10 +581,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final playlistDao = ref.watch(playlistDaoProvider);
     final savedAlbumDao = ref.watch(savedAlbumDaoProvider);
     final isConnected = ref.watch(isConnectedProvider).value ?? true;
-    // Fase 7.I.7 (D-24): el gating de edición pasa de `isConnected` a
-    // `canEdit = isLocalMode || isConnected` -- refactor central de 7.I
-    // (H-5). `isLocalMode` además oculta (no deshabilita, 7.I.8) lo que
-    // directamente no aplica sin cuenta: IA, compartir, sync manual.
     final isLocalMode = ref.watch(localModeProvider);
     final canEdit = ref.watch(canEditProvider);
 
@@ -538,8 +609,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 ),
                 Row(
                   children: [
-                    // 7.I.8: control de sincronización manual, oculto en
-                    // modo local (no hay nube con la que sincronizar).
                     if (isDesktop && !isLocalMode)
                       IconButton(
                         icon: const Icon(Icons.refresh),
@@ -550,6 +619,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         },
                         tooltip: 'Sincronizar biblioteca',
                       ),
+                    Tooltip(
+                      message: 'Guía de importación & exportación',
+                      child: IconButton(
+                        icon: Icon(AppIcons.broken(SolarIcons.QuestionCircle), color: AppTheme.primary, size: 20),
+                        onPressed: () => _showImportExportTutorial(context),
+                      ),
+                    ),
                     Tooltip(
                       message: 'Pantalla de descargas',
                       child: IconButton(
@@ -565,28 +641,38 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       ),
                     ),
                     Tooltip(
-                      message: 'Buscar',
+                      message: 'Buscar en tu biblioteca',
                       child: IconButton(
-                        icon: Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.primary, size: 20),
-                        onPressed: () => context.push('/search'),
+                        icon: Icon(
+                          _showLocalSearch ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.Magnifer),
+                          color: AppTheme.primary,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _showLocalSearch = !_showLocalSearch;
+                            if (!_showLocalSearch) {
+                              _localSearchController.clear();
+                              _localSearchQuery = '';
+                            }
+                          });
+                        },
                       ),
                     ),
-                    // 7.I.8: las 4 funciones de IA necesitan el JWT del
-                    // usuario -- se ocultan (no se deshabilitan) sin cuenta.
                     if (!isLocalMode)
                       Tooltip(
                         message: isConnected ? 'Crear playlist con IA' : 'Sin conexión',
                         child: IconButton(
-                          // D-14: mismo ícono (`StarsMinimalistic`) en los 4
-                          // puntos de entrada de IA de la Fase 7.F.
                           icon: Icon(
                             AppIcons.broken(SolarIcons.StarsMinimalistic),
                             color: isConnected ? AppTheme.primary : AppTheme.muted,
                             size: 20,
                           ),
-                          onPressed: isConnected ? () => showAiCreatePlaylistSheet(context, ref) : () {
-                            AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.');
-                          },
+                          onPressed: isConnected
+                              ? () => showAiCreatePlaylistSheet(context, ref)
+                              : () {
+                                  AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.');
+                                },
                         ),
                       ),
                     Tooltip(
@@ -605,6 +691,45 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               ],
             ),
           ),
+
+          // Barra de búsqueda local integrada en la Biblioteca
+          if (_showLocalSearch)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                isDesktop ? 32 : 20,
+                0,
+                isDesktop ? 32 : 20,
+                10,
+              ),
+              child: TextField(
+                controller: _localSearchController,
+                autofocus: true,
+                style: const TextStyle(color: AppTheme.primary),
+                onChanged: (val) {
+                  setState(() {
+                    _localSearchQuery = val.trim().toLowerCase();
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Buscar en playlists, álbumes o descargas...',
+                  hintStyle: TextStyle(color: AppTheme.secondary.withValues(alpha: 0.7)),
+                  prefixIcon: Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.secondary, size: 18),
+                  suffixIcon: _localSearchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(AppIcons.broken(SolarIcons.CloseCircle), color: AppTheme.secondary, size: 18),
+                          onPressed: () {
+                            _localSearchController.clear();
+                            setState(() => _localSearchQuery = '');
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: AppTheme.surface,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+              ),
+            ),
 
           const Divider(color: AppTheme.surface, height: 1),
           const SizedBox(height: 12),
@@ -657,16 +782,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   ? StreamBuilder<List<SavedAlbum>>(
                       stream: savedAlbumDao.watchAllSavedAlbums(),
                       builder: (ctx, snapshot) {
-                        final albums = snapshot.data ?? [];
+                        final allAlbums = snapshot.data ?? [];
+                        final albums = allAlbums.where((a) {
+                          if (_localSearchQuery.isEmpty) return true;
+                          return a.title.toLowerCase().contains(_localSearchQuery) ||
+                              a.artistName.toLowerCase().contains(_localSearchQuery);
+                        }).toList();
+
                         if (albums.isEmpty) {
                           return SingleChildScrollView(
                             physics: const AlwaysScrollableScrollPhysics(),
                             child: Container(
                               height: MediaQuery.of(context).size.height * 0.5,
                               alignment: Alignment.center,
-                              child: const Text(
-                                'No tienes álbumes guardados',
-                                style: TextStyle(color: AppTheme.secondary),
+                              child: Text(
+                                _localSearchQuery.isNotEmpty ? 'No se encontraron álbumes que coincidan' : 'No tienes álbumes guardados',
+                                style: const TextStyle(color: AppTheme.secondary),
                               ),
                             ),
                           );
@@ -738,7 +869,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                 data: (data) => Stream.value(data),
                                 loading: () => Stream.value([]),
                                 error: (err, stack) => Stream.value([]),
-
                               ),
                           builder: (ctx, snapshot) {
                             final downloadedTracks = snapshot.data ?? [];
@@ -799,7 +929,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                     return result;
                                   }(),
                                   builder: (ctx, filteredSnapshot) {
-                                    final filteredPlaylists = filteredSnapshot.data ?? [];
+                                    final allFilteredPlaylists = filteredSnapshot.data ?? [];
+                                    final filteredPlaylists = allFilteredPlaylists.where((p) {
+                                      if (_localSearchQuery.isEmpty) return true;
+                                      return p.title.toLowerCase().contains(_localSearchQuery) ||
+                                          (p.description != null && p.description!.toLowerCase().contains(_localSearchQuery));
+                                    }).toList();
+
                                     if (filteredPlaylists.isEmpty) {
                                       return SingleChildScrollView(
                                         physics: const AlwaysScrollableScrollPhysics(),
@@ -816,9 +952,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                                 color: AppTheme.secondary,
                                               ),
                                               const SizedBox(height: 16),
-                                              const Text(
-                                                'Sin descargas',
-                                                style: TextStyle(
+                                              Text(
+                                                _localSearchQuery.isNotEmpty ? 'No se encontraron descargas que coincidan' : 'Sin descargas',
+                                                style: const TextStyle(
                                                   color: AppTheme.primary,
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 18,
@@ -909,16 +1045,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       : StreamBuilder<List<Playlist>>(
                           stream: playlistDao.watchAllPlaylists(),
                           builder: (ctx, snapshot) {
-                            final playlists = snapshot.data ?? [];
+                            final allPlaylists = snapshot.data ?? [];
+                            final playlists = allPlaylists.where((p) {
+                              if (_localSearchQuery.isEmpty) return true;
+                              return p.title.toLowerCase().contains(_localSearchQuery) ||
+                                  (p.description != null && p.description!.toLowerCase().contains(_localSearchQuery));
+                            }).toList();
+
                             if (playlists.isEmpty) {
                               return SingleChildScrollView(
                                 physics: const AlwaysScrollableScrollPhysics(),
                                 child: Container(
                                   height: MediaQuery.of(context).size.height * 0.5,
                                   alignment: Alignment.center,
-                                  child: const Text(
-                                    'No tienes playlists',
-                                    style: TextStyle(color: AppTheme.secondary),
+                                  child: Text(
+                                    _localSearchQuery.isNotEmpty ? 'No se encontraron playlists que coincidan' : 'No tienes playlists',
+                                    style: const TextStyle(color: AppTheme.secondary),
                                   ),
                                 ),
                               );
@@ -994,4 +1136,3 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     );
   }
 }
-

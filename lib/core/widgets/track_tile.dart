@@ -175,174 +175,185 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       child: MouseRegion(
         onEnter: (_) => setState(() => _isHovered = true),
         onExit: (_) => setState(() => _isHovered = false),
-        child: InkWell(
-          onTap: () {
-            if (!isPlayable) {
-              // Si llegamos acá, isDownloadedLocal ya es falso (una
-              // descarga local siempre es reproducible, ver isPlayable
-              // arriba) — el único motivo posible es falta de conexión o la
-              // marca de sesión, priorizando conexión como razón principal
-              // (si ni siquiera hay red, eso es lo que el usuario necesita
-              // saber, más allá de si además está marcada).
-              final message = isConnected
-                  ? 'No disponible en este dispositivo'
-                  : 'No disponible sin conexión';
-              AppToast.show(context, message: message);
-              return;
-            }
-            if (isPlayingActive) {
-              ref.read(syncoraPlayerControllerProvider.notifier).pause();
-            } else if (widget.onTap != null) {
-              widget.onTap!();
-            } else if (isPausedActive) {
-              ref.read(syncoraPlayerControllerProvider.notifier).play();
-            }
-          },
-          onLongPress: () {
-            HapticFeedback.mediumImpact();
-            FocusManager.instance.primaryFocus?.unfocus();
-            if (widget.onMorePressed != null) {
-              widget.onMorePressed!();
-            } else if (!isDesktop) {
-              _showTrackOptionsMenu(context, ref);
-            }
-          },
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isActiveTrack
-                  ? AppTheme.surfaceHover.withValues(alpha: 0.6)
-                  : (_isHovered ? AppTheme.surfaceHover.withValues(alpha: 0.3) : Colors.transparent),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  // Número / Play / Pause
-                  if (widget.index != null) ...[
-                    SizedBox(
-                      width: 28,
-                      child: Center(
-                        child: isPlayingActive
-                            ? (_isHovered
-                                ? Icon(
-                                    AppIcons.bold(SolarIcons.Pause),
-                                    color: activeColor,
-                                    size: 18,
-                                  )
-                                : LoadingAnimationWidget.staggeredDotsWave(
-                                    color: activeColor,
-                                    size: 18,
-                                  ))
-                            : (isPausedActive
-                                ? (_isHovered
-                                    ? Icon(
-                                        AppIcons.bold(SolarIcons.Play),
-                                        color: activeColor,
-                                        size: 18,
-                                      )
-                                    : Text(
-                                        '${widget.index! + 1}',
-                                        style: const TextStyle(
+        child: GestureDetector(
+          onSecondaryTapDown: isDesktop
+              ? (details) => _showContextMenu(details.globalPosition)
+              : null,
+          child: InkWell(
+            onTap: () {
+              if (!isPlayable) {
+                // Si llegamos acá, isDownloadedLocal ya es falso (una
+                // descarga local siempre es reproducible, ver isPlayable
+                // arriba) — el único motivo posible es falta de conexión o la
+                // marca de sesión, priorizando conexión como razón principal
+                // (si ni siquiera hay red, eso es lo que el usuario necesita
+                // saber, más allá de si además está marcada).
+                final message = isConnected
+                    ? 'No disponible en este dispositivo'
+                    : 'No disponible sin conexión';
+                AppToast.show(context, message: message);
+                return;
+              }
+              if (isPlayingActive) {
+                ref.read(syncoraPlayerControllerProvider.notifier).pause();
+              } else if (widget.onTap != null) {
+                widget.onTap!();
+              } else if (isPausedActive) {
+                ref.read(syncoraPlayerControllerProvider.notifier).play();
+              }
+            },
+            onLongPress: () {
+              HapticFeedback.mediumImpact();
+              FocusManager.instance.primaryFocus?.unfocus();
+              if (widget.onMorePressed != null) {
+                widget.onMorePressed!();
+              } else if (!isDesktop) {
+                _showTrackOptionsMenu(context, ref);
+              }
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isActiveTrack
+                    ? AppTheme.surfaceHover.withValues(alpha: 0.6)
+                    : (_isHovered ? AppTheme.surfaceHover.withValues(alpha: 0.3) : Colors.transparent),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: [
+                    // Número / Play / Pause
+                    if (widget.index != null) ...[
+                      SizedBox(
+                        width: 28,
+                        child: Center(
+                          child: isPlayingActive
+                              ? (_isHovered
+                                  ? Icon(
+                                      AppIcons.bold(SolarIcons.Pause),
+                                      color: activeColor,
+                                      size: 18,
+                                    )
+                                  : LoadingAnimationWidget.staggeredDotsWave(
+                                      color: activeColor,
+                                      size: 18,
+                                    ))
+                              : (isPausedActive
+                                  ? (_isHovered
+                                      ? Icon(
+                                          AppIcons.bold(SolarIcons.Play),
                                           color: activeColor,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ))
-                                : (isDesktop && _isHovered
-                                    ? Icon(
-                                        AppIcons.bold(SolarIcons.Play),
-                                        color: AppTheme.primary,
-                                        size: 18,
-                                      )
-                                    : Text(
-                                        '${widget.index! + 1}',
-                                        style: TextStyle(
-                                          color: AppTheme.secondary.withValues(alpha: 0.7),
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ))),
+                                          size: 18,
+                                        )
+                                      : Text(
+                                          '${widget.index! + 1}',
+                                          style: const TextStyle(
+                                            color: activeColor,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ))
+                                  : (isDesktop && _isHovered
+                                      ? Icon(
+                                          AppIcons.bold(SolarIcons.Play),
+                                          color: AppTheme.primary,
+                                          size: 18,
+                                        )
+                                      : Text(
+                                          '${widget.index! + 1}',
+                                          style: TextStyle(
+                                            color: AppTheme.secondary.withValues(alpha: 0.7),
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ))),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+
+                    // Portada + Título + Artista
+                    Expanded(
+                      flex: (isDesktop && widget.showAlbum) ? 3 : 1,
+                      child: Row(
+                        children: [
+                          coverWidget,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  widget.track.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontSize: 14,
+                                    fontWeight: isActiveTrack ? FontWeight.bold : FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                _buildSubtitle(context, subtitleColor, isDownloadingLocal, isDownloadedLocal, isConnected),
+
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
+
+                  // Columna Álbum en Desktop (Clickable hacia /album/:id)
+                  if (isDesktop && widget.showAlbum) ...[
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
+                      child: _HoverableText(
+                        text: (widget.track.album != null && widget.track.album!.isNotEmpty)
+                            ? widget.track.album!
+                            : '—',
+                        style: const TextStyle(
+                          color: AppTheme.secondary,
+                          fontSize: 13,
+                        ),
+                        isClickable: widget.track.albumId != null && widget.track.albumId != 0,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        onTap: () {
+                          if (widget.track.albumId != null && widget.track.albumId != 0) {
+                            context.push('/album/${widget.track.albumId}');
+                          }
+                        },
+                      ),
+                    ),
                   ],
 
-                  // Portada + Título + Artista
-                  Expanded(
-                    flex: (isDesktop && widget.showAlbum) ? 3 : 1,
-                    child: Row(
-                      children: [
-                        coverWidget,
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                widget.track.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: textColor,
-                                  fontSize: 14,
-                                  fontWeight: isActiveTrack ? FontWeight.bold : FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              _buildSubtitle(context, subtitleColor, isDownloadingLocal, isDownloadedLocal, isConnected),
-
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                // Columna Álbum en Desktop
-                if (isDesktop && widget.showAlbum) ...[
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      (widget.track.album != null && widget.track.album!.isNotEmpty)
-                          ? widget.track.album!
-                          : '—',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppTheme.secondary,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
-
-                const SizedBox(width: 12),
-
-                // Duración en Desktop
-                if (isDesktop && widget.showDuration && widget.track.duration != null) ...[
-                  SizedBox(
-                    width: 50,
-                    child: Text(
-                      _formatDuration(widget.track.duration!),
-                      textAlign: TextAlign.right,
-                      style: const TextStyle(
-                        color: AppTheme.secondary,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
                   const SizedBox(width: 12),
-                ],
 
-                // Botón de 3 Puntos u Opciones
-                _buildMoreButton(context),
-              ],
+                  // Duración en Desktop
+                  if (isDesktop && widget.showDuration && widget.track.duration != null) ...[
+                    SizedBox(
+                      width: 50,
+                      child: Text(
+                        _formatDuration(widget.track.duration!),
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          color: AppTheme.secondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                  ],
+
+                  // Botón de 3 Puntos u Opciones
+                  _buildMoreButton(context, isDownloadedLocal),
+                ],
+              ),
             ),
           ),
         ),
@@ -559,7 +570,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
   }
 
 
-  Widget _buildMoreButton(BuildContext context) {
+  Widget _buildMoreButton(BuildContext context, bool isDownloadedLocal) {
     if (widget.onMorePressed != null) {
       return IconButton(
         icon: Icon(AppIcons.broken(SolarIcons.MenuDots), size: 18, color: AppTheme.secondary),
@@ -569,7 +580,6 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     }
 
     final isDesktop = MediaQuery.of(context).size.width >= 768;
-
     final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
 
     return FutureBuilder<bool>(
@@ -589,72 +599,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
             onSelected: (value) async {
               _handleOptionSelected(context, ref, value);
             },
-            itemBuilder: (ctx) => [
-              PopupMenuItem(
-                value: 'playlist',
-                child: Row(
-                  children: [
-                    Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 18),
-                    const SizedBox(width: 12),
-                    const Expanded(child: Text('Agregar a una playlist', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
-                    Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'like',
-                child: Row(
-                  children: [
-                    Icon(isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart), color: AppTheme.primary, size: 18),
-                    const SizedBox(width: 12),
-                    Text(isLiked ? 'Eliminar de Me Gusta' : 'Guardar en Tus me gusta', style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'queue',
-                child: Row(
-                  children: [
-                    Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary, size: 18),
-                    const SizedBox(width: 12),
-                    const Text('Agregar a la fila de reproducción', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
-                  ],
-                ),
-              ),
-              if ((widget.track.artistId ?? 0) != 0)
-                PopupMenuItem(
-                  value: 'other_versions',
-                  child: Row(
-                    children: [
-                      Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.primary, size: 18),
-                      const SizedBox(width: 12),
-                      const Expanded(child: Text('Buscar otras versiones', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
-                    ],
-                  ),
-                ),
-              if (widget.onRemove != null)
-                PopupMenuItem(
-                  value: 'remove',
-                  child: Row(
-                    children: [
-                      Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: AppTheme.primary, size: 18),
-                      const SizedBox(width: 12),
-                      Text(widget.removeLabel, style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-              PopupMenuItem(
-                value: 'share',
-                child: Row(
-                  children: [
-                    Icon(AppIcons.broken(SolarIcons.Share), color: AppTheme.primary, size: 18),
-                    const SizedBox(width: 12),
-                    const Expanded(child: Text('Compartir', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
-                    Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
-                  ],
-                ),
-              ),
-            ],
+            itemBuilder: (ctx) => _buildMenuItems(isLiked, isDownloadedLocal),
           );
         }
 
@@ -665,6 +610,138 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         );
       },
     );
+  }
+
+  List<PopupMenuEntry<String>> _buildMenuItems(bool isLiked, bool isDownloaded) {
+    return [
+      if ((widget.track.artistId ?? 0) != 0)
+        PopupMenuItem(
+          value: 'artist',
+          child: Row(
+            children: [
+              Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.primary, size: 18),
+              const SizedBox(width: 12),
+              const Expanded(child: Text('Ir al artista', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+            ],
+          ),
+        ),
+      if (widget.track.albumId != null && widget.track.albumId != 0)
+        PopupMenuItem(
+          value: 'album',
+          child: Row(
+            children: [
+              Icon(AppIcons.broken(SolarIcons.Vinyl), color: AppTheme.primary, size: 18),
+              const SizedBox(width: 12),
+              const Expanded(child: Text('Ir al álbum', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+            ],
+          ),
+        ),
+      PopupMenuItem(
+        value: 'playlist',
+        child: Row(
+          children: [
+            Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 18),
+            const SizedBox(width: 12),
+            const Expanded(child: Text('Agregar a una playlist', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+            Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: 'like',
+        child: Row(
+          children: [
+            Icon(isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart), color: AppTheme.primary, size: 18),
+            const SizedBox(width: 12),
+            Text(isLiked ? 'Eliminar de Me Gusta' : 'Guardar en Tus me gusta', style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: 'queue',
+        child: Row(
+          children: [
+            Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary, size: 18),
+            const SizedBox(width: 12),
+            const Text('Agregar a la fila de reproducción', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: 'download',
+        child: Row(
+          children: [
+            Icon(isDownloaded ? AppIcons.bold(SolarIcons.TrashBinTrash) : AppIcons.broken(SolarIcons.DownloadMinimalistic), color: AppTheme.primary, size: 18),
+            const SizedBox(width: 12),
+            Text(isDownloaded ? 'Eliminar descarga' : 'Descargar canción', style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+      if ((widget.track.artistId ?? 0) != 0)
+        PopupMenuItem(
+          value: 'other_versions',
+          child: Row(
+            children: [
+              Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.primary, size: 18),
+              const SizedBox(width: 12),
+              const Expanded(child: Text('Buscar otras versiones', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+            ],
+          ),
+        ),
+      if (widget.onRemove != null)
+        PopupMenuItem(
+          value: 'remove',
+          child: Row(
+            children: [
+              Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: AppTheme.primary, size: 18),
+              const SizedBox(width: 12),
+              Text(widget.removeLabel, style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ),
+      PopupMenuItem(
+        value: 'share',
+        child: Row(
+          children: [
+            Icon(AppIcons.broken(SolarIcons.Share), color: AppTheme.primary, size: 18),
+            const SizedBox(width: 12),
+            const Expanded(child: Text('Compartir', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+            Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  void _showContextMenu(Offset position) async {
+    final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
+    final isLiked = await ref.read(playlistDaoProvider).isTrackLiked(trackIdInt);
+    final downloaded = await ref.read(downloadedTrackDaoProvider).getByTrackId(trackIdInt);
+    final isDownloaded = downloaded != null && downloaded.downloadState == 2;
+
+    if (!mounted) return;
+
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    final overlaySize = overlay?.size ?? MediaQuery.of(context).size;
+
+    final selected = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(position.dx, position.dy, 0, 0),
+        Offset.zero & overlaySize,
+      ),
+      color: const Color(0xFF1E1E1E),
+      elevation: 10,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Color(0xFF2A2A2A)),
+      ),
+      items: _buildMenuItems(isLiked, isDownloaded),
+    );
+
+    if (selected != null && mounted) {
+      _handleOptionSelected(context, ref, selected);
+    }
   }
 
   Widget _buildPlaceholder() {
@@ -678,7 +755,40 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
     final dao = ref.read(playlistDaoProvider);
 
-    if (value == 'remove') {
+    if (value == 'artist') {
+      if ((widget.track.artistId ?? 0) != 0) {
+        context.push('/artist/${widget.track.artistId}');
+      }
+    } else if (value == 'album') {
+      if (widget.track.albumId != null && widget.track.albumId != 0) {
+        context.push('/album/${widget.track.albumId}');
+      }
+    } else if (value == 'download') {
+      final downloaded = await ref.read(downloadedTrackDaoProvider).getByTrackId(trackIdInt);
+      final isDownloaded = downloaded != null && downloaded.downloadState == 2;
+      if (isDownloaded) {
+        await ref.read(downloadedTrackDaoProvider).deleteByTrackId(trackIdInt);
+        if (context.mounted) {
+          AppToast.show(context, message: 'Descarga eliminada');
+        }
+      } else {
+        try {
+          if (context.mounted) {
+            AppToast.show(context, message: 'Descargando "${widget.track.title}"');
+          }
+          await ref.read(downloadServiceProvider).downloadTrack(widget.track);
+        } catch (e) {
+          if (context.mounted) {
+            AppToast.show(context, message: e.toString());
+          }
+        }
+      }
+    } else if (value == 'share') {
+      await Clipboard.setData(ClipboardData(text: 'https://www.deezer.com/track/$trackIdInt'));
+      if (context.mounted) {
+        AppToast.show(context, message: 'Enlace copiado al portapapeles');
+      }
+    } else if (value == 'remove') {
       if (widget.onRemove != null) {
         widget.onRemove!();
       }
@@ -711,18 +821,9 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         try {
           final res = await supabaseRepo.getOrCreateLikedPlaylist();
           likedRemoteId = res['id']?.toString();
-          // `remoteId` NO se escribe en local todavía — mismo motivo que en
-          // "Agregar a playlist" más abajo: escribirlo antes de respaldar lo
-          // que ya había habilita sync automático contra un remoto vacío/a
-          // medias y termina podando "Tus me gusta" local.
         } catch (_) {}
       }
 
-      // Si "Tus me gusta" era solo local (típico si el usuario acumuló likes
-      // antes de iniciar sesión, o antes de que existiera este respaldo) y
-      // recién le creamos su contraparte remota, hay que subir TODO el
-      // estado actual de una — `toggleLikeTrack` ya corrió arriba, así que
-      // esta lista ya incluye (o excluye) la pista que se acaba de tocar.
       var likedBackfillOk = true;
       if (wasLocalOnly && likedRemoteId != null) {
         try {
@@ -752,9 +853,6 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       }
 
       if (likedRemoteId != null) {
-        // Si era local-only, el backfill de arriba ya subió el estado
-        // completo (incluida esta pista) — no hace falta aplicar el cambio
-        // puntual encima, sería redundante.
         if (!wasLocalOnly) {
           try {
             if (isLiked) {
@@ -828,6 +926,44 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                 subtitle: Text(pl.isLiked ? 'Especial' : (pl.description ?? 'Playlist'), style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
                 onTap: () async {
                   final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
+                  final existingTracks = await dao.getTracksOrdered(pl.id);
+                  final isDuplicate = existingTracks.any((t) =>
+                      t.trackId == trackIdInt ||
+                      (t.title.trim().toLowerCase() == widget.track.title.trim().toLowerCase() &&
+                          t.artistName.trim().toLowerCase() == widget.track.artist.trim().toLowerCase()));
+
+                  if (isDuplicate) {
+                    if (!context.mounted) return;
+                    final addAnyway = await showDialog<bool>(
+                      context: context,
+                      builder: (confirmCtx) => AlertDialog(
+                        backgroundColor: AppTheme.surface,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        title: const Text('Canción ya agregada', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                        content: Text('Esta canción ya está en "${pl.title}". ¿Deseas agregarla de todos modos?', style: const TextStyle(color: AppTheme.secondary)),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(confirmCtx, false),
+                            child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondary)),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor: AppTheme.background,
+                            ),
+                            onPressed: () => Navigator.pop(confirmCtx, true),
+                            child: const Text('Agregar de todos modos', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (addAnyway != true) {
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      return;
+                    }
+                  }
+
                   var remoteId = pl.remoteId;
                   final wasLocalOnly = remoteId == null;
                   final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
@@ -842,34 +978,17 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                               isLiked: pl.isLiked,
                             );
                       remoteId = created['id']?.toString();
-                      // OJO: `remoteId` NO se escribe en la playlist local
-                      // todavía aquí — recién al final, después de que se
-                      // suban también las pistas existentes. Escribirlo de
-                      // una causó un bug real: en cuanto la playlist local
-                      // tiene `remoteId`, abrirla dispara sync automático
-                      // (`playlist_detail_screen.dart`), que trata el remoto
-                      // como fuente de verdad y poda lo local que no esté
-                      // ahí — y el remoto recién creado está vacío.
                     } catch (_) {}
                   }
 
-                  // Si la playlist era solo local (ej. importada desde CSV)
-                  // y recién le creamos su contraparte remota, hay que subir
-                  // TODAS sus pistas existentes ahora, no solo la nueva que
-                  // se está agregando. Si no, la próxima sincronización ve
-                  // un remoto más flaco que lo local y PODA todo lo que no
-                  // esté ahí (`sync_service.dart`, `_syncPlaylistsAndTracks`
-                  // trata el remoto como fuente de verdad) — borrando la
-                  // playlist importada casi entera. Bug real reportado en
-                  // vivo: se agregaba UNA canción y desaparecía el resto.
                   var existingTracksUploadOk = true;
                   if (wasLocalOnly && remoteId != null) {
                     try {
-                      final existingTracks = await dao.getTracksOrdered(pl.id);
-                      if (existingTracks.isNotEmpty) {
+                      final currentTracks = await dao.getTracksOrdered(pl.id);
+                      if (currentTracks.isNotEmpty) {
                         await supabaseRepo.addTracksToPlaylist(
                           remoteId,
-                          existingTracks
+                          currentTracks
                               .map((t) => {
                                     'track_id': t.trackId,
                                     'artist_id': t.artistId,
@@ -917,14 +1036,6 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                       return;
                     }
 
-                    // Recién ahora, con el remoto ya al día (pistas viejas +
-                    // la nueva), se marca la playlist local como respaldada
-                    // — es la señal que habilita la sincronización
-                    // automática al abrirla. Si la subida de las pistas
-                    // existentes falló arriba, se deja sin `remoteId` a
-                    // propósito: mejor quedarse local-only (seguro, ninguna
-                    // sync la toca) que marcarla sincronizada con un remoto
-                    // incompleto.
                     if (wasLocalOnly && existingTracksUploadOk) {
                       try {
                         await dao.updatePlaylist(pl.copyWith(remoteId: Value(remoteId)));
@@ -957,11 +1068,6 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     );
   }
 
-  // D2 (Fase D, entrada 1): "Buscar otras versiones" desde el menú de una
-  // canción. A diferencia del fallback dentro del modal de Búsqueda
-  // Profunda (entrada 2), acá no hay ningún formulario — ya se tiene una
-  // canción válida (artista, título, álbum de referencia) y se dispara el
-  // crawl directamente.
   void _showOtherVersionsModal(BuildContext context) {
     FocusManager.instance.primaryFocus?.unfocus();
     final artistId = widget.track.artistId ?? 0;
@@ -974,8 +1080,6 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       excludeTrackId: widget.track.deezerId,
     );
 
-    // En desktop es una ventana central (Dialog) — nada de sheet arrastrable
-    // desde abajo, eso solo tiene sentido como gesto táctil en móvil.
     final isDesktop = MediaQuery.of(context).size.width >= 768;
     if (isDesktop) {
       showDialog(
@@ -1020,6 +1124,8 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     FocusManager.instance.primaryFocus?.unfocus();
     final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
     final isLiked = await ref.read(playlistDaoProvider).isTrackLiked(trackIdInt);
+    final downloaded = await ref.read(downloadedTrackDaoProvider).getByTrackId(trackIdInt);
+    final isDownloaded = downloaded != null && downloaded.downloadState == 2;
 
     if (!context.mounted) return;
 
@@ -1031,12 +1137,30 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         physics: const ClampingScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
+          if ((widget.track.artistId ?? 0) != 0)
+            _OptionItem(
+              icon: AppIcons.broken(SolarIcons.User),
+              label: 'Ir al artista',
+              onTap: () {
+                Navigator.pop(context);
+                _handleOptionSelected(context, ref, 'artist');
+              },
+            ),
+          if (widget.track.albumId != null && widget.track.albumId != 0)
+            _OptionItem(
+              icon: AppIcons.broken(SolarIcons.Vinyl),
+              label: 'Ir al álbum',
+              onTap: () {
+                Navigator.pop(context);
+                _handleOptionSelected(context, ref, 'album');
+              },
+            ),
           _OptionItem(
-            icon: AppIcons.broken(SolarIcons.PlaylistMinimalisticN2),
-            label: 'Agregar a la cola',
+            icon: AppIcons.broken(SolarIcons.AddFolder),
+            label: 'Agregar a playlist',
             onTap: () {
               Navigator.pop(context);
-              _handleOptionSelected(context, ref, 'queue');
+              _handleOptionSelected(context, ref, 'playlist');
             },
           ),
           _OptionItem(
@@ -1048,11 +1172,19 @@ class _TrackTileState extends ConsumerState<TrackTile> {
             },
           ),
           _OptionItem(
-            icon: AppIcons.broken(SolarIcons.AddFolder),
-            label: 'Agregar a playlist',
+            icon: AppIcons.broken(SolarIcons.PlaylistMinimalisticN2),
+            label: 'Agregar a la cola',
             onTap: () {
               Navigator.pop(context);
-              _handleOptionSelected(context, ref, 'playlist');
+              _handleOptionSelected(context, ref, 'queue');
+            },
+          ),
+          _OptionItem(
+            icon: isDownloaded ? AppIcons.bold(SolarIcons.TrashBinTrash) : AppIcons.broken(SolarIcons.DownloadMinimalistic),
+            label: isDownloaded ? 'Eliminar descarga' : 'Descargar canción',
+            onTap: () {
+              Navigator.pop(context);
+              _handleOptionSelected(context, ref, 'download');
             },
           ),
           if ((widget.track.artistId ?? 0) != 0)
@@ -1073,6 +1205,14 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                 _handleOptionSelected(context, ref, 'remove');
               },
             ),
+          _OptionItem(
+            icon: AppIcons.broken(SolarIcons.Share),
+            label: 'Compartir',
+            onTap: () {
+              Navigator.pop(context);
+              _handleOptionSelected(context, ref, 'share');
+            },
+          ),
         ],
       ),
     );
@@ -1245,12 +1385,16 @@ class _HoverableText extends StatefulWidget {
   final TextStyle style;
   final bool isClickable;
   final VoidCallback? onTap;
+  final int? maxLines;
+  final TextOverflow? overflow;
 
   const _HoverableText({
     required this.text,
     required this.style,
     required this.isClickable,
     this.onTap,
+    this.maxLines,
+    this.overflow,
   });
 
   @override
@@ -1274,6 +1418,8 @@ class _HoverableTextState extends State<_HoverableText> {
         onTap: widget.isClickable ? widget.onTap : null,
         child: Text(
           widget.text,
+          maxLines: widget.maxLines,
+          overflow: widget.overflow,
           style: widget.style.copyWith(
             decoration: (widget.isClickable && _isHovered) ? TextDecoration.underline : TextDecoration.none,
             decorationColor: widget.style.color,

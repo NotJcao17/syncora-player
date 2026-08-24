@@ -13,6 +13,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../../data/local_db/database_provider.dart';
 import '../../data/local_db/syncora_database.dart';
+import '../../data/sync/sync_service.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../features/auth/local_mode_provider.dart';
 import '../../features/player/player_models.dart';
@@ -22,6 +23,7 @@ import '../../features/player/widgets/desktop_lyrics_view.dart';
 import '../../features/player/widgets/mini_player.dart';
 import '../../features/player/widgets/queue_view.dart';
 import '../theme/app_theme.dart';
+import '../utils/connectivity_service.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/offline_banner.dart';
 import '../widgets/playlist_cover_widget.dart';
@@ -52,6 +54,17 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.addHandler(_handleDesktopKeyEvent);
     }
+    Future.microtask(() async {
+      final isLocalMode = ref.read(localModeProvider);
+      final isConnected = ref.read(isConnectedProvider).value ?? true;
+      final user = ref.read(currentUserProvider);
+      if (!isLocalMode && isConnected && user != null) {
+        try {
+          await ref.read(syncServiceProvider).syncLibrary(force: false);
+          await ref.read(syncServiceProvider).syncSavedAlbums(force: false);
+        } catch (_) {}
+      }
+    });
   }
 
   @override

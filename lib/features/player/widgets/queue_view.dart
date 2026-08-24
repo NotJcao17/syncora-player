@@ -295,7 +295,34 @@ class _QueueViewState extends ConsumerState<QueueView> {
                 ),
               ),
               TextButton.icon(
-                onPressed: () => controller.clearQueue(),
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: AppTheme.surface,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      title: const Text('¿Limpiar cola de reproducción?', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                      content: const Text('Se eliminarán todas las canciones en espera de la cola.', style: TextStyle(color: AppTheme.secondary)),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondary)),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Limpiar', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    controller.clearQueue();
+                  }
+                },
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   visualDensity: VisualDensity.compact,

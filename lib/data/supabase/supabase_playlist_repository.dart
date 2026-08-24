@@ -104,6 +104,7 @@ class SupabasePlaylistRepository {
     String id, {
     String? title,
     String? description,
+    String? coverUrl,
     bool? isPublic,
     bool? isPinned,
     int? orderIndex,
@@ -116,6 +117,7 @@ class SupabasePlaylistRepository {
     };
     if (title != null) updates['title'] = title;
     if (description != null) updates['description'] = description;
+    if (coverUrl != null) updates['cover_url'] = coverUrl;
     if (isPublic != null) updates['is_public'] = isPublic;
     if (isPinned != null) updates['is_pinned'] = isPinned;
     if (orderIndex != null) updates['order_index'] = orderIndex;
