@@ -7,7 +7,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/auth_provider.dart';
 
-/// Modal bottom sheet para la selección de avatar basado en Dicebear seeds.
+import 'package:flutter/foundation.dart';
+import '../../../core/theme/app_icons.dart';
+
+/// Modal bottom sheet / diálogo centrado para la selección de avatar basado en Dicebear seeds.
 class AvatarSelectorSheet extends ConsumerStatefulWidget {
   final String? currentSeed;
   // Fase 7.I.4: `Future<void> Function` (no `ValueChanged`, que es
@@ -15,11 +18,13 @@ class AvatarSelectorSheet extends ConsumerStatefulWidget {
   // "fire and forget" cuyo error, si lo hay, se pierde como excepción de
   // Future sin capturar (hallazgo de la revisión independiente).
   final Future<void> Function(String seed)? onAvatarSelected;
+  final bool isDialog;
 
   const AvatarSelectorSheet({
     super.key,
     this.currentSeed,
     this.onAvatarSelected,
+    this.isDialog = false,
   });
 
   static const List<String> avatarSeeds = [
@@ -54,6 +59,27 @@ class AvatarSelectorSheet extends ConsumerStatefulWidget {
     String? currentSeed,
     Future<void> Function(String seed)? onAvatarSelected,
   }) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) || screenWidth >= 768;
+
+    if (isDesktop) {
+      return showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          backgroundColor: AppTheme.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480, maxHeight: 540),
+            child: AvatarSelectorSheet(
+              currentSeed: currentSeed,
+              onAvatarSelected: onAvatarSelected,
+              isDialog: true,
+            ),
+          ),
+        ),
+      );
+    }
+
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -61,6 +87,7 @@ class AvatarSelectorSheet extends ConsumerStatefulWidget {
       builder: (context) => AvatarSelectorSheet(
         currentSeed: currentSeed,
         onAvatarSelected: onAvatarSelected,
+        isDialog: false,
       ),
     );
   }
@@ -141,27 +168,33 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.8,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: AppTheme.surfaceUpShadow,
+        borderRadius: widget.isDialog
+            ? BorderRadius.circular(20)
+            : const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: widget.isDialog ? null : AppTheme.surfaceUpShadow,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Indicator handle
-          const SizedBox(height: 12),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceActive,
-              borderRadius: BorderRadius.circular(2),
+          if (!widget.isDialog) ...[
+            // Indicator handle
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceActive,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
+          ] else ...[
+            const SizedBox(height: 20),
+          ],
 
-          // Sheet Title
+          // Sheet Title / Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
@@ -176,15 +209,30 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
                     letterSpacing: -0.5,
                   ),
                 ),
-                if (_isSaving)
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppTheme.accent,
-                    ),
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isSaving)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 8.0),
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppTheme.primary,
+                          ),
+                        ),
+                      ),
+                    if (widget.isDialog)
+                      IconButton(
+                        icon: Icon(AppIcons.broken(SolarIcons.CloseCircle), color: AppTheme.secondary, size: 22),
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      ),
+                  ],
+                ),
               ],
             ),
           ),

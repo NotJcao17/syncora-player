@@ -166,7 +166,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                 ),
                               ),
                               child: Icon(
-                                AppIcons.bold(SolarIcons.Fire),
+                                searchState.popularOnly
+                                    ? AppIcons.bold(SolarIcons.Chart)
+                                    : AppIcons.broken(SolarIcons.Chart),
                                 size: 18,
                                 color: searchState.popularOnly ? AppTheme.background : AppTheme.secondary,
                               ),
@@ -453,7 +455,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(AppIcons.broken(SolarIcons.Fire), size: 48, color: AppTheme.secondary),
+            Icon(AppIcons.broken(SolarIcons.Chart), size: 48, color: AppTheme.secondary),
             const SizedBox(height: 12),
             const Text(
               'Sin resultados populares para esta búsqueda',

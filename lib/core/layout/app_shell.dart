@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -19,11 +18,13 @@ import '../../features/auth/local_mode_provider.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
 import '../../features/player/syncora_player_controller.dart';
+import '../../features/player/widgets/desktop_lyrics_view.dart';
 import '../../features/player/widgets/mini_player.dart';
 import '../../features/player/widgets/queue_view.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/offline_banner.dart';
+import '../widgets/playlist_cover_widget.dart';
 
 /// Layout adaptativo de la aplicación (Móvil vs Desktop calcado de los mockups HTML).
 
@@ -120,6 +121,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   void _onItemTapped(int index) {
+    ref.read(isLyricsOpenProvider.notifier).state = false;
     switch (index) {
       case 0:
         context.go('/');
@@ -246,6 +248,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   /// Layout Desktop (Windows / pantallas >= 768px calcado de index.html mockup)
   Widget _buildDesktopLayout(BuildContext context, int selectedIndex, bool isQueueOpen, bool isMobileLandscape) {
     final sidebarWidth = _isSidebarCollapsed ? 80.0 : _sidebarWidth;
+    final isLyricsOpen = ref.watch(isLyricsOpenProvider);
+    final currentTrack = ref.watch(currentTrackProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -307,7 +311,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                                           child: Text(
                                             'Syncora',
                                             maxLines: 1,
-                                            overflow: TextOverflow.clip,
+                                            overflow: TextOverflow.ellipsis,
                                             softWrap: false,
                                             style: TextStyle(
                                               fontSize: 18,
@@ -406,6 +410,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                                         final isActivelyPlaying = activeContextId == 'playlist_${pl.id}';
 
                                         return _DesktopPlaylistItem(
+                                          playlistId: pl.id,
                                           title: pl.title,
                                           subtitle: pl.isLiked ? 'Playlist especial' : (pl.description ?? 'Playlist'),
                                           coverUrl: pl.coverUrl ?? '',
@@ -449,7 +454,9 @@ class _AppShellState extends ConsumerState<AppShell> {
 
                 // Área Central
                 Expanded(
-                  child: widget.child,
+                  child: (isLyricsOpen && currentTrack != null)
+                      ? DesktopLyricsView(track: currentTrack)
+                      : widget.child,
                 ),
 
                 // Panel Lateral Derecho de Cola de Reproducción en Windows
@@ -535,7 +542,7 @@ class _CustomTitleBar extends ConsumerWidget {
         : (profileAsync.value?['avatar_seed'] ?? user?.id ?? 'default-seed');
 
     return Container(
-      height: 38,
+      height: 42,
       color: AppTheme.background,
       child: Row(
         children: [
@@ -858,7 +865,7 @@ class _DesktopSidebarItem extends StatelessWidget {
                     child: Text(
                       label,
                       maxLines: 1,
-                      overflow: TextOverflow.clip,
+                      overflow: TextOverflow.ellipsis,
                       softWrap: false,
                       style: TextStyle(
                         color: color,
@@ -879,6 +886,7 @@ class _DesktopSidebarItem extends StatelessWidget {
 
 /// Item de playlist con miniatura estilo Spotify.
 class _DesktopPlaylistItem extends StatefulWidget {
+  final int? playlistId;
   final String title;
   final String subtitle;
   final String coverUrl;
@@ -889,6 +897,7 @@ class _DesktopPlaylistItem extends StatefulWidget {
   final VoidCallback onTap;
 
   const _DesktopPlaylistItem({
+    this.playlistId,
     required this.title,
     required this.subtitle,
     required this.coverUrl,
@@ -933,18 +942,16 @@ class _DesktopPlaylistItemState extends State<_DesktopPlaylistItem> {
                   child: SizedBox(
                     width: 48,
                     height: 48,
-                    child: widget.isLiked
-                        ? Container(
-                            decoration: const BoxDecoration(gradient: AppTheme.gradientLiked),
-                            child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 22),
-                          )
-                        : (widget.coverUrl.isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl: widget.coverUrl,
-                                fit: BoxFit.cover,
-                                errorWidget: (_, _, _) => Container(color: AppTheme.surfaceHover, child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 20)),
-                              )
-                            : Container(color: AppTheme.surfaceHover, child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 20))),
+                    child: PlaylistCoverWidget(
+                      playlistId: widget.playlistId,
+                      coverUrl: widget.coverUrl,
+                      isLiked: widget.isLiked,
+                      width: 48,
+                      height: 48,
+                      borderRadius: BorderRadius.circular(8),
+                      memCacheWidth: 100,
+                      memCacheHeight: 100,
+                    ),
                   ),
                 ),
                 if (!widget.isCollapsed) ...[
@@ -957,7 +964,7 @@ class _DesktopPlaylistItemState extends State<_DesktopPlaylistItem> {
                         Text(
                           widget.title,
                           maxLines: 1,
-                          overflow: TextOverflow.clip,
+                          overflow: TextOverflow.ellipsis,
                           softWrap: false,
                           style: const TextStyle(
                             color: AppTheme.primary,
@@ -969,7 +976,7 @@ class _DesktopPlaylistItemState extends State<_DesktopPlaylistItem> {
                         Text(
                           widget.subtitle,
                           maxLines: 1,
-                          overflow: TextOverflow.clip,
+                          overflow: TextOverflow.ellipsis,
                           softWrap: false,
                           style: const TextStyle(
                             color: AppTheme.secondary,
@@ -980,7 +987,10 @@ class _DesktopPlaylistItemState extends State<_DesktopPlaylistItem> {
                     ),
                   ),
                   if (widget.isActivelyPlaying)
-                    Icon(AppIcons.broken(SolarIcons.VolumeLoud), color: const Color(0xFF22C55E), size: 18),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Icon(AppIcons.broken(SolarIcons.VolumeLoud), color: Colors.white, size: 18),
+                    ),
                 ],
               ],
             ),

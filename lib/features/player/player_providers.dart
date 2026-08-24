@@ -132,3 +132,7 @@ final unavailableTrackIdsProvider = Provider<Set<String>>((ref) =>
 
 /// StateProvider para controlar la apertura del panel de cola de reproducción en escritorio
 final isQueueOpenProvider = StateProvider<bool>((ref) => false);
+
+/// StateProvider para controlar la apertura de la vista central de letras en escritorio
+final isLyricsOpenProvider = StateProvider<bool>((ref) => false);
+

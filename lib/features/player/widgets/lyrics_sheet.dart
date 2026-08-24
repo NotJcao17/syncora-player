@@ -30,6 +30,19 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
   }
 
   @override
+  void didUpdateWidget(covariant LyricsSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.track.id != widget.track.id) {
+      setState(() {
+        _isLoading = true;
+        _lyricsResult = null;
+        _lastHighlightedIndex = -1;
+      });
+      _fetchLyrics();
+    }
+  }
+
+  @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
@@ -182,18 +195,24 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
         final isActive = index == activeIndex;
         final isPast = index < activeIndex;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 200),
-            style: TextStyle(
-              fontSize: isActive ? 22 : 16,
-              fontWeight: isActive ? FontWeight.w900 : FontWeight.w500,
-              color: isActive
-                  ? AppTheme.primary
-                  : (isPast ? AppTheme.secondary.withValues(alpha: 0.6) : AppTheme.secondary),
+        return InkWell(
+          onTap: () {
+            ref.read(syncoraPlayerControllerProvider.notifier).seek(line.timestamp);
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: TextStyle(
+                fontSize: isActive ? 22 : 16,
+                fontWeight: isActive ? FontWeight.w900 : FontWeight.w500,
+                color: isActive
+                    ? AppTheme.primary
+                    : (isPast ? AppTheme.secondary.withValues(alpha: 0.6) : AppTheme.secondary),
+              ),
+              child: Text(line.text.isEmpty ? '♪' : line.text),
             ),
-            child: Text(line.text.isEmpty ? '♪' : line.text),
           ),
         );
       },

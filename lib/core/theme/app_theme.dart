@@ -159,7 +159,7 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           fontSize: 13,
         ),
-        actionTextColor: const Color(0xFF059669),
+        actionTextColor: AppTheme.primary,
       ),
     );
   }

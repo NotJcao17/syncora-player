@@ -385,7 +385,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                       children: [
                                         Icon(
                                           isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
-                                          color: isShuffle ? const Color(0xFF22C55E) : AppTheme.secondary,
+                                          color: isShuffle ? Colors.white : AppTheme.secondary,
                                           size: 22,
                                         ),
                                         const SizedBox(height: 2),
@@ -394,7 +394,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                           height: 4,
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color: isShuffle ? const Color(0xFF22C55E) : Colors.transparent,
+                                            color: isShuffle ? Colors.white : Colors.transparent,
                                           ),
                                         ),
                                       ],

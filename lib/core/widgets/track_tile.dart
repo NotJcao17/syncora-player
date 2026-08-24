@@ -104,7 +104,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     // sesión solo importa cuando NO hay descarga local.
     final isPlayable = isDownloadedLocal || (isConnected && !isMarkedUnavailableThisSession);
 
-    const activeColor = Color(0xFF22C55E);
+    const activeColor = Colors.white;
 
     final textColor = isPlayable
         ? (isActiveTrack ? activeColor : AppTheme.primary)
@@ -421,7 +421,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     if (!isDesktop) {
       return Row(
         children: [
-          if (statusIcon != null) statusIcon,
+          ?statusIcon,
           Expanded(
             child: Text(
               widget.track.artist,
@@ -486,7 +486,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
 
       return Row(
         children: [
-          if (statusIcon != null) statusIcon,
+          ?statusIcon,
           Expanded(
             child: Text.rich(
               TextSpan(children: spans),
@@ -503,7 +503,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     if (hasArtistId) {
       return Row(
         children: [
-          if (statusIcon != null) statusIcon,
+          ?statusIcon,
           Expanded(
             child: Text.rich(
               TextSpan(
@@ -530,7 +530,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
 
     return Row(
       children: [
-        if (statusIcon != null) statusIcon,
+        ?statusIcon,
         Expanded(
           child: Text(
             widget.track.artist,

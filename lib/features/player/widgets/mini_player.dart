@@ -336,11 +336,13 @@ class MiniPlayer extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     IconButton(
-                      icon: Icon(AppIcons.broken(SolarIcons.Microphone), size: 20, color: AppTheme.secondary),
+                      icon: Icon(
+                        AppIcons.broken(SolarIcons.Microphone),
+                        size: 20,
+                        color: ref.watch(isLyricsOpenProvider) ? AppTheme.primary : AppTheme.secondary,
+                      ),
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Letras próximamente')),
-                        );
+                        ref.read(isLyricsOpenProvider.notifier).state = !ref.read(isLyricsOpenProvider);
                       },
                       tooltip: 'Letras',
                       padding: EdgeInsets.zero,
@@ -565,35 +567,46 @@ class _DesktopTrackInfoState extends State<_DesktopTrackInfo> {
         ),
         const SizedBox(width: 14),
 
-        // Título (Enlace a Álbum) y Artista (Enlace a Artista)
+        // Título (Enlace a Álbum) + Corazón dinámico + Artista (Enlace a Artista)
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              MouseRegion(
-                cursor: hasAlbumId ? SystemMouseCursors.click : SystemMouseCursors.basic,
-                onEnter: (_) {
-                  if (hasAlbumId) setState(() => _isAlbumHovered = true);
-                },
-                onExit: (_) {
-                  if (hasAlbumId) setState(() => _isAlbumHovered = false);
-                },
-                child: GestureDetector(
-                  onTap: hasAlbumId
-                      ? () => context.push('/album/${widget.currentTrack.albumId}')
-                      : null,
-                  child: MarqueeText(
-                    text: widget.currentTrack.title,
-                    style: TextStyle(
-                      color: AppTheme.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      decoration: (hasAlbumId && _isAlbumHovered) ? TextDecoration.underline : TextDecoration.none,
-                      decorationColor: AppTheme.primary,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: MouseRegion(
+                      cursor: hasAlbumId ? SystemMouseCursors.click : SystemMouseCursors.basic,
+                      onEnter: (_) {
+                        if (hasAlbumId) setState(() => _isAlbumHovered = true);
+                      },
+                      onExit: (_) {
+                        if (hasAlbumId) setState(() => _isAlbumHovered = false);
+                      },
+                      child: GestureDetector(
+                        onTap: hasAlbumId
+                            ? () => context.push('/album/${widget.currentTrack.albumId}')
+                            : null,
+                        child: Text(
+                          widget.currentTrack.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            decoration: (hasAlbumId && _isAlbumHovered) ? TextDecoration.underline : TextDecoration.none,
+                            decorationColor: AppTheme.primary,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 4),
+                  _MiniPlayerHeartButton(currentTrack: widget.currentTrack, isDesktop: true),
+                ],
               ),
               const SizedBox(height: 2),
 
@@ -602,8 +615,6 @@ class _DesktopTrackInfoState extends State<_DesktopTrackInfo> {
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        _MiniPlayerHeartButton(currentTrack: widget.currentTrack, isDesktop: true),
       ],
     );
   }
@@ -783,65 +794,72 @@ class _DesktopProgressBarState extends State<_DesktopProgressBar> {
         ? Duration(milliseconds: (_dragRatio * durationMs).toInt())
         : widget.position;
 
-    return Row(
-      children: [
-        Text(
-          _formatDuration(currentDisplayDuration),
-          style: const TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: MouseRegion(
-            onEnter: (_) => setState(() => _isHovered = true),
-            onExit: (_) => setState(() => _isHovered = false),
-            child: SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                trackHeight: (_isHovered || _isDragging) ? 6 : 4,
-                thumbShape: RoundSliderThumbShape(enabledThumbRadius: (_isHovered || _isDragging) ? 6 : 0),
-                overlayShape: RoundSliderOverlayShape(overlayRadius: (_isHovered || _isDragging) ? 12 : 0),
-                activeTrackColor: AppTheme.primary,
-                inactiveTrackColor: AppTheme.surface,
-                thumbColor: AppTheme.primary,
-              ),
-              child: Slider(
-                value: effectiveRatio,
-                onChangeStart: (val) {
-                  setState(() {
-                    _isDragging = true;
-                    _dragRatio = val;
-                    _wasPlayingBeforeDrag = widget.isPlaying;
-                  });
-                  if (widget.isPlaying) {
-                    widget.controller.pause();
-                  }
-                },
-                onChanged: (val) {
-                  setState(() {
-                    _dragRatio = val;
-                  });
-                },
-                onChangeEnd: (val) async {
-                  final targetMs = (val * durationMs).toInt();
-                  await widget.controller.seek(Duration(milliseconds: targetMs));
-                  if (mounted) {
-                    setState(() {
-                      _isDragging = false;
-                    });
-                  }
-                  if (_wasPlayingBeforeDrag) {
-                    widget.controller.play();
-                  }
-                },
+    return SizedBox(
+      height: 24,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            _formatDuration(currentDisplayDuration),
+            style: const TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SizedBox(
+              height: 24,
+              child: MouseRegion(
+                onEnter: (_) => setState(() => _isHovered = true),
+                onExit: (_) => setState(() => _isHovered = false),
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: (_isHovered || _isDragging) ? 6 : 4,
+                    thumbShape: RoundSliderThumbShape(enabledThumbRadius: (_isHovered || _isDragging) ? 6 : 0),
+                    overlayShape: RoundSliderOverlayShape(overlayRadius: (_isHovered || _isDragging) ? 12 : 0),
+                    activeTrackColor: AppTheme.primary,
+                    inactiveTrackColor: AppTheme.surface,
+                    thumbColor: AppTheme.primary,
+                  ),
+                  child: Slider(
+                    value: effectiveRatio,
+                    onChangeStart: (val) {
+                      setState(() {
+                        _isDragging = true;
+                        _dragRatio = val;
+                        _wasPlayingBeforeDrag = widget.isPlaying;
+                      });
+                      if (widget.isPlaying) {
+                        widget.controller.pause();
+                      }
+                    },
+                    onChanged: (val) {
+                      setState(() {
+                        _dragRatio = val;
+                      });
+                    },
+                    onChangeEnd: (val) async {
+                      final targetMs = (val * durationMs).toInt();
+                      await widget.controller.seek(Duration(milliseconds: targetMs));
+                      if (mounted) {
+                        setState(() {
+                          _isDragging = false;
+                        });
+                      }
+                      if (_wasPlayingBeforeDrag) {
+                        widget.controller.play();
+                      }
+                    },
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          _formatDuration(widget.duration),
-          style: const TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.w500),
-        ),
-      ],
+          const SizedBox(width: 8),
+          Text(
+            _formatDuration(widget.duration),
+            style: const TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -25,24 +25,20 @@ class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   void _openAvatarSelector(BuildContext context, WidgetRef ref, {required bool isLocalMode, required String currentSeed}) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => AvatarSelectorSheet(
-        currentSeed: currentSeed,
-        // Fase 7.I.4: en modo local no hay tabla `profiles` donde
-        // `AvatarSelectorSheet` pueda escribir el seed elegido (su propio
-        // update a Supabase ya se salta solo, porque `userId` queda vacío
-        // sin sesión) -- este callback es el único lugar que persiste la
-        // elección en modo local.
-        onAvatarSelected: isLocalMode
-            ? (seed) async {
-                await ref.read(localModeStorageProvider).setAvatarSeed(seed);
-                ref.invalidate(localAvatarSeedProvider);
-              }
-            : null,
-      ),
+    AvatarSelectorSheet.show(
+      context,
+      currentSeed: currentSeed,
+      // Fase 7.I.4: en modo local no hay tabla `profiles` donde
+      // `AvatarSelectorSheet` pueda escribir el seed elegido (su propio
+      // update a Supabase ya se salta solo, porque `userId` queda vacío
+      // sin sesión) -- este callback es el único lugar que persiste la
+      // elección en modo local.
+      onAvatarSelected: isLocalMode
+          ? (seed) async {
+              await ref.read(localModeStorageProvider).setAvatarSeed(seed);
+              ref.invalidate(localAvatarSeedProvider);
+            }
+          : null,
     );
   }
 

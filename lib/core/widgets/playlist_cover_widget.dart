@@ -18,6 +18,8 @@ class PlaylistCoverWidget extends ConsumerWidget {
   final double? height;
   final BorderRadius? borderRadius;
   final BoxFit fit;
+  final int? memCacheWidth;
+  final int? memCacheHeight;
 
   const PlaylistCoverWidget({
     super.key,
@@ -29,6 +31,8 @@ class PlaylistCoverWidget extends ConsumerWidget {
     this.height,
     this.borderRadius,
     this.fit = BoxFit.cover,
+    this.memCacheWidth,
+    this.memCacheHeight,
   });
 
   @override
@@ -57,7 +61,8 @@ class PlaylistCoverWidget extends ConsumerWidget {
       content = CachedNetworkImage(
         imageUrl: coverUrl!,
         fit: fit,
-        memCacheWidth: 400,
+        memCacheWidth: memCacheWidth ?? 400,
+        memCacheHeight: memCacheHeight ?? 400,
         placeholder: (context, url) => Container(color: AppTheme.surfaceHover),
         errorWidget: (context, url, error) => _buildFallbackIcon(),
       );
@@ -137,6 +142,8 @@ class PlaylistCoverWidget extends ConsumerWidget {
           ),
         ],
       );
+    } else if (distinctCovers.isNotEmpty) {
+      return _buildGridItem(distinctCovers.first);
     }
 
     return _buildFallbackIcon();
@@ -146,7 +153,8 @@ class PlaylistCoverWidget extends ConsumerWidget {
     return CachedNetworkImage(
       imageUrl: url,
       fit: BoxFit.cover,
-      memCacheWidth: 200,
+      memCacheWidth: memCacheWidth ?? 200,
+      memCacheHeight: memCacheHeight ?? 200,
       placeholder: (context, url) => Container(color: AppTheme.surfaceHover),
       errorWidget: (context, url, error) => Container(
         color: AppTheme.surfaceHover,
