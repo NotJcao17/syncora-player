@@ -65,7 +65,9 @@ class AiMatchingProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ratio = total == 0 ? 0.0 : current / total;
+    final effectiveTotal = total <= 0 ? 1 : total;
+    final effectiveCurrent = current.clamp(0, effectiveTotal);
+    final ratio = (effectiveCurrent / effectiveTotal).clamp(0.0, 1.0);
     return SizedBox(
       height: 220,
       child: Padding(
@@ -78,7 +80,7 @@ class AiMatchingProgress extends StatelessWidget {
             const SizedBox(height: 16),
             LinearProgressIndicator(value: ratio, backgroundColor: AppTheme.surfaceHover, color: AppTheme.primary),
             const SizedBox(height: 12),
-            Text('Buscando pista $current de $total...', style: const TextStyle(color: AppTheme.secondary, fontSize: 13)),
+            Text('Buscando pista $effectiveCurrent de $effectiveTotal...', style: const TextStyle(color: AppTheme.secondary, fontSize: 13)),
             const SizedBox(height: 6),
             Text(
               currentTrackName,

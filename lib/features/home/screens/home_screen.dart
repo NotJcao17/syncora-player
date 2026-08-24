@@ -156,7 +156,7 @@ class HomeScreen extends ConsumerWidget {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'Tus minutos esta semana: ${snapshot.totalMinutes}',
+                                  'Tus minutos esta semana: ${snapshot.totalMinutes > 0 ? "${snapshot.totalMinutes} min" : "< 1 min"}',
                                   style: Theme.of(context).textTheme.bodyLarge,
                                 ),
                               ),

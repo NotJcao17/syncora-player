@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/ai_generation_steps.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
@@ -14,12 +15,13 @@ import '../../library/import_export/playlist_import_export_service.dart';
 import '../../player/player_providers.dart';
 
 /// Fase 7.F.4 -- "Buscar canción por fragmento de letra". Entrada desde el
-/// botón junto a "Popular" / "Búsqueda Profunda" en `search_screen.dart`. A
-/// diferencia de 7.F.1/7.F.2/7.F.3, no termina en una vista previa
-/// confirmable: los resultados ya matcheados contra Deezer se muestran
-/// directamente como resultados de búsqueda normales (D-15), listos para
-/// reproducir o agregar a la cola sin fricción extra.
+/// botón junto a "Popular" / "Búsqueda Profunda" en `search_screen.dart`.
 void showAiLyricSearchSheet(BuildContext context, WidgetRef ref) {
+  final isConnected = ref.read(isConnectedProvider).value ?? true;
+  if (!isConnected) {
+    AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+    return;
+  }
   AppBottomSheet.show(
     context: context,
     title: 'Buscar por letra',
@@ -58,6 +60,12 @@ class _AiLyricSearchFlowState extends ConsumerState<_AiLyricSearchFlow> {
 
   Future<void> _submit() async {
     if (_isSubmitting) return;
+    final isConnected = ref.read(isConnectedProvider).value ?? true;
+    if (!isConnected) {
+      AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+      return;
+    }
+
     final fragment = _lyricController.text.trim();
     if (fragment.isEmpty) {
       setState(() => _formError = 'Pega un fragmento de la letra.');

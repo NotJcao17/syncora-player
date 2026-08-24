@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_card.dart';
@@ -20,6 +21,7 @@ import '../ai_lyric_search/ai_lyric_search_sheet.dart';
 import '../collaboration_search.dart';
 import '../exact_track_search.dart';
 import '../other_versions_search.dart';
+import '../search_history_storage.dart';
 import '../search_provider.dart';
 import '../search_ranking.dart';
 
@@ -188,6 +190,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               borderRadius: BorderRadius.circular(12),
                               onTap: () {
                                 FocusManager.instance.primaryFocus?.unfocus();
+                                final isConnected = ref.read(isConnectedProvider).value ?? true;
+                                if (!isConnected) {
+                                  AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+                                  return;
+                                }
                                 showAiLyricSearchSheet(context, ref);
                               },
                               child: Container(
@@ -364,7 +371,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         onRetry: () => searchNotifier.retry(),
                       )
                     : _searchController.text.trim().isEmpty
-                        ? _buildExploreCategories(isDesktop)
+                        ? _buildEmptyQueryView(isDesktop)
                         : _buildSearchResults(searchState, isDesktop),
           ),
         ],
@@ -372,61 +379,121 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _buildExploreCategories(bool isDesktop) {
+  Widget _buildEmptyQueryView(bool isDesktop) {
+    final history = ref.watch(searchHistoryProvider);
+
     return SingleChildScrollView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Explorar todo',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primary,
+          if (history.isNotEmpty) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Búsquedas recientes',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primary,
+                      ),
                 ),
-          ),
-          const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isDesktop ? 5 : 2,
-              childAspectRatio: 1.6,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
+                TextButton(
+                  onPressed: () {
+                    ref.read(searchHistoryProvider.notifier).clearAll();
+                  },
+                  child: const Text(
+                    'Borrar todo el historial',
+                    style: TextStyle(color: AppTheme.secondary, fontSize: 13),
+                  ),
+                ),
+              ],
             ),
-            itemCount: _categories.length,
-            itemBuilder: (ctx, i) {
-              final cat = _categories[i];
-              return InkWell(
-                onTap: () {
-                  FocusManager.instance.primaryFocus?.unfocus();
-                  _searchController.text = cat['name'] as String;
-                  ref.read(searchProvider.notifier).setQuery(cat['name'] as String);
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: cat['color'] as Color,
-                    borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: history.map((term) {
+                return InputChip(
+                  avatar: Icon(AppIcons.broken(SolarIcons.Magnifer), size: 14, color: AppTheme.secondary),
+                  label: Text(term, style: const TextStyle(color: AppTheme.primary, fontSize: 13)),
+                  backgroundColor: AppTheme.surface,
+                  deleteIcon: const Icon(Icons.close, size: 14, color: AppTheme.secondary),
+                  onDeleted: () {
+                    ref.read(searchHistoryProvider.notifier).removeQuery(term);
+                  },
+                  onPressed: () {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                    _searchController.text = term;
+                    ref.read(searchProvider.notifier).setQuery(term);
+                  },
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: const BorderSide(color: AppTheme.surfaceHover),
                   ),
-                  child: Text(
-                    cat['name'] as String,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 40),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+          ],
+          _buildExploreCategories(isDesktop),
         ],
       ),
+    );
+  }
+
+  Widget _buildExploreCategories(bool isDesktop) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Explorar todo',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: AppTheme.primary,
+              ),
+        ),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isDesktop ? 5 : 2,
+            childAspectRatio: 1.6,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
+          itemCount: _categories.length,
+          itemBuilder: (ctx, i) {
+            final cat = _categories[i];
+            return InkWell(
+              onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+                _searchController.text = cat['name'] as String;
+                ref.read(searchProvider.notifier).setQuery(cat['name'] as String);
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: cat['color'] as Color,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  cat['name'] as String,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 40),
+      ],
     );
   }
 
@@ -535,6 +602,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               child: GestureDetector(
                 onTap: () {
                   FocusManager.instance.primaryFocus?.unfocus();
+                  final q = _searchController.text.trim();
+                  if (q.isNotEmpty) ref.read(searchHistoryProvider.notifier).addQuery(q);
                   context.push('/artist/${artist.id}');
                 },
                 child: Container(
@@ -626,9 +695,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               isPlaying: isPlaying,
               onTap: () {
                 FocusManager.instance.primaryFocus?.unfocus();
+                final q = _searchController.text.trim();
+                if (q.isNotEmpty) ref.read(searchHistoryProvider.notifier).addQuery(q);
                 controller.setQueue(syncoraTracks, startIndex: i);
               },
-              onAddToQueue: () => controller.addToQueue(track),
+              onAddToQueue: () {
+                final q = _searchController.text.trim();
+                if (q.isNotEmpty) ref.read(searchHistoryProvider.notifier).addQuery(q);
+                controller.addToQueue(track);
+              },
             );
           },
         ),
@@ -661,6 +736,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   coverUrl: album.coverUrl,
                   onTap: () {
                     FocusManager.instance.primaryFocus?.unfocus();
+                    final q = _searchController.text.trim();
+                    if (q.isNotEmpty) ref.read(searchHistoryProvider.notifier).addQuery(q);
                     context.push('/album/${album.id}');
                   },
                 ),

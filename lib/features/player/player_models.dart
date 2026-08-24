@@ -75,6 +75,7 @@ class SyncoraTrack {
   final String? previewUrl;
   final bool isSpokenWord;
   final String? genre;
+  final bool isAiGenerated;
 
   const SyncoraTrack({
     required this.id,
@@ -90,6 +91,7 @@ class SyncoraTrack {
     this.previewUrl,
     this.isSpokenWord = false,
     this.genre,
+    this.isAiGenerated = false,
   }) : _artist = artist; // ignore: prefer_initializing_formals
 
   factory SyncoraTrack.fromVideoId({
@@ -121,6 +123,7 @@ class SyncoraTrack {
         'previewUrl': previewUrl,
         'isSpokenWord': isSpokenWord,
         'genre': genre,
+        'isAiGenerated': isAiGenerated,
       };
 
   factory SyncoraTrack.fromJson(Map<String, dynamic> json) {
@@ -142,6 +145,7 @@ class SyncoraTrack {
       previewUrl: json['previewUrl'] as String?,
       isSpokenWord: json['isSpokenWord'] as bool? ?? false,
       genre: json['genre'] as String?,
+      isAiGenerated: json['isAiGenerated'] as bool? ?? false,
     );
   }
 
@@ -160,6 +164,7 @@ class SyncoraTrack {
     String? previewUrl,
     bool? isSpokenWord,
     String? genre,
+    bool? isAiGenerated,
   }) {
     return SyncoraTrack(
       id: id ?? this.id,
@@ -175,6 +180,7 @@ class SyncoraTrack {
       previewUrl: previewUrl ?? this.previewUrl,
       isSpokenWord: isSpokenWord ?? this.isSpokenWord,
       genre: genre ?? this.genre,
+      isAiGenerated: isAiGenerated ?? this.isAiGenerated,
     );
   }
 }

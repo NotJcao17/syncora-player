@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/ai_generation_steps.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
@@ -23,6 +24,11 @@ import '../import_export/playlist_import_export_service.dart';
 /// hojas -- más simple de navegar y evita perder el estado del formulario
 /// entre pasos.
 void showAiCreatePlaylistSheet(BuildContext context, WidgetRef ref) {
+  final isConnected = ref.read(isConnectedProvider).value ?? true;
+  if (!isConnected) {
+    AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+    return;
+  }
   AppBottomSheet.show(
     context: context,
     title: 'Crear playlist con IA',
@@ -171,8 +177,32 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
     return result;
   }
 
+  int? _extractAddCount(String text) {
+    final clean = text.trim().toLowerCase();
+    final plusMatch = RegExp(r'^\s*\+\s*(\d+)').firstMatch(clean);
+    if (plusMatch != null) return int.tryParse(plusMatch.group(1)!);
+
+    final addMatch = RegExp(r'(?:agrega|añade|anade|suma|adiciona|pon|inserta)\s+(\d+)').firstMatch(clean);
+    if (addMatch != null) return int.tryParse(addMatch.group(1)!);
+
+    final moreMatch = RegExp(r'(\d+)\s+(?:más|mas|canciones\s+más|canciones\s+mas|temas\s+más|adicionales)').firstMatch(clean);
+    if (moreMatch != null) return int.tryParse(moreMatch.group(1)!);
+
+    final isAddIntent = RegExp(r'\b(agrega|agregar|añade|anade|añadir|anadir|sumar|suma|más\s+canciones|mas\s+canciones)\b').hasMatch(clean);
+    if (isAddIntent) {
+      return 5;
+    }
+    return null;
+  }
+
   Future<void> _submitForm() async {
     if (_isSubmitting) return;
+    final isConnected = ref.read(isConnectedProvider).value ?? true;
+    if (!isConnected) {
+      AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+      return;
+    }
+
     final prompt = _promptController.text.trim();
     if (prompt.isEmpty && !(_paramsExpanded && _hasAnyParamSet)) {
       setState(() => _formError = 'Escribe una descripción o abre los parámetros y elige alguno.');
@@ -216,11 +246,27 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
   }
 
   Future<void> _refine() async {
+    final isConnected = ref.read(isConnectedProvider).value ?? true;
+    if (!isConnected) {
+      AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+      return;
+    }
+
     final instruction = _refineController.text.trim();
     if (instruction.isEmpty) {
       AppToast.show(context, message: 'Escribe qué quieres ajustar antes de afinar.');
       return;
     }
+
+    final addCount = _extractAddCount(instruction);
+    _refineController.clear();
+    setState(() => _refinePanelOpen = false);
+
+    if (addCount != null && addCount > 0) {
+      await _refineAdd(instruction, addCount);
+      return;
+    }
+
     final contextTracks = _includedTracks
         .map((t) => {
               'id': t.id.toString(),
@@ -234,15 +280,102 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
       askCount = _clampInt((_requestedExactCount! * 1.3).round(), 1, _kHardCountCap);
     }
 
-    _refineController.clear();
-    setState(() => _refinePanelOpen = false);
-
     await _generate(
       prompt: instruction,
       params: _buildParams(isRefinement: true),
       count: askCount,
       contextTracks: contextTracks,
     );
+  }
+
+  Future<void> _refineAdd(String instruction, int addCount) async {
+    setState(() => _step = _Step.callingAi);
+    final contextTracks = _includedTracks
+        .map((t) => {
+              'id': t.id.toString(),
+              'title': t.title,
+              'artist': t.artistName,
+            })
+        .toList();
+
+    final askCount = _clampInt((addCount * 1.3).round(), 1, _kHardCountCap);
+    final service = ref.read(aiAssistantServiceProvider);
+    Map<String, dynamic> result;
+    try {
+      result = await service.modifyPlaylistAdd(
+        prompt: instruction,
+        contextTracks: contextTracks.isEmpty ? null : contextTracks,
+        count: askCount,
+      );
+    } on AiAssistantException catch (e) {
+      if (!mounted) return;
+      setState(() => _step = _Step.preview);
+      AppToast.show(context, message: e.message);
+      return;
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _step = _Step.preview);
+      AppToast.show(context, message: 'No se pudo contactar al asistente de IA. Revisa tu conexión e intenta de nuevo.');
+      return;
+    }
+
+    final rawTracks = PlaylistImportExportService.parseTrackSuggestions(result['tracks']);
+    if (rawTracks.isEmpty) {
+      if (!mounted) return;
+      setState(() => _step = _Step.preview);
+      AppToast.show(context, message: 'La IA no devolvió canciones adicionales.');
+      return;
+    }
+
+    await _matchAndAppend(rawTracks, addCount);
+  }
+
+  Future<void> _matchAndAppend(List<RawImportTrack> rawTracks, int addCount) async {
+    if (!mounted) return;
+    final deezerApi = ref.read(deezerApiProvider);
+    final service = PlaylistImportExportService(deezerApi);
+    final matched = <DeezerTrack>[];
+    final unmatched = <RawImportTrack>[];
+
+    final displayTotal = addCount;
+    setState(() {
+      _step = _Step.matching;
+      _matchTotal = displayTotal;
+      _matchCurrent = 0;
+      _matchCurrentName = '';
+    });
+
+    try {
+      await for (final progress in service.processImport(
+        rawTracks: rawTracks,
+        outMatched: matched,
+        outUnmatched: unmatched,
+      )) {
+        if (!mounted) return;
+        setState(() {
+          _matchCurrent = progress.current.clamp(0, displayTotal);
+          _matchTotal = displayTotal;
+          _matchCurrentName = progress.currentTrackName;
+        });
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+    final filtered = PlaylistImportExportService.trimToCount(matched, addCount);
+    final existingIds = _allMatched.map((t) => t.id).toSet();
+    final newUnique = filtered.where((t) => !existingIds.contains(t.id)).toList();
+
+    setState(() {
+      _allMatched = [..._allMatched, ...newUnique];
+      _unmatched = [..._unmatched, ...unmatched];
+      _step = _Step.preview;
+    });
+
+    if (newUnique.isEmpty) {
+      AppToast.show(context, message: 'No se encontraron canciones nuevas para añadir.');
+    } else {
+      AppToast.show(context, message: '${newUnique.length} canciones añadidas a la playlist');
+    }
   }
 
   Future<void> _generate({
@@ -293,21 +426,16 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
   }
 
   Future<void> _matchAndSettle(List<RawImportTrack> rawTracks) async {
-    // El llamador (`_generate`) llega hasta acá recién después de un
-    // `await service.createPlaylist(...)` real -- si el usuario cerró la
-    // hoja mientras esa llamada estaba en curso, `ref` ya no es seguro de
-    // usar (el `ConsumerState` fue descartado). El chequeo tiene que ser lo
-    // primero, antes de cualquier `ref.read` (mismo bug que 7.F.2 encontró
-    // en su propia copia de este patrón, revisión independiente).
     if (!mounted) return;
     final deezerApi = ref.read(deezerApiProvider);
     final service = PlaylistImportExportService(deezerApi);
     final matched = <DeezerTrack>[];
     final unmatched = <RawImportTrack>[];
 
+    final displayTotal = _requestedExactCount ?? rawTracks.length;
     setState(() {
       _step = _Step.matching;
-      _matchTotal = rawTracks.length;
+      _matchTotal = displayTotal;
       _matchCurrent = 0;
       _matchCurrentName = '';
     });
@@ -320,15 +448,12 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
       )) {
         if (!mounted) return;
         setState(() {
-          _matchCurrent = progress.current;
-          _matchTotal = progress.total;
+          _matchCurrent = progress.current.clamp(0, displayTotal);
+          _matchTotal = displayTotal;
           _matchCurrentName = progress.currentTrackName;
         });
       }
     } catch (_) {
-      // El propio processImport ya captura errores por pista (los cuenta
-      // como no-matcheadas); esto solo cubre un fallo catastrófico
-      // inesperado del stream, para no dejar la UI congelada en "matching".
     }
 
     if (!mounted) return;

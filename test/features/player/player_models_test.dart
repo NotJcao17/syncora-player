@@ -42,6 +42,25 @@ void main() {
       expect(updated.artist, equals('Updated Artist'));
       expect(updated.artists.first.id, equals(99));
     });
+
+    test('isAiGenerated defaults to false and can be set / serialized', () {
+      const track = SyncoraTrack(
+        id: '4',
+        title: 'AI Track',
+        artist: 'AI Artist',
+        isAiGenerated: true,
+      );
+      expect(track.isAiGenerated, isTrue);
+
+      final json = track.toJson();
+      expect(json['isAiGenerated'], isTrue);
+
+      final deserialized = SyncoraTrack.fromJson(json);
+      expect(deserialized.isAiGenerated, isTrue);
+
+      final copy = track.copyWith(isAiGenerated: false);
+      expect(copy.isAiGenerated, isFalse);
+    });
   });
 
   group('SyncoraArtistRef.encodeList / decodeList round-trip', () {

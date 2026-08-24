@@ -8,7 +8,12 @@ import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/track_tile.dart';
+import '../../../data/apis/deezer_provider.dart';
+import '../../../data/local_db/database_provider.dart';
+import '../../../data/models/deezer/deezer_track.dart';
+import '../../../data/supabase/supabase_providers.dart';
 import '../../auth/local_mode_provider.dart';
+import '../../library/import_export/playlist_import_export_service.dart';
 import '../ai_queue/ai_create_queue_sheet.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
@@ -257,16 +262,89 @@ class _QueueViewState extends ConsumerState<QueueView> {
     );
   }
 
+  Future<void> _saveQueueAsPlaylist() async {
+    final state = ref.read(syncoraPlayerControllerProvider.notifier).state;
+    final allTracks = <SyncoraTrack>[
+      if (state.currentTrack != null) state.currentTrack!,
+      ...state.manualQueue,
+      ...state.autoQueue,
+    ];
+
+    if (allTracks.isEmpty) {
+      AppToast.show(context, message: 'La cola de reproducción está vacía.');
+      return;
+    }
+
+    final nameController = TextEditingController(
+      text: 'Mi Cola (${DateTime.now().day}/${DateTime.now().month})',
+    );
+
+    final title = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Guardar cola como playlist',
+          style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          style: const TextStyle(color: AppTheme.primary),
+          decoration: const InputDecoration(
+            labelText: 'Nombre de la playlist',
+            labelStyle: TextStyle(color: AppTheme.secondary),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
+            onPressed: () => Navigator.pop(ctx, nameController.text.trim()),
+            child: const Text('Guardar', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (title == null || title.isEmpty) return;
+
+    final deezerApi = ref.read(deezerApiProvider);
+    final service = PlaylistImportExportService(deezerApi);
+    final deezerTracks = allTracks
+        .map((t) => DeezerTrack(
+              id: int.tryParse(t.id) ?? 0,
+              title: t.title,
+              artistName: t.artist,
+              artistId: t.artistId ?? 0,
+              albumTitle: t.album ?? '',
+              albumId: t.albumId ?? 0,
+              durationSec: t.duration?.inSeconds ?? 0,
+              coverUrl: t.coverUrl,
+            ))
+        .toList();
+
+    await service.createPlaylistWithMatchedTracks(
+      title: title,
+      matchedTracks: deezerTracks,
+      dao: ref.read(playlistDaoProvider),
+      deezerApi: deezerApi,
+      supabaseRepo: ref.read(supabasePlaylistRepositoryProvider),
+    );
+
+    if (mounted) {
+      AppToast.show(context, message: 'Playlist "$title" guardada con ${allTracks.length} canciones');
+    }
+  }
+
   Widget _buildToolbar(bool hasSelection) {
     final controller = ref.read(syncoraPlayerControllerProvider.notifier);
     final selectionCount = _selectedManual.length + _selectedAuto.length;
-    // Fase 7.F.2: mismo patrón de gating que los otros 3 puntos de entrada
-    // de IA (`library_screen.dart`) -- deshabilitado sin conexión, con
-    // tooltip/toast explicando por qué en vez de un botón muerto sin
-    // explicación.
     final isConnected = ref.watch(isConnectedProvider).value ?? true;
-    // 7.I: sin cuenta, ninguna de las dos entradas de IA de acá aplica --
-    // se ocultan (D-24), no solo se deshabilitan.
     final isLocalMode = ref.watch(localModeProvider);
 
     return Padding(
@@ -274,19 +352,69 @@ class _QueueViewState extends ConsumerState<QueueView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              if (!isLocalMode)
+                TextButton.icon(
+                  onPressed: isConnected
+                      ? () => showAiCreateQueueSheet(context, ref, autoImprove: true)
+                      : () => AppToast.show(
+                            context,
+                            message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.',
+                          ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    backgroundColor: AppTheme.surfaceHover,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  icon: Icon(
+                    AppIcons.broken(SolarIcons.StarsMinimalistic),
+                    size: 15,
+                    color: isConnected ? AppTheme.accent : AppTheme.muted,
+                  ),
+                  label: Text(
+                    'Mejorar cola con IA',
+                    style: TextStyle(
+                      color: isConnected ? AppTheme.primary : AppTheme.muted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              TextButton.icon(
+                onPressed: _saveQueueAsPlaylist,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  backgroundColor: AppTheme.surfaceHover,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                icon: Icon(
+                  AppIcons.broken(SolarIcons.AddFolder),
+                  size: 15,
+                  color: AppTheme.secondary,
+                ),
+                label: const Text(
+                  'Guardar como playlist',
+                  style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ),
               TextButton.icon(
                 onPressed: _toggleEditMode,
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   visualDensity: VisualDensity.compact,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 icon: Icon(
                   _editMode ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.Pen),
-                  size: 16,
+                  size: 15,
                   color: AppTheme.secondary,
                 ),
                 label: Text(
@@ -301,8 +429,14 @@ class _QueueViewState extends ConsumerState<QueueView> {
                     builder: (ctx) => AlertDialog(
                       backgroundColor: AppTheme.surface,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      title: const Text('¿Limpiar cola de reproducción?', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-                      content: const Text('Se eliminarán todas las canciones en espera de la cola.', style: TextStyle(color: AppTheme.secondary)),
+                      title: const Text(
+                        '¿Limpiar cola de reproducción?',
+                        style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
+                      ),
+                      content: const Text(
+                        'Se eliminarán todas las canciones en espera de la cola.',
+                        style: TextStyle(color: AppTheme.secondary),
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
@@ -324,51 +458,17 @@ class _QueueViewState extends ConsumerState<QueueView> {
                   }
                 },
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   visualDensity: VisualDensity.compact,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                icon: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), size: 16, color: AppTheme.secondary),
+                icon: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), size: 15, color: AppTheme.secondary),
                 label: const Text('Limpiar cola', style: TextStyle(color: AppTheme.secondary, fontSize: 12)),
               ),
             ],
           ),
-          if (!isLocalMode)
-            Row(
-              children: [
-                // D-9 / atajo "✨ Mejorar esta cola": prellena basada-en-cola-
-                // actual + intercalar + 25 y dispara directo, sin abrir el
-                // panel completo. Único punto de entrada de IA visible en el
-                // toolbar (antes coexistía con un `IconButton` suelto que
-                // abría el mismo panel completo y se percibía como
-                // duplicado -- el panel completo sigue accesible desde el
-                // `EmptyStateWidget` cuando la cola está totalmente vacía, y
-                // este atajo igual pasa por el paso de vista previa
-                // confirmable/cancelable antes de aplicar nada, D-12).
-                TextButton.icon(
-                  onPressed: isConnected
-                      ? () => showAiCreateQueueSheet(context, ref, autoImprove: true)
-                      : () => AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.'),
-                  icon: Icon(
-                    AppIcons.broken(SolarIcons.StarsMinimalistic),
-                    size: 14,
-                    color: isConnected ? AppTheme.primary : AppTheme.muted,
-                  ),
-                  label: Text(
-                    'Mejorar esta cola',
-                    style: TextStyle(color: isConnected ? AppTheme.primary : AppTheme.muted, fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
           if (_editMode && hasSelection) ...[
-            const SizedBox(height: 4),
-            // Bug real (pruebas manuales): en modo edición, esta fila tenía
-            // que convivir con "Editar"/"Limpiar cola" en un ancho angosto
-            // (la hoja de cola) -- un `Row` sin envolver overflowaba en
-            // cuanto había texto suficiente ("Eliminar seleccionadas (N)" +
-            // "Mover arriba"). `Wrap` baja a una segunda línea en vez de
-            // desbordar horizontalmente.
+            const SizedBox(height: 6),
             Wrap(
               spacing: 8,
               runSpacing: 4,

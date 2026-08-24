@@ -275,6 +275,13 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const Divider(height: 24, color: AppTheme.surfaceHover),
                 _buildActionTile(
+                  icon: AppIcons.broken(SolarIcons.History),
+                  title: 'Historial de reproducción',
+                  subtitle: 'Ver canciones escuchadas recientemente',
+                  onTap: () => context.push('/history'),
+                ),
+                const Divider(height: 24, color: AppTheme.surfaceHover),
+                _buildActionTile(
                   icon: AppIcons.broken(SolarIcons.Moon),
                   title: 'Temporizador de apagado',
                   subtitle: 'Detener música automáticamente',

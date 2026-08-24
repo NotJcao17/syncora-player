@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/ai_generation_steps.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
@@ -13,21 +14,16 @@ import '../../library/import_export/playlist_import_export_service.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
 
-/// Fase 7.F.2 -- "Crear cola con IA". Entrada desde la pantalla/hoja de cola
-/// (`widgets/queue_view.dart`), mismo patrón de un solo `AppBottomSheet` con
-/// pasos internos que 7.F.1 (`library/ai_playlist/ai_create_playlist_sheet.dart`):
-/// formulario -> generación -> matching contra Deezer -> vista previa
-/// editable -> aplicar a la cola. Reusa el matching (`PlaylistImportExportService
-/// .processImport`) y los widgets de vista previa de 7.F.1
-/// (`core/widgets/ai_generation_steps.dart`) en vez de duplicarlos.
-///
-/// [autoImprove] es el atajo "✨ Mejorar esta cola" (D-9, "el antiguo Smart
-/// Shuffle"): prellena basada-en-cola-actual + intercalar + 25 y dispara la
-/// generación de inmediato, sin mostrar el formulario completo.
+/// Fase 7.F.2 -- "Crear cola con IA" / "Mejorar cola con IA".
 void showAiCreateQueueSheet(BuildContext context, WidgetRef ref, {bool autoImprove = false}) {
+  final isConnected = ref.read(isConnectedProvider).value ?? true;
+  if (!isConnected) {
+    AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+    return;
+  }
   AppBottomSheet.show(
     context: context,
-    title: autoImprove ? 'Mejorar esta cola' : 'Crear cola con IA',
+    title: autoImprove ? 'Mejorar cola con IA' : 'Crear cola con IA',
     maxHeightFactor: 0.9,
     child: _AiCreateQueueFlow(autoImprove: autoImprove),
   );
@@ -56,8 +52,6 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
   late int _count;
   String? _formError;
 
-  // Mismo propósito que el flag equivalente de 7.F.1: evita que un doble-tap
-  // dispare dos `_generate` concurrentes.
   bool _isSubmitting = false;
 
   int _matchCurrent = 0;
@@ -72,24 +66,9 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
   void initState() {
     super.initState();
     _count = _kDefaultCount;
-    // Default del toggle "cómo agregarla" para el panel completo: intercalar
-    // (no especificado por el plan salvo para el atajo D-9, que también pide
-    // intercalar) -- decisión tomada acá, documentada en el resumen de la
-    // tarea.
     _interleave = true;
-    if (widget.autoImprove) {
-      // D-9: basada en la cola actual + intercalar + 25, disparado directo
-      // sin mostrar el formulario -- arranca ya en "generando" para no
-      // parpadear el formulario en el primer frame.
-      _basedOnCurrent = true;
-      _step = _Step.callingAi;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _submit();
-      });
-    } else {
-      _basedOnCurrent = false;
-      _step = _Step.form;
-    }
+    _basedOnCurrent = widget.autoImprove;
+    _step = _Step.form;
   }
 
   @override
@@ -103,12 +82,6 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
 
   int _clampInt(int value, int min, int max) => value < min ? min : (value > max ? max : value);
 
-  /// "Playlist/cola actual completa" (7.F.2): pista actual + manual +
-  /// automática, deduplicadas por id, en ese orden. Tope de seguridad
-  /// absurdo del plan (>2.000-3.000 pistas): por encima de eso se muestrea
-  /// por frecuencia de artista en vez de mandar todo tal cual -- el servidor
-  /// igual trunca a `MAX_CONTEXT_ITEMS` (3000, `sanitize.ts`) pero con un
-  /// `slice` ciego, sin ningún criterio de relevancia.
   List<Map<String, dynamic>> _buildQueueContext() {
     final state = ref.read(syncoraPlayerControllerProvider.notifier).state;
     final seen = <String>{};
@@ -134,10 +107,6 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
       for (final t in tracks) {
         freq[t.artist] = (freq[t.artist] ?? 0) + 1;
       }
-      // La pista que suena ahora (si hay) es siempre `tracks.first` -- es la
-      // más relevante para "continuá desde acá" y `List.sort` no es
-      // estable, así que un muestreo puro por frecuencia de artista puede
-      // perfectamente descartarla. Se la preserva aparte del muestreo.
       final rest = current != null ? tracks.skip(1).toList() : tracks;
       final sorted = List<SyncoraTrack>.from(rest)
         ..sort((a, b) => (freq[b.artist] ?? 0).compareTo(freq[a.artist] ?? 0));
@@ -150,6 +119,12 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
 
   Future<void> _submit() async {
     if (_isSubmitting) return;
+    final isConnected = ref.read(isConnectedProvider).value ?? true;
+    if (!isConnected) {
+      AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+      return;
+    }
+
     final prompt = _promptController.text.trim();
     final contextTracks = _basedOnCurrent ? _buildQueueContext() : const <Map<String, dynamic>>[];
 
@@ -221,20 +196,16 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
   }
 
   Future<void> _matchAndSettle(List<RawImportTrack> rawTracks) async {
-    // El llamador (`_generate`) llega hasta acá recién después de un
-    // `await service.createQueue(...)` real -- si el usuario cerró la hoja
-    // mientras esa llamada estaba en curso, `ref` ya no es seguro de usar
-    // (el `ConsumerState` fue descartado). El chequeo tiene que ser lo
-    // primero, antes de cualquier `ref.read`, no después.
     if (!mounted) return;
     final deezerApi = ref.read(deezerApiProvider);
     final service = PlaylistImportExportService(deezerApi);
     final matched = <DeezerTrack>[];
     final unmatched = <RawImportTrack>[];
 
+    final displayTotal = _count;
     setState(() {
       _step = _Step.matching;
-      _matchTotal = rawTracks.length;
+      _matchTotal = displayTotal;
       _matchCurrent = 0;
       _matchCurrentName = '';
     });
@@ -247,16 +218,12 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
       )) {
         if (!mounted) return;
         setState(() {
-          _matchCurrent = progress.current;
-          _matchTotal = progress.total;
+          _matchCurrent = progress.current.clamp(0, displayTotal);
+          _matchTotal = displayTotal;
           _matchCurrentName = progress.currentTrackName;
         });
       }
-    } catch (_) {
-      // Mismo criterio que 7.F.1: `processImport` ya cuenta los fallos por
-      // pista como no-matcheadas, esto solo cubre un fallo catastrófico
-      // inesperado del stream.
-    }
+    } catch (_) {}
 
     if (!mounted) return;
 
@@ -282,10 +249,8 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
     }
     setState(() => _step = _Step.applying);
 
-    final syncoraTracks = included.map((t) => t.toSyncoraTrack()).toList();
+    final syncoraTracks = included.map((t) => t.toSyncoraTrack(isAiGenerated: true)).toList();
     final controller = ref.read(syncoraPlayerControllerProvider.notifier);
-    // D-1: la cola manual nunca se toca salvo para agregarle pistas al
-    // final vía el flujo normal -- "intercalar" solo muta la automática.
     if (_interleave) {
       controller.interleaveIntoAutoQueue(syncoraTracks);
     } else {
@@ -411,7 +376,10 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
               child: ElevatedButton.icon(
                 onPressed: _isSubmitting ? null : _submit,
                 icon: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), size: 18),
-                label: const Text('Crear cola con IA', style: TextStyle(fontWeight: FontWeight.bold)),
+                label: Text(
+                  widget.autoImprove ? 'Mejorar cola con IA' : 'Crear cola con IA',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   foregroundColor: AppTheme.background,

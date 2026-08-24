@@ -25,9 +25,20 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
       );
 
   Future<List<ListeningHistoryData>> getRecentHistory({int limit = 50}) => (select(listeningHistory)
-        ..orderBy([(t) => OrderingTerm(expression: t.listenedAt, mode: OrderingMode.desc)])
+        ..orderBy([
+          (t) => OrderingTerm(expression: t.listenedAt, mode: OrderingMode.desc),
+          (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
+        ])
         ..limit(limit))
       .get();
+
+  Stream<List<ListeningHistoryData>> watchRecentHistory({int limit = 50}) => (select(listeningHistory)
+        ..orderBy([
+          (t) => OrderingTerm(expression: t.listenedAt, mode: OrderingMode.desc),
+          (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
+        ])
+        ..limit(limit))
+      .watch();
 
   /// Entradas aún no subidas a Supabase (`syncedAt` nulo), las más antiguas
   /// primero para respetar el orden de escucha al subirlas.

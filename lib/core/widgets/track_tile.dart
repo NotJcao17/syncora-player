@@ -409,35 +409,57 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     bool isDownloadedLocal,
     bool isConnected,
   ) {
-    Widget? statusIcon;
+    final statusIcons = <Widget>[];
     if (isDownloadingLocal) {
-      statusIcon = const Padding(
-        padding: EdgeInsets.only(right: 6),
-        child: SizedBox(
-          width: 13,
-          height: 13,
-          child: CircularProgressIndicator(
-            strokeWidth: 1.5,
-            color: AppTheme.secondary,
+      statusIcons.add(
+        const Padding(
+          padding: EdgeInsets.only(right: 6),
+          child: SizedBox(
+            width: 13,
+            height: 13,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              color: AppTheme.secondary,
+            ),
           ),
         ),
       );
     } else if (isDownloadedLocal) {
-      statusIcon = Padding(
-        padding: const EdgeInsets.only(right: 6),
-        child: Icon(
-          AppIcons.bold(SolarIcons.DownloadMinimalistic),
-          color: AppTheme.secondary,
-          size: 13,
+      statusIcons.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: Icon(
+            AppIcons.bold(SolarIcons.DownloadMinimalistic),
+            color: AppTheme.secondary,
+            size: 13,
+          ),
         ),
       );
     } else if (!isConnected) {
-      statusIcon = Padding(
-        padding: const EdgeInsets.only(right: 6),
-        child: Icon(
-          AppIcons.broken(SolarIcons.WiFiRouter),
-          color: const Color(0xFFF59E0B),
-          size: 13,
+      statusIcons.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: Icon(
+            AppIcons.broken(SolarIcons.WiFiRouter),
+            color: const Color(0xFFF59E0B),
+            size: 13,
+          ),
+        ),
+      );
+    }
+
+    if (widget.track.isAiGenerated) {
+      statusIcons.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: Tooltip(
+            message: 'Añadida por IA',
+            child: Icon(
+              AppIcons.broken(SolarIcons.StarsMinimalistic),
+              color: AppTheme.secondary.withValues(alpha: 0.85),
+              size: 13,
+            ),
+          ),
         ),
       );
     }
@@ -447,7 +469,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     if (!isDesktop) {
       return Row(
         children: [
-          ?statusIcon,
+          ...statusIcons,
           Expanded(
             child: Text(
               widget.track.artist,
@@ -512,7 +534,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
 
       return Row(
         children: [
-          ?statusIcon,
+          ...statusIcons,
           Expanded(
             child: Text.rich(
               TextSpan(children: spans),
@@ -529,7 +551,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     if (hasArtistId) {
       return Row(
         children: [
-          ?statusIcon,
+          ...statusIcons,
           Expanded(
             child: Text.rich(
               TextSpan(
@@ -556,7 +578,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
 
     return Row(
       children: [
-        ?statusIcon,
+        ...statusIcons,
         Expanded(
           child: Text(
             widget.track.artist,

@@ -129,7 +129,7 @@ class DeezerTrack {
     );
   }
 
-  SyncoraTrack toSyncoraTrack() {
+  SyncoraTrack toSyncoraTrack({bool isAiGenerated = false}) {
     return SyncoraTrack(
       id: id.toString(),
       title: title,
@@ -141,6 +141,7 @@ class DeezerTrack {
       duration: Duration(seconds: durationSec),
       artUri: coverUrl.isNotEmpty ? Uri.tryParse(coverUrl) : null,
       previewUrl: previewUrl,
+      isAiGenerated: isAiGenerated,
     );
   }
 }

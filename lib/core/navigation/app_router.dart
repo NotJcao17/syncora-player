@@ -16,6 +16,7 @@ import '../../features/library/screens/playlist_detail_screen.dart';
 import '../../features/player/screens/player_fullscreen_screen.dart';
 import '../../features/search/screens/artist_detail_screen.dart';
 import '../../features/search/screens/search_screen.dart';
+import '../../features/settings/screens/listening_history_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/stats/screens/stats_screen.dart';
 import '../layout/app_shell.dart';
@@ -223,6 +224,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/stats',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: StatsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/history',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: ListeningHistoryScreen(),
             ),
           ),
 

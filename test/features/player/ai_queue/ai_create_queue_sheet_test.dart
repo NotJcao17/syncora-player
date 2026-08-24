@@ -238,8 +238,9 @@ void main() {
     expect(find.text('Crear cola con IA'), findsOneWidget);
   });
 
-  testWidgets('con la cola no vacía, el toolbar muestra el atajo "Mejorar esta cola"',
+  testWidgets('con la cola no vacía, el toolbar muestra el atajo "Mejorar cola con IA"',
       (tester) async {
+    growViewport(tester);
     final controller = buildController();
     await controller.setQueue(
       const [SyncoraTrack(id: 't1', title: 'T1', artist: 'A1')],
@@ -248,13 +249,8 @@ void main() {
     await tester.pumpWidget(buildHarness(controller));
     await tester.pumpAndSettle();
 
-    // El `IconButton` suelto que abría el mismo sheet sin `autoImprove` se
-    // quitó (pruebas manuales: dos botones de IA pegados se veían
-    // redundantes) -- "Mejorar esta cola" queda como único punto de entrada
-    // visible en el toolbar; el panel completo sigue accesible desde el
-    // `EmptyStateWidget` cuando la cola está vacía.
     expect(find.byTooltip('Crear cola con IA'), findsNothing);
-    expect(find.text('Mejorar esta cola'), findsOneWidget);
+    expect(find.text('Mejorar cola con IA'), findsOneWidget);
   });
 
   testWidgets('cola nueva sin prompt exige texto o "basada en cola actual" (validación local, sin llamar a la IA)',
@@ -332,8 +328,9 @@ void main() {
     expect(controller.state.manualQueue, isEmpty);
   });
 
-  testWidgets('atajo "Mejorar esta cola" (D-9): dispara directo sin mostrar el formulario, e intercala en la automática',
+  testWidgets('atajo "Mejorar cola con IA": abre opciones interactivas, genera e intercala pistas marcadas como IA',
       (tester) async {
+    growViewport(tester);
     final controller = buildController();
     await controller.setQueue(
       [
@@ -358,18 +355,16 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Mejorar esta cola'));
-    // Primer frame tras abrir la hoja: ya debe estar en "generando", sin
-    // haber mostrado el formulario ni un frame de por medio (D-9: "dispara
-    // directo, sin abrir el panel completo").
-    await tester.pump();
-    expect(find.text('Origen'), findsNothing);
-    expect(find.text('Generando canciones para tu cola con IA...'), findsOneWidget);
-
+    await tester.tap(find.text('Mejorar cola con IA'));
     await tester.pumpAndSettle();
 
-    // D-9: basada en la cola actual + intercalar + 25 -- se verifica que
-    // efectivamente viajó así a la Edge Function.
+    // Muestra formulario interactivo con origen en cola actual
+    expect(find.text('Origen'), findsOneWidget);
+    expect(find.text('Mejorar cola con IA').last, findsOneWidget);
+
+    await tester.tap(find.text('Mejorar cola con IA').last);
+    await tester.pumpAndSettle();
+
     expect(sentBody?['interleave'], true);
     expect(sentBody?['count'], isNotNull);
     final contextTracks = sentBody?['contextTracks'] as List?;
@@ -380,8 +375,8 @@ void main() {
     await tester.tap(find.text('Intercalar en la cola'));
     await tester.pumpAndSettle(const Duration(seconds: 4));
 
-    expect(controller.state.autoQueue.any((t) => t.id == '1'), isTrue,
-        reason: 'la pista sugerida por la IA (matcheada a id Deezer 1) debe haber quedado en la automática');
-    expect(controller.state.manualQueue, isEmpty, reason: 'D-1: intercalar nunca toca la cola manual');
+    expect(controller.state.autoQueue.any((t) => t.id == '1' && t.isAiGenerated), isTrue,
+        reason: 'la pista sugerida por la IA debe haber quedado en la automática con isAiGenerated = true');
+    expect(controller.state.manualQueue, isEmpty, reason: 'intercalar nunca toca la cola manual');
   });
 }

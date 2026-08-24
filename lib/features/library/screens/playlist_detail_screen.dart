@@ -15,6 +15,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/connectivity_service.dart';
 import '../../../core/utils/contributor_resolver.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
@@ -33,6 +34,7 @@ import '../../player/audio_engine/audio_engine_state.dart';
 import '../../player/player_models.dart';
 import '../../player/player_providers.dart';
 import '../../search/search_ranking.dart';
+import '../ai_playlist/ai_modify_playlist_sheet.dart';
 import '../import_export/playlist_import_export_service.dart';
 
 enum PlaylistSortColumn { original, title, album, date, duration }
@@ -666,7 +668,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (!playlist.isLiked)
+              if (!playlist.isLiked) ...[
                 ListTile(
                   leading: Icon(AppIcons.broken(SolarIcons.Pen), color: AppTheme.primary),
                   title: const Text('Editar información y portada', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
@@ -675,6 +677,20 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     _showEditPlaylistDialog(context, playlist);
                   },
                 ),
+                ListTile(
+                  leading: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: AppTheme.accent),
+                  title: const Text('Modificar con IA', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    final isConnected = ref.read(isConnectedProvider).value ?? true;
+                    if (!isConnected) {
+                      AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+                      return;
+                    }
+                    showAiModifyPlaylistSheet(context, ref, playlist);
+                  },
+                ),
+              ],
               if (tracks.isNotEmpty)
                 ListTile(
                   leading: Icon(AppIcons.broken(SolarIcons.AddFolder), color: AppTheme.primary),
@@ -1044,6 +1060,28 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             label: Text(_showAddSongsSearch ? 'Cerrar buscador' : 'Agregar canciones', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                           ),
                                           const SizedBox(width: 8),
+
+                                          if (!playlist.isLiked) ...[
+                                            ElevatedButton.icon(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: AppTheme.surface,
+                                                foregroundColor: AppTheme.accent,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                              ),
+                                              onPressed: () {
+                                                final isConnected = ref.read(isConnectedProvider).value ?? true;
+                                                if (!isConnected) {
+                                                  AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+                                                  return;
+                                                }
+                                                showAiModifyPlaylistSheet(context, ref, playlist);
+                                              },
+                                              icon: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), size: 18),
+                                              label: const Text('Modificar con IA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                            ),
+                                            const SizedBox(width: 8),
+                                          ],
 
                                           // Ordenamiento en Móvil
                                           if (!isDesktop && sortedSyncoraTracks.isNotEmpty) ...[

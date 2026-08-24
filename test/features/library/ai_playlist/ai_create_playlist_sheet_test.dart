@@ -237,4 +237,86 @@ void main() {
     expect(find.text('abrir'), findsOneWidget);
     expect(find.text('Guardar playlist'), findsNothing);
   });
+
+  testWidgets('Afinar con IA con +N canciones agrega temas adicionales sin reemplazar los existentes', (tester) async {
+    const fakeTrack1 = DeezerTrack(
+      id: 1,
+      artistId: 10,
+      albumId: 100,
+      title: 'Initial Song',
+      artistName: 'Initial Artist',
+      albumTitle: 'Album 1',
+      coverUrl: 'https://cover.example/1.jpg',
+      durationSec: 180,
+    );
+    const fakeTrack2 = DeezerTrack(
+      id: 2,
+      artistId: 20,
+      albumId: 200,
+      title: 'Added Song',
+      artistName: 'Added Artist',
+      albumTitle: 'Album 2',
+      coverUrl: 'https://cover.example/2.jpg',
+      durationSec: 200,
+    );
+
+    int callCount = 0;
+    final aiService = AiAssistantService(
+      keyStorage: _FakeAiKeyStorage(),
+      invoke: (functionName, {headers = const {}, body}) async {
+        callCount++;
+        if (callCount == 1) {
+          return FunctionResponse(
+            status: 200,
+            data: {
+              'action': 'create_playlist',
+              'result': {
+                'playlistName': 'Mi Playlist',
+                'tracks': [{'title': 'Initial Song', 'artist': 'Initial Artist'}],
+              },
+            },
+          );
+        } else {
+          return FunctionResponse(
+            status: 200,
+            data: {
+              'action': 'modify_playlist_add',
+              'result': {
+                'tracks': [{'title': 'Added Song', 'artist': 'Added Artist'}],
+              },
+            },
+          );
+        }
+      },
+    );
+
+    // Mock Deezer to return fakeTrack1 or fakeTrack2 based on query
+    final deezerApi = _FakeDeezerApi(fakeTrack1);
+
+    await tester.pumpWidget(buildHarness(
+      aiService: aiService,
+      deezerApi: deezerApi,
+    ));
+    await tester.tap(find.text('abrir'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'música inicial');
+    await tester.tap(find.text('Crear con IA'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Initial Song'), findsOneWidget);
+
+    // Abre el panel de afinar
+    await tester.tap(find.text('Afinar con IA'));
+    await tester.pumpAndSettle();
+
+    // Escribe "+1 canción más acústica"
+    await tester.enterText(find.widgetWithText(TextField, 'Ej: menos canciones lentas, más de los 2000s'), '+1 canción más acústica');
+    await tester.tap(find.text('Enviar ajuste'));
+    await tester.pumpAndSettle();
+
+    // Ahora deben estar presentes ambas
+    expect(find.text('Initial Song'), findsOneWidget);
+    await tester.pumpAndSettle(const Duration(seconds: 4));
+  });
 }

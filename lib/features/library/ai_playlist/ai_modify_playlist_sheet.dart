@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/ai_generation_steps.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
@@ -28,6 +29,11 @@ import '../import_export/playlist_import_export_service.dart';
 ///    `PlaylistImportExportService.processImport`/`parseTrackSuggestions`/
 ///    `trimToCount` y los widgets de `core/widgets/ai_generation_steps.dart`.
 void showAiModifyPlaylistSheet(BuildContext context, WidgetRef ref, Playlist playlist) {
+  final isConnected = ref.read(isConnectedProvider).value ?? true;
+  if (!isConnected) {
+    AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+    return;
+  }
   AppBottomSheet.show(
     context: context,
     title: 'Modificar playlist con IA',
@@ -96,6 +102,12 @@ class _AiModifyPlaylistFlowState extends ConsumerState<_AiModifyPlaylistFlow> {
 
   Future<void> _submit() async {
     if (_isSubmitting) return;
+    final isConnected = ref.read(isConnectedProvider).value ?? true;
+    if (!isConnected) {
+      AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+      return;
+    }
+
     final prompt = _promptController.text.trim();
     if (prompt.isEmpty) {
       setState(() => _formError = _mode == _Mode.remove
@@ -208,18 +220,16 @@ class _AiModifyPlaylistFlowState extends ConsumerState<_AiModifyPlaylistFlow> {
   }
 
   Future<void> _matchAndSettle(List<RawImportTrack> rawTracks) async {
-    // Mismo cuidado que 7.F.1/7.F.2: `_generate*` llega hasta acá recién
-    // después de un `await` real a la Edge Function -- si el usuario cerró
-    // la hoja mientras tanto, `ref` ya no es seguro de usar.
     if (!mounted) return;
     final deezerApi = ref.read(deezerApiProvider);
     final service = PlaylistImportExportService(deezerApi);
     final matched = <DeezerTrack>[];
     final unmatched = <RawImportTrack>[];
 
+    final displayTotal = _count;
     setState(() {
       _step = _Step.matching;
-      _matchTotal = rawTracks.length;
+      _matchTotal = displayTotal;
       _matchCurrent = 0;
       _matchCurrentName = '';
     });
@@ -232,14 +242,12 @@ class _AiModifyPlaylistFlowState extends ConsumerState<_AiModifyPlaylistFlow> {
       )) {
         if (!mounted) return;
         setState(() {
-          _matchCurrent = progress.current;
-          _matchTotal = progress.total;
+          _matchCurrent = progress.current.clamp(0, displayTotal);
+          _matchTotal = displayTotal;
           _matchCurrentName = progress.currentTrackName;
         });
       }
     } catch (_) {
-      // processImport ya cuenta los fallos por pista como no-matcheadas;
-      // esto solo cubre un fallo catastrófico inesperado del stream.
     }
 
     if (!mounted) return;
