@@ -98,13 +98,13 @@ bool get _isTestEnv {
 
     // 2. Metadata
     if (track != null) {
+      final thumb = track.coverUrl.isNotEmpty ? track.coverUrl : track.artUri?.toString();
       _smtc.updateMetadata(
         MusicMetadata(
           title: track.title,
           artist: track.artist,
-          album: track.album,
-          // SMTC exige URL de red para la imagen (o null).
-          thumbnail: track.artUri?.toString(),
+          album: track.album ?? '',
+          thumbnail: thumb != null && thumb.isNotEmpty ? thumb : null,
         ),
       );
     } else {
@@ -131,10 +131,12 @@ bool get _isTestEnv {
   /// Limpia suscripciones locales. No se llama a `_smtc.dispose()` prematuramente
   /// porque destruye el runtime global de Rust de smtc_windows.
   void dispose() {
-    if (_disposed || kIsWeb || !Platform.isWindows || Platform.environment.containsKey('FLUTTER_TEST')) return;
+    if (_disposed || kIsWeb || !Platform.isWindows || _isTestEnv) return;
     _disposed = true;
     _buttonSub?.cancel();
     _controller.removeListener(_onControllerChanged);
-    _smtc.disableSmtc();
+    try {
+      _smtc.disableSmtc();
+    } catch (_) {}
   }
 }

@@ -186,6 +186,21 @@ class MediaKitEngine implements AudioEngine {
   }
 
   @override
+  Future<void> microFadeOut() async {
+    final curVol = _state.volume;
+    if (curVol <= 0.0) return;
+    try {
+      final step = curVol / 3.0;
+      await _player.setVolume(((curVol - step).clamp(0.0, 1.0)) * 100.0);
+      await Future.delayed(const Duration(milliseconds: 40));
+      await _player.setVolume(((curVol - 2 * step).clamp(0.0, 1.0)) * 100.0);
+      await Future.delayed(const Duration(milliseconds: 40));
+      await _player.setVolume(0.0);
+      await Future.delayed(const Duration(milliseconds: 40));
+    } catch (_) {}
+  }
+
+  @override
   Future<void> setSkipSilenceEnabled(bool enabled) async {
     _skipSilence = enabled;
     if (enabled) {

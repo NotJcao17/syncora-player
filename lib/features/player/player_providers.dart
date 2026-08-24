@@ -9,6 +9,7 @@ import '../../core/extraction/extraction_provider.dart';
 import '../../core/utils/connectivity_service.dart';
 import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
+import '../../data/local_db/daos/playlist_dao.dart';
 import 'audio_engine/audio_engine_factory.dart';
 import 'os_controls/syncora_audio_handler.dart';
 import 'os_controls/windows_media_controls.dart';
@@ -54,6 +55,7 @@ final syncoraPlayerControllerProvider =
   final deezerApi = ref.watch(deezerApiProvider);
   final downloadedTrackDao = ref.watch(downloadedTrackDaoProvider);
   final listeningHistoryDao = ref.watch(listeningHistoryDaoProvider);
+  final playlistDao = ref.watch(playlistDaoProvider);
   final radioService = RadioService(deezerApi: deezerApi);
 
   final controller = SyncoraPlayerController(
@@ -79,7 +81,7 @@ final syncoraPlayerControllerProvider =
     }
   } else if (!kIsWeb && Platform.isAndroid) {
     try {
-      _initAndroidAudioService(controller);
+      _initAndroidAudioService(controller, playlistDao);
     } catch (e) {
       debugPrint('AndroidAudioService no disponible en este entorno: $e');
     }
@@ -88,16 +90,16 @@ final syncoraPlayerControllerProvider =
   return controller;
 });
 
-void _initAndroidAudioService(SyncoraPlayerController controller) {
+void _initAndroidAudioService(SyncoraPlayerController controller, [PlaylistDao? playlistDao]) {
   final currentHandler = _globalAndroidAudioHandler;
   if (currentHandler != null) {
     if (currentHandler is SyncoraAudioHandler) {
-      currentHandler.updateController(controller);
+      currentHandler.updateController(controller, playlistDao: playlistDao);
     }
     return;
   }
   AudioService.init(
-    builder: () => SyncoraAudioHandler(controller),
+    builder: () => SyncoraAudioHandler(controller, playlistDao: playlistDao),
     config: const AudioServiceConfig(
       androidNotificationChannelId: 'com.syncora.player',
       androidNotificationChannelName: 'Syncora Player',

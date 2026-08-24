@@ -118,6 +118,13 @@ class FakeAudioEngine implements AudioEngine {
     ));
   }
 
+  int microFadeOutCallCount = 0;
+
+  @override
+  Future<void> microFadeOut() async {
+    microFadeOutCallCount++;
+  }
+
   @override
   Future<void> seek(Duration position) async {
     emitState(_state.copyWith(position: position));

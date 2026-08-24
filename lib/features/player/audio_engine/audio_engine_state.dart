@@ -102,6 +102,10 @@ abstract class AudioEngine {
   Future<void> setSpeed(double speed);
   Future<void> setVolume(double volume);
 
+  /// Micro fade-out de audio (~120-150ms) a nivel de motor interno antes de detener o cambiar de pista.
+  /// No altera el volumen canónico de la UI para evitar glitches visuales en el slider de volumen.
+  Future<void> microFadeOut();
+
   /// Recorte de silencios. En Android delega al flag de ExoPlayer (solo para
   /// spoken-word/podcasts, Pitfall #7); en Windows alterna el filtro
   /// `silencedetect` de libmpv y ejecuta un seek al primer sample de audio.

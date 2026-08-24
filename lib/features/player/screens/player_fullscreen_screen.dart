@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../../../core/theme/app_icons.dart';
 import 'package:palette_generator/palette_generator.dart';
 
@@ -10,6 +11,7 @@ import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
 import '../../../data/local_db/database_provider.dart';
+import '../audio_engine/audio_engine_state.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
 import '../syncora_player_controller.dart';
@@ -327,11 +329,17 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                           boxShadow: AppTheme.glowHighShadow,
                         ),
                         child: IconButton(
-                          icon: Icon(
-                            isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
-                            color: AppTheme.background,
-                            size: 40,
-                          ),
+                          icon: (state.engine.processingState == AudioProcessingState.loading ||
+                                  state.engine.processingState == AudioProcessingState.buffering)
+                              ? LoadingAnimationWidget.threeArchedCircle(
+                                  color: AppTheme.background,
+                                  size: 36,
+                                )
+                              : Icon(
+                                  isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
+                                  color: AppTheme.background,
+                                  size: 40,
+                                ),
                           onPressed: () {
                             if (isPlaying) {
                               controller.pause();

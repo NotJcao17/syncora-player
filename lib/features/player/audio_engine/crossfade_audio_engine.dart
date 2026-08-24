@@ -275,6 +275,24 @@ class CrossfadeAudioEngine implements AudioEngine {
     return _active.setVolume(volume);
   }
 
+  /// Micro fade-out interno (~120-150ms) en el motor activo para transiciones limpias y anti-pop.
+  /// No modifica [_canonicalVolume], por lo que el estado observable hacia la UI permanece intacto
+  /// (la barra de volumen no se mueve visualmente ni parpadea).
+  @override
+  Future<void> microFadeOut() async {
+    final curVol = _canonicalVolume;
+    if (curVol <= 0.0) return;
+    try {
+      final step = curVol / 3.0;
+      await _active.setVolume((curVol - step).clamp(0.0, 1.0));
+      await Future.delayed(const Duration(milliseconds: 40));
+      await _active.setVolume((curVol - 2 * step).clamp(0.0, 1.0));
+      await Future.delayed(const Duration(milliseconds: 40));
+      await _active.setVolume(0.0);
+      await Future.delayed(const Duration(milliseconds: 40));
+    } catch (_) {}
+  }
+
   @override
   Future<void> setSkipSilenceEnabled(bool enabled) {
     _canonicalSkipSilence = enabled;

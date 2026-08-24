@@ -76,6 +76,9 @@ class FakeAudioEngine implements AudioEngine {
   }
 
   @override
+  Future<void> microFadeOut() async {}
+
+  @override
   Future<void> seek(Duration position) async {
     emitState(_state.copyWith(position: position));
   }

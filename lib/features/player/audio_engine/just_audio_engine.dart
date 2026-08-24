@@ -96,6 +96,21 @@ class JustAudioEngine implements AudioEngine {
   Future<void> setVolume(double volume) => _player.setVolume(volume.clamp(0.0, 1.0));
 
   @override
+  Future<void> microFadeOut() async {
+    final curVol = _state.volume;
+    if (curVol <= 0.0) return;
+    try {
+      final step = curVol / 3.0;
+      await _player.setVolume((curVol - step).clamp(0.0, 1.0));
+      await Future.delayed(const Duration(milliseconds: 40));
+      await _player.setVolume((curVol - 2 * step).clamp(0.0, 1.0));
+      await Future.delayed(const Duration(milliseconds: 40));
+      await _player.setVolume(0.0);
+      await Future.delayed(const Duration(milliseconds: 40));
+    } catch (_) {}
+  }
+
+  @override
   Future<void> setSkipSilenceEnabled(bool enabled) async {
     // ExoPlayer nativo. Solo para spoken-word/podcasts (Pitfall #7); el
     // gapless entre canciones musicales lo resuelve la Playlist API.

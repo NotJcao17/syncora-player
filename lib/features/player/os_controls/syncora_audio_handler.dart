@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:audio_service/audio_service.dart';
+import '../../../data/local_db/daos/playlist_dao.dart';
 import '../player_models.dart';
 import '../syncora_player_controller.dart';
 import '../audio_engine/audio_engine_state.dart' as engine_state;
@@ -7,18 +8,32 @@ import '../audio_engine/audio_engine_state.dart' as engine_state;
 /// Adaptador de Android para conectar [SyncoraPlayerController] con [audio_service].
 ///
 /// Refleja el estado del controlador en la notificación del sistema y la pantalla
-/// de bloqueo, y retransmite las acciones del usuario (play, pause, seek, skip)
-/// de vuelta al controlador.
+/// de bloqueo, y retransmite las acciones del usuario (play, pause, seek, skip,
+/// shuffle, like) de vuelta al controlador y base de datos.
 class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
   SyncoraPlayerController _controller;
+  PlaylistDao? _playlistDao;
 
-  SyncoraAudioHandler(this._controller) {
+  static const MediaControl _shuffleControl = MediaControl(
+    androidIcon: 'drawable/ic_shuffle',
+    label: 'Shuffle',
+    action: MediaAction.setShuffleMode,
+  );
+
+  static const MediaControl _favoriteControl = MediaControl(
+    androidIcon: 'drawable/ic_heart',
+    label: 'Favorite',
+    action: MediaAction.custom,
+  );
+
+  SyncoraAudioHandler(this._controller, {PlaylistDao? playlistDao}) : _playlistDao = playlistDao {
     _controller.addListener(_onControllerChanged);
     _onControllerChanged(); // Estado inicial
   }
 
   /// Actualiza la instancia del controlador cuando el provider se recrea.
-  void updateController(SyncoraPlayerController newController) {
+  void updateController(SyncoraPlayerController newController, {PlaylistDao? playlistDao}) {
+    if (playlistDao != null) _playlistDao = playlistDao;
     if (_controller == newController) return;
     _controller.removeListener(_onControllerChanged);
     _controller = newController;
@@ -42,19 +57,21 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     // modelo dual). El índice 0 siempre es la pista actual; luego la manual
     // completa, luego la automática.
     final combinedQueue = <SyncoraTrack>[
-      if (track != null) track,
+      ?track,
       ...state.manualQueue,
       ...state.autoQueue,
     ];
     final queueItems = combinedQueue.map(_toMediaItem).toList();
     queue.add(queueItems);
 
-    // 3. PlaybackState
+    // 3. PlaybackState con controles completos
     final isPlaying = engineState.playing;
     final controls = <MediaControl>[
+      _shuffleControl,
       MediaControl.skipToPrevious,
       isPlaying ? MediaControl.pause : MediaControl.play,
       MediaControl.skipToNext,
+      _favoriteControl,
     ];
 
     playbackState.add(
@@ -64,8 +81,13 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
           MediaAction.seek,
           MediaAction.seekForward,
           MediaAction.seekBackward,
+          MediaAction.setShuffleMode,
+          MediaAction.setRepeatMode,
+          MediaAction.custom,
         },
-        androidCompactActionIndices: const [0, 1, 2],
+        androidCompactActionIndices: const [1, 2, 3],
+        shuffleMode: state.isShuffle ? AudioServiceShuffleMode.all : AudioServiceShuffleMode.none,
+        repeatMode: _mapRepeatMode(state.repeatMode),
         processingState: _mapProcessingState(engineState.processingState),
         playing: isPlaying,
         updatePosition: engineState.position,
@@ -74,6 +96,17 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
         queueIndex: track != null ? 0 : null,
       ),
     );
+  }
+
+  AudioServiceRepeatMode _mapRepeatMode(SyncoraRepeatMode mode) {
+    switch (mode) {
+      case SyncoraRepeatMode.off:
+        return AudioServiceRepeatMode.none;
+      case SyncoraRepeatMode.all:
+        return AudioServiceRepeatMode.all;
+      case SyncoraRepeatMode.one:
+        return AudioServiceRepeatMode.one;
+    }
   }
 
   AudioProcessingState _mapProcessingState(engine_state.AudioProcessingState state) {
@@ -125,6 +158,44 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> skipToPrevious() => _controller.skipToPrevious();
+
+  @override
+  Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async {
+    _controller.toggleShuffle();
+  }
+
+  @override
+  Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
+    _controller.cycleRepeatMode();
+  }
+
+  @override
+  Future<dynamic> customAction(String name, [Map<String, dynamic>? extras]) async {
+    if (name == 'toggleFavorite' || name == 'Favorite' || name == 'favorite') {
+      await _toggleFavorite();
+      return true;
+    } else if (name == 'toggleShuffle' || name == 'Shuffle' || name == 'shuffle') {
+      _controller.toggleShuffle();
+      return true;
+    }
+    return super.customAction(name, extras);
+  }
+
+  Future<void> _toggleFavorite() async {
+    final track = _controller.state.currentTrack;
+    if (track == null || _playlistDao == null) return;
+    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
+    await _playlistDao?.toggleLikeTrack(
+      trackId: trackIdInt,
+      artistId: track.artistId ?? 0,
+      albumId: track.albumId ?? 0,
+      title: track.title,
+      artistName: track.artist,
+      albumName: track.album ?? '',
+      coverUrl: track.coverUrl,
+      durationMs: (track.duration ?? Duration.zero).inMilliseconds,
+    );
+  }
 
   /// Traduce un índice de la vista combinada expuesta al SO (ver
   /// [_onControllerChanged]) a `(origen, índice dentro de esa cola)`.

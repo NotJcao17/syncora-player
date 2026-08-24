@@ -174,12 +174,12 @@ class SyncoraPlayerController extends ChangeNotifier {
   })  : _engine = engine, // ignore: prefer_initializing_formals
         _extractionService = extractionService, // ignore: prefer_initializing_formals
         _deezerApi = deezerApi, // ignore: prefer_initializing_formals
-        _downloadedTrackDao = downloadedTrackDao,
-        _listeningHistoryDao = listeningHistoryDao,
-        _radioService = radioService,
-        _isConnectedGetter = isConnectedGetter,
-        _radioEnabledGetter = radioEnabledGetter,
-        _crossfadeDurationGetter = crossfadeDurationGetter,
+        _downloadedTrackDao = downloadedTrackDao, // ignore: prefer_initializing_formals
+        _listeningHistoryDao = listeningHistoryDao, // ignore: prefer_initializing_formals
+        _radioService = radioService, // ignore: prefer_initializing_formals
+        _isConnectedGetter = isConnectedGetter, // ignore: prefer_initializing_formals
+        _radioEnabledGetter = radioEnabledGetter, // ignore: prefer_initializing_formals
+        _crossfadeDurationGetter = crossfadeDurationGetter, // ignore: prefer_initializing_formals
         _sessionStorage = sessionStorage ?? PlayerSessionStorage();
 
   final AudioEngine _engine;
@@ -823,20 +823,15 @@ bool get _isTestEnv {
   }
 }
 
-  /// Micro fade-out de audio (150ms) antes de cambiar de pista o detener el motor
+  /// Micro fade-out de audio (120-150ms) antes de cambiar de pista o detener el motor.
+  ///
+  /// Se ejecuta a nivel interno del motor de audio ([AudioEngine.microFadeOut]) sin alterar
+  /// el volumen canónico/observable de la UI, evitando cualquier artefacto pop/corte abrupto
+  /// y garantizando que la barra de volumen no se mueva visualmente ni parpadee el botón de play/pause.
   Future<void> _microFadeOut() async {
     if (!_state.engine.playing || _isTestEnv) return;
     try {
-      final currentVol = _state.engine.volume;
-      if (currentVol <= 0) return;
-      final step = currentVol / 3.0;
-      await _engine.setVolume((currentVol - step).clamp(0.0, 1.0));
-      await Future.delayed(const Duration(milliseconds: 50));
-      await _engine.setVolume((currentVol - 2 * step).clamp(0.0, 1.0));
-      await Future.delayed(const Duration(milliseconds: 50));
-      await _engine.setVolume(0.0);
-      await Future.delayed(const Duration(milliseconds: 50));
-      await _engine.setVolume(currentVol);
+      await _engine.microFadeOut();
     } catch (e) {
       _log('[Audio] Error en micro fade-out: $e');
     }
@@ -1131,6 +1126,43 @@ bool get _isTestEnv {
     _notify();
     _log('[Session] Sesión restaurada: ${session.manualQueue.length + session.autoQueue.length} '
         'pistas en cola, posición: ${session.positionSeconds}s (pausado)');
+
+    if (session.currentTrack != null) {
+      _prewarmSessionTrack(session.currentTrack!);
+    }
+  }
+
+  /// Precalienta silenciosamente la extracción de la URL en segundo plano tras restaurar sesión,
+  /// de modo que al pulsar Play la pista comience a sonar de inmediato sin demora.
+  void _prewarmSessionTrack(SyncoraTrack track) {
+    unawaited(() async {
+      try {
+        final trackDeezerId = int.tryParse(track.id) ?? track.id.hashCode.abs();
+        if (_downloadedTrackDao != null && trackDeezerId > 0) {
+          final downloaded = await _downloadedTrackDao.getByTrackId(trackDeezerId);
+          if (downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty) {
+            return;
+          }
+        }
+        final isConnected = _isConnectedGetter?.call() ?? true;
+        if (!isConnected) return;
+
+        String targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)
+            ? track.youtubeVideoId!
+            : track.id;
+
+        _log('[Session] Precalentando extracción en segundo plano para ${track.title}...');
+        await _extractionService.extractUrl(
+          targetId,
+          trackTitle: track.title,
+          trackArtist: track.artist,
+          durationSeconds: track.duration?.inSeconds,
+          priority: ExtractionPriority.streaming,
+        );
+      } catch (e) {
+        _log('[Session] Precalentamiento de sesión ignorado: $e');
+      }
+    }());
   }
 
   /// Salto silencioso automático cuando se intenta reproducir una pista no
@@ -1182,7 +1214,11 @@ bool get _isTestEnv {
     }
 
     await _engine.stop();
-    _state = _state.copyWith(clearError: true, clearCurrentTrack: true, clearCurrentOrigin: true);
+    _state = _state.copyWith(
+      clearError: true,
+      clearCurrentTrack: true,
+      clearCurrentOrigin: true,
+    );
     _notify();
     _saveSession();
   }
@@ -1595,13 +1631,7 @@ bool get _isTestEnv {
     // queda con el crossfade preventivo bloqueado por una transición vieja.
     _abandonCrossfadeGuard();
 
-    // Fase 7.D (crossfade): hay que saber si corresponde un crossfade ANTES
-    // de decidir si se hace el stop()/micro fade-out abrupto de siempre —
-    // el crossfade reemplaza esa secuencia por completo (condiciones 1-4
-    // más abajo). Se capturan aquí, antes de tocar nada, la condición 3
-    // (¿la pista que suena AHORA vino de descarga local?) y la condición 4
-    // (¿el motor está reproduciendo algo?) porque ambas se pisan/cambian
-    // más abajo en este mismo método.
+    final crossfadeDuration = _crossfadeDurationGetter?.call() ?? Duration.zero;
     final previousPlaybackWasLocal = _currentPlaybackIsLocal;
     final wasEnginePlaying = _state.engine.playing;
     // Revisión de código: resetear explícitamente al principio de CADA
@@ -1630,49 +1660,28 @@ bool get _isTestEnv {
     final newTrackIsLocal =
         downloaded != null && downloaded.downloadState == 2 && downloaded.localAudioPath.isNotEmpty;
 
-    // Condición 1: setting de duración de crossfade > 0 (no "off").
-    final crossfadeDuration = _crossfadeDurationGetter?.call() ?? Duration.zero;
-    final shouldCrossfade = crossfadeDuration > Duration.zero &&
-        newTrackIsLocal && // condición 2
-        previousPlaybackWasLocal && // condición 3: nunca crossfade desde/hacia streaming (Pitfall #17)
-        wasEnginePlaying; // condición 4: no tiene sentido crossfade desde silencio/idle
+    // Fase 7.D (crossfade): las 4 condiciones para cruzar (ver docstring de
+    // `_maybeCrossfadeProactively`). Si no se cumplen, se detiene el motor
+    // previo con micro fade-out para evitar clics/pops.
+    final useCrossfade = crossfadeDuration > Duration.zero &&
+        newTrackIsLocal &&
+        previousPlaybackWasLocal &&
+        wasEnginePlaying;
 
-    if (!shouldCrossfade) {
-      // Detener inmediatamente cualquier audio previo con micro fade-out para evitar audio bleed/clics
+    if (!useCrossfade) {
       await _microFadeOut();
       await _engine.stop();
     }
 
-    // 2. Pista descargada localmente: cargar directo, sin pasar por el
-    // ExtractionIsolate (con o sin crossfade, según se decidió arriba).
+    // 2. Pista descargada localmente: cargar directo, sin pasar por el ExtractionIsolate
     if (newTrackIsLocal) {
       final localPath = downloaded.localAudioPath;
       _onPlaybackStartedSuccessfully();
       _currentPlaybackIsLocal = true;
 
-      if (shouldCrossfade) {
-        _log('[Play] Crossfade (${crossfadeDuration.inSeconds}s) hacia pista local descargada: $localPath');
-        // Mismo guard que el camino preventivo: mientras el ramp de volumen
-        // corre en segundo plano, el motor saliente sigue emitiendo ticks
-        // con su posición cerca del EOF aunque `currentTrack` ya sea la
-        // pista nueva — sin esto, un skip manual hecho cerca del final de la
-        // canción también podía encadenar avances de cola (mismo bug de la
-        // cascada, disparado a mano en vez de solo).
-        _isCrossfading = true;
-        final fadeGen = ++_crossfadeGeneration;
-        try {
-          await _engine.crossfadeToLocalSource(localPath, crossfadeDuration);
-        } catch (_) {
-          // Mismo motivo que en `_runProactiveCrossfade`: si el motor falló
-          // no hay ramp que esperar, y mantener el guard puesto se comería la
-          // completion del motor que siga sonando.
-          _releaseCrossfadeGuard(fadeGen);
-          rethrow;
-        }
-        unawaited(
-          Future<void>.delayed(crossfadeDuration + _crossfadeSettleMargin)
-              .then((_) => _releaseCrossfadeGuard(fadeGen)),
-        );
+      if (useCrossfade) {
+        _log('[Play] Crossfade a descarga local: $localPath (${crossfadeDuration.inSeconds}s)');
+        await _engine.crossfadeToLocalSource(localPath, crossfadeDuration);
       } else {
         _log('[Play] Pista local descargada encontrada: $localPath. Cargando sin pasar por ExtractionIsolate.');
         await _engine.setLocalSource(localPath);

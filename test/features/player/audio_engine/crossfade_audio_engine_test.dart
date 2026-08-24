@@ -288,5 +288,11 @@ void main() {
 
       await settled;
     });
+
+    test('microFadeOut() baja el volumen del motor activo sin alterar el volumen canónico', () async {
+      await engine.setVolume(0.8);
+      await engine.microFadeOut();
+      expect(volumeHistories[0].last, 0.0);
+    });
   });
 }

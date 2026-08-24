@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../../../core/theme/app_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -9,6 +10,7 @@ import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
+import '../audio_engine/audio_engine_state.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
 import '../syncora_player_controller.dart';
@@ -24,6 +26,8 @@ class MiniPlayer extends ConsumerWidget {
     final isPlaying = ref.watch(isPlayingProvider);
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final state = ref.watch(playerStateProvider);
+    final isLoading = state.engine.processingState == AudioProcessingState.loading ||
+        state.engine.processingState == AudioProcessingState.buffering;
 
     final isDesktop = MediaQuery.of(context).size.width >= 768;
     final isVisible = currentTrack != null;
@@ -34,8 +38,8 @@ class MiniPlayer extends ConsumerWidget {
       color: isDesktop ? AppTheme.surface : Colors.transparent,
       elevation: isDesktop ? 12 : 0,
       child: isDesktop
-          ? _buildDesktopBar(context, ref, currentTrack, isPlaying, controller, state)
-          : _buildMobileBar(context, ref, currentTrack, isPlaying, controller),
+          ? _buildDesktopBar(context, ref, currentTrack, isPlaying, isLoading, controller, state)
+          : _buildMobileBar(context, ref, currentTrack, isPlaying, isLoading, controller),
     );
   }
 
@@ -46,6 +50,7 @@ class MiniPlayer extends ConsumerWidget {
     WidgetRef ref,
     SyncoraTrack currentTrack,
     bool isPlaying,
+    bool isLoading,
     SyncoraPlayerController controller,
   ) {
     return GestureDetector(
@@ -128,10 +133,17 @@ class MiniPlayer extends ConsumerWidget {
                   shape: BoxShape.circle,
                   color: AppTheme.background,
                 ),
-                child: Icon(
-                  isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
-                  color: AppTheme.primary,
-                  size: 20,
+                child: Center(
+                  child: isLoading
+                      ? LoadingAnimationWidget.threeArchedCircle(
+                          color: AppTheme.primary,
+                          size: 20,
+                        )
+                      : Icon(
+                          isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
+                          color: AppTheme.primary,
+                          size: 20,
+                        ),
                 ),
               ),
             ),
@@ -141,12 +153,12 @@ class MiniPlayer extends ConsumerWidget {
     );
   }
 
-  /// Layout Desktop: barra inferior completa (idéntica a image2.png / mockup HTML index.html)
   Widget _buildDesktopBar(
     BuildContext context,
     WidgetRef ref,
     SyncoraTrack currentTrack,
     bool isPlaying,
+    bool isLoading,
     SyncoraPlayerController controller,
     SyncoraPlayerState state,
   ) {
@@ -234,11 +246,16 @@ class MiniPlayer extends ConsumerWidget {
                         boxShadow: AppTheme.glowShadow,
                       ),
                       child: IconButton(
-                        icon: Icon(
-                          isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
-                          color: AppTheme.background,
-                          size: 20,
-                        ),
+                        icon: isLoading
+                            ? LoadingAnimationWidget.threeArchedCircle(
+                                color: AppTheme.background,
+                                size: 20,
+                              )
+                            : Icon(
+                                isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
+                                color: AppTheme.background,
+                                size: 20,
+                              ),
                         onPressed: () {
                           if (isPlaying) {
                             controller.pause();

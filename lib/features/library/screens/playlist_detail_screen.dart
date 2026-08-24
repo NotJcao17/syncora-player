@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -476,6 +477,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                               if (syncoraTracks.isNotEmpty) ...[
                                 _HeaderPlayButton(
                                   isPlaying: showPauseHeader,
+                                  isLoading: isCurrentContext &&
+                                      (playerState.engine.processingState == AudioProcessingState.loading ||
+                                       playerState.engine.processingState == AudioProcessingState.buffering),
                                   onPressed: () {
                                     if (showPauseHeader) {
                                       controller.pause();
@@ -824,10 +828,12 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
 class _HeaderPlayButton extends StatefulWidget {
   final bool isPlaying;
+  final bool isLoading;
   final VoidCallback onPressed;
 
   const _HeaderPlayButton({
     required this.isPlaying,
+    this.isLoading = false,
     required this.onPressed,
   });
 
@@ -855,11 +861,16 @@ class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
             boxShadow: _isHovered ? AppTheme.glowHighShadow : AppTheme.glowShadow,
           ),
           child: IconButton(
-            icon: Icon(
-              widget.isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.outline(SolarIcons.Play),
-              color: AppTheme.background,
-              size: 26,
-            ),
+            icon: widget.isLoading
+                ? LoadingAnimationWidget.threeArchedCircle(
+                    color: AppTheme.background,
+                    size: 26,
+                  )
+                : Icon(
+                    widget.isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.outline(SolarIcons.Play),
+                    color: AppTheme.background,
+                    size: 26,
+                  ),
             onPressed: widget.onPressed,
           ),
         ),

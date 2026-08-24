@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -43,6 +44,74 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   bool _isSidebarCollapsed = false;
   double _sidebarWidth = 256.0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+      HardwareKeyboard.instance.addHandler(_handleDesktopKeyEvent);
+    }
+  }
+
+  @override
+  void dispose() {
+    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+      HardwareKeyboard.instance.removeHandler(_handleDesktopKeyEvent);
+    }
+    super.dispose();
+  }
+
+  bool _handleDesktopKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
+
+    // 1. Barra espaciadora: toggle Play/Pause si no se está escribiendo en un input
+    if (event.logicalKey == LogicalKeyboardKey.space) {
+      final primaryFocus = FocusManager.instance.primaryFocus;
+      final focusContext = primaryFocus?.context;
+      if (focusContext != null) {
+        final isEditable = focusContext.widget is EditableText ||
+            focusContext.findAncestorWidgetOfExactType<EditableText>() != null;
+        if (isEditable) return false;
+      }
+
+      final controller = ref.read(syncoraPlayerControllerProvider);
+      if (controller.state.currentTrack == null) return false;
+
+      if (controller.state.engine.playing) {
+        controller.pause();
+      } else {
+        controller.play();
+      }
+      return true;
+    }
+
+    // 2. Teclas multimedia de teclado físico
+    if (event.logicalKey == LogicalKeyboardKey.mediaPlayPause ||
+        event.logicalKey == LogicalKeyboardKey.mediaPlay) {
+      final controller = ref.read(syncoraPlayerControllerProvider);
+      if (controller.state.currentTrack == null) return false;
+      if (controller.state.engine.playing) {
+        controller.pause();
+      } else {
+        controller.play();
+      }
+      return true;
+    } else if (event.logicalKey == LogicalKeyboardKey.mediaPause) {
+      ref.read(syncoraPlayerControllerProvider).pause();
+      return true;
+    } else if (event.logicalKey == LogicalKeyboardKey.mediaTrackNext) {
+      ref.read(syncoraPlayerControllerProvider).skipToNext();
+      return true;
+    } else if (event.logicalKey == LogicalKeyboardKey.mediaTrackPrevious) {
+      ref.read(syncoraPlayerControllerProvider).skipToPrevious();
+      return true;
+    } else if (event.logicalKey == LogicalKeyboardKey.mediaStop) {
+      ref.read(syncoraPlayerControllerProvider).stop();
+      return true;
+    }
+
+    return false;
+  }
 
   int _calculateSelectedIndex() {
     if (widget.location.startsWith('/search')) return 1;

@@ -68,6 +68,8 @@ class _FakeAudioEngine implements AudioEngine {
   Future<void> stop() async =>
       _emit(_state.copyWith(playing: false, processingState: AudioProcessingState.idle));
   @override
+  Future<void> microFadeOut() async {}
+  @override
   Future<void> seek(Duration position) async => _emit(_state.copyWith(position: position));
   @override
   Future<void> setSpeed(double speed) async => _emit(_state.copyWith(speed: speed));
