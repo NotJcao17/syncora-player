@@ -38,7 +38,7 @@ void main() {
     tearDown(() => container.dispose());
 
     test('loads initial history from storage', () async {
-      final notifier = container.read(searchHistoryProvider.notifier);
+      container.read(searchHistoryProvider.notifier);
       await pumpEventQueue();
       expect(container.read(searchHistoryProvider), equals(['Rock', 'Pop']));
     });

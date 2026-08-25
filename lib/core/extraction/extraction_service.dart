@@ -12,6 +12,7 @@ abstract class ExtractionService {
     String? trackArtist,
     int? durationSeconds,
     ExtractionPriority priority = ExtractionPriority.streaming,
+    String? quality,
   });
 
   void resetEngine();
@@ -37,6 +38,7 @@ class ExtractionServiceReal implements ExtractionService {
     String? trackArtist,
     int? durationSeconds,
     ExtractionPriority priority = ExtractionPriority.streaming,
+    String? quality,
   }) async {
     final requestId =
         'req_${++_requestIdCounter}_${DateTime.now().millisecondsSinceEpoch}';
@@ -56,6 +58,7 @@ class ExtractionServiceReal implements ExtractionService {
       trackTitle: trackTitle,
       trackArtist: trackArtist,
       durationSeconds: durationSeconds,
+      quality: quality,
     );
     return _isolate.request(request);
   }
@@ -88,6 +91,7 @@ class ExtractionServiceMock implements ExtractionService {
     String? trackArtist,
     int? durationSeconds,
     ExtractionPriority priority = ExtractionPriority.streaming,
+    String? quality,
   }) async {
     final requestId = 'mock_${DateTime.now().millisecondsSinceEpoch}';
 

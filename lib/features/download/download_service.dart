@@ -18,6 +18,8 @@ import '../../data/local_db/daos/downloaded_track_dao.dart';
 import '../../data/local_db/syncora_database.dart';
 
 import '../player/player_models.dart';
+import 'models/download_quality.dart';
+import 'services/download_quality_storage.dart';
 
 
 class DownloadException implements Exception {
@@ -45,14 +47,18 @@ class DownloadProgress {
 
 class DownloadBatchResult {
   final int totalCount;
+  final int pendingCount;
   final int successCount;
   final int failedCount;
+  final int alreadyDownloadedCount;
   final List<String> errors;
 
   const DownloadBatchResult({
     required this.totalCount,
+    this.pendingCount = 0,
     required this.successCount,
     required this.failedCount,
+    this.alreadyDownloadedCount = 0,
     required this.errors,
   });
 
@@ -63,14 +69,12 @@ class DownloadService {
   final DownloadedTrackDao dao;
   final ExtractionService extractionService;
   final CoverCacheService coverCacheService;
-  // ignore: unused_field
-  final Ref ref;
+  final Ref? ref;
 
   DownloadedTrackDao get _dao => dao;
   ExtractionService get _extractionService => extractionService;
   CoverCacheService get _coverCacheService => coverCacheService;
-  // ignore: unused_element
-  Ref get _ref => ref;
+  Ref? get _ref => ref;
 
   bool _isWifiOnly = true;
   final StreamController<DownloadProgress> _progressController =
@@ -82,7 +86,7 @@ class DownloadService {
     required this.dao,
     required this.extractionService,
     required this.coverCacheService,
-    required this.ref,
+    this.ref,
   });
 
   Stream<DownloadProgress> get progressStream => _progressController.stream;
@@ -91,16 +95,12 @@ class DownloadService {
     _isWifiOnly = wifiOnly;
   }
 
+  bool get wifiOnly => _isWifiOnly;
+
   bool get _isTestEnv => Platform.environment.containsKey('FLUTTER_TEST');
 
-  Future<String> _getAudioDir() async {
-    if (kIsWeb) return '';
-    final base = (await getApplicationDocumentsDirectory()).path;
-    final dir = Directory('$base/syncora/downloads');
-    if (!dir.existsSync()) {
-      dir.createSync(recursive: true);
-    }
-    return dir.path;
+  void dispose() {
+    _progressController.close();
   }
 
   Future<void> _checkWifiGuard() async {
@@ -113,6 +113,27 @@ class DownloadService {
     if (!isWifi) {
       throw DownloadException('Solo se permiten descargas con WiFi activo.');
     }
+  }
+
+  Future<String> _getAudioDir() async {
+    if (kIsWeb) return '';
+    final base = (await getApplicationDocumentsDirectory()).path;
+    final dir = Directory('$base/syncora/downloads');
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+    }
+    return dir.path;
+  }
+
+  Future<int> getDownloadedTracksCount() async {
+    final list = await _dao.getAll();
+    int count = 0;
+    for (final track in list) {
+      if (track.downloadState == 2) {
+        count++;
+      }
+    }
+    return count;
   }
 
   Future<int> countDownloaded(List<int> trackIds) async {
@@ -138,7 +159,9 @@ class DownloadService {
 
     // Resolver colaboradores completos antes de persistir — `/search` no los trae,
     // solo `/track/{id}`. Se pide una única vez aquí, no durante la navegación.
-    final contributors = await resolveTrackContributors(_ref.read(deezerApiProvider), track);
+    final contributors = _ref != null
+        ? await resolveTrackContributors(_ref!.read(deezerApiProvider), track)
+        : <SyncoraArtistRef>[];
     final contributorsJson = SyncoraArtistRef.encodeList(contributors);
 
     // 1. Insertar estado pendiente / descargando en DB
@@ -172,10 +195,12 @@ class DownloadService {
     );
 
     try {
-      // 2. Extraer URL de YouTube
+      // 2. Extraer URL de YouTube con calidad de audio configurada
       final targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)
           ? track.youtubeVideoId!
           : track.id;
+
+      final downloadQuality = _ref?.read(downloadQualityProvider) ?? DownloadQuality.high;
 
       final result = await _extractionService.extractUrl(
         targetId,
@@ -183,6 +208,7 @@ class DownloadService {
         trackArtist: track.artist,
         durationSeconds: ((track.duration?.inMilliseconds ?? 0) / 1000).round(),
         priority: ExtractionPriority.download,
+        quality: downloadQuality.name,
       );
 
       if (_activeCancelTokens[track.deezerId] == true) {
@@ -325,14 +351,21 @@ class DownloadService {
 
     int successCount = 0;
     int failedCount = 0;
+    int alreadyDownloadedCount = 0;
     final List<String> errors = [];
 
+    final List<SyncoraTrack> tracksToDownload = [];
     for (final track in tracks) {
       final existing = await _dao.getByTrackId(track.deezerId);
       if (existing != null && existing.downloadState == 2) {
+        alreadyDownloadedCount++;
         successCount++;
         continue; // Saltar si ya descargado
       }
+      tracksToDownload.add(track);
+    }
+
+    for (final track in tracksToDownload) {
       try {
         final success = await downloadTrack(track);
         if (success) {
@@ -351,8 +384,10 @@ class DownloadService {
 
     return DownloadBatchResult(
       totalCount: tracks.length,
+      pendingCount: tracksToDownload.length,
       successCount: successCount,
       failedCount: failedCount,
+      alreadyDownloadedCount: alreadyDownloadedCount,
       errors: errors,
     );
   }
@@ -370,20 +405,29 @@ class DownloadService {
   }
 
   Future<void> cleanupInterruptedDownloads() async {
-    if (_isTestEnv || kIsWeb) return;
     try {
       final allDownloaded = await _dao.getAll();
       for (final track in allDownloaded) {
         if (track.downloadState == 1) {
-          final file = File(track.localAudioPath);
-          if (file.existsSync()) {
-            try { file.deleteSync(); } catch (_) {}
+          // Interrumpido mientras descargaba
+          if (!kIsWeb && !_isTestEnv) {
+            try {
+              final file = File(track.localAudioPath);
+              if (file.existsSync()) {
+                file.deleteSync();
+              }
+            } catch (_) {}
           }
           await _dao.deleteByTrackId(track.trackId);
         } else if (track.downloadState == 2) {
-          final file = File(track.localAudioPath);
-          if (!file.existsSync() || file.lengthSync() == 0) {
-            await _dao.deleteByTrackId(track.trackId);
+          // Estado completo pero archivo inexistente o vacío
+          if (!kIsWeb && !_isTestEnv) {
+            try {
+              final file = File(track.localAudioPath);
+              if (!file.existsSync() || file.lengthSync() == 0) {
+                await _dao.deleteByTrackId(track.trackId);
+              }
+            } catch (_) {}
           }
         }
       }
@@ -457,10 +501,5 @@ class DownloadService {
         error: error,
       ),
     );
-  }
-
-
-  void dispose() {
-    _progressController.close();
   }
 }

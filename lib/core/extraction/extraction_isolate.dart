@@ -322,6 +322,7 @@ class ExtractionIsolate {
           trackTitle: request.trackTitle,
           trackArtist: request.trackArtist,
           durationSeconds: request.durationSeconds,
+          quality: request.quality,
         );
         return _processExtraction(
           request: resolvedRequest,
@@ -494,6 +495,7 @@ class ExtractionIsolate {
             trackTitle: request.trackTitle,
             trackArtist: request.trackArtist,
             durationSeconds: request.durationSeconds,
+            quality: request.quality,
           );
           final result = await _processExtraction(
             request: resolvedRequest,
@@ -540,6 +542,7 @@ class ExtractionIsolate {
           client: client,
           jsRuntime: jsRuntime,
           sendLog: sendLog,
+          quality: request.quality,
         );
 
         if (evalResult != null) {
@@ -653,6 +656,7 @@ class ExtractionIsolate {
     required String client,
     required JavascriptRuntime? jsRuntime,
     required void Function(String) sendLog,
+    String? quality,
   }) async {
     if (jsRuntime == null) return null;
 
@@ -664,7 +668,7 @@ class ExtractionIsolate {
     // simples sin escapar en absoluto; un id/valor con un apóstrofe literal
     // rompía la sintaxis del script generado.
     final code =
-        'globalThis.extractVideo(${jsonEncode(videoId)}, ${jsonEncode(client)}, ${jsonEncode(jsRequestId)});';
+        'globalThis.extractVideo(${jsonEncode(videoId)}, ${jsonEncode(client)}, ${jsonEncode(jsRequestId)}, ${jsonEncode(quality ?? "high")});';
     final evalRes = jsRuntime.evaluate(code);
     
     if (evalRes.isError) {

@@ -53,5 +53,41 @@ void main() {
       );
       expect(find.text('Crear Cuenta'), findsOneWidget);
     });
+
+    testWidgets('Displays proactive password length indicator dynamically when typing in Registro tab', (tester) async {
+      tester.view.physicalSize = const Size(1280, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: AuthScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Cambiar a Registro
+      await tester.tap(find.text('Registro'));
+      await tester.pumpAndSettle();
+
+      // Inicialmente dice "Mínimo 8 caracteres"
+      expect(find.text('Mínimo 8 caracteres'), findsOneWidget);
+
+      // Escribir 3 caracteres en el campo de contraseña
+      final passwordField = find.byType(TextFormField).at(1);
+      await tester.enterText(passwordField, 'abc');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mínimo 8 caracteres (llevas 3 de 8)'), findsOneWidget);
+
+      // Escribir 8 caracteres
+      await tester.enterText(passwordField, '12345678');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Contraseña válida (mínimo 8 caracteres)'), findsOneWidget);
+    });
   });
 }

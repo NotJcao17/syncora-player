@@ -214,6 +214,7 @@ class TestableExtractionService implements ExtractionService {
     String? trackArtist,
     int? durationSeconds,
     ExtractionPriority priority = ExtractionPriority.streaming,
+    String? quality,
   }) async {
     extractCount++;
     final held = _held.remove(videoId);

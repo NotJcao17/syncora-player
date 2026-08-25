@@ -8,6 +8,7 @@ class ExtractionRequest {
   final String? trackTitle;
   final String? trackArtist;
   final int? durationSeconds;
+  final String? quality; // 'high', 'medium', 'low'
 
   const ExtractionRequest({
     required this.videoId,
@@ -16,6 +17,7 @@ class ExtractionRequest {
     this.trackTitle,
     this.trackArtist,
     this.durationSeconds,
+    this.quality,
   });
 
   Map<String, dynamic> toJson() => {
@@ -25,6 +27,7 @@ class ExtractionRequest {
         'trackTitle': trackTitle,
         'trackArtist': trackArtist,
         'durationSeconds': durationSeconds,
+        'quality': quality,
       };
 
   factory ExtractionRequest.fromJson(Map<String, dynamic> json) =>
@@ -38,5 +41,6 @@ class ExtractionRequest {
         trackTitle: json['trackTitle'] as String?,
         trackArtist: json['trackArtist'] as String?,
         durationSeconds: json['durationSeconds'] as int?,
+        quality: json['quality'] as String?,
       );
 }

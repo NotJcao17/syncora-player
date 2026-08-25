@@ -8,6 +8,8 @@ import '../../data/local_db/database_provider.dart';
 import '../../data/local_db/syncora_database.dart';
 import 'download_service.dart';
 
+export 'models/download_quality.dart';
+export 'services/download_quality_storage.dart';
 
 final downloadWifiOnlyProvider = StateProvider<bool>((ref) => true);
 

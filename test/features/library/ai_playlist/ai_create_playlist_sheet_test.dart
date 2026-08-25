@@ -249,16 +249,6 @@ void main() {
       coverUrl: 'https://cover.example/1.jpg',
       durationSec: 180,
     );
-    const fakeTrack2 = DeezerTrack(
-      id: 2,
-      artistId: 20,
-      albumId: 200,
-      title: 'Added Song',
-      artistName: 'Added Artist',
-      albumTitle: 'Album 2',
-      coverUrl: 'https://cover.example/2.jpg',
-      durationSec: 200,
-    );
 
     int callCount = 0;
     final aiService = AiAssistantService(

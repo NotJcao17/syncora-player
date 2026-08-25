@@ -299,6 +299,7 @@ class SettingsScreen extends ConsumerWidget {
           Consumer(
             builder: (context, ref, _) {
               final wifiOnly = ref.watch(downloadWifiOnlyProvider);
+              final quality = ref.watch(downloadQualityProvider);
               final downloadedTracksAsync = ref.watch(watchAllDownloadedTracksProvider);
               final coverCache = ref.watch(coverCacheServiceProvider);
               final dao = ref.watch(downloadedTrackDaoProvider);
@@ -325,6 +326,17 @@ class SettingsScreen extends ConsumerWidget {
                         AppToast.show(
                           context,
                           message: val ? 'Descargas restringidas a Wi-Fi' : 'Descargas permitidas con datos móviles',
+                        );
+                      },
+                    ),
+                    const Divider(height: 24, color: AppTheme.surfaceHover),
+                    _buildQualitySelector(
+                      value: quality,
+                      onChanged: (newQuality) {
+                        ref.read(downloadQualityProvider.notifier).setQuality(newQuality);
+                        AppToast.show(
+                          context,
+                          message: 'Calidad de descarga: ${newQuality.label} (${newQuality.bitrateDescription})',
                         );
                       },
                     ),
@@ -551,6 +563,63 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       child: Text(
                         labelFor(option),
+                        style: TextStyle(
+                          color: selected ? AppTheme.background : AppTheme.secondary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQualitySelector({
+    required DownloadQuality value,
+    required ValueChanged<DownloadQuality> onChanged,
+  }) {
+    const options = DownloadQuality.values;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(AppIcons.broken(SolarIcons.Soundwave), color: AppTheme.primary, size: 22),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Calidad de descarga',
+                style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 15),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${value.label} (${value.bitrateDescription}) • ${value.detail}',
+                style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: options.map((option) {
+                  final selected = option == value;
+                  return GestureDetector(
+                    onTap: () => onChanged(option),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: selected ? AppTheme.primary : AppTheme.surfaceActive,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${option.label} (${option.bitrateDescription})',
                         style: TextStyle(
                           color: selected ? AppTheme.background : AppTheme.secondary,
                           fontWeight: FontWeight.w600,

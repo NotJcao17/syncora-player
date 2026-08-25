@@ -5,6 +5,7 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/error_state.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../player/player_models.dart';
@@ -236,7 +237,28 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
   void _startDownload(DownloadService service, List<SyncoraTrack> tracks) async {
     setState(() => _isProcessing = true);
     try {
-      AppToast.show(context, message: 'Iniciando descarga de ${tracks.length} canciones...');
+      final downloadedTracksAsync = ref.read(watchAllDownloadedTracksProvider);
+      final downloadedTracks = downloadedTracksAsync.value ?? [];
+      final downloadedIds = downloadedTracks
+          .where((DownloadedTrack t) => t.downloadState == 2)
+          .map((DownloadedTrack t) => t.trackId)
+          .toSet();
+
+      final pendingCount = tracks.where((t) {
+        final tId = int.tryParse(t.id) ?? t.id.hashCode.abs();
+        return !downloadedIds.contains(tId);
+      }).length;
+
+      if (pendingCount == 0) {
+        AppToast.show(context, message: 'Todas las canciones ya están descargadas');
+        return;
+      }
+
+      final startMessage = pendingCount == 1
+          ? 'Descargando 1 canción...'
+          : 'Descargando $pendingCount canciones...';
+      AppToast.show(context, message: startMessage);
+
       final result = await service.downloadTracks(tracks, groupLabel: widget.title);
       if (mounted) {
         if (result.failedCount == 0) {
@@ -253,7 +275,7 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
       }
     } catch (e) {
       if (mounted) {
-        AppToast.show(context, message: e.toString());
+        AppToast.show(context, message: ErrorStateWidget.formatErrorMessage(e));
       }
     } finally {
       if (mounted) {

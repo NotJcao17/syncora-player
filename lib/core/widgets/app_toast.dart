@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/player/player_providers.dart';
 import '../theme/app_icons.dart';
-import '../theme/app_theme.dart';
 
 
 /// Pop-up flotante suave al estilo Spotify Desktop / Móvil.
@@ -130,12 +129,24 @@ class _ToastWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget defaultIcon;
     final lower = message.toLowerCase();
-    if (lower.contains('descarg')) {
-      defaultIcon = Icon(AppIcons.bold(SolarIcons.CloudCheck), color: AppTheme.primary, size: 15);
-    } else if (lower.contains('conexió') || lower.contains('restaurad')) {
-      defaultIcon = Icon(AppIcons.bold(SolarIcons.WiFiRouter), color: const Color(0xFF22C55E), size: 15);
+    if (lower.contains('me gusta') || lower.contains('favorit') || lower.contains('like')) {
+      defaultIcon = Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 16);
+    } else if (lower.contains('descarg')) {
+      defaultIcon = Icon(AppIcons.bold(SolarIcons.CloudCheck), color: Colors.white, size: 16);
+    } else if (lower.contains('cola') || lower.contains('queue')) {
+      defaultIcon = Icon(AppIcons.bold(SolarIcons.ListCross), color: Colors.white, size: 16);
+    } else if (lower.contains('álbum') || lower.contains('album')) {
+      defaultIcon = Icon(AppIcons.bold(SolarIcons.VinylRecord), color: Colors.white, size: 16);
+    } else if (lower.contains('playlist') || lower.contains('lista')) {
+      defaultIcon = Icon(AppIcons.bold(SolarIcons.MusicNote), color: Colors.white, size: 16);
+    } else if (lower.contains('eliminad') || lower.contains('borrad') || lower.contains('quitad')) {
+      defaultIcon = Icon(AppIcons.bold(SolarIcons.TrashBinTrash), color: Colors.white, size: 16);
+    } else if (lower.contains('conexió') || lower.contains('restaurad') || lower.contains('wifi')) {
+      defaultIcon = Icon(AppIcons.bold(SolarIcons.WiFiRouter), color: const Color(0xFF22C55E), size: 16);
+    } else if (lower.contains('error') || lower.contains('falló') || lower.contains('no se pudo') || lower.contains('no disponible')) {
+      defaultIcon = Icon(AppIcons.bold(SolarIcons.DangerCircle), color: const Color(0xFFEF4444), size: 16);
     } else {
-      defaultIcon = Icon(AppIcons.bold(SolarIcons.CheckCircle), color: Colors.white, size: 15);
+      defaultIcon = Icon(AppIcons.bold(SolarIcons.CheckCircle), color: Colors.white, size: 16);
     }
 
     return Material(
@@ -149,19 +160,19 @@ class _ToastWidget extends StatelessWidget {
             maxWidth: isDesktop ? 600 : 360,
             minWidth: 180,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E2633),
+            color: const Color(0xFF1E1E1E),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppTheme.surfaceActive,
+              color: const Color(0xFF2A2A2A),
               width: 1,
             ),
             boxShadow: const [
               BoxShadow(
-                color: Colors.black38,
-                blurRadius: 12,
-                offset: Offset(0, 4),
+                color: Colors.black54,
+                blurRadius: 16,
+                offset: Offset(0, 6),
               ),
             ],
           ),
@@ -179,7 +190,7 @@ class _ToastWidget extends StatelessWidget {
                 child: Text(
                   message,
                   style: const TextStyle(
-                    color: AppTheme.primary,
+                    color: Colors.white,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                     decoration: TextDecoration.none,

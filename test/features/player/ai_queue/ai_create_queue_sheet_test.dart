@@ -101,6 +101,7 @@ class _FakeExtractionService implements ExtractionService {
     String? trackArtist,
     int? durationSeconds,
     ExtractionPriority priority = ExtractionPriority.streaming,
+    String? quality,
   }) async {
     return const ExtractionSuccess(requestId: 'req_1', streamUrl: 'https://example.com/stream.mp3', headers: {});
   }

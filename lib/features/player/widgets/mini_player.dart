@@ -369,9 +369,7 @@ class MiniPlayer extends ConsumerWidget {
                     IconButton(
                       icon: Icon(AppIcons.broken(SolarIcons.Speaker), size: 20, color: AppTheme.secondary),
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Conectar dispositivo')),
-                        );
+                        AppToast.show(context, message: 'Dispositivos: Este dispositivo');
                       },
                       tooltip: 'Dispositivos',
                       padding: EdgeInsets.zero,

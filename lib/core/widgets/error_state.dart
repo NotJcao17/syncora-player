@@ -19,8 +19,81 @@ class ErrorStateWidget extends StatelessWidget {
     this.onRetry,
   });
 
+  /// Convierte excepciones o mensajes de error técnicos a mensajes amigables y comprensibles.
+  static String formatErrorMessage(
+    Object? error, {
+    String defaultMessage = 'Ocurrió un problema temporal. Intenta nuevamente.',
+  }) {
+    if (error == null) return defaultMessage;
+    final str = error.toString().trim();
+    if (str.isEmpty) return defaultMessage;
+
+    final lower = str.toLowerCase();
+
+    // Problemas de red o conectividad
+    if (lower.contains('socketexception') ||
+        lower.contains('failed host lookup') ||
+        lower.contains('clientexception') ||
+        lower.contains('connection refused') ||
+        lower.contains('connection reset') ||
+        lower.contains('timeout') ||
+        lower.contains('sin conexión') ||
+        lower.contains('no internet') ||
+        lower.contains('network error') ||
+        lower.contains('network_error')) {
+      return 'No se pudo conectar con el servidor. Revisa tu conexión a internet.';
+    }
+
+    // Contenido no encontrado
+    if (lower.contains('404') ||
+        lower.contains('not found') ||
+        lower.contains('notfound') ||
+        lower.contains('no encontrado') ||
+        lower.contains('no disponible')) {
+      return 'No se encontró el contenido solicitado o no está disponible.';
+    }
+
+    // Errores de permisos / 403 / 401
+    if (lower.contains('403') ||
+        lower.contains('forbidden') ||
+        lower.contains('unauthorized') ||
+        lower.contains('401')) {
+      return 'Esta canción o contenido no está disponible en este momento.';
+    }
+
+    // Rate limiting
+    if (lower.contains('429') ||
+        lower.contains('rate limit') ||
+        lower.contains('rate-limit') ||
+        lower.contains('too many requests')) {
+      return 'Demasiadas solicitudes. Por favor, espera un momento e intenta nuevamente.';
+    }
+
+    // Limpiar prefijos genéricos de excepciones Dart
+    var cleaned = str;
+    if (cleaned.startsWith('Exception: ')) {
+      cleaned = cleaned.substring('Exception: '.length).trim();
+    } else if (cleaned.startsWith('Error: ')) {
+      cleaned = cleaned.substring('Error: '.length).trim();
+    } else if (cleaned.startsWith('AuthException: ')) {
+      cleaned = cleaned.substring('AuthException: '.length).trim();
+    }
+
+    // Si el texto contiene stack traces, JSONs o referencias a código fuente
+    if (cleaned.contains('dart:') ||
+        cleaned.contains('package:') ||
+        cleaned.contains('#0 ') ||
+        (cleaned.contains('{') && cleaned.contains('}'))) {
+      return defaultMessage;
+    }
+
+    return cleaned.isNotEmpty ? cleaned : defaultMessage;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayMessage = formatErrorMessage(message);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
@@ -54,7 +127,7 @@ class ErrorStateWidget extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              message,
+              displayMessage,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.secondary,

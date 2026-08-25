@@ -16,6 +16,7 @@ import '../../data/local_db/syncora_database.dart';
 import '../../data/sync/sync_service.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../features/auth/local_mode_provider.dart';
+import '../../features/download/download_provider.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
 import '../../features/player/syncora_player_controller.dart';
@@ -55,6 +56,9 @@ class _AppShellState extends ConsumerState<AppShell> {
       HardwareKeyboard.instance.addHandler(_handleDesktopKeyEvent);
     }
     Future.microtask(() async {
+      // Inicializar downloadService y ejecutar limpieza de descargas interrumpidas
+      ref.read(downloadServiceProvider);
+
       final isLocalMode = ref.read(localModeProvider);
       final isConnected = ref.read(isConnectedProvider).value ?? true;
       final user = ref.read(currentUserProvider);

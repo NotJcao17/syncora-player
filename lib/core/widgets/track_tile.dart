@@ -21,6 +21,7 @@ import '../../features/search/other_versions_search.dart';
 import '../../features/search/search_ranking.dart';
 import 'app_bottom_sheet.dart';
 import 'app_toast.dart';
+import 'error_state.dart';
 
 /// Componente de fila de canción reutilizable.
 class TrackTile extends ConsumerStatefulWidget {
@@ -801,7 +802,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
           await ref.read(downloadServiceProvider).downloadTrack(widget.track);
         } catch (e) {
           if (context.mounted) {
-            AppToast.show(context, message: e.toString());
+            AppToast.show(context, message: ErrorStateWidget.formatErrorMessage(e));
           }
         }
       }

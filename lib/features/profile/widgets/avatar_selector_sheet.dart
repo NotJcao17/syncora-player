@@ -1,14 +1,15 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/theme/app_theme.dart';
-import '../../auth/auth_provider.dart';
-
-import 'package:flutter/foundation.dart';
 import '../../../core/theme/app_icons.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/error_state.dart';
+import '../../auth/auth_provider.dart';
 
 /// Modal bottom sheet / diálogo centrado para la selección de avatar basado en Dicebear seeds.
 class AvatarSelectorSheet extends ConsumerStatefulWidget {
@@ -127,11 +128,9 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
       await widget.onAvatarSelected?.call(seed);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al actualizar avatar: ${e.toString()}'),
-            backgroundColor: const Color(0xFFEF4444),
-          ),
+        AppToast.show(
+          context,
+          message: 'Error al actualizar avatar: ${ErrorStateWidget.formatErrorMessage(e)}',
         );
       }
     } finally {

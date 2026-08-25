@@ -541,8 +541,9 @@ globalThis.resetJsEngine = function() {
   console.log('[JS] Instancias de Innertube reiniciadas.');
 };
 
-globalThis.extractVideo = function(videoId, client, jsRequestId) {
-  console.log('[JS] extractVideo iniciado para videoId=' + videoId + ', client=' + client + ', reqId=' + jsRequestId);
+globalThis.extractVideo = function(videoId, client, jsRequestId, quality) {
+  quality = quality || 'high';
+  console.log('[JS] extractVideo iniciado para videoId=' + videoId + ', client=' + client + ', reqId=' + jsRequestId + ', quality=' + quality);
   (async function() {
     try {
       var InnertubeClass = globalThis.Innertube || (globalThis.YouTubeJS ? (globalThis.YouTubeJS.Innertube || globalThis.YouTubeJS.default) : null);
@@ -611,27 +612,47 @@ globalThis.extractVideo = function(videoId, client, jsRequestId) {
         audioFormats = usableFormats; // Fallback a cualquier formato usable (video+audio)
       }
 
-      // Ordenar por bitrate descendente
-      audioFormats.sort(function(a, b) {
-        return (b.bitrate || 0) - (a.bitrate || 0);
-      });
-
-      var selectedFormat;
+      var targetFormats = audioFormats.slice();
       if (client === 'ANDROID' || client === 'ANDROID_VR') {
         // ExoPlayer en Android tiene mejor compatibilidad con MP4/AAC que WebM/Opus.
-        // Preferir formatos mp4 (AAC) sobre webm (Opus) para evitar errores (0) Source error.
         var mp4Formats = audioFormats.filter(function(f) {
           return f.mimeType && f.mimeType.indexOf('mp4') !== -1;
         });
-        selectedFormat = mp4Formats.length > 0 ? mp4Formats[0] : audioFormats[0];
-      } else {
-        selectedFormat = audioFormats[0]; // WEB: mayor bitrate sin importar formato
+        if (mp4Formats.length > 0) {
+          targetFormats = mp4Formats;
+        }
       }
+
+      var selectedFormat;
+      if (quality === 'low') {
+        // Baja (~64-96 kbps / Ahorro): formato más cercano a 70 kbps
+        targetFormats.sort(function(a, b) {
+          var diffA = Math.abs((a.bitrate || 0) - 70000);
+          var diffB = Math.abs((b.bitrate || 0) - 70000);
+          return diffA - diffB;
+        });
+        selectedFormat = targetFormats[0];
+      } else if (quality === 'medium') {
+        // Normal (~128 kbps): formato más cercano a 128 kbps
+        targetFormats.sort(function(a, b) {
+          var diffA = Math.abs((a.bitrate || 0) - 128000);
+          var diffB = Math.abs((b.bitrate || 0) - 128000);
+          return diffA - diffB;
+        });
+        selectedFormat = targetFormats[0];
+      } else {
+        // Alta (~160-256 kbps / máxima disponible): ordenar por mayor bitrate
+        targetFormats.sort(function(a, b) {
+          return (b.bitrate || 0) - (a.bitrate || 0);
+        });
+        selectedFormat = targetFormats[0];
+      }
+
       if (!selectedFormat) {
         throw new Error('No se encontró ningún formato de audio disponible (intentó ' + client + ')');
       }
 
-      console.log('[JS] Formato seleccionado itag=' + selectedFormat.itag + ', mimeType=' + selectedFormat.mimeType);
+      console.log('[JS] Formato seleccionado itag=' + selectedFormat.itag + ', mimeType=' + selectedFormat.mimeType + ', bitrate=' + selectedFormat.bitrate + ' (calidad ' + quality + ')');
       console.log('[JS FORMAT JSON DUMP] ' + JSON.stringify(selectedFormat));
 
       var finalUrl = selectedFormat.url;

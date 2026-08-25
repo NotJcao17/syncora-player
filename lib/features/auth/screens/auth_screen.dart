@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/navigation/app_router.dart';
+import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
@@ -322,7 +323,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF2A2A2A)),
+        ),
         title: const Text(
           'Esta cuenta ya tiene datos en la nube',
           style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
@@ -337,11 +341,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar, seguir en modo local'),
+            child: const Text('Cancelar, seguir en modo local', style: TextStyle(color: AppTheme.secondary)),
           ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Borrar datos locales y continuar', style: TextStyle(color: Colors.redAccent)),
+            child: const Text('Borrar datos locales y continuar', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -554,17 +563,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF181C27),
-      // Fase 7.I.10: overlay simple durante la migración local -> cuenta --
-      // dura lo que tarde subir la biblioteca (potencialmente varias
-      // playlists), el usuario necesita saber que algo está pasando en vez
-      // de ver la pantalla de login congelada tras crear la cuenta.
+      backgroundColor: AppTheme.background,
       body: _isMigrating
           ? Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircularProgressIndicator(color: AppTheme.primary),
+                  const CircularProgressIndicator(color: Colors.white),
                   const SizedBox(height: 16),
                   Text(
                     _isDiscarding
@@ -585,7 +590,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: AppTheme.surfaceShadow,
               border: Border.all(
-                color: AppTheme.surfaceActive.withValues(alpha: 0.5),
+                color: const Color(0xFF2A2A2A),
                 width: 1,
               ),
             ),
@@ -645,13 +650,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Fase 7.H.4: cupo de cuentas lleno -- mensaje propio, no un
-                // error genérico ni un "inténtalo más tarde". El botón
-                // "usar sin cuenta" del plan (7.I) todavía no se agrega acá
-                // a propósito: 7.I (modo local) no está implementado en
-                // este punto de la fase, y un botón que no lleva a ningún
-                // lado sería peor que no mostrarlo -- se cablea en 7.I.3
-                // cuando exista `localModeProvider`/la pantalla real.
+                // Fase 7.H.4: cupo de cuentas lleno
                 if (_accountLimitReached) ...[
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -763,24 +762,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 const SizedBox(height: 24),
 
                 // Divisor con texto "o"
-                Row(
+                const Row(
                   children: [
-                    const Expanded(
-                      child: Divider(color: AppTheme.surfaceActive, thickness: 1),
+                    Expanded(
+                      child: Divider(color: Color(0xFF2A2A2A), thickness: 1),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
                         'o',
                         style: TextStyle(
-                          color: AppTheme.muted,
+                          color: AppTheme.secondary,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    const Expanded(
-                      child: Divider(color: AppTheme.surfaceActive, thickness: 1),
+                    Expanded(
+                      child: Divider(color: Color(0xFF2A2A2A), thickness: 1),
                     ),
                   ],
                 ),
@@ -792,6 +791,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   decoration: BoxDecoration(
                     color: AppTheme.background,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF2A2A2A)),
                   ),
                   child: Row(
                     children: [
@@ -809,7 +809,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
                               color: _selectedTabIndex == 0
-                                  ? AppTheme.surfaceActive
+                                  ? const Color(0xFF2A2A2A)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -820,8 +820,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: _selectedTabIndex == 0
-                                    ? AppTheme.primary
-                                    : AppTheme.muted,
+                                    ? Colors.white
+                                    : AppTheme.secondary,
                               ),
                             ),
                           ),
@@ -841,7 +841,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
                               color: _selectedTabIndex == 1
-                                  ? AppTheme.surfaceActive
+                                  ? const Color(0xFF2A2A2A)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -852,8 +852,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: _selectedTabIndex == 1
-                                    ? AppTheme.primary
-                                    : AppTheme.muted,
+                                    ? Colors.white
+                                    : AppTheme.secondary,
                               ),
                             ),
                           ),
@@ -886,10 +886,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           ),
                           filled: true,
                           fillColor: AppTheme.background,
-                          prefixIcon: const Icon(
-                            Icons.email_outlined,
+                          prefixIcon: Icon(
+                            AppIcons.broken(SolarIcons.Letter),
                             color: AppTheme.secondary,
-                            size: 20,
+                            size: 18,
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 14,
@@ -897,12 +897,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
+                            borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(
-                              color: AppTheme.accent,
+                              color: Colors.white,
                               width: 1.5,
                             ),
                           ),
@@ -933,18 +937,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           ),
                           filled: true,
                           fillColor: AppTheme.background,
-                          prefixIcon: const Icon(
-                            Icons.lock_outline,
+                          prefixIcon: Icon(
+                            AppIcons.broken(SolarIcons.LockPassword),
                             color: AppTheme.secondary,
-                            size: 20,
+                            size: 18,
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
+                                  ? AppIcons.broken(SolarIcons.EyeClosed)
+                                  : AppIcons.broken(SolarIcons.Eye),
                               color: AppTheme.secondary,
-                              size: 20,
+                              size: 18,
                             ),
                             onPressed: () {
                               setState(() {
@@ -958,12 +962,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
+                            borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(
-                              color: AppTheme.accent,
+                              color: Colors.white,
                               width: 1.5,
                             ),
                           ),
@@ -976,6 +984,65 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           ),
                         ),
                       ),
+
+                      // Aviso proactivo e inmediato de 8 caracteres al escribir en Registro
+                      if (_selectedTabIndex == 1) ...[
+                        const SizedBox(height: 8),
+                        ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _passwordController,
+                          builder: (context, val, _) {
+                            final length = val.text.length;
+                            final isMinLength = length >= 8;
+                            final hasStarted = length > 0;
+
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isMinLength
+                                    ? const Color(0x1A22C55E)
+                                    : (hasStarted ? const Color(0x1AF59E0B) : Colors.transparent),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isMinLength
+                                      ? const Color(0x4D22C55E)
+                                      : (hasStarted ? const Color(0x4DF59E0B) : const Color(0xFF2A2A2A)),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isMinLength
+                                        ? AppIcons.bold(SolarIcons.CheckCircle)
+                                        : AppIcons.broken(SolarIcons.InfoCircle),
+                                    size: 14,
+                                    color: isMinLength
+                                        ? const Color(0xFF22C55E)
+                                        : (hasStarted ? const Color(0xFFF59E0B) : AppTheme.secondary),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      isMinLength
+                                          ? 'Contraseña válida (mínimo 8 caracteres)'
+                                          : (hasStarted
+                                              ? 'Mínimo 8 caracteres (llevas $length de 8)'
+                                              : 'Mínimo 8 caracteres'),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: isMinLength || hasStarted ? FontWeight.w600 : FontWeight.w500,
+                                        color: isMinLength
+                                            ? const Color(0xFF22C55E)
+                                            : (hasStarted ? const Color(0xFFFBBF24) : AppTheme.secondary),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                       const SizedBox(height: 18),
 
                       // Tarjeta de Advertencia Ámbar/Naranja en la pestaña Registro
@@ -1002,13 +1069,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         const SizedBox(height: 18),
                       ],
 
-                      // Botón de Submit
+                      // Botón de Submit Principal (Blanco con texto negro)
                       ElevatedButton(
                         onPressed: _isLoading ? null : _handleSubmitForm,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.surfaceActive,
-                          foregroundColor: AppTheme.primary,
-                          minimumSize: const Size.fromHeight(46),
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black87,
+                          minimumSize: const Size.fromHeight(48),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -1020,7 +1087,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: AppTheme.primary,
+                                  color: Colors.black87,
                                 ),
                               )
                             : Text(
@@ -1037,30 +1104,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   ),
                 ),
 
-                // Fase 7.I.3 (D-23): "Usar sin cuenta" -- opción de primera
-                // clase, no letra chica escondida: mismo tamaño de texto y
-                // ubicación visible que el resto del flujo, con una
-                // explicación honesta de la contrapartida (sin sync, sin
-                // respaldo, sin IA) en vez de solo el botón pelado.
                 const SizedBox(height: 20),
-                Row(
+                const Row(
                   children: [
-                    const Expanded(
-                      child: Divider(color: AppTheme.surfaceActive, thickness: 1),
+                    Expanded(
+                      child: Divider(color: Color(0xFF2A2A2A), thickness: 1),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
                         'o',
                         style: TextStyle(
-                          color: AppTheme.muted,
+                          color: AppTheme.secondary,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    const Expanded(
-                      child: Divider(color: AppTheme.surfaceActive, thickness: 1),
+                    Expanded(
+                      child: Divider(color: Color(0xFF2A2A2A), thickness: 1),
                     ),
                   ],
                 ),
@@ -1068,8 +1130,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 OutlinedButton(
                   onPressed: _isLoading ? null : _useWithoutAccount,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.secondary,
-                    side: const BorderSide(color: AppTheme.surfaceActive),
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0xFF2A2A2A)),
                     minimumSize: const Size.fromHeight(46),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -1080,7 +1142,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   'Tu biblioteca se guarda solo en este dispositivo. Sin sincronización, sin respaldo '
                   'y sin funciones de IA.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppTheme.muted, fontSize: 11, height: 1.4),
+                  style: TextStyle(color: AppTheme.secondary, fontSize: 11, height: 1.4),
                 ),
               ],
             ),

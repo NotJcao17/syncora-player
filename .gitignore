@@ -47,7 +47,8 @@ app.*.map.json
 !.env.example
 .env.local
 
-# Android Studio will place build artifacts here
+# Local Supabase temporary state
+supabase/.temp/
 /android/build/
 /android/app/debug
 /android/app/profile
