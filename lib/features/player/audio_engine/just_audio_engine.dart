@@ -66,6 +66,7 @@ class JustAudioEngine implements AudioEngine {
       Uri.parse(url),
       headers: headers ?? const {},
     );
+    await _player.setVolume(_state.volume.clamp(0.0, 1.0));
     await _player.setAudioSource(source);
   }
 
@@ -73,18 +74,25 @@ class JustAudioEngine implements AudioEngine {
   Future<void> setLocalSource(String path) async {
     _emit(_state.copyWith(processingState: AudioProcessingState.loading));
     final source = AudioSource.file(path);
+    await _player.setVolume(_state.volume.clamp(0.0, 1.0));
     await _player.setAudioSource(source);
   }
 
 
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() async {
+    await _player.setVolume(_state.volume.clamp(0.0, 1.0));
+    return _player.play();
+  }
 
   @override
   Future<void> pause() => _player.pause();
 
   @override
-  Future<void> stop() => _player.stop();
+  Future<void> stop() async {
+    await _player.stop();
+    await _player.setVolume(_state.volume.clamp(0.0, 1.0));
+  }
 
   @override
   Future<void> seek(Duration position) => _player.seek(position);
@@ -93,7 +101,11 @@ class JustAudioEngine implements AudioEngine {
   Future<void> setSpeed(double speed) => _player.setSpeed(speed.clamp(0.25, 2.0));
 
   @override
-  Future<void> setVolume(double volume) => _player.setVolume(volume.clamp(0.0, 1.0));
+  Future<void> setVolume(double volume) {
+    final clamped = volume.clamp(0.0, 1.0);
+    _state = _state.copyWith(volume: clamped);
+    return _player.setVolume(clamped);
+  }
 
   @override
   Future<void> microFadeOut() async {
@@ -102,11 +114,14 @@ class JustAudioEngine implements AudioEngine {
     try {
       final step = curVol / 3.0;
       await _player.setVolume((curVol - step).clamp(0.0, 1.0));
-      await Future.delayed(const Duration(milliseconds: 40));
+      await Future.delayed(const Duration(milliseconds: 30));
       await _player.setVolume((curVol - 2 * step).clamp(0.0, 1.0));
-      await Future.delayed(const Duration(milliseconds: 40));
+      await Future.delayed(const Duration(milliseconds: 30));
       await _player.setVolume(0.0);
-      await Future.delayed(const Duration(milliseconds: 40));
+      await Future.delayed(const Duration(milliseconds: 20));
+      await _player.stop();
+      // Restaura el volumen del motor nativo a nivel canónico tras detenerse
+      await _player.setVolume(curVol.clamp(0.0, 1.0));
     } catch (_) {}
   }
 

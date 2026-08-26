@@ -289,10 +289,11 @@ void main() {
       await settled;
     });
 
-    test('microFadeOut() baja el volumen del motor activo sin alterar el volumen canónico', () async {
+    test('microFadeOut() baja el volumen del motor activo a 0.0 y lo restaura tras detenerse', () async {
       await engine.setVolume(0.8);
       await engine.microFadeOut();
-      expect(volumeHistories[0].last, 0.0);
+      expect(volumeHistories[0].contains(0.0), isTrue);
+      expect(volumeHistories[0].last, closeTo(0.8, 0.0001));
     });
   });
 }

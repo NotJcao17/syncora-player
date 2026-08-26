@@ -142,6 +142,7 @@ class MediaKitEngine implements AudioEngine {
     _seekedThisTrack = false;
     _hadMeaningfulPlayback = false;
     _emit(_state.copyWith(processingState: AudioProcessingState.loading));
+    await _player.setVolume(_state.volume * 100.0);
     await _player.open(Media(url, httpHeaders: headers));
     // Si el Skip Silence ya estaba activado, re-aplicar el filtro para esta
     // nueva pista (cada open podría resetear la cadena de filtros).
@@ -155,6 +156,7 @@ class MediaKitEngine implements AudioEngine {
     _seekedThisTrack = false;
     _hadMeaningfulPlayback = false;
     _emit(_state.copyWith(processingState: AudioProcessingState.loading));
+    await _player.setVolume(_state.volume * 100.0);
     await _player.open(Media(path));
     if (_skipSilence) {
       await _applySilenceFilter();
@@ -163,13 +165,19 @@ class MediaKitEngine implements AudioEngine {
 
 
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() async {
+    await _player.setVolume(_state.volume * 100.0);
+    return _player.play();
+  }
 
   @override
   Future<void> pause() => _player.pause();
 
   @override
-  Future<void> stop() => _player.stop();
+  Future<void> stop() async {
+    await _player.stop();
+    await _player.setVolume(_state.volume * 100.0);
+  }
 
   @override
   Future<void> seek(Duration position) => _player.seek(position);
@@ -192,11 +200,15 @@ class MediaKitEngine implements AudioEngine {
     try {
       final step = curVol / 3.0;
       await _player.setVolume(((curVol - step).clamp(0.0, 1.0)) * 100.0);
-      await Future.delayed(const Duration(milliseconds: 40));
+      await Future.delayed(const Duration(milliseconds: 30));
       await _player.setVolume(((curVol - 2 * step).clamp(0.0, 1.0)) * 100.0);
-      await Future.delayed(const Duration(milliseconds: 40));
+      await Future.delayed(const Duration(milliseconds: 30));
       await _player.setVolume(0.0);
-      await Future.delayed(const Duration(milliseconds: 40));
+      await Future.delayed(const Duration(milliseconds: 20));
+      await _player.stop();
+      // Restaura inmediatamente el volumen del motor nativo a nivel canónico
+      // mientras está detenido, asegurando que la siguiente pista no arranque en silencio.
+      await _player.setVolume(curVol * 100.0);
     } catch (_) {}
   }
 

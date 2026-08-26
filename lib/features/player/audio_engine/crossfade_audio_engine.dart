@@ -170,6 +170,7 @@ class CrossfadeAudioEngine implements AudioEngine {
   @override
   Future<void> setUrl(String url, {Map<String, String>? headers}) async {
     await _settleFadeBeforeNormalTransition();
+    await _active.setVolume(_canonicalVolume);
     return _active.setUrl(url, headers: headers);
   }
 
@@ -177,6 +178,7 @@ class CrossfadeAudioEngine implements AudioEngine {
   Future<void> setLocalSource(String path) async {
     await _settleFadeBeforeNormalTransition();
     _prewarmStandbyIfCrossfadeEnabled();
+    await _active.setVolume(_canonicalVolume);
     return _active.setLocalSource(path);
   }
 
@@ -202,13 +204,14 @@ class CrossfadeAudioEngine implements AudioEngine {
     }
 
     final pending = _pendingFadeCompleter;
-    if (pending == null) return;
-    _fadeGeneration++;
-    if (!pending.isCompleted) pending.complete();
-    _pendingFadeCompleter = null;
-    try {
-      await _standby?.stop();
-    } catch (_) {}
+    if (pending != null) {
+      _fadeGeneration++;
+      if (!pending.isCompleted) pending.complete();
+      _pendingFadeCompleter = null;
+      try {
+        await _standby?.stop();
+      } catch (_) {}
+    }
     try {
       await _active.setVolume(_canonicalVolume);
     } catch (_) {}
@@ -236,7 +239,10 @@ class CrossfadeAudioEngine implements AudioEngine {
   }
 
   @override
-  Future<void> play() => _active.play();
+  Future<void> play() async {
+    await _active.setVolume(_canonicalVolume);
+    return _active.play();
+  }
 
   // `pause`/`stop`/`seek` también tienen que cerrar el fade en vuelo: sin
   // esto, el motor SALIENTE no lo detiene nadie hasta que el ramp llegue
@@ -253,7 +259,8 @@ class CrossfadeAudioEngine implements AudioEngine {
   @override
   Future<void> stop() async {
     await _settleFadeBeforeNormalTransition();
-    return _active.stop();
+    await _active.stop();
+    await _active.setVolume(_canonicalVolume);
   }
 
   @override
@@ -284,11 +291,14 @@ class CrossfadeAudioEngine implements AudioEngine {
     try {
       final step = curVol / 3.0;
       await _active.setVolume((curVol - step).clamp(0.0, 1.0));
-      await Future.delayed(const Duration(milliseconds: 40));
+      await Future.delayed(const Duration(milliseconds: 30));
       await _active.setVolume((curVol - 2 * step).clamp(0.0, 1.0));
-      await Future.delayed(const Duration(milliseconds: 40));
+      await Future.delayed(const Duration(milliseconds: 30));
       await _active.setVolume(0.0);
-      await Future.delayed(const Duration(milliseconds: 40));
+      await Future.delayed(const Duration(milliseconds: 20));
+      await _active.stop();
+      // Restaura inmediatamente el volumen canónico en el motor activo ya detenido
+      await _active.setVolume(_canonicalVolume);
     } catch (_) {}
   }
 
