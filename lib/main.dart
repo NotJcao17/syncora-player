@@ -166,6 +166,19 @@ void main() async {
     MediaKit.ensureInitialized();
     await windowManager.ensureInitialized();
 
+    // SMTC debe quedar inicializado (y esperado) ANTES de `runApp()`: los
+    // controles de hover de la barra de tareas nunca aparecían porque esta
+    // llamada vivía sin `await` dentro del callback de
+    // `waitUntilReadyToShow` -- una carrera con `runApp()` de más abajo, que
+    // sigue de largo sin esperar a que ese callback termine. El primer
+    // provider que lee `syncoraPlayerControllerProvider` (ya durante el
+    // primer build) construye `WindowsMediaControls`, que a su vez crea el
+    // `SMTCWindows` real -- si `RustLib.init()` (dentro de
+    // `SMTCWindows.initialize()`) todavía no había corrido en ese momento,
+    // esa construcción lanzaba una excepción atrapada en silencio por su
+    // propio try/catch, y SMTC quedaba sin registrar para toda la sesión.
+    await SMTCWindows.initialize();
+
     const windowOptions = WindowOptions(
       size: Size(1280, 720),
       minimumSize: Size(900, 600),
@@ -178,7 +191,6 @@ void main() async {
     windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();
-      await SMTCWindows.initialize();
     });
   }
 

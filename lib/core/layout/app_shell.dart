@@ -99,7 +99,18 @@ class _AppShellState extends ConsumerState<AppShell> {
         event.logicalKey == LogicalKeyboardKey.mediaStop;
 
     if (isMediaKey) {
-      if (event is KeyDownEvent) {
+      // En Windows, `WindowsMediaControls` (SMTC) ya es el único camino que
+      // debe reaccionar a estas teclas: `SystemMediaTransportControls`
+      // recibe la pulsación a nivel de SO incluso con la ventana de Syncora
+      // sin foco, cosa que este handler de `HardwareKeyboard` no puede (solo
+      // ve la tecla cuando la ventana SÍ tiene foco). Si este handler
+      // también actuara aquí, una sola pulsación con la ventana enfocada
+      // alternaría play/pause DOS veces dentro de la propia app (SMTC +
+      // este handler), cancelándose entre sí. Sigue consumiendo el evento
+      // (`return true`) para no dejarlo escapar hacia otro atajo de Flutter.
+      // En Linux/macOS no hay un equivalente de SMTC en este código todavía,
+      // así que ahí este handler sigue siendo el único camino.
+      if (!Platform.isWindows && event is KeyDownEvent) {
         final controller = ref.read(syncoraPlayerControllerProvider);
         if (event.logicalKey == LogicalKeyboardKey.mediaPlayPause ||
             event.logicalKey == LogicalKeyboardKey.mediaPlay) {

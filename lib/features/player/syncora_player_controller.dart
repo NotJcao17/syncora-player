@@ -14,6 +14,7 @@ import '../../data/local_db/syncora_database.dart' show DownloadedTrack;
 import '../../data/models/deezer/deezer_track.dart';
 
 import 'audio_engine/audio_engine_state.dart';
+import 'audio_engine/playback_start_watcher.dart';
 import 'player_models.dart';
 import 'radio/radio_service.dart';
 import 'session/player_session_storage.dart';
@@ -1753,6 +1754,39 @@ bool get _isTestEnv {
           }
 
           await _engine.play();
+
+          // Diagnóstico: canciones que se quedan cargando indefinidamente en
+          // el primer intento (ej. "Mondlicht") — la extracción resolvió una
+          // URL válida, pero el motor nativo a veces no llega a arrancar el
+          // stream real (falla muda al abrir la conexión) y sin esto el
+          // spinner de carga quedaba pegado para siempre. Un único reintento
+          // de `setUrl`/`play` tras un timeout corto cubre ese caso sin
+          // arriesgar un loop de reintentos (Pitfall #14 — sigue siendo
+          // UNA sola vez, igual que el guard 403/red).
+          //
+          // `_state.engine` ya viene actualizado de forma síncrona por
+          // `_onEngineState` (suscrito desde `init()`) para cualquier emisión
+          // que el motor ya haya hecho durante los `await` de arriba — chequear
+          // eso PRIMERO evita crear el `Timer` de espera cuando el arranque ya
+          // es un hecho consumado (motores de test que emiten todo síncrono
+          // nunca vuelven a emitir después, así que esperar en un stream nuevo
+          // se quedaría colgado hasta el timeout sin necesidad).
+          final alreadyStarted = _state.engine.playing ||
+              _state.engine.processingState == AudioProcessingState.buffering ||
+              _state.engine.processingState == AudioProcessingState.ready;
+          if (!isStale() &&
+              !alreadyStarted &&
+              !await awaitPlaybackStarted(_engine.stateStream, const Duration(seconds: 8))) {
+            _log('[Play] La reproducción no arrancó tras 8s — reintentando setUrl una vez.');
+            if (!isStale()) {
+              await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
+              if (initialPos != null) {
+                await _engine.seek(initialPos);
+              }
+              await _engine.play();
+            }
+          }
+
           _saveSession();
         } catch (e) {
           _log('[Play] Error cargando en motor: $e');
@@ -1861,7 +1895,17 @@ bool get _isTestEnv {
 
     _trackListenProgress(engineState);
 
-    _state = _state.copyWith(engine: engineState);
+    // Mientras haya una posición de sesión restaurada pendiente de consumir
+    // (ver `_restoredPositionSeconds`), el motor real todavía no cargó
+    // ninguna pista — cualquier evento suyo con posición 0 (ej. el que
+    // dispara `setVolume()` en `_restoreSession()`) no debe pisar
+    // visualmente la posición ya restaurada en `_state.engine.position`.
+    final effectiveEngineState =
+        (_restoredPositionSeconds != null && engineState.processingState == AudioProcessingState.idle)
+            ? engineState.copyWith(position: _state.engine.position)
+            : engineState;
+
+    _state = _state.copyWith(engine: effectiveEngineState);
     _notify();
 
     // Fase 7.D (rediseño): revisa en cada tick si corresponde disparar un
