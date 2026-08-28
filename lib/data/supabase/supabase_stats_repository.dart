@@ -45,6 +45,35 @@ class SupabaseStatsRepository {
     }).toList();
   }
 
+  /// Fase de polish post-7.G (hallazgo verificado, no estaba en el plan
+  /// original): Semanal/Mensual leían siempre de Drift local
+  /// (`listeningHistoryDaoProvider`), incluso con cuenta -- correcto para
+  /// modo local, pero incorrecto con cuenta: Drift solo ve las escuchas de
+  /// ESTE dispositivo, no las de otros dispositivos de la misma cuenta.
+  /// `stats_providers.dart` usa este método (no Drift) cuando hay sesión.
+  Future<List<RawListenEntry>> fetchEntriesSince(DateTime cutoff) async {
+    final client = _client;
+    if (client == null) return [];
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return [];
+
+    final rows = await client
+        .from('listening_history')
+        .select('artist_id, track_id, genre, duration_listened_ms')
+        .eq('user_id', userId)
+        .gte('listened_at', cutoff.toUtc().toIso8601String());
+
+    return (rows as List).map((row) {
+      final map = row as Map<String, dynamic>;
+      return RawListenEntry(
+        artistId: map['artist_id'] as int? ?? 0,
+        trackId: map['track_id'] as int? ?? 0,
+        genre: map['genre'] as String?,
+        durationListenedMs: map['duration_listened_ms'] as int? ?? 0,
+      );
+    }).toList();
+  }
+
   List<StatEntry> _parseEntries(dynamic raw) {
     if (raw is! List) return [];
     return raw

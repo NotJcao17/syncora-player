@@ -32,6 +32,7 @@ import '../../player/audio_engine/audio_engine_factory.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
 import '../../player/player_models.dart';
 import '../../player/player_providers.dart';
+import '../../player/radio/radio_service.dart';
 import '../../search/search_ranking.dart';
 import '../ai_playlist/ai_modify_playlist_sheet.dart';
 import '../import_export/playlist_import_export_service.dart';
@@ -1321,7 +1322,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                 itemCount: _searchResults.length > 8 ? 8 : _searchResults.length,
                                                 itemBuilder: (ctx, i) {
                                                   final track = _searchResults[i];
-                                                  final isAlreadyAdded = tracks.any((t) => t.trackId == track.id);
+                                                  final existingEntries = tracks.where((t) => t.trackId == track.id).toList();
+                                                  final isAlreadyAdded = existingEntries.isNotEmpty;
                                                   return ListTile(
                                                     contentPadding: EdgeInsets.zero,
                                                     leading: ClipRRect(
@@ -1330,72 +1332,89 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                     ),
                                                     title: Text(track.title, style: const TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
                                                     subtitle: Text(track.artistName, style: const TextStyle(color: AppTheme.secondary, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                                    trailing: isAlreadyAdded
-                                                        ? const SizedBox(
-                                                            width: 48,
-                                                            height: 48,
-                                                            child: Center(
-                                                              child: Icon(Icons.check_circle, color: Colors.white, size: 22),
-                                                            ),
-                                                          )
-                                                        : IconButton(
-                                                            icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
-                                                            onPressed: () async {
-                                                              final ok = await _executeRemoteMutation(() async {
-                                                                String? remoteId = playlist.remoteId;
-                                                                final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                                                                if (remoteId == null) {
-                                                                  final res = await supabaseRepo.createPlaylist(
-                                                                    title: playlist.title,
-                                                                    description: playlist.description,
-                                                                    isPublic: playlist.isPublic,
-                                                                    isLiked: playlist.isLiked,
-                                                                  );
-                                                                  remoteId = res['id']?.toString();
-                                                                  if (remoteId != null) {
-                                                                    await playlistDao.updatePlaylist(playlist.copyWith(remoteId: Value(remoteId)));
-                                                                  }
-                                                                }
-
-                                                                if (remoteId != null) {
-                                                                  await supabaseRepo.addTrackToPlaylist(remoteId, {
-                                                                    'track_id': track.id,
-                                                                    'artist_id': track.artistId,
-                                                                    'album_id': track.albumId,
-                                                                    'title': track.title,
-                                                                    'artist_name': track.artistName,
-                                                                    'album_name': track.albumTitle,
-                                                                    'cover_url': track.coverUrl,
-                                                                    'duration_ms': track.durationSec * 1000,
+                                                    trailing: SizedBox(
+                                                      width: 48,
+                                                      height: 48,
+                                                      child: Center(
+                                                        child: isAlreadyAdded
+                                                            ? IconButton(
+                                                                icon: const Icon(Icons.check_circle, color: Colors.white, size: 22),
+                                                                tooltip: 'Quitar de la playlist',
+                                                                onPressed: () async {
+                                                                  final ok = await _executeRemoteMutation(() async {
+                                                                    if (playlist.remoteId != null) {
+                                                                      final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                                                                      await supabaseRepo.removeTrackFromPlaylist(playlist.remoteId!, track.id);
+                                                                    }
                                                                   });
-                                                                }
-                                                              });
+                                                                  if (!ok) return;
+                                                                  for (final entry in existingEntries) {
+                                                                    await playlistDao.removeTrackEntry(entry.id);
+                                                                  }
+                                                                  if (!context.mounted) return;
+                                                                  AppToast.show(context, message: '"${track.title}" quitada de la playlist');
+                                                                },
+                                                              )
+                                                            : IconButton(
+                                                                icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
+                                                                onPressed: () async {
+                                                                  final ok = await _executeRemoteMutation(() async {
+                                                                    String? remoteId = playlist.remoteId;
+                                                                    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                                                                    if (remoteId == null) {
+                                                                      final res = await supabaseRepo.createPlaylist(
+                                                                        title: playlist.title,
+                                                                        description: playlist.description,
+                                                                        isPublic: playlist.isPublic,
+                                                                        isLiked: playlist.isLiked,
+                                                                      );
+                                                                      remoteId = res['id']?.toString();
+                                                                      if (remoteId != null) {
+                                                                        await playlistDao.updatePlaylist(playlist.copyWith(remoteId: Value(remoteId)));
+                                                                      }
+                                                                    }
 
-                                                              if (!ok) return;
+                                                                    if (remoteId != null) {
+                                                                      await supabaseRepo.addTrackToPlaylist(remoteId, {
+                                                                        'track_id': track.id,
+                                                                        'artist_id': track.artistId,
+                                                                        'album_id': track.albumId,
+                                                                        'title': track.title,
+                                                                        'artist_name': track.artistName,
+                                                                        'album_name': track.albumTitle,
+                                                                        'cover_url': track.coverUrl,
+                                                                        'duration_ms': track.durationSec * 1000,
+                                                                      });
+                                                                    }
+                                                                  });
 
-                                                              final currentPl = await playlistDao.getPlaylistById(playlist.id);
-                                                              if (currentPl == null) return;
+                                                                  if (!ok) return;
 
-                                                              final contributors = await resolveDeezerTrackContributors(
-                                                                ref.read(deezerApiProvider),
-                                                                track,
-                                                              );
-                                                              await playlistDao.addTrackToPlaylist(
-                                                                playlistId: playlist.id,
-                                                                trackId: track.id,
-                                                                artistId: track.artistId,
-                                                                albumId: track.albumId,
-                                                                title: track.title,
-                                                                artistName: track.artistName,
-                                                                albumName: track.albumTitle,
-                                                                coverUrl: track.coverUrl,
-                                                                durationMs: track.durationSec * 1000,
-                                                                contributorsJson: SyncoraArtistRef.encodeList(contributors),
-                                                              );
-                                                              if (!context.mounted) return;
-                                                              AppToast.show(context, message: '"${track.title}" agregada a la playlist');
-                                                            },
-                                                          ),
+                                                                  final currentPl = await playlistDao.getPlaylistById(playlist.id);
+                                                                  if (currentPl == null) return;
+
+                                                                  final contributors = await resolveDeezerTrackContributors(
+                                                                    ref.read(deezerApiProvider),
+                                                                    track,
+                                                                  );
+                                                                  await playlistDao.addTrackToPlaylist(
+                                                                    playlistId: playlist.id,
+                                                                    trackId: track.id,
+                                                                    artistId: track.artistId,
+                                                                    albumId: track.albumId,
+                                                                    title: track.title,
+                                                                    artistName: track.artistName,
+                                                                    albumName: track.albumTitle,
+                                                                    coverUrl: track.coverUrl,
+                                                                    durationMs: track.durationSec * 1000,
+                                                                    contributorsJson: SyncoraArtistRef.encodeList(contributors),
+                                                                  );
+                                                                  if (!context.mounted) return;
+                                                                  AppToast.show(context, message: '"${track.title}" agregada a la playlist');
+                                                                },
+                                                              ),
+                                                      ),
+                                                    ),
                                                   );
                                                 },
                                               ),
@@ -1705,6 +1724,36 @@ class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
   }
 }
 
+/// Recomendaciones de Deezer para una playlist, cacheadas por id de playlist
+/// (`FutureProvider.family`) para no recalcularlas en cada rebuild/rotación
+/// -- solo se recalculan cuando cambia el id de playlist o se invalida
+/// manualmente (botón "Actualizar"). Reusa el mismo algoritmo de radio/cola
+/// infinita que `syncoraPlayerControllerProvider` (`RadioService.generateBatch`,
+/// muestreo ponderado por artista) en vez de una heurística propia.
+final playlistRecommendationsProvider = FutureProvider.family<List<SyncoraTrack>, int>((ref, playlistId) async {
+  final dao = ref.read(playlistDaoProvider);
+  final deezerApi = ref.read(deezerApiProvider);
+  final tracks = await dao.getTracksOrdered(playlistId);
+
+  final contextTracks = tracks
+      .map((t) => SyncoraTrack(
+            id: t.trackId.toString(),
+            title: t.title,
+            artist: t.artistName,
+            artistId: t.artistId,
+            album: t.albumName,
+            albumId: t.albumId,
+            duration: Duration(milliseconds: t.durationMs),
+            artUri: t.coverUrl.isNotEmpty ? Uri.tryParse(t.coverUrl) : null,
+          ))
+      .toList();
+
+  final excludeIds = tracks.map((t) => t.trackId.toString()).toSet();
+  final radioService = RadioService(deezerApi: deezerApi);
+  final results = await radioService.generateBatch(contextTracks: contextTracks, excludeIds: excludeIds);
+  return results.take(10).toList();
+});
+
 /// Sección de recomendaciones Deezer al pie de la Playlist con preview player de 30s.
 class _DeezerRecommendationsSection extends ConsumerStatefulWidget {
   final Playlist playlist;
@@ -1722,12 +1771,10 @@ class _DeezerRecommendationsSection extends ConsumerStatefulWidget {
 }
 
 class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommendationsSection> {
-  List<DeezerTrack> _recommendations = [];
-  bool _isLoading = false;
   AudioEngine? _previewEngine;
-  int? _activePreviewTrackId;
+  String? _activePreviewTrackId;
   bool _isPreviewPlaying = false;
-  final Set<int> _addedTrackIds = {};
+  final Set<String> _addedTrackIds = {};
 
   @override
   void initState() {
@@ -1741,7 +1788,6 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
         });
       }
     });
-    _fetchRecommendations();
   }
 
   @override
@@ -1751,63 +1797,15 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
     super.dispose();
   }
 
-  Future<void> _fetchRecommendations() async {
-    if (!mounted) return;
-    setState(() => _isLoading = true);
-
-    try {
-      final deezerApi = ref.read(deezerApiProvider);
-      final List<DeezerTrack> results = [];
-      final existingIds = widget.existingTracks.map((t) => t.trackId).toSet()..addAll(_addedTrackIds);
-
-      if (widget.existingTracks.isNotEmpty) {
-        final shuffledTracks = List<PlaylistTrack>.from(widget.existingTracks)..shuffle();
-        final seedArtists = shuffledTracks.map((t) => t.artistId).where((id) => id > 0).toSet().toList()..shuffle();
-        final seedTracks = shuffledTracks.map((t) => t.trackId).where((id) => id > 0).toSet().toList()..shuffle();
-
-        for (final artistId in seedArtists.take(2)) {
-          try {
-            final radioTracks = await deezerApi.getArtistRadio(artistId);
-            results.addAll(radioTracks);
-          } catch (_) {}
-        }
-
-        if (results.length < 10) {
-          for (final trackId in seedTracks.take(2)) {
-            try {
-              final recs = await deezerApi.getTrackRecommendations(trackId);
-              results.addAll(recs);
-            } catch (_) {}
-          }
-        }
-      }
-
-      if (results.length < 10) {
-        final charts = await deezerApi.getTopCharts();
-        results.addAll(charts);
-      }
-
-      final seenIds = <int>{};
-      final filtered = <DeezerTrack>[];
-      for (final t in results) {
-        if (!existingIds.contains(t.id) && seenIds.add(t.id)) {
-          filtered.add(t);
-        }
-      }
-      filtered.shuffle();
-
-      if (mounted) {
-        setState(() {
-          _recommendations = filtered.take(10).toList();
-          _isLoading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  /// Filtra las pistas ya presentes en la playlist (por si se agregaron por
+  /// otra vía -- buscador inline, etc. -- después de resolver el lote
+  /// cacheado) y las recién agregadas desde esta misma sección.
+  List<SyncoraTrack> _visibleRecommendations(List<SyncoraTrack> cached) {
+    final existingIds = widget.existingTracks.map((t) => t.trackId.toString()).toSet();
+    return cached.where((t) => !existingIds.contains(t.id) && !_addedTrackIds.contains(t.id)).toList();
   }
 
-  Future<void> _togglePreview(DeezerTrack track) async {
+  Future<void> _togglePreview(SyncoraTrack track) async {
     if (track.previewUrl == null || track.previewUrl!.isEmpty) {
       AppToast.show(context, message: 'Previsualización de audio no disponible para esta canción.');
       return;
@@ -1852,37 +1850,38 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
     }
   }
 
-  Future<void> _addRecommendedTrack(DeezerTrack track) async {
+  Future<void> _addRecommendedTrack(SyncoraTrack track) async {
     final dao = ref.read(playlistDaoProvider);
     final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+    final durationMs = track.duration?.inMilliseconds ?? 0;
 
     if (widget.playlist.remoteId != null) {
       try {
         await supabaseRepo.addTrackToPlaylist(widget.playlist.remoteId!, {
-          'track_id': track.id,
+          'track_id': track.deezerId,
           'artist_id': track.artistId,
           'album_id': track.albumId,
           'title': track.title,
-          'artist_name': track.artistName,
-          'album_name': track.albumTitle,
+          'artist_name': track.artist,
+          'album_name': track.album,
           'cover_url': track.coverUrl,
-          'duration_ms': track.durationSec * 1000,
+          'duration_ms': durationMs,
         });
       } catch (_) {}
     }
 
-    final contributors = await resolveDeezerTrackContributors(ref.read(deezerApiProvider), track);
+    final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), track);
 
     await dao.addTrackToPlaylist(
       playlistId: widget.playlist.id,
-      trackId: track.id,
-      artistId: track.artistId,
-      albumId: track.albumId,
+      trackId: track.deezerId,
+      artistId: track.artistId ?? 0,
+      albumId: track.albumId ?? 0,
       title: track.title,
-      artistName: track.artistName,
-      albumName: track.albumTitle,
+      artistName: track.artist,
+      albumName: track.album ?? '',
       coverUrl: track.coverUrl,
-      durationMs: track.durationSec * 1000,
+      durationMs: durationMs,
       contributorsJson: SyncoraArtistRef.encodeList(contributors),
     );
 
@@ -1894,7 +1893,6 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
       }
       setState(() {
         _addedTrackIds.add(track.id);
-        _recommendations.removeWhere((t) => t.id == track.id);
       });
       AppToast.show(context, message: '"${track.title}" agregada a la playlist');
       widget.onTrackAdded();
@@ -1913,6 +1911,10 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
         }
       }
     });
+
+    final recommendationsAsync = ref.watch(playlistRecommendationsProvider(widget.playlist.id));
+    final isLoading = recommendationsAsync.isLoading;
+    final recommendations = _visibleRecommendations(recommendationsAsync.value ?? const []);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1959,23 +1961,28 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
-                icon: _isLoading
+                icon: isLoading
                     ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary))
                     : Icon(AppIcons.broken(SolarIcons.Refresh), size: 16),
                 label: const Text('Actualizar', style: TextStyle(fontSize: 12)),
-                onPressed: _isLoading ? null : _fetchRecommendations,
+                onPressed: isLoading
+                    ? null
+                    : () {
+                        _addedTrackIds.clear();
+                        ref.invalidate(playlistRecommendationsProvider(widget.playlist.id));
+                      },
               ),
             ],
           ),
           const SizedBox(height: 16),
-          if (_isLoading)
+          if (isLoading)
             const Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: CircularProgressIndicator(color: AppTheme.primary),
               ),
             )
-          else if (_recommendations.isEmpty)
+          else if (recommendations.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(
@@ -1986,11 +1993,10 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _recommendations.length,
+              itemCount: recommendations.length,
               separatorBuilder: (c, i) => const Divider(height: 8, color: Colors.transparent),
               itemBuilder: (ctx, i) {
-                final track = _recommendations[i];
-                final isAdded = _addedTrackIds.contains(track.id) || widget.existingTracks.any((t) => t.trackId == track.id);
+                final track = recommendations[i];
                 final isThisPreviewPlaying = _activePreviewTrackId == track.id && _isPreviewPlaying;
 
                 return Container(
@@ -2032,7 +2038,7 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              track.artistName,
+                              track.artist,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
@@ -2052,16 +2058,11 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
                         onPressed: () => _togglePreview(track),
                       ),
                       // Botón agregar a playlist
-                      isAdded
-                          ? const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12),
-                              child: Icon(Icons.check_circle, color: Colors.white, size: 22),
-                            )
-                          : IconButton(
-                              icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
-                              tooltip: 'Agregar a la playlist',
-                              onPressed: () => _addRecommendedTrack(track),
-                            ),
+                      IconButton(
+                        icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
+                        tooltip: 'Agregar a la playlist',
+                        onPressed: () => _addRecommendedTrack(track),
+                      ),
                     ],
                   ),
                 );

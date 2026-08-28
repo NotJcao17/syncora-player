@@ -48,6 +48,15 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
         ..limit(limit))
       .get();
 
+  /// Todas las entradas sin subir, SIN el límite de 100 de
+  /// [getUnsyncedHistory] -- usado solo por la migración local -> cuenta
+  /// (`migrateLocalListeningHistoryToAccount`), donde puede haber más de 100
+  /// escuchas acumuladas en modo local antes de crear la cuenta.
+  Future<List<ListeningHistoryData>> getAllUnsyncedHistory() => (select(listeningHistory)
+        ..where((t) => t.syncedAt.isNull())
+        ..orderBy([(t) => OrderingTerm(expression: t.listenedAt, mode: OrderingMode.asc)]))
+      .get();
+
   /// Marca una entrada como sincronizada. Debe llamarse únicamente después de
   /// que la inserción/upsert remota en Supabase haya tenido éxito (Fase
   /// 7.0.1) — si se marca antes y la subida falla, la entrada se pierde y

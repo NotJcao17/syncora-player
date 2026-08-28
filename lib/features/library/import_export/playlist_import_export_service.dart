@@ -5,11 +5,13 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/utils/contributor_resolver.dart';
 import '../../../data/apis/deezer_api.dart';
+import '../../../data/local_db/daos/listening_history_dao.dart';
 import '../../../data/local_db/daos/playlist_dao.dart';
 import '../../../data/local_db/daos/saved_album_dao.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/supabase/supabase_album_repository.dart';
+import '../../../data/supabase/supabase_history_repository.dart';
 import '../../../data/supabase/supabase_playlist_repository.dart';
 import '../../player/player_models.dart';
 import '../../search/exact_track_search.dart';
@@ -516,6 +518,38 @@ class PlaylistImportExportService {
           'artist_name': album.artistName,
           'cover_url': album.coverUrl,
         });
+      } catch (_) {
+        // Se reintenta en la próxima llamada; upsert hace el resto seguro.
+      }
+    }
+  }
+
+  /// Complemento de [migrateLocalPlaylistsToAccount]/
+  /// [migrateLocalSavedAlbumsToAccount]: sube el historial de escucha
+  /// acumulado en modo local (`listening_history` con `syncedAt` nulo) a la
+  /// cuenta recién creada -- sin esto, Estadísticas partía de cero al migrar
+  /// (hallazgo verificado: la migración original solo subía playlists y
+  /// álbumes). Usa el mismo `upsert` idempotente que el sync normal
+  /// (`SupabaseHistoryRepository.insertListeningHistory`, clave natural
+  /// `user_id, track_id, listened_at`), así que repetir esta llamada en un
+  /// reintento no duplica nada. Cada fila en su propio `try/catch` -- un
+  /// fallo no aborta el resto, igual que `migrateLocalSavedAlbumsToAccount`.
+  Future<void> migrateLocalListeningHistoryToAccount({
+    required ListeningHistoryDao listeningHistoryDao,
+    required SupabaseHistoryRepository supabaseHistoryRepo,
+  }) async {
+    final localEntries = await listeningHistoryDao.getAllUnsyncedHistory();
+    for (final entry in localEntries) {
+      try {
+        await supabaseHistoryRepo.insertListeningHistory(
+          trackId: entry.trackId,
+          listenedAt: entry.listenedAt,
+          artistId: entry.artistId,
+          albumId: entry.albumId,
+          genre: entry.genre,
+          durationListenedMs: entry.durationListenedMs,
+        );
+        await listeningHistoryDao.markSynced(entry.id);
       } catch (_) {
         // Se reintenta en la próxima llamada; upsert hace el resto seguro.
       }
