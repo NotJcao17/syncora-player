@@ -188,6 +188,12 @@ void main() async {
       titleBarStyle: TitleBarStyle.hidden,
     );
 
+    // `setPreventClose` intercepta el cierre nativo de la ventana para que
+    // `AppShell.onWindowClose` (app_shell.dart) pueda disponer del motor de
+    // audio (mpv), sus suscripciones y la instancia SMTC antes de destruir
+    // la ventana -- sin esto la app quedaba en "No responde" al cerrar.
+    await windowManager.setPreventClose(true);
+
     windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();

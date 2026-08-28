@@ -11,6 +11,7 @@ import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../utils/connectivity_service.dart';
 import '../utils/contributor_resolver.dart';
+import '../utils/share_link_builder.dart';
 import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../data/models/deezer/deezer_track.dart';
@@ -23,6 +24,7 @@ import '../../features/search/search_ranking.dart';
 import 'app_bottom_sheet.dart';
 import 'app_toast.dart';
 import 'error_state.dart';
+import 'playlist_cover_widget.dart';
 
 /// Componente de fila de canción reutilizable.
 class TrackTile extends ConsumerStatefulWidget {
@@ -819,7 +821,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         }
       }
     } else if (value == 'share') {
-      await Clipboard.setData(ClipboardData(text: 'https://www.deezer.com/track/$trackIdInt'));
+      await Clipboard.setData(ClipboardData(text: ShareLinkBuilder.track('$trackIdInt')));
       if (context.mounted) {
         AppToast.show(context, message: 'Enlace copiado al portapapeles');
       }
@@ -948,17 +950,29 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Agregar a playlist', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-        content: SizedBox(
-          width: 300,
-          child: ListView.builder(
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 400),
+          child: SizedBox(
+            width: 300,
+            child: ListView.builder(
             shrinkWrap: true,
             itemCount: playlists.length,
             itemBuilder: (c, i) {
               final pl = playlists[i];
               return ListTile(
-                leading: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.primary),
-                title: Text(pl.title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-                subtitle: Text(pl.isLiked ? 'Especial' : (pl.description ?? 'Playlist'), style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: PlaylistCoverWidget(
+                    playlistId: pl.id,
+                    coverUrl: pl.coverUrl,
+                    isLiked: pl.isLiked,
+                    width: 36,
+                    height: 36,
+                    memCacheWidth: 80,
+                    memCacheHeight: 80,
+                  ),
+                ),
+                title: Text(pl.title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
                 onTap: () async {
                   final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
                   final existingTracks = await dao.getTracksOrdered(pl.id);
@@ -1097,6 +1111,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                 },
               );
             },
+            ),
           ),
         ),
       ),

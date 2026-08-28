@@ -232,47 +232,67 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
       });
     }
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760),
-        child: ListView.builder(
-          controller: _scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 160),
-          itemCount: lines.length,
-          itemBuilder: (context, index) {
-            final line = lines[index];
-            final isActive = index == activeIndex;
-            final isPast = index < activeIndex;
+    // El Scrollbar se ata a un ListView de ancho completo para que el thumb
+    // quede pegado al borde derecho real de la ventana; el contenido sigue
+    // centrado con maxWidth 760 pero por-item, no restringiendo el
+    // viewport scrolleable (eso era lo que dejaba el scrollbar "flotando"
+    // lejos del borde en pantallas anchas).
+    return Scrollbar(
+      controller: _scrollController,
+      thumbVisibility: true,
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.symmetric(vertical: 160),
+        itemCount: lines.length,
+        itemBuilder: (context, index) {
+          final line = lines[index];
+          final isActive = index == activeIndex;
+          final isPast = index < activeIndex;
 
-            return _DesktopLyricsLineTile(
-              key: _lineKeys.putIfAbsent(index, () => GlobalKey()),
-              line: line,
-              isActive: isActive,
-              isPast: isPast,
-              onTap: () {
-                ref.read(syncoraPlayerControllerProvider.notifier).seek(line.timestamp);
-              },
-            );
-          },
-        ),
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: _DesktopLyricsLineTile(
+                  key: _lineKeys.putIfAbsent(index, () => GlobalKey()),
+                  line: line,
+                  isActive: isActive,
+                  isPast: isPast,
+                  onTap: () {
+                    ref.read(syncoraPlayerControllerProvider.notifier).seek(line.timestamp);
+                  },
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildPlainLyricsDesktop() {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
-          child: Text(
-            _lyricsResult!.plainLyrics!,
-            textAlign: TextAlign.left,
-            style: const TextStyle(
-              color: AppTheme.primary,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              height: 2.0,
+    return Scrollbar(
+      controller: _scrollController,
+      thumbVisibility: true,
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                _lyricsResult!.plainLyrics!,
+                textAlign: TextAlign.left,
+                style: const TextStyle(
+                  color: AppTheme.primary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  height: 2.0,
+                ),
+              ),
             ),
           ),
         ),
