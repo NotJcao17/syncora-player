@@ -23,6 +23,7 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
   LRCLibResult? _lyricsResult;
   bool _isLoading = true;
   final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> _lineKeys = {};
   int _lastHighlightedIndex = -1;
 
   @override
@@ -38,6 +39,7 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
       setState(() {
         _isLoading = true;
         _lyricsResult = null;
+        _lineKeys.clear();
         _lastHighlightedIndex = -1;
       });
       _fetchLyrics();
@@ -71,14 +73,23 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
   void _scrollToCurrentLine(int activeIndex) {
     if (activeIndex != _lastHighlightedIndex && _scrollController.hasClients) {
       _lastHighlightedIndex = activeIndex;
-      final viewportHeight = _scrollController.position.viewportDimension;
-      // Estimar 64px por línea de letra en karaoke desktop espacioso
-      final targetOffset = (activeIndex * 64.0) - (viewportHeight * 0.35);
-      _scrollController.animateTo(
-        targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOutCubic,
-      );
+      final key = _lineKeys[activeIndex];
+      if (key?.currentContext != null) {
+        Scrollable.ensureVisible(
+          key!.currentContext!,
+          alignment: 0.5,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+        );
+      } else {
+        final viewportHeight = _scrollController.position.viewportDimension;
+        final targetOffset = (activeIndex * 64.0) - (viewportHeight * 0.5);
+        _scrollController.animateTo(
+          targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+        );
+      }
     }
   }
 
@@ -226,7 +237,7 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
         constraints: const BoxConstraints(maxWidth: 760),
         child: ListView.builder(
           controller: _scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 80),
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 160),
           itemCount: lines.length,
           itemBuilder: (context, index) {
             final line = lines[index];
@@ -234,6 +245,7 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
             final isPast = index < activeIndex;
 
             return _DesktopLyricsLineTile(
+              key: _lineKeys.putIfAbsent(index, () => GlobalKey()),
               line: line,
               isActive: isActive,
               isPast: isPast,
@@ -276,6 +288,7 @@ class _DesktopLyricsLineTile extends StatefulWidget {
   final VoidCallback onTap;
 
   const _DesktopLyricsLineTile({
+    super.key,
     required this.line,
     required this.isActive,
     required this.isPast,

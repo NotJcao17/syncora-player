@@ -12,7 +12,6 @@ import 'package:smtc_windows/smtc_windows.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'app.dart';
-import 'core/theme/app_theme.dart';
 import 'features/auth/local_mode_provider.dart';
 import 'features/auth/services/auth_deep_link_errors.dart';
 import 'features/auth/services/local_mode_storage.dart';
@@ -93,13 +92,15 @@ Future<void> _handleAuthDeepLink(Uri rawUri) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Edge-to-edge transparent status bar en Android y tema oscuro
+  // Edge-to-edge transparent status bar y navigation bar en Android y tema oscuro
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
       statusBarBrightness: Brightness.dark,
-      systemNavigationBarColor: AppTheme.background,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );

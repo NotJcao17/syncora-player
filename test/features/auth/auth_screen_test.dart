@@ -81,13 +81,13 @@ void main() {
       await tester.enterText(passwordField, 'abc');
       await tester.pumpAndSettle();
 
-      expect(find.text('Mínimo 8 caracteres (llevas 3 de 8)'), findsOneWidget);
+      expect(find.text('Mínimo 8 caracteres'), findsOneWidget);
 
       // Escribir 8 caracteres
       await tester.enterText(passwordField, '12345678');
       await tester.pumpAndSettle();
 
-      expect(find.text('Contraseña válida (mínimo 8 caracteres)'), findsOneWidget);
+      expect(find.text('Mínimo 8 caracteres'), findsOneWidget);
     });
   });
 }

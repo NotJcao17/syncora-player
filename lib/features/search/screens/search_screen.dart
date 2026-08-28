@@ -392,19 +392,26 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Búsquedas recientes',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: AppTheme.primary,
-                      ),
+                Expanded(
+                  child: Text(
+                    'Búsquedas recientes',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.primary,
+                        ),
+                  ),
                 ),
+                const SizedBox(width: 8),
                 TextButton(
                   onPressed: () {
                     ref.read(searchHistoryProvider.notifier).clearAll();
                   },
                   child: const Text(
                     'Borrar todo el historial',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: AppTheme.secondary, fontSize: 13),
                   ),
                 ),

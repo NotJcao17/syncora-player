@@ -569,29 +569,24 @@ class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedScale(
-        scale: _isHovered ? 1.08 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppTheme.primary,
-            boxShadow: _isHovered ? AppTheme.glowHighShadow : AppTheme.glowShadow,
-          ),
-          child: Material(
-            color: Colors.transparent,
-            shape: const CircleBorder(),
-            clipBehavior: Clip.antiAlias,
-            child: IconButton(
-              style: IconButton.styleFrom(
-                shape: const CircleBorder(),
-                padding: EdgeInsets.zero,
-              ),
-              icon: widget.isLoading
+      child: GestureDetector(
+        onTap: widget.onPressed,
+        child: AnimatedScale(
+          scale: _isHovered ? 1.08 : 1.0,
+          duration: const Duration(milliseconds: 150),
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppTheme.primary,
+              boxShadow: _isHovered ? AppTheme.glowHighShadow : AppTheme.glowShadow,
+            ),
+            child: Center(
+              child: widget.isLoading
                   ? LoadingAnimationWidget.threeArchedCircle(
                       color: AppTheme.background,
                       size: 26,
@@ -599,9 +594,8 @@ class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
                   : Icon(
                       widget.isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.outline(SolarIcons.Play),
                       color: AppTheme.background,
-                      size: 26,
+                      size: 28,
                     ),
-              onPressed: widget.onPressed,
             ),
           ),
         ),

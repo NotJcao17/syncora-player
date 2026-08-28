@@ -72,6 +72,16 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   @override
+  void didUpdateWidget(covariant AppShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.location != widget.location) {
+      if (ref.read(isLyricsOpenProvider)) {
+        ref.read(isLyricsOpenProvider.notifier).state = false;
+      }
+    }
+  }
+
+  @override
   void dispose() {
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.removeHandler(_handleDesktopKeyEvent);
@@ -322,7 +332,10 @@ class _AppShellState extends ConsumerState<AppShell> {
                               children: [
                                 Expanded(
                                   child: GestureDetector(
-                                    onTap: () => context.go('/'),
+                                    onTap: () {
+                                      ref.read(isLyricsOpenProvider.notifier).state = false;
+                                      context.go('/');
+                                    },
                                     child: Row(
                                       children: [
                                         Image.asset(
@@ -443,7 +456,10 @@ class _AppShellState extends ConsumerState<AppShell> {
                                           isSelected: isSelected,
                                           isActivelyPlaying: isActivelyPlaying,
                                           isCollapsed: _isSidebarCollapsed,
-                                          onTap: () => context.push('/playlist/${pl.isLiked ? 'liked' : pl.id}'),
+                                          onTap: () {
+                                            ref.read(isLyricsOpenProvider.notifier).state = false;
+                                            context.push('/playlist/${pl.isLiked ? 'liked' : pl.id}');
+                                          },
                                         );
                                       },
                                     );

@@ -322,21 +322,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: const Color(0xFF1E1E1E),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: Color(0xFF2A2A2A)),
         ),
         title: const Text(
           'Esta cuenta ya tiene datos en la nube',
-          style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
+          style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 17),
         ),
         content: const Text(
           'Estabas usando el modo local con tus propias playlists y álbumes guardados. '
           'Si continúas, esos datos locales se van a borrar de este dispositivo y se '
           'reemplazan por los de la cuenta con la que acabas de iniciar sesión. '
           'Esta acción no se puede deshacer.',
-          style: TextStyle(color: AppTheme.secondary),
+          style: TextStyle(color: AppTheme.secondary, fontSize: 13, height: 1.4),
         ),
         actions: [
           TextButton(
@@ -985,30 +985,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         ),
                       ),
 
-                      // Aviso proactivo e inmediato de 8 caracteres al escribir en Registro
+                      // Aviso proactivo y sutil de 8 caracteres al escribir en Registro
                       if (_selectedTabIndex == 1) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         ValueListenableBuilder<TextEditingValue>(
                           valueListenable: _passwordController,
                           builder: (context, val, _) {
-                            final length = val.text.length;
-                            final isMinLength = length >= 8;
-                            final hasStarted = length > 0;
+                            final isMinLength = val.text.length >= 8;
 
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: isMinLength
-                                    ? const Color(0x1A22C55E)
-                                    : (hasStarted ? const Color(0x1AF59E0B) : Colors.transparent),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: isMinLength
-                                      ? const Color(0x4D22C55E)
-                                      : (hasStarted ? const Color(0x4DF59E0B) : const Color(0xFF2A2A2A)),
-                                ),
-                              ),
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 4, top: 2),
                               child: Row(
                                 children: [
                                   Icon(
@@ -1016,25 +1002,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         ? AppIcons.bold(SolarIcons.CheckCircle)
                                         : AppIcons.broken(SolarIcons.InfoCircle),
                                     size: 14,
-                                    color: isMinLength
-                                        ? const Color(0xFF22C55E)
-                                        : (hasStarted ? const Color(0xFFF59E0B) : AppTheme.secondary),
+                                    color: isMinLength ? Colors.white : AppTheme.secondary,
                                   ),
                                   const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      isMinLength
-                                          ? 'Contraseña válida (mínimo 8 caracteres)'
-                                          : (hasStarted
-                                              ? 'Mínimo 8 caracteres (llevas $length de 8)'
-                                              : 'Mínimo 8 caracteres'),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: isMinLength || hasStarted ? FontWeight.w600 : FontWeight.w500,
-                                        color: isMinLength
-                                            ? const Color(0xFF22C55E)
-                                            : (hasStarted ? const Color(0xFFFBBF24) : AppTheme.secondary),
-                                      ),
+                                  Text(
+                                    'Mínimo 8 caracteres',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isMinLength ? FontWeight.w600 : FontWeight.w500,
+                                      color: isMinLength ? Colors.white : AppTheme.secondary,
                                     ),
                                   ),
                                 ],

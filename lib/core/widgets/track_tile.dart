@@ -131,7 +131,30 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       ),
     );
 
-    if (widget.index == null && isActiveTrack) {
+    void triggerPlay() {
+      if (!isPlayable) {
+        // Si llegamos acá, isDownloadedLocal ya es falso (una
+        // descarga local siempre es reproducible, ver isPlayable
+        // arriba) — el único motivo posible es falta de conexión o la
+        // marca de sesión, priorizando conexión como razón principal
+        // (si ni siquiera hay red, eso es lo que el usuario necesita
+        // saber, más allá de si además está marcada).
+        final message = isConnected
+            ? 'No disponible en este dispositivo'
+            : 'No disponible sin conexión';
+        AppToast.show(context, message: message);
+        return;
+      }
+      if (isPlayingActive) {
+        ref.read(syncoraPlayerControllerProvider.notifier).pause();
+      } else if (isPausedActive) {
+        ref.read(syncoraPlayerControllerProvider.notifier).play();
+      } else if (widget.onTap != null) {
+        widget.onTap!();
+      }
+    }
+
+    if (widget.index == null && (isActiveTrack || (isDesktop && _isHovered))) {
       coverWidget = Stack(
         children: [
           coverWidget,
@@ -171,6 +194,17 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       );
     }
 
+    final effectiveCoverWidget = (isDesktop && widget.index == null)
+        ? GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: triggerPlay,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: coverWidget,
+            ),
+          )
+        : coverWidget;
+
     Widget content = Opacity(
       opacity: isPlayable ? 1.0 : 0.4,
       child: MouseRegion(
@@ -181,28 +215,8 @@ class _TrackTileState extends ConsumerState<TrackTile> {
               ? (details) => _showContextMenu(details.globalPosition)
               : null,
           child: InkWell(
-            onTap: () {
-              if (!isPlayable) {
-                // Si llegamos acá, isDownloadedLocal ya es falso (una
-                // descarga local siempre es reproducible, ver isPlayable
-                // arriba) — el único motivo posible es falta de conexión o la
-                // marca de sesión, priorizando conexión como razón principal
-                // (si ni siquiera hay red, eso es lo que el usuario necesita
-                // saber, más allá de si además está marcada).
-                final message = isConnected
-                    ? 'No disponible en este dispositivo'
-                    : 'No disponible sin conexión';
-                AppToast.show(context, message: message);
-                return;
-              }
-              if (isPlayingActive) {
-                ref.read(syncoraPlayerControllerProvider.notifier).pause();
-              } else if (isPausedActive) {
-                ref.read(syncoraPlayerControllerProvider.notifier).play();
-              } else if (widget.onTap != null) {
-                widget.onTap!();
-              }
-            },
+            onTap: isMobile ? triggerPlay : null,
+            onDoubleTap: isDesktop ? triggerPlay : null,
             onLongPress: () {
               HapticFeedback.mediumImpact();
               FocusManager.instance.primaryFocus?.unfocus();
@@ -226,51 +240,58 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                   children: [
                     // Número / Play / Pause
                     if (widget.index != null) ...[
-                      SizedBox(
-                        width: 28,
-                        child: Center(
-                          child: isPlayingActive
-                              ? (_isHovered
-                                  ? Icon(
-                                      AppIcons.bold(SolarIcons.Pause),
-                                      color: activeColor,
-                                      size: 18,
-                                    )
-                                  : LoadingAnimationWidget.staggeredDotsWave(
-                                      color: activeColor,
-                                      size: 18,
-                                    ))
-                              : (isPausedActive
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: triggerPlay,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: SizedBox(
+                            width: 28,
+                            child: Center(
+                              child: isPlayingActive
                                   ? (_isHovered
                                       ? Icon(
-                                          AppIcons.bold(SolarIcons.Play),
+                                          AppIcons.bold(SolarIcons.Pause),
                                           color: activeColor,
                                           size: 18,
                                         )
-                                      : Text(
-                                          '${widget.index! + 1}',
-                                          style: const TextStyle(
-                                            color: activeColor,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ))
-                                  : (isDesktop && _isHovered
-                                      ? Icon(
-                                          AppIcons.bold(SolarIcons.Play),
-                                          color: AppTheme.primary,
+                                      : LoadingAnimationWidget.staggeredDotsWave(
+                                          color: activeColor,
                                           size: 18,
-                                        )
-                                      : Text(
-                                          '${widget.index! + 1}',
-                                          style: TextStyle(
-                                            color: AppTheme.secondary.withValues(alpha: 0.7),
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ))),
+                                        ))
+                                  : (isPausedActive
+                                      ? (_isHovered
+                                          ? Icon(
+                                              AppIcons.bold(SolarIcons.Play),
+                                              color: activeColor,
+                                              size: 18,
+                                            )
+                                          : Text(
+                                              '${widget.index! + 1}',
+                                              style: const TextStyle(
+                                                color: activeColor,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ))
+                                      : (isDesktop && _isHovered
+                                          ? Icon(
+                                              AppIcons.bold(SolarIcons.Play),
+                                              color: AppTheme.primary,
+                                              size: 18,
+                                            )
+                                          : Text(
+                                              '${widget.index! + 1}',
+                                              style: TextStyle(
+                                                color: AppTheme.secondary.withValues(alpha: 0.7),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ))),
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -281,7 +302,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                       flex: (isDesktop && widget.showAlbum) ? 3 : 1,
                       child: Row(
                         children: [
-                          coverWidget,
+                          effectiveCoverWidget,
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(

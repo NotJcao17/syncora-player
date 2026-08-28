@@ -465,14 +465,19 @@ class HomeScreen extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Basado en tu gusto: ${sec.artist.name}',
-              style: const TextStyle(
-                color: AppTheme.primary,
-                fontWeight: FontWeight.w800,
-                fontSize: 16,
+            Expanded(
+              child: Text(
+                'Basado en tu gusto: ${sec.artist.name}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             TextButton(
               onPressed: () => context.push('/artist/${sec.artist.id}'),
               child: const Text('Ver artista', style: TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold)),

@@ -172,7 +172,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                     child: ConstrainedBox(
                       constraints: BoxConstraints(minHeight: availableHeight - 24.0),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           // Top Header
                           Row(
@@ -213,7 +213,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                             ],
                           ),
 
-                          const SizedBox(height: 12),
+                          const Spacer(),
 
                           // Portada Centrada y Escalable
                           Hero(
@@ -241,157 +241,81 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                             ),
                           ),
 
-                          const SizedBox(height: 16),
+                          const Spacer(),
 
-                          // Info de pista: Título, Artista, Me Gusta
-                          Row(
+                          // Sección inferior compacta
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    MarqueeText(
-                                      text: currentTrack.title,
-                                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: AppTheme.primary,
-                                            fontSize: 22,
-                                          ) ?? const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primary),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    MarqueeText(
-                                      text: currentTrack.artist,
-                                      style: const TextStyle(
-                                        color: AppTheme.secondary,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  _isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
-                                  color: _isLiked ? Colors.white : AppTheme.secondary,
-                                  size: 28,
-                                ),
-                                onPressed: () => _toggleLike(currentTrack),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          // Barra de reproducción interactiva
-                          _FullscreenSeekBar(
-                            position: state.engine.position,
-                            duration: state.engine.duration.inSeconds > 0
-                                ? state.engine.duration
-                                : (currentTrack.duration != null && currentTrack.duration!.inSeconds > 0
-                                    ? currentTrack.duration!
-                                    : const Duration(seconds: 180)),
-                            track: currentTrack,
-                            controller: controller,
-                            isPlaying: isPlaying,
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          // Controles Multimedia Principales
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              IconButton(
-                                icon: Padding(
-                                  padding: const EdgeInsets.only(top: 3.0),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        state.isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
-                                        color: state.isShuffle ? Colors.white : AppTheme.secondary,
-                                        size: 24,
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Container(
-                                        width: 4,
-                                        height: 4,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: state.isShuffle ? Colors.white : Colors.transparent,
+                              // Info de pista: Título, Artista, Me Gusta
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        MarqueeText(
+                                          text: currentTrack.title,
+                                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.primary,
+                                                fontSize: 22,
+                                              ) ?? const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primary),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                onPressed: () => controller.toggleShuffle(),
-                                tooltip: 'Aleatorio',
-                              ),
-                              IconButton(
-                                icon: Icon(AppIcons.broken(SolarIcons.SkipPrevious), color: AppTheme.primary, size: 36),
-                                onPressed: () => controller.skipToPrevious(),
-                                tooltip: 'Anterior',
-                              ),
-                              Container(
-                                width: 76,
-                                height: 76,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppTheme.primary,
-                                  boxShadow: AppTheme.glowHighShadow,
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  shape: const CircleBorder(),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: IconButton(
-                                    style: IconButton.styleFrom(
-                                      shape: const CircleBorder(),
-                                      padding: EdgeInsets.zero,
-                                    ),
-                                    icon: (state.engine.processingState == AudioProcessingState.loading ||
-                                            state.engine.processingState == AudioProcessingState.buffering)
-                                        ? LoadingAnimationWidget.threeArchedCircle(
-                                            color: AppTheme.background,
-                                            size: 34,
-                                          )
-                                        : Icon(
-                                            isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
-                                            color: AppTheme.background,
-                                            size: 38,
+                                        const SizedBox(height: 4),
+                                        MarqueeText(
+                                          text: currentTrack.artist,
+                                          style: const TextStyle(
+                                            color: AppTheme.secondary,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
                                           ),
-                                    onPressed: () {
-                                      if (isPlaying) {
-                                        controller.pause();
-                                      } else {
-                                        controller.play();
-                                      }
-                                    },
-                                    tooltip: isPlaying ? 'Pausar' : 'Reproducir',
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
+                                  IconButton(
+                                    icon: Icon(
+                                      _isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
+                                      color: _isLiked ? Colors.white : AppTheme.secondary,
+                                      size: 28,
+                                    ),
+                                    onPressed: () => _toggleLike(currentTrack),
+                                  ),
+                                ],
                               ),
-                              IconButton(
-                                icon: Icon(AppIcons.broken(SolarIcons.SkipNext), color: AppTheme.primary, size: 36),
-                                onPressed: () => controller.skipToNext(),
-                                tooltip: 'Siguiente',
+
+                              const SizedBox(height: 12),
+
+                              // Barra de reproducción interactiva
+                              _FullscreenSeekBar(
+                                position: state.engine.position,
+                                duration: state.engine.duration.inSeconds > 0
+                                    ? state.engine.duration
+                                    : (currentTrack.duration != null && currentTrack.duration!.inSeconds > 0
+                                        ? currentTrack.duration!
+                                        : const Duration(seconds: 180)),
+                                track: currentTrack,
+                                controller: controller,
+                                isPlaying: isPlaying,
                               ),
-                              Builder(
-                                builder: (context) {
-                                  final isRepeatActive = state.repeatMode != SyncoraRepeatMode.off;
-                                  final repeatIconData = state.repeatMode == SyncoraRepeatMode.one
-                                      ? (isRepeatActive ? AppIcons.outline(SolarIcons.RepeatOne) : AppIcons.broken(SolarIcons.RepeatOne))
-                                      : (isRepeatActive ? AppIcons.outline(SolarIcons.Repeat) : AppIcons.broken(SolarIcons.Repeat));
-                                  return IconButton(
+
+                              const SizedBox(height: 12),
+
+                              // Controles Multimedia Principales
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  IconButton(
                                     icon: Padding(
                                       padding: const EdgeInsets.only(top: 3.0),
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(
-                                            repeatIconData,
-                                            color: isRepeatActive ? Colors.white : AppTheme.secondary,
+                                            state.isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
+                                            color: state.isShuffle ? Colors.white : AppTheme.secondary,
                                             size: 24,
                                           ),
                                           const SizedBox(height: 2),
@@ -400,35 +324,118 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                             height: 4,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              color: isRepeatActive ? Colors.white : Colors.transparent,
+                                              color: state.isShuffle ? Colors.white : Colors.transparent,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    onPressed: () => controller.cycleRepeatMode(),
-                                    tooltip: 'Repetir',
-                                  );
-                                },
+                                    onPressed: () => controller.toggleShuffle(),
+                                    tooltip: 'Aleatorio',
+                                  ),
+                                  IconButton(
+                                    icon: Icon(AppIcons.broken(SolarIcons.SkipPrevious), color: AppTheme.primary, size: 36),
+                                    onPressed: () => controller.skipToPrevious(),
+                                    tooltip: 'Anterior',
+                                  ),
+                                  Container(
+                                    width: 76,
+                                    height: 76,
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: AppTheme.primary,
+                                      boxShadow: AppTheme.glowHighShadow,
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      shape: const CircleBorder(),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: IconButton(
+                                        style: IconButton.styleFrom(
+                                          shape: const CircleBorder(),
+                                          padding: EdgeInsets.zero,
+                                        ),
+                                        icon: (state.engine.processingState == AudioProcessingState.loading ||
+                                                state.engine.processingState == AudioProcessingState.buffering)
+                                            ? LoadingAnimationWidget.threeArchedCircle(
+                                                color: AppTheme.background,
+                                                size: 34,
+                                              )
+                                            : Icon(
+                                                isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
+                                                color: AppTheme.background,
+                                                size: 38,
+                                              ),
+                                        onPressed: () {
+                                          if (isPlaying) {
+                                            controller.pause();
+                                          } else {
+                                            controller.play();
+                                          }
+                                        },
+                                        tooltip: isPlaying ? 'Pausar' : 'Reproducir',
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(AppIcons.broken(SolarIcons.SkipNext), color: AppTheme.primary, size: 36),
+                                    onPressed: () => controller.skipToNext(),
+                                    tooltip: 'Siguiente',
+                                  ),
+                                  Builder(
+                                    builder: (context) {
+                                      final isRepeatActive = state.repeatMode != SyncoraRepeatMode.off;
+                                      final repeatIconData = state.repeatMode == SyncoraRepeatMode.one
+                                          ? (isRepeatActive ? AppIcons.outline(SolarIcons.RepeatOne) : AppIcons.broken(SolarIcons.RepeatOne))
+                                          : (isRepeatActive ? AppIcons.outline(SolarIcons.Repeat) : AppIcons.broken(SolarIcons.Repeat));
+                                      return IconButton(
+                                        icon: Padding(
+                                          padding: const EdgeInsets.only(top: 3.0),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                repeatIconData,
+                                                color: isRepeatActive ? Colors.white : AppTheme.secondary,
+                                                size: 24,
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Container(
+                                                width: 4,
+                                                height: 4,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: isRepeatActive ? Colors.white : Colors.transparent,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        onPressed: () => controller.cycleRepeatMode(),
+                                        tooltip: 'Repetir',
+                                      );
+                                    },
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
 
-                          const SizedBox(height: 12),
+                              const SizedBox(height: 8),
 
-                          // Botones Inferiores: Letras (LRCLib real) & Cola
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              TextButton.icon(
-                                onPressed: () => _showLyricsSheet(context, currentTrack),
-                                icon: Icon(AppIcons.broken(SolarIcons.AlignLeft), size: 18, color: AppTheme.secondary),
-                                label: const Text('Letras', style: TextStyle(color: AppTheme.secondary)),
-                              ),
-                              IconButton(
-                                icon: Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), size: 22, color: AppTheme.secondary),
-                                onPressed: () => QueueView.showSheet(context),
-                                tooltip: 'Ver cola',
+                              // Botones Inferiores: Letras (LRCLib real) & Cola
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  TextButton.icon(
+                                    onPressed: () => _showLyricsSheet(context, currentTrack),
+                                    icon: Icon(AppIcons.broken(SolarIcons.AlignLeft), size: 18, color: AppTheme.secondary),
+                                    label: const Text('Letras', style: TextStyle(color: AppTheme.secondary)),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), size: 22, color: AppTheme.secondary),
+                                    onPressed: () => QueueView.showSheet(context),
+                                    tooltip: 'Ver cola',
+                                  ),
+                                ],
                               ),
                             ],
                           ),

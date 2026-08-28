@@ -201,142 +201,161 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     );
   }
 
-  void _showPlaylistOptionsMenu(BuildContext context, Playlist playlist, bool canEdit, bool isLocalMode) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceHover,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              ListTile(
-                leading: Icon(AppIcons.broken(SolarIcons.PenNewSquare), color: canEdit ? AppTheme.primary : AppTheme.muted),
-                title: Text('Editar nombre', style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted)),
-                enabled: canEdit,
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showEditPlaylistDialog(context, playlist);
-                },
-              ),
-              if (!isLocalMode) ...[
-                ListTile(
-                  leading: Icon(
-                    AppIcons.broken(playlist.isPublic ? SolarIcons.Lock : SolarIcons.Global),
-                    color: canEdit ? AppTheme.primary : AppTheme.muted,
-                  ),
-                  title: Text(
-                    playlist.isPublic ? 'Hacer privada' : 'Hacer pública',
-                    style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted),
-                  ),
-                  enabled: canEdit,
-                  onTap: () async {
-                    Navigator.pop(ctx);
-                    final newPublic = !playlist.isPublic;
-                    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                    final dao = ref.read(playlistDaoProvider);
-                    String? remoteId = playlist.remoteId;
-                    if (remoteId == null) {
-                      try {
-                        final supabaseRes = await supabaseRepo.createPlaylist(
-                          title: playlist.title,
-                          description: playlist.description,
-                          isPublic: newPublic,
-                          isLiked: playlist.isLiked,
-                        );
-                        remoteId = supabaseRes['id']?.toString();
-                      } catch (_) {}
-                    } else {
-                      try {
-                        await supabaseRepo.updatePlaylist(remoteId, isPublic: newPublic);
-                      } catch (_) {}
-                    }
-                    await dao.updatePlaylist(playlist.copyWith(
-                      isPublic: newPublic,
-                      remoteId: Value(remoteId),
-                    ));
-                    if (context.mounted) {
-                      AppToast.show(
-                        context,
-                        message: newPublic ? 'Playlist marcada como pública' : 'Playlist marcada como privada',
-                      );
-                    }
-                  },
-                ),
-                ListTile(
-                  leading: Icon(AppIcons.broken(SolarIcons.LinkMinimalistic), color: AppTheme.primary),
-                  title: const Text('Copiar enlace', style: TextStyle(color: AppTheme.primary)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    Clipboard.setData(ClipboardData(text: 'syncoraplayer://playlist/${playlist.remoteId ?? playlist.id}'));
-                    AppToast.show(context, message: 'Enlace copiado al portapapeles');
-                  },
-                ),
-                ListTile(
-                  leading: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: canEdit ? AppTheme.primary : AppTheme.muted),
-                  title: Text('Modificar con IA', style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted)),
-                  enabled: canEdit,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    showAiModifyPlaylistSheet(context, ref, playlist);
-                  },
-                ),
-              ],
-              ListTile(
-                leading: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), color: canEdit ? Colors.redAccent : AppTheme.muted),
-                title: Text('Eliminar playlist', style: TextStyle(color: canEdit ? Colors.redAccent : AppTheme.muted)),
-                enabled: canEdit,
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (dCtx) => AlertDialog(
-                      backgroundColor: AppTheme.surface,
-                      title: const Text('¿Eliminar playlist?', style: TextStyle(color: AppTheme.primary)),
-                      content: const Text('Esta acción no se puede deshacer.', style: TextStyle(color: AppTheme.secondary)),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancelar')),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                          onPressed: () => Navigator.pop(dCtx, true),
-                          child: const Text('Eliminar'),
-                        ),
-                      ],
-                    ),
+  Widget _buildPlaylistOptionsContent(BuildContext ctx, Playlist playlist, bool canEdit, bool isLocalMode) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          leading: Icon(AppIcons.broken(SolarIcons.PenNewSquare), color: canEdit ? AppTheme.primary : AppTheme.muted),
+          title: Text('Editar nombre', style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted)),
+          enabled: canEdit,
+          onTap: () {
+            Navigator.pop(ctx);
+            _showEditPlaylistDialog(context, playlist);
+          },
+        ),
+        if (!isLocalMode) ...[
+          ListTile(
+            leading: Icon(
+              AppIcons.broken(playlist.isPublic ? SolarIcons.Lock : SolarIcons.Global),
+              color: canEdit ? AppTheme.primary : AppTheme.muted,
+            ),
+            title: Text(
+              playlist.isPublic ? 'Hacer privada' : 'Hacer pública',
+              style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted),
+            ),
+            enabled: canEdit,
+            onTap: () async {
+              Navigator.pop(ctx);
+              final newPublic = !playlist.isPublic;
+              final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+              final dao = ref.read(playlistDaoProvider);
+              String? remoteId = playlist.remoteId;
+              if (remoteId == null) {
+                try {
+                  final supabaseRes = await supabaseRepo.createPlaylist(
+                    title: playlist.title,
+                    description: playlist.description,
+                    isPublic: newPublic,
+                    isLiked: playlist.isLiked,
                   );
-
-                  if (confirm != true) return;
-
-                  try {
-                    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                    if (playlist.remoteId != null) {
-                      await supabaseRepo.deletePlaylist(playlist.remoteId!);
-                    }
-                  } catch (_) {}
-                  final dao = ref.read(playlistDaoProvider);
-                  await dao.deletePlaylist(playlist.id);
-                  if (context.mounted) {
-                    AppToast.show(context, message: 'Playlist eliminada');
-                  }
-                },
-              ),
-            ],
+                  remoteId = supabaseRes['id']?.toString();
+                } catch (_) {}
+              } else {
+                try {
+                  await supabaseRepo.updatePlaylist(remoteId, isPublic: newPublic);
+                } catch (_) {}
+              }
+              await dao.updatePlaylist(playlist.copyWith(
+                isPublic: newPublic,
+                remoteId: Value(remoteId),
+              ));
+              if (mounted) {
+                AppToast.show(
+                  context,
+                  message: newPublic ? 'Playlist marcada como pública' : 'Playlist marcada como privada',
+                );
+              }
+            },
           ),
-        );
-      },
+          ListTile(
+            leading: Icon(AppIcons.broken(SolarIcons.LinkMinimalistic), color: AppTheme.primary),
+            title: const Text('Copiar enlace', style: TextStyle(color: AppTheme.primary)),
+            onTap: () {
+              Navigator.pop(ctx);
+              Clipboard.setData(ClipboardData(text: 'syncoraplayer://playlist/${playlist.remoteId ?? playlist.id}'));
+              AppToast.show(context, message: 'Enlace copiado al portapapeles');
+            },
+          ),
+          ListTile(
+            leading: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: canEdit ? AppTheme.primary : AppTheme.muted),
+            title: Text('Modificar con IA', style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted)),
+            enabled: canEdit,
+            onTap: () {
+              Navigator.pop(ctx);
+              showAiModifyPlaylistSheet(context, ref, playlist);
+            },
+          ),
+        ],
+        ListTile(
+          leading: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), color: canEdit ? Colors.redAccent : AppTheme.muted),
+          title: Text('Eliminar playlist', style: TextStyle(color: canEdit ? Colors.redAccent : AppTheme.muted)),
+          enabled: canEdit,
+          onTap: () async {
+            Navigator.pop(ctx);
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (dCtx) => AlertDialog(
+                backgroundColor: AppTheme.surface,
+                title: const Text('¿Eliminar playlist?', style: TextStyle(color: AppTheme.primary)),
+                content: const Text('Esta acción no se puede deshacer.', style: TextStyle(color: AppTheme.secondary)),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancelar')),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    onPressed: () => Navigator.pop(dCtx, true),
+                    child: const Text('Eliminar'),
+                  ),
+                ],
+              ),
+            );
+
+            if (confirm != true) return;
+
+            try {
+              final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+              if (playlist.remoteId != null) {
+                await supabaseRepo.deletePlaylist(playlist.remoteId!);
+              }
+            } catch (_) {}
+            final dao = ref.read(playlistDaoProvider);
+            await dao.deletePlaylist(playlist.id);
+            if (mounted) {
+              AppToast.show(context, message: 'Playlist eliminada');
+            }
+          },
+        ),
+      ],
     );
+  }
+
+  void _showPlaylistOptionsMenu(BuildContext context, Playlist playlist, bool canEdit, bool isLocalMode) {
+    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    if (isDesktop) {
+      showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: AppTheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFF2A2A2A)),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: _buildPlaylistOptionsContent(ctx, playlist, canEdit, isLocalMode),
+            ),
+          ),
+        ),
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: AppTheme.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (ctx) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: _buildPlaylistOptionsContent(ctx, playlist, canEdit, isLocalMode),
+            ),
+          );
+        },
+      );
+    }
   }
 
   void _showEditPlaylistDialog(BuildContext context, Playlist playlist) {
@@ -598,95 +617,106 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Tu Biblioteca',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.primary,
-                    letterSpacing: -0.8,
+                const Flexible(
+                  child: Text(
+                    'Tu Biblioteca',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.primary,
+                      letterSpacing: -0.8,
+                    ),
                   ),
                 ),
-                Row(
-                  children: [
-                    if (isDesktop && !isLocalMode)
-                      IconButton(
-                        icon: const Icon(Icons.refresh),
-                        color: AppTheme.primary,
-                        onPressed: () async {
-                          await ref.read(syncServiceProvider).syncLibrary(force: true);
-                          await ref.read(syncServiceProvider).syncSavedAlbums(force: true);
-                        },
-                        tooltip: 'Sincronizar biblioteca',
-                      ),
-                    Tooltip(
-                      message: 'Guía de importación & exportación',
-                      child: IconButton(
-                        icon: Icon(AppIcons.broken(SolarIcons.QuestionCircle), color: AppTheme.primary, size: 20),
-                        onPressed: () => _showImportExportTutorial(context),
-                      ),
-                    ),
-                    Tooltip(
-                      message: 'Pantalla de descargas',
-                      child: IconButton(
-                        icon: Icon(AppIcons.broken(SolarIcons.DownloadMinimalistic), color: AppTheme.primary, size: 20),
-                        onPressed: () => context.push('/downloads'),
-                      ),
-                    ),
-                    Tooltip(
-                      message: 'Importar desde CSV/TXT',
-                      child: IconButton(
-                        icon: Icon(AppIcons.broken(SolarIcons.Import), color: AppTheme.primary, size: 20),
-                        onPressed: () => _importPlaylistFromFile(context),
-                      ),
-                    ),
-                    Tooltip(
-                      message: 'Buscar en tu biblioteca',
-                      child: IconButton(
-                        icon: Icon(
-                          _showLocalSearch ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.Magnifer),
-                          color: AppTheme.primary,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _showLocalSearch = !_showLocalSearch;
-                            if (!_showLocalSearch) {
-                              _localSearchController.clear();
-                              _localSearchQuery = '';
-                            }
-                          });
-                        },
-                      ),
-                    ),
-                    if (!isLocalMode)
-                      Tooltip(
-                        message: isConnected ? 'Crear playlist con IA' : 'Sin conexión',
-                        child: IconButton(
-                          icon: Icon(
-                            AppIcons.broken(SolarIcons.StarsMinimalistic),
-                            color: isConnected ? AppTheme.primary : AppTheme.muted,
-                            size: 20,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isDesktop && !isLocalMode)
+                          IconButton(
+                            icon: const Icon(Icons.refresh),
+                            color: AppTheme.primary,
+                            onPressed: () async {
+                              await ref.read(syncServiceProvider).syncLibrary(force: true);
+                              await ref.read(syncServiceProvider).syncSavedAlbums(force: true);
+                            },
+                            tooltip: 'Sincronizar biblioteca',
                           ),
-                          onPressed: isConnected
-                              ? () => showAiCreatePlaylistSheet(context, ref)
-                              : () {
-                                  AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.');
-                                },
+                        Tooltip(
+                          message: 'Guía de importación & exportación',
+                          child: IconButton(
+                            icon: Icon(AppIcons.broken(SolarIcons.QuestionCircle), color: AppTheme.primary, size: 20),
+                            onPressed: () => _showImportExportTutorial(context),
+                          ),
                         ),
-                      ),
-                    Tooltip(
-                      message: canEdit ? 'Crear playlist' : 'Sin conexión',
-                      child: IconButton(
-                        icon: Icon(
-                          AppIcons.broken(SolarIcons.AddCircle),
-                          color: canEdit ? AppTheme.primary : AppTheme.muted,
-                          size: 22,
+                        Tooltip(
+                          message: 'Pantalla de descargas',
+                          child: IconButton(
+                            icon: Icon(AppIcons.broken(SolarIcons.DownloadMinimalistic), color: AppTheme.primary, size: 20),
+                            onPressed: () => context.push('/downloads'),
+                          ),
                         ),
-                        onPressed: () => _showCreatePlaylistDialog(context, canEdit),
-                      ),
+                        Tooltip(
+                          message: 'Importar desde CSV/TXT',
+                          child: IconButton(
+                            icon: Icon(AppIcons.broken(SolarIcons.Import), color: AppTheme.primary, size: 20),
+                            onPressed: () => _importPlaylistFromFile(context),
+                          ),
+                        ),
+                        Tooltip(
+                          message: 'Buscar en tu biblioteca',
+                          child: IconButton(
+                            icon: Icon(
+                              _showLocalSearch ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.Magnifer),
+                              color: AppTheme.primary,
+                              size: 20,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _showLocalSearch = !_showLocalSearch;
+                                if (!_showLocalSearch) {
+                                  _localSearchController.clear();
+                                  _localSearchQuery = '';
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                        if (!isLocalMode)
+                          Tooltip(
+                            message: isConnected ? 'Crear playlist con IA' : 'Sin conexión',
+                            child: IconButton(
+                              icon: Icon(
+                                AppIcons.broken(SolarIcons.StarsMinimalistic),
+                                color: isConnected ? AppTheme.primary : AppTheme.muted,
+                                size: 20,
+                              ),
+                              onPressed: isConnected
+                                  ? () => showAiCreatePlaylistSheet(context, ref)
+                                  : () {
+                                      AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.');
+                                    },
+                            ),
+                          ),
+                        Tooltip(
+                          message: canEdit ? 'Crear playlist' : 'Sin conexión',
+                          child: IconButton(
+                            icon: Icon(
+                              AppIcons.broken(SolarIcons.AddCircle),
+                              color: canEdit ? AppTheme.primary : AppTheme.muted,
+                              size: 22,
+                            ),
+                            onPressed: () => _showCreatePlaylistDialog(context, canEdit),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),

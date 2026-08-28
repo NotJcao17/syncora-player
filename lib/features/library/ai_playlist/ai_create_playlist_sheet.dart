@@ -814,11 +814,14 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
                 child: OutlinedButton.icon(
                   onPressed: isSaving ? null : () => setState(() => _refinePanelOpen = !_refinePanelOpen),
                   icon: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), size: 16),
-                  label: const Text('Afinar con IA'),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Afinar con IA', maxLines: 1),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.primary,
                     side: const BorderSide(color: AppTheme.surfaceHover),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),

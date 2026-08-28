@@ -79,9 +79,67 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     super.dispose();
   }
 
-  void _extractPalette(String coverUrl) async {
-    if (coverUrl.isEmpty || _extractedCoverUrl == coverUrl) return;
+  void _extractPalette(String coverUrl, {bool isLiked = false}) async {
+    if (isLiked) {
+      if (mounted) {
+        setState(() {
+          _dominantColor = AppTheme.gradientLiked.colors.first;
+        });
+      }
+      return;
+    }
+
+    if (coverUrl.isEmpty) return;
+    if (_extractedCoverUrl == coverUrl) return;
     _extractedCoverUrl = coverUrl;
+
+    if (coverUrl.startsWith('gradient:')) {
+      final indexStr = coverUrl.replaceFirst('gradient:', '');
+      final index = int.tryParse(indexStr) ?? 0;
+      if (PlaylistCoverWidget.presetGradients.isNotEmpty) {
+        final gradient = PlaylistCoverWidget.presetGradients[index % PlaylistCoverWidget.presetGradients.length];
+        if (mounted) {
+          setState(() {
+            _dominantColor = gradient.colors.first;
+          });
+        }
+      }
+      return;
+    }
+
+    if (coverUrl.startsWith('color:')) {
+      final hex = coverUrl.replaceFirst('color:', '').replaceAll('#', '');
+      final colorInt = int.tryParse(hex, radix: 16);
+      if (colorInt != null) {
+        final color = Color(hex.length == 6 ? 0xFF000000 | colorInt : colorInt);
+        if (mounted) {
+          setState(() {
+            _dominantColor = color;
+          });
+        }
+      }
+      return;
+    }
+
+    if (coverUrl.startsWith('file://') || coverUrl.startsWith('/')) {
+      try {
+        final file = File(coverUrl.replaceFirst('file://', ''));
+        if (await file.exists()) {
+          final palette = await PaletteGenerator.fromImageProvider(
+            FileImage(file),
+            maximumColorCount: 8,
+          );
+          final color = palette.darkVibrantColor?.color ?? palette.dominantColor?.color;
+          if (mounted && color != null) {
+            setState(() {
+              _dominantColor = color;
+            });
+          }
+        }
+      } catch (_) {}
+      return;
+    }
+
     try {
       final palette = await PaletteGenerator.fromImageProvider(
         NetworkImage(coverUrl),
@@ -657,107 +715,132 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     }
   }
 
+  Widget _buildPlaylistOptionsContent(BuildContext ctx, Playlist playlist, List<PlaylistTrack> tracks) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (!playlist.isLiked) ...[
+          ListTile(
+            leading: Icon(AppIcons.broken(SolarIcons.Pen), color: AppTheme.primary),
+            title: const Text('Editar información y portada', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+            onTap: () {
+              Navigator.pop(ctx);
+              _showEditPlaylistDialog(context, playlist);
+            },
+          ),
+          ListTile(
+            leading: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: AppTheme.accent),
+            title: const Text('Modificar con IA', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+            onTap: () {
+              Navigator.pop(ctx);
+              final isConnected = ref.read(isConnectedProvider).value ?? true;
+              if (!isConnected) {
+                AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+                return;
+              }
+              showAiModifyPlaylistSheet(context, ref, playlist);
+            },
+          ),
+        ],
+        if (tracks.isNotEmpty)
+          ListTile(
+            leading: Icon(AppIcons.broken(SolarIcons.AddFolder), color: AppTheme.primary),
+            title: const Text('Agregar todas a otra playlist', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+            onTap: () {
+              Navigator.pop(ctx);
+              _showAddAllToOtherPlaylistDialog(context, tracks);
+            },
+          ),
+        if (tracks.isNotEmpty)
+          ListTile(
+            leading: Icon(AppIcons.broken(SolarIcons.CheckSquare), color: AppTheme.primary),
+            title: const Text('Eliminar canciones repetidas', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+            onTap: () {
+              Navigator.pop(ctx);
+              _deduplicatePlaylistTracks(playlist, tracks);
+            },
+          ),
+        ListTile(
+          leading: Icon(AppIcons.broken(SolarIcons.Export), color: AppTheme.primary),
+          title: const Text('Exportar playlist (CSV)', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+          onTap: () {
+            Navigator.pop(ctx);
+            _exportPlaylist(tracks);
+          },
+        ),
+        if (!playlist.isLiked)
+          ListTile(
+            leading: Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: Colors.red),
+            title: const Text('Eliminar playlist', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+            onTap: () async {
+              Navigator.pop(ctx);
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (dCtx) => AlertDialog(
+                  backgroundColor: AppTheme.surface,
+                  title: const Text('¿Eliminar playlist?', style: TextStyle(color: AppTheme.primary)),
+                  content: const Text('Esta acción no se puede deshacer.', style: TextStyle(color: AppTheme.secondary)),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancelar')),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      onPressed: () => Navigator.pop(dCtx, true),
+                      child: const Text('Eliminar'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await _executeRemoteMutation(() async {
+                  if (playlist.remoteId != null) {
+                    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                    await supabaseRepo.deletePlaylist(playlist.remoteId!);
+                  }
+                });
+                if (!playlist.isLiked) {
+                  await ref.read(playlistDaoProvider).deletePlaylist(playlist.id);
+                }
+                if (mounted && context.canPop()) context.pop();
+              }
+            },
+          ),
+      ],
+    );
+  }
+
   void _showPlaylistOptionsMenu(BuildContext context, Playlist playlist, List<PlaylistTrack> tracks) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!playlist.isLiked) ...[
-                ListTile(
-                  leading: Icon(AppIcons.broken(SolarIcons.Pen), color: AppTheme.primary),
-                  title: const Text('Editar información y portada', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _showEditPlaylistDialog(context, playlist);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: AppTheme.accent),
-                  title: const Text('Modificar con IA', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    final isConnected = ref.read(isConnectedProvider).value ?? true;
-                    if (!isConnected) {
-                      AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
-                      return;
-                    }
-                    showAiModifyPlaylistSheet(context, ref, playlist);
-                  },
-                ),
-              ],
-              if (tracks.isNotEmpty)
-                ListTile(
-                  leading: Icon(AppIcons.broken(SolarIcons.AddFolder), color: AppTheme.primary),
-                  title: const Text('Agregar todas a otra playlist', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _showAddAllToOtherPlaylistDialog(context, tracks);
-                  },
-                ),
-              if (tracks.isNotEmpty)
-                ListTile(
-                  leading: Icon(AppIcons.broken(SolarIcons.CheckSquare), color: AppTheme.primary),
-                  title: const Text('Eliminar canciones repetidas', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _deduplicatePlaylistTracks(playlist, tracks);
-                  },
-                ),
-              ListTile(
-                leading: Icon(AppIcons.broken(SolarIcons.Export), color: AppTheme.primary),
-                title: const Text('Exportar playlist (CSV)', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _exportPlaylist(tracks);
-                },
-              ),
-              if (!playlist.isLiked)
-                ListTile(
-                  leading: Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: Colors.red),
-                  title: const Text('Eliminar playlist', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
-                  onTap: () async {
-                    Navigator.pop(ctx);
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (dCtx) => AlertDialog(
-                        backgroundColor: AppTheme.surface,
-                        title: const Text('¿Eliminar playlist?', style: TextStyle(color: AppTheme.primary)),
-                        content: const Text('Esta acción no se puede deshacer.', style: TextStyle(color: AppTheme.secondary)),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancelar')),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                            onPressed: () => Navigator.pop(dCtx, true),
-                            child: const Text('Eliminar'),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (confirm == true) {
-                      await _executeRemoteMutation(() async {
-                        if (playlist.remoteId != null) {
-                          final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                          await supabaseRepo.deletePlaylist(playlist.remoteId!);
-                        }
-                      });
-                      if (!playlist.isLiked) {
-                        await ref.read(playlistDaoProvider).deletePlaylist(playlist.id);
-                      }
-                      if (context.mounted && context.canPop()) context.pop();
-                    }
-                  },
-                ),
-            ],
+    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    if (isDesktop) {
+      showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: AppTheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFF2A2A2A)),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: _buildPlaylistOptionsContent(ctx, playlist, tracks),
+            ),
           ),
         ),
-      ),
-    );
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: AppTheme.surface,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: _buildPlaylistOptionsContent(ctx, playlist, tracks),
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -843,7 +926,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               final sortedPairs = _sortTrackPairs(rawPairs);
               final sortedSyncoraTracks = sortedPairs.map((p) => p.syncoraTrack).toList();
 
-              if (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty) {
+              if (playlist.isLiked) {
+                _extractPalette('', isLiked: true);
+              } else if (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty) {
                 _extractPalette(playlist.coverUrl!);
               } else if (sortedSyncoraTracks.isNotEmpty && sortedSyncoraTracks.first.coverUrl.isNotEmpty) {
                 _extractPalette(sortedSyncoraTracks.first.coverUrl);
@@ -1046,41 +1131,84 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             const SizedBox(width: 8),
                                           ],
 
-                                          ElevatedButton.icon(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: _showAddSongsSearch ? AppTheme.surfaceHover : AppTheme.surface,
-                                              foregroundColor: AppTheme.primary,
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                            ),
-                                            onPressed: () {
-                                              setState(() => _showAddSongsSearch = !_showAddSongsSearch);
-                                            },
-                                            icon: Icon(_showAddSongsSearch ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.AddCircle), size: 18),
-                                            label: Text(_showAddSongsSearch ? 'Cerrar buscador' : 'Agregar canciones', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                          ),
-                                          const SizedBox(width: 8),
-
-                                          if (!playlist.isLiked) ...[
+                                          if (isDesktop) ...[
                                             ElevatedButton.icon(
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: AppTheme.surface,
-                                                foregroundColor: AppTheme.accent,
+                                                backgroundColor: _showAddSongsSearch ? AppTheme.surfaceHover : AppTheme.surface,
+                                                foregroundColor: AppTheme.primary,
                                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                               ),
                                               onPressed: () {
-                                                final isConnected = ref.read(isConnectedProvider).value ?? true;
-                                                if (!isConnected) {
-                                                  AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
-                                                  return;
-                                                }
-                                                showAiModifyPlaylistSheet(context, ref, playlist);
+                                                setState(() => _showAddSongsSearch = !_showAddSongsSearch);
                                               },
-                                              icon: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), size: 18),
-                                              label: const Text('Modificar con IA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                              icon: Icon(_showAddSongsSearch ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.AddCircle), size: 18),
+                                              label: Text(_showAddSongsSearch ? 'Cerrar buscador' : 'Agregar canciones', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                             ),
                                             const SizedBox(width: 8),
+
+                                            if (!playlist.isLiked) ...[
+                                              ElevatedButton.icon(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: AppTheme.surface,
+                                                  foregroundColor: AppTheme.accent,
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                                ),
+                                                onPressed: () {
+                                                  final isConnected = ref.read(isConnectedProvider).value ?? true;
+                                                  if (!isConnected) {
+                                                    AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+                                                    return;
+                                                  }
+                                                  showAiModifyPlaylistSheet(context, ref, playlist);
+                                                },
+                                                icon: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), size: 18),
+                                                label: const Text('Modificar con IA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                              ),
+                                              const SizedBox(width: 8),
+                                            ],
+                                          ] else ...[
+                                            Tooltip(
+                                              message: _showAddSongsSearch ? 'Cerrar buscador' : 'Agregar canciones',
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: _showAddSongsSearch ? AppTheme.surfaceHover : AppTheme.surface,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: IconButton(
+                                                  icon: Icon(_showAddSongsSearch ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 20),
+                                                  onPressed: () {
+                                                    setState(() => _showAddSongsSearch = !_showAddSongsSearch);
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+
+                                            if (!playlist.isLiked) ...[
+                                              Tooltip(
+                                                message: 'Modificar con IA',
+                                                child: Container(
+                                                  decoration: const BoxDecoration(
+                                                    color: AppTheme.surface,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: IconButton(
+                                                    icon: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: AppTheme.accent, size: 20),
+                                                    onPressed: () {
+                                                      final isConnected = ref.read(isConnectedProvider).value ?? true;
+                                                      if (!isConnected) {
+                                                        AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+                                                        return;
+                                                      }
+                                                      showAiModifyPlaylistSheet(context, ref, playlist);
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                            ],
                                           ],
 
                                           // Ordenamiento en Móvil
@@ -1516,29 +1644,24 @@ class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedScale(
-        scale: _isHovered ? 1.08 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppTheme.primary,
-            boxShadow: _isHovered ? AppTheme.glowHighShadow : AppTheme.glowShadow,
-          ),
-          child: Material(
-            color: Colors.transparent,
-            shape: const CircleBorder(),
-            clipBehavior: Clip.antiAlias,
-            child: IconButton(
-              style: IconButton.styleFrom(
-                shape: const CircleBorder(),
-                padding: EdgeInsets.zero,
-              ),
-              icon: widget.isLoading
+      child: GestureDetector(
+        onTap: widget.onPressed,
+        child: AnimatedScale(
+          scale: _isHovered ? 1.08 : 1.0,
+          duration: const Duration(milliseconds: 150),
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppTheme.primary,
+              boxShadow: _isHovered ? AppTheme.glowHighShadow : AppTheme.glowShadow,
+            ),
+            child: Center(
+              child: widget.isLoading
                   ? LoadingAnimationWidget.threeArchedCircle(
                       color: AppTheme.background,
                       size: 26,
@@ -1546,9 +1669,8 @@ class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
                   : Icon(
                       widget.isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.outline(SolarIcons.Play),
                       color: AppTheme.background,
-                      size: 26,
+                      size: 28,
                     ),
-              onPressed: widget.onPressed,
             ),
           ),
         ),
@@ -1757,24 +1879,31 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Recomendaciones',
-                    style: TextStyle(
-                      color: AppTheme.primary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Recomendaciones',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppTheme.primary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Basadas en las canciones y artistas de esta playlist',
-                    style: TextStyle(color: AppTheme.secondary, fontSize: 12),
-                  ),
-                ],
+                    SizedBox(height: 2),
+                    Text(
+                      'Basadas en las canciones y artistas de esta playlist',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: AppTheme.secondary, fontSize: 12),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.primary,
