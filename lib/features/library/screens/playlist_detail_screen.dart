@@ -78,74 +78,55 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     super.dispose();
   }
 
-  void _extractPalette(String coverUrl, {bool isLiked = false}) async {
-    if (isLiked) {
-      if (mounted) {
-        setState(() {
-          _dominantColor = AppTheme.gradientLiked.colors.first;
-        });
-      }
-      return;
+  Color _resolveDominantColor(Playlist playlist, List<SyncoraTrack> tracks) {
+    if (playlist.isLiked) {
+      return AppTheme.gradientLiked.colors.first;
     }
-
-    if (coverUrl.isEmpty) return;
-    if (_extractedCoverUrl == coverUrl) return;
-    _extractedCoverUrl = coverUrl;
+    final coverUrl = (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty)
+        ? playlist.coverUrl!
+        : (tracks.isNotEmpty ? tracks.first.coverUrl : '');
 
     if (coverUrl.startsWith('gradient:')) {
       final indexStr = coverUrl.replaceFirst('gradient:', '');
       final index = int.tryParse(indexStr) ?? 0;
       if (PlaylistCoverWidget.presetGradients.isNotEmpty) {
-        final gradient = PlaylistCoverWidget.presetGradients[index % PlaylistCoverWidget.presetGradients.length];
-        if (mounted) {
-          setState(() {
-            _dominantColor = gradient.colors.first;
-          });
-        }
+        return PlaylistCoverWidget.presetGradients[index % PlaylistCoverWidget.presetGradients.length].colors.first;
       }
-      return;
     }
 
     if (coverUrl.startsWith('color:')) {
       final hex = coverUrl.replaceFirst('color:', '').replaceAll('#', '');
       final colorInt = int.tryParse(hex, radix: 16);
       if (colorInt != null) {
-        final color = Color(hex.length == 6 ? 0xFF000000 | colorInt : colorInt);
-        if (mounted) {
-          setState(() {
-            _dominantColor = color;
-          });
-        }
+        return Color(hex.length == 6 ? 0xFF000000 | colorInt : colorInt);
       }
-      return;
     }
 
-    if (coverUrl.startsWith('file://') || coverUrl.startsWith('/')) {
-      try {
-        final file = File(coverUrl.replaceFirst('file://', ''));
-        if (await file.exists()) {
-          final palette = await PaletteGenerator.fromImageProvider(
-            FileImage(file),
-            maximumColorCount: 8,
-          );
-          final color = palette.darkVibrantColor?.color ?? palette.dominantColor?.color;
-          if (mounted && color != null) {
-            setState(() {
-              _dominantColor = color;
-            });
-          }
-        }
-      } catch (_) {}
-      return;
-    }
+    return _dominantColor ?? AppTheme.surfaceHover.withValues(alpha: 0.3);
+  }
+
+  void _extractPalette(String coverUrl) async {
+    if (coverUrl.isEmpty || coverUrl.startsWith('gradient:') || coverUrl.startsWith('color:')) return;
+    if (_extractedCoverUrl == coverUrl) return;
+    _extractedCoverUrl = coverUrl;
 
     try {
-      final palette = await PaletteGenerator.fromImageProvider(
-        NetworkImage(coverUrl),
-        maximumColorCount: 8,
-      );
+      PaletteGenerator palette;
+      if (coverUrl.startsWith('file://') || coverUrl.startsWith('/')) {
+        final file = File(coverUrl.replaceFirst('file://', ''));
+        if (!await file.exists()) return;
+        palette = await PaletteGenerator.fromImageProvider(
+          FileImage(file),
+          maximumColorCount: 8,
+        );
+      } else {
+        palette = await PaletteGenerator.fromImageProvider(
+          NetworkImage(coverUrl),
+          maximumColorCount: 8,
+        );
+      }
       final color = palette.darkVibrantColor?.color ?? palette.dominantColor?.color;
-      if (mounted && color != null) {
+      if (mounted && color != null && _dominantColor != color) {
         setState(() {
           _dominantColor = color;
         });
@@ -932,7 +913,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
         }
 
         final isLiked = playlist.isLiked;
-        final dominantGradientColor = _dominantColor?.withValues(alpha: 0.35) ?? AppTheme.surfaceHover.withValues(alpha: 0.3);
 
         return Scaffold(
           backgroundColor: AppTheme.background,
@@ -971,13 +951,13 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
               final rawSyncoraTracks = rawPairs.map((p) => p.syncoraTrack).toList();
 
-              if (playlist.isLiked) {
-                _extractPalette('', isLiked: true);
-              } else if (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty) {
-                _extractPalette(playlist.coverUrl!);
-              } else if (rawSyncoraTracks.isNotEmpty && rawSyncoraTracks.first.coverUrl.isNotEmpty) {
-                _extractPalette(rawSyncoraTracks.first.coverUrl);
+              final coverForPalette = (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty)
+                  ? playlist.coverUrl!
+                  : (rawSyncoraTracks.isNotEmpty ? rawSyncoraTracks.first.coverUrl : '');
+              if (!playlist.isLiked && coverForPalette.isNotEmpty) {
+                _extractPalette(coverForPalette);
               }
+              final dominantGradientColor = _resolveDominantColor(playlist, rawSyncoraTracks).withValues(alpha: 0.35);
 
               final playerState = ref.watch(playerStateProvider);
               final playlistContextId = 'playlist_${playlist.id}';

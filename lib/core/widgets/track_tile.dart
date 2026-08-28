@@ -404,8 +404,11 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         movementDuration: const Duration(milliseconds: 200),
         confirmDismiss: (direction) async {
           HapticFeedback.mediumImpact();
-          widget.onAddToQueue!();
-          AppToast.show(context, message: '"${widget.track.title}" agregada a la cola');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            widget.onAddToQueue?.call();
+            AppToast.show(context, message: '"${widget.track.title}" agregada a la cola');
+          });
           return false; // Retornar false para no eliminar la canción de la lista
         },
         background: Container(
