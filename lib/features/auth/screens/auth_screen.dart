@@ -322,10 +322,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFF2A2A2A)),
+          side: const BorderSide(color: AppTheme.surfaceHover),
         ),
         title: const Text(
           'Esta cuenta ya tiene datos en la nube',
@@ -590,7 +590,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: AppTheme.surfaceShadow,
               border: Border.all(
-                color: const Color(0xFF2A2A2A),
+                color: AppTheme.surfaceHover,
                 width: 1,
               ),
             ),
@@ -765,7 +765,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 const Row(
                   children: [
                     Expanded(
-                      child: Divider(color: Color(0xFF2A2A2A), thickness: 1),
+                      child: Divider(color: AppTheme.surfaceHover, thickness: 1),
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
@@ -779,7 +779,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       ),
                     ),
                     Expanded(
-                      child: Divider(color: Color(0xFF2A2A2A), thickness: 1),
+                      child: Divider(color: AppTheme.surfaceHover, thickness: 1),
                     ),
                   ],
                 ),
@@ -791,7 +791,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   decoration: BoxDecoration(
                     color: AppTheme.background,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF2A2A2A)),
+                    border: Border.all(color: AppTheme.surfaceHover),
                   ),
                   child: Row(
                     children: [
@@ -809,7 +809,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
                               color: _selectedTabIndex == 0
-                                  ? const Color(0xFF2A2A2A)
+                                  ? AppTheme.surfaceHover
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -841,7 +841,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
                               color: _selectedTabIndex == 1
-                                  ? const Color(0xFF2A2A2A)
+                                  ? AppTheme.surfaceHover
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -897,11 +897,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
+                            borderSide: const BorderSide(color: AppTheme.surfaceHover),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
+                            borderSide: const BorderSide(color: AppTheme.surfaceHover),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -962,11 +962,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
+                            borderSide: const BorderSide(color: AppTheme.surfaceHover),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
+                            borderSide: const BorderSide(color: AppTheme.surfaceHover),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -1084,7 +1084,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 const Row(
                   children: [
                     Expanded(
-                      child: Divider(color: Color(0xFF2A2A2A), thickness: 1),
+                      child: Divider(color: AppTheme.surfaceHover, thickness: 1),
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
@@ -1098,7 +1098,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       ),
                     ),
                     Expanded(
-                      child: Divider(color: Color(0xFF2A2A2A), thickness: 1),
+                      child: Divider(color: AppTheme.surfaceHover, thickness: 1),
                     ),
                   ],
                 ),
@@ -1107,7 +1107,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   onPressed: _isLoading ? null : _useWithoutAccount,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0xFF2A2A2A)),
+                    side: const BorderSide(color: AppTheme.surfaceHover),
                     minimumSize: const Size.fromHeight(46),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),

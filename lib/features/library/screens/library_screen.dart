@@ -617,12 +617,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Flexible(
+                Expanded(
                   child: Text(
-                    'Tu Biblioteca',
+                    isDesktop ? 'Tu Biblioteca' : 'Biblioteca',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
                       color: AppTheme.primary,
@@ -631,12 +631,20 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Flexible(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
+                // Fila de accesos (Descargas, Importar, Buscar, IA, Crear):
+                // antes iba en un `Flexible` hermano del título, así que ambos
+                // se repartían el ancho disponible 50/50 -- en pantallas
+                // angostas eso empujaba la mitad de los íconos fuera de la
+                // vista, "perdidos" detrás de un scroll horizontal sin
+                // affordance visible. Sin `Flexible`/`Expanded` acá, la fila
+                // toma solo el ancho que sus íconos necesitan; es el título
+                // (ahora `Expanded`, con ellipsis) el que cede espacio.
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  reverse: true,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                         if (isDesktop && !isLocalMode)
                           IconButton(
                             icon: const Icon(Icons.refresh),
@@ -710,7 +718,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       ],
                     ),
                   ),
-                ),
               ],
             ),
           ),
