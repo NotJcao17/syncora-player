@@ -170,15 +170,12 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                   final availableHeight = constraints.maxHeight;
                   final coverSize = (availableHeight * 0.35).clamp(180.0, 320.0);
 
-                  return SingleChildScrollView(
-                    physics: const ClampingScrollPhysics(),
+                  return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(minHeight: availableHeight - 24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Top Header
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Top Header
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -439,10 +436,9 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                           ),
                         ],
                       ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  },
+                ),
             ),
           ),
         ),
