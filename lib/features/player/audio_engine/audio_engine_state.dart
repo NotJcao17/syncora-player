@@ -88,10 +88,10 @@ abstract class AudioEngine {
   ///
   /// Los headers DEBEN ser los mismos con los que se generó la firma de la
   /// URL (Pitfall #13), o YouTube devolverá 403 silenciosamente.
-  Future<void> setUrl(String url, {Map<String, String>? headers});
+  Future<void> setUrl(String url, {Map<String, String>? headers, Duration? initialPosition});
 
   /// Carga un archivo de audio descargado localmente sin peticiones HTTP.
-  Future<void> setLocalSource(String path);
+  Future<void> setLocalSource(String path, {Duration? initialPosition});
 
 
   Future<void> play();

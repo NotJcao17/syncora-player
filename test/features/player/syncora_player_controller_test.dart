@@ -61,7 +61,7 @@ class FakeAudioEngine implements AudioEngine {
   int setUrlCallCount = 0;
 
   @override
-  Future<void> setUrl(String url, {Map<String, String>? headers}) async {
+  Future<void> setUrl(String url, {Map<String, String>? headers, Duration? initialPosition}) async {
     lastUrl = url;
     setUrlCallCount++;
     emitState(_state.copyWith(
@@ -77,7 +77,7 @@ class FakeAudioEngine implements AudioEngine {
   int setLocalSourceCallCount = 0;
 
   @override
-  Future<void> setLocalSource(String path) async {
+  Future<void> setLocalSource(String path, {Duration? initialPosition}) async {
     lastLocalSourcePath = path;
     setLocalSourceCallCount++;
     emitState(_state.copyWith(
@@ -287,6 +287,7 @@ class _FakeRestoredSessionStorage extends PlayerSessionStorage {
     required List<SyncoraTrack> originalContextTracks,
     required List<HistoryEntry> history,
     required int positionSeconds,
+    double volume = 1.0,
     required SyncoraRepeatMode repeatMode,
     required bool shuffle,
     String? activeContextId,
@@ -2413,6 +2414,29 @@ void main() {
       expect(restored.autoQueue.map((t) => t.id).toList(), ['a1']);
       expect(restored.positionSeconds, 77);
       expect(restored.history, isEmpty, reason: 'el historial se degrada a vacío, no crashea el resto');
+    });
+
+    test('PlayerSessionData serializa y deserializa el volumen correctamente', () {
+      const session = PlayerSessionData(
+        currentTrack: SyncoraTrack(id: 't1', title: 'T1'),
+        currentOrigin: QueueOrigin.auto,
+        manualQueue: [],
+        autoQueue: [],
+        originalContextTracks: [],
+        history: [],
+        positionSeconds: 30,
+        volume: 0.65,
+        repeatMode: SyncoraRepeatMode.off,
+        shuffle: false,
+      );
+
+      final json = session.toJson();
+      expect(json['volume'], 0.65);
+
+      final restored = PlayerSessionData.fromJson(json);
+      expect(restored, isNotNull);
+      expect(restored!.volume, 0.65);
+      expect(restored.positionSeconds, 30);
     });
   });
 }

@@ -168,18 +168,18 @@ class CrossfadeAudioEngine implements AudioEngine {
   Duration get duration => _active.duration;
 
   @override
-  Future<void> setUrl(String url, {Map<String, String>? headers}) async {
+  Future<void> setUrl(String url, {Map<String, String>? headers, Duration? initialPosition}) async {
     await _settleFadeBeforeNormalTransition();
     await _active.setVolume(_canonicalVolume);
-    return _active.setUrl(url, headers: headers);
+    return _active.setUrl(url, headers: headers, initialPosition: initialPosition);
   }
 
   @override
-  Future<void> setLocalSource(String path) async {
+  Future<void> setLocalSource(String path, {Duration? initialPosition}) async {
     await _settleFadeBeforeNormalTransition();
     _prewarmStandbyIfCrossfadeEnabled();
     await _active.setVolume(_canonicalVolume);
-    return _active.setLocalSource(path);
+    return _active.setLocalSource(path, initialPosition: initialPosition);
   }
 
   /// Cierra a mano un fade que siga en vuelo cuando llega una transición

@@ -51,12 +51,12 @@ class _FakeAudioEngine implements AudioEngine {
   }
 
   @override
-  Future<void> setUrl(String url, {Map<String, String>? headers}) async {
+  Future<void> setUrl(String url, {Map<String, String>? headers, Duration? initialPosition}) async {
     _emit(_state.copyWith(processingState: AudioProcessingState.ready, duration: const Duration(seconds: 180)));
   }
 
   @override
-  Future<void> setLocalSource(String path) async {
+  Future<void> setLocalSource(String path, {Duration? initialPosition}) async {
     _emit(_state.copyWith(processingState: AudioProcessingState.ready, duration: const Duration(seconds: 180)));
   }
 

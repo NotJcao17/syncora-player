@@ -80,9 +80,42 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   bool _handleDesktopKeyEvent(KeyEvent event) {
+    // 1. Teclas multimedia de teclado físico (capturar y consumir el evento para no reactivar otras apps)
+    final isMediaKey = event.logicalKey == LogicalKeyboardKey.mediaPlayPause ||
+        event.logicalKey == LogicalKeyboardKey.mediaPlay ||
+        event.logicalKey == LogicalKeyboardKey.mediaPause ||
+        event.logicalKey == LogicalKeyboardKey.mediaTrackNext ||
+        event.logicalKey == LogicalKeyboardKey.mediaTrackPrevious ||
+        event.logicalKey == LogicalKeyboardKey.mediaStop;
+
+    if (isMediaKey) {
+      if (event is KeyDownEvent) {
+        final controller = ref.read(syncoraPlayerControllerProvider);
+        if (event.logicalKey == LogicalKeyboardKey.mediaPlayPause ||
+            event.logicalKey == LogicalKeyboardKey.mediaPlay) {
+          if (controller.state.currentTrack != null) {
+            if (controller.state.engine.playing) {
+              controller.pause();
+            } else {
+              controller.play();
+            }
+          }
+        } else if (event.logicalKey == LogicalKeyboardKey.mediaPause) {
+          controller.pause();
+        } else if (event.logicalKey == LogicalKeyboardKey.mediaTrackNext) {
+          controller.skipToNext();
+        } else if (event.logicalKey == LogicalKeyboardKey.mediaTrackPrevious) {
+          controller.skipToPrevious();
+        } else if (event.logicalKey == LogicalKeyboardKey.mediaStop) {
+          controller.stop();
+        }
+      }
+      return true;
+    }
+
     if (event is! KeyDownEvent) return false;
 
-    // 1. Barra espaciadora: toggle Play/Pause si no se está escribiendo en un input
+    // 2. Barra espaciadora: toggle Play/Pause si no se está escribiendo en un input
     if (event.logicalKey == LogicalKeyboardKey.space) {
       final primaryFocus = FocusManager.instance.primaryFocus;
       final focusContext = primaryFocus?.context;
@@ -100,31 +133,6 @@ class _AppShellState extends ConsumerState<AppShell> {
       } else {
         controller.play();
       }
-      return true;
-    }
-
-    // 2. Teclas multimedia de teclado físico
-    if (event.logicalKey == LogicalKeyboardKey.mediaPlayPause ||
-        event.logicalKey == LogicalKeyboardKey.mediaPlay) {
-      final controller = ref.read(syncoraPlayerControllerProvider);
-      if (controller.state.currentTrack == null) return false;
-      if (controller.state.engine.playing) {
-        controller.pause();
-      } else {
-        controller.play();
-      }
-      return true;
-    } else if (event.logicalKey == LogicalKeyboardKey.mediaPause) {
-      ref.read(syncoraPlayerControllerProvider).pause();
-      return true;
-    } else if (event.logicalKey == LogicalKeyboardKey.mediaTrackNext) {
-      ref.read(syncoraPlayerControllerProvider).skipToNext();
-      return true;
-    } else if (event.logicalKey == LogicalKeyboardKey.mediaTrackPrevious) {
-      ref.read(syncoraPlayerControllerProvider).skipToPrevious();
-      return true;
-    } else if (event.logicalKey == LogicalKeyboardKey.mediaStop) {
-      ref.read(syncoraPlayerControllerProvider).stop();
       return true;
     }
 

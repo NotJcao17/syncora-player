@@ -106,12 +106,16 @@ class DownloadService {
   Future<void> _checkWifiGuard() async {
     if (!_isWifiOnly) return;
     if (_isTestEnv || kIsWeb) return;
+    // En escritorio (Windows / macOS / Linux), no bloquear descargas con el guard de WiFi
+    if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+      return;
+    }
 
     final connectivityResults = await Connectivity().checkConnectivity();
-    final isWifi = connectivityResults.contains(ConnectivityResult.wifi) ||
+    final isAllowed = connectivityResults.contains(ConnectivityResult.wifi) ||
         connectivityResults.contains(ConnectivityResult.ethernet);
-    if (!isWifi) {
-      throw DownloadException('Solo se permiten descargas con WiFi activo.');
+    if (!isAllowed) {
+      throw DownloadException('Solo se permiten descargas con WiFi o Ethernet activo.');
     }
   }
 

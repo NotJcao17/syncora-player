@@ -1080,6 +1080,7 @@ bool get _isTestEnv {
       originalContextTracks: _state.originalContextTracks,
       history: _state.history,
       positionSeconds: _state.engine.position.inSeconds,
+      volume: _state.engine.volume,
       repeatMode: _state.repeatMode,
       shuffle: _state.shuffle,
       activeContextId: _state.activeContextId,
@@ -1118,14 +1119,16 @@ bool get _isTestEnv {
       engine: _state.engine.copyWith(
         position: Duration(seconds: session.positionSeconds),
         duration: restoredDuration,
+        volume: session.volume,
         playing: false,
         processingState: AudioProcessingState.idle,
       ),
       clearError: true,
     );
+    await _engine.setVolume(session.volume);
     _notify();
     _log('[Session] Sesión restaurada: ${session.manualQueue.length + session.autoQueue.length} '
-        'pistas en cola, posición: ${session.positionSeconds}s (pausado)');
+        'pistas en cola, posición: ${session.positionSeconds}s, volumen: ${session.volume} (pausado)');
 
     if (session.currentTrack != null) {
       _prewarmSessionTrack(session.currentTrack!);
@@ -1679,17 +1682,20 @@ bool get _isTestEnv {
       _onPlaybackStartedSuccessfully();
       _currentPlaybackIsLocal = true;
 
+      final initialPos = (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0)
+          ? Duration(seconds: _restoredPositionSeconds!)
+          : null;
+      _restoredPositionSeconds = null;
+
       if (useCrossfade) {
         _log('[Play] Crossfade a descarga local: $localPath (${crossfadeDuration.inSeconds}s)');
         await _engine.crossfadeToLocalSource(localPath, crossfadeDuration);
       } else {
         _log('[Play] Pista local descargada encontrada: $localPath. Cargando sin pasar por ExtractionIsolate.');
-        await _engine.setLocalSource(localPath);
+        await _engine.setLocalSource(localPath, initialPosition: initialPos);
 
-        if (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0) {
-          final targetPos = Duration(seconds: _restoredPositionSeconds!);
-          _restoredPositionSeconds = null;
-          await _engine.seek(targetPos);
+        if (initialPos != null) {
+          await _engine.seek(initialPos);
         }
 
         await _engine.play();
@@ -1736,13 +1742,16 @@ bool get _isTestEnv {
         // actual no califica como origen local para un crossfade.
         _currentPlaybackIsLocal = false;
         try {
-          await _engine.setUrl(streamUrl, headers: headers);
+          final initialPos = (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0)
+              ? Duration(seconds: _restoredPositionSeconds!)
+              : null;
+          _restoredPositionSeconds = null;
+
+          await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
 
           // Si había una posición restaurada al iniciar la app, buscarla
-          if (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0) {
-            final targetPos = Duration(seconds: _restoredPositionSeconds!);
-            _restoredPositionSeconds = null;
-            await _engine.seek(targetPos);
+          if (initialPos != null) {
+            await _engine.seek(initialPos);
           }
 
           await _engine.play();

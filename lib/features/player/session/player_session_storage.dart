@@ -19,6 +19,7 @@ class PlayerSessionData {
   final List<SyncoraTrack> originalContextTracks;
   final List<HistoryEntry> history;
   final int positionSeconds;
+  final double volume;
   final SyncoraRepeatMode repeatMode;
   final bool shuffle;
   final String? activeContextId;
@@ -31,6 +32,7 @@ class PlayerSessionData {
     required this.originalContextTracks,
     required this.history,
     required this.positionSeconds,
+    this.volume = 1.0,
     required this.repeatMode,
     required this.shuffle,
     this.activeContextId,
@@ -48,6 +50,7 @@ class PlayerSessionData {
         'originalContextTracks': originalContextTracks.map((t) => t.toJson()).toList(),
         'history': history.map((h) => h.toJson()).toList(),
         'positionSeconds': positionSeconds,
+        'volume': volume,
         'repeatMode': repeatMode.name,
         'shuffle': shuffle,
         'activeContextId': activeContextId,
@@ -107,6 +110,8 @@ class PlayerSessionData {
         orElse: () => SyncoraRepeatMode.off,
       );
 
+      final volume = (json['volume'] as num?)?.toDouble() ?? 1.0;
+
       return PlayerSessionData(
         currentTrack: currentTrack,
         currentOrigin: currentOrigin,
@@ -115,6 +120,7 @@ class PlayerSessionData {
         originalContextTracks: originalContextTracks,
         history: history,
         positionSeconds: (json['positionSeconds'] as num?)?.toInt() ?? 0,
+        volume: volume.clamp(0.0, 1.0),
         repeatMode: repeatMode,
         shuffle: json['shuffle'] as bool? ?? false,
         activeContextId: json['activeContextId'] as String?,
@@ -145,6 +151,7 @@ class PlayerSessionStorage {
     required List<SyncoraTrack> originalContextTracks,
     required List<HistoryEntry> history,
     required int positionSeconds,
+    double volume = 1.0,
     required SyncoraRepeatMode repeatMode,
     required bool shuffle,
     String? activeContextId,
@@ -159,6 +166,7 @@ class PlayerSessionStorage {
         originalContextTracks: originalContextTracks,
         history: history,
         positionSeconds: positionSeconds,
+        volume: volume,
         repeatMode: repeatMode,
         shuffle: shuffle,
         activeContextId: activeContextId,

@@ -366,37 +366,10 @@ class MiniPlayer extends ConsumerWidget {
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                     ),
-                    IconButton(
-                      icon: Icon(AppIcons.broken(SolarIcons.Speaker), size: 20, color: AppTheme.secondary),
-                      onPressed: () {
-                        AppToast.show(context, message: 'Dispositivos: Este dispositivo');
-                      },
-                      tooltip: 'Dispositivos',
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                    ),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      icon: Icon(
-                        state.engine.volume > 0 ? AppIcons.broken(SolarIcons.VolumeLoud) : AppIcons.broken(SolarIcons.VolumeCross),
-                        size: 20,
-                        color: state.engine.volume > 0 ? AppTheme.secondary : AppTheme.muted,
-                      ),
-                      onPressed: () {
-                        if (state.engine.volume > 0) {
-                          controller.setVolume(0.0);
-                        } else {
-                          controller.setVolume(1.0);
-                        }
-                      },
-                      tooltip: state.engine.volume > 0 ? 'Silenciar' : 'Activar sonido',
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                    ),
-                    const SizedBox(width: 4),
-                    _DesktopVolumeSlider(
+                    const SizedBox(width: 8),
+                    _DesktopVolumeControls(
                       volume: state.engine.volume,
-                      onChanged: (val) => controller.setVolume(val),
+                      controller: controller,
                     ),
                   ],
                 ),
@@ -900,6 +873,64 @@ class _DesktopVolumeSliderState extends State<_DesktopVolumeSlider> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _DesktopVolumeControls extends StatefulWidget {
+  final double volume;
+  final SyncoraPlayerController controller;
+
+  const _DesktopVolumeControls({
+    required this.volume,
+    required this.controller,
+  });
+
+  @override
+  State<_DesktopVolumeControls> createState() => _DesktopVolumeControlsState();
+}
+
+class _DesktopVolumeControlsState extends State<_DesktopVolumeControls> {
+  double _previousVolume = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final currentVolume = widget.volume;
+    final isMuted = currentVolume <= 0.0;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(
+            !isMuted ? AppIcons.broken(SolarIcons.VolumeLoud) : AppIcons.broken(SolarIcons.VolumeCross),
+            size: 20,
+            color: !isMuted ? AppTheme.secondary : AppTheme.muted,
+          ),
+          onPressed: () {
+            if (!isMuted) {
+              _previousVolume = currentVolume;
+              widget.controller.setVolume(0.0);
+            } else {
+              final restoreVol = _previousVolume > 0.0 ? _previousVolume : 1.0;
+              widget.controller.setVolume(restoreVol);
+            }
+          },
+          tooltip: !isMuted ? 'Silenciar' : 'Activar sonido',
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+        ),
+        const SizedBox(width: 4),
+        _DesktopVolumeSlider(
+          volume: currentVolume,
+          onChanged: (val) {
+            if (val > 0.0) {
+              _previousVolume = val;
+            }
+            widget.controller.setVolume(val);
+          },
+        ),
+      ],
     );
   }
 }

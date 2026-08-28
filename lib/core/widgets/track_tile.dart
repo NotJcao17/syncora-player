@@ -197,10 +197,10 @@ class _TrackTileState extends ConsumerState<TrackTile> {
               }
               if (isPlayingActive) {
                 ref.read(syncoraPlayerControllerProvider.notifier).pause();
-              } else if (widget.onTap != null) {
-                widget.onTap!();
               } else if (isPausedActive) {
                 ref.read(syncoraPlayerControllerProvider.notifier).play();
+              } else if (widget.onTap != null) {
+                widget.onTap!();
               }
             },
             onLongPress: () {

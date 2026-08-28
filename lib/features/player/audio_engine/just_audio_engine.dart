@@ -60,22 +60,22 @@ class JustAudioEngine implements AudioEngine {
   Duration get duration => _player.duration ?? Duration.zero;
 
   @override
-  Future<void> setUrl(String url, {Map<String, String>? headers}) async {
+  Future<void> setUrl(String url, {Map<String, String>? headers, Duration? initialPosition}) async {
     _emit(_state.copyWith(processingState: AudioProcessingState.loading));
     final source = AudioSource.uri(
       Uri.parse(url),
       headers: headers ?? const {},
     );
     await _player.setVolume(_state.volume.clamp(0.0, 1.0));
-    await _player.setAudioSource(source);
+    await _player.setAudioSource(source, initialPosition: initialPosition);
   }
 
   @override
-  Future<void> setLocalSource(String path) async {
+  Future<void> setLocalSource(String path, {Duration? initialPosition}) async {
     _emit(_state.copyWith(processingState: AudioProcessingState.loading));
     final source = AudioSource.file(path);
     await _player.setVolume(_state.volume.clamp(0.0, 1.0));
-    await _player.setAudioSource(source);
+    await _player.setAudioSource(source, initialPosition: initialPosition);
   }
 
 

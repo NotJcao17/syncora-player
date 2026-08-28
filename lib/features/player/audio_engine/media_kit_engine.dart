@@ -138,12 +138,12 @@ class MediaKitEngine implements AudioEngine {
   Duration get duration => _player.state.duration;
 
   @override
-  Future<void> setUrl(String url, {Map<String, String>? headers}) async {
+  Future<void> setUrl(String url, {Map<String, String>? headers, Duration? initialPosition}) async {
     _seekedThisTrack = false;
     _hadMeaningfulPlayback = false;
     _emit(_state.copyWith(processingState: AudioProcessingState.loading));
     await _player.setVolume(_state.volume * 100.0);
-    await _player.open(Media(url, httpHeaders: headers));
+    await _player.open(Media(url, httpHeaders: headers, start: initialPosition));
     // Si el Skip Silence ya estaba activado, re-aplicar el filtro para esta
     // nueva pista (cada open podría resetear la cadena de filtros).
     if (_skipSilence) {
@@ -152,12 +152,12 @@ class MediaKitEngine implements AudioEngine {
   }
 
   @override
-  Future<void> setLocalSource(String path) async {
+  Future<void> setLocalSource(String path, {Duration? initialPosition}) async {
     _seekedThisTrack = false;
     _hadMeaningfulPlayback = false;
     _emit(_state.copyWith(processingState: AudioProcessingState.loading));
     await _player.setVolume(_state.volume * 100.0);
-    await _player.open(Media(path));
+    await _player.open(Media(path, start: initialPosition));
     if (_skipSilence) {
       await _applySilenceFilter();
     }

@@ -1733,6 +1733,17 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<bool>(isPlayingProvider, (previous, next) {
+      if (next && _isPreviewPlaying) {
+        _previewEngine?.pause();
+        if (mounted) {
+          setState(() {
+            _isPreviewPlaying = false;
+          });
+        }
+      }
+    });
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
