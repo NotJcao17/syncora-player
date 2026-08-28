@@ -100,7 +100,11 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
   Widget build(BuildContext context) {
     final currentTrack = ref.watch(currentTrackProvider);
     final isPlaying = ref.watch(isPlayingProvider);
-    final state = ref.watch(playerStateProvider);
+    final isShuffle = ref.watch(playerStateProvider.select((s) => s.isShuffle));
+    final repeatMode = ref.watch(playerStateProvider.select((s) => s.repeatMode));
+    final isLoading = ref.watch(playerStateProvider.select((s) =>
+        s.engine.processingState == AudioProcessingState.loading ||
+        s.engine.processingState == AudioProcessingState.buffering));
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
 
     if (currentTrack == null) {
@@ -290,12 +294,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
 
                               // Barra de reproducción interactiva
                               _FullscreenSeekBar(
-                                position: state.engine.position,
-                                duration: state.engine.duration.inSeconds > 0
-                                    ? state.engine.duration
-                                    : (currentTrack.duration != null && currentTrack.duration!.inSeconds > 0
-                                        ? currentTrack.duration!
-                                        : const Duration(seconds: 180)),
+                                fallbackDuration: currentTrack.duration,
                                 track: currentTrack,
                                 controller: controller,
                                 isPlaying: isPlaying,
@@ -314,8 +313,8 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(
-                                            state.isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
-                                            color: state.isShuffle ? Colors.white : AppTheme.secondary,
+                                            isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
+                                            color: isShuffle ? Colors.white : AppTheme.secondary,
                                             size: 24,
                                           ),
                                           const SizedBox(height: 2),
@@ -324,7 +323,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                             height: 4,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              color: state.isShuffle ? Colors.white : Colors.transparent,
+                                              color: isShuffle ? Colors.white : Colors.transparent,
                                             ),
                                           ),
                                         ],
@@ -355,8 +354,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                           shape: const CircleBorder(),
                                           padding: EdgeInsets.zero,
                                         ),
-                                        icon: (state.engine.processingState == AudioProcessingState.loading ||
-                                                state.engine.processingState == AudioProcessingState.buffering)
+                                        icon: isLoading
                                             ? LoadingAnimationWidget.threeArchedCircle(
                                                 color: AppTheme.background,
                                                 size: 34,
@@ -384,8 +382,8 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                   ),
                                   Builder(
                                     builder: (context) {
-                                      final isRepeatActive = state.repeatMode != SyncoraRepeatMode.off;
-                                      final repeatIconData = state.repeatMode == SyncoraRepeatMode.one
+                                      final isRepeatActive = repeatMode != SyncoraRepeatMode.off;
+                                      final repeatIconData = repeatMode == SyncoraRepeatMode.one
                                           ? (isRepeatActive ? AppIcons.outline(SolarIcons.RepeatOne) : AppIcons.broken(SolarIcons.RepeatOne))
                                           : (isRepeatActive ? AppIcons.outline(SolarIcons.Repeat) : AppIcons.broken(SolarIcons.Repeat));
                                       return IconButton(
@@ -492,26 +490,24 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
   }
 }
 
-class _FullscreenSeekBar extends StatefulWidget {
-  final Duration position;
-  final Duration duration;
+class _FullscreenSeekBar extends ConsumerStatefulWidget {
+  final Duration? fallbackDuration;
   final SyncoraTrack track;
   final SyncoraPlayerController controller;
   final bool isPlaying;
 
   const _FullscreenSeekBar({
-    required this.position,
-    required this.duration,
+    this.fallbackDuration,
     required this.track,
     required this.controller,
     required this.isPlaying,
   });
 
   @override
-  State<_FullscreenSeekBar> createState() => _FullscreenSeekBarState();
+  ConsumerState<_FullscreenSeekBar> createState() => _FullscreenSeekBarState();
 }
 
-class _FullscreenSeekBarState extends State<_FullscreenSeekBar> {
+class _FullscreenSeekBarState extends ConsumerState<_FullscreenSeekBar> {
   bool _isDragging = false;
   bool _isHovered = false;
   double _dragRatio = 0.0;
@@ -525,14 +521,22 @@ class _FullscreenSeekBarState extends State<_FullscreenSeekBar> {
 
   @override
   Widget build(BuildContext context) {
-    final durationMs = widget.duration.inMilliseconds > 0 ? widget.duration.inMilliseconds.toDouble() : 180000.0;
-    final currentMs = widget.position.inMilliseconds.toDouble().clamp(0.0, durationMs);
+    final position = ref.watch(playerStateProvider.select((s) => s.engine.position));
+    final engineDuration = ref.watch(playerStateProvider.select((s) => s.engine.duration));
+    final duration = engineDuration.inSeconds > 0
+        ? engineDuration
+        : (widget.fallbackDuration != null && widget.fallbackDuration!.inSeconds > 0
+            ? widget.fallbackDuration!
+            : const Duration(seconds: 180));
+
+    final durationMs = duration.inMilliseconds > 0 ? duration.inMilliseconds.toDouble() : 180000.0;
+    final currentMs = position.inMilliseconds.toDouble().clamp(0.0, durationMs);
     final realRatio = (currentMs / durationMs).clamp(0.0, 1.0);
     final effectiveRatio = _isDragging ? _dragRatio : realRatio;
 
     final currentDisplayDuration = _isDragging
         ? Duration(milliseconds: (_dragRatio * durationMs).toInt())
-        : widget.position;
+        : position;
 
     return Column(
       children: [
@@ -594,7 +598,7 @@ class _FullscreenSeekBarState extends State<_FullscreenSeekBar> {
                 style: const TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.w600),
               ),
               Text(
-                _formatDuration(widget.duration),
+                _formatDuration(duration),
                 style: const TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ],

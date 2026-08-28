@@ -1069,8 +1069,6 @@ bool get _isTestEnv {
   // Lógica interna & Persistencia de Sesión
   // ----------------------------------------------------------------------
 
-  int _lastSavedPositionSeconds = -1;
-
   void _saveSession() {
     _sessionStorage.saveSession(
       currentTrack: _state.currentTrack,
@@ -1865,12 +1863,6 @@ bool get _isTestEnv {
 
     _state = _state.copyWith(engine: engineState);
     _notify();
-
-    final currentPosSec = engineState.position.inSeconds;
-    if (currentPosSec != _lastSavedPositionSeconds && (currentPosSec % 2 == 0 || !engineState.playing)) {
-      _lastSavedPositionSeconds = currentPosSec;
-      _saveSession();
-    }
 
     // Fase 7.D (rediseño): revisa en cada tick si corresponde disparar un
     // crossfade preventivo antes de que la pista actual llegue a su fin

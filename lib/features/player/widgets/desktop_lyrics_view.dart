@@ -95,7 +95,7 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
 
   @override
   Widget build(BuildContext context) {
-    final currentPosition = ref.watch(playerStateProvider).engine.position;
+    final currentPosition = ref.watch(playerStateProvider.select((s) => s.engine.position));
 
     return Container(
       decoration: const BoxDecoration(

@@ -80,7 +80,7 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final currentPosition = ref.watch(playerStateProvider).engine.position;
+    final currentPosition = ref.watch(playerStateProvider.select((s) => s.engine.position));
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,

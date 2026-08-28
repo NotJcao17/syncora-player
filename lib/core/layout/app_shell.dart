@@ -436,8 +436,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                                       );
                                     }
 
-                                    final playerState = ref.watch(playerStateProvider);
-                                    final activeContextId = playerState.activeContextId;
+                                    final activeContextId = ref.watch(playerStateProvider.select((s) => s.activeContextId));
 
                                     return ListView.builder(
                                       itemCount: playlists.length,

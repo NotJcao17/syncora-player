@@ -959,13 +959,12 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               }
               final dominantGradientColor = _resolveDominantColor(playlist, rawSyncoraTracks).withValues(alpha: 0.35);
 
-              final playerState = ref.watch(playerStateProvider);
               final playlistContextId = 'playlist_${playlist.id}';
-              final isCurrentContext = playerState.activeContextId == playlistContextId;
-              final isBufferingOrPlaying = isPlaying ||
-                  (playerState.engine.processingState == AudioProcessingState.loading ||
-                      playerState.engine.processingState == AudioProcessingState.buffering);
-              final showPauseHeader = isCurrentContext && isBufferingOrPlaying;
+              final isCurrentContext = ref.watch(playerStateProvider.select((s) => s.activeContextId == playlistContextId));
+              final isBuffering = ref.watch(playerStateProvider.select((s) =>
+                  s.engine.processingState == AudioProcessingState.loading ||
+                  s.engine.processingState == AudioProcessingState.buffering));
+              final showPauseHeader = isCurrentContext && (isPlaying || isBuffering);
 
               return Container(
                 decoration: BoxDecoration(
@@ -1120,9 +1119,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                           if (sortedSyncoraTracks.isNotEmpty) ...[
                                             _HeaderPlayButton(
                                               isPlaying: showPauseHeader,
-                                              isLoading: isCurrentContext &&
-                                                  (playerState.engine.processingState == AudioProcessingState.loading ||
-                                                      playerState.engine.processingState == AudioProcessingState.buffering),
+                                              isLoading: isCurrentContext && isBuffering,
                                               onPressed: () {
                                                 if (showPauseHeader) {
                                                   controller.pause();

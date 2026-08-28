@@ -180,13 +180,12 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
     final syncoraTracks = album.tracks.map((t) => t.toSyncoraTrack()).toList();
     final totalDurationStr = _formatTotalDuration(album.tracks);
 
-    final playerState = ref.watch(playerStateProvider);
     final albumContextId = 'album_${album.id}';
-    final isCurrentContext = playerState.activeContextId == albumContextId;
-    final isBufferingOrPlaying = isPlaying ||
-        (playerState.engine.processingState == AudioProcessingState.loading ||
-         playerState.engine.processingState == AudioProcessingState.buffering);
-    final showPauseHeader = isCurrentContext && isBufferingOrPlaying;
+    final isCurrentContext = ref.watch(playerStateProvider.select((s) => s.activeContextId == albumContextId));
+    final isBuffering = ref.watch(playerStateProvider.select((s) =>
+        s.engine.processingState == AudioProcessingState.loading ||
+        s.engine.processingState == AudioProcessingState.buffering));
+    final showPauseHeader = isCurrentContext && (isPlaying || isBuffering);
 
     final dominantGradientColor = _dominantColor?.withValues(alpha: 0.35) ?? AppTheme.surfaceHover.withValues(alpha: 0.3);
 
@@ -351,9 +350,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                   if (syncoraTracks.isNotEmpty) ...[
                                     _HeaderPlayButton(
                                       isPlaying: showPauseHeader,
-                                      isLoading: isCurrentContext &&
-                                          (playerState.engine.processingState == AudioProcessingState.loading ||
-                                           playerState.engine.processingState == AudioProcessingState.buffering),
+                                      isLoading: isCurrentContext && isBuffering,
                                       onPressed: () {
                                         if (showPauseHeader) {
                                           controller.pause();
@@ -373,8 +370,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                     const SizedBox(width: 12),
                                     Consumer(
                                       builder: (context, ref, _) {
-                                        final playerState = ref.watch(playerStateProvider);
-                                        final isShuffle = playerState.isShuffle;
+                                        final isShuffle = ref.watch(playerStateProvider.select((s) => s.isShuffle));
 
                                         return IconButton(
                                           icon: Padding(

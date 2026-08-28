@@ -25,9 +25,11 @@ class MiniPlayer extends ConsumerWidget {
     final currentTrack = ref.watch(currentTrackProvider);
     final isPlaying = ref.watch(isPlayingProvider);
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
-    final state = ref.watch(playerStateProvider);
-    final isLoading = state.engine.processingState == AudioProcessingState.loading ||
-        state.engine.processingState == AudioProcessingState.buffering;
+    final isLoading = ref.watch(playerStateProvider.select((s) =>
+        s.engine.processingState == AudioProcessingState.loading ||
+        s.engine.processingState == AudioProcessingState.buffering));
+    final isShuffle = ref.watch(playerStateProvider.select((s) => s.isShuffle));
+    final repeatMode = ref.watch(playerStateProvider.select((s) => s.repeatMode));
 
     final isDesktop = MediaQuery.of(context).size.width >= 768;
     final isVisible = currentTrack != null;
@@ -38,7 +40,7 @@ class MiniPlayer extends ConsumerWidget {
       color: isDesktop ? AppTheme.surface : Colors.transparent,
       elevation: isDesktop ? 12 : 0,
       child: isDesktop
-          ? _buildDesktopBar(context, ref, currentTrack, isPlaying, isLoading, controller, state)
+          ? _buildDesktopBar(context, ref, currentTrack, isPlaying, isLoading, controller, isShuffle, repeatMode)
           : _buildMobileBar(context, ref, currentTrack, isPlaying, isLoading, controller),
     );
   }
@@ -160,14 +162,9 @@ class MiniPlayer extends ConsumerWidget {
     bool isPlaying,
     bool isLoading,
     SyncoraPlayerController controller,
-    SyncoraPlayerState state,
+    bool isShuffle,
+    SyncoraRepeatMode repeatMode,
   ) {
-    final position = state.engine.position;
-    final trackDuration = currentTrack.duration;
-    final duration = state.engine.duration.inSeconds > 0
-        ? state.engine.duration
-        : (trackDuration != null && trackDuration.inSeconds > 0 ? trackDuration : const Duration(seconds: 180));
-
     return Container(
       height: 96,
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -208,9 +205,9 @@ class MiniPlayer extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              state.isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
+                              isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
                               size: 20,
-                              color: state.isShuffle ? Colors.white : AppTheme.secondary,
+                              color: isShuffle ? Colors.white : AppTheme.secondary,
                             ),
                             const SizedBox(height: 2),
                             Container(
@@ -218,7 +215,7 @@ class MiniPlayer extends ConsumerWidget {
                               height: 4,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: state.isShuffle ? Colors.white : Colors.transparent,
+                                color: isShuffle ? Colors.white : Colors.transparent,
                               ),
                             ),
                           ],
@@ -276,8 +273,8 @@ class MiniPlayer extends ConsumerWidget {
                     const SizedBox(width: 16),
                     Builder(
                       builder: (context) {
-                        final isRepeatActive = state.repeatMode != SyncoraRepeatMode.off;
-                        final repeatIconData = state.repeatMode == SyncoraRepeatMode.one
+                        final isRepeatActive = repeatMode != SyncoraRepeatMode.off;
+                        final repeatIconData = repeatMode == SyncoraRepeatMode.one
                             ? (isRepeatActive ? AppIcons.outline(SolarIcons.RepeatOne) : AppIcons.broken(SolarIcons.RepeatOne))
                             : (isRepeatActive ? AppIcons.outline(SolarIcons.Repeat) : AppIcons.broken(SolarIcons.Repeat));
                         return IconButton(
@@ -315,8 +312,7 @@ class MiniPlayer extends ConsumerWidget {
 
                 // Slider Fino de Progreso
                 _DesktopProgressBar(
-                  position: position,
-                  duration: duration,
+                  fallbackDuration: currentTrack.duration,
                   controller: controller,
                   isPlaying: isPlaying,
                 ),
@@ -368,7 +364,7 @@ class MiniPlayer extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     _DesktopVolumeControls(
-                      volume: state.engine.volume,
+                      volume: ref.watch(playerStateProvider.select((s) => s.engine.volume)),
                       controller: controller,
                     ),
                   ],
@@ -725,24 +721,22 @@ class _MiniPlayerHoverableArtistState extends State<_MiniPlayerHoverableArtist> 
   }
 }
 
-class _DesktopProgressBar extends StatefulWidget {
-  final Duration position;
-  final Duration duration;
+class _DesktopProgressBar extends ConsumerStatefulWidget {
+  final Duration? fallbackDuration;
   final SyncoraPlayerController controller;
   final bool isPlaying;
 
   const _DesktopProgressBar({
-    required this.position,
-    required this.duration,
+    this.fallbackDuration,
     required this.controller,
     required this.isPlaying,
   });
 
   @override
-  State<_DesktopProgressBar> createState() => _DesktopProgressBarState();
+  ConsumerState<_DesktopProgressBar> createState() => _DesktopProgressBarState();
 }
 
-class _DesktopProgressBarState extends State<_DesktopProgressBar> {
+class _DesktopProgressBarState extends ConsumerState<_DesktopProgressBar> {
   bool _isDragging = false;
   bool _isHovered = false;
   double _dragRatio = 0.0;
@@ -756,14 +750,22 @@ class _DesktopProgressBarState extends State<_DesktopProgressBar> {
 
   @override
   Widget build(BuildContext context) {
-    final durationMs = widget.duration.inMilliseconds;
-    final currentMs = widget.position.inMilliseconds;
+    final position = ref.watch(playerStateProvider.select((s) => s.engine.position));
+    final engineDuration = ref.watch(playerStateProvider.select((s) => s.engine.duration));
+    final duration = engineDuration.inSeconds > 0
+        ? engineDuration
+        : (widget.fallbackDuration != null && widget.fallbackDuration!.inSeconds > 0
+            ? widget.fallbackDuration!
+            : const Duration(seconds: 180));
+
+    final durationMs = duration.inMilliseconds;
+    final currentMs = position.inMilliseconds;
     final realRatio = durationMs > 0 ? (currentMs / durationMs).clamp(0.0, 1.0) : 0.0;
     final effectiveRatio = _isDragging ? _dragRatio : realRatio;
 
     final currentDisplayDuration = _isDragging
         ? Duration(milliseconds: (_dragRatio * durationMs).toInt())
-        : widget.position;
+        : position;
 
     return SizedBox(
       height: 24,
@@ -826,7 +828,7 @@ class _DesktopProgressBarState extends State<_DesktopProgressBar> {
           ),
           const SizedBox(width: 8),
           Text(
-            _formatDuration(widget.duration),
+            _formatDuration(duration),
             style: const TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.w500),
           ),
         ],
