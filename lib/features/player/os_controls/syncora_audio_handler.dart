@@ -20,10 +20,15 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     action: MediaAction.setShuffleMode,
   );
 
-  static const MediaControl _favoriteControl = MediaControl(
+  // `MediaControl.custom` (no el constructor por defecto con
+  // `action: MediaAction.custom`) es obligatorio para acciones custom: sin
+  // el `name` que arma su `CustomMediaAction`, el botón nunca llegaba a
+  // asociarse con ningún `customAction()` real del handler (el `assert` que
+  // lo exige queda mudo en release, así que fallaba en silencio).
+  static final MediaControl _favoriteControl = MediaControl.custom(
     androidIcon: 'drawable/ic_heart',
     label: 'Favorite',
-    action: MediaAction.custom,
+    name: 'toggleFavorite',
   );
 
   SyncoraAudioHandler(this._controller, {this._playlistDao}) {
