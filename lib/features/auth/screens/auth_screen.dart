@@ -225,6 +225,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         savedAlbumDao: ref.read(savedAlbumDaoProvider),
         supabaseAlbumRepo: ref.read(supabaseAlbumRepositoryProvider),
       );
+      await service.migrateLocalListeningHistoryToAccount(
+        listeningHistoryDao: ref.read(listeningHistoryDaoProvider),
+        supabaseHistoryRepo: ref.read(supabaseHistoryRepositoryProvider),
+      );
     } catch (_) {
       // Best-effort -- lo que no se subió queda local, sin `remoteId`, y
       // se retoma solo en el próximo arranque (ver `main.dart`).

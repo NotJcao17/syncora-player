@@ -432,7 +432,14 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
     final matched = <DeezerTrack>[];
     final unmatched = <RawImportTrack>[];
 
-    final displayTotal = _requestedExactCount ?? rawTracks.length;
+    // Si el usuario no fijó una cantidad exacta al enviar el formulario, la
+    // congelamos con el tamaño de esta primera generación en vez de dejar
+    // que cada ronda de "Afinar con IA" (regenerar completo, no agregar)
+    // recalcule el total a partir de `rawTracks.length` de esa respuesta --
+    // sin esto, el total mostrado podía crecer de ronda en ronda en vez de
+    // reflejar siempre el lote que se está generando.
+    _requestedExactCount ??= rawTracks.length;
+    final displayTotal = _requestedExactCount!;
     setState(() {
       _step = _Step.matching;
       _matchTotal = displayTotal;

@@ -9,6 +9,7 @@ import 'daos/playlist_dao.dart';
 import 'daos/saved_album_dao.dart';
 import 'daos/listening_history_dao.dart';
 import 'daos/downloaded_track_dao.dart';
+import 'daos/stats_metadata_cache_dao.dart';
 
 part 'syncora_database.g.dart';
 
@@ -96,15 +97,30 @@ class DownloadedTracks extends Table {
   TextColumn get contributorsJson => text().nullable()();
 }
 
+// Caché de nombre/portada de artistas y canciones resueltos para
+// Estadísticas -- ver `StatsMetadataCacheDao` para el motivo (evitar golpear
+// Deezer en vivo por cada carga de la pantalla de Estadísticas).
+class StatsMetadataCache extends Table {
+  TextColumn get entityType => text()(); // 'artist' | 'track'
+  IntColumn get entityId => integer()();
+  TextColumn get primaryName => text()(); // nombre del artista o título de la canción
+  TextColumn get secondaryName => text().nullable()(); // null para artista; nombre del artista para canción
+  TextColumn get coverUrl => text()();
+  DateTimeColumn get cachedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {entityType, entityId};
+}
+
 @DriftDatabase(
-  tables: [Playlists, PlaylistTracks, SavedAlbums, ListeningHistory, DownloadedTracks],
-  daos: [PlaylistDao, SavedAlbumDao, ListeningHistoryDao, DownloadedTrackDao],
+  tables: [Playlists, PlaylistTracks, SavedAlbums, ListeningHistory, DownloadedTracks, StatsMetadataCache],
+  daos: [PlaylistDao, SavedAlbumDao, ListeningHistoryDao, DownloadedTrackDao, StatsMetadataCacheDao],
 )
 class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration {
@@ -136,6 +152,9 @@ class SyncoraDatabase extends _$SyncoraDatabase {
         }
         if (from < 5) {
           await m.addColumn(listeningHistory, listeningHistory.syncedAt);
+        }
+        if (from < 6) {
+          await m.createTable(statsMetadataCache);
         }
       },
     );

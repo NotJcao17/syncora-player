@@ -3281,6 +3281,442 @@ class DownloadedTracksCompanion extends UpdateCompanion<DownloadedTrack> {
   }
 }
 
+class $StatsMetadataCacheTable extends StatsMetadataCache
+    with TableInfo<$StatsMetadataCacheTable, StatsMetadataCacheData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $StatsMetadataCacheTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entityTypeMeta = const VerificationMeta(
+    'entityType',
+  );
+  @override
+  late final GeneratedColumn<String> entityType = GeneratedColumn<String>(
+    'entity_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entityIdMeta = const VerificationMeta(
+    'entityId',
+  );
+  @override
+  late final GeneratedColumn<int> entityId = GeneratedColumn<int>(
+    'entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _primaryNameMeta = const VerificationMeta(
+    'primaryName',
+  );
+  @override
+  late final GeneratedColumn<String> primaryName = GeneratedColumn<String>(
+    'primary_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _secondaryNameMeta = const VerificationMeta(
+    'secondaryName',
+  );
+  @override
+  late final GeneratedColumn<String> secondaryName = GeneratedColumn<String>(
+    'secondary_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _coverUrlMeta = const VerificationMeta(
+    'coverUrl',
+  );
+  @override
+  late final GeneratedColumn<String> coverUrl = GeneratedColumn<String>(
+    'cover_url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cachedAtMeta = const VerificationMeta(
+    'cachedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> cachedAt = GeneratedColumn<DateTime>(
+    'cached_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    entityType,
+    entityId,
+    primaryName,
+    secondaryName,
+    coverUrl,
+    cachedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'stats_metadata_cache';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StatsMetadataCacheData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entity_type')) {
+      context.handle(
+        _entityTypeMeta,
+        entityType.isAcceptableOrUnknown(data['entity_type']!, _entityTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityTypeMeta);
+    }
+    if (data.containsKey('entity_id')) {
+      context.handle(
+        _entityIdMeta,
+        entityId.isAcceptableOrUnknown(data['entity_id']!, _entityIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityIdMeta);
+    }
+    if (data.containsKey('primary_name')) {
+      context.handle(
+        _primaryNameMeta,
+        primaryName.isAcceptableOrUnknown(
+          data['primary_name']!,
+          _primaryNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_primaryNameMeta);
+    }
+    if (data.containsKey('secondary_name')) {
+      context.handle(
+        _secondaryNameMeta,
+        secondaryName.isAcceptableOrUnknown(
+          data['secondary_name']!,
+          _secondaryNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cover_url')) {
+      context.handle(
+        _coverUrlMeta,
+        coverUrl.isAcceptableOrUnknown(data['cover_url']!, _coverUrlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_coverUrlMeta);
+    }
+    if (data.containsKey('cached_at')) {
+      context.handle(
+        _cachedAtMeta,
+        cachedAt.isAcceptableOrUnknown(data['cached_at']!, _cachedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entityType, entityId};
+  @override
+  StatsMetadataCacheData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StatsMetadataCacheData(
+      entityType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_type'],
+      )!,
+      entityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}entity_id'],
+      )!,
+      primaryName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}primary_name'],
+      )!,
+      secondaryName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}secondary_name'],
+      ),
+      coverUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cover_url'],
+      )!,
+      cachedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}cached_at'],
+      )!,
+    );
+  }
+
+  @override
+  $StatsMetadataCacheTable createAlias(String alias) {
+    return $StatsMetadataCacheTable(attachedDatabase, alias);
+  }
+}
+
+class StatsMetadataCacheData extends DataClass
+    implements Insertable<StatsMetadataCacheData> {
+  final String entityType;
+  final int entityId;
+  final String primaryName;
+  final String? secondaryName;
+  final String coverUrl;
+  final DateTime cachedAt;
+  const StatsMetadataCacheData({
+    required this.entityType,
+    required this.entityId,
+    required this.primaryName,
+    this.secondaryName,
+    required this.coverUrl,
+    required this.cachedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entity_type'] = Variable<String>(entityType);
+    map['entity_id'] = Variable<int>(entityId);
+    map['primary_name'] = Variable<String>(primaryName);
+    if (!nullToAbsent || secondaryName != null) {
+      map['secondary_name'] = Variable<String>(secondaryName);
+    }
+    map['cover_url'] = Variable<String>(coverUrl);
+    map['cached_at'] = Variable<DateTime>(cachedAt);
+    return map;
+  }
+
+  StatsMetadataCacheCompanion toCompanion(bool nullToAbsent) {
+    return StatsMetadataCacheCompanion(
+      entityType: Value(entityType),
+      entityId: Value(entityId),
+      primaryName: Value(primaryName),
+      secondaryName: secondaryName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(secondaryName),
+      coverUrl: Value(coverUrl),
+      cachedAt: Value(cachedAt),
+    );
+  }
+
+  factory StatsMetadataCacheData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StatsMetadataCacheData(
+      entityType: serializer.fromJson<String>(json['entityType']),
+      entityId: serializer.fromJson<int>(json['entityId']),
+      primaryName: serializer.fromJson<String>(json['primaryName']),
+      secondaryName: serializer.fromJson<String?>(json['secondaryName']),
+      coverUrl: serializer.fromJson<String>(json['coverUrl']),
+      cachedAt: serializer.fromJson<DateTime>(json['cachedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entityType': serializer.toJson<String>(entityType),
+      'entityId': serializer.toJson<int>(entityId),
+      'primaryName': serializer.toJson<String>(primaryName),
+      'secondaryName': serializer.toJson<String?>(secondaryName),
+      'coverUrl': serializer.toJson<String>(coverUrl),
+      'cachedAt': serializer.toJson<DateTime>(cachedAt),
+    };
+  }
+
+  StatsMetadataCacheData copyWith({
+    String? entityType,
+    int? entityId,
+    String? primaryName,
+    Value<String?> secondaryName = const Value.absent(),
+    String? coverUrl,
+    DateTime? cachedAt,
+  }) => StatsMetadataCacheData(
+    entityType: entityType ?? this.entityType,
+    entityId: entityId ?? this.entityId,
+    primaryName: primaryName ?? this.primaryName,
+    secondaryName: secondaryName.present
+        ? secondaryName.value
+        : this.secondaryName,
+    coverUrl: coverUrl ?? this.coverUrl,
+    cachedAt: cachedAt ?? this.cachedAt,
+  );
+  StatsMetadataCacheData copyWithCompanion(StatsMetadataCacheCompanion data) {
+    return StatsMetadataCacheData(
+      entityType: data.entityType.present
+          ? data.entityType.value
+          : this.entityType,
+      entityId: data.entityId.present ? data.entityId.value : this.entityId,
+      primaryName: data.primaryName.present
+          ? data.primaryName.value
+          : this.primaryName,
+      secondaryName: data.secondaryName.present
+          ? data.secondaryName.value
+          : this.secondaryName,
+      coverUrl: data.coverUrl.present ? data.coverUrl.value : this.coverUrl,
+      cachedAt: data.cachedAt.present ? data.cachedAt.value : this.cachedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StatsMetadataCacheData(')
+          ..write('entityType: $entityType, ')
+          ..write('entityId: $entityId, ')
+          ..write('primaryName: $primaryName, ')
+          ..write('secondaryName: $secondaryName, ')
+          ..write('coverUrl: $coverUrl, ')
+          ..write('cachedAt: $cachedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    entityType,
+    entityId,
+    primaryName,
+    secondaryName,
+    coverUrl,
+    cachedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StatsMetadataCacheData &&
+          other.entityType == this.entityType &&
+          other.entityId == this.entityId &&
+          other.primaryName == this.primaryName &&
+          other.secondaryName == this.secondaryName &&
+          other.coverUrl == this.coverUrl &&
+          other.cachedAt == this.cachedAt);
+}
+
+class StatsMetadataCacheCompanion
+    extends UpdateCompanion<StatsMetadataCacheData> {
+  final Value<String> entityType;
+  final Value<int> entityId;
+  final Value<String> primaryName;
+  final Value<String?> secondaryName;
+  final Value<String> coverUrl;
+  final Value<DateTime> cachedAt;
+  final Value<int> rowid;
+  const StatsMetadataCacheCompanion({
+    this.entityType = const Value.absent(),
+    this.entityId = const Value.absent(),
+    this.primaryName = const Value.absent(),
+    this.secondaryName = const Value.absent(),
+    this.coverUrl = const Value.absent(),
+    this.cachedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  StatsMetadataCacheCompanion.insert({
+    required String entityType,
+    required int entityId,
+    required String primaryName,
+    this.secondaryName = const Value.absent(),
+    required String coverUrl,
+    this.cachedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : entityType = Value(entityType),
+       entityId = Value(entityId),
+       primaryName = Value(primaryName),
+       coverUrl = Value(coverUrl);
+  static Insertable<StatsMetadataCacheData> custom({
+    Expression<String>? entityType,
+    Expression<int>? entityId,
+    Expression<String>? primaryName,
+    Expression<String>? secondaryName,
+    Expression<String>? coverUrl,
+    Expression<DateTime>? cachedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entityType != null) 'entity_type': entityType,
+      if (entityId != null) 'entity_id': entityId,
+      if (primaryName != null) 'primary_name': primaryName,
+      if (secondaryName != null) 'secondary_name': secondaryName,
+      if (coverUrl != null) 'cover_url': coverUrl,
+      if (cachedAt != null) 'cached_at': cachedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  StatsMetadataCacheCompanion copyWith({
+    Value<String>? entityType,
+    Value<int>? entityId,
+    Value<String>? primaryName,
+    Value<String?>? secondaryName,
+    Value<String>? coverUrl,
+    Value<DateTime>? cachedAt,
+    Value<int>? rowid,
+  }) {
+    return StatsMetadataCacheCompanion(
+      entityType: entityType ?? this.entityType,
+      entityId: entityId ?? this.entityId,
+      primaryName: primaryName ?? this.primaryName,
+      secondaryName: secondaryName ?? this.secondaryName,
+      coverUrl: coverUrl ?? this.coverUrl,
+      cachedAt: cachedAt ?? this.cachedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entityType.present) {
+      map['entity_type'] = Variable<String>(entityType.value);
+    }
+    if (entityId.present) {
+      map['entity_id'] = Variable<int>(entityId.value);
+    }
+    if (primaryName.present) {
+      map['primary_name'] = Variable<String>(primaryName.value);
+    }
+    if (secondaryName.present) {
+      map['secondary_name'] = Variable<String>(secondaryName.value);
+    }
+    if (coverUrl.present) {
+      map['cover_url'] = Variable<String>(coverUrl.value);
+    }
+    if (cachedAt.present) {
+      map['cached_at'] = Variable<DateTime>(cachedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StatsMetadataCacheCompanion(')
+          ..write('entityType: $entityType, ')
+          ..write('entityId: $entityId, ')
+          ..write('primaryName: $primaryName, ')
+          ..write('secondaryName: $secondaryName, ')
+          ..write('coverUrl: $coverUrl, ')
+          ..write('cachedAt: $cachedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$SyncoraDatabase extends GeneratedDatabase {
   _$SyncoraDatabase(QueryExecutor e) : super(e);
   $SyncoraDatabaseManager get managers => $SyncoraDatabaseManager(this);
@@ -3293,6 +3729,8 @@ abstract class _$SyncoraDatabase extends GeneratedDatabase {
   late final $DownloadedTracksTable downloadedTracks = $DownloadedTracksTable(
     this,
   );
+  late final $StatsMetadataCacheTable statsMetadataCache =
+      $StatsMetadataCacheTable(this);
   late final PlaylistDao playlistDao = PlaylistDao(this as SyncoraDatabase);
   late final SavedAlbumDao savedAlbumDao = SavedAlbumDao(
     this as SyncoraDatabase,
@@ -3303,6 +3741,8 @@ abstract class _$SyncoraDatabase extends GeneratedDatabase {
   late final DownloadedTrackDao downloadedTrackDao = DownloadedTrackDao(
     this as SyncoraDatabase,
   );
+  late final StatsMetadataCacheDao statsMetadataCacheDao =
+      StatsMetadataCacheDao(this as SyncoraDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3313,6 +3753,7 @@ abstract class _$SyncoraDatabase extends GeneratedDatabase {
     savedAlbums,
     listeningHistory,
     downloadedTracks,
+    statsMetadataCache,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -5149,6 +5590,244 @@ typedef $$DownloadedTracksTableProcessedTableManager =
       DownloadedTrack,
       PrefetchHooks Function()
     >;
+typedef $$StatsMetadataCacheTableCreateCompanionBuilder =
+    StatsMetadataCacheCompanion Function({
+      required String entityType,
+      required int entityId,
+      required String primaryName,
+      Value<String?> secondaryName,
+      required String coverUrl,
+      Value<DateTime> cachedAt,
+      Value<int> rowid,
+    });
+typedef $$StatsMetadataCacheTableUpdateCompanionBuilder =
+    StatsMetadataCacheCompanion Function({
+      Value<String> entityType,
+      Value<int> entityId,
+      Value<String> primaryName,
+      Value<String?> secondaryName,
+      Value<String> coverUrl,
+      Value<DateTime> cachedAt,
+      Value<int> rowid,
+    });
+
+class $$StatsMetadataCacheTableFilterComposer
+    extends Composer<_$SyncoraDatabase, $StatsMetadataCacheTable> {
+  $$StatsMetadataCacheTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get entityType => $composableBuilder(
+    column: $table.entityType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get entityId => $composableBuilder(
+    column: $table.entityId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get primaryName => $composableBuilder(
+    column: $table.primaryName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get secondaryName => $composableBuilder(
+    column: $table.secondaryName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get coverUrl => $composableBuilder(
+    column: $table.coverUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get cachedAt => $composableBuilder(
+    column: $table.cachedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$StatsMetadataCacheTableOrderingComposer
+    extends Composer<_$SyncoraDatabase, $StatsMetadataCacheTable> {
+  $$StatsMetadataCacheTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get entityType => $composableBuilder(
+    column: $table.entityType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get entityId => $composableBuilder(
+    column: $table.entityId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get primaryName => $composableBuilder(
+    column: $table.primaryName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get secondaryName => $composableBuilder(
+    column: $table.secondaryName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get coverUrl => $composableBuilder(
+    column: $table.coverUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get cachedAt => $composableBuilder(
+    column: $table.cachedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$StatsMetadataCacheTableAnnotationComposer
+    extends Composer<_$SyncoraDatabase, $StatsMetadataCacheTable> {
+  $$StatsMetadataCacheTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get entityType => $composableBuilder(
+    column: $table.entityType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get entityId =>
+      $composableBuilder(column: $table.entityId, builder: (column) => column);
+
+  GeneratedColumn<String> get primaryName => $composableBuilder(
+    column: $table.primaryName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get secondaryName => $composableBuilder(
+    column: $table.secondaryName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get coverUrl =>
+      $composableBuilder(column: $table.coverUrl, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get cachedAt =>
+      $composableBuilder(column: $table.cachedAt, builder: (column) => column);
+}
+
+class $$StatsMetadataCacheTableTableManager
+    extends
+        RootTableManager<
+          _$SyncoraDatabase,
+          $StatsMetadataCacheTable,
+          StatsMetadataCacheData,
+          $$StatsMetadataCacheTableFilterComposer,
+          $$StatsMetadataCacheTableOrderingComposer,
+          $$StatsMetadataCacheTableAnnotationComposer,
+          $$StatsMetadataCacheTableCreateCompanionBuilder,
+          $$StatsMetadataCacheTableUpdateCompanionBuilder,
+          (
+            StatsMetadataCacheData,
+            BaseReferences<
+              _$SyncoraDatabase,
+              $StatsMetadataCacheTable,
+              StatsMetadataCacheData
+            >,
+          ),
+          StatsMetadataCacheData,
+          PrefetchHooks Function()
+        > {
+  $$StatsMetadataCacheTableTableManager(
+    _$SyncoraDatabase db,
+    $StatsMetadataCacheTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$StatsMetadataCacheTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$StatsMetadataCacheTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$StatsMetadataCacheTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> entityType = const Value.absent(),
+                Value<int> entityId = const Value.absent(),
+                Value<String> primaryName = const Value.absent(),
+                Value<String?> secondaryName = const Value.absent(),
+                Value<String> coverUrl = const Value.absent(),
+                Value<DateTime> cachedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => StatsMetadataCacheCompanion(
+                entityType: entityType,
+                entityId: entityId,
+                primaryName: primaryName,
+                secondaryName: secondaryName,
+                coverUrl: coverUrl,
+                cachedAt: cachedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String entityType,
+                required int entityId,
+                required String primaryName,
+                Value<String?> secondaryName = const Value.absent(),
+                required String coverUrl,
+                Value<DateTime> cachedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => StatsMetadataCacheCompanion.insert(
+                entityType: entityType,
+                entityId: entityId,
+                primaryName: primaryName,
+                secondaryName: secondaryName,
+                coverUrl: coverUrl,
+                cachedAt: cachedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$StatsMetadataCacheTableProcessedTableManager =
+    ProcessedTableManager<
+      _$SyncoraDatabase,
+      $StatsMetadataCacheTable,
+      StatsMetadataCacheData,
+      $$StatsMetadataCacheTableFilterComposer,
+      $$StatsMetadataCacheTableOrderingComposer,
+      $$StatsMetadataCacheTableAnnotationComposer,
+      $$StatsMetadataCacheTableCreateCompanionBuilder,
+      $$StatsMetadataCacheTableUpdateCompanionBuilder,
+      (
+        StatsMetadataCacheData,
+        BaseReferences<
+          _$SyncoraDatabase,
+          $StatsMetadataCacheTable,
+          StatsMetadataCacheData
+        >,
+      ),
+      StatsMetadataCacheData,
+      PrefetchHooks Function()
+    >;
 
 class $SyncoraDatabaseManager {
   final _$SyncoraDatabase _db;
@@ -5163,4 +5842,6 @@ class $SyncoraDatabaseManager {
       $$ListeningHistoryTableTableManager(_db, _db.listeningHistory);
   $$DownloadedTracksTableTableManager get downloadedTracks =>
       $$DownloadedTracksTableTableManager(_db, _db.downloadedTracks);
+  $$StatsMetadataCacheTableTableManager get statsMetadataCache =>
+      $$StatsMetadataCacheTableTableManager(_db, _db.statsMetadataCache);
 }
