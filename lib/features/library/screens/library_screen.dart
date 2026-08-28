@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/connectivity_service.dart';
+import '../../../core/utils/share_link_builder.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/playlist_cover_widget.dart';
 import '../../../data/apis/deezer_provider.dart';
@@ -263,7 +264,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             title: const Text('Copiar enlace', style: TextStyle(color: AppTheme.primary)),
             onTap: () {
               Navigator.pop(ctx);
-              Clipboard.setData(ClipboardData(text: 'syncoraplayer://playlist/${playlist.remoteId ?? playlist.id}'));
+              Clipboard.setData(ClipboardData(text: ShareLinkBuilder.playlist('${playlist.remoteId ?? playlist.id}')));
               AppToast.show(context, message: 'Enlace copiado al portapapeles');
             },
           ),

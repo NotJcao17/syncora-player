@@ -45,7 +45,7 @@ class AppShell extends ConsumerStatefulWidget {
   ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends ConsumerState<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> with WindowListener {
   bool _isSidebarCollapsed = false;
   double _sidebarWidth = 256.0;
 
@@ -54,6 +54,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     super.initState();
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.addHandler(_handleDesktopKeyEvent);
+    }
+    if (!kIsWeb && Platform.isWindows) {
+      windowManager.addListener(this);
     }
     Future.microtask(() async {
       // Inicializar downloadService y ejecutar limpieza de descargas interrumpidas
@@ -86,7 +89,30 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.removeHandler(_handleDesktopKeyEvent);
     }
+    if (!kIsWeb && Platform.isWindows) {
+      windowManager.removeListener(this);
+    }
     super.dispose();
+  }
+
+  // Cierre limpio en Windows (item 2 del bundle 3): sin esto, `windowManager
+  // .close()` destruye la ventana nativa directamente sin pasar por el
+  // dispose de Riverpod, dejando el proceso mpv de `media_kit`
+  // (`MediaKitEngine._player`), las suscripciones del motor y la instancia
+  // SMTC vivos -- eso es lo que se veía como la app quedando en "No responde"
+  // al cerrar. `setPreventClose(true)` (ver `main.dart`) intercepta el
+  // cierre nativo para que este handler pueda correr antes; se invalida el
+  // provider (dispara `SyncoraPlayerController.dispose()` +
+  // `WindowsMediaControls.dispose()` registrado vía `ref.onDispose`) y recién
+  // ahí se destruye la ventana.
+  @override
+  void onWindowClose() async {
+    final isPreventClose = await windowManager.isPreventClose();
+    if (!isPreventClose) return;
+    try {
+      ref.invalidate(syncoraPlayerControllerProvider);
+    } catch (_) {}
+    await windowManager.destroy();
   }
 
   bool _handleDesktopKeyEvent(KeyEvent event) {
@@ -675,26 +701,41 @@ class _CustomTitleBar extends ConsumerWidget {
                 ),
               ),
             ),
-          _WindowCaptionButton(
-            icon: AppIcons.broken(SolarIcons.MinusSquare),
-            onPressed: () => windowManager.minimize(),
-            hoverColor: AppTheme.surfaceHover,
-          ),
-          _WindowCaptionButton(
-            icon: AppIcons.broken(SolarIcons.MaximizeSquare),
-            onPressed: () async {
-              if (await windowManager.isMaximized()) {
-                windowManager.unmaximize();
-              } else {
-                windowManager.maximize();
-              }
-            },
-            hoverColor: AppTheme.surfaceHover,
-          ),
-          _WindowCaptionButton(
-            icon: AppIcons.broken(SolarIcons.CloseSquare),
-            onPressed: () => windowManager.close(),
-            hoverColor: const Color(0xFFE11D48),
+          // Fila propia con altura fija == altura de la barra (42) y
+          // crossAxisAlignment.stretch: los botones (`_WindowCaptionButton`,
+          // sin alto fijo propio) llenan todo el alto de la barra en vez de
+          // quedar centrados con 2px muertos arriba/abajo -- ese margen
+          // muerto es justo lo que dejaba el píxel exacto de la esquina
+          // superior derecha de la pantalla sin click posible sobre el
+          // botón de cerrar.
+          SizedBox(
+            height: 42,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _WindowCaptionButton(
+                  icon: AppIcons.broken(SolarIcons.MinusSquare),
+                  onPressed: () => windowManager.minimize(),
+                  hoverColor: AppTheme.surfaceHover,
+                ),
+                _WindowCaptionButton(
+                  icon: AppIcons.broken(SolarIcons.MaximizeSquare),
+                  onPressed: () async {
+                    if (await windowManager.isMaximized()) {
+                      windowManager.unmaximize();
+                    } else {
+                      windowManager.maximize();
+                    }
+                  },
+                  hoverColor: AppTheme.surfaceHover,
+                ),
+                _WindowCaptionButton(
+                  icon: AppIcons.broken(SolarIcons.CloseSquare),
+                  onPressed: () => windowManager.close(),
+                  hoverColor: const Color(0xFFE11D48),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -729,7 +770,6 @@ class _WindowCaptionButtonState extends State<_WindowCaptionButton> {
         onTap: widget.onPressed,
         child: Container(
           width: 46,
-          height: 38,
           color: _isHovered ? widget.hoverColor : Colors.transparent,
           child: Icon(
             widget.icon,
