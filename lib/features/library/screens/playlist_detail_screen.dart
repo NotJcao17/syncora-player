@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' hide Column;
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -241,6 +240,71 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     }
   }
 
+  void _showExportDialog(BuildContext context, List<PlaylistTrack> tracks) {
+    if (_playlist == null || tracks.isEmpty) {
+      AppToast.show(context, message: 'No hay canciones para exportar.');
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(AppIcons.broken(SolarIcons.Export), color: AppTheme.primary, size: 24),
+            const SizedBox(width: 10),
+            const Text('Exportar playlist', style: TextStyle(color: AppTheme.primary, fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: SizedBox(
+          width: 480,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Text(
+                  'Transfiere tu playlist a Spotify, Apple Music o Deezer:',
+                  style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  '1. Presiona el botón "Exportar a CSV" aquí abajo para guardar el archivo de la playlist.\n'
+                  '2. Ingresa en tu navegador a tunemymusic.com o soundiiz.com.\n'
+                  '3. Elige la opción "Subir archivo / CSV" como origen de tu música.\n'
+                  '4. Selecciona tu plataforma de destino (Spotify, Apple Music, Deezer, etc.).\n'
+                  '5. ¡Tus canciones se transferirán automáticamente!',
+                  style: TextStyle(color: AppTheme.secondary, fontSize: 13, height: 1.45),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondary)),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: AppTheme.background,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+            icon: Icon(AppIcons.broken(SolarIcons.DownloadMinimalistic), size: 18),
+            label: const Text('Exportar a CSV', style: TextStyle(fontWeight: FontWeight.bold)),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _exportPlaylist(tracks);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _exportPlaylist(List<PlaylistTrack> tracks) async {
     if (_playlist == null || tracks.isEmpty) {
       AppToast.show(context, message: 'No hay canciones para exportar.');
@@ -467,27 +531,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                           ),
                         );
                       }),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primary,
-                        side: const BorderSide(color: AppTheme.surfaceHover),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      icon: Icon(AppIcons.broken(SolarIcons.Upload), size: 16),
-                      label: const Text('Elegir imagen de mi equipo...', style: TextStyle(fontSize: 12)),
-                      onPressed: () async {
-                        final result = await FilePicker.platform.pickFiles(
-                          type: FileType.image,
-                          allowMultiple: false,
-                        );
-                        if (result != null && result.files.single.path != null) {
-                          setDialogState(() {
-                            selectedCoverUrl = result.files.single.path;
-                          });
-                        }
-                      },
                     ),
                   ],
                 ),
@@ -765,7 +808,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           title: const Text('Exportar playlist (CSV)', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
           onTap: () {
             Navigator.pop(ctx);
-            _exportPlaylist(tracks);
+            _showExportDialog(context, tracks);
           },
         ),
         if (!playlist.isLiked)
@@ -926,12 +969,14 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               final sortedPairs = _sortTrackPairs(rawPairs);
               final sortedSyncoraTracks = sortedPairs.map((p) => p.syncoraTrack).toList();
 
+              final rawSyncoraTracks = rawPairs.map((p) => p.syncoraTrack).toList();
+
               if (playlist.isLiked) {
                 _extractPalette('', isLiked: true);
               } else if (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty) {
                 _extractPalette(playlist.coverUrl!);
-              } else if (sortedSyncoraTracks.isNotEmpty && sortedSyncoraTracks.first.coverUrl.isNotEmpty) {
-                _extractPalette(sortedSyncoraTracks.first.coverUrl);
+              } else if (rawSyncoraTracks.isNotEmpty && rawSyncoraTracks.first.coverUrl.isNotEmpty) {
+                _extractPalette(rawSyncoraTracks.first.coverUrl);
               }
 
               final playerState = ref.watch(playerStateProvider);
@@ -993,7 +1038,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             child: PlaylistCoverWidget(
                                               coverUrl: playlist.coverUrl,
                                               playlistId: playlist.id,
-                                              tracks: sortedSyncoraTracks,
+                                              tracks: rawSyncoraTracks,
                                               isLiked: isLiked,
                                               borderRadius: BorderRadius.circular(16),
                                             ),
@@ -1052,7 +1097,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                               child: PlaylistCoverWidget(
                                                 coverUrl: playlist.coverUrl,
                                                 playlistId: playlist.id,
-                                                tracks: sortedSyncoraTracks,
+                                                tracks: rawSyncoraTracks,
                                                 isLiked: isLiked,
                                                 borderRadius: BorderRadius.circular(20),
                                               ),
@@ -1223,7 +1268,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                 const PopupMenuItem(value: PlaylistSortColumn.original, child: Text('Orden original', style: TextStyle(color: AppTheme.primary, fontSize: 13))),
                                                 const PopupMenuItem(value: PlaylistSortColumn.title, child: Text('Título', style: TextStyle(color: AppTheme.primary, fontSize: 13))),
                                                 const PopupMenuItem(value: PlaylistSortColumn.album, child: Text('Álbum', style: TextStyle(color: AppTheme.primary, fontSize: 13))),
-                                                const PopupMenuItem(value: PlaylistSortColumn.date, child: Text('Fecha de adición', style: TextStyle(color: AppTheme.primary, fontSize: 13))),
                                                 const PopupMenuItem(value: PlaylistSortColumn.duration, child: Text('Duración', style: TextStyle(color: AppTheme.primary, fontSize: 13))),
                                               ],
                                             ),
@@ -1261,10 +1305,15 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             const SizedBox(height: 12),
                                             TextField(
                                               controller: _addSongsController,
-                                              onChanged: (val) => _performAddSongsSearch(val),
+                                              onChanged: (val) {
+                                                if (!_showAddSongsSearch) {
+                                                  setState(() => _showAddSongsSearch = true);
+                                                }
+                                                _performAddSongsSearch(val);
+                                              },
                                               style: const TextStyle(color: AppTheme.primary),
                                               decoration: InputDecoration(
-                                                hintText: 'Escribe nombre de canción o artista...',
+                                                hintText: 'Escribe el nombre de la canción',
                                                 hintStyle: TextStyle(color: AppTheme.secondary.withValues(alpha: 0.7)),
                                                 prefixIcon: Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.secondary, size: 18),
                                                 suffixIcon: _isSearchingSongs
@@ -1305,7 +1354,13 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                     title: Text(track.title, style: const TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
                                                     subtitle: Text(track.artistName, style: const TextStyle(color: AppTheme.secondary, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
                                                     trailing: isAlreadyAdded
-                                                        ? Icon(AppIcons.bold(SolarIcons.CheckCircle), color: Colors.white, size: 22)
+                                                        ? const SizedBox(
+                                                            width: 48,
+                                                            height: 48,
+                                                            child: Center(
+                                                              child: Icon(Icons.check_circle, color: Colors.white, size: 22),
+                                                            ),
+                                                          )
                                                         : IconButton(
                                                             icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
                                                             onPressed: () async {
@@ -1406,7 +1461,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                               _buildDesktopColumnHeader(
                                                 label: '#',
                                                 column: PlaylistSortColumn.original,
-                                                width: 28,
+                                                width: 48,
                                                 alignment: Alignment.center,
                                               ),
                                               const SizedBox(width: 8),
@@ -1427,12 +1482,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                   label: 'ÁLBUM',
                                                   column: PlaylistSortColumn.album,
                                                 ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              _buildDesktopColumnHeader(
-                                                label: 'FECHA',
-                                                column: PlaylistSortColumn.date,
-                                                width: 60,
                                               ),
                                               const SizedBox(width: 12),
                                               _buildDesktopColumnHeader(
@@ -1731,32 +1780,48 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
 
     try {
       final deezerApi = ref.read(deezerApiProvider);
-      List<DeezerTrack> results = [];
+      final List<DeezerTrack> results = [];
+      final existingIds = widget.existingTracks.map((t) => t.trackId).toSet()..addAll(_addedTrackIds);
 
       if (widget.existingTracks.isNotEmpty) {
-        final sampleTracks = List<PlaylistTrack>.from(widget.existingTracks)..shuffle();
-        final seedTrack = sampleTracks.first;
+        final shuffledTracks = List<PlaylistTrack>.from(widget.existingTracks)..shuffle();
+        final seedArtists = shuffledTracks.map((t) => t.artistId).where((id) => id > 0).toSet().toList()..shuffle();
+        final seedTracks = shuffledTracks.map((t) => t.trackId).where((id) => id > 0).toSet().toList()..shuffle();
 
-        if (seedTrack.trackId != 0) {
-          results = await deezerApi.getTrackRecommendations(seedTrack.trackId);
+        for (final artistId in seedArtists.take(2)) {
+          try {
+            final radioTracks = await deezerApi.getArtistRadio(artistId);
+            results.addAll(radioTracks);
+          } catch (_) {}
         }
 
-        if (results.isEmpty && seedTrack.artistId != 0) {
-          results = await deezerApi.getArtistRadio(seedTrack.artistId);
+        if (results.length < 10) {
+          for (final trackId in seedTracks.take(2)) {
+            try {
+              final recs = await deezerApi.getTrackRecommendations(trackId);
+              results.addAll(recs);
+            } catch (_) {}
+          }
         }
       }
 
-      if (results.isEmpty) {
-        results = await deezerApi.getTopCharts();
+      if (results.length < 10) {
+        final charts = await deezerApi.getTopCharts();
+        results.addAll(charts);
       }
 
-      // Excluir canciones que ya están en la playlist
-      final existingIds = widget.existingTracks.map((t) => t.trackId).toSet();
-      final filtered = results.where((t) => !existingIds.contains(t.id)).take(10).toList();
+      final seenIds = <int>{};
+      final filtered = <DeezerTrack>[];
+      for (final t in results) {
+        if (!existingIds.contains(t.id) && seenIds.add(t.id)) {
+          filtered.add(t);
+        }
+      }
+      filtered.shuffle();
 
       if (mounted) {
         setState(() {
-          _recommendations = filtered;
+          _recommendations = filtered.take(10).toList();
           _isLoading = false;
         });
       }
@@ -1845,8 +1910,14 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
     );
 
     if (mounted) {
+      if (_activePreviewTrackId == track.id) {
+        _previewEngine?.stop();
+        _isPreviewPlaying = false;
+        _activePreviewTrackId = null;
+      }
       setState(() {
         _addedTrackIds.add(track.id);
+        _recommendations.removeWhere((t) => t.id == track.id);
       });
       AppToast.show(context, message: '"${track.title}" agregada a la playlist');
       widget.onTrackAdded();

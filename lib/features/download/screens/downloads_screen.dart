@@ -199,7 +199,9 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
                       album: t.albumName,
                       albumId: t.albumId,
                       duration: Duration(milliseconds: t.durationMs),
-                      artUri: t.localCoverPath != null ? Uri.file(t.localCoverPath!) : null,
+                      artUri: (t.coverUrl.isNotEmpty)
+                          ? Uri.tryParse(t.coverUrl)
+                          : (t.localCoverPath != null ? Uri.file(t.localCoverPath!) : null),
                     );
                   }).toList();
 

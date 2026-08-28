@@ -11,7 +11,9 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/skeleton_box.dart';
+import '../../../data/sync/sync_service.dart';
 import '../../auth/local_mode_provider.dart';
 import '../stats_calculator.dart';
 import '../stats_providers.dart';
@@ -60,7 +62,31 @@ class _StatsScreenState extends ConsumerState<StatsScreen> with SingleTickerProv
                     icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary, size: 22),
                   ),
                   const SizedBox(width: 4),
-                  Text('Estadísticas', style: Theme.of(context).textTheme.headlineSmall),
+                  Expanded(
+                    child: Text('Estadísticas', style: Theme.of(context).textTheme.headlineSmall),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: AppTheme.primary),
+                    tooltip: 'Actualizar estadísticas',
+                    onPressed: () async {
+                      try {
+                        if (!isLocalMode) {
+                          await ref.read(syncServiceProvider).syncListeningHistory();
+                        }
+                        ref.invalidate(weeklyStatsProvider);
+                        ref.invalidate(monthlyStatsProvider);
+                        ref.invalidate(yearlyStatsProvider);
+                        ref.invalidate(allTimeStatsProvider);
+                        if (context.mounted) {
+                          AppToast.show(context, message: 'Estadísticas actualizadas');
+                        }
+                      } catch (_) {
+                        if (context.mounted) {
+                          AppToast.show(context, message: 'No se pudieron sincronizar las estadísticas');
+                        }
+                      }
+                    },
+                  ),
                 ],
               ),
             ),

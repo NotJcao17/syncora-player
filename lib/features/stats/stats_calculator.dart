@@ -76,33 +76,36 @@ abstract class StatsCalculator {
   /// Alimenta Semanal (topN=5, sin géneros) y Mensual (topN=10, con
   /// géneros) -- mismo método, distinta ventana/topN, según quien llame.
   static StatsSnapshot fromRawEntries(List<RawListenEntry> entries, {int topN = 5}) {
-    final artistMinutes = <int, int>{};
+    final artistMs = <int, int>{};
     final artistPlays = <int, int>{};
-    final trackMinutes = <int, int>{};
+    final trackMs = <int, int>{};
     final trackPlays = <int, int>{};
-    final genreMinutes = <String, int>{};
+    final genreMs = <String, int>{};
     var totalMs = 0;
 
     for (final entry in entries) {
       totalMs += entry.durationListenedMs;
-      final minutes = entry.durationListenedMs ~/ 60000;
 
       if (entry.artistId > 0) {
-        artistMinutes[entry.artistId] = (artistMinutes[entry.artistId] ?? 0) + minutes;
+        artistMs[entry.artistId] = (artistMs[entry.artistId] ?? 0) + entry.durationListenedMs;
         artistPlays[entry.artistId] = (artistPlays[entry.artistId] ?? 0) + 1;
       }
       if (entry.trackId > 0) {
-        trackMinutes[entry.trackId] = (trackMinutes[entry.trackId] ?? 0) + minutes;
+        trackMs[entry.trackId] = (trackMs[entry.trackId] ?? 0) + entry.durationListenedMs;
         trackPlays[entry.trackId] = (trackPlays[entry.trackId] ?? 0) + 1;
       }
       final genre = entry.genre;
       if (genre != null && genre.isNotEmpty) {
-        genreMinutes[genre] = (genreMinutes[genre] ?? 0) + minutes;
+        genreMs[genre] = (genreMs[genre] ?? 0) + entry.durationListenedMs;
       }
     }
 
+    final artistMinutes = artistMs.map((k, v) => MapEntry(k, (v / 60000).ceil()));
+    final trackMinutes = trackMs.map((k, v) => MapEntry(k, (v / 60000).ceil()));
+    final genreMinutes = genreMs.map((k, v) => MapEntry(k, (v / 60000).ceil()));
+
     return StatsSnapshot(
-      totalMinutes: totalMs ~/ 60000,
+      totalMinutes: (totalMs / 60000).ceil(),
       topArtists: _topStatEntries(artistMinutes, artistPlays, topN),
       topTracks: _topStatEntries(trackMinutes, trackPlays, topN),
       topGenres: _topGenreEntries(genreMinutes),

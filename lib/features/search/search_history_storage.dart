@@ -68,8 +68,8 @@ class SearchHistoryNotifier extends Notifier<List<String>> {
     final current = List<String>.from(state);
     current.removeWhere((item) => item.toLowerCase() == trimmed.toLowerCase());
     current.insert(0, trimmed);
-    if (current.length > 20) {
-      current.removeRange(20, current.length);
+    if (current.length > 10) {
+      current.removeRange(10, current.length);
     }
     state = current;
     await _storage.saveHistory(current);

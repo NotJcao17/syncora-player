@@ -57,7 +57,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     super.dispose();
   }
 
-  void _showImportExportTutorial(BuildContext context) {
+  void _showImportDialog(BuildContext context) {
+    final isConnected = ref.read(isConnectedProvider).value ?? true;
+    if (!isConnected) {
+      AppToast.show(context, message: 'Sin conexión. Se requiere internet para importar canciones.');
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -65,9 +71,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(AppIcons.broken(SolarIcons.QuestionCircle), color: AppTheme.primary, size: 24),
+            Icon(AppIcons.broken(SolarIcons.Import), color: AppTheme.primary, size: 24),
             const SizedBox(width: 10),
-            const Text('Guía de Importación & Exportación', style: TextStyle(color: AppTheme.primary, fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Importar playlist', style: TextStyle(color: AppTheme.primary, fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
         content: SizedBox(
@@ -78,30 +84,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               mainAxisSize: MainAxisSize.min,
               children: const [
                 Text(
-                  'Cómo importar playlists desde Spotify (Exportify):',
+                  'Importa tus playlists desde Spotify con Exportify:',
                   style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
-                SizedBox(height: 8),
+                SizedBox(height: 10),
                 Text(
                   '1. Abre tu navegador e ingresa a exportify.net\n'
                   '2. Inicia sesión con tu cuenta de Spotify.\n'
-                  '3. Haz clic en "Export" junto a la playlist que deseas importar para descargar el archivo CSV.\n'
-                  '4. En Syncora, presiona el botón "Importar" en tu Biblioteca y selecciona el archivo CSV descargado.\n'
-                  '5. Syncora buscará y añadirá automáticamente todas tus canciones.',
-                  style: TextStyle(color: AppTheme.secondary, fontSize: 13, height: 1.45),
-                ),
-                Divider(color: AppTheme.surfaceHover, height: 28),
-                Text(
-                  'Cómo exportar a Spotify / Apple Music / Deezer:',
-                  style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  '1. Abre cualquier playlist en Syncora y presiona "Exportar playlist (CSV)".\n'
-                  '2. El archivo CSV se guardará en tu carpeta de Descargas/Documentos.\n'
-                  '3. Ingresa a tunemymusic.com o soundiiz.com en tu navegador.\n'
-                  '4. Selecciona "Subir archivo / CSV" como origen y elige tu plataforma destino (Spotify, Apple Music, Deezer, etc.).\n'
-                  '5. ¡Tus canciones se transferirán automáticamente!',
+                  '3. Haz clic en "Export" junto a la playlist que deseas para descargar el archivo CSV.\n'
+                  '4. Presiona el botón "Seleccionar archivo CSV" aquí abajo para cargar tus canciones en Syncora.',
                   style: TextStyle(color: AppTheme.secondary, fontSize: 13, height: 1.45),
                 ),
               ],
@@ -109,13 +100,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           ),
         ),
         actions: [
-          ElevatedButton(
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondary)),
+          ),
+          ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               foregroundColor: AppTheme.background,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Entendido', style: TextStyle(fontWeight: FontWeight.bold)),
+            icon: Icon(AppIcons.broken(SolarIcons.Upload), size: 18),
+            label: const Text('Seleccionar archivo CSV', style: TextStyle(fontWeight: FontWeight.bold)),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _importPlaylistFromFile(context);
+            },
           ),
         ],
       ),
@@ -648,13 +648,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                             tooltip: 'Sincronizar biblioteca',
                           ),
                         Tooltip(
-                          message: 'Guía de importación & exportación',
-                          child: IconButton(
-                            icon: Icon(AppIcons.broken(SolarIcons.QuestionCircle), color: AppTheme.primary, size: 20),
-                            onPressed: () => _showImportExportTutorial(context),
-                          ),
-                        ),
-                        Tooltip(
                           message: 'Pantalla de descargas',
                           child: IconButton(
                             icon: Icon(AppIcons.broken(SolarIcons.DownloadMinimalistic), color: AppTheme.primary, size: 20),
@@ -662,10 +655,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           ),
                         ),
                         Tooltip(
-                          message: 'Importar desde CSV/TXT',
+                          message: 'Importar playlist (CSV/TXT)',
                           child: IconButton(
                             icon: Icon(AppIcons.broken(SolarIcons.Import), color: AppTheme.primary, size: 20),
-                            onPressed: () => _importPlaylistFromFile(context),
+                            onPressed: () => _showImportDialog(context),
                           ),
                         ),
                         Tooltip(
@@ -1044,12 +1037,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                                           ),
                                                         ),
                                                         const SizedBox(height: 4),
-                                                        Text(
-                                                          isLiked ? 'Playlist especial • Descargada' : '${playlist.description ?? "Playlist"} • Descargada',
-                                                          style: const TextStyle(
-                                                            color: AppTheme.secondary,
-                                                            fontSize: 13,
-                                                          ),
+                                                        StreamBuilder<List<PlaylistTrack>>(
+                                                          stream: playlistDao.watchTracksOrdered(playlist.id),
+                                                          builder: (ctx, trackSnap) {
+                                                            final count = trackSnap.data?.length ?? 0;
+                                                            final countStr = count == 1 ? '1 canción' : '$count canciones';
+                                                            return Text(
+                                                              isLiked ? 'Playlist especial • Descargada' : '$countStr • Descargada',
+                                                              style: const TextStyle(
+                                                                color: AppTheme.secondary,
+                                                                fontSize: 13,
+                                                              ),
+                                                            );
+                                                          },
                                                         ),
                                                       ],
                                                     ),
@@ -1135,12 +1135,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
-                                                Text(
-                                                  isLiked ? 'Playlist especial' : (playlist.description ?? 'Playlist'),
-                                                  style: const TextStyle(
-                                                    color: AppTheme.secondary,
-                                                    fontSize: 13,
-                                                  ),
+                                                StreamBuilder<List<PlaylistTrack>>(
+                                                  stream: playlistDao.watchTracksOrdered(playlist.id),
+                                                  builder: (ctx, trackSnap) {
+                                                    final count = trackSnap.data?.length ?? 0;
+                                                    final countStr = count == 1 ? '1 canción' : '$count canciones';
+                                                    return Text(
+                                                      isLiked ? 'Playlist especial • $countStr' : countStr,
+                                                      style: const TextStyle(
+                                                        color: AppTheme.secondary,
+                                                        fontSize: 13,
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
                                               ],
                                             ),

@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/skeleton_box.dart';
+import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
@@ -197,77 +197,23 @@ class ListeningHistoryScreen extends ConsumerWidget {
                 );
               }
 
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: CachedNetworkImage(
-                          imageUrl: track.coverUrl,
-                          memCacheWidth: 200,
-                          fit: BoxFit.cover,
-                          errorWidget: (_, _, _) => Container(
-                            color: AppTheme.surfaceHover,
-                            child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 20),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            track.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 14),
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  track.artistName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                timeAgo,
-                                style: TextStyle(
-                                  color: AppTheme.secondary.withValues(alpha: 0.75),
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: Icon(AppIcons.broken(SolarIcons.Play), color: AppTheme.primary, size: 20),
-                      onPressed: () {
-                        final controller = ref.read(syncoraPlayerControllerProvider.notifier);
-                        controller.setQueue([track.toSyncoraTrack()], startIndex: 0);
-                        controller.play();
-                      },
-                      tooltip: 'Reproducir',
-                    ),
-                  ],
-                ),
+              final syncoraTrack = track.toSyncoraTrack();
+              return TrackTile(
+                track: syncoraTrack,
+                showAlbum: true,
+                onTap: () {
+                  final controller = ref.read(syncoraPlayerControllerProvider.notifier);
+                  final allTracks = items
+                      .where((it) => it.track != null)
+                      .map((it) => it.track!.toSyncoraTrack())
+                      .toList();
+                  final idx = allTracks.indexWhere((t) => t.id == syncoraTrack.id);
+                  controller.setQueue(allTracks, startIndex: idx >= 0 ? idx : 0, activeContextId: 'listening_history');
+                },
+                onAddToQueue: () {
+                  ref.read(syncoraPlayerControllerProvider.notifier).addToQueue(syncoraTrack);
+                  AppToast.show(context, message: 'Agregada a la cola');
+                },
               );
             },
           );

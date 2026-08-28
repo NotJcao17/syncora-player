@@ -59,7 +59,7 @@ void main() {
       expect(container.read(searchHistoryProvider), equals(['rock', 'Jazz', 'Pop']));
     });
 
-    test('addQuery caps at 20 items', () async {
+    test('addQuery caps at 10 items', () async {
       final notifier = container.read(searchHistoryProvider.notifier);
       await pumpEventQueue();
 
@@ -68,7 +68,7 @@ void main() {
       }
 
       final history = container.read(searchHistoryProvider);
-      expect(history.length, equals(20));
+      expect(history.length, equals(10));
       expect(history.first, equals('Genre 24'));
     });
 

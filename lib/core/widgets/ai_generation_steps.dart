@@ -59,8 +59,8 @@ class AiMatchingProgress extends StatelessWidget {
     super.key,
     required this.current,
     required this.total,
-    required this.currentTrackName,
-    this.title = 'Buscando canciones en Deezer...',
+    this.currentTrackName = '',
+    this.title = 'Buscando canciones...',
   });
 
   @override
@@ -69,24 +69,28 @@ class AiMatchingProgress extends StatelessWidget {
     final effectiveCurrent = current.clamp(0, effectiveTotal);
     final ratio = (effectiveCurrent / effectiveTotal).clamp(0.0, 1.0);
     return SizedBox(
-      height: 220,
+      height: 180,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 16),
-            LinearProgressIndicator(value: ratio, backgroundColor: AppTheme.surfaceHover, color: AppTheme.primary),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: ratio > 0 ? ratio : null,
+                minHeight: 6,
+                backgroundColor: AppTheme.surfaceHover,
+                color: AppTheme.primary,
+              ),
+            ),
             const SizedBox(height: 12),
-            Text('Buscando pista $effectiveCurrent de $effectiveTotal...', style: const TextStyle(color: AppTheme.secondary, fontSize: 13)),
-            const SizedBox(height: 6),
             Text(
-              currentTrackName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
+              'Buscando canciones ($effectiveCurrent de $effectiveTotal)...',
+              style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
             ),
           ],
         ),

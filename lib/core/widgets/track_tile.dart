@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
@@ -120,13 +121,21 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         width: 48,
         height: 48,
         child: widget.track.coverUrl.isNotEmpty
-            ? CachedNetworkImage(
-                imageUrl: widget.track.coverUrl,
-                memCacheWidth: 300,
-                fit: BoxFit.cover,
-                errorWidget: (context, url, error) => _buildPlaceholder(),
-                placeholder: (context, url) => Container(color: AppTheme.surfaceHover),
-              )
+            ? (widget.track.coverUrl.startsWith('file:') ||
+                    widget.track.coverUrl.startsWith('/') ||
+                    widget.track.coverUrl.contains(':\\')
+                ? Image.file(
+                    File(widget.track.coverUrl.replaceFirst('file://', '')),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                  )
+                : CachedNetworkImage(
+                    imageUrl: widget.track.coverUrl,
+                    memCacheWidth: 300,
+                    fit: BoxFit.cover,
+                    errorWidget: (context, url, error) => _buildPlaceholder(),
+                    placeholder: (context, url) => Container(color: AppTheme.surfaceHover),
+                  ))
             : _buildPlaceholder(),
       ),
     );
@@ -246,7 +255,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                         child: MouseRegion(
                           cursor: SystemMouseCursors.click,
                           child: SizedBox(
-                            width: 28,
+                            width: 48,
                             child: Center(
                               child: isPlayingActive
                                   ? (_isHovered
@@ -711,16 +720,6 @@ class _TrackTileState extends ConsumerState<TrackTile> {
           ],
         ),
       ),
-      PopupMenuItem(
-        value: 'download',
-        child: Row(
-          children: [
-            Icon(isDownloaded ? AppIcons.bold(SolarIcons.TrashBinTrash) : AppIcons.broken(SolarIcons.DownloadMinimalistic), color: AppTheme.primary, size: 18),
-            const SizedBox(width: 12),
-            Text(isDownloaded ? 'Eliminar descarga' : 'Descargar canción', style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
-          ],
-        ),
-      ),
       if ((widget.track.artistId ?? 0) != 0)
         PopupMenuItem(
           value: 'other_versions',
@@ -743,17 +742,6 @@ class _TrackTileState extends ConsumerState<TrackTile> {
             ],
           ),
         ),
-      PopupMenuItem(
-        value: 'share',
-        child: Row(
-          children: [
-            Icon(AppIcons.broken(SolarIcons.Share), color: AppTheme.primary, size: 18),
-            const SizedBox(width: 12),
-            const Expanded(child: Text('Compartir', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
-            Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
-          ],
-        ),
-      ),
     ];
   }
 
@@ -1168,8 +1156,6 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     FocusManager.instance.primaryFocus?.unfocus();
     final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
     final isLiked = await ref.read(playlistDaoProvider).isTrackLiked(trackIdInt);
-    final downloaded = await ref.read(downloadedTrackDaoProvider).getByTrackId(trackIdInt);
-    final isDownloaded = downloaded != null && downloaded.downloadState == 2;
 
     if (!context.mounted) return;
 
@@ -1223,14 +1209,6 @@ class _TrackTileState extends ConsumerState<TrackTile> {
               _handleOptionSelected(context, ref, 'queue');
             },
           ),
-          _OptionItem(
-            icon: isDownloaded ? AppIcons.bold(SolarIcons.TrashBinTrash) : AppIcons.broken(SolarIcons.DownloadMinimalistic),
-            label: isDownloaded ? 'Eliminar descarga' : 'Descargar canción',
-            onTap: () {
-              Navigator.pop(context);
-              _handleOptionSelected(context, ref, 'download');
-            },
-          ),
           if ((widget.track.artistId ?? 0) != 0)
             _OptionItem(
               icon: AppIcons.broken(SolarIcons.Magnifer),
@@ -1249,14 +1227,6 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                 _handleOptionSelected(context, ref, 'remove');
               },
             ),
-          _OptionItem(
-            icon: AppIcons.broken(SolarIcons.Share),
-            label: 'Compartir',
-            onTap: () {
-              Navigator.pop(context);
-              _handleOptionSelected(context, ref, 'share');
-            },
-          ),
         ],
       ),
     );
