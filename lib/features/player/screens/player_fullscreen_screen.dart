@@ -145,7 +145,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
           }
         },
         child: AnimatedContainer(
-          duration: _dragOffsetY > 0 ? Duration.zero : const Duration(milliseconds: 250),
+          duration: _dragOffsetY > 0 ? Duration.zero : const Duration(milliseconds: 200),
           transform: Matrix4.translationValues(0, _dragOffsetY, 0),
           decoration: BoxDecoration(
             borderRadius: _dragOffsetY > 0
@@ -259,10 +259,16 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                         MarqueeText(
                                           text: currentTrack.title,
                                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                                fontWeight: FontWeight.bold,
+                                                fontWeight: FontWeight.w800,
                                                 color: AppTheme.primary,
                                                 fontSize: 22,
-                                              ) ?? const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                                                letterSpacing: -0.5,
+                                              ) ?? const TextStyle(
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.w800,
+                                                color: AppTheme.primary,
+                                                letterSpacing: -0.5,
+                                              ),
                                         ),
                                         const SizedBox(height: 4),
                                         MarqueeText(
