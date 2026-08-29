@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/utils/startup_retry.dart';
 import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../data/models/deezer/deezer_album.dart';
@@ -18,17 +19,17 @@ class PersonalizedArtistSection {
 
 final editorialPlaylistsProvider = FutureProvider<List<DeezerPlaylist>>((ref) async {
   final deezerApi = ref.watch(deezerApiProvider);
-  return deezerApi.getEditorialPlaylists();
+  return retryOnNetworkError(deezerApi.getEditorialPlaylists);
 });
 
 final topChartsProvider = FutureProvider<List<DeezerTrack>>((ref) async {
   final deezerApi = ref.watch(deezerApiProvider);
-  return deezerApi.getTopCharts();
+  return retryOnNetworkError(deezerApi.getTopCharts);
 });
 
 final newReleasesProvider = FutureProvider<List<DeezerAlbum>>((ref) async {
   final deezerApi = ref.watch(deezerApiProvider);
-  return deezerApi.getNewReleases();
+  return retryOnNetworkError(deezerApi.getNewReleases);
 });
 
 final personalizedSectionsProvider = FutureProvider<List<PersonalizedArtistSection>>((ref) async {
@@ -46,8 +47,8 @@ final personalizedSectionsProvider = FutureProvider<List<PersonalizedArtistSecti
 
   for (final artistId in topArtistIds) {
     try {
-      final artist = await deezerApi.getArtist(artistId);
-      final tracks = await deezerApi.getArtistTopTracks(artistId);
+      final artist = await retryOnNetworkError(() => deezerApi.getArtist(artistId));
+      final tracks = await retryOnNetworkError(() => deezerApi.getArtistTopTracks(artistId));
       if (tracks.isNotEmpty) {
         sections.add(PersonalizedArtistSection(artist: artist, tracks: tracks));
       }

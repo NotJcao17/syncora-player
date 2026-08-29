@@ -25,6 +25,7 @@ import '../../features/player/widgets/mini_player.dart';
 import '../../features/player/widgets/queue_view.dart';
 import '../theme/app_theme.dart';
 import '../utils/connectivity_service.dart';
+import '../utils/startup_retry.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/offline_banner.dart';
 import '../widgets/playlist_cover_widget.dart';
@@ -63,9 +64,16 @@ class _AppShellState extends ConsumerState<AppShell> {
       final isConnected = ref.read(isConnectedProvider).value ?? true;
       final user = ref.read(currentUserProvider);
       if (!isLocalMode && isConnected && user != null) {
+        // Con reintento: en el arranque en frío el DNS todavía no resuelve, así
+        // que este primer sync moría en silencio y los cambios hechos en otro
+        // dispositivo no aparecían hasta recargar a mano.
         try {
-          await ref.read(syncServiceProvider).syncLibrary(force: false);
-          await ref.read(syncServiceProvider).syncSavedAlbums(force: false);
+          await retryOnNetworkError(
+            () => ref.read(syncServiceProvider).syncLibrary(force: false),
+          );
+          await retryOnNetworkError(
+            () => ref.read(syncServiceProvider).syncSavedAlbums(force: false),
+          );
         } catch (_) {}
       }
     });
