@@ -20,16 +20,31 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     action: MediaAction.setShuffleMode,
   );
 
+  // Ítem 4 (QA): el corazón vivía como `MediaControl` FIJO con un único
+  // ícono relleno (`ic_heart`) -- por eso se veía "liked" siempre, sin
+  // importar el estado real: no había ningún ícono alternativo para el
+  // estado "no me gusta" ni lógica que eligiera entre ambos. Ahora se arma
+  // dinámicamente en cada publicación de `playbackState` según
+  // `_isCurrentTrackLiked` (ver `_favoriteControl` getter y
+  // `_publishPlaybackState`).
+  //
   // `MediaControl.custom` (no el constructor por defecto con
   // `action: MediaAction.custom`) es obligatorio para acciones custom: sin
   // el `name` que arma su `CustomMediaAction`, el botón nunca llegaba a
   // asociarse con ningún `customAction()` real del handler (el `assert` que
   // lo exige queda mudo en release, así que fallaba en silencio).
-  static final MediaControl _favoriteControl = MediaControl.custom(
-    androidIcon: 'drawable/ic_heart',
-    label: 'Favorite',
-    name: 'toggleFavorite',
-  );
+  MediaControl get _favoriteControl => MediaControl.custom(
+        androidIcon: _isCurrentTrackLiked ? 'drawable/ic_heart' : 'drawable/ic_heart_outline',
+        label: _isCurrentTrackLiked ? 'Quitar de Me gusta' : 'Me gusta',
+        name: 'toggleFavorite',
+      );
+
+  /// Estado "me gusta" de [_likedStateTrackId] (la última pista para la que
+  /// se consultó/actualizó). Ítem 4 (QA): sin esto el corazón quedaba
+  /// pegado al valor de construcción para siempre -- ver
+  /// `_refreshLikedState`/`_toggleFavorite`.
+  bool _isCurrentTrackLiked = false;
+  String? _likedStateTrackId;
 
   SyncoraAudioHandler(this._controller, {this._playlistDao}) {
     _controller.addListener(_onControllerChanged);
@@ -48,7 +63,6 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
 
   void _onControllerChanged() {
     final state = _controller.state;
-    final engineState = state.engine;
 
     // 1. MediaItem (pista actual)
     final track = state.currentTrack;
@@ -69,7 +83,31 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     final queueItems = combinedQueue.map(_toMediaItem).toList();
     queue.add(queueItems);
 
-    // 3. PlaybackState con controles completos
+    // Ítem 4 (QA): la pista activa cambió -- el flag de "me gusta" quedado
+    // de la anterior ya no representa nada real, hay que refrescarlo contra
+    // la DB antes de volver a publicar el corazón (async, ver
+    // `_refreshLikedState`). Comparar por id evita relanzar la consulta en
+    // cada tick de posición (este método corre en CADA cambio del
+    // controller, no solo al cambiar de pista).
+    if (track?.id != _likedStateTrackId) {
+      _refreshLikedState(track);
+    }
+
+    _publishPlaybackState();
+  }
+
+  /// Publica el `playbackState` completo con los controles vigentes --
+  /// factorizado fuera de [_onControllerChanged] (ítem 4, QA) porque
+  /// [_toggleFavorite] y [_refreshLikedState] también necesitan re-publicar
+  /// tras actualizar [_isCurrentTrackLiked] SIN esperar a que el controller
+  /// dispare su propio `ChangeNotifier` (que nunca lo hace: el estado de "me
+  /// gusta" vive en la DB de playlists, no en `SyncoraPlayerState`) -- antes
+  /// de este fix, tocar el corazón nunca refrescaba la notificación/
+  /// lockscreen con el nuevo estado.
+  void _publishPlaybackState() {
+    final state = _controller.state;
+    final engineState = state.engine;
+    final track = state.currentTrack;
     final isPlaying = engineState.playing;
     final controls = <MediaControl>[
       _shuffleControl,
@@ -101,6 +139,32 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
         queueIndex: track != null ? 0 : null,
       ),
     );
+  }
+
+  /// Consulta el estado real de "me gusta" de [track] contra la DB y
+  /// re-publica el `playbackState` con el ícono correcto. `null` (nada
+  /// sonando) limpia el flag sin consultar nada.
+  Future<void> _refreshLikedState(SyncoraTrack? track) async {
+    _likedStateTrackId = track?.id;
+    final playlistDao = _playlistDao;
+    if (track == null || playlistDao == null) {
+      _isCurrentTrackLiked = false;
+      _publishPlaybackState();
+      return;
+    }
+    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
+    bool liked;
+    try {
+      liked = await playlistDao.isTrackLiked(trackIdInt);
+    } catch (_) {
+      liked = false;
+    }
+    // La pista pudo haber cambiado de nuevo mientras esta consulta estaba en
+    // vuelo -- si ya no es la vigente, esta respuesta quedó obsoleta y no
+    // debe pisar el estado de una pista más nueva.
+    if (_likedStateTrackId != track.id) return;
+    _isCurrentTrackLiked = liked;
+    _publishPlaybackState();
   }
 
   AudioServiceRepeatMode _mapRepeatMode(SyncoraRepeatMode mode) {
@@ -188,9 +252,10 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
 
   Future<void> _toggleFavorite() async {
     final track = _controller.state.currentTrack;
-    if (track == null || _playlistDao == null) return;
+    final playlistDao = _playlistDao;
+    if (track == null || playlistDao == null) return;
     final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
-    await _playlistDao?.toggleLikeTrack(
+    final nowLiked = await playlistDao.toggleLikeTrack(
       trackId: trackIdInt,
       artistId: track.artistId ?? 0,
       albumId: track.albumId ?? 0,
@@ -200,6 +265,14 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
       coverUrl: track.coverUrl,
       durationMs: (track.duration ?? Duration.zero).inMilliseconds,
     );
+    // Ítem 4 (QA): sin esto el corazón nunca reflejaba el toggle -- nada más
+    // dispara una republicación de `playbackState` tras esta acción (ver
+    // docstring de `_publishPlaybackState`).
+    if (_controller.state.currentTrack?.id == track.id) {
+      _isCurrentTrackLiked = nowLiked;
+      _likedStateTrackId = track.id;
+      _publishPlaybackState();
+    }
   }
 
   /// Traduce un índice de la vista combinada expuesta al SO (ver

@@ -1,6 +1,7 @@
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
+#include <shobjidl.h>
 
 #include "flutter_window.h"
 #include "utils.h"
@@ -54,6 +55,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // Initialize COM, so that it is available for use in the library and/or
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+
+  // Ítem 2 (QA, SMTC): apps Win32 sin empaquetar (no MSIX) necesitan un
+  // AppUserModelID explícito ANTES de crear la ventana para que
+  // `SystemMediaTransportControls` (usado por el paquete `smtc_windows`, ver
+  // `windows_media_controls.dart`) se asocie con el ícono de la barra de
+  // tareas y su flyout aparezca al pasar el mouse por encima. Sin esto,
+  // Windows le asigna al proceso un AUMID generado a partir de la ruta del
+  // .exe, y en la práctica el flyout de SMTC no llega a mostrarse nunca para
+  // el proceso (no es un error visible, simplemente no aparece nada).
+  ::SetCurrentProcessExplicitAppUserModelID(L"com.syncora.player");
 
   flutter::DartProject project(L"data");
 
