@@ -13,6 +13,7 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/skeleton_box.dart';
+import '../../../data/sync/sync_cache_manager.dart';
 import '../../../data/sync/sync_service.dart';
 import '../../auth/local_mode_provider.dart';
 import '../stats_calculator.dart';
@@ -36,12 +37,35 @@ class _StatsScreenState extends ConsumerState<StatsScreen> with SingleTickerProv
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _autoRefreshIfStale();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  /// Investigación de estadísticas, problema 1: Inicio/Biblioteca ya
+  /// refrescan solos al volver tras ≥5 min (`SyncCacheManager`, clave
+  /// 'library' vía `syncLibrary(force: false)` en `initState`) -- Estadísticas
+  /// no tenía ningún disparo equivalente y dependía por completo del botón
+  /// manual "Actualizar". Mismo patrón acá, clave propia 'stats' para no
+  /// pisar el TTL de 'library'/'saved_albums'.
+  void _autoRefreshIfStale() {
+    final cacheManager = ref.read(syncCacheManagerProvider);
+    if (!cacheManager.isExpired('stats')) return;
+    cacheManager.markSynced('stats');
+    Future.microtask(() async {
+      if (!ref.read(localModeProvider)) {
+        await ref.read(syncServiceProvider).syncListeningHistory();
+      }
+      if (!mounted) return;
+      ref.invalidate(weeklyStatsProvider);
+      ref.invalidate(monthlyStatsProvider);
+      ref.invalidate(yearlyStatsProvider);
+      ref.invalidate(allTimeStatsProvider);
+    });
   }
 
   @override
@@ -167,7 +191,15 @@ class _RawStatsTab extends StatelessWidget {
       error: (_, _) => const _StatsEmptyState(),
       data: (snapshot) {
         if (snapshot.isEmpty) return const _StatsEmptyState();
-        return _StatsContent(snapshot: snapshot, showGenres: showGenres, showMostActiveMonth: false);
+        // Bug real de pruebas manuales (investigación de estadísticas,
+        // problema 2): a diferencia de Anual/Desde el inicio, que envuelven
+        // `_StatsContent` en un `ListView` propio, Semanal/Mensual llegan acá
+        // sin ningún ancestro scrolleable -- `_StatsContent` deshabilita su
+        // propio scroll (`NeverScrollableScrollPhysics`, ver comentario ahí)
+        // porque asume que un padre ya se encarga. Sin ese padre, el
+        // `TabBarView` le da una altura acotada y el contenido que exceda esa
+        // altura queda simplemente cortado, sin forma de deslizar hacia él.
+        return SingleChildScrollView(child: _StatsContent(snapshot: snapshot, showGenres: showGenres, showMostActiveMonth: false));
       },
     );
   }

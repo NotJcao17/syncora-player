@@ -267,6 +267,109 @@ void main() {
         expect(stillUnsynced.length, 1, reason: 'un fallo de subida no debe marcar la entrada como sincronizada');
       });
     });
+
+    // Investigación de estadísticas, root cause de "el PC no ve las
+    // escuchas del celular hasta tocar Actualizar ahí": la subida ahora se
+    // dispara también en `pushListeningHistoryIfDue()`, con un cooldown
+    // corto para no golpear la red en cada pista si el usuario escucha
+    // varias seguidas -- separado de `syncListeningHistory()` (sin cooldown,
+    // usado por el botón manual/arranque) para no cambiarles el
+    // comportamiento a esos otros llamadores.
+    group('pushListeningHistoryIfDue (disparo reactivo, investigación de estadísticas)', () {
+      test('sube de inmediato la primera vez (sin sync previo)', () async {
+        final mockHistoryRepo = MockSupabaseHistoryRepository();
+        final mockSyncService = SyncService(
+          playlistRepo: MockSupabasePlaylistRepository(),
+          albumRepo: SupabaseAlbumRepository(),
+          historyRepo: mockHistoryRepo,
+          playlistDao: db.playlistDao,
+          savedAlbumDao: db.savedAlbumDao,
+          listeningHistoryDao: db.listeningHistoryDao,
+          cacheManager: cacheManager,
+        );
+
+        await db.listeningHistoryDao.recordEntry(
+          trackId: 1,
+          artistId: 10,
+          albumId: 100,
+          durationListenedMs: 40000,
+        );
+
+        await mockSyncService.pushListeningHistoryIfDue();
+
+        expect(mockHistoryRepo.insertedTrackIds, equals([1]));
+      });
+
+      test('una segunda llamada inmediata queda en cooldown y no reenvía', () async {
+        final mockHistoryRepo = MockSupabaseHistoryRepository();
+        final mockSyncService = SyncService(
+          playlistRepo: MockSupabasePlaylistRepository(),
+          albumRepo: SupabaseAlbumRepository(),
+          historyRepo: mockHistoryRepo,
+          playlistDao: db.playlistDao,
+          savedAlbumDao: db.savedAlbumDao,
+          listeningHistoryDao: db.listeningHistoryDao,
+          cacheManager: cacheManager,
+        );
+
+        await db.listeningHistoryDao.recordEntry(
+          trackId: 1,
+          artistId: 10,
+          albumId: 100,
+          durationListenedMs: 40000,
+        );
+        await mockSyncService.pushListeningHistoryIfDue();
+        expect(mockHistoryRepo.insertedTrackIds, equals([1]));
+
+        // Otra pista termina de escucharse casi enseguida (misma sesión).
+        await db.listeningHistoryDao.recordEntry(
+          trackId: 2,
+          artistId: 20,
+          albumId: 200,
+          durationListenedMs: 35000,
+        );
+        await mockSyncService.pushListeningHistoryIfDue();
+
+        expect(mockHistoryRepo.insertedTrackIds, equals([1]),
+            reason: 'la segunda pista queda pendiente en Drift hasta que expire el cooldown');
+        final stillUnsynced = await db.listeningHistoryDao.getUnsyncedHistory();
+        expect(stillUnsynced.map((e) => e.trackId), equals([2]));
+      });
+
+      test('syncListeningHistory() (botón manual/arranque) ignora el cooldown de pushListeningHistoryIfDue',
+          () async {
+        final mockHistoryRepo = MockSupabaseHistoryRepository();
+        final mockSyncService = SyncService(
+          playlistRepo: MockSupabasePlaylistRepository(),
+          albumRepo: SupabaseAlbumRepository(),
+          historyRepo: mockHistoryRepo,
+          playlistDao: db.playlistDao,
+          savedAlbumDao: db.savedAlbumDao,
+          listeningHistoryDao: db.listeningHistoryDao,
+          cacheManager: cacheManager,
+        );
+
+        await db.listeningHistoryDao.recordEntry(
+          trackId: 1,
+          artistId: 10,
+          albumId: 100,
+          durationListenedMs: 40000,
+        );
+        await mockSyncService.pushListeningHistoryIfDue();
+
+        await db.listeningHistoryDao.recordEntry(
+          trackId: 2,
+          artistId: 20,
+          albumId: 200,
+          durationListenedMs: 35000,
+        );
+        // Botón "Actualizar" de Estadísticas: debe subir sin importar el
+        // cooldown del disparo reactivo.
+        await mockSyncService.syncListeningHistory();
+
+        expect(mockHistoryRepo.insertedTrackIds, equals([1, 2]));
+      });
+    });
   });
 }
 

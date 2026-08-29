@@ -797,6 +797,46 @@ void main() {
       expect(history.length, 1,
           reason: 'la red de seguridad debe leer la posición en vivo del motor, no la del último tick procesado');
     });
+
+    // Investigación de estadísticas (root cause de "el PC no ve las
+    // escuchas del celular hasta tocar Actualizar ahí"): la subida a
+    // Supabase debe dispararse apenas se graba localmente, no solo en
+    // `syncOnStartup()`/el botón manual de Estadísticas.
+    test('onListenRecorded se dispara exactamente una vez al cruzar el umbral, no antes', () async {
+      var callCount = 0;
+      final trackedEngine = FakeAudioEngine();
+      final trackedController = SyncoraPlayerController(
+        engine: trackedEngine,
+        extractionService: TestableExtractionService(),
+        listeningHistoryDao: db.listeningHistoryDao,
+        onListenRecorded: () => callCount++,
+      );
+      trackedController.init();
+      addTearDown(trackedController.dispose);
+
+      final track = SyncoraTrack(id: 't1', title: 'Larga', duration: const Duration(seconds: 200));
+      await trackedController.setQueue([track], autoplay: true);
+
+      Future<void> tick(int s) async {
+        trackedEngine.emitState(
+          trackedController.state.engine.copyWith(playing: true, position: Duration(seconds: s)),
+        );
+        await pumpEventQueue();
+      }
+
+      for (var s = 1; s <= 29; s++) {
+        await tick(s);
+      }
+      expect(callCount, 0, reason: 'todavía no cruzó el umbral de 30s');
+
+      await tick(30);
+      expect(callCount, 1, reason: 'debe dispararse justo al cruzar el umbral');
+
+      for (var s = 31; s <= 40; s++) {
+        await tick(s);
+      }
+      expect(callCount, 1, reason: 'no debe repetirse para la misma instancia de reproducción');
+    });
   });
 
   // Fase 7.A: modelo de cola dual (manual + automática). Ver
