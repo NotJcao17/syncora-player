@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
+import '../../../core/widgets/track_cover_image.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../audio_engine/audio_engine_state.dart';
 import '../player_models.dart';
@@ -230,11 +230,11 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(24),
                                   child: currentTrack.coverUrl.isNotEmpty
-                                      ? CachedNetworkImage(
-                                          imageUrl: currentTrack.coverUrl,
+                                      ? TrackCoverImage(
+                                          coverUrl: currentTrack.coverUrl,
+                                          trackId: int.tryParse(currentTrack.id),
                                           memCacheWidth: 600,
-                                          fit: BoxFit.cover,
-                                          errorWidget: (context, url, error) => _buildCoverPlaceholder(),
+                                          placeholder: _buildCoverPlaceholder(),
                                         )
                                       : _buildCoverPlaceholder(),
                                 ),

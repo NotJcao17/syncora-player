@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -25,6 +24,7 @@ import 'app_bottom_sheet.dart';
 import 'app_toast.dart';
 import 'error_state.dart';
 import 'playlist_cover_widget.dart';
+import 'track_cover_image.dart';
 
 /// Menú contextual de 3 puntos/click derecho de una pista -- extraído de
 /// `_TrackTileState` (que delega en esta clase) para que otros lugares de
@@ -665,12 +665,11 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
                   )
-                : CachedNetworkImage(
-                    imageUrl: widget.track.coverUrl,
+                : TrackCoverImage(
+                    coverUrl: widget.track.coverUrl,
+                    trackId: int.tryParse(widget.track.id),
                     memCacheWidth: 300,
-                    fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => _buildPlaceholder(),
-                    placeholder: (context, url) => Container(color: AppTheme.surfaceHover),
+                    placeholder: _buildPlaceholder(),
                   ))
             : _buildPlaceholder(),
       ),

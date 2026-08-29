@@ -12,6 +12,7 @@ import 'package:smtc_windows/smtc_windows.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'app.dart';
+import 'core/cache/cover_cache_service.dart';
 import 'features/auth/local_mode_provider.dart';
 import 'features/auth/services/auth_deep_link_errors.dart';
 import 'features/auth/services/local_mode_storage.dart';
@@ -193,6 +194,14 @@ void main() async {
       await windowManager.focus();
     });
   }
+
+  // Resuelve el directorio de portadas una sola vez para que la UI pueda
+  // preguntar de forma síncrona si una pista descargada ya tiene portada en
+  // disco (ver `CoverCacheService.localCoverFileSync`), y así mostrarla sin
+  // conexión.
+  try {
+    await CoverCacheService().warmUp();
+  } catch (_) {}
 
   // Fase 7.I.1: precargar el modo local ANTES de `runApp` -- `localModeProvider`
   // se lee de forma síncrona en el `redirect` de `app_router.dart` (GoRouter

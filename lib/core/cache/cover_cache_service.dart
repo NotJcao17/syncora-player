@@ -11,14 +11,37 @@ class CoverCacheService {
 
   bool get _isTestEnv => Platform.environment.containsKey('FLUTTER_TEST');
 
+  /// Ruta del directorio de portadas, memorizada tras la primera resolución.
+  /// `getApplicationDocumentsDirectory()` es async, así que sin este caché no
+  /// hay forma de que un `build()` sincrónico sepa si una portada descargada
+  /// existe en disco (ver [localCoverFileSync]).
+  static String? _cachedCoverDir;
+
   Future<String> _getCoverDir() async {
     if (kIsWeb) return '';
+    final cached = _cachedCoverDir;
+    if (cached != null) return cached;
     final base = (await getApplicationDocumentsDirectory()).path;
     final dir = Directory('$base/syncora/covers');
     if (!dir.existsSync()) {
       dir.createSync(recursive: true);
     }
+    _cachedCoverDir = dir.path;
     return dir.path;
+  }
+
+  /// Prepara [localCoverFileSync] resolviendo el directorio una vez al arrancar.
+  Future<void> warmUp() => _getCoverDir();
+
+  /// Portada local de una pista descargada, o `null` si no está en disco.
+  /// Sincrónico a propósito: lo consumen `build()`s de listas, donde un
+  /// `FutureBuilder` por fila provocaría parpadeo en cada scroll.
+  static File? localCoverFileSync(int? trackId) {
+    if (kIsWeb || trackId == null) return null;
+    final dir = _cachedCoverDir;
+    if (dir == null) return null;
+    final file = File('$dir/$trackId.jpg');
+    return file.existsSync() ? file : null;
   }
 
   Future<File> _getIndexFile() async {

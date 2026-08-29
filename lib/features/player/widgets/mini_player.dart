@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +7,7 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
+import '../../../core/widgets/track_cover_image.dart';
 import '../../../core/widgets/track_tile.dart' show TrackContextMenu;
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
@@ -76,11 +76,11 @@ class MiniPlayer extends ConsumerWidget {
                   width: 48,
                   height: 48,
                   child: currentTrack.coverUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: currentTrack.coverUrl,
+                      ? TrackCoverImage(
+                          coverUrl: currentTrack.coverUrl,
+                          trackId: int.tryParse(currentTrack.id),
                           memCacheWidth: 300,
-                          fit: BoxFit.cover,
-                          errorWidget: (_, _, _) => _buildPlaceholder(),
+                          placeholder: _buildPlaceholder(),
                         )
                       : _buildPlaceholder(),
                 ),
@@ -504,11 +504,11 @@ class _DesktopTrackInfoState extends ConsumerState<_DesktopTrackInfo> {
           width: 56,
           height: 56,
           child: widget.currentTrack.coverUrl.isNotEmpty
-              ? CachedNetworkImage(
-                  imageUrl: widget.currentTrack.coverUrl,
+              ? TrackCoverImage(
+                  coverUrl: widget.currentTrack.coverUrl,
+                  trackId: int.tryParse(widget.currentTrack.id),
                   memCacheWidth: 300,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, _, _) => _buildPlaceholder(),
+                  placeholder: _buildPlaceholder(),
                 )
               : _buildPlaceholder(),
         ),
