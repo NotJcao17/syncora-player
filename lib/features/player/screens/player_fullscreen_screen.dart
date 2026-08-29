@@ -214,7 +214,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                             ],
                           ),
 
-                          const Spacer(),
+                          const Spacer(flex: 3),
 
                           // Portada Centrada y Escalable
                           Hero(
@@ -242,7 +242,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                             ),
                           ),
 
-                          const Spacer(),
+                          const Spacer(flex: 1),
 
                           // Sección inferior compacta
                           Column(
@@ -293,7 +293,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                 ],
                               ),
 
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 20),
 
                               // Barra de reproducción interactiva
                               _FullscreenSeekBar(
@@ -303,7 +303,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                 isPlaying: isPlaying,
                               ),
 
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 28),
 
                               // Controles Multimedia Principales
                               Row(
@@ -420,7 +420,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                 ],
                               ),
 
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 20),
 
                               // Botones Inferiores: Letras (LRCLib real) & Cola
                               Row(
