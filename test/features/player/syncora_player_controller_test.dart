@@ -59,13 +59,11 @@ class FakeAudioEngine implements AudioEngine {
 
   String? lastUrl;
   int setUrlCallCount = 0;
-  Duration? lastInitialPosition;
 
   @override
   Future<void> setUrl(String url, {Map<String, String>? headers, Duration? initialPosition}) async {
     lastUrl = url;
     setUrlCallCount++;
-    lastInitialPosition = initialPosition;
     emitState(_state.copyWith(
       processingState: AudioProcessingState.ready,
       duration: const Duration(seconds: 180),
@@ -263,27 +261,18 @@ class TestableExtractionService implements ExtractionService {
 /// interfaz, pero sus métodos son subclasseables.
 class _FakeRestoredSessionStorage extends PlayerSessionStorage {
   final List<SyncoraTrack> manualQueue;
-  final SyncoraTrack? currentTrack;
-  final List<SyncoraTrack> autoQueue;
-  final int positionSeconds;
-
-  _FakeRestoredSessionStorage({
-    required this.manualQueue,
-    this.currentTrack,
-    this.autoQueue = const [],
-    this.positionSeconds = 0,
-  });
+  _FakeRestoredSessionStorage({required this.manualQueue});
 
   @override
   Future<PlayerSessionData?> loadSession() async {
     return PlayerSessionData(
-      currentTrack: currentTrack,
+      currentTrack: null,
       currentOrigin: null,
       manualQueue: manualQueue,
-      autoQueue: autoQueue,
+      autoQueue: const [],
       originalContextTracks: const [],
       history: const [],
-      positionSeconds: positionSeconds,
+      positionSeconds: 0,
       repeatMode: SyncoraRepeatMode.off,
       shuffle: false,
     );
@@ -808,46 +797,6 @@ void main() {
       expect(history.length, 1,
           reason: 'la red de seguridad debe leer la posición en vivo del motor, no la del último tick procesado');
     });
-
-    // Investigación de estadísticas (root cause de "el PC no ve las
-    // escuchas del celular hasta tocar Actualizar ahí"): la subida a
-    // Supabase debe dispararse apenas se graba localmente, no solo en
-    // `syncOnStartup()`/el botón manual de Estadísticas.
-    test('onListenRecorded se dispara exactamente una vez al cruzar el umbral, no antes', () async {
-      var callCount = 0;
-      final trackedEngine = FakeAudioEngine();
-      final trackedController = SyncoraPlayerController(
-        engine: trackedEngine,
-        extractionService: TestableExtractionService(),
-        listeningHistoryDao: db.listeningHistoryDao,
-        onListenRecorded: () => callCount++,
-      );
-      trackedController.init();
-      addTearDown(trackedController.dispose);
-
-      final track = SyncoraTrack(id: 't1', title: 'Larga', duration: const Duration(seconds: 200));
-      await trackedController.setQueue([track], autoplay: true);
-
-      Future<void> tick(int s) async {
-        trackedEngine.emitState(
-          trackedController.state.engine.copyWith(playing: true, position: Duration(seconds: s)),
-        );
-        await pumpEventQueue();
-      }
-
-      for (var s = 1; s <= 29; s++) {
-        await tick(s);
-      }
-      expect(callCount, 0, reason: 'todavía no cruzó el umbral de 30s');
-
-      await tick(30);
-      expect(callCount, 1, reason: 'debe dispararse justo al cruzar el umbral');
-
-      for (var s = 31; s <= 40; s++) {
-        await tick(s);
-      }
-      expect(callCount, 1, reason: 'no debe repetirse para la misma instancia de reproducción');
-    });
   });
 
   // Fase 7.A: modelo de cola dual (manual + automática). Ver
@@ -1183,43 +1132,6 @@ void main() {
           reason: 'D-1: intercalar con IA no debe promover una pista manual a "sonando ahora"');
 
       restoredController.dispose();
-    });
-
-    test(
-        'la posición restaurada NO se aplica a la pista siguiente si el usuario pulsa "siguiente" '
-        'en vez de "play" tras abrir la app', () async {
-      // Escenario reportado: se cierra la app a mitad de una canción y al
-      // reabrirla se pulsa directamente "siguiente". La posición guardada
-      // pertenece SOLO a la pista restaurada, pero como se consumía en el
-      // siguiente arranque cualquiera, la pista nueva empezaba en ese mismo
-      // segundo (y los saltos silenciosos posteriores terminaban dejando el
-      // botón sin responder).
-      final engine = FakeAudioEngine();
-      final restored = SyncoraPlayerController(
-        engine: engine,
-        extractionService: TestableExtractionService(),
-        sessionStorage: _FakeRestoredSessionStorage(
-          manualQueue: const [],
-          currentTrack: const SyncoraTrack(id: 'restored', title: 'Restaurada'),
-          autoQueue: const [SyncoraTrack(id: 'next', title: 'Siguiente')],
-          positionSeconds: 42,
-        ),
-      );
-      restored.init();
-      await pumpEventQueue();
-
-      expect(restored.state.currentTrack?.id, 'restored');
-      expect(restored.state.engine.position, const Duration(seconds: 42),
-          reason: 'la barra debe mostrar el segundo guardado al abrir la app');
-
-      await restored.skipToNext();
-      await pumpEventQueue();
-
-      expect(restored.state.currentTrack?.id, 'next');
-      expect(engine.lastInitialPosition, isNull,
-          reason: 'la pista siguiente debe arrancar desde el principio, no en el segundo restaurado');
-
-      restored.dispose();
     });
 
     test('interleaveIntoAutoQueue con autoQueue vacía anexa todas las sugerencias al final', () async {

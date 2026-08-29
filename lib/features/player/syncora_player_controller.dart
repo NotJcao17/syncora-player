@@ -171,17 +171,6 @@ class SyncoraPlayerController extends ChangeNotifier {
     // alcanzable en la app real hacia ese estado, del que dependen las
     // pruebas de regresión de D-1 sobre `interleaveIntoAutoQueue`).
     PlayerSessionStorage? sessionStorage,
-    // Investigación de estadísticas (root cause de "PC no ve las escuchas
-    // del celular hasta tocar Actualizar en el celular"): antes, subir el
-    // historial a Supabase (`SyncService.syncListeningHistory`) solo pasaba
-    // en `syncOnStartup()` o al tocar "Actualizar" en Estadísticas -- nunca
-    // como reacción directa a grabar una escucha. Este callback desacopla la
-    // subida de cualquier pantalla/botón: se dispara (fire-and-forget, nunca
-    // bloquea la reproducción) apenas `_recordListenEntry` graba localmente
-    // con éxito. `SyncService.syncListeningHistory` ya tiene su propio
-    // cooldown corto (ver `sync_service.dart`) para no golpear la red en
-    // cada pista si el usuario escucha varias seguidas.
-    VoidCallback? onListenRecorded,
   })  : _engine = engine, // ignore: prefer_initializing_formals
         _extractionService = extractionService, // ignore: prefer_initializing_formals
         _deezerApi = deezerApi, // ignore: prefer_initializing_formals
@@ -191,7 +180,6 @@ class SyncoraPlayerController extends ChangeNotifier {
         _isConnectedGetter = isConnectedGetter, // ignore: prefer_initializing_formals
         _radioEnabledGetter = radioEnabledGetter, // ignore: prefer_initializing_formals
         _crossfadeDurationGetter = crossfadeDurationGetter, // ignore: prefer_initializing_formals
-        _onListenRecorded = onListenRecorded, // ignore: prefer_initializing_formals
         _sessionStorage = sessionStorage ?? PlayerSessionStorage();
 
   final AudioEngine _engine;
@@ -200,7 +188,6 @@ class SyncoraPlayerController extends ChangeNotifier {
   final DownloadedTrackDao? _downloadedTrackDao;
   final ListeningHistoryDao? _listeningHistoryDao;
   final RadioService? _radioService;
-  final VoidCallback? _onListenRecorded;
   final bool Function()? _isConnectedGetter;
   final bool Function()? _radioEnabledGetter;
 
@@ -346,26 +333,6 @@ class SyncoraPlayerController extends ChangeNotifier {
   StreamSubscription<String>? _engineLogSub;
   bool _disposed = false;
   int? _restoredPositionSeconds;
-  DateTime? _lastPositionSaveAt;
-
-  /// Id de la pista a la que pertenece [_restoredPositionSeconds].
-  ///
-  /// Sin esto, si el usuario abría la app y pulsaba "siguiente" en vez de
-  /// "play", la posición guardada de la pista restaurada la consumía la pista
-  /// SIGUIENTE, que arrancaba en ese mismo segundo.
-  String? _restoredPositionTrackId;
-
-  /// Lee y descarta la posición restaurada en el mismo paso — nunca debe
-  /// sobrevivir al arranque que la consume, ni aplicarse a otra pista.
-  Duration? _consumeRestoredPosition(SyncoraTrack track) {
-    final seconds = _restoredPositionSeconds;
-    final ownerId = _restoredPositionTrackId;
-    _restoredPositionSeconds = null;
-    _restoredPositionTrackId = null;
-    if (seconds == null || seconds <= 0) return null;
-    if (ownerId != null && ownerId != track.id) return null;
-    return Duration(seconds: seconds);
-  }
 
   SyncoraPlayerState _state = SyncoraPlayerState.initial;
 
@@ -407,7 +374,6 @@ class SyncoraPlayerController extends ChangeNotifier {
     String? activeContextId,
   }) async {
     _restoredPositionSeconds = null;
-    _restoredPositionTrackId = null;
     // 7.C.3: setQueue() es una intervención del usuario (nuevo contexto de
     // escucha) — no debe arrastrar un conteo de fallos lógicos de la sesión
     // de escucha anterior (ver docstring de `_consecutiveLogicalFailures`).
@@ -492,7 +458,6 @@ class SyncoraPlayerController extends ChangeNotifier {
     if (index < 0 || index >= sourceQueue.length) return;
 
     _restoredPositionSeconds = null;
-    _restoredPositionTrackId = null;
 
     final target = sourceQueue[index];
     final remaining = sourceQueue.sublist(index + 1);
@@ -582,13 +547,6 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// público, el guard las bloquearía a sí mismas (deadlock lógico) y la
   /// cascada de auto-skip se trabaría en el primer fallo.
   Future<void> _advanceAndPlay() async {
-    // Avanzar de pista invalida cualquier posición restaurada pendiente: era de
-    // la pista anterior. Si se dejaba puesta (por ejemplo, porque el camino
-    // offline retorna antes de consumirla), `_maybePersistPosition` dejaba de
-    // guardar la posición el resto de la sesión y `awaitingRestoredStart`
-    // congelaba la barra en un segundo viejo — esa rama no tiene vencimiento.
-    _restoredPositionSeconds = null;
-    _restoredPositionTrackId = null;
     final advanced = _advance();
     if (!advanced) {
       // Fin de ambas colas sin repeat-all posible: intentar Autoplay con
@@ -1140,7 +1098,6 @@ bool get _isTestEnv {
     // dejaba `_restoredPositionSeconds` seteado sin destino.
     if (session.currentTrack != null) {
       _restoredPositionSeconds = session.positionSeconds;
-      _restoredPositionTrackId = session.currentTrack!.id;
     }
     final restoredDuration = session.currentTrack?.duration ?? Duration.zero;
 
@@ -1257,12 +1214,6 @@ bool get _isTestEnv {
       }
     }
 
-    // Nada descargado en ninguna de las dos colas: termina en "nada sonando",
-    // deliberadamente SIN aviso ni marca en gris (decisión de la Fase 7.C,
-    // fijada por test). Anotado por la revisión de código: desde fuera este
-    // silencio es difícil de distinguir de "el botón dejó de funcionar", así
-    // que si se quiere avisar, es un cambio de diseño a decidir aparte — no
-    // algo que deba colarse en un fix de otra cosa.
     await _engine.stop();
     _state = _state.copyWith(
       clearError: true,
@@ -1376,16 +1327,6 @@ bool get _isTestEnv {
         // y el camino abierto para cuando exista una fuente barata.
         genre: track.genre,
       );
-      // Fire-and-forget: dispara la subida a Supabase apenas se graba la
-      // escucha localmente, sin esperar (ni bloquear la reproducción) y sin
-      // depender de que el usuario visite ninguna pantalla en particular.
-      // `onListenRecorded` (inyectado desde `player_providers.dart`) ya
-      // filtra modo local/errores de red por su cuenta.
-      try {
-        _onListenRecorded?.call();
-      } catch (e) {
-        _log('[Listen] Error disparando sync reactivo de historial: $e');
-      }
     } catch (e) {
       _log('[Listen] Error registrando escucha en el historial: $e');
     }
@@ -1739,7 +1680,10 @@ bool get _isTestEnv {
       _onPlaybackStartedSuccessfully();
       _currentPlaybackIsLocal = true;
 
-      final initialPos = _consumeRestoredPosition(track);
+      final initialPos = (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0)
+          ? Duration(seconds: _restoredPositionSeconds!)
+          : null;
+      _restoredPositionSeconds = null;
 
       if (useCrossfade) {
         _log('[Play] Crossfade a descarga local: $localPath (${crossfadeDuration.inSeconds}s)');
@@ -1796,7 +1740,10 @@ bool get _isTestEnv {
         // actual no califica como origen local para un crossfade.
         _currentPlaybackIsLocal = false;
         try {
-          final initialPos = _consumeRestoredPosition(track);
+          final initialPos = (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0)
+              ? Duration(seconds: _restoredPositionSeconds!)
+              : null;
+          _restoredPositionSeconds = null;
 
           await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
 
@@ -1914,28 +1861,8 @@ bool get _isTestEnv {
 
     _trackListenProgress(engineState);
 
-    // Sesión restaurada y todavía sin cargar nada en el motor: sus emisiones
-    // (la que dispara `setVolume()` en `_restoreSession`, por ejemplo) traen
-    // posición 0 y pisaban el segundo restaurado, así que la barra aparecía en
-    // 0:00 al abrir la app aunque luego reanudara bien.
-    //
-    // Acotado a `idle` a propósito: ahí no hay reproducción real que se pueda
-    // tapar. Hubo también una ventana de 3s tras pulsar play para disimular el
-    // parpadeo del arranque, y se quitó — si el usuario pulsaba "siguiente"
-    // dentro de esos 3s, la barra se quedaba en la posición vieja (retrocedía
-    // ~1s y se congelaba) en vez de seguir a la pista nueva. El parpadeo es
-    // cosmético; congelar la barra en un cambio de pista no lo es.
-    final suppressZero = _restoredPositionSeconds != null &&
-        engineState.processingState == AudioProcessingState.idle &&
-        engineState.position == Duration.zero &&
-        _state.engine.position > Duration.zero;
-    final effectiveEngineState =
-        suppressZero ? engineState.copyWith(position: _state.engine.position) : engineState;
-
-    _state = _state.copyWith(engine: effectiveEngineState);
+    _state = _state.copyWith(engine: engineState);
     _notify();
-
-    _maybePersistPosition(effectiveEngineState);
 
     // Fase 7.D (rediseño): revisa en cada tick si corresponde disparar un
     // crossfade preventivo antes de que la pista actual llegue a su fin
@@ -1964,25 +1891,6 @@ bool get _isTestEnv {
       // _handleExtractionError.
       _advanceAndPlay();
     }
-  }
-
-  /// La sesión solo se persistía en eventos discretos (play/pause/next/seek…),
-  /// nunca mientras la pista simplemente avanzaba. Al cerrar la app, entonces,
-  /// el segundo guardado era el del último de esos eventos y no donde iba la
-  /// reproducción de verdad: al reabrir la barra aparecía en un punto anterior
-  /// (o en 0, si el último evento había sido el play inicial). Persistir en
-  /// cada tick sería volver al disco varias veces por segundo, así que se
-  /// hace como mucho una vez cada 5s.
-  void _maybePersistPosition(AudioEngineState engineState) {
-    if (!engineState.playing) return;
-    // Sesión restaurada aún sin arrancar: `_state.engine.position` es el valor
-    // restaurado, no uno real del motor.
-    if (_restoredPositionSeconds != null) return;
-    final now = DateTime.now();
-    final last = _lastPositionSaveAt;
-    if (last != null && now.difference(last) < const Duration(seconds: 5)) return;
-    _lastPositionSaveAt = now;
-    _saveSession();
   }
 
   Future<void> _onComplete() async {
