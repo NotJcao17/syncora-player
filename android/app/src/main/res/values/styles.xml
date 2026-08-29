@@ -24,8 +24,8 @@
              defecto un scrim semitransparente negro/blanco detras de la barra
              de estado y de navegacion para mantener contraste con los iconos.
              Sobre un fondo casi negro (AppTheme.background) ese scrim es
-             indistinguible de una barra solida negra -- por eso el intento
-             anterior (solo el lado Dart) no se veia distinto para el tester. -->
+             indistinguible de una barra solida negra, por eso el intento
+             anterior (solo el lado Dart) no se veia distinto. -->
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
