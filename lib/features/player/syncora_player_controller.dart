@@ -347,6 +347,7 @@ class SyncoraPlayerController extends ChangeNotifier {
   StreamSubscription<String>? _engineLogSub;
   bool _disposed = false;
   int? _restoredPositionSeconds;
+  DateTime? _lastPositionSaveAt;
 
   SyncoraPlayerState _state = SyncoraPlayerState.initial;
 
@@ -1950,6 +1951,8 @@ bool get _isTestEnv {
     _state = _state.copyWith(engine: effectiveEngineState);
     _notify();
 
+    _maybePersistPosition(effectiveEngineState);
+
     // Fase 7.D (rediseño): revisa en cada tick si corresponde disparar un
     // crossfade preventivo antes de que la pista actual llegue a su fin
     // natural — ver docstring de `_maybeCrossfadeProactively`.
@@ -1977,6 +1980,26 @@ bool get _isTestEnv {
       // _handleExtractionError.
       _advanceAndPlay();
     }
+  }
+
+  /// La sesión solo se persistía en eventos discretos (play/pause/next/seek…),
+  /// nunca mientras la pista simplemente avanzaba. Al cerrar la app, entonces,
+  /// el segundo guardado era el del último de esos eventos y no donde iba la
+  /// reproducción de verdad: al reabrir la barra aparecía en un punto anterior
+  /// (o en 0, si el último evento había sido el play inicial). Persistir en
+  /// cada tick sería volver al disco varias veces por segundo, así que se
+  /// hace como mucho una vez cada 5s.
+  void _maybePersistPosition(AudioEngineState engineState) {
+    if (!engineState.playing) return;
+    // Todavía sin consumir la posición restaurada: `_state.engine.position`
+    // es el valor restaurado, no uno real del motor — guardarlo no aporta
+    // nada y arriesga pisarlo con un frame transicional.
+    if (_restoredPositionSeconds != null) return;
+    final now = DateTime.now();
+    final last = _lastPositionSaveAt;
+    if (last != null && now.difference(last) < const Duration(seconds: 5)) return;
+    _lastPositionSaveAt = now;
+    _saveSession();
   }
 
   Future<void> _onComplete() async {

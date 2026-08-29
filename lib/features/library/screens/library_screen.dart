@@ -665,10 +665,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           ),
                         ),
                         Tooltip(
-                          message: 'Importar playlist (CSV/TXT)',
+                          // Importar resuelve cada pista del CSV contra Deezer,
+                          // así que sin conexión no puede hacer nada útil.
+                          message: isConnected ? 'Importar playlist (CSV/TXT)' : 'Sin conexión',
                           child: IconButton(
-                            icon: Icon(AppIcons.broken(SolarIcons.Import), color: AppTheme.primary, size: 20),
-                            onPressed: () => _showImportDialog(context),
+                            icon: Icon(
+                              AppIcons.broken(SolarIcons.Import),
+                              color: isConnected ? AppTheme.primary : AppTheme.muted,
+                              size: 20,
+                            ),
+                            onPressed: isConnected ? () => _showImportDialog(context) : null,
                           ),
                         ),
                         Tooltip(

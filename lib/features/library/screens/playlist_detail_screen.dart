@@ -2010,6 +2010,10 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
     final isLoading = _isRefreshing || (_manualRecommendations == null && recommendationsAsync.isLoading);
     final baseRecommendations = _manualRecommendations ?? recommendationsAsync.value ?? const [];
     final recommendations = _visibleRecommendations(baseRecommendations);
+    // Toda esta sección vive de Deezer: generar el lote, resolver la pista y
+    // agregarla a la playlist son operaciones de red, así que sin conexión
+    // los controles se apagan en vez de fallar al tocarlos.
+    final isConnected = ref.watch(isConnectedProvider).value ?? true;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -2060,7 +2064,7 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
                     ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary))
                     : Icon(AppIcons.broken(SolarIcons.Refresh), size: 16),
                 label: const Text('Actualizar', style: TextStyle(fontSize: 12)),
-                onPressed: isLoading ? null : _refreshRecommendations,
+                onPressed: (isLoading || !isConnected) ? null : _refreshRecommendations,
               ),
             ],
           ),
@@ -2144,14 +2148,20 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
                           color: isThisPreviewPlaying ? AppTheme.accent : AppTheme.primary,
                           size: 20,
                         ),
-                        tooltip: isThisPreviewPlaying ? 'Pausar previsualización' : 'Escuchar 30s',
-                        onPressed: () => _togglePreview(track),
+                        tooltip: isThisPreviewPlaying
+                            ? 'Pausar previsualización'
+                            : (isConnected ? 'Escuchar 30s' : 'Sin conexión'),
+                        onPressed: isConnected ? () => _togglePreview(track) : null,
                       ),
                       // Botón agregar a playlist
                       IconButton(
-                        icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
-                        tooltip: 'Agregar a la playlist',
-                        onPressed: () => _addRecommendedTrack(track),
+                        icon: Icon(
+                          AppIcons.broken(SolarIcons.AddCircle),
+                          color: isConnected ? AppTheme.primary : AppTheme.muted,
+                          size: 22,
+                        ),
+                        tooltip: isConnected ? 'Agregar a la playlist' : 'Sin conexión',
+                        onPressed: isConnected ? () => _addRecommendedTrack(track) : null,
                       ),
                     ],
                   ),
