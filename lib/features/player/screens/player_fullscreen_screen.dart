@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
+import '../../library/services/like_track_service.dart';
 import '../../../core/widgets/track_cover_image.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../audio_engine/audio_engine_state.dart';
@@ -65,24 +66,18 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
   }
 
   Future<void> _toggleLike(SyncoraTrack track) async {
-    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
-    final dao = ref.read(playlistDaoProvider);
-    final isLikedNow = await dao.toggleLikeTrack(
-      trackId: trackIdInt,
-      artistId: 0,
-      albumId: 0,
-      title: track.title,
-      artistName: track.artist,
-      albumName: track.album ?? '',
-      coverUrl: track.coverUrl,
-      durationMs: (track.duration ?? Duration.zero).inMilliseconds,
-    );
+    // Antes esto solo escribía en Drift: el "me gusta" nunca subía a Supabase
+    // y el siguiente sync lo podaba. Ver `toggleTrackLike`.
+    final result = await toggleTrackLike(ref, track);
 
     if (mounted) {
-      setState(() => _isLiked = isLikedNow);
+      setState(() => _isLiked = result.isLiked);
+      if (result.remoteFailed) {
+        AppToast.show(context, message: 'La playlist ya no existe en la nube');
+      }
       AppToast.show(
         context,
-        message: isLikedNow ? 'Se agregó a Tus me gusta.' : 'Se eliminó de Tus me gusta.',
+        message: result.isLiked ? 'Se agregó a Tus me gusta.' : 'Se eliminó de Tus me gusta.',
       );
     }
   }

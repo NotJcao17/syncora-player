@@ -24,6 +24,7 @@ import 'app_bottom_sheet.dart';
 import 'app_toast.dart';
 import 'error_state.dart';
 import 'playlist_cover_widget.dart';
+import '../../features/library/services/like_track_service.dart';
 import 'track_cover_image.dart';
 
 /// Menú contextual de 3 puntos/click derecho de una pista -- extraído de
@@ -174,7 +175,6 @@ class TrackContextMenu {
     VoidCallback? onRemove,
   }) async {
     final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
-    final dao = ref.read(playlistDaoProvider);
 
     if (value == 'artist') {
       if ((track.artistId ?? 0) != 0) {
@@ -221,94 +221,14 @@ class TrackContextMenu {
     } else if (value == 'other_versions') {
       showOtherVersionsModal(context, track);
     } else if (value == 'like') {
-      final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), track);
-      final isLiked = await dao.toggleLikeTrack(
-        trackId: trackIdInt,
-        artistId: track.artistId ?? 0,
-        albumId: track.albumId ?? 0,
-        title: track.title,
-        artistName: track.artist,
-        albumName: track.album ?? '',
-        coverUrl: track.coverUrl,
-        durationMs: (track.duration ?? Duration.zero).inMilliseconds,
-        contributorsJson: SyncoraArtistRef.encodeList(contributors),
-      );
-      final likedPlaylist = await dao.getLikedPlaylist();
-      final wasLocalOnly = likedPlaylist.remoteId == null;
-      var likedRemoteId = likedPlaylist.remoteId;
-      final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-
-      if (likedRemoteId == null) {
-        try {
-          final res = await supabaseRepo.getOrCreateLikedPlaylist();
-          likedRemoteId = res['id']?.toString();
-        } catch (_) {}
-      }
-
-      var likedBackfillOk = true;
-      if (wasLocalOnly && likedRemoteId != null) {
-        try {
-          final existingTracks = await dao.getTracksOrdered(likedPlaylist.id);
-          if (existingTracks.isNotEmpty) {
-            await supabaseRepo.addTracksToPlaylist(
-              likedRemoteId,
-              existingTracks
-                  .map((t) => {
-                        'track_id': t.trackId,
-                        'artist_id': t.artistId,
-                        'album_id': t.albumId,
-                        'title': t.title,
-                        'artist_name': t.artistName,
-                        'album_name': t.albumName,
-                        'cover_url': t.coverUrl,
-                        'duration_ms': t.durationMs,
-                        if (t.genre != null) 'genre': t.genre,
-                        if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
-                      })
-                  .toList(),
-            );
-          }
-        } catch (_) {
-          likedBackfillOk = false;
-        }
-      }
-
-      if (likedRemoteId != null) {
-        if (!wasLocalOnly) {
-          try {
-            if (isLiked) {
-              await supabaseRepo.addTrackToPlaylist(likedRemoteId, {
-                'track_id': trackIdInt,
-                'artist_id': track.artistId ?? 0,
-                'album_id': track.albumId ?? 0,
-                'title': track.title,
-                'artist_name': track.artist,
-                'album_name': track.album ?? '',
-                'cover_url': track.coverUrl,
-                'duration_ms': (track.duration ?? Duration.zero).inMilliseconds,
-                'genre': track.genre,
-                if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
-              });
-            } else {
-              await supabaseRepo.removeTrackFromPlaylist(likedRemoteId, trackIdInt);
-            }
-          } catch (_) {
-            if (context.mounted) {
-              AppToast.show(context, message: 'La playlist ya no existe en la nube');
-            }
-          }
-        }
-
-        if (wasLocalOnly && likedBackfillOk) {
-          try {
-            await dao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(likedRemoteId)));
-          } catch (_) {}
-        }
+      final result = await toggleTrackLike(ref, track);
+      if (context.mounted && result.remoteFailed) {
+        AppToast.show(context, message: 'La playlist ya no existe en la nube');
       }
       if (context.mounted) {
         AppToast.show(
           context,
-          message: isLiked ? 'Se agregó a Tus me gusta.' : 'Se eliminó de Tus me gusta.',
+          message: result.isLiked ? 'Se agregó a Tus me gusta.' : 'Se eliminó de Tus me gusta.',
         );
       }
     } else if (value == 'playlist') {

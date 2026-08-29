@@ -10,6 +10,8 @@ import '../../core/utils/connectivity_service.dart';
 import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../data/local_db/daos/playlist_dao.dart';
+import '../../data/sync/sync_service.dart';
+import '../auth/local_mode_provider.dart';
 import 'audio_engine/audio_engine_factory.dart';
 import 'os_controls/syncora_audio_handler.dart';
 import 'os_controls/windows_media_controls.dart';
@@ -68,6 +70,14 @@ final syncoraPlayerControllerProvider =
     isConnectedGetter: () => ref.read(isConnectedProvider).value ?? true,
     radioEnabledGetter: () => ref.read(radioEnabledProvider),
     crossfadeDurationGetter: () => ref.read(crossfadeDurationProvider),
+    onListenRecorded: () {
+      // Sube la escucha apenas se graba: antes solo se subía en
+      // `syncOnStartup()` o al refrescar Estadísticas, por eso lo escuchado en
+      // el celular no aparecía en el PC hasta abrir Estadísticas en el celular.
+      // En modo local no hay nada que subir.
+      if (ref.read(localModeProvider)) return;
+      ref.read(syncServiceProvider).pushListeningHistoryIfDue();
+    },
   );
 
   controller.init();
@@ -104,16 +114,6 @@ void _initAndroidAudioService(SyncoraPlayerController controller, [PlaylistDao? 
       androidNotificationChannelId: 'com.syncora.player',
       androidNotificationChannelName: 'Syncora Player',
       androidNotificationOngoing: true,
-      // Ítem 4 (QA, pendiente de verificar en hardware real): Android exige
-      // que el ícono chico de la notificación/lockscreen sea monocromo (solo
-      // alpha), no full-color -- `mipmap/ic_launcher` es el ícono a color de
-      // la app. En algunas versiones de Android esto hace que el sistema
-      // dibuje un ícono en blanco o directamente lo omita ("app icon
-      // missing" reportado por QA). No se generó acá un drawable monocromo
-      // dedicado (`android/app/src/main/res/drawable/ic_stat_*`) porque
-      // requiere una silueta de marca real, no algo que un agente sin acceso
-      // a los assets de diseño deba inventar -- queda pendiente para un
-      // humano con el arte fuente.
       // Android exige que el icono chico de la notificacion sea monocromo
       // (solo alfa): con `mipmap/ic_launcher`, que es a color, el sistema lo
       // dibujaba como un cuadro blanco o directamente lo omitia. El proyecto ya

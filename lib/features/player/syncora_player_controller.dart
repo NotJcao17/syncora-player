@@ -165,6 +165,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     bool Function()? isConnectedGetter,
     bool Function()? radioEnabledGetter,
     Duration Function()? crossfadeDurationGetter,
+    VoidCallback? onListenRecorded,
     // Inyectable solo para tests (ver `syncora_player_controller_test.dart`,
     // grupo "Fase 7.F.2" -- un doble que devuelve una sesión restaurada con
     // `currentTrack: null` y `manualQueue` no vacía, el único camino
@@ -180,6 +181,7 @@ class SyncoraPlayerController extends ChangeNotifier {
         _isConnectedGetter = isConnectedGetter, // ignore: prefer_initializing_formals
         _radioEnabledGetter = radioEnabledGetter, // ignore: prefer_initializing_formals
         _crossfadeDurationGetter = crossfadeDurationGetter, // ignore: prefer_initializing_formals
+        _onListenRecorded = onListenRecorded, // ignore: prefer_initializing_formals
         _sessionStorage = sessionStorage ?? PlayerSessionStorage();
 
   final AudioEngine _engine;
@@ -195,6 +197,10 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// off/2s/4s/6s). `null` o `Duration.zero` == "off" — mismo default
   /// conservador que `crossfadeDurationProvider`.
   final Duration Function()? _crossfadeDurationGetter;
+
+  /// Se dispara al registrar una escucha, para subirla a la nube en el momento
+  /// (ver `player_providers.dart`).
+  final VoidCallback? _onListenRecorded;
 
   /// ¿La pista que está sonando AHORA MISMO se cargó desde descarga local
   /// (en vez de streaming)? Se actualiza justo después de arrancar
@@ -1327,6 +1333,16 @@ bool get _isTestEnv {
         // y el camino abierto para cuando exista una fuente barata.
         genre: track.genre,
       );
+      // Sin esto, la escucha quedaba solo en Drift hasta el siguiente arranque
+      // o hasta que el usuario abriera Estadísticas EN ESE MISMO dispositivo:
+      // por eso el PC no veía lo escuchado en el celular. Fire-and-forget y con
+      // su propio try/catch — un fallo de red nunca debe afectar la
+      // reproducción.
+      try {
+        _onListenRecorded?.call();
+      } catch (e) {
+        _log('[Listen] Error disparando sync de historial: $e');
+      }
     } catch (e) {
       _log('[Listen] Error registrando escucha en el historial: $e');
     }
