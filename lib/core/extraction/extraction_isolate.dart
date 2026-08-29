@@ -41,8 +41,6 @@ class ExtractionIsolate {
   SendPort? _isolateSendPort;
   final Map<String, Completer<ExtractionResult>> _pendingRequests = {};
   ReceivePort? _mainReceivePort;
-  ReceivePort? _errorPort;
-  ReceivePort? _exitPort;
   Completer<void>? _spawnCompleter;
   final StreamController<String> _logController = StreamController<String>.broadcast();
 
@@ -78,26 +76,6 @@ class ExtractionIsolate {
       }
     });
 
-    // Si el isolate muere (excepción no capturada en su loop, o Android lo mata
-    // por memoria), sin estos puertos nadie se enteraba: las peticiones en
-    // vuelo quedaban esperando para siempre y el reproductor no podía volver a
-    // avanzar de pista. Se marca el puerto como caído para que la próxima
-    // petición vuelva a levantarlo.
-    // `_spawnCompleter` también se limpia: `spawn()` devuelve temprano el
-    // completer existente si no es nulo, así que dejarlo puesto haría que la
-    // siguiente petición creyera haber relanzado el isolate y luego reventara
-    // en el `_isolateSendPort!`.
-    void markDead(String reason) {
-      _isolateSendPort = null;
-      _spawnCompleter = null;
-      _failAllPending(reason);
-    }
-
-    _errorPort = ReceivePort()
-      ..listen((message) => markDead('El proceso de extracción falló: $message'));
-    _exitPort = ReceivePort()
-      ..listen((_) => markDead('El proceso de extracción terminó inesperadamente.'));
-
     _isolate = await Isolate.spawn(
       _isolateEntryPoint,
       _IsolateInitMessage(
@@ -105,22 +83,10 @@ class ExtractionIsolate {
         mainSendPort: _mainReceivePort!.sendPort,
         jsBundle: jsBundle,
       ),
-      onError: _errorPort!.sendPort,
-      onExit: _exitPort!.sendPort,
     );
 
     return _spawnCompleter!.future;
   }
-
-  /// Techo duro para una petición al isolate.
-  ///
-  /// Generoso a propósito: el peor caso legítimo encadena varios intentos de
-  /// búsqueda y extracción con sus propios timeouts. Lo que corta es el caso
-  /// en el que la respuesta NO va a llegar nunca — el isolate murió, o el
-  /// mensaje se perdió. Sin esto, el `Future` quedaba pendiente para siempre y,
-  /// como `skipToNext()` lo espera con el guard `_isTransitioning` puesto, el
-  /// botón "siguiente" quedaba muerto por el resto de la vida del proceso.
-  static const Duration requestTimeout = Duration(seconds: 120);
 
   Future<ExtractionResult> request(ExtractionRequest request) async {
     if (_isolateSendPort == null) {
@@ -132,34 +98,7 @@ class ExtractionIsolate {
 
     _isolateSendPort!.send(request);
 
-    return completer.future.timeout(
-      requestTimeout,
-      onTimeout: () {
-        _pendingRequests.remove(request.requestId);
-        return ExtractionFailure(
-          requestId: request.requestId,
-          error: ExtractionError.networkError,
-          message: 'La extracción no respondió a tiempo.',
-        );
-      },
-    );
-  }
-
-  /// Completa con error todo lo que quedó esperando cuando el isolate deja de
-  /// responder (excepción no capturada en su loop, o el sistema lo mata por
-  /// memoria en Android). Sin esto esas peticiones no se resolvían jamás.
-  void _failAllPending(String reason) {
-    if (_pendingRequests.isEmpty) return;
-    final pending = Map.of(_pendingRequests);
-    _pendingRequests.clear();
-    for (final entry in pending.entries) {
-      if (entry.value.isCompleted) continue;
-      entry.value.complete(ExtractionFailure(
-        requestId: entry.key,
-        error: ExtractionError.unknownError,
-        message: reason,
-      ));
-    }
+    return completer.future;
   }
 
   void resetEngine() {
@@ -169,10 +108,6 @@ class ExtractionIsolate {
   void dispose() {
     _logController.close();
     _mainReceivePort?.close();
-    _errorPort?.close();
-    _exitPort?.close();
-    _errorPort = null;
-    _exitPort = null;
     _isolate?.kill(priority: Isolate.immediate);
     _isolate = null;
     _isolateSendPort = null;
@@ -335,28 +270,12 @@ class ExtractionIsolate {
     // Escuchar peticiones enviadas desde el Main Isolate
     await for (final message in childReceivePort) {
       if (message is ExtractionRequest) {
-        // El try/catch es lo que mantiene vivo este loop. `_processExtraction`
-        // tiene caminos que lanzan (por ejemplo, un `cast<Map>` perezoso sobre
-        // resultados de búsqueda con una forma inesperada): una excepción acá
-        // terminaba el `await for`, el isolate dejaba de atender peticiones
-        // PARA SIEMPRE y el reproductor no podía volver a cambiar de pista.
-        // Además hay que responder siempre algo: quien pidió está esperando.
-        ExtractionResult result;
-        try {
-          result = await _processExtraction(
-            request: message,
-            jsRuntime: jsRuntime,
-            retryPolicy: retryPolicy,
-            sendLog: sendLog,
-          );
-        } catch (e, st) {
-          sendLog('[IsolateJS] Error no controlado procesando ${message.requestId}: $e\n$st');
-          result = ExtractionFailure(
-            requestId: message.requestId,
-            error: ExtractionError.unknownError,
-            message: 'Error interno de extracción: $e',
-          );
-        }
+        final result = await _processExtraction(
+          request: message,
+          jsRuntime: jsRuntime,
+          retryPolicy: retryPolicy,
+          sendLog: sendLog,
+        );
         initMessage.mainSendPort.send(result);
       } else if (message == 'RESET_ENGINE') {
         sendLog('[IsolateJS] Reiniciando motor JS...');

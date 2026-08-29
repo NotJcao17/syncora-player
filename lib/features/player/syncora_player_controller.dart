@@ -348,18 +348,6 @@ class SyncoraPlayerController extends ChangeNotifier {
   int? _restoredPositionSeconds;
   DateTime? _lastPositionSaveAt;
 
-  /// Ventana breve, arrancada al consumir una posición restaurada, durante la
-  /// cual un `position == 0` del motor se considera un frame transicional
-  /// (`buffering`/`loading` antes de procesar el seek) y no se deja pisar la
-  /// posición ya restaurada.
-  ///
-  /// Antes esto se derivaba de `_restoredPositionSeconds != null`, que se
-  /// limpiaba recién al final del arranque: si ese campo quedaba con valor
-  /// (cualquier camino que no llegara a limpiarlo), TODA pista siguiente
-  /// arrancaba en el segundo viejo, la barra se congelaba y la sesión dejaba
-  /// de guardarse. Acotarlo por tiempo hace imposible que se filtre.
-  DateTime? _suppressZeroPositionUntil;
-
   /// Id de la pista a la que pertenece [_restoredPositionSeconds].
   ///
   /// Sin esto, si el usuario abría la app y pulsaba "siguiente" en vez de
@@ -376,7 +364,6 @@ class SyncoraPlayerController extends ChangeNotifier {
     _restoredPositionTrackId = null;
     if (seconds == null || seconds <= 0) return null;
     if (ownerId != null && ownerId != track.id) return null;
-    _suppressZeroPositionUntil = DateTime.now().add(const Duration(seconds: 3));
     return Duration(seconds: seconds);
   }
 
@@ -1927,32 +1914,21 @@ bool get _isTestEnv {
 
     _trackListenProgress(engineState);
 
-    // Mientras haya una posición de sesión restaurada pendiente de consumir
-    // (ver `_restoredPositionSeconds`), el motor real todavía no llegó al
-    // punto restaurado — cualquier evento suyo con posición 0 (el de
-    // `setVolume()` en `_restoreSession()`, pero también los estados
-    // transicionales `buffering`/`loading` que el motor emite justo al
-    // arrancar Play, ANTES de procesar el seek al segundo guardado) no debe
-    // pisar visualmente la posición ya restaurada en `_state.engine.position`.
-    // La ventana es corta y con vencimiento propio (ver
-    // `_suppressZeroPositionUntil`): pasados los 3s, o al reproducir cualquier
-    // otra pista, un `position == 0` vuelve a ser un 0 legítimo.
-    final suppressUntil = _suppressZeroPositionUntil;
-    final withinPlayWindow = suppressUntil != null && DateTime.now().isBefore(suppressUntil);
     // Sesión restaurada y todavía sin cargar nada en el motor: sus emisiones
     // (la que dispara `setVolume()` en `_restoreSession`, por ejemplo) traen
     // posición 0 y pisaban el segundo restaurado, así que la barra aparecía en
-    // 0:00 al abrir la app aunque luego reanudara bien. Acotado a `idle` y a
-    // que la posición restaurada siga sin consumirse — y como ahora se consume
-    // y descarta en el mismo paso, no puede sobrevivir a la pista que la usa.
-    final awaitingRestoredStart = _restoredPositionSeconds != null &&
-        engineState.processingState == AudioProcessingState.idle;
-    final suppressZero = engineState.position == Duration.zero &&
-        _state.engine.position > Duration.zero &&
-        (withinPlayWindow || awaitingRestoredStart);
-    if (suppressUntil != null && !withinPlayWindow) {
-      _suppressZeroPositionUntil = null;
-    }
+    // 0:00 al abrir la app aunque luego reanudara bien.
+    //
+    // Acotado a `idle` a propósito: ahí no hay reproducción real que se pueda
+    // tapar. Hubo también una ventana de 3s tras pulsar play para disimular el
+    // parpadeo del arranque, y se quitó — si el usuario pulsaba "siguiente"
+    // dentro de esos 3s, la barra se quedaba en la posición vieja (retrocedía
+    // ~1s y se congelaba) en vez de seguir a la pista nueva. El parpadeo es
+    // cosmético; congelar la barra en un cambio de pista no lo es.
+    final suppressZero = _restoredPositionSeconds != null &&
+        engineState.processingState == AudioProcessingState.idle &&
+        engineState.position == Duration.zero &&
+        _state.engine.position > Duration.zero;
     final effectiveEngineState =
         suppressZero ? engineState.copyWith(position: _state.engine.position) : engineState;
 
