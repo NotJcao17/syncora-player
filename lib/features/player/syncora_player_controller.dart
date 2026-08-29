@@ -361,12 +361,22 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// de guardarse. Acotarlo por tiempo hace imposible que se filtre.
   DateTime? _suppressZeroPositionUntil;
 
+  /// Id de la pista a la que pertenece [_restoredPositionSeconds].
+  ///
+  /// Sin esto, si el usuario abría la app y pulsaba "siguiente" en vez de
+  /// "play", la posición guardada de la pista restaurada la consumía la pista
+  /// SIGUIENTE, que arrancaba en ese mismo segundo.
+  String? _restoredPositionTrackId;
+
   /// Lee y descarta la posición restaurada en el mismo paso — nunca debe
-  /// sobrevivir al arranque que la consume.
-  Duration? _consumeRestoredPosition() {
+  /// sobrevivir al arranque que la consume, ni aplicarse a otra pista.
+  Duration? _consumeRestoredPosition(SyncoraTrack track) {
     final seconds = _restoredPositionSeconds;
+    final ownerId = _restoredPositionTrackId;
     _restoredPositionSeconds = null;
+    _restoredPositionTrackId = null;
     if (seconds == null || seconds <= 0) return null;
+    if (ownerId != null && ownerId != track.id) return null;
     _suppressZeroPositionUntil = DateTime.now().add(const Duration(seconds: 3));
     return Duration(seconds: seconds);
   }
@@ -411,6 +421,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     String? activeContextId,
   }) async {
     _restoredPositionSeconds = null;
+    _restoredPositionTrackId = null;
     // 7.C.3: setQueue() es una intervención del usuario (nuevo contexto de
     // escucha) — no debe arrastrar un conteo de fallos lógicos de la sesión
     // de escucha anterior (ver docstring de `_consecutiveLogicalFailures`).
@@ -495,6 +506,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     if (index < 0 || index >= sourceQueue.length) return;
 
     _restoredPositionSeconds = null;
+    _restoredPositionTrackId = null;
 
     final target = sourceQueue[index];
     final remaining = sourceQueue.sublist(index + 1);
@@ -1135,6 +1147,7 @@ bool get _isTestEnv {
     // dejaba `_restoredPositionSeconds` seteado sin destino.
     if (session.currentTrack != null) {
       _restoredPositionSeconds = session.positionSeconds;
+      _restoredPositionTrackId = session.currentTrack!.id;
     }
     final restoredDuration = session.currentTrack?.duration ?? Duration.zero;
 
@@ -1727,7 +1740,7 @@ bool get _isTestEnv {
       _onPlaybackStartedSuccessfully();
       _currentPlaybackIsLocal = true;
 
-      final initialPos = _consumeRestoredPosition();
+      final initialPos = _consumeRestoredPosition(track);
 
       if (useCrossfade) {
         _log('[Play] Crossfade a descarga local: $localPath (${crossfadeDuration.inSeconds}s)');
@@ -1784,7 +1797,7 @@ bool get _isTestEnv {
         // actual no califica como origen local para un crossfade.
         _currentPlaybackIsLocal = false;
         try {
-          final initialPos = _consumeRestoredPosition();
+          final initialPos = _consumeRestoredPosition(track);
 
           await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
 

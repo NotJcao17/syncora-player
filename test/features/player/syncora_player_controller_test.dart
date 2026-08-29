@@ -59,11 +59,13 @@ class FakeAudioEngine implements AudioEngine {
 
   String? lastUrl;
   int setUrlCallCount = 0;
+  Duration? lastInitialPosition;
 
   @override
   Future<void> setUrl(String url, {Map<String, String>? headers, Duration? initialPosition}) async {
     lastUrl = url;
     setUrlCallCount++;
+    lastInitialPosition = initialPosition;
     emitState(_state.copyWith(
       processingState: AudioProcessingState.ready,
       duration: const Duration(seconds: 180),
@@ -261,18 +263,27 @@ class TestableExtractionService implements ExtractionService {
 /// interfaz, pero sus métodos son subclasseables.
 class _FakeRestoredSessionStorage extends PlayerSessionStorage {
   final List<SyncoraTrack> manualQueue;
-  _FakeRestoredSessionStorage({required this.manualQueue});
+  final SyncoraTrack? currentTrack;
+  final List<SyncoraTrack> autoQueue;
+  final int positionSeconds;
+
+  _FakeRestoredSessionStorage({
+    required this.manualQueue,
+    this.currentTrack,
+    this.autoQueue = const [],
+    this.positionSeconds = 0,
+  });
 
   @override
   Future<PlayerSessionData?> loadSession() async {
     return PlayerSessionData(
-      currentTrack: null,
+      currentTrack: currentTrack,
       currentOrigin: null,
       manualQueue: manualQueue,
-      autoQueue: const [],
+      autoQueue: autoQueue,
       originalContextTracks: const [],
       history: const [],
-      positionSeconds: 0,
+      positionSeconds: positionSeconds,
       repeatMode: SyncoraRepeatMode.off,
       shuffle: false,
     );
@@ -1172,6 +1183,43 @@ void main() {
           reason: 'D-1: intercalar con IA no debe promover una pista manual a "sonando ahora"');
 
       restoredController.dispose();
+    });
+
+    test(
+        'la posición restaurada NO se aplica a la pista siguiente si el usuario pulsa "siguiente" '
+        'en vez de "play" tras abrir la app', () async {
+      // Escenario reportado: se cierra la app a mitad de una canción y al
+      // reabrirla se pulsa directamente "siguiente". La posición guardada
+      // pertenece SOLO a la pista restaurada, pero como se consumía en el
+      // siguiente arranque cualquiera, la pista nueva empezaba en ese mismo
+      // segundo (y los saltos silenciosos posteriores terminaban dejando el
+      // botón sin responder).
+      final engine = FakeAudioEngine();
+      final restored = SyncoraPlayerController(
+        engine: engine,
+        extractionService: TestableExtractionService(),
+        sessionStorage: _FakeRestoredSessionStorage(
+          manualQueue: const [],
+          currentTrack: const SyncoraTrack(id: 'restored', title: 'Restaurada'),
+          autoQueue: const [SyncoraTrack(id: 'next', title: 'Siguiente')],
+          positionSeconds: 42,
+        ),
+      );
+      restored.init();
+      await pumpEventQueue();
+
+      expect(restored.state.currentTrack?.id, 'restored');
+      expect(restored.state.engine.position, const Duration(seconds: 42),
+          reason: 'la barra debe mostrar el segundo guardado al abrir la app');
+
+      await restored.skipToNext();
+      await pumpEventQueue();
+
+      expect(restored.state.currentTrack?.id, 'next');
+      expect(engine.lastInitialPosition, isNull,
+          reason: 'la pista siguiente debe arrancar desde el principio, no en el segundo restaurado');
+
+      restored.dispose();
     });
 
     test('interleaveIntoAutoQueue con autoQueue vacía anexa todas las sugerencias al final', () async {

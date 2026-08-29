@@ -8,25 +8,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// de red activa. `connectivity_plus` reporta lo segundo: en Windows es normal
 /// seguir reportando `wifi` con el cable desconectado o sin salida a internet,
 /// y en Android el evento de reconexión llega tarde o no llega.
-/// Se prueban dos hosts y con un timeout holgado: con uno solo y 2s, el arranque
-/// en frío del móvil (pila de red todavía levantándose, o un operador que
-/// bloquea ese resolver) daba un falso negativo y la app abría en modo offline.
+/// Se usa una petición HTTPS y no un socket crudo al puerto 53: muchas redes
+/// móviles y operadores bloquean el TCP directo a resolvers públicos, así que
+/// la sonda anterior fallaba en el teléfono aunque la conexión estuviera
+/// perfecta — la app arrancaba creyéndose offline. Este endpoint es el mismo
+/// que usa Android para detectar portales cautivos, devuelve 204 sin cuerpo, y
+/// viaja por la misma pila HTTP que el resto de la app.
 Future<bool> _hasInternet() async {
-  const hosts = [('1.1.1.1', 53), ('8.8.8.8', 53)];
-  for (final (host, port) in hosts) {
-    try {
-      final socket = await Socket.connect(
-        host,
-        port,
-        timeout: const Duration(seconds: 4),
-      );
-      socket.destroy();
-      return true;
-    } catch (_) {
-      // Siguiente host.
-    }
+  final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
+  try {
+    final request = await client.headUrl(
+      Uri.parse('https://clients3.google.com/generate_204'),
+    );
+    final response = await request.close().timeout(const Duration(seconds: 5));
+    await response.drain<void>();
+    return response.statusCode >= 200 && response.statusCode < 400;
+  } catch (_) {
+    return false;
+  } finally {
+    client.close(force: true);
   }
-  return false;
 }
 
 final isConnectedProvider = StreamProvider<bool>((ref) {
