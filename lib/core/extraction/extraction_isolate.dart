@@ -83,16 +83,20 @@ class ExtractionIsolate {
     // vuelo quedaban esperando para siempre y el reproductor no podía volver a
     // avanzar de pista. Se marca el puerto como caído para que la próxima
     // petición vuelva a levantarlo.
+    // `_spawnCompleter` también se limpia: `spawn()` devuelve temprano el
+    // completer existente si no es nulo, así que dejarlo puesto haría que la
+    // siguiente petición creyera haber relanzado el isolate y luego reventara
+    // en el `_isolateSendPort!`.
+    void markDead(String reason) {
+      _isolateSendPort = null;
+      _spawnCompleter = null;
+      _failAllPending(reason);
+    }
+
     _errorPort = ReceivePort()
-      ..listen((message) {
-        _isolateSendPort = null;
-        _failAllPending('El proceso de extracción falló: $message');
-      });
+      ..listen((message) => markDead('El proceso de extracción falló: $message'));
     _exitPort = ReceivePort()
-      ..listen((_) {
-        _isolateSendPort = null;
-        _failAllPending('El proceso de extracción terminó inesperadamente.');
-      });
+      ..listen((_) => markDead('El proceso de extracción terminó inesperadamente.'));
 
     _isolate = await Isolate.spawn(
       _isolateEntryPoint,

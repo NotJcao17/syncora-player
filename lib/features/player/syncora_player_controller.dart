@@ -14,7 +14,6 @@ import '../../data/local_db/syncora_database.dart' show DownloadedTrack;
 import '../../data/models/deezer/deezer_track.dart';
 
 import 'audio_engine/audio_engine_state.dart';
-import 'audio_engine/playback_start_watcher.dart';
 import 'player_models.dart';
 import 'radio/radio_service.dart';
 import 'session/player_session_storage.dart';
@@ -1812,15 +1811,7 @@ bool get _isTestEnv {
         try {
           final initialPos = _consumeRestoredPosition(track);
 
-          // `setAudioSource` de just_audio completa cuando ExoPlayer terminó de
-          // cargar la fuente: con un stream que se estanca, ExoPlayer reintenta
-          // por dentro y el future no completa ni lanza. Como este `await` vive
-          // dentro del guard `_isTransitioning` de `skipToNext()`, eso dejaba el
-          // botón "siguiente" muerto. El timeout lo convierte en un error
-          // normal, que el `catch` de abajo ya sabe manejar.
-          await _engine
-              .setUrl(streamUrl, headers: headers, initialPosition: initialPos)
-              .timeout(const Duration(seconds: 30));
+          await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
 
           // Si había una posición restaurada al iniciar la app, buscarla
           if (initialPos != null) {
@@ -1828,38 +1819,6 @@ bool get _isTestEnv {
           }
 
           await _engine.play();
-
-          // Diagnóstico: canciones que se quedan cargando indefinidamente en
-          // el primer intento (ej. "Mondlicht") — la extracción resolvió una
-          // URL válida, pero el motor nativo a veces no llega a arrancar el
-          // stream real (falla muda al abrir la conexión) y sin esto el
-          // spinner de carga quedaba pegado para siempre. Un único reintento
-          // de `setUrl`/`play` tras un timeout corto cubre ese caso sin
-          // arriesgar un loop de reintentos (Pitfall #14 — sigue siendo
-          // UNA sola vez, igual que el guard 403/red).
-          //
-          // `_state.engine` ya viene actualizado de forma síncrona por
-          // `_onEngineState` (suscrito desde `init()`) para cualquier emisión
-          // que el motor ya haya hecho durante los `await` de arriba — chequear
-          // eso PRIMERO evita crear el `Timer` de espera cuando el arranque ya
-          // es un hecho consumado (motores de test que emiten todo síncrono
-          // nunca vuelven a emitir después, así que esperar en un stream nuevo
-          // se quedaría colgado hasta el timeout sin necesidad).
-          final alreadyStarted = _state.engine.playing ||
-              _state.engine.processingState == AudioProcessingState.buffering ||
-              _state.engine.processingState == AudioProcessingState.ready;
-          if (!isStale() && !alreadyStarted) {
-            // Deliberadamente SIN await: este vigilante es una red de seguridad
-            // para un arranque que se cuelga, no un paso del arranque normal.
-            // Esperarlo acá bloqueaba `playCurrent()` hasta 8s y, como
-            // `skipToNext()` mantiene `_isTransitioning` mientras tanto, el
-            // botón de siguiente quedaba muerto todo ese rato — y para siempre
-            // si el stream del motor no volvía a emitir (lo habitual con
-            // just_audio en Android, donde la emisión ya había ocurrido antes
-            // de suscribirnos; en Windows los ticks de posición lo disimulaban).
-            unawaited(_watchPlaybackStart(streamUrl, headers, initialPos, isStale));
-          }
-
           _saveSession();
         } catch (e) {
           _log('[Play] Error cargando en motor: $e');
@@ -2048,30 +2007,6 @@ bool get _isTestEnv {
     if (last != null && now.difference(last) < const Duration(seconds: 5)) return;
     _lastPositionSaveAt = now;
     _saveSession();
-  }
-
-  /// Reintenta UNA vez si la reproducción no arrancó en 8s (canciones que se
-  /// quedaban con el spinner colgado pese a una extracción exitosa). Corre
-  /// fuera del camino de arranque para no bloquear transiciones; `isStale`
-  /// aborta si mientras tanto el usuario cambió de pista.
-  Future<void> _watchPlaybackStart(
-    String streamUrl,
-    Map<String, String>? headers,
-    Duration? initialPos,
-    bool Function() isStale,
-  ) async {
-    final started = await awaitPlaybackStarted(_engine.stateStream, const Duration(seconds: 8));
-    if (started || isStale() || _disposed) return;
-    _log('[Play] La reproducción no arrancó tras 8s — reintentando setUrl una vez.');
-    try {
-      await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
-      if (initialPos != null) {
-        await _engine.seek(initialPos);
-      }
-      await _engine.play();
-    } catch (e) {
-      _log('[Play] El reintento de arranque falló: $e');
-    }
   }
 
   Future<void> _onComplete() async {
