@@ -596,6 +596,13 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// público, el guard las bloquearía a sí mismas (deadlock lógico) y la
   /// cascada de auto-skip se trabaría en el primer fallo.
   Future<void> _advanceAndPlay() async {
+    // Avanzar de pista invalida cualquier posición restaurada pendiente: era de
+    // la pista anterior. Si se dejaba puesta (por ejemplo, porque el camino
+    // offline retorna antes de consumirla), `_maybePersistPosition` dejaba de
+    // guardar la posición el resto de la sesión y `awaitingRestoredStart`
+    // congelaba la barra en un segundo viejo — esa rama no tiene vencimiento.
+    _restoredPositionSeconds = null;
+    _restoredPositionTrackId = null;
     final advanced = _advance();
     if (!advanced) {
       // Fin de ambas colas sin repeat-all posible: intentar Autoplay con
@@ -1264,6 +1271,12 @@ bool get _isTestEnv {
       }
     }
 
+    // Nada descargado en ninguna de las dos colas: termina en "nada sonando",
+    // deliberadamente SIN aviso ni marca en gris (decisión de la Fase 7.C,
+    // fijada por test). Anotado por la revisión de código: desde fuera este
+    // silencio es difícil de distinguir de "el botón dejó de funcionar", así
+    // que si se quiere avisar, es un cambio de diseño a decidir aparte — no
+    // algo que deba colarse en un fix de otra cosa.
     await _engine.stop();
     _state = _state.copyWith(
       clearError: true,
@@ -1799,7 +1812,15 @@ bool get _isTestEnv {
         try {
           final initialPos = _consumeRestoredPosition(track);
 
-          await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
+          // `setAudioSource` de just_audio completa cuando ExoPlayer terminó de
+          // cargar la fuente: con un stream que se estanca, ExoPlayer reintenta
+          // por dentro y el future no completa ni lanza. Como este `await` vive
+          // dentro del guard `_isTransitioning` de `skipToNext()`, eso dejaba el
+          // botón "siguiente" muerto. El timeout lo convierte en un error
+          // normal, que el `catch` de abajo ya sabe manejar.
+          await _engine
+              .setUrl(streamUrl, headers: headers, initialPosition: initialPos)
+              .timeout(const Duration(seconds: 30));
 
           // Si había una posición restaurada al iniciar la app, buscarla
           if (initialPos != null) {

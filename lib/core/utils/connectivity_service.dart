@@ -17,11 +17,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 Future<bool> _hasInternet() async {
   final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
   try {
-    final request = await client.headUrl(
-      Uri.parse('https://clients3.google.com/generate_204'),
-    );
+    // `connectionTimeout` no cubre la resolución DNS, que en Android puede
+    // colgarse bastante más: sin este techo la sonda se quedaba en vuelo y la
+    // detección de reconexión no volvía a correr mientras tanto.
+    final request = await client
+        .headUrl(Uri.parse('https://clients3.google.com/generate_204'))
+        .timeout(const Duration(seconds: 6));
     final response = await request.close().timeout(const Duration(seconds: 5));
-    await response.drain<void>();
+    await response.drain<void>().timeout(const Duration(seconds: 5));
     return response.statusCode >= 200 && response.statusCode < 400;
   } catch (_) {
     return false;
@@ -88,6 +91,11 @@ final isConnectedProvider = StreamProvider<bool>((ref) {
   // revisa de inmediato, que es cuando el resultado importa.
   final lifecycle = AppLifecycleListener(
     onResume: () {
+      // Una sonda que estaba en vuelo cuando el sistema suspendió la red pudo
+      // haber sumado fallos: sin resetear, un único fallo tras volver al frente
+      // ya alcanzaba los 3 y declaraba offline, justo en el momento más
+      // propenso a falsos negativos.
+      probeFailures = 0;
       poller ??= Timer.periodic(const Duration(seconds: 5), (_) => check());
       check();
     },
