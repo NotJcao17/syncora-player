@@ -82,7 +82,18 @@ class JustAudioEngine implements AudioEngine {
   @override
   Future<void> play() async {
     await _player.setVolume(_state.volume.clamp(0.0, 1.0));
-    return _player.play();
+    // `AudioPlayer.play()` de just_audio NO completa cuando la reproducción
+    // arranca, sino cuando TERMINA (fin de pista, pausa o stop). Devolver ese
+    // future hacía que `await _engine.play()` en el controlador se quedara
+    // esperando la canción entera y, como `skipToNext()` mantiene su guard
+    // `_isTransitioning` mientras espera, el segundo "siguiente" salía por el
+    // guard sin hacer nada: el botón quedaba muerto hasta que la pista acabara
+    // (o hasta que otra acción parara el motor y completara este future, que es
+    // por qué tocar la barra o poner otra canción lo "revivía").
+    //
+    // No aplica a Windows: `media_kit` sí retorna en cuanto emite el comando,
+    // por eso el fallo solo se veía en Android.
+    unawaited(_player.play());
   }
 
   @override
