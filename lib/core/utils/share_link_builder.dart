@@ -1,15 +1,16 @@
 /// Construye los enlaces que la app copia al portapapeles.
 ///
-/// Se usa el esquema propio (`syncoraplayer://playlist/123`) y no una URL
-/// `https://`: no existe ningún sitio publicado detrás de un dominio propio, así
-/// que un enlace `https` se veía como un enlace normal pero al abrirlo daba
-/// error de DNS. El deep link, en cambio, abre la app directamente en quien la
-/// tenga instalada (registrado en `AndroidManifest.xml`).
+/// Se usa una URL `https` y no el esquema propio (`syncoraplayer://…`) porque
+/// los deep links no son clicables: WhatsApp, notas y correo solo convierten en
+/// enlace lo que empieza por `http(s)`, así que el esquema propio llegaba como
+/// texto plano.
 ///
-/// Si algún día existe la web, basta cambiar [scheme] por el dominio y añadir
-/// los App Links correspondientes — el resto de la app no se entera.
+/// [baseUrl] apunta al dominio previsto para la landing, todavía sin publicar:
+/// hasta que exista, el enlace se puede compartir y abrir, pero mostrará el 404
+/// de Netlify. La landing es la que después debe redirigir al deep link o
+/// mostrar la vista previa.
 class ShareLinkBuilder {
-  static const String scheme = 'syncoraplayer';
+  static const String baseUrl = 'https://syncora.netlify.app';
 
   static String track(String id) => _build('track', id);
 
@@ -17,5 +18,5 @@ class ShareLinkBuilder {
 
   static String album(String id) => _build('album', id);
 
-  static String _build(String type, String id) => '$scheme://$type/$id';
+  static String _build(String type, String id) => '$baseUrl/$type/$id';
 }

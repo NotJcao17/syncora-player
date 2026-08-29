@@ -826,7 +826,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             onTap: () {
               Navigator.pop(ctx);
               Clipboard.setData(ClipboardData(text: ShareLinkBuilder.playlist('${playlist.remoteId ?? playlist.id}')));
-              AppToast.show(context, message: 'Enlace copiado. Se abre en Syncora en quien tenga la app');
+              AppToast.show(context, message: 'Enlace copiado al portapapeles');
             },
           ),
         ],

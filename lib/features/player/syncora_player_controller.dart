@@ -1945,11 +1945,19 @@ bool get _isTestEnv {
     // `_suppressZeroPositionUntil`): pasados los 3s, o al reproducir cualquier
     // otra pista, un `position == 0` vuelve a ser un 0 legítimo.
     final suppressUntil = _suppressZeroPositionUntil;
-    final suppressZero = suppressUntil != null &&
-        DateTime.now().isBefore(suppressUntil) &&
-        engineState.position == Duration.zero &&
-        _state.engine.position > Duration.zero;
-    if (suppressUntil != null && !DateTime.now().isBefore(suppressUntil)) {
+    final withinPlayWindow = suppressUntil != null && DateTime.now().isBefore(suppressUntil);
+    // Sesión restaurada y todavía sin cargar nada en el motor: sus emisiones
+    // (la que dispara `setVolume()` en `_restoreSession`, por ejemplo) traen
+    // posición 0 y pisaban el segundo restaurado, así que la barra aparecía en
+    // 0:00 al abrir la app aunque luego reanudara bien. Acotado a `idle` y a
+    // que la posición restaurada siga sin consumirse — y como ahora se consume
+    // y descarta en el mismo paso, no puede sobrevivir a la pista que la usa.
+    final awaitingRestoredStart = _restoredPositionSeconds != null &&
+        engineState.processingState == AudioProcessingState.idle;
+    final suppressZero = engineState.position == Duration.zero &&
+        _state.engine.position > Duration.zero &&
+        (withinPlayWindow || awaitingRestoredStart);
+    if (suppressUntil != null && !withinPlayWindow) {
       _suppressZeroPositionUntil = null;
     }
     final effectiveEngineState =
