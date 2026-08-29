@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../auth/auth_provider.dart';
 import '../../auth/local_mode_provider.dart';
 import '../../../core/theme/app_icons.dart';
+import '../../../core/utils/connectivity_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/playlist_card.dart';
@@ -13,6 +14,8 @@ import '../../../core/widgets/skeleton_box.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../player/player_providers.dart';
 import '../../stats/stats_providers.dart';
+import '../../../data/sync/sync_cache_manager.dart';
+import '../../../data/sync/sync_service.dart';
 import '../home_providers.dart';
 
 /// Pantalla Principal conectada a Deezer API real y datos personalizados del usuario.
@@ -27,8 +30,48 @@ class HomeScreen extends ConsumerWidget {
     return 'Buenas noches';
   }
 
+  /// Mismo refresco por TTL que hace la pantalla de Estadísticas, compartiendo
+  /// su clave de caché: Inicio muestra el resumen semanal, así que entrar acá
+  /// tras un rato también debe traer lo que se escuchó en otro dispositivo.
+  /// `isExpired`/`markSynced` lo vuelven idempotente, por eso puede dispararse
+  /// desde `build` sin entrar en bucle.
+  void _maybeRefreshStats(WidgetRef ref) {
+    final cacheManager = ref.read(syncCacheManagerProvider);
+    if (!cacheManager.isExpired('stats')) return;
+    cacheManager.markSynced('stats');
+    Future.microtask(() async {
+      if (!ref.read(localModeProvider)) {
+        await ref.read(syncServiceProvider).syncListeningHistory();
+      }
+      ref.invalidate(weeklyStatsProvider);
+      ref.invalidate(monthlyStatsProvider);
+      ref.invalidate(yearlyStatsProvider);
+      ref.invalidate(allTimeStatsProvider);
+    });
+  }
+
+  bool _isLoadingAny(
+    AsyncValue a,
+    AsyncValue b,
+    AsyncValue c,
+    AsyncValue d,
+  ) =>
+      a.isLoading || b.isLoading || c.isLoading || d.isLoading;
+
+  bool _hasAnyContent(
+    AsyncValue<List> a,
+    AsyncValue<List> b,
+    AsyncValue<List> c,
+    AsyncValue<List> d,
+  ) =>
+      (a.value?.isNotEmpty ?? false) ||
+      (b.value?.isNotEmpty ?? false) ||
+      (c.value?.isNotEmpty ?? false) ||
+      (d.value?.isNotEmpty ?? false);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    _maybeRefreshStats(ref);
     final isDesktop = MediaQuery.of(context).size.width >= 768;
     final personalizedAsync = ref.watch(personalizedSectionsProvider);
     final topChartsAsync = ref.watch(topChartsProvider);
@@ -173,6 +216,60 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
+
+          // Sin esto, cuando las cuatro secciones fallan (el caso típico: sin
+          // conexión, ya que todas dependen de Deezer) cada una colapsaba a un
+          // `SizedBox.shrink()` y la pantalla quedaba completamente vacía, sin
+          // ninguna explicación.
+          if (!_isLoadingAny(personalizedAsync, topChartsAsync, playlistsAsync, newReleasesAsync) &&
+              !_hasAnyContent(personalizedAsync, topChartsAsync, playlistsAsync, newReleasesAsync))
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20, vertical: 32),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    Icon(
+                      AppIcons.broken(
+                        (ref.watch(isConnectedProvider).value ?? true) ? SolarIcons.Refresh : SolarIcons.WiFiRouter,
+                      ),
+                      color: AppTheme.muted,
+                      size: 40,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      (ref.watch(isConnectedProvider).value ?? true)
+                          ? 'No pudimos cargar el contenido'
+                          : 'Sin conexión',
+                      style: const TextStyle(color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      (ref.watch(isConnectedProvider).value ?? true)
+                          ? 'Revisa tu conexión e inténtalo de nuevo.'
+                          : 'Tu biblioteca y tus descargas siguen disponibles.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        ref.invalidate(personalizedSectionsProvider);
+                        ref.invalidate(topChartsProvider);
+                        ref.invalidate(editorialPlaylistsProvider);
+                        ref.invalidate(newReleasesProvider);
+                      },
+                      icon: Icon(AppIcons.broken(SolarIcons.Refresh), size: 16),
+                      label: const Text('Reintentar'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primary,
+                        side: const BorderSide(color: AppTheme.surfaceHover),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           // Acceso rápido: Tus me gusta y accesos directos
           SliverPadding(

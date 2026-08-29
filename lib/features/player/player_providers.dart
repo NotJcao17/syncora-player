@@ -126,7 +126,11 @@ void _initAndroidAudioService(SyncoraPlayerController controller, [PlaylistDao? 
       // requiere una silueta de marca real, no algo que un agente sin acceso
       // a los assets de diseño deba inventar -- queda pendiente para un
       // humano con el arte fuente.
-      androidNotificationIcon: 'mipmap/ic_launcher',
+      // Android exige que el icono chico de la notificacion sea monocromo
+      // (solo alfa): con `mipmap/ic_launcher`, que es a color, el sistema lo
+      // dibujaba como un cuadro blanco o directamente lo omitia. El proyecto ya
+      // tiene la variante monocroma del logo generada para el launcher.
+      androidNotificationIcon: 'drawable/ic_launcher_monochrome',
     ),
   ).then((handler) {
     _globalAndroidAudioHandler = handler;

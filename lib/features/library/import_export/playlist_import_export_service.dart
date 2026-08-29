@@ -103,15 +103,33 @@ class PlaylistImportExportService {
   /// entre `ai_create_playlist_sheet.dart` (panel "Afinar con IA") y
   /// `ai_modify_playlist_sheet.dart` (modo agregar).
   static int? extractAddCount(String text) {
-    final clean = text.trim().toLowerCase();
+    // Se normalizan los acentos antes de comparar: la version anterior exigia
+    // la forma exacta del verbo ("agrega"), asi que "agregame"/"agrégame"/
+    // "añademe" no coincidian y la peticion caia al camino de regenerar,
+    // reprocesando la playlist entera (el "13/13" reportado, y la lentitud
+    // que lo acompanaba).
+    const accents = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ñ': 'n'};
+    var clean = text.trim().toLowerCase();
+    accents.forEach((from, to) => clean = clean.replaceAll(from, to));
+
     final plusMatch = RegExp(r'^\s*\+\s*(\d+)').firstMatch(clean);
     if (plusMatch != null) return int.tryParse(plusMatch.group(1)!);
 
-    final addMatch = RegExp(r'(?:agrega|añade|anade|suma|adiciona|pon|inserta)\s+(\d+)').firstMatch(clean);
-    if (addMatch != null) return int.tryParse(addMatch.group(1)!);
+    // Raiz + sufijo libre cubre agrega/agregame/agregar/anade/anademe/etc.
+    final addIntent = RegExp(r'\b(agreg\w*|anad\w*|sum\w*|adicion\w*|inserta\w*|pon|ponme|mete\w*)\b')
+        .hasMatch(clean);
 
-    final moreMatch = RegExp(r'(\d+)\s+(?:más|mas|canciones\s+más|canciones\s+mas|temas\s+más|adicionales)').firstMatch(clean);
-    if (moreMatch != null) return int.tryParse(moreMatch.group(1)!);
+    // "5 mas", "5 nuevas", "5 adicionales", "5 extra".
+    final qualified = RegExp(r'(\d+)\s+(?:\w+\s+)?(?:mas|nuevas|nuevos|adicionales|extra)\b')
+        .firstMatch(clean);
+    if (qualified != null) return int.tryParse(qualified.group(1)!);
+
+    // Con intencion de agregar explicita, cualquier numero del texto es la
+    // cantidad pedida ("agregame 5 nuevas", "pon 3 de rock").
+    if (addIntent) {
+      final anyNumber = RegExp(r'(\d+)').firstMatch(clean);
+      if (anyNumber != null) return int.tryParse(anyNumber.group(1)!);
+    }
 
     return null;
   }

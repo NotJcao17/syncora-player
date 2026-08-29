@@ -743,6 +743,40 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     }
   }
 
+  /// Mismo flujo que el menú de la biblioteca: si la playlist todavía no
+  /// existe en Supabase hay que crearla ahí antes de poder marcarla pública,
+  /// porque la visibilidad vive del lado del servidor (RLS).
+  Future<void> _togglePublic(Playlist playlist) async {
+    final newPublic = !playlist.isPublic;
+    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+    final dao = ref.read(playlistDaoProvider);
+    String? remoteId = playlist.remoteId;
+    if (remoteId == null) {
+      try {
+        final res = await supabaseRepo.createPlaylist(
+          title: playlist.title,
+          description: playlist.description,
+          isPublic: newPublic,
+          isLiked: playlist.isLiked,
+        );
+        remoteId = res['id']?.toString();
+      } catch (_) {}
+    } else {
+      try {
+        await supabaseRepo.updatePlaylist(remoteId, isPublic: newPublic);
+      } catch (_) {}
+    }
+    await dao.updatePlaylist(playlist.copyWith(
+      isPublic: newPublic,
+      remoteId: Value(remoteId),
+    ));
+    if (!mounted) return;
+    AppToast.show(
+      context,
+      message: newPublic ? 'Playlist marcada como pública' : 'Playlist marcada como privada',
+    );
+  }
+
   Widget _buildPlaylistOptionsContent(BuildContext ctx, Playlist playlist, List<PlaylistTrack> tracks) {
     final isLocalMode = ref.read(localModeProvider);
     return Column(
@@ -771,7 +805,21 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             },
           ),
         ],
-        if (!isLocalMode)
+        if (!isLocalMode) ...[
+          ListTile(
+            leading: Icon(
+              AppIcons.broken(playlist.isPublic ? SolarIcons.Lock : SolarIcons.Global),
+              color: AppTheme.primary,
+            ),
+            title: Text(
+              playlist.isPublic ? 'Hacer privada' : 'Hacer pública',
+              style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600),
+            ),
+            onTap: () async {
+              Navigator.pop(ctx);
+              await _togglePublic(playlist);
+            },
+          ),
           ListTile(
             leading: Icon(AppIcons.broken(SolarIcons.LinkMinimalistic), color: AppTheme.primary),
             title: const Text('Copiar enlace', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
@@ -781,6 +829,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               AppToast.show(context, message: 'Enlace copiado al portapapeles');
             },
           ),
+        ],
         if (tracks.isNotEmpty)
           ListTile(
             leading: Icon(AppIcons.broken(SolarIcons.AddFolder), color: AppTheme.primary),

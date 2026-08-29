@@ -178,18 +178,18 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
   }
 
   int? _extractAddCount(String text) {
-    final clean = text.trim().toLowerCase();
-    final plusMatch = RegExp(r'^\s*\+\s*(\d+)').firstMatch(clean);
-    if (plusMatch != null) return int.tryParse(plusMatch.group(1)!);
+    // Delegado al parser compartido (probado en
+    // `test/features/library/extract_add_count_test.dart`) — antes había una
+    // copia propia acá, más frágil, que no reconocía verbos con acento ni
+    // sufijos pegados y por eso caía a regenerar la playlist entera.
+    final explicit = PlaylistImportExportService.extractAddCount(text);
+    if (explicit != null) return explicit;
 
-    final addMatch = RegExp(r'(?:agrega|añade|anade|suma|adiciona|pon|inserta)\s+(\d+)').firstMatch(clean);
-    if (addMatch != null) return int.tryParse(addMatch.group(1)!);
-
-    final moreMatch = RegExp(r'(\d+)\s+(?:más|mas|canciones\s+más|canciones\s+mas|temas\s+más|adicionales)').firstMatch(clean);
-    if (moreMatch != null) return int.tryParse(moreMatch.group(1)!);
-
-    final isAddIntent = RegExp(r'\b(agrega|agregar|añade|anade|añadir|anadir|sumar|suma|más\s+canciones|mas\s+canciones)\b').hasMatch(clean);
-    if (isAddIntent) {
+    const accents = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ñ': 'n'};
+    var clean = text.trim().toLowerCase();
+    accents.forEach((from, to) => clean = clean.replaceAll(from, to));
+    // Intención de agregar sin cantidad ("agrega mas canciones"): default.
+    if (RegExp(r'\b(agreg\w*|anad\w*|sum\w*|mas\s+canciones)\b').hasMatch(clean)) {
       return 5;
     }
     return null;

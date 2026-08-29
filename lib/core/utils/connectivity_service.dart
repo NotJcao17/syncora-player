@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Comprueba alcanzabilidad REAL de internet, no solo que exista una interfaz
@@ -40,7 +41,28 @@ final isConnectedProvider = StreamProvider<bool>((ref) {
     if (checking || closed) return;
     checking = true;
     try {
-      final now = await _hasInternet();
+      var now = await _hasInternet();
+
+      // Una sonda fallida no alcanza para declarar offline: en Android, con la
+      // app en segundo plano el sistema corta los sockets, y eso aparecia como
+      // una desconexion real (al volver al frente saltaba el aviso "Conexion
+      // restaurada" sin que la red se hubiera caido nunca). Solo se acepta el
+      // offline si la plataforma tambien reporta que no hay interfaz, o si una
+      // segunda sonda lo confirma.
+      if (!now && (last ?? true)) {
+        List<ConnectivityResult> results;
+        try {
+          results = await connectivity.checkConnectivity();
+        } catch (_) {
+          results = const [];
+        }
+        if (!results.contains(ConnectivityResult.none)) {
+          await Future<void>.delayed(const Duration(seconds: 2));
+          if (closed) return;
+          now = await _hasInternet();
+        }
+      }
+
       if (closed || now == last) return;
       last = now;
       controller.add(now);
@@ -48,6 +70,20 @@ final isConnectedProvider = StreamProvider<bool>((ref) {
       checking = false;
     }
   }
+
+  // Con la app en segundo plano no se sondea: ahi las fallas son del sistema
+  // suspendiendo la red, no de la conexion del usuario. Al volver al frente se
+  // revisa de inmediato, que es cuando el resultado importa.
+  final lifecycle = AppLifecycleListener(
+    onResume: () {
+      poller ??= Timer.periodic(const Duration(seconds: 5), (_) => check());
+      check();
+    },
+    onPause: () {
+      poller?.cancel();
+      poller = null;
+    },
+  );
 
   // El evento nativo hace que la transición se note al instante cuando SÍ
   // llega; el poller es la red de seguridad para cuando no llega (la causa
@@ -62,6 +98,7 @@ final isConnectedProvider = StreamProvider<bool>((ref) {
 
   ref.onDispose(() {
     closed = true;
+    lifecycle.dispose();
     changeSub?.cancel();
     poller?.cancel();
     controller.close();

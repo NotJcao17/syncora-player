@@ -14,10 +14,15 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
   SyncoraPlayerController _controller;
   PlaylistDao? _playlistDao;
 
-  static const MediaControl _shuffleControl = MediaControl(
+  // Mismo motivo que el corazón (ver `_favoriteControl`): un `MediaControl`
+  // con `action:` sirve para las acciones estándar de transporte, pero un botón
+  // propio en la notificación necesita `MediaControl.custom` con `name`, que es
+  // lo que enruta el click hacia `customAction()` (ya maneja 'toggleShuffle').
+  // Sin eso el botón no llegaba a dibujarse.
+  static final MediaControl _shuffleControl = MediaControl.custom(
     androidIcon: 'drawable/ic_shuffle',
     label: 'Shuffle',
-    action: MediaAction.setShuffleMode,
+    name: 'toggleShuffle',
   );
 
   // Ítem 4 (QA): el corazón vivía como `MediaControl` FIJO con un único

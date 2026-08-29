@@ -168,7 +168,9 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final availableHeight = constraints.maxHeight;
-                  final coverSize = (availableHeight * 0.35).clamp(180.0, 320.0);
+                  // Portada mas grande y repartida 1:1 (antes 3:1 hacia arriba,
+                  // que dejaba un hueco muerto entre el header y la portada).
+                  final coverSize = (availableHeight * 0.42).clamp(200.0, 360.0);
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
@@ -214,7 +216,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                             ],
                           ),
 
-                          const Spacer(flex: 3),
+                          const Spacer(flex: 1),
 
                           // Portada Centrada y Escalable
                           Hero(

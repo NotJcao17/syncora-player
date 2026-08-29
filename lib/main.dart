@@ -13,6 +13,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'app.dart';
 import 'core/cache/cover_cache_service.dart';
+import 'core/theme/app_theme.dart';
 import 'features/auth/local_mode_provider.dart';
 import 'features/auth/services/auth_deep_link_errors.dart';
 import 'features/auth/services/local_mode_storage.dart';
@@ -100,7 +101,10 @@ void main() async {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
       statusBarBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.transparent,
+      // Igual que la barra de navegacion de la app (`AppTheme.surface`) y no el
+      // fondo: abajo siempre hay nav bar o mini reproductor, asi que dejarlo
+      // transparente mostraba el fondo mas oscuro y se leia como una franja.
+      systemNavigationBarColor: AppTheme.surface,
       systemNavigationBarDividerColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.light,
     ),

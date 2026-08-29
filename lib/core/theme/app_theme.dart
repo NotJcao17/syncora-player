@@ -81,7 +81,8 @@ class AppTheme {
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
-          systemNavigationBarColor: Colors.transparent,
+          // Ver nota en `main.dart`: acompana la barra de navegacion de la app.
+          systemNavigationBarColor: surface,
           systemNavigationBarDividerColor: Colors.transparent,
           systemNavigationBarIconBrightness: Brightness.light,
         ),

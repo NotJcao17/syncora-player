@@ -348,7 +348,10 @@ class _QueueViewState extends ConsumerState<QueueView> {
     final isLocalMode = ref.watch(localModeProvider);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 8.0),
+      // Las pildoras traen su propio padding interno, asi que un margen
+      // exterior grande las alejaba de mas del borde izquierdo respecto del
+      // resto del contenido de la cola.
+      padding: const EdgeInsets.fromLTRB(12.0, 8.0, 12.0, 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
