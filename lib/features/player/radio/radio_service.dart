@@ -161,6 +161,19 @@ class RadioService {
     return result;
   }
 
+  /// Índice de arranque para el botón grande "Play" de una playlist/álbum
+  /// cuando el shuffle ya está activo -- sin esto, `setQueue(tracks,
+  /// startIndex: 0)` siempre arrancaba en la primera pista del orden
+  /// original y solo mezclaba el RESTO de la cola automática resultante
+  /// (`SyncoraPlayerController.setQueue`, `newAuto = shuffle ? rest.shuffled
+  /// : rest`), así que "reproducir con aleatorio activado" sonaba
+  /// determinista igual. Pura: no hace I/O, el llamador inyecta el
+  /// `Random`.
+  static int pickShuffledStartIndex(int length, math.Random random) {
+    if (length <= 1) return 0;
+    return random.nextInt(length);
+  }
+
   // --------------------------------------------------------------------
   // Orquestación con I/O
   // --------------------------------------------------------------------

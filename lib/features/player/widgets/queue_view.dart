@@ -348,7 +348,7 @@ class _QueueViewState extends ConsumerState<QueueView> {
     final isLocalMode = ref.watch(localModeProvider);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

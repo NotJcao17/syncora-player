@@ -8,6 +8,7 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
+import '../../../core/widgets/track_tile.dart' show TrackContextMenu;
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../audio_engine/audio_engine_state.dart';
@@ -479,16 +480,16 @@ class _MiniPlayerHeartButtonState extends ConsumerState<_MiniPlayerHeartButton> 
   }
 }
 
-class _DesktopTrackInfo extends StatefulWidget {
+class _DesktopTrackInfo extends ConsumerStatefulWidget {
   final SyncoraTrack currentTrack;
 
   const _DesktopTrackInfo({required this.currentTrack});
 
   @override
-  State<_DesktopTrackInfo> createState() => _DesktopTrackInfoState();
+  ConsumerState<_DesktopTrackInfo> createState() => _DesktopTrackInfoState();
 }
 
-class _DesktopTrackInfoState extends State<_DesktopTrackInfo> {
+class _DesktopTrackInfoState extends ConsumerState<_DesktopTrackInfo> {
   bool _isAlbumHovered = false;
 
   @override
@@ -556,6 +557,18 @@ class _DesktopTrackInfoState extends State<_DesktopTrackInfo> {
                         onTap: hasAlbumId
                             ? () => context.push('/album/${widget.currentTrack.albumId}')
                             : null,
+                        // Click derecho sobre el título de la pista actual en
+                        // la barra de desktop -- mismo menú de 3 puntos que
+                        // el resto de la app (`TrackTile._showContextMenu`),
+                        // solo que disparado sin pasar por un `TrackTile`
+                        // completo.
+                        onSecondaryTapDown: (details) => TrackContextMenu.showAtPosition(
+                          context,
+                          ref,
+                          widget.currentTrack,
+                          details.globalPosition,
+                          onAddToQueue: () => ref.read(syncoraPlayerControllerProvider.notifier).addToQueue(widget.currentTrack),
+                        ),
                         child: Text(
                           widget.currentTrack.title,
                           maxLines: 1,

@@ -186,7 +186,14 @@ class _AiModifyPlaylistFlowState extends ConsumerState<_AiModifyPlaylistFlow> {
     final contextTracks = tracks
         .map((t) => {'id': t.trackId.toString(), 'title': t.title, 'artist': t.artistName})
         .toList();
-    final askCount = _clampInt((_count * 1.3).round(), 1, _kHardCountCap);
+    // Si el usuario escribió una cantidad explícita en el texto ("agrega 5
+    // más"), esa es la cantidad real que pidió -- el dropdown "Cantidad de
+    // canciones" es solo un valor de conveniencia que puede seguir en su
+    // default (25) sin que el usuario lo haya tocado. Usar siempre el
+    // dropdown aquí (ignorando el texto) es lo que causaba que el progreso y
+    // el recorte final mostraran el default en vez del incremento pedido.
+    final requestedCount = PlaylistImportExportService.extractAddCount(prompt) ?? _count;
+    final askCount = _clampInt((requestedCount * 1.3).round(), 1, _kHardCountCap);
 
     final service = ref.read(aiAssistantServiceProvider);
     Map<String, dynamic> result;
@@ -216,17 +223,17 @@ class _AiModifyPlaylistFlowState extends ConsumerState<_AiModifyPlaylistFlow> {
       return;
     }
 
-    await _matchAndSettle(rawTracks);
+    await _matchAndSettle(rawTracks, requestedCount);
   }
 
-  Future<void> _matchAndSettle(List<RawImportTrack> rawTracks) async {
+  Future<void> _matchAndSettle(List<RawImportTrack> rawTracks, int targetCount) async {
     if (!mounted) return;
     final deezerApi = ref.read(deezerApiProvider);
     final service = PlaylistImportExportService(deezerApi);
     final matched = <DeezerTrack>[];
     final unmatched = <RawImportTrack>[];
 
-    final displayTotal = _count;
+    final displayTotal = targetCount;
     setState(() {
       _step = _Step.matching;
       _matchTotal = displayTotal;
@@ -251,7 +258,7 @@ class _AiModifyPlaylistFlowState extends ConsumerState<_AiModifyPlaylistFlow> {
     }
 
     if (!mounted) return;
-    final trimmed = PlaylistImportExportService.trimToCount(matched, _count);
+    final trimmed = PlaylistImportExportService.trimToCount(matched, targetCount);
 
     setState(() {
       _addMatched = trimmed;
