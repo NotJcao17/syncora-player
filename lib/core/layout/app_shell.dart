@@ -45,7 +45,7 @@ class AppShell extends ConsumerStatefulWidget {
   ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends ConsumerState<AppShell> with WindowListener {
+class _AppShellState extends ConsumerState<AppShell> {
   bool _isSidebarCollapsed = false;
   double _sidebarWidth = 256.0;
 
@@ -54,9 +54,6 @@ class _AppShellState extends ConsumerState<AppShell> with WindowListener {
     super.initState();
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.addHandler(_handleDesktopKeyEvent);
-    }
-    if (!kIsWeb && Platform.isWindows) {
-      windowManager.addListener(this);
     }
     Future.microtask(() async {
       // Inicializar downloadService y ejecutar limpieza de descargas interrumpidas
@@ -89,41 +86,7 @@ class _AppShellState extends ConsumerState<AppShell> with WindowListener {
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.removeHandler(_handleDesktopKeyEvent);
     }
-    if (!kIsWeb && Platform.isWindows) {
-      windowManager.removeListener(this);
-    }
     super.dispose();
-  }
-
-  // Cierre limpio en Windows (item 2 del bundle 3, regresión corregida en el
-  // item 12 de la ronda de QA siguiente): la primera versión de este fix
-  // esperaba el `invalidate` del provider ANTES de destruir la ventana --
-  // `SyncoraPlayerController.dispose()` dispara `CrossfadeAudioEngine
-  // .dispose()` -> `MediaKitEngine.dispose()` -> `Player.dispose()` de
-  // `media_kit`, cuya implementación real mantiene un lock interno y agenda
-  // el `mpv_terminate_destroy` nativo detrás de un `Future.delayed(Duration
-  // (seconds: 5))` propio del paquete (workaround de estabilidad de mpv) --
-  // con `CrossfadeAudioEngine` pudiendo tener DOS instancias de motor
-  // (`_active`/`_standby`) esa espera se duplicaba, produciendo el freeze
-  // visible de ~10s que reportó el tester antes de que la ventana
-  // desapareciera de verdad. La ventana ya no necesita esperar nada de eso:
-  // `windowManager.destroy()` se dispara primero (deja en vuelo la
-  // destrucción nativa, que corre del lado de la plataforma, no del
-  // isolate de Dart) y el `invalidate` -- que sigue haciendo falta para
-  // liberar streams/SMTC en el mejor esfuerzo -- corre en paralelo sin
-  // bloquear ese `await`. Si el proceso termina antes de que el `invalidate`
-  // alcance a completar su disposal, no pasa nada: el SO libera igual la
-  // memoria de mpv (vive dentro del proceso, no es un subproceso aparte) y
-  // Windows limpia la sesión SMTC huérfana al morir el proceso dueño.
-  @override
-  void onWindowClose() async {
-    final isPreventClose = await windowManager.isPreventClose();
-    if (!isPreventClose) return;
-    final destroyFuture = windowManager.destroy();
-    try {
-      ref.invalidate(syncoraPlayerControllerProvider);
-    } catch (_) {}
-    await destroyFuture;
   }
 
   bool _handleDesktopKeyEvent(KeyEvent event) {
