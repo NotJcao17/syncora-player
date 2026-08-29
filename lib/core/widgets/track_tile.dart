@@ -26,6 +26,540 @@ import 'app_toast.dart';
 import 'error_state.dart';
 import 'playlist_cover_widget.dart';
 
+/// Menú contextual de 3 puntos/click derecho de una pista -- extraído de
+/// `_TrackTileState` (que delega en esta clase) para que otros lugares de
+/// la app puedan mostrar exactamente el mismo menú sobre un [SyncoraTrack]
+/// suelto, sin necesidad de montar un `TrackTile` completo. Ej: click
+/// derecho sobre el título de la pista actual en la barra del reproductor
+/// (mini player / barra de desktop).
+class TrackContextMenu {
+  TrackContextMenu._();
+
+  static Future<void> showAtPosition(
+    BuildContext context,
+    WidgetRef ref,
+    SyncoraTrack track,
+    Offset position, {
+    VoidCallback? onAddToQueue,
+    VoidCallback? onRemove,
+    String removeLabel = 'Eliminar de la playlist',
+  }) async {
+    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
+    final isLiked = await ref.read(playlistDaoProvider).isTrackLiked(trackIdInt);
+    final downloaded = await ref.read(downloadedTrackDaoProvider).getByTrackId(trackIdInt);
+    final isDownloaded = downloaded != null && downloaded.downloadState == 2;
+
+    if (!context.mounted) return;
+
+    // `Overlay.of(context).context` es un `BuildContext` propio del
+    // `OverlayState` (distinto del parámetro `context`) -- el `mounted`
+    // check de arriba no lo cubre a él directamente, pero vive mientras
+    // viva el árbol de overlays de la app, así que es seguro usarlo aquí.
+    // ignore: use_build_context_synchronously
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    final overlaySize = overlay?.size ?? MediaQuery.of(context).size;
+
+    final selected = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(position.dx, position.dy, 0, 0),
+        Offset.zero & overlaySize,
+      ),
+      color: const Color(0xFF1E1E1E),
+      elevation: 10,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Color(0xFF2A2A2A)),
+      ),
+      items: buildMenuItems(track, isLiked, isDownloaded, onRemove: onRemove, removeLabel: removeLabel),
+    );
+
+    if (selected != null && context.mounted) {
+      await handleOptionSelected(context, ref, track, selected, onAddToQueue: onAddToQueue, onRemove: onRemove);
+    }
+  }
+
+  static List<PopupMenuEntry<String>> buildMenuItems(
+    SyncoraTrack track,
+    bool isLiked,
+    bool isDownloaded, {
+    VoidCallback? onRemove,
+    String removeLabel = 'Eliminar de la playlist',
+  }) {
+    return [
+      if ((track.artistId ?? 0) != 0)
+        PopupMenuItem(
+          value: 'artist',
+          child: Row(
+            children: [
+              Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.primary, size: 18),
+              const SizedBox(width: 12),
+              const Expanded(child: Text('Ir al artista', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+            ],
+          ),
+        ),
+      if (track.albumId != null && track.albumId != 0)
+        PopupMenuItem(
+          value: 'album',
+          child: Row(
+            children: [
+              Icon(AppIcons.broken(SolarIcons.Vinyl), color: AppTheme.primary, size: 18),
+              const SizedBox(width: 12),
+              const Expanded(child: Text('Ir al álbum', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+            ],
+          ),
+        ),
+      PopupMenuItem(
+        value: 'playlist',
+        child: Row(
+          children: [
+            Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 18),
+            const SizedBox(width: 12),
+            const Expanded(child: Text('Agregar a una playlist', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+            Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: 'like',
+        child: Row(
+          children: [
+            Icon(isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart), color: AppTheme.primary, size: 18),
+            const SizedBox(width: 12),
+            Text(isLiked ? 'Eliminar de Me Gusta' : 'Guardar en Tus me gusta', style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: 'queue',
+        child: Row(
+          children: [
+            Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary, size: 18),
+            const SizedBox(width: 12),
+            const Text('Agregar a la fila de reproducción', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+      if ((track.artistId ?? 0) != 0)
+        PopupMenuItem(
+          value: 'other_versions',
+          child: Row(
+            children: [
+              Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.primary, size: 18),
+              const SizedBox(width: 12),
+              const Expanded(child: Text('Buscar otras versiones', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+            ],
+          ),
+        ),
+      if (onRemove != null)
+        PopupMenuItem(
+          value: 'remove',
+          child: Row(
+            children: [
+              Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: AppTheme.primary, size: 18),
+              const SizedBox(width: 12),
+              Text(removeLabel, style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ),
+    ];
+  }
+
+  static Future<void> handleOptionSelected(
+    BuildContext context,
+    WidgetRef ref,
+    SyncoraTrack track,
+    String value, {
+    VoidCallback? onAddToQueue,
+    VoidCallback? onRemove,
+  }) async {
+    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
+    final dao = ref.read(playlistDaoProvider);
+
+    if (value == 'artist') {
+      if ((track.artistId ?? 0) != 0) {
+        context.push('/artist/${track.artistId}');
+      }
+    } else if (value == 'album') {
+      if (track.albumId != null && track.albumId != 0) {
+        context.push('/album/${track.albumId}');
+      }
+    } else if (value == 'download') {
+      final downloaded = await ref.read(downloadedTrackDaoProvider).getByTrackId(trackIdInt);
+      final isDownloaded = downloaded != null && downloaded.downloadState == 2;
+      if (isDownloaded) {
+        await ref.read(downloadedTrackDaoProvider).deleteByTrackId(trackIdInt);
+        if (context.mounted) {
+          AppToast.show(context, message: 'Descarga eliminada');
+        }
+      } else {
+        try {
+          if (context.mounted) {
+            AppToast.show(context, message: 'Descargando "${track.title}"');
+          }
+          await ref.read(downloadServiceProvider).downloadTrack(track);
+        } catch (e) {
+          if (context.mounted) {
+            AppToast.show(context, message: ErrorStateWidget.formatErrorMessage(e));
+          }
+        }
+      }
+    } else if (value == 'share') {
+      await Clipboard.setData(ClipboardData(text: ShareLinkBuilder.track('$trackIdInt')));
+      if (context.mounted) {
+        AppToast.show(context, message: 'Enlace copiado al portapapeles');
+      }
+    } else if (value == 'remove') {
+      onRemove?.call();
+    } else if (value == 'queue') {
+      if (onAddToQueue != null) {
+        onAddToQueue();
+        if (context.mounted) {
+          AppToast.show(context, message: '"${track.title}" agregada a la cola');
+        }
+      }
+    } else if (value == 'other_versions') {
+      showOtherVersionsModal(context, track);
+    } else if (value == 'like') {
+      final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), track);
+      final isLiked = await dao.toggleLikeTrack(
+        trackId: trackIdInt,
+        artistId: track.artistId ?? 0,
+        albumId: track.albumId ?? 0,
+        title: track.title,
+        artistName: track.artist,
+        albumName: track.album ?? '',
+        coverUrl: track.coverUrl,
+        durationMs: (track.duration ?? Duration.zero).inMilliseconds,
+        contributorsJson: SyncoraArtistRef.encodeList(contributors),
+      );
+      final likedPlaylist = await dao.getLikedPlaylist();
+      final wasLocalOnly = likedPlaylist.remoteId == null;
+      var likedRemoteId = likedPlaylist.remoteId;
+      final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+
+      if (likedRemoteId == null) {
+        try {
+          final res = await supabaseRepo.getOrCreateLikedPlaylist();
+          likedRemoteId = res['id']?.toString();
+        } catch (_) {}
+      }
+
+      var likedBackfillOk = true;
+      if (wasLocalOnly && likedRemoteId != null) {
+        try {
+          final existingTracks = await dao.getTracksOrdered(likedPlaylist.id);
+          if (existingTracks.isNotEmpty) {
+            await supabaseRepo.addTracksToPlaylist(
+              likedRemoteId,
+              existingTracks
+                  .map((t) => {
+                        'track_id': t.trackId,
+                        'artist_id': t.artistId,
+                        'album_id': t.albumId,
+                        'title': t.title,
+                        'artist_name': t.artistName,
+                        'album_name': t.albumName,
+                        'cover_url': t.coverUrl,
+                        'duration_ms': t.durationMs,
+                        if (t.genre != null) 'genre': t.genre,
+                        if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
+                      })
+                  .toList(),
+            );
+          }
+        } catch (_) {
+          likedBackfillOk = false;
+        }
+      }
+
+      if (likedRemoteId != null) {
+        if (!wasLocalOnly) {
+          try {
+            if (isLiked) {
+              await supabaseRepo.addTrackToPlaylist(likedRemoteId, {
+                'track_id': trackIdInt,
+                'artist_id': track.artistId ?? 0,
+                'album_id': track.albumId ?? 0,
+                'title': track.title,
+                'artist_name': track.artist,
+                'album_name': track.album ?? '',
+                'cover_url': track.coverUrl,
+                'duration_ms': (track.duration ?? Duration.zero).inMilliseconds,
+                'genre': track.genre,
+                if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
+              });
+            } else {
+              await supabaseRepo.removeTrackFromPlaylist(likedRemoteId, trackIdInt);
+            }
+          } catch (_) {
+            if (context.mounted) {
+              AppToast.show(context, message: 'La playlist ya no existe en la nube');
+            }
+          }
+        }
+
+        if (wasLocalOnly && likedBackfillOk) {
+          try {
+            await dao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(likedRemoteId)));
+          } catch (_) {}
+        }
+      }
+      if (context.mounted) {
+        AppToast.show(
+          context,
+          message: isLiked ? 'Se agregó a Tus me gusta.' : 'Se eliminó de Tus me gusta.',
+        );
+      }
+    } else if (value == 'playlist') {
+      await showAddToPlaylistDialog(context, ref, track);
+    }
+  }
+
+  static Future<void> showAddToPlaylistDialog(BuildContext context, WidgetRef ref, SyncoraTrack track) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final dao = ref.read(playlistDaoProvider);
+    final playlists = await dao.getAllPlaylists();
+
+    if (!context.mounted) return;
+
+    if (playlists.isEmpty) {
+      AppToast.show(context, message: 'No tienes playlists creadas. Crea una en tu biblioteca.');
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Agregar a playlist', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 400),
+          child: SizedBox(
+            width: 300,
+            child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: playlists.length,
+            itemBuilder: (c, i) {
+              final pl = playlists[i];
+              return ListTile(
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: PlaylistCoverWidget(
+                    playlistId: pl.id,
+                    coverUrl: pl.coverUrl,
+                    isLiked: pl.isLiked,
+                    width: 36,
+                    height: 36,
+                    // Sin esto, `PlaylistCoverWidget` cae en su propio radio
+                    // por defecto (16, pensado para portadas grandes) que en
+                    // un thumbnail de 36px domina sobre el `ClipRRect(6)` de
+                    // afuera y termina viéndose circular.
+                    borderRadius: BorderRadius.circular(6),
+                    memCacheWidth: 80,
+                    memCacheHeight: 80,
+                  ),
+                ),
+                title: Text(pl.title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+                onTap: () async {
+                  final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
+                  final existingTracks = await dao.getTracksOrdered(pl.id);
+                  final isDuplicate = existingTracks.any((t) =>
+                      t.trackId == trackIdInt ||
+                      (t.title.trim().toLowerCase() == track.title.trim().toLowerCase() &&
+                          t.artistName.trim().toLowerCase() == track.artist.trim().toLowerCase()));
+
+                  if (isDuplicate) {
+                    if (!context.mounted) return;
+                    final addAnyway = await showDialog<bool>(
+                      context: context,
+                      builder: (confirmCtx) => AlertDialog(
+                        backgroundColor: AppTheme.surface,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        title: const Text('Canción ya agregada', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                        content: Text('Esta canción ya está en "${pl.title}". ¿Deseas agregarla de todos modos?', style: const TextStyle(color: AppTheme.secondary)),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(confirmCtx, false),
+                            child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondary)),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor: AppTheme.background,
+                            ),
+                            onPressed: () => Navigator.pop(confirmCtx, true),
+                            child: const Text('Agregar de todos modos', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (addAnyway != true) {
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      return;
+                    }
+                  }
+
+                  var remoteId = pl.remoteId;
+                  final wasLocalOnly = remoteId == null;
+                  final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                  if (remoteId == null) {
+                    try {
+                      final created = pl.isLiked
+                          ? await supabaseRepo.getOrCreateLikedPlaylist()
+                          : await supabaseRepo.createPlaylist(
+                              title: pl.title,
+                              description: pl.description,
+                              isPublic: pl.isPublic,
+                              isLiked: pl.isLiked,
+                            );
+                      remoteId = created['id']?.toString();
+                    } catch (_) {}
+                  }
+
+                  var existingTracksUploadOk = true;
+                  if (wasLocalOnly && remoteId != null) {
+                    try {
+                      final currentTracks = await dao.getTracksOrdered(pl.id);
+                      if (currentTracks.isNotEmpty) {
+                        await supabaseRepo.addTracksToPlaylist(
+                          remoteId,
+                          currentTracks
+                              .map((t) => {
+                                    'track_id': t.trackId,
+                                    'artist_id': t.artistId,
+                                    'album_id': t.albumId,
+                                    'title': t.title,
+                                    'artist_name': t.artistName,
+                                    'album_name': t.albumName,
+                                    'cover_url': t.coverUrl,
+                                    'duration_ms': t.durationMs,
+                                    if (t.genre != null) 'genre': t.genre,
+                                    if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
+                                  })
+                              .toList(),
+                        );
+                      }
+                    } catch (_) {
+                      existingTracksUploadOk = false;
+                    }
+                  }
+
+                  final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), track);
+
+                  if (remoteId != null) {
+                    try {
+                      await supabaseRepo.addTrackToPlaylist(remoteId, {
+                        'track_id': trackIdInt,
+                        'artist_id': track.artistId ?? 0,
+                        'album_id': track.albumId ?? 0,
+                        'title': track.title,
+                        'artist_name': track.artist,
+                        'album_name': track.album ?? '',
+                        'cover_url': track.coverUrl,
+                        'duration_ms': (track.duration ?? Duration.zero).inMilliseconds,
+                        'genre': track.genre,
+                        if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
+                      });
+                    } catch (_) {
+                      if (context.mounted) {
+                        AppToast.show(context, message: 'La playlist ya no existe en la nube');
+                      }
+                      if (!pl.isLiked) {
+                        await dao.deletePlaylist(pl.id);
+                      }
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      return;
+                    }
+
+                    if (wasLocalOnly && existingTracksUploadOk) {
+                      try {
+                        await dao.updatePlaylist(pl.copyWith(remoteId: Value(remoteId)));
+                      } catch (_) {}
+                    }
+                  }
+
+                  await dao.addTrackToPlaylist(
+                    playlistId: pl.id,
+                    trackId: trackIdInt,
+                    artistId: track.artistId ?? 0,
+                    albumId: track.albumId ?? 0,
+                    title: track.title,
+                    artistName: track.artist,
+                    albumName: track.album ?? '',
+                    coverUrl: track.coverUrl,
+                    durationMs: (track.duration ?? Duration.zero).inMilliseconds,
+                    contributorsJson: SyncoraArtistRef.encodeList(contributors),
+                  );
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (context.mounted) {
+                    AppToast.show(context, message: 'Agregada a "${pl.title}"');
+                  }
+                },
+              );
+            },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static void showOtherVersionsModal(BuildContext context, SyncoraTrack track) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final artistId = track.artistId ?? 0;
+    if (artistId == 0) return;
+
+    final content = _OtherVersionsModalContent(
+      artistId: artistId,
+      title: track.title,
+      referenceAlbumId: track.albumId,
+      excludeTrackId: track.deezerId,
+    );
+
+    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    if (isDesktop) {
+      showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: AppTheme.background,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 80, vertical: 48),
+          child: SizedBox(
+            width: 560,
+            height: 560,
+            child: Padding(padding: const EdgeInsets.all(20), child: content),
+          ),
+        ),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SizedBox(
+        height: MediaQuery.of(ctx).size.height * 0.7,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+          ),
+          child: content,
+        ),
+      ),
+    );
+  }
+}
+
 /// Componente de fila de canción reutilizable.
 class TrackTile extends ConsumerStatefulWidget {
   final SyncoraTrack track;
@@ -671,114 +1205,25 @@ class _TrackTileState extends ConsumerState<TrackTile> {
   }
 
   List<PopupMenuEntry<String>> _buildMenuItems(bool isLiked, bool isDownloaded) {
-    return [
-      if ((widget.track.artistId ?? 0) != 0)
-        PopupMenuItem(
-          value: 'artist',
-          child: Row(
-            children: [
-              Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.primary, size: 18),
-              const SizedBox(width: 12),
-              const Expanded(child: Text('Ir al artista', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
-            ],
-          ),
-        ),
-      if (widget.track.albumId != null && widget.track.albumId != 0)
-        PopupMenuItem(
-          value: 'album',
-          child: Row(
-            children: [
-              Icon(AppIcons.broken(SolarIcons.Vinyl), color: AppTheme.primary, size: 18),
-              const SizedBox(width: 12),
-              const Expanded(child: Text('Ir al álbum', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
-            ],
-          ),
-        ),
-      PopupMenuItem(
-        value: 'playlist',
-        child: Row(
-          children: [
-            Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 18),
-            const SizedBox(width: 12),
-            const Expanded(child: Text('Agregar a una playlist', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
-            Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
-          ],
-        ),
-      ),
-      PopupMenuItem(
-        value: 'like',
-        child: Row(
-          children: [
-            Icon(isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart), color: AppTheme.primary, size: 18),
-            const SizedBox(width: 12),
-            Text(isLiked ? 'Eliminar de Me Gusta' : 'Guardar en Tus me gusta', style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
-          ],
-        ),
-      ),
-      PopupMenuItem(
-        value: 'queue',
-        child: Row(
-          children: [
-            Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary, size: 18),
-            const SizedBox(width: 12),
-            const Text('Agregar a la fila de reproducción', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
-          ],
-        ),
-      ),
-      if ((widget.track.artistId ?? 0) != 0)
-        PopupMenuItem(
-          value: 'other_versions',
-          child: Row(
-            children: [
-              Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.primary, size: 18),
-              const SizedBox(width: 12),
-              const Expanded(child: Text('Buscar otras versiones', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
-            ],
-          ),
-        ),
-      if (widget.onRemove != null)
-        PopupMenuItem(
-          value: 'remove',
-          child: Row(
-            children: [
-              Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: AppTheme.primary, size: 18),
-              const SizedBox(width: 12),
-              Text(widget.removeLabel, style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
-            ],
-          ),
-        ),
-    ];
+    return TrackContextMenu.buildMenuItems(
+      widget.track,
+      isLiked,
+      isDownloaded,
+      onRemove: widget.onRemove,
+      removeLabel: widget.removeLabel,
+    );
   }
 
-  void _showContextMenu(Offset position) async {
-    final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
-    final isLiked = await ref.read(playlistDaoProvider).isTrackLiked(trackIdInt);
-    final downloaded = await ref.read(downloadedTrackDaoProvider).getByTrackId(trackIdInt);
-    final isDownloaded = downloaded != null && downloaded.downloadState == 2;
-
-    if (!mounted) return;
-
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
-    final overlaySize = overlay?.size ?? MediaQuery.of(context).size;
-
-    final selected = await showMenu<String>(
-      context: context,
-      position: RelativeRect.fromRect(
-        Rect.fromLTWH(position.dx, position.dy, 0, 0),
-        Offset.zero & overlaySize,
-      ),
-      color: const Color(0xFF1E1E1E),
-      elevation: 10,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Color(0xFF2A2A2A)),
-      ),
-      items: _buildMenuItems(isLiked, isDownloaded),
+  void _showContextMenu(Offset position) {
+    TrackContextMenu.showAtPosition(
+      context,
+      ref,
+      widget.track,
+      position,
+      onAddToQueue: widget.onAddToQueue,
+      onRemove: widget.onRemove,
+      removeLabel: widget.removeLabel,
     );
-
-    if (selected != null && mounted) {
-      _handleOptionSelected(context, ref, selected);
-    }
   }
 
   Widget _buildPlaceholder() {
@@ -788,391 +1233,14 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     );
   }
 
-  void _handleOptionSelected(BuildContext context, WidgetRef ref, String value) async {
-    final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
-    final dao = ref.read(playlistDaoProvider);
-
-    if (value == 'artist') {
-      if ((widget.track.artistId ?? 0) != 0) {
-        context.push('/artist/${widget.track.artistId}');
-      }
-    } else if (value == 'album') {
-      if (widget.track.albumId != null && widget.track.albumId != 0) {
-        context.push('/album/${widget.track.albumId}');
-      }
-    } else if (value == 'download') {
-      final downloaded = await ref.read(downloadedTrackDaoProvider).getByTrackId(trackIdInt);
-      final isDownloaded = downloaded != null && downloaded.downloadState == 2;
-      if (isDownloaded) {
-        await ref.read(downloadedTrackDaoProvider).deleteByTrackId(trackIdInt);
-        if (context.mounted) {
-          AppToast.show(context, message: 'Descarga eliminada');
-        }
-      } else {
-        try {
-          if (context.mounted) {
-            AppToast.show(context, message: 'Descargando "${widget.track.title}"');
-          }
-          await ref.read(downloadServiceProvider).downloadTrack(widget.track);
-        } catch (e) {
-          if (context.mounted) {
-            AppToast.show(context, message: ErrorStateWidget.formatErrorMessage(e));
-          }
-        }
-      }
-    } else if (value == 'share') {
-      await Clipboard.setData(ClipboardData(text: ShareLinkBuilder.track('$trackIdInt')));
-      if (context.mounted) {
-        AppToast.show(context, message: 'Enlace copiado al portapapeles');
-      }
-    } else if (value == 'remove') {
-      if (widget.onRemove != null) {
-        widget.onRemove!();
-      }
-    } else if (value == 'queue') {
-      if (widget.onAddToQueue != null) {
-        widget.onAddToQueue!();
-        AppToast.show(context, message: '"${widget.track.title}" agregada a la cola');
-      }
-    } else if (value == 'other_versions') {
-      _showOtherVersionsModal(context);
-    } else if (value == 'like') {
-      final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), widget.track);
-      final isLiked = await dao.toggleLikeTrack(
-        trackId: trackIdInt,
-        artistId: widget.track.artistId ?? 0,
-        albumId: widget.track.albumId ?? 0,
-        title: widget.track.title,
-        artistName: widget.track.artist,
-        albumName: widget.track.album ?? '',
-        coverUrl: widget.track.coverUrl,
-        durationMs: (widget.track.duration ?? Duration.zero).inMilliseconds,
-        contributorsJson: SyncoraArtistRef.encodeList(contributors),
-      );
-      final likedPlaylist = await dao.getLikedPlaylist();
-      final wasLocalOnly = likedPlaylist.remoteId == null;
-      var likedRemoteId = likedPlaylist.remoteId;
-      final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-
-      if (likedRemoteId == null) {
-        try {
-          final res = await supabaseRepo.getOrCreateLikedPlaylist();
-          likedRemoteId = res['id']?.toString();
-        } catch (_) {}
-      }
-
-      var likedBackfillOk = true;
-      if (wasLocalOnly && likedRemoteId != null) {
-        try {
-          final existingTracks = await dao.getTracksOrdered(likedPlaylist.id);
-          if (existingTracks.isNotEmpty) {
-            await supabaseRepo.addTracksToPlaylist(
-              likedRemoteId,
-              existingTracks
-                  .map((t) => {
-                        'track_id': t.trackId,
-                        'artist_id': t.artistId,
-                        'album_id': t.albumId,
-                        'title': t.title,
-                        'artist_name': t.artistName,
-                        'album_name': t.albumName,
-                        'cover_url': t.coverUrl,
-                        'duration_ms': t.durationMs,
-                        if (t.genre != null) 'genre': t.genre,
-                        if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
-                      })
-                  .toList(),
-            );
-          }
-        } catch (_) {
-          likedBackfillOk = false;
-        }
-      }
-
-      if (likedRemoteId != null) {
-        if (!wasLocalOnly) {
-          try {
-            if (isLiked) {
-              await supabaseRepo.addTrackToPlaylist(likedRemoteId, {
-                'track_id': trackIdInt,
-                'artist_id': widget.track.artistId ?? 0,
-                'album_id': widget.track.albumId ?? 0,
-                'title': widget.track.title,
-                'artist_name': widget.track.artist,
-                'album_name': widget.track.album ?? '',
-                'cover_url': widget.track.coverUrl,
-                'duration_ms': (widget.track.duration ?? Duration.zero).inMilliseconds,
-                'genre': widget.track.genre,
-                if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
-              });
-            } else {
-              await supabaseRepo.removeTrackFromPlaylist(likedRemoteId, trackIdInt);
-            }
-          } catch (_) {
-            if (context.mounted) {
-              AppToast.show(context, message: 'La playlist ya no existe en la nube');
-            }
-          }
-        }
-
-        if (wasLocalOnly && likedBackfillOk) {
-          try {
-            await dao.updatePlaylist(likedPlaylist.copyWith(remoteId: Value(likedRemoteId)));
-          } catch (_) {}
-        }
-      }
-      if (context.mounted) {
-        AppToast.show(
-          context,
-          message: isLiked ? 'Se agregó a Tus me gusta.' : 'Se eliminó de Tus me gusta.',
-        );
-      }
-    } else if (value == 'playlist') {
-      _showAddToPlaylistDialog(context, ref);
-    }
-  }
-
-  void _showAddToPlaylistDialog(BuildContext context, WidgetRef ref) async {
-    FocusManager.instance.primaryFocus?.unfocus();
-    final dao = ref.read(playlistDaoProvider);
-    final playlists = await dao.getAllPlaylists();
-
-    if (!context.mounted) return;
-
-    if (playlists.isEmpty) {
-      AppToast.show(context, message: 'No tienes playlists creadas. Crea una en tu biblioteca.');
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Agregar a playlist', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 400),
-          child: SizedBox(
-            width: 300,
-            child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: playlists.length,
-            itemBuilder: (c, i) {
-              final pl = playlists[i];
-              return ListTile(
-                leading: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: PlaylistCoverWidget(
-                    playlistId: pl.id,
-                    coverUrl: pl.coverUrl,
-                    isLiked: pl.isLiked,
-                    width: 36,
-                    height: 36,
-                    // Sin esto, `PlaylistCoverWidget` cae en su propio radio
-                    // por defecto (16, pensado para portadas grandes) que en
-                    // un thumbnail de 36px domina sobre el `ClipRRect(6)` de
-                    // afuera (el clip anidado más redondeado es el que gana
-                    // la intersección visual) y termina viéndose circular.
-                    borderRadius: BorderRadius.circular(6),
-                    memCacheWidth: 80,
-                    memCacheHeight: 80,
-                  ),
-                ),
-                title: Text(pl.title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-                onTap: () async {
-                  final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
-                  final existingTracks = await dao.getTracksOrdered(pl.id);
-                  final isDuplicate = existingTracks.any((t) =>
-                      t.trackId == trackIdInt ||
-                      (t.title.trim().toLowerCase() == widget.track.title.trim().toLowerCase() &&
-                          t.artistName.trim().toLowerCase() == widget.track.artist.trim().toLowerCase()));
-
-                  if (isDuplicate) {
-                    if (!context.mounted) return;
-                    final addAnyway = await showDialog<bool>(
-                      context: context,
-                      builder: (confirmCtx) => AlertDialog(
-                        backgroundColor: AppTheme.surface,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        title: const Text('Canción ya agregada', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-                        content: Text('Esta canción ya está en "${pl.title}". ¿Deseas agregarla de todos modos?', style: const TextStyle(color: AppTheme.secondary)),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(confirmCtx, false),
-                            child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondary)),
-                          ),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primary,
-                              foregroundColor: AppTheme.background,
-                            ),
-                            onPressed: () => Navigator.pop(confirmCtx, true),
-                            child: const Text('Agregar de todos modos', style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                    );
-
-                    if (addAnyway != true) {
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      return;
-                    }
-                  }
-
-                  var remoteId = pl.remoteId;
-                  final wasLocalOnly = remoteId == null;
-                  final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                  if (remoteId == null) {
-                    try {
-                      final created = pl.isLiked
-                          ? await supabaseRepo.getOrCreateLikedPlaylist()
-                          : await supabaseRepo.createPlaylist(
-                              title: pl.title,
-                              description: pl.description,
-                              isPublic: pl.isPublic,
-                              isLiked: pl.isLiked,
-                            );
-                      remoteId = created['id']?.toString();
-                    } catch (_) {}
-                  }
-
-                  var existingTracksUploadOk = true;
-                  if (wasLocalOnly && remoteId != null) {
-                    try {
-                      final currentTracks = await dao.getTracksOrdered(pl.id);
-                      if (currentTracks.isNotEmpty) {
-                        await supabaseRepo.addTracksToPlaylist(
-                          remoteId,
-                          currentTracks
-                              .map((t) => {
-                                    'track_id': t.trackId,
-                                    'artist_id': t.artistId,
-                                    'album_id': t.albumId,
-                                    'title': t.title,
-                                    'artist_name': t.artistName,
-                                    'album_name': t.albumName,
-                                    'cover_url': t.coverUrl,
-                                    'duration_ms': t.durationMs,
-                                    if (t.genre != null) 'genre': t.genre,
-                                    if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
-                                  })
-                              .toList(),
-                        );
-                      }
-                    } catch (_) {
-                      existingTracksUploadOk = false;
-                    }
-                  }
-
-                  final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), widget.track);
-
-                  if (remoteId != null) {
-                    try {
-                      await supabaseRepo.addTrackToPlaylist(remoteId, {
-                        'track_id': trackIdInt,
-                        'artist_id': widget.track.artistId ?? 0,
-                        'album_id': widget.track.albumId ?? 0,
-                        'title': widget.track.title,
-                        'artist_name': widget.track.artist,
-                        'album_name': widget.track.album ?? '',
-                        'cover_url': widget.track.coverUrl,
-                        'duration_ms': (widget.track.duration ?? Duration.zero).inMilliseconds,
-                        'genre': widget.track.genre,
-                        if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
-                      });
-                    } catch (_) {
-                      if (context.mounted) {
-                        AppToast.show(context, message: 'La playlist ya no existe en la nube');
-                      }
-                      if (!pl.isLiked) {
-                        await dao.deletePlaylist(pl.id);
-                      }
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      return;
-                    }
-
-                    if (wasLocalOnly && existingTracksUploadOk) {
-                      try {
-                        await dao.updatePlaylist(pl.copyWith(remoteId: Value(remoteId)));
-                      } catch (_) {}
-                    }
-                  }
-
-                  await dao.addTrackToPlaylist(
-                    playlistId: pl.id,
-                    trackId: trackIdInt,
-                    artistId: widget.track.artistId ?? 0,
-                    albumId: widget.track.albumId ?? 0,
-                    title: widget.track.title,
-                    artistName: widget.track.artist,
-                    albumName: widget.track.album ?? '',
-                    coverUrl: widget.track.coverUrl,
-                    durationMs: (widget.track.duration ?? Duration.zero).inMilliseconds,
-                    contributorsJson: SyncoraArtistRef.encodeList(contributors),
-                  );
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (context.mounted) {
-                    AppToast.show(context, message: 'Agregada a "${pl.title}"');
-                  }
-                },
-              );
-            },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showOtherVersionsModal(BuildContext context) {
-    FocusManager.instance.primaryFocus?.unfocus();
-    final artistId = widget.track.artistId ?? 0;
-    if (artistId == 0) return;
-
-    final content = _OtherVersionsModalContent(
-      artistId: artistId,
-      title: widget.track.title,
-      referenceAlbumId: widget.track.albumId,
-      excludeTrackId: widget.track.deezerId,
-    );
-
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
-    if (isDesktop) {
-      showDialog(
-        context: context,
-        builder: (ctx) => Dialog(
-          backgroundColor: AppTheme.background,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 80, vertical: 48),
-          child: SizedBox(
-            width: 560,
-            height: 560,
-            child: Padding(padding: const EdgeInsets.all(20), child: content),
-          ),
-        ),
-      );
-      return;
-    }
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppTheme.background,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SizedBox(
-        height: MediaQuery.of(ctx).size.height * 0.7,
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-          ),
-          child: content,
-        ),
-      ),
+  void _handleOptionSelected(BuildContext context, WidgetRef ref, String value) {
+    TrackContextMenu.handleOptionSelected(
+      context,
+      ref,
+      widget.track,
+      value,
+      onAddToQueue: widget.onAddToQueue,
+      onRemove: widget.onRemove,
     );
   }
 
@@ -1261,7 +1329,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
 /// crawl acotado de discografía (`OtherVersionsSearch`) apenas se abre, sin
 /// formulario: ya se tiene artista/título/álbum de la canción desde la que
 /// se disparó. Solo el contenido: el contenedor (sheet en móvil, diálogo
-/// centrado en desktop) lo decide `_showOtherVersionsModal`.
+/// centrado en desktop) lo decide `TrackContextMenu.showOtherVersionsModal`.
 class _OtherVersionsModalContent extends ConsumerStatefulWidget {
   final int artistId;
   final String title;

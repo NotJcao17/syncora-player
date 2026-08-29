@@ -187,12 +187,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 } catch (_) {}
 
                 final dao = ref.read(playlistDaoProvider);
-                await dao.createPlaylist(
+                final newPlaylistId = await dao.createPlaylist(
                   title: title,
                   description: description,
                   remoteId: remoteId,
                 );
                 if (ctx.mounted) Navigator.of(ctx).pop();
+                if (context.mounted) context.push('/playlist/$newPlaylistId');
               }
             },
             child: const Text('Crear', style: TextStyle(fontWeight: FontWeight.bold)),

@@ -95,6 +95,27 @@ class PlaylistImportExportService {
     return tracks.sublist(0, exact);
   }
 
+  /// Detecta una cantidad explícita ("agrega 5", "+5", "5 más") en un texto
+  /// libre de "afinar"/"modificar" en modo agregar, para que el total
+  /// mostrado en el progreso y el recorte final reflejen solo lo que el
+  /// usuario pidió en el texto -- nunca el tamaño de la playlist existente
+  /// ni un valor de UI (dropdown/preset) que el usuario no tocó. Compartido
+  /// entre `ai_create_playlist_sheet.dart` (panel "Afinar con IA") y
+  /// `ai_modify_playlist_sheet.dart` (modo agregar).
+  static int? extractAddCount(String text) {
+    final clean = text.trim().toLowerCase();
+    final plusMatch = RegExp(r'^\s*\+\s*(\d+)').firstMatch(clean);
+    if (plusMatch != null) return int.tryParse(plusMatch.group(1)!);
+
+    final addMatch = RegExp(r'(?:agrega|añade|anade|suma|adiciona|pon|inserta)\s+(\d+)').firstMatch(clean);
+    if (addMatch != null) return int.tryParse(addMatch.group(1)!);
+
+    final moreMatch = RegExp(r'(\d+)\s+(?:más|mas|canciones\s+más|canciones\s+mas|temas\s+más|adicionales)').firstMatch(clean);
+    if (moreMatch != null) return int.tryParse(moreMatch.group(1)!);
+
+    return null;
+  }
+
   /// Parse CSV or TXT file contents into a list of RawImportTrack objects
   List<RawImportTrack> parseFileContent(String fileContent) {
     final List<RawImportTrack> results = [];

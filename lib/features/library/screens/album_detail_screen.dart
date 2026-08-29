@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +21,7 @@ import '../../../data/sync/sync_service.dart';
 import '../../auth/local_mode_provider.dart';
 import '../../download/widgets/download_header_button.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
+import '../../player/radio/radio_service.dart';
 
 import '../../player/player_providers.dart';
 
@@ -357,7 +360,11 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                         } else if (isCurrentContext) {
                                           controller.play();
                                         } else {
-                                          controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: albumContextId);
+                                          final isShuffle = ref.read(playerStateProvider).isShuffle;
+                                          final startIndex = isShuffle
+                                              ? RadioService.pickShuffledStartIndex(syncoraTracks.length, math.Random())
+                                              : 0;
+                                          controller.setQueue(syncoraTracks, startIndex: startIndex, activeContextId: albumContextId);
                                           controller.play();
                                         }
                                       },

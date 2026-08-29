@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/foundation.dart';
@@ -16,6 +17,7 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/utils/contributor_resolver.dart';
+import '../../../core/utils/share_link_builder.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_cover_widget.dart';
@@ -27,6 +29,7 @@ import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/sync/sync_service.dart';
+import '../../auth/local_mode_provider.dart';
 import '../../download/widgets/download_header_button.dart';
 import '../../player/audio_engine/audio_engine_factory.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
@@ -741,6 +744,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   }
 
   Widget _buildPlaylistOptionsContent(BuildContext ctx, Playlist playlist, List<PlaylistTrack> tracks) {
+    final isLocalMode = ref.read(localModeProvider);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -767,6 +771,16 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             },
           ),
         ],
+        if (!isLocalMode)
+          ListTile(
+            leading: Icon(AppIcons.broken(SolarIcons.LinkMinimalistic), color: AppTheme.primary),
+            title: const Text('Copiar enlace', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+            onTap: () {
+              Navigator.pop(ctx);
+              Clipboard.setData(ClipboardData(text: ShareLinkBuilder.playlist('${playlist.remoteId ?? playlist.id}')));
+              AppToast.show(context, message: 'Enlace copiado al portapapeles');
+            },
+          ),
         if (tracks.isNotEmpty)
           ListTile(
             leading: Icon(AppIcons.broken(SolarIcons.AddFolder), color: AppTheme.primary),
@@ -1127,7 +1141,11 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                 } else if (isCurrentContext) {
                                                   controller.play();
                                                 } else {
-                                                  controller.setQueue(sortedSyncoraTracks, startIndex: 0, activeContextId: playlistContextId);
+                                                  final isShuffle = ref.read(playerStateProvider).isShuffle;
+                                                  final startIndex = isShuffle
+                                                      ? RadioService.pickShuffledStartIndex(sortedSyncoraTracks.length, math.Random())
+                                                      : 0;
+                                                  controller.setQueue(sortedSyncoraTracks, startIndex: startIndex, activeContextId: playlistContextId);
                                                   controller.play();
                                                 }
                                               },
@@ -1776,6 +1794,17 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
   bool _isPreviewPlaying = false;
   final Set<String> _addedTrackIds = {};
 
+  // Ids ya mostrados en esta visita a la playlist (el lote inicial del
+  // `FutureProvider` más cada "Actualizar" manual) -- se agregan al
+  // exclude-list de la siguiente generación para que "Actualizar" no pueda
+  // repetir exactamente el mismo lote. Vive en el estado local (no en el
+  // provider) para que se olvide solo al salir de la pantalla, como pide el
+  // ítem 16: "no need infinite variety forever, solo no repetir dentro de la
+  // misma visita".
+  final Set<String> _shownTrackIds = {};
+  List<SyncoraTrack>? _manualRecommendations;
+  bool _isRefreshing = false;
+
   @override
   void initState() {
     super.initState();
@@ -1788,6 +1817,51 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
         });
       }
     });
+  }
+
+  Future<void> _refreshRecommendations() async {
+    setState(() => _isRefreshing = true);
+    try {
+      final dao = ref.read(playlistDaoProvider);
+      final deezerApi = ref.read(deezerApiProvider);
+      final tracks = await dao.getTracksOrdered(widget.playlist.id);
+
+      final contextTracks = tracks
+          .map((t) => SyncoraTrack(
+                id: t.trackId.toString(),
+                title: t.title,
+                artist: t.artistName,
+                artistId: t.artistId,
+                album: t.albumName,
+                albumId: t.albumId,
+                duration: Duration(milliseconds: t.durationMs),
+                artUri: t.coverUrl.isNotEmpty ? Uri.tryParse(t.coverUrl) : null,
+              ))
+          .toList();
+
+      // Excluye las canciones ya en la playlist Y todo lo ya mostrado en
+      // refrescos anteriores de esta visita -- sin lo segundo, un muestreo
+      // ponderado que vuelve a elegir a los mismos artistas semilla (muy
+      // probable si 1-2 artistas dominan el contexto) devolvía el mismo lote
+      // cacheado por `DeezerApi` para ese artista.
+      final excludeIds = {
+        ...tracks.map((t) => t.trackId.toString()),
+        ..._shownTrackIds,
+      };
+      final radioService = RadioService(deezerApi: deezerApi);
+      final results = await radioService.generateBatch(contextTracks: contextTracks, excludeIds: excludeIds);
+      final batch = results.take(10).toList();
+
+      if (!mounted) return;
+      setState(() {
+        _manualRecommendations = batch;
+        _shownTrackIds.addAll(batch.map((t) => t.id));
+        _addedTrackIds.clear();
+        _isRefreshing = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
   }
 
   @override
@@ -1913,8 +1987,29 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
     });
 
     final recommendationsAsync = ref.watch(playlistRecommendationsProvider(widget.playlist.id));
-    final isLoading = recommendationsAsync.isLoading;
-    final recommendations = _visibleRecommendations(recommendationsAsync.value ?? const []);
+    ref.listen<AsyncValue<List<SyncoraTrack>>>(playlistRecommendationsProvider(widget.playlist.id), (previous, next) {
+      // Semilla el exclude-list de "Actualizar" con el lote inicial del
+      // provider, para que el primer refresco manual tampoco pueda repetirlo
+      // -- solo mientras no haya habido ya un refresco manual (si lo hubo,
+      // `_manualRecommendations` manda y este provider ya no vuelve a
+      // resolver salvo invalidación externa).
+      final data = next.value;
+      if (data != null && _manualRecommendations == null) {
+        _shownTrackIds.addAll(data.map((t) => t.id));
+      }
+    });
+
+    // El spinner grande solo reemplaza toda la sección en la carga inicial
+    // -- durante un refresco manual se mantiene visible el lote anterior
+    // (con el spinner chico del botón "Actualizar" como único indicador),
+    // porque colapsar la lista entera a un spinner centrado y volver a
+    // expandirla es lo que producía el salto de scroll hacia arriba
+    // reportado (el offset actual queda clamped al alto mucho menor del
+    // spinner y Flutter lo reajusta).
+    final isFirstLoad = _manualRecommendations == null && recommendationsAsync.isLoading;
+    final isLoading = _isRefreshing || (_manualRecommendations == null && recommendationsAsync.isLoading);
+    final baseRecommendations = _manualRecommendations ?? recommendationsAsync.value ?? const [];
+    final recommendations = _visibleRecommendations(baseRecommendations);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1965,17 +2060,12 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
                     ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary))
                     : Icon(AppIcons.broken(SolarIcons.Refresh), size: 16),
                 label: const Text('Actualizar', style: TextStyle(fontSize: 12)),
-                onPressed: isLoading
-                    ? null
-                    : () {
-                        _addedTrackIds.clear();
-                        ref.invalidate(playlistRecommendationsProvider(widget.playlist.id));
-                      },
+                onPressed: isLoading ? null : _refreshRecommendations,
               ),
             ],
           ),
           const SizedBox(height: 16),
-          if (isLoading)
+          if (isFirstLoad)
             const Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),

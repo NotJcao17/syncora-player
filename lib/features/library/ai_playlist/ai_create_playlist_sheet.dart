@@ -715,7 +715,11 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
       children: [
         Text(label, style: const TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600)),
         SliderTheme(
-          data: SliderTheme.of(context).copyWith(activeTrackColor: AppTheme.primary, thumbColor: AppTheme.primary),
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: AppTheme.primary,
+            thumbColor: AppTheme.primary,
+            inactiveTrackColor: AppTheme.surfaceActive,
+          ),
           child: Slider(value: value, onChanged: onChanged),
         ),
       ],
