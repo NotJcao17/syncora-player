@@ -104,6 +104,16 @@ void _initAndroidAudioService(SyncoraPlayerController controller, [PlaylistDao? 
       androidNotificationChannelId: 'com.syncora.player',
       androidNotificationChannelName: 'Syncora Player',
       androidNotificationOngoing: true,
+      // Ítem 4 (QA, pendiente de verificar en hardware real): Android exige
+      // que el ícono chico de la notificación/lockscreen sea monocromo (solo
+      // alpha), no full-color -- `mipmap/ic_launcher` es el ícono a color de
+      // la app. En algunas versiones de Android esto hace que el sistema
+      // dibuje un ícono en blanco o directamente lo omita ("app icon
+      // missing" reportado por QA). No se generó acá un drawable monocromo
+      // dedicado (`android/app/src/main/res/drawable/ic_stat_*`) porque
+      // requiere una silueta de marca real, no algo que un agente sin acceso
+      // a los assets de diseño deba inventar -- queda pendiente para un
+      // humano con el arte fuente.
       androidNotificationIcon: 'mipmap/ic_launcher',
     ),
   ).then((handler) {

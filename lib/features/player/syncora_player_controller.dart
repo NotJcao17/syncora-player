@@ -1684,7 +1684,6 @@ bool get _isTestEnv {
       final initialPos = (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0)
           ? Duration(seconds: _restoredPositionSeconds!)
           : null;
-      _restoredPositionSeconds = null;
 
       if (useCrossfade) {
         _log('[Play] Crossfade a descarga local: $localPath (${crossfadeDuration.inSeconds}s)');
@@ -1699,6 +1698,11 @@ bool get _isTestEnv {
 
         await _engine.play();
       }
+      // Recién acá: `_onEngineState` (item 1, QA) sigue tratando cualquier
+      // posición 0 como "todavía no llegamos al punto restaurado" mientras
+      // este campo siga con valor — limpiarlo antes de que el seek/play de
+      // arriba termine reabre la ventana del dip visual a 0.
+      _restoredPositionSeconds = null;
       _saveSession();
       return;
     }
@@ -1744,7 +1748,6 @@ bool get _isTestEnv {
           final initialPos = (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0)
               ? Duration(seconds: _restoredPositionSeconds!)
               : null;
-          _restoredPositionSeconds = null;
 
           await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
 
@@ -1787,8 +1790,17 @@ bool get _isTestEnv {
             }
           }
 
+          // Recién acá (item 1, QA): igual que en el camino de descarga
+          // local, limpiar antes de que termine todo el arranque (incluido
+          // el reintento) reabre la ventana del dip visual a 0 en
+          // `_onEngineState`.
+          _restoredPositionSeconds = null;
           _saveSession();
         } catch (e) {
+          // Falló antes de llegar a limpiarlo arriba: no dejar el campo
+          // pegado indefinidamente suprimiendo posiciones 0 legítimas de
+          // reproducciones futuras.
+          _restoredPositionSeconds = null;
           _log('[Play] Error cargando en motor: $e');
           _state = _state.copyWith(
             lastError: ExtractionError.unknownError,
@@ -1896,12 +1908,19 @@ bool get _isTestEnv {
     _trackListenProgress(engineState);
 
     // Mientras haya una posición de sesión restaurada pendiente de consumir
-    // (ver `_restoredPositionSeconds`), el motor real todavía no cargó
-    // ninguna pista — cualquier evento suyo con posición 0 (ej. el que
-    // dispara `setVolume()` en `_restoreSession()`) no debe pisar
-    // visualmente la posición ya restaurada en `_state.engine.position`.
+    // (ver `_restoredPositionSeconds`), el motor real todavía no llegó al
+    // punto restaurado — cualquier evento suyo con posición 0 (el de
+    // `setVolume()` en `_restoreSession()`, pero también los estados
+    // transicionales `buffering`/`loading` que el motor emite justo al
+    // arrancar Play, ANTES de procesar el seek al segundo guardado) no debe
+    // pisar visualmente la posición ya restaurada en `_state.engine.position`.
+    // Antes esto solo cubría `processingState == idle`: una vez que Play
+    // arranca de verdad, el motor pasa a `buffering`/`loading` con posición 0
+    // y ese frame se colaba igual (la barra dipeaba a 0 un instante antes de
+    // recuperar el segundo correcto) — cubrir cualquier posición 0, sin
+    // condicionar al estado exacto, cierra esa ventana.
     final effectiveEngineState =
-        (_restoredPositionSeconds != null && engineState.processingState == AudioProcessingState.idle)
+        (_restoredPositionSeconds != null && engineState.position == Duration.zero)
             ? engineState.copyWith(position: _state.engine.position)
             : engineState;
 

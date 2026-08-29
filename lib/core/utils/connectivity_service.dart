@@ -2,10 +2,9 @@ import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final isConnectedProvider = StreamProvider<bool>((ref) async* {
+final isConnectedProvider = StreamProvider<bool>((ref) {
   if (Platform.environment.containsKey('FLUTTER_TEST')) {
-    yield true;
-    return;
+    return Stream.value(true);
   }
 
   final connectivity = Connectivity();
@@ -15,32 +14,31 @@ final isConnectedProvider = StreamProvider<bool>((ref) async* {
     return !results.contains(ConnectivityResult.none);
   }
 
-  // `distinct()` antes solo se aplicaba al stream de cambios: el chequeo
-  // inicial y la primera emisión de `onConnectivityChanged` (el plugin
-  // reemite el estado actual apenas alguien se suscribe) podían duplicar el
-  // mismo valor. Este `lastEmitted` deduplica sobre TODO el stream fusionado,
-  // no solo la mitad de él.
-  bool? lastEmitted;
+  Stream<bool> merged() async* {
+    try {
+      yield isConnected(await connectivity.checkConnectivity());
+    } catch (_) {
+      yield true;
+    }
 
-  try {
-    final initial = await connectivity.checkConnectivity();
-    lastEmitted = isConnected(initial);
-    yield lastEmitted;
-  } catch (_) {
-    lastEmitted = true;
-    yield true;
+    // Un único glitch transitorio del plugin nativo (`onConnectivityChanged`
+    // emitiendo un error en vez de un valor) mataba el generador `async*`
+    // entero -- sin este `handleError`, el provider quedaba en estado de
+    // error para siempre y la app dejaba de detectar desconexión/reconexión
+    // hasta reiniciar. Ahora el error se ignora (no se reemite nada) y el
+    // stream sigue vivo para el próximo cambio real de conectividad.
+    yield* connectivity.onConnectivityChanged.map(isConnected).handleError((_) {});
   }
 
-  // Un único glitch transitorio del plugin nativo (`onConnectivityChanged`
-  // emitiendo un error en vez de un valor) mataba el generador `async*`
-  // entero -- sin este `handleError`, el provider quedaba en estado de error
-  // para siempre y la app dejaba de detectar desconexión/reconexión hasta
-  // reiniciar. Ahora el error se ignora (no se reemite nada) y el stream
-  // sigue vivo para el próximo cambio real de conectividad.
-  await for (final results in connectivity.onConnectivityChanged.handleError((_) {})) {
-    final next = isConnected(results);
-    if (next == lastEmitted) continue;
-    lastEmitted = next;
-    yield next;
-  }
+  // Ítem 6 (QA, regresión): la versión anterior deduplicaba a mano con una
+  // variable `lastEmitted` comparada evento a evento -- funcionalmente
+  // equivalente a lo que ya hace `distinct()`, pero manual y sin ningún test
+  // que lo cubriera; se sospecha (sin poder reproducirlo fuera de un
+  // dispositivo real) que esa lógica terminó comiéndose transiciones reales
+  // en vez de solo duplicados. `distinct()` es la primitiva estándar de
+  // `Stream` para exactamente este problema -- se aplica sobre la secuencia
+  // fusionada completa (chequeo inicial + cambios), así que sigue evitando
+  // la doble emisión del mismo valor sin lógica propia que pueda tener un
+  // bug de orden/comparación.
+  return merged().distinct();
 });
