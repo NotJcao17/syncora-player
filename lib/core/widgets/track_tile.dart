@@ -968,6 +968,12 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                     isLiked: pl.isLiked,
                     width: 36,
                     height: 36,
+                    // Sin esto, `PlaylistCoverWidget` cae en su propio radio
+                    // por defecto (16, pensado para portadas grandes) que en
+                    // un thumbnail de 36px domina sobre el `ClipRRect(6)` de
+                    // afuera (el clip anidado más redondeado es el que gana
+                    // la intersección visual) y termina viéndose circular.
+                    borderRadius: BorderRadius.circular(6),
                     memCacheWidth: 80,
                     memCacheHeight: 80,
                   ),
