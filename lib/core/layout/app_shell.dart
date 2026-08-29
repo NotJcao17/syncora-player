@@ -262,18 +262,27 @@ class _AppShellState extends ConsumerState<AppShell> {
         Scaffold(
           backgroundColor: AppTheme.background,
           body: widget.child,
-          bottomNavigationBar: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const MiniPlayer(),
-                _MobileNavBar(
-                  selectedIndex: selectedIndex,
-                  onItemTapped: _onItemTapped,
-                  hasTrack: hasTrack,
-                ),
-              ],
+          // El relleno que agrega `SafeArea` para la barra de gestos queda
+          // transparente y dejaba ver el fondo del `Scaffold`, mas oscuro que
+          // la barra de navegacion: eso era la "franja" de abajo. Con
+          // edge-to-edge y navegacion por gestos, Android ignora
+          // `systemNavigationBarColor`, asi que el tono tiene que pintarlo la
+          // propia app.
+          bottomNavigationBar: ColoredBox(
+            color: AppTheme.surface,
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const MiniPlayer(),
+                  _MobileNavBar(
+                    selectedIndex: selectedIndex,
+                    onItemTapped: _onItemTapped,
+                    hasTrack: hasTrack,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -18,6 +18,15 @@ void main() {
       expect(PlaylistImportExportService.extractAddCount('ponme 4 de rock'), 4);
     });
 
+    test('reconoce el calificador antes del numero', () {
+      // El caso reportado: "otras 5" seguia sin coincidir y la peticion caia
+      // al camino de regenerar, que ademas recortaba de vuelta a 25.
+      expect(PlaylistImportExportService.extractAddCount('otras 5'), 5);
+      expect(PlaylistImportExportService.extractAddCount('otras 5 canciones'), 5);
+      expect(PlaylistImportExportService.extractAddCount('dame 3 más'), 3);
+      expect(PlaylistImportExportService.extractAddCount('quiero otras 8'), 8);
+    });
+
     test('reconoce cantidad calificada sin verbo', () {
       expect(PlaylistImportExportService.extractAddCount('5 más'), 5);
       expect(PlaylistImportExportService.extractAddCount('10 canciones mas'), 10);

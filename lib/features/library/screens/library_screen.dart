@@ -266,7 +266,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             onTap: () {
               Navigator.pop(ctx);
               Clipboard.setData(ClipboardData(text: ShareLinkBuilder.playlist('${playlist.remoteId ?? playlist.id}')));
-              AppToast.show(context, message: 'Enlace copiado al portapapeles');
+              AppToast.show(context, message: 'Enlace copiado. Se abre en Syncora en quien tenga la app');
             },
           ),
           ListTile(

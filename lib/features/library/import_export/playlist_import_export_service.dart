@@ -116,13 +116,21 @@ class PlaylistImportExportService {
     if (plusMatch != null) return int.tryParse(plusMatch.group(1)!);
 
     // Raiz + sufijo libre cubre agrega/agregame/agregar/anade/anademe/etc.
-    final addIntent = RegExp(r'\b(agreg\w*|anad\w*|sum\w*|adicion\w*|inserta\w*|pon|ponme|mete\w*)\b')
-        .hasMatch(clean);
+    // "otras/otros" y "dame" tambien expresan la intencion ("otras 5").
+    final addIntent = RegExp(
+      r'\b(agreg\w*|anad\w*|sum\w*|adicion\w*|inserta\w*|pon|ponme|mete\w*|otras|otros|dame|quiero|mas)\b',
+    ).hasMatch(clean);
 
     // "5 mas", "5 nuevas", "5 adicionales", "5 extra".
     final qualified = RegExp(r'(\d+)\s+(?:\w+\s+)?(?:mas|nuevas|nuevos|adicionales|extra)\b')
         .firstMatch(clean);
     if (qualified != null) return int.tryParse(qualified.group(1)!);
+
+    // El calificador puede ir ANTES del numero: "otras 5", "otras 5 canciones",
+    // "dame 3 mas". Este era el caso que seguia cayendo al camino de regenerar.
+    final qualifierFirst =
+        RegExp(r'\b(?:otras|otros|mas|nuevas|nuevos|adicionales|extra)\s+(\d+)\b').firstMatch(clean);
+    if (qualifierFirst != null) return int.tryParse(qualifierFirst.group(1)!);
 
     // Con intencion de agregar explicita, cualquier numero del texto es la
     // cantidad pedida ("agregame 5 nuevas", "pon 3 de rock").

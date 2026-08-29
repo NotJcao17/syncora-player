@@ -8,18 +8,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// de red activa. `connectivity_plus` reporta lo segundo: en Windows es normal
 /// seguir reportando `wifi` con el cable desconectado o sin salida a internet,
 /// y en Android el evento de reconexión llega tarde o no llega.
+/// Se prueban dos hosts y con un timeout holgado: con uno solo y 2s, el arranque
+/// en frío del móvil (pila de red todavía levantándose, o un operador que
+/// bloquea ese resolver) daba un falso negativo y la app abría en modo offline.
 Future<bool> _hasInternet() async {
-  try {
-    final socket = await Socket.connect(
-      '1.1.1.1',
-      53,
-      timeout: const Duration(seconds: 2),
-    );
-    socket.destroy();
-    return true;
-  } catch (_) {
-    return false;
+  const hosts = [('1.1.1.1', 53), ('8.8.8.8', 53)];
+  for (final (host, port) in hosts) {
+    try {
+      final socket = await Socket.connect(
+        host,
+        port,
+        timeout: const Duration(seconds: 4),
+      );
+      socket.destroy();
+      return true;
+    } catch (_) {
+      // Siguiente host.
+    }
   }
+  return false;
 }
 
 final isConnectedProvider = StreamProvider<bool>((ref) {
@@ -34,6 +41,7 @@ final isConnectedProvider = StreamProvider<bool>((ref) {
   bool? last;
   var checking = false;
   var closed = false;
+  var probeFailures = 0;
 
   Future<void> check() async {
     // Un chequeo a la vez: el poller y el evento de plataforma pueden caer
@@ -41,31 +49,34 @@ final isConnectedProvider = StreamProvider<bool>((ref) {
     if (checking || closed) return;
     checking = true;
     try {
-      var now = await _hasInternet();
-
-      // Una sonda fallida no alcanza para declarar offline: en Android, con la
-      // app en segundo plano el sistema corta los sockets, y eso aparecia como
-      // una desconexion real (al volver al frente saltaba el aviso "Conexion
-      // restaurada" sin que la red se hubiera caido nunca). Solo se acepta el
-      // offline si la plataforma tambien reporta que no hay interfaz, o si una
-      // segunda sonda lo confirma.
-      if (!now && (last ?? true)) {
-        List<ConnectivityResult> results;
-        try {
-          results = await connectivity.checkConnectivity();
-        } catch (_) {
-          results = const [];
-        }
-        if (!results.contains(ConnectivityResult.none)) {
-          await Future<void>.delayed(const Duration(seconds: 2));
-          if (closed) return;
-          now = await _hasInternet();
-        }
+      // La interfaz de red es la señal primaria: es instantánea y fiable para
+      // el caso "no hay red". La sonda solo se usa para el caso contrario
+      // (interfaz activa pero sin salida real), y hace falta que falle varias
+      // veces seguidas antes de declarar offline — una sola falla puede ser la
+      // app recién arrancada, o el sistema suspendiendo sockets en segundo
+      // plano, y eso aparecía como una desconexión inexistente.
+      List<ConnectivityResult> results;
+      try {
+        results = await connectivity.checkConnectivity();
+      } catch (_) {
+        results = const [];
       }
 
-      if (closed || now == last) return;
-      last = now;
-      controller.add(now);
+      bool online;
+      if (results.isNotEmpty && results.contains(ConnectivityResult.none)) {
+        probeFailures = 0;
+        online = false;
+      } else if (await _hasInternet()) {
+        probeFailures = 0;
+        online = true;
+      } else {
+        probeFailures++;
+        online = probeFailures < 3;
+      }
+
+      if (closed || online == last) return;
+      last = online;
+      controller.add(online);
     } finally {
       checking = false;
     }

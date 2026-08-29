@@ -349,6 +349,28 @@ class SyncoraPlayerController extends ChangeNotifier {
   int? _restoredPositionSeconds;
   DateTime? _lastPositionSaveAt;
 
+  /// Ventana breve, arrancada al consumir una posición restaurada, durante la
+  /// cual un `position == 0` del motor se considera un frame transicional
+  /// (`buffering`/`loading` antes de procesar el seek) y no se deja pisar la
+  /// posición ya restaurada.
+  ///
+  /// Antes esto se derivaba de `_restoredPositionSeconds != null`, que se
+  /// limpiaba recién al final del arranque: si ese campo quedaba con valor
+  /// (cualquier camino que no llegara a limpiarlo), TODA pista siguiente
+  /// arrancaba en el segundo viejo, la barra se congelaba y la sesión dejaba
+  /// de guardarse. Acotarlo por tiempo hace imposible que se filtre.
+  DateTime? _suppressZeroPositionUntil;
+
+  /// Lee y descarta la posición restaurada en el mismo paso — nunca debe
+  /// sobrevivir al arranque que la consume.
+  Duration? _consumeRestoredPosition() {
+    final seconds = _restoredPositionSeconds;
+    _restoredPositionSeconds = null;
+    if (seconds == null || seconds <= 0) return null;
+    _suppressZeroPositionUntil = DateTime.now().add(const Duration(seconds: 3));
+    return Duration(seconds: seconds);
+  }
+
   SyncoraPlayerState _state = SyncoraPlayerState.initial;
 
   SyncoraPlayerState get state => _state;
@@ -1705,9 +1727,7 @@ bool get _isTestEnv {
       _onPlaybackStartedSuccessfully();
       _currentPlaybackIsLocal = true;
 
-      final initialPos = (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0)
-          ? Duration(seconds: _restoredPositionSeconds!)
-          : null;
+      final initialPos = _consumeRestoredPosition();
 
       if (useCrossfade) {
         _log('[Play] Crossfade a descarga local: $localPath (${crossfadeDuration.inSeconds}s)');
@@ -1722,11 +1742,6 @@ bool get _isTestEnv {
 
         await _engine.play();
       }
-      // Recién acá: `_onEngineState` (item 1, QA) sigue tratando cualquier
-      // posición 0 como "todavía no llegamos al punto restaurado" mientras
-      // este campo siga con valor — limpiarlo antes de que el seek/play de
-      // arriba termine reabre la ventana del dip visual a 0.
-      _restoredPositionSeconds = null;
       _saveSession();
       return;
     }
@@ -1769,9 +1784,7 @@ bool get _isTestEnv {
         // actual no califica como origen local para un crossfade.
         _currentPlaybackIsLocal = false;
         try {
-          final initialPos = (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0)
-              ? Duration(seconds: _restoredPositionSeconds!)
-              : null;
+          final initialPos = _consumeRestoredPosition();
 
           await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
 
@@ -1814,17 +1827,8 @@ bool get _isTestEnv {
             }
           }
 
-          // Recién acá (item 1, QA): igual que en el camino de descarga
-          // local, limpiar antes de que termine todo el arranque (incluido
-          // el reintento) reabre la ventana del dip visual a 0 en
-          // `_onEngineState`.
-          _restoredPositionSeconds = null;
           _saveSession();
         } catch (e) {
-          // Falló antes de llegar a limpiarlo arriba: no dejar el campo
-          // pegado indefinidamente suprimiendo posiciones 0 legítimas de
-          // reproducciones futuras.
-          _restoredPositionSeconds = null;
           _log('[Play] Error cargando en motor: $e');
           _state = _state.copyWith(
             lastError: ExtractionError.unknownError,
@@ -1938,15 +1942,19 @@ bool get _isTestEnv {
     // transicionales `buffering`/`loading` que el motor emite justo al
     // arrancar Play, ANTES de procesar el seek al segundo guardado) no debe
     // pisar visualmente la posición ya restaurada en `_state.engine.position`.
-    // Antes esto solo cubría `processingState == idle`: una vez que Play
-    // arranca de verdad, el motor pasa a `buffering`/`loading` con posición 0
-    // y ese frame se colaba igual (la barra dipeaba a 0 un instante antes de
-    // recuperar el segundo correcto) — cubrir cualquier posición 0, sin
-    // condicionar al estado exacto, cierra esa ventana.
+    // La ventana es corta y con vencimiento propio (ver
+    // `_suppressZeroPositionUntil`): pasados los 3s, o al reproducir cualquier
+    // otra pista, un `position == 0` vuelve a ser un 0 legítimo.
+    final suppressUntil = _suppressZeroPositionUntil;
+    final suppressZero = suppressUntil != null &&
+        DateTime.now().isBefore(suppressUntil) &&
+        engineState.position == Duration.zero &&
+        _state.engine.position > Duration.zero;
+    if (suppressUntil != null && !DateTime.now().isBefore(suppressUntil)) {
+      _suppressZeroPositionUntil = null;
+    }
     final effectiveEngineState =
-        (_restoredPositionSeconds != null && engineState.position == Duration.zero)
-            ? engineState.copyWith(position: _state.engine.position)
-            : engineState;
+        suppressZero ? engineState.copyWith(position: _state.engine.position) : engineState;
 
     _state = _state.copyWith(engine: effectiveEngineState);
     _notify();
@@ -1991,9 +1999,8 @@ bool get _isTestEnv {
   /// hace como mucho una vez cada 5s.
   void _maybePersistPosition(AudioEngineState engineState) {
     if (!engineState.playing) return;
-    // Todavía sin consumir la posición restaurada: `_state.engine.position`
-    // es el valor restaurado, no uno real del motor — guardarlo no aporta
-    // nada y arriesga pisarlo con un frame transicional.
+    // Sesión restaurada aún sin arrancar: `_state.engine.position` es el valor
+    // restaurado, no uno real del motor.
     if (_restoredPositionSeconds != null) return;
     final now = DateTime.now();
     final last = _lastPositionSaveAt;

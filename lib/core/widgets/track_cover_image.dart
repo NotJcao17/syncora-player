@@ -53,6 +53,10 @@ class TrackCoverImage extends StatelessWidget {
         fit: fit,
         cacheWidth: memCacheWidth,
         cacheHeight: memCacheHeight,
+        // `Image.file` usa por defecto un filtrado mas basto que el de
+        // `CachedNetworkImage`: sin esto, la portada grande del reproductor se
+        // veia visiblemente peor al pasar a servirse desde disco.
+        filterQuality: FilterQuality.medium,
         errorBuilder: (_, _, _) => fallback,
       );
     }

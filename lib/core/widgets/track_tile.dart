@@ -207,7 +207,7 @@ class TrackContextMenu {
     } else if (value == 'share') {
       await Clipboard.setData(ClipboardData(text: ShareLinkBuilder.track('$trackIdInt')));
       if (context.mounted) {
-        AppToast.show(context, message: 'Enlace copiado al portapapeles');
+        AppToast.show(context, message: 'Enlace copiado. Se abre en Syncora en quien tenga la app');
       }
     } else if (value == 'remove') {
       onRemove?.call();

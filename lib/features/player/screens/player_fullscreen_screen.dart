@@ -235,7 +235,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                       ? TrackCoverImage(
                                           coverUrl: currentTrack.coverUrl,
                                           trackId: int.tryParse(currentTrack.id),
-                                          memCacheWidth: 600,
+                                          memCacheWidth: 1000,
                                           placeholder: _buildCoverPlaceholder(),
                                         )
                                       : _buildCoverPlaceholder(),
