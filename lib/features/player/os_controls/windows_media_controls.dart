@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:smtc_windows/smtc_windows.dart';
 
+import '../../../data/local_db/daos/playlist_dao.dart';
 import '../syncora_player_controller.dart';
 import '../audio_engine/audio_engine_state.dart' as engine_state;
 
@@ -14,10 +16,21 @@ import '../audio_engine/audio_engine_state.dart' as engine_state;
 /// de Windows, y retransmite pulsaciones de teclas multimedia al controlador.
 class WindowsMediaControls {
   final SyncoraPlayerController _controller;
+  final PlaylistDao? _playlistDao;
   late final SMTCWindows _smtc;
   StreamSubscription<PressedButton>? _buttonSub;
   DateTime _lastTimelineUpdate = DateTime.fromMillisecondsSinceEpoch(0);
   bool _disposed = false;
+
+  /// Botones que Windows dibuja al pasar el mouse por el icono de la barra de
+  /// tareas. Es una API distinta de SMTC (`ITaskbarList3::ThumbBarAddButtons`,
+  /// ver `windows/runner/thumbnail_toolbar.cpp`): `smtc_windows` no la expone,
+  /// por eso vive en el runner nativo detrás de este canal.
+  static const _thumbBar = MethodChannel('syncora/thumbbar');
+  bool _isCurrentTrackLiked = false;
+  String? _likedStateTrackId;
+  bool? _lastPushedPlaying;
+  bool? _lastPushedLiked;
 
 bool get _isTestEnv {
   try {
@@ -28,8 +41,10 @@ bool get _isTestEnv {
   }
 }
 
-  WindowsMediaControls(this._controller) {
+  WindowsMediaControls(this._controller, [this._playlistDao]) {
     if (kIsWeb || !Platform.isWindows || _isTestEnv) return;
+
+    _thumbBar.setMethodCallHandler(_onThumbBarCall);
 
     try {
       _smtc = SMTCWindows(
@@ -80,11 +95,98 @@ bool get _isTestEnv {
     }
   }
 
+  Future<void> _onThumbBarCall(MethodCall call) async {
+    if (_disposed || call.method != 'action') return;
+    switch (call.arguments as String) {
+      case 'previous':
+        await _controller.skipToPrevious();
+        break;
+      case 'playPause':
+        if (_controller.state.engine.playing) {
+          await _controller.pause();
+        } else {
+          await _controller.play();
+        }
+        break;
+      case 'next':
+        await _controller.skipToNext();
+        break;
+      case 'like':
+        await _toggleLike();
+        break;
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    final track = _controller.state.currentTrack;
+    final dao = _playlistDao;
+    if (track == null || dao == null) return;
+    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
+    final nowLiked = await dao.toggleLikeTrack(
+      trackId: trackIdInt,
+      artistId: track.artistId ?? 0,
+      albumId: track.albumId ?? 0,
+      genre: track.genre ?? '',
+      title: track.title,
+      artistName: track.artist,
+      albumName: track.album ?? '',
+      coverUrl: track.coverUrl,
+      durationMs: (track.duration ?? Duration.zero).inMilliseconds,
+    );
+    if (_controller.state.currentTrack?.id != track.id) return;
+    _isCurrentTrackLiked = nowLiked;
+    _likedStateTrackId = track.id;
+    _pushThumbBarState();
+  }
+
+  Future<void> _refreshLikedState(String? trackId) async {
+    _likedStateTrackId = trackId;
+    final dao = _playlistDao;
+    if (trackId == null || dao == null) {
+      _isCurrentTrackLiked = false;
+      _pushThumbBarState();
+      return;
+    }
+    final trackIdInt = int.tryParse(trackId) ?? trackId.hashCode.abs();
+    bool liked;
+    try {
+      liked = await dao.isTrackLiked(trackIdInt);
+    } catch (_) {
+      liked = false;
+    }
+    // La pista pudo cambiar mientras la consulta estaba en vuelo.
+    if (_likedStateTrackId != trackId) return;
+    _isCurrentTrackLiked = liked;
+    _pushThumbBarState();
+  }
+
+  /// Solo cruza el canal cuando algo que los botones muestran cambió de verdad:
+  /// `_onControllerChanged` corre en cada tick de posición.
+  void _pushThumbBarState() {
+    if (_disposed) return;
+    final playing = _controller.state.engine.playing;
+    if (playing == _lastPushedPlaying && _isCurrentTrackLiked == _lastPushedLiked) {
+      return;
+    }
+    _lastPushedPlaying = playing;
+    _lastPushedLiked = _isCurrentTrackLiked;
+    _thumbBar.invokeMethod('update', {
+      'isPlaying': playing,
+      'isLiked': _isCurrentTrackLiked,
+    }).catchError((_) {});
+  }
+
   void _onControllerChanged() {
     if (_disposed) return;
     final state = _controller.state;
     final engineState = state.engine;
     final track = state.currentTrack;
+
+    if (track?.id != _likedStateTrackId) {
+      _refreshLikedState(track?.id);
+    } else {
+      _pushThumbBarState();
+    }
 
     // 1. Playback status
     if (engineState.playing) {

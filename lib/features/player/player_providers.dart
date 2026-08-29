@@ -86,7 +86,7 @@ final syncoraPlayerControllerProvider =
 
   if (!kIsWeb && Platform.isWindows && !_isTestEnv) {
     try {
-      final winControls = WindowsMediaControls(controller);
+      final winControls = WindowsMediaControls(controller, playlistDao);
       ref.onDispose(winControls.dispose);
     } catch (e) {
       debugPrint('WindowsMediaControls no disponible en este entorno: $e');

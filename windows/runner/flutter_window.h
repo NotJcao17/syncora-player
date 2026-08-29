@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include "thumbnail_toolbar.h"
 #include "win32_window.h"
 
 // A window that does nothing but host a Flutter view.
@@ -28,6 +29,9 @@ class FlutterWindow : public Win32Window {
 
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
+
+  // Botones del hover de la barra de tareas (ver thumbnail_toolbar.h).
+  ThumbnailToolbar thumbnail_toolbar_;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_
