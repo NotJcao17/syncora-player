@@ -95,24 +95,35 @@ class _AppShellState extends ConsumerState<AppShell> with WindowListener {
     super.dispose();
   }
 
-  // Cierre limpio en Windows (item 2 del bundle 3): sin esto, `windowManager
-  // .close()` destruye la ventana nativa directamente sin pasar por el
-  // dispose de Riverpod, dejando el proceso mpv de `media_kit`
-  // (`MediaKitEngine._player`), las suscripciones del motor y la instancia
-  // SMTC vivos -- eso es lo que se veía como la app quedando en "No responde"
-  // al cerrar. `setPreventClose(true)` (ver `main.dart`) intercepta el
-  // cierre nativo para que este handler pueda correr antes; se invalida el
-  // provider (dispara `SyncoraPlayerController.dispose()` +
-  // `WindowsMediaControls.dispose()` registrado vía `ref.onDispose`) y recién
-  // ahí se destruye la ventana.
+  // Cierre limpio en Windows (item 2 del bundle 3, regresión corregida en el
+  // item 12 de la ronda de QA siguiente): la primera versión de este fix
+  // esperaba el `invalidate` del provider ANTES de destruir la ventana --
+  // `SyncoraPlayerController.dispose()` dispara `CrossfadeAudioEngine
+  // .dispose()` -> `MediaKitEngine.dispose()` -> `Player.dispose()` de
+  // `media_kit`, cuya implementación real mantiene un lock interno y agenda
+  // el `mpv_terminate_destroy` nativo detrás de un `Future.delayed(Duration
+  // (seconds: 5))` propio del paquete (workaround de estabilidad de mpv) --
+  // con `CrossfadeAudioEngine` pudiendo tener DOS instancias de motor
+  // (`_active`/`_standby`) esa espera se duplicaba, produciendo el freeze
+  // visible de ~10s que reportó el tester antes de que la ventana
+  // desapareciera de verdad. La ventana ya no necesita esperar nada de eso:
+  // `windowManager.destroy()` se dispara primero (deja en vuelo la
+  // destrucción nativa, que corre del lado de la plataforma, no del
+  // isolate de Dart) y el `invalidate` -- que sigue haciendo falta para
+  // liberar streams/SMTC en el mejor esfuerzo -- corre en paralelo sin
+  // bloquear ese `await`. Si el proceso termina antes de que el `invalidate`
+  // alcance a completar su disposal, no pasa nada: el SO libera igual la
+  // memoria de mpv (vive dentro del proceso, no es un subproceso aparte) y
+  // Windows limpia la sesión SMTC huérfana al morir el proceso dueño.
   @override
   void onWindowClose() async {
     final isPreventClose = await windowManager.isPreventClose();
     if (!isPreventClose) return;
+    final destroyFuture = windowManager.destroy();
     try {
       ref.invalidate(syncoraPlayerControllerProvider);
     } catch (_) {}
-    await windowManager.destroy();
+    await destroyFuture;
   }
 
   bool _handleDesktopKeyEvent(KeyEvent event) {
