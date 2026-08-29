@@ -262,28 +262,24 @@ class _AppShellState extends ConsumerState<AppShell> {
         Scaffold(
           backgroundColor: AppTheme.background,
           body: widget.child,
-          // El relleno que agrega `SafeArea` para la barra de gestos queda
-          // transparente y dejaba ver el fondo del `Scaffold`, mas oscuro que
-          // la barra de navegacion: eso era la "franja" de abajo. Con
-          // edge-to-edge y navegacion por gestos, Android ignora
-          // `systemNavigationBarColor`, asi que el tono tiene que pintarlo la
-          // propia app.
-          bottomNavigationBar: ColoredBox(
-            color: AppTheme.surface,
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const MiniPlayer(),
-                  _MobileNavBar(
-                    selectedIndex: selectedIndex,
-                    onItemTapped: _onItemTapped,
-                    hasTrack: hasTrack,
-                  ),
-                ],
+          // La franja de la barra de gestos la pinta la propia barra de
+          // navegacion, extendiendo su padding inferior con el inset del
+          // sistema. Antes se resolvia con un `SafeArea` + una caja de color
+          // detras, pero la sombra de la barra caia encima de esa caja y la
+          // oscurecia: el tono quedaba parecido pero nunca igual. Con
+          // edge-to-edge y navegacion por gestos Android ignora
+          // `systemNavigationBarColor`, asi que esto tiene que resolverse aca.
+          bottomNavigationBar: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const MiniPlayer(),
+              _MobileNavBar(
+                selectedIndex: selectedIndex,
+                onItemTapped: _onItemTapped,
+                hasTrack: hasTrack,
+                bottomInset: paddingBottom,
               ),
-            ),
+            ],
           ),
         ),
         Positioned(
@@ -782,10 +778,15 @@ class _MobileNavBar extends StatelessWidget {
   final ValueChanged<int> onItemTapped;
   final bool hasTrack;
 
+  /// Inset inferior del sistema (barra de gestos). Se suma al padding para que
+  /// el fondo de la barra llegue hasta el borde real de la pantalla.
+  final double bottomInset;
+
   const _MobileNavBar({
     required this.selectedIndex,
     required this.onItemTapped,
     this.hasTrack = false,
+    this.bottomInset = 0,
   });
 
   @override
@@ -798,7 +799,7 @@ class _MobileNavBar extends StatelessWidget {
           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
           boxShadow: AppTheme.bottomNavShadow,
         ),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: EdgeInsets.only(top: 10, bottom: 10 + bottomInset),
         child: Row(
         children: [
           Expanded(

@@ -207,6 +207,11 @@ class _QueueViewState extends ConsumerState<QueueView> {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      // Sin esto el `Column` centra a sus hijos (default de Flutter), y como la
+      // barra de acciones se encoge a lo que ocupan sus pildoras, quedaba
+      // flotando en el medio: cada fila del `Wrap` arrancaba en una x distinta
+      // en vez de alinearse contra el borde izquierdo.
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildToolbar(hasSelection),
         Flexible(
@@ -358,6 +363,7 @@ class _QueueViewState extends ConsumerState<QueueView> {
           Wrap(
             spacing: 8,
             runSpacing: 6,
+            alignment: WrapAlignment.start,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               if (!isLocalMode)

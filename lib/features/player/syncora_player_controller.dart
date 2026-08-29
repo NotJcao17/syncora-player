@@ -1814,17 +1814,16 @@ bool get _isTestEnv {
           final alreadyStarted = _state.engine.playing ||
               _state.engine.processingState == AudioProcessingState.buffering ||
               _state.engine.processingState == AudioProcessingState.ready;
-          if (!isStale() &&
-              !alreadyStarted &&
-              !await awaitPlaybackStarted(_engine.stateStream, const Duration(seconds: 8))) {
-            _log('[Play] La reproducción no arrancó tras 8s — reintentando setUrl una vez.');
-            if (!isStale()) {
-              await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
-              if (initialPos != null) {
-                await _engine.seek(initialPos);
-              }
-              await _engine.play();
-            }
+          if (!isStale() && !alreadyStarted) {
+            // Deliberadamente SIN await: este vigilante es una red de seguridad
+            // para un arranque que se cuelga, no un paso del arranque normal.
+            // Esperarlo acá bloqueaba `playCurrent()` hasta 8s y, como
+            // `skipToNext()` mantiene `_isTransitioning` mientras tanto, el
+            // botón de siguiente quedaba muerto todo ese rato — y para siempre
+            // si el stream del motor no volvía a emitir (lo habitual con
+            // just_audio en Android, donde la emisión ya había ocurrido antes
+            // de suscribirnos; en Windows los ticks de posición lo disimulaban).
+            unawaited(_watchPlaybackStart(streamUrl, headers, initialPos, isStale));
           }
 
           _saveSession();
@@ -2007,6 +2006,30 @@ bool get _isTestEnv {
     if (last != null && now.difference(last) < const Duration(seconds: 5)) return;
     _lastPositionSaveAt = now;
     _saveSession();
+  }
+
+  /// Reintenta UNA vez si la reproducción no arrancó en 8s (canciones que se
+  /// quedaban con el spinner colgado pese a una extracción exitosa). Corre
+  /// fuera del camino de arranque para no bloquear transiciones; `isStale`
+  /// aborta si mientras tanto el usuario cambió de pista.
+  Future<void> _watchPlaybackStart(
+    String streamUrl,
+    Map<String, String>? headers,
+    Duration? initialPos,
+    bool Function() isStale,
+  ) async {
+    final started = await awaitPlaybackStarted(_engine.stateStream, const Duration(seconds: 8));
+    if (started || isStale() || _disposed) return;
+    _log('[Play] La reproducción no arrancó tras 8s — reintentando setUrl una vez.');
+    try {
+      await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
+      if (initialPos != null) {
+        await _engine.seek(initialPos);
+      }
+      await _engine.play();
+    } catch (e) {
+      _log('[Play] El reintento de arranque falló: $e');
+    }
   }
 
   Future<void> _onComplete() async {
