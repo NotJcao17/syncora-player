@@ -157,6 +157,29 @@ class SyncService {
     }
   }
 
+  /// Cooldown corto (no los 5 min por defecto de [SyncCacheManager]) para el
+  /// disparo reactivo desde `SyncoraPlayerController.onListenRecorded`:
+  /// investigación de estadísticas, root cause de "el PC no ve las escuchas
+  /// del celular hasta tocar Actualizar ahí" -- antes, subir el historial
+  /// solo pasaba en `syncOnStartup()` o al tocar el botón manual de
+  /// Estadísticas, nunca como reacción directa a grabar una escucha. Separado
+  /// de [syncListeningHistory] (sin cooldown, usado por el botón manual y el
+  /// arranque, que deben ejecutar siempre) para no cambiarle el
+  /// comportamiento a esos otros llamadores -- sin esto, escuchar varias
+  /// pistas cortas seguidas dispararía un upsert de red por cada una.
+  static const _listeningHistoryPushCooldown = Duration(seconds: 30);
+
+  Future<void> pushListeningHistoryIfDue() async {
+    if (!_cacheManager.isExpired(
+      'listening_history_push',
+      customTtl: _listeningHistoryPushCooldown,
+    )) {
+      return;
+    }
+    _cacheManager.markSynced('listening_history_push');
+    await syncListeningHistory();
+  }
+
   Future<void> _syncPlaylistsAndTracks() async {
     final remotePlaylists = await _playlistRepo.fetchUserPlaylists();
 

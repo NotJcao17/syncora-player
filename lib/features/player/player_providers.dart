@@ -10,6 +10,8 @@ import '../../core/utils/connectivity_service.dart';
 import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../data/local_db/daos/playlist_dao.dart';
+import '../../data/sync/sync_service.dart';
+import '../auth/local_mode_provider.dart';
 import 'audio_engine/audio_engine_factory.dart';
 import 'os_controls/syncora_audio_handler.dart';
 import 'os_controls/windows_media_controls.dart';
@@ -68,6 +70,16 @@ final syncoraPlayerControllerProvider =
     isConnectedGetter: () => ref.read(isConnectedProvider).value ?? true,
     radioEnabledGetter: () => ref.read(radioEnabledProvider),
     crossfadeDurationGetter: () => ref.read(crossfadeDurationProvider),
+    onListenRecorded: () {
+      // Root cause de "el PC no ve escuchas del celular hasta tocar
+      // Actualizar en el celular": la subida a Supabase antes solo pasaba en
+      // `syncOnStartup()`/el botón de Estadísticas, nunca al grabar una
+      // escucha. En modo local no hay nada que subir (H-5: los repos de
+      // Supabase ya no-opean sin sesión), pero evitamos el intento de red de
+      // entrada.
+      if (ref.read(localModeProvider)) return;
+      ref.read(syncServiceProvider).pushListeningHistoryIfDue();
+    },
   );
 
   controller.init();

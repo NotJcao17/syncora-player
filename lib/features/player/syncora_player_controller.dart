@@ -172,6 +172,17 @@ class SyncoraPlayerController extends ChangeNotifier {
     // alcanzable en la app real hacia ese estado, del que dependen las
     // pruebas de regresión de D-1 sobre `interleaveIntoAutoQueue`).
     PlayerSessionStorage? sessionStorage,
+    // Investigación de estadísticas (root cause de "PC no ve las escuchas
+    // del celular hasta tocar Actualizar en el celular"): antes, subir el
+    // historial a Supabase (`SyncService.syncListeningHistory`) solo pasaba
+    // en `syncOnStartup()` o al tocar "Actualizar" en Estadísticas -- nunca
+    // como reacción directa a grabar una escucha. Este callback desacopla la
+    // subida de cualquier pantalla/botón: se dispara (fire-and-forget, nunca
+    // bloquea la reproducción) apenas `_recordListenEntry` graba localmente
+    // con éxito. `SyncService.syncListeningHistory` ya tiene su propio
+    // cooldown corto (ver `sync_service.dart`) para no golpear la red en
+    // cada pista si el usuario escucha varias seguidas.
+    VoidCallback? onListenRecorded,
   })  : _engine = engine, // ignore: prefer_initializing_formals
         _extractionService = extractionService, // ignore: prefer_initializing_formals
         _deezerApi = deezerApi, // ignore: prefer_initializing_formals
@@ -181,6 +192,7 @@ class SyncoraPlayerController extends ChangeNotifier {
         _isConnectedGetter = isConnectedGetter, // ignore: prefer_initializing_formals
         _radioEnabledGetter = radioEnabledGetter, // ignore: prefer_initializing_formals
         _crossfadeDurationGetter = crossfadeDurationGetter, // ignore: prefer_initializing_formals
+        _onListenRecorded = onListenRecorded, // ignore: prefer_initializing_formals
         _sessionStorage = sessionStorage ?? PlayerSessionStorage();
 
   final AudioEngine _engine;
@@ -189,6 +201,7 @@ class SyncoraPlayerController extends ChangeNotifier {
   final DownloadedTrackDao? _downloadedTrackDao;
   final ListeningHistoryDao? _listeningHistoryDao;
   final RadioService? _radioService;
+  final VoidCallback? _onListenRecorded;
   final bool Function()? _isConnectedGetter;
   final bool Function()? _radioEnabledGetter;
 
@@ -1328,6 +1341,16 @@ bool get _isTestEnv {
         // y el camino abierto para cuando exista una fuente barata.
         genre: track.genre,
       );
+      // Fire-and-forget: dispara la subida a Supabase apenas se graba la
+      // escucha localmente, sin esperar (ni bloquear la reproducción) y sin
+      // depender de que el usuario visite ninguna pantalla en particular.
+      // `onListenRecorded` (inyectado desde `player_providers.dart`) ya
+      // filtra modo local/errores de red por su cuenta.
+      try {
+        _onListenRecorded?.call();
+      } catch (e) {
+        _log('[Listen] Error disparando sync reactivo de historial: $e');
+      }
     } catch (e) {
       _log('[Listen] Error registrando escucha en el historial: $e');
     }
