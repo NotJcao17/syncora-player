@@ -208,3 +208,161 @@ Lo que habría ahorrado la mayor parte del tiempo perdido:
    `flutter analyze` + `flutter test` + **compilar Android** (`gradlew
    assembleDebug`). Las dos primeras no ven los XML de `android/` ni el runner
    nativo de Windows.
+
+---
+
+## 6. Segunda ronda de QA
+
+Ocho puntos reportados. El método de §5 se siguió al pie: antes de tocar nada
+se buscó el dato que discrimina, y **dos de los ocho no eran lo que parecían**
+(§6.7 y §6.8). Cada arreglo lleva un test que se verificó fallando sin él.
+
+### 6.1 La conectividad "se dormía" tras unos minutos (Windows)
+
+La sonda periódica estaba gateada por un flag `interfaceUp` alimentado **solo**
+por `connectivity_plus`. Si ese stream reportaba la interfaz caída y después no
+avisaba de que había vuelto (algo habitual en Windows), el flag quedaba en
+`false` para siempre y la sonda se convertía en un no-op permanente: la app no
+volvía a detectar internet nunca.
+
+Además la sonda en sí medía lo que no debía: `InternetAddress.lookup` de un
+nombre. El cliente DNS de Windows cachea, así que puede "resolver bien" con el
+cable desconectado; y `Future.timeout` **no cancela** el `getaddrinfo`
+subyacente, así que cada sonda colgada dejaba un hilo del pool de I/O de la VM
+bloqueado — acumulados, agotan el pool.
+
+Correcciones: la sonda periódica ya no se apaga nunca (la interfaz caída es
+solo una señal rápida para declarar offline; quien decide volver a online es
+siempre la sonda), y se cambió a `Socket.connect` contra **IPs literales**
+(`1.1.1.1:53`, `8.8.8.8:53`), que sí aborta de verdad y no pasa por el
+resolver. La máquina de estados se extrajo a `DesktopConnectivityMonitor` para
+poder testearla. **El camino de Android no se tocó** (§2.2).
+
+### 6.2 Acciones que escriben en la nube sin gatear
+
+Inventario completo de escrituras a Supabase. Faltaban:
+
+| Sitio | Qué pasaba offline |
+| :--- | :--- |
+| Corazón de la pantalla de bloqueo (Android) y del hover de la barra de tareas (Windows) | Escribía solo en Drift; el sync lo revertía |
+| Guardar/quitar álbum (`album_detail_screen`) | Ídem |
+| Menú de 3 puntos de la playlist (editar, pública/privada, copiar a otra, deduplicar, eliminar) | Ídem, y ver abajo |
+| "Eliminar de la playlist" del menú de pista | Ídem |
+| "Guardar cola como playlist" | Ídem |
+| Cambiar avatar | Fallaba con un error genérico |
+
+Los dos primeros son controles del SO: no hay botón que pintar en muted, así
+que la acción **no se ejecuta** y se avisa por un `PlayerNotice` nuevo
+(`blockedOffline`) que `app_shell.dart` ya sabe mostrar como toast.
+
+**Lo más grave estaba en `_executeRemoteMutation`** (`playlist_detail_screen`):
+sin conexión, tanto el `select` de comprobación como la mutación fallan, y
+**los dos caminos de error interpretan ese fallo como "la playlist ya no existe
+en la nube" y borran la copia local**. Es decir: estar offline podía borrarte
+una playlist entera por un diagnóstico equivocado. Ahora corta antes de llegar
+ahí.
+
+### 6.3 Hueco muerto en el buscador de canciones de la playlist
+
+El intento anterior quitó dos `SizedBox(height: 16)` y no cambió nada, con
+razón: **un `ListView` vertical sin `padding` explícito no usa cero**.
+`BoxScrollView.build` le inyecta el padding vertical del `MediaQuery` ambiente
+(barra de estado/notch arriba, barra de gestos abajo), y esa pantalla no está
+dentro de un `SafeArea`. Medido en un test desechable: un `ListView` con 100 px
+de contenido mide **172 px** bajo un `MediaQuery` de padding 48/24.
+
+Arreglo: `padding: EdgeInsets.zero`. **El mismo patrón existe en otros ~10
+`ListView` con `shrinkWrap` de la app**; no se tocaron para no cambiar
+espaciados sin verificación visual, pero conviene revisarlos.
+
+### 6.4 Canciones que se quedan cargando en el primer intento
+
+No se pudo reproducir (le pasó a 2 canciones), así que **no se parcheó a
+ciegas** — la lección de §1. Lo que sí se encontró leyendo el código es un
+fallo demostrable e independiente de la causa raíz:
+
+El spinner de la UI se dibuja **exactamente** con `processingState` en
+`loading`/`buffering`, y `setUrl` emite `loading` nada más empezar. Cualquier
+fallo posterior dejaba la UI girando para siempre: el `catch` del controlador
+registraba el error pero **nunca sacaba al motor de `loading`**. Y si el future
+de carga del motor no completa (que es justo lo que describe el síntoma), ni
+siquiera se llegaba al `catch`.
+
+Correcciones, todas dentro del **único** camino de reproducción del controlador
+— sin vigilantes ni reintentos en segundo plano (§2.1):
+
+1. El fallo de carga devuelve el motor a `idle`, así el spinner se apaga y
+   aparece un aviso. Con estado `idle` y pista actual, pulsar Reproducir rehace
+   `playCurrent()` entero: el reintento lo decide el usuario, no un temporizador.
+2. Techo de espera de 30 s sobre la carga (`setUrl`/`setLocalSource`). Una carga
+   normal tarda menos de un segundo. Efecto secundario bueno: `skipToNext()`
+   sostiene su guard mientras espera a `playCurrent()`, así que una carga
+   colgada dejaba el botón "siguiente" muerto **para siempre**; ahora como
+   mucho 30 s.
+3. Logs que discriminan: `URL resuelta` → `Fuente cargada por el motor en Xms`
+   → `Comando play() entregado`. Si en el próximo caso aparece el primero pero
+   no el segundo, el que no completa es el future de carga del motor; si
+   aparecen los tres y aun así no suena, el motor aceptó el comando y no llegó
+   a bufferear. Son investigaciones opuestas (§5.3).
+
+### 6.5 Restaurar sesión con contexto de playlist y cola manual
+
+Verificado con un round trip real por JSON: el controlador **ya** guardaba y
+restauraba bien `activeContextId`, cola manual, automática y contexto
+original. Lo que fallaba era la **escritura en disco**:
+
+`saveSession` hacía `writeAsString` directo sobre el archivo final (lo trunca y
+después lo llena) y **sin ninguna serialización**, mientras el controlador lo
+llama en cada play/pause/next/cambio de cola. Dos escrituras solapadas podían
+dejar un JSON a medias, y `loadSession` no distingue eso de "no hay sesión":
+devuelve `null` y **se pierde la sesión entera**. Un test con 50 guardados
+concurrentes contra el código anterior termina con la posición **49**, no la
+50: ni siquiera respetaba el orden.
+
+Arreglo: escritura a un temporal + `rename` atómico, y *single-flight con
+coalescing* (nunca dos escrituras a la vez; una ráfaga se colapsa en dos).
+
+### 6.6 Guardado periódico de la posición
+
+Ahora la sesión se persiste cada 5 s mientras suena algo, enganchado al tick
+que el motor ya emite (sin temporizadores propios ni escrituras al motor).
+
+Y la causa de que **la barra apareciera en 0** aunque el audio sí arrancara en
+el segundo correcto: `_restoreSession` deja la posición en el estado, pero el
+motor sigue emitiendo su estado en reposo (posición 0, sin reproducir) y el
+siguiente tick la pisaba. La ventana de supresión está atada al **id de la
+pista dueña** y solo aplica mientras el motor reporte posición 0 sin
+reproducir, así que no puede filtrarse a la siguiente pista — exactamente la
+forma que exige §2.3.
+
+### 6.7 Matching de YouTube: la hipótesis de las palabras clave era falsa
+
+Ver `docs/fuentes_youtube_y_matching.md` (documento nuevo, que además explica
+de una vez cuándo se usa YouTube y cuándo YouTube Music).
+
+Resumen: el vídeo instrumental que sonó en lugar de "Ladders" de Mac Miller
+**se titula literalmente "Ladders - Mac Miller (Official Audio)"**. No dice
+"instrumental" ni "karaoke" en ninguna parte, así que ninguna lista de términos
+indeseados podía atraparlo. Lo que lo distingue del master real es el canal.
+
+Con los pesos anteriores el impostor ganaba de forma sistemática: `official`
+(+30) y `audio` (+30) sumaban por separado, contra +30 del canal `- Topic`.
+Escribir dos palabras de marketing valía el doble que ser el master del sello.
+Ahora los términos del título suman **un solo bonus acotado** y el canal
+autorizado vale +120 — más que la duración exacta — porque es la única señal
+que un re-subidor no puede falsificar.
+
+### 6.8 Portada de "Mr. Brightside": no es un bug nuestro
+
+Verificado contra la API en vivo. Deezer devuelve la entrada de la
+recopilación "Nu Rock" como resultado principal (`rank` 905.448, el más alto),
+y **también** en `/artist/897/top` y al buscar por el ISRC de la grabación. La
+versión de *Hot Fuss* no aparece ni en los primeros ocho resultados.
+
+Y no hay señal barata para detectarlo: el `album` embebido en `/search` solo
+trae `id`, `title` y portadas. Hay que pedir `/album/{id}` aparte para ver que
+su artista es "Varios Artistas" — y ahí `record_type` vale `"album"`, **no**
+`"compilation"`, así que ese campo tampoco sirve. Corregirlo exigiría varias
+peticiones por pista contra una API limitada a 50 cada 5 s, para cambiar una
+miniatura. **No se implementó**; el detector correcto, si algún día se hace, es
+`album.artist.id == 5080`.

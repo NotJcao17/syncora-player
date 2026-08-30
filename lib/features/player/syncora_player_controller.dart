@@ -172,7 +172,11 @@ class SyncoraPlayerController extends ChangeNotifier {
     // alcanzable en la app real hacia ese estado, del que dependen las
     // pruebas de regresión de D-1 sobre `interleaveIntoAutoQueue`).
     PlayerSessionStorage? sessionStorage,
-  })  : _engine = engine, // ignore: prefer_initializing_formals
+    // Solo para tests: acorta el techo de espera de carga del motor
+    // ([_engineLoadTimeout]) para no tener que esperar 30 s reales.
+    Duration? engineLoadTimeout,
+  })  : _engineLoadTimeout = engineLoadTimeout ?? defaultEngineLoadTimeout,
+        _engine = engine, // ignore: prefer_initializing_formals
         _extractionService = extractionService, // ignore: prefer_initializing_formals
         _deezerApi = deezerApi, // ignore: prefer_initializing_formals
         _downloadedTrackDao = downloadedTrackDao, // ignore: prefer_initializing_formals
@@ -376,6 +380,23 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// next…), así que cerrar la app en medio de una canción guardaba la
   /// posición del último evento — normalmente el segundo 0 del play.
   static const Duration _periodicSessionSaveInterval = Duration(seconds: 5);
+
+  /// Techo de espera para que el motor termine de CARGAR una fuente
+  /// (`setUrl`/`setLocalSource`).
+  ///
+  /// No es un reintento ni un vigilante en segundo plano (eso ya rompio el
+  /// skip una vez, ver §2.1 de `correcciones_qa_post_fase_7.md`): es el mismo
+  /// y unico camino de reproduccion dejando de esperar. Sin este techo, un
+  /// future de carga que no completa deja el estado del motor en `loading`
+  /// para siempre, y como el spinner de la UI se dibuja exactamente con
+  /// `loading`/`buffering`, la cancion se queda cargando sin ningun aviso ni
+  /// forma de salir salvo pulsar "siguiente".
+  ///
+  /// Generoso a proposito: una carga normal tarda menos de un segundo, asi
+  /// que 30 s no puede cortar una reproduccion que iba a funcionar.
+  static const Duration defaultEngineLoadTimeout = Duration(seconds: 30);
+
+  final Duration _engineLoadTimeout;
 
   SyncoraPlayerState _state = SyncoraPlayerState.initial;
 
@@ -1773,18 +1794,28 @@ bool get _isTestEnv {
       _restoredPositionSeconds = null;
       _restoredPositionTrackId = null;
 
-      if (useCrossfade) {
-        _log('[Play] Crossfade a descarga local: $localPath (${crossfadeDuration.inSeconds}s)');
-        await _engine.crossfadeToLocalSource(localPath, crossfadeDuration);
-      } else {
-        _log('[Play] Pista local descargada encontrada: $localPath. Cargando sin pasar por ExtractionIsolate.');
-        await _engine.setLocalSource(localPath, initialPosition: initialPos);
+      try {
+        if (useCrossfade) {
+          _log('[Play] Crossfade a descarga local: $localPath (${crossfadeDuration.inSeconds}s)');
+          await _engine.crossfadeToLocalSource(localPath, crossfadeDuration);
+        } else {
+          _log('[Play] Pista local descargada encontrada: $localPath. Cargando sin pasar por ExtractionIsolate.');
+          await _engine
+              .setLocalSource(localPath, initialPosition: initialPos)
+              .timeout(_engineLoadTimeout);
+          _log('[Play] Fuente local cargada por el motor.');
 
-        if (initialPos != null) {
-          await _engine.seek(initialPos);
+          if (initialPos != null) {
+            await _engine.seek(initialPos);
+          }
+
+          await _engine.play();
         }
-
-        await _engine.play();
+      } catch (e) {
+        // Mismo motivo que en el camino de streaming: sin esto el estado se
+        // quedaba en `loading` y el spinner no se apagaba nunca.
+        _failPlaybackLoad(track, e);
+        return;
       }
       _saveSession();
       return;
@@ -1834,7 +1865,18 @@ bool get _isTestEnv {
           _restoredPositionSeconds = null;
           _restoredPositionTrackId = null;
 
-          await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
+          // Los tres logs de este bloque son deliberados: son el dato que
+          // discrimina el fallo de "la cancion se queda cargando en el primer
+          // intento". Si en el proximo caso aparece "URL resuelta" pero NO
+          // "fuente cargada", el que no completa es el future de carga del
+          // motor; si aparecen los dos y tampoco arranca, el motor acepto el
+          // comando y no llego a bufferear. Son investigaciones opuestas.
+          final loadStarted = DateTime.now();
+          await _engine
+              .setUrl(streamUrl, headers: headers, initialPosition: initialPos)
+              .timeout(_engineLoadTimeout);
+          _log('[Play] Fuente cargada por el motor en '
+              '${DateTime.now().difference(loadStarted).inMilliseconds}ms.');
 
           // Si había una posición restaurada al iniciar la app, buscarla
           if (initialPos != null) {
@@ -1842,14 +1884,10 @@ bool get _isTestEnv {
           }
 
           await _engine.play();
+          _log('[Play] Comando play() entregado al motor.');
           _saveSession();
         } catch (e) {
-          _log('[Play] Error cargando en motor: $e');
-          _state = _state.copyWith(
-            lastError: ExtractionError.unknownError,
-            lastErrorMessage: 'No se pudo iniciar la reproducción: $e',
-          );
-          _notify();
+          _failPlaybackLoad(track, e);
         }
         break;
 
@@ -2026,6 +2064,32 @@ bool get _isTestEnv {
     }
     _lastPeriodicSessionSave = now;
     _saveSession();
+  }
+
+  /// Saca al motor del estado `loading` cuando la carga fallo.
+  ///
+  /// El spinner de la UI (mini reproductor, pantalla completa, cabeceras de
+  /// playlist/album) se dibuja con `loading`/`buffering`. `setUrl` emite
+  /// `loading` al empezar, asi que cualquier fallo posterior que no vuelva a
+  /// emitir deja la UI girando indefinidamente aunque el controlador si haya
+  /// registrado el error. Volver a `idle` ademas habilita el reintento
+  /// explicito del usuario: `play()` con estado `idle` y una pista actual
+  /// rehace `playCurrent()` completo.
+  void _failPlaybackLoad(SyncoraTrack track, Object error) {
+    _log('[Play] Error cargando en motor: $error');
+    _state = _state.copyWith(
+      engine: _state.engine.copyWith(
+        processingState: AudioProcessingState.idle,
+        playing: false,
+      ),
+      lastError: ExtractionError.unknownError,
+      lastErrorMessage: 'No se pudo iniciar la reproduccion: $error',
+      notice: _nextNotice(
+        kind: PlayerNoticeKind.persistentError,
+        message: 'No se pudo iniciar "${track.title}". Toca reproducir para reintentar.',
+      ),
+    );
+    _notify();
   }
 
   Future<void> _onComplete() async {

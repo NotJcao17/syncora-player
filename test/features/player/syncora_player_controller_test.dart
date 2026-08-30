@@ -61,10 +61,24 @@ class FakeAudioEngine implements AudioEngine {
   String? lastUrl;
   int setUrlCallCount = 0;
 
+  /// Semantica REAL de un motor que no logra cargar la fuente: emite
+  /// `loading` y su future nunca completa (pitfall #27 -- un fake que
+  /// resuelve al instante no puede ver este fallo).
+  bool stallSetUrl = false;
+
+  /// El motor lanza al intentar cargar (fuente invalida, headers rechazados).
+  bool throwOnSetUrl = false;
+
   @override
   Future<void> setUrl(String url, {Map<String, String>? headers, Duration? initialPosition}) async {
     lastUrl = url;
     setUrlCallCount++;
+    if (stallSetUrl || throwOnSetUrl) {
+      emitState(_state.copyWith(processingState: AudioProcessingState.loading));
+      if (throwOnSetUrl) throw StateError('el motor no pudo abrir la fuente');
+      await Completer<void>().future; // nunca completa
+      return;
+    }
     emitState(_state.copyWith(
       processingState: AudioProcessingState.ready,
       duration: const Duration(seconds: 180),
@@ -2482,6 +2496,84 @@ void main() {
       expect(restored, isNotNull);
       expect(restored!.volume, 0.65);
       expect(restored.positionSeconds, 30);
+    });
+  });
+
+  group('Fallo de carga en el motor: el spinner no puede quedarse girando', () {
+    /// El spinner de la UI (mini reproductor, pantalla completa, cabeceras)
+    /// se dibuja exactamente con `processingState` en `loading`/`buffering`.
+    /// `setUrl` emite `loading` nada mas empezar, asi que cualquier fallo
+    /// posterior que no vuelva a emitir dejaba la cancion "cargando" para
+    /// siempre, sin aviso y sin salida salvo pulsar "siguiente" -- que es el
+    /// sintoma reportado en QA.
+    Future<SyncoraPlayerController> playingController(FakeAudioEngine engine) async {
+      final controller = SyncoraPlayerController(
+        engine: engine,
+        extractionService: TestableExtractionService(),
+        engineLoadTimeout: const Duration(milliseconds: 60),
+      );
+      controller.init();
+      await pumpEventQueue();
+      return controller;
+    }
+
+    test('si el motor lanza al cargar, el estado sale de loading y avisa', () async {
+      final engine = FakeAudioEngine()..throwOnSetUrl = true;
+      final controller = await playingController(engine);
+
+      await controller.setQueue(const [SyncoraTrack(id: 'a', title: 'A')]);
+      await pumpEventQueue();
+
+      expect(controller.state.engine.processingState, AudioProcessingState.idle);
+      expect(controller.state.notice?.kind, PlayerNoticeKind.persistentError);
+      controller.dispose();
+    });
+
+    test('si la carga del motor nunca completa, el techo de espera la corta', () async {
+      final engine = FakeAudioEngine()..stallSetUrl = true;
+      final controller = await playingController(engine);
+
+      // `setQueue` espera a `playCurrent()`, asi que al volver el techo de
+      // espera ya vencio. Sin el, esta linea no se alcanzaria nunca: el
+      // future de carga del motor no completa jamas.
+      await controller.setQueue(const [SyncoraTrack(id: 'a', title: 'A')])
+          .timeout(const Duration(seconds: 5));
+      await pumpEventQueue();
+
+      expect(controller.state.engine.processingState, AudioProcessingState.idle);
+      expect(controller.state.notice?.kind, PlayerNoticeKind.persistentError);
+      controller.dispose();
+    });
+
+    test('no se reintenta solo: el motor recibe una unica carga', () async {
+      // Regla de §2.1 de correcciones_qa_post_fase_7.md: nada puede volver a
+      // escribir en el motor fuera del camino del controlador.
+      final engine = FakeAudioEngine()..stallSetUrl = true;
+      final controller = await playingController(engine);
+
+      await controller.setQueue(const [SyncoraTrack(id: 'a', title: 'A')]);
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      await pumpEventQueue();
+
+      expect(engine.setUrlCallCount, 1);
+      controller.dispose();
+    });
+
+    test('tras el fallo, pulsar reproducir rehace la carga desde cero', () async {
+      final engine = FakeAudioEngine()..throwOnSetUrl = true;
+      final controller = await playingController(engine);
+
+      await controller.setQueue(const [SyncoraTrack(id: 'a', title: 'A')]);
+      await pumpEventQueue();
+      expect(engine.setUrlCallCount, 1);
+
+      engine.throwOnSetUrl = false;
+      await controller.play();
+      await pumpEventQueue();
+
+      expect(engine.setUrlCallCount, 2);
+      expect(controller.state.engine.processingState, AudioProcessingState.ready);
+      controller.dispose();
     });
   });
 
