@@ -550,7 +550,11 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         playlist.remoteId!,
                         title: newTitle,
                         description: newDesc.isEmpty ? null : newDesc,
+                        clearDescription: newDesc.isEmpty,
                         coverUrl: selectedCoverUrl,
+                        // Volver a portada automática es un NULL explícito, no
+                        // un "no lo toques".
+                        clearCoverUrl: selectedCoverUrl == null,
                       );
                     } catch (_) {}
                   }
@@ -680,6 +684,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final seenTitles = <String>{};
     final duplicateTrackDbIds = <int>[];
     final duplicateTrackIds = <int>[];
+    // La fila que SÍ se conserva de cada `trackId` duplicado: hace falta para
+    // poder reponerla en Supabase (ver más abajo).
+    final keptByTrackId = <int, PlaylistTrack>{};
 
     for (final t in tracks) {
       final key = '${t.title.trim().toLowerCase()}_${t.artistName.trim().toLowerCase()}';
@@ -689,6 +696,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       } else {
         seenIds.add(t.trackId);
         seenTitles.add(key);
+        keptByTrackId[t.trackId] = t;
       }
     }
 
@@ -731,9 +739,29 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     }
 
     if (playlist.remoteId != null) {
-      for (final trackId in duplicateTrackIds) {
+      // `removeTrackFromPlaylist` borra TODAS las filas con ese `track_id`,
+      // no solo las sobrantes: si solo se llamara a eso, en la nube quedaban
+      // cero copias mientras en local quedaba una, y el siguiente sync podaba
+      // también la local — la canción desaparecía entera. Por eso se repone
+      // la copia que sí se conserva.
+      for (final trackId in duplicateTrackIds.toSet()) {
         try {
           await supabaseRepo.removeTrackFromPlaylist(playlist.remoteId!, trackId);
+          final kept = keptByTrackId[trackId];
+          if (kept != null) {
+            await supabaseRepo.addTrackToPlaylist(playlist.remoteId!, {
+              'track_id': kept.trackId,
+              'artist_id': kept.artistId,
+              'album_id': kept.albumId,
+              'title': kept.title,
+              'artist_name': kept.artistName,
+              'album_name': kept.albumName,
+              'cover_url': kept.coverUrl,
+              'duration_ms': kept.durationMs,
+              if (kept.genre != null) 'genre': kept.genre,
+              if (kept.contributorsJson != null) 'contributors_json': kept.contributorsJson,
+            });
+          }
         } catch (_) {}
       }
     }
@@ -908,10 +936,17 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             side: const BorderSide(color: Color(0xFF2A2A2A)),
           ),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 380),
+            constraints: BoxConstraints(
+              maxWidth: 380,
+              // La lista de opciones creció (pública/copiar enlace) y en pantallas bajas
+              // puede exceder el alto del Dialog; la hacemos desplazable en vez de desbordar.
+              maxHeight: MediaQuery.of(ctx).size.height * 0.8,
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              child: _buildPlaylistOptionsContent(ctx, playlist, tracks),
+              child: SingleChildScrollView(
+                child: _buildPlaylistOptionsContent(ctx, playlist, tracks),
+              ),
             ),
           ),
         ),
@@ -919,12 +954,21 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     } else {
       showModalBottomSheet(
         context: context,
+        // isScrollControlled permite que el sheet crezca más allá de la mitad de pantalla
+        // (default de showModalBottomSheet) y que el contenido pueda scrollear en vez de
+        // desbordar cuando la lista de opciones no entra completa.
+        isScrollControlled: true,
         backgroundColor: AppTheme.surface,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
         builder: (ctx) => SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: _buildPlaylistOptionsContent(ctx, playlist, tracks),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: SingleChildScrollView(
+                child: _buildPlaylistOptionsContent(ctx, playlist, tracks),
+              ),
+            ),
           ),
         ),
       );
@@ -1489,8 +1533,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                           ],
                                         ),
                                       ),
-                                      const SizedBox(height: 16),
                                     ],
+                                    // Un solo separador tras el buscador (antes había dos SizedBox
+                                    // de 16 apilados que sumaban 32px de hueco vacío bajo el campo).
                                     const SizedBox(height: 16),
                                   ],
                                 ),

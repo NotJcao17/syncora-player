@@ -2,8 +2,11 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/contributor_resolver.dart';
+import '../../../data/apis/deezer_api.dart';
 import '../../../data/apis/deezer_provider.dart';
+import '../../../data/local_db/daos/playlist_dao.dart';
 import '../../../data/local_db/database_provider.dart';
+import '../../../data/supabase/supabase_playlist_repository.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../player/player_models.dart';
 
@@ -30,10 +33,28 @@ class LikeToggleResult {
 /// `artistId`/`albumId` en 0 y sin género, ensuciando los datos guardados.
 ///
 /// Centralizarlo evita que los tres vuelvan a divergir.
-Future<LikeToggleResult> toggleTrackLike(WidgetRef ref, SyncoraTrack track) async {
-  final dao = ref.read(playlistDaoProvider);
+Future<LikeToggleResult> toggleTrackLike(WidgetRef ref, SyncoraTrack track) {
+  return toggleTrackLikeWith(
+    dao: ref.read(playlistDaoProvider),
+    supabaseRepo: ref.read(supabasePlaylistRepositoryProvider),
+    deezerApi: ref.read(deezerApiProvider),
+    track: track,
+  );
+}
+
+/// Igual que [toggleTrackLike] pero con las dependencias explícitas, para los
+/// adaptadores del sistema operativo (barra de tareas de Windows, notificación
+/// y pantalla de bloqueo de Android), que no son widgets y no tienen `WidgetRef`.
+/// Sin esto esos corazones escribían solo en Drift y el cambio se revertía en
+/// el siguiente sync.
+Future<LikeToggleResult> toggleTrackLikeWith({
+  required PlaylistDao dao,
+  required SupabasePlaylistRepository supabaseRepo,
+  required DeezerApi deezerApi,
+  required SyncoraTrack track,
+}) async {
   final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
-  final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), track);
+  final contributors = await resolveTrackContributors(deezerApi, track);
 
   final isLiked = await dao.toggleLikeTrack(
     trackId: trackIdInt,
@@ -50,7 +71,6 @@ Future<LikeToggleResult> toggleTrackLike(WidgetRef ref, SyncoraTrack track) asyn
   final likedPlaylist = await dao.getLikedPlaylist();
   final wasLocalOnly = likedPlaylist.remoteId == null;
   var likedRemoteId = likedPlaylist.remoteId;
-  final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
 
   if (likedRemoteId == null) {
     try {

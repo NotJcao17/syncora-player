@@ -1265,6 +1265,10 @@ bool get _isTestEnv {
   bool _listenRecorded = false;
   Duration? _listenLastPosition;
 
+  /// Id de la fila insertada al cruzar el umbral, para corregir después sus
+  /// minutos con el tiempo realmente escuchado (ver `_finalizeListenEntry`).
+  int? _listenEntryId;
+
   /// Debe llamarse con la pista que está a punto de empezar a sonar (o que
   /// se reinicia desde el principio), antes de tocar el motor. **Siempre**
   /// reinicia el acumulado incondicionalmente: cada llamada representa un
@@ -1275,10 +1279,36 @@ bool get _isTestEnv {
   /// sonar en el intento fallido, `_listenAccumulated` ya estaba en cero —
   /// reiniciar es un no-op en ese caso, no una pérdida de progreso real.
   void _beginListenTracking(SyncoraTrack newTrack) {
+    // Cierra la escucha anterior antes de empezar otra: es el momento en que
+    // se conoce cuánto se escuchó de verdad.
+    _finalizeListenEntry();
     _listenTrackedTrack = newTrack;
     _listenAccumulated = Duration.zero;
     _listenRecorded = false;
     _listenLastPosition = null;
+    _listenEntryId = null;
+  }
+
+  /// Corrige los minutos de la escucha en curso con el total real acumulado.
+  ///
+  /// La entrada se inserta al cruzar el umbral (≈30s) para que sobreviva a un
+  /// cierre de la app, pero ahí solo se conocen esos 30s. Sin este ajuste toda
+  /// canción contaba como medio minuto y el total de minutos escuchados salía
+  /// muy por debajo de la realidad.
+  void _finalizeListenEntry() {
+    final entryId = _listenEntryId;
+    final dao = _listeningHistoryDao;
+    _listenEntryId = null;
+    if (entryId == null || dao == null) return;
+    final total = _listenAccumulated.inMilliseconds;
+    unawaited(() async {
+      try {
+        await dao.updateListenedDuration(entryId, total);
+        _onListenRecorded?.call();
+      } catch (e) {
+        _log('[Listen] Error ajustando la duración escuchada: $e');
+      }
+    }());
   }
 
   /// Suma al acumulado el avance natural de posición reportado por el motor
@@ -1290,8 +1320,6 @@ bool get _isTestEnv {
       _listenLastPosition = null;
       return;
     }
-    if (_listenRecorded) return;
-
     final newPos = engineState.position;
     if (_listenLastPosition != null && engineState.playing) {
       final delta = newPos - _listenLastPosition!;
@@ -1301,7 +1329,10 @@ bool get _isTestEnv {
     }
     _listenLastPosition = newPos;
 
-    if (_listenAccumulated >= _listenThresholdFor(track)) {
+    // Se sigue acumulando DESPUÉS de registrar: `_listenRecorded` solo evita
+    // insertar la escucha dos veces, no que se mida el tiempo real. Antes se
+    // cortaba aquí y por eso toda pista contaba como ~30s.
+    if (!_listenRecorded && _listenAccumulated >= _listenThresholdFor(track)) {
       _listenRecorded = true;
       _recordListenEntry(track, _listenAccumulated);
     }
@@ -1319,7 +1350,7 @@ bool get _isTestEnv {
     final dao = _listeningHistoryDao;
     if (dao == null) return;
     try {
-      await dao.recordEntry(
+      _listenEntryId = await dao.recordEntry(
         trackId: track.deezerId,
         artistId: track.artistId ?? 0,
         albumId: track.albumId ?? 0,
@@ -1978,6 +2009,9 @@ bool get _isTestEnv {
     // umbral antes de que se cierre la app/controlador. Lee la posición en
     // vivo (ver `_onComplete`) para que esto sea una red de seguridad real.
     _trackListenProgress(_state.engine.copyWith(position: _engine.position));
+    // Cierra la escucha en curso con el tiempo real antes de irse: si no, se
+    // quedaría guardada con los ~30s del umbral.
+    _finalizeListenEntry();
     _disposed = true;
     _engineSub?.cancel();
     _completionSub?.cancel();

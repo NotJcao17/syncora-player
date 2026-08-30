@@ -100,11 +100,19 @@ class SupabasePlaylistRepository {
     }
   }
 
+  /// [clearCoverUrl]/[clearDescription] distinguen "no lo toques" de "ponlo a
+  /// NULL": con solo `coverUrl == null` no había forma de expresar lo segundo,
+  /// así que volver a portada automática (o vaciar la descripción) se guardaba
+  /// en local pero nunca viajaba a Supabase — y el siguiente sync restauraba el
+  /// valor viejo, que es lo que se veía como "el cambio se revierte al
+  /// recargar".
   Future<void> updatePlaylist(
     String id, {
     String? title,
     String? description,
     String? coverUrl,
+    bool clearCoverUrl = false,
+    bool clearDescription = false,
     bool? isPublic,
     bool? isPinned,
     int? orderIndex,
@@ -116,8 +124,16 @@ class SupabasePlaylistRepository {
       'updated_at': DateTime.now().toIso8601String(),
     };
     if (title != null) updates['title'] = title;
-    if (description != null) updates['description'] = description;
-    if (coverUrl != null) updates['cover_url'] = coverUrl;
+    if (clearDescription) {
+      updates['description'] = null;
+    } else if (description != null) {
+      updates['description'] = description;
+    }
+    if (clearCoverUrl) {
+      updates['cover_url'] = null;
+    } else if (coverUrl != null) {
+      updates['cover_url'] = coverUrl;
+    }
     if (isPublic != null) updates['is_public'] = isPublic;
     if (isPinned != null) updates['is_pinned'] = isPinned;
     if (orderIndex != null) updates['order_index'] = orderIndex;

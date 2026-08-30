@@ -5,7 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:smtc_windows/smtc_windows.dart';
 
+import '../../../data/apis/deezer_api.dart';
 import '../../../data/local_db/daos/playlist_dao.dart';
+import '../../../data/supabase/supabase_playlist_repository.dart';
+import '../../library/services/like_track_service.dart';
 import '../syncora_player_controller.dart';
 import '../audio_engine/audio_engine_state.dart' as engine_state;
 
@@ -17,6 +20,8 @@ import '../audio_engine/audio_engine_state.dart' as engine_state;
 class WindowsMediaControls {
   final SyncoraPlayerController _controller;
   final PlaylistDao? _playlistDao;
+  final SupabasePlaylistRepository? _supabaseRepo;
+  final DeezerApi? _deezerApi;
   late final SMTCWindows _smtc;
   StreamSubscription<PressedButton>? _buttonSub;
   DateTime _lastTimelineUpdate = DateTime.fromMillisecondsSinceEpoch(0);
@@ -41,7 +46,12 @@ bool get _isTestEnv {
   }
 }
 
-  WindowsMediaControls(this._controller, [this._playlistDao]) {
+  WindowsMediaControls(
+    this._controller, [
+    this._playlistDao,
+    this._supabaseRepo,
+    this._deezerApi,
+  ]) {
     if (kIsWeb || !Platform.isWindows || _isTestEnv) return;
 
     _thumbBar.setMethodCallHandler(_onThumbBarCall);
@@ -121,18 +131,18 @@ bool get _isTestEnv {
     final track = _controller.state.currentTrack;
     final dao = _playlistDao;
     if (track == null || dao == null) return;
-    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
-    final nowLiked = await dao.toggleLikeTrack(
-      trackId: trackIdInt,
-      artistId: track.artistId ?? 0,
-      albumId: track.albumId ?? 0,
-      genre: track.genre ?? '',
-      title: track.title,
-      artistName: track.artist,
-      albumName: track.album ?? '',
-      coverUrl: track.coverUrl,
-      durationMs: (track.duration ?? Duration.zero).inMilliseconds,
+    // Vía el servicio compartido: sube también a Supabase. Antes escribía solo
+    // en Drift y el "me gusta" se revertía al recargar la biblioteca.
+    final repo = _supabaseRepo;
+    final api = _deezerApi;
+    if (repo == null || api == null) return;
+    final result = await toggleTrackLikeWith(
+      dao: dao,
+      supabaseRepo: repo,
+      deezerApi: api,
+      track: track,
     );
+    final nowLiked = result.isLiked;
     if (_controller.state.currentTrack?.id != track.id) return;
     _isCurrentTrackLiked = nowLiked;
     _likedStateTrackId = track.id;

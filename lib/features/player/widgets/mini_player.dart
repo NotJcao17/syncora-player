@@ -7,6 +7,7 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
+import '../../auth/local_mode_provider.dart';
 import '../../library/services/like_track_service.dart';
 import '../../../core/widgets/track_cover_image.dart';
 import '../../../core/widgets/track_tile.dart' show TrackContextMenu;
@@ -435,6 +436,7 @@ class _MiniPlayerHeartButtonState extends ConsumerState<_MiniPlayerHeartButton> 
         }
 
         final likedPlaylist = snapshot.data!;
+        final canEdit = ref.watch(canEditProvider);
         return StreamBuilder<List<PlaylistTrack>>(
           stream: dao.watchTracksOrdered(likedPlaylist.id),
           builder: (context, tracksSnapshot) {
@@ -444,12 +446,22 @@ class _MiniPlayerHeartButtonState extends ConsumerState<_MiniPlayerHeartButton> 
             return IconButton(
               icon: Icon(
                 isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
-                color: isLiked
-                    ? (widget.isDesktop ? Colors.white : AppTheme.background)
-                    : (widget.isDesktop ? AppTheme.secondary : AppTheme.background),
+                color: !canEdit
+                    ? AppTheme.muted
+                    : (isLiked
+                        ? (widget.isDesktop ? Colors.white : AppTheme.background)
+                        : (widget.isDesktop ? AppTheme.secondary : AppTheme.background)),
                 size: widget.isDesktop ? 20 : 24,
               ),
+              tooltip: canEdit ? null : 'Sin conexión',
               onPressed: () async {
+                // D-24: sin conexión (y sin modo local) el "me gusta" no se
+                // toca -- mismo motivo que `toggleTrackLike` en el resto de
+                // entradas (menú de 3 puntos, reproductor fullscreen).
+                if (!canEdit) {
+                  AppToast.show(context, message: 'Sin conexión. No se puede modificar Tus me gusta offline.');
+                  return;
+                }
                 // Antes esto solo escribía en Drift: el "me gusta" nunca subía
                 // a Supabase y el siguiente sync lo podaba. Ver
                 // `toggleTrackLike`.

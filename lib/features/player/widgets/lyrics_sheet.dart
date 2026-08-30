@@ -21,6 +21,7 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
   LRCLibResult? _lyricsResult;
   bool _isLoading = true;
   final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> _lineKeys = {};
   int _lastHighlightedIndex = -1;
 
   @override
@@ -36,6 +37,7 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
       setState(() {
         _isLoading = true;
         _lyricsResult = null;
+        _lineKeys.clear();
         _lastHighlightedIndex = -1;
       });
       _fetchLyrics();
@@ -66,15 +68,30 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
     }
   }
 
+  // Mismo enfoque que DesktopLyricsView: Scrollable.ensureVisible con alignment 0.5
+  // centra la línea usando su alto real (en vez de estimar con un alto fijo por línea,
+  // que en móvil dejaba la línea resaltada pegada arriba porque el estimado no
+  // coincidía con el alto real, sobre todo con líneas que ocupan más de un renglón).
   void _scrollToCurrentLine(int activeIndex) {
     if (activeIndex != _lastHighlightedIndex && _scrollController.hasClients) {
       _lastHighlightedIndex = activeIndex;
-      final targetOffset = (activeIndex * 48.0) - 120.0;
-      _scrollController.animateTo(
-        targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-      );
+      final key = _lineKeys[activeIndex];
+      if (key?.currentContext != null) {
+        Scrollable.ensureVisible(
+          key!.currentContext!,
+          alignment: 0.5,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      } else {
+        final viewportHeight = _scrollController.position.viewportDimension;
+        final targetOffset = (activeIndex * 48.0) - (viewportHeight * 0.5);
+        _scrollController.animateTo(
+          targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      }
     }
   }
 
@@ -196,6 +213,7 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
         final isPast = index < activeIndex;
 
         return InkWell(
+          key: _lineKeys.putIfAbsent(index, () => GlobalKey()),
           onTap: () {
             ref.read(syncoraPlayerControllerProvider.notifier).seek(line.timestamp);
           },

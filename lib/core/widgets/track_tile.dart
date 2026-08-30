@@ -15,6 +15,7 @@ import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../data/models/deezer/deezer_track.dart';
 import '../../data/supabase/supabase_providers.dart';
+import '../../features/auth/local_mode_provider.dart';
 import '../../features/download/download_provider.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
@@ -49,6 +50,7 @@ class TrackContextMenu {
     final isLiked = await ref.read(playlistDaoProvider).isTrackLiked(trackIdInt);
     final downloaded = await ref.read(downloadedTrackDaoProvider).getByTrackId(trackIdInt);
     final isDownloaded = downloaded != null && downloaded.downloadState == 2;
+    final canEdit = ref.read(canEditProvider);
 
     if (!context.mounted) return;
 
@@ -72,7 +74,7 @@ class TrackContextMenu {
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: Color(0xFF2A2A2A)),
       ),
-      items: buildMenuItems(track, isLiked, isDownloaded, onRemove: onRemove, removeLabel: removeLabel),
+      items: buildMenuItems(track, isLiked, isDownloaded, canEdit: canEdit, onRemove: onRemove, removeLabel: removeLabel),
     );
 
     if (selected != null && context.mounted) {
@@ -84,9 +86,14 @@ class TrackContextMenu {
     SyncoraTrack track,
     bool isLiked,
     bool isDownloaded, {
+    bool canEdit = true,
     VoidCallback? onRemove,
     String removeLabel = 'Eliminar de la playlist',
   }) {
+    // "Me gusta" y "Agregar a playlist" escriben en Supabase (D-24):
+    // sin conexión (y sin modo local) se pintan en muted, mismo patrón que
+    // los botones de IA/Importar de `library_screen.dart`.
+    final editColor = canEdit ? AppTheme.primary : AppTheme.muted;
     return [
       if ((track.artistId ?? 0) != 0)
         PopupMenuItem(
@@ -114,9 +121,9 @@ class TrackContextMenu {
         value: 'playlist',
         child: Row(
           children: [
-            Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 18),
+            Icon(AppIcons.broken(SolarIcons.AddCircle), color: editColor, size: 18),
             const SizedBox(width: 12),
-            const Expanded(child: Text('Agregar a una playlist', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500))),
+            Expanded(child: Text('Agregar a una playlist', style: TextStyle(color: editColor, fontSize: 13, fontWeight: FontWeight.w500))),
             Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
           ],
         ),
@@ -125,9 +132,9 @@ class TrackContextMenu {
         value: 'like',
         child: Row(
           children: [
-            Icon(isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart), color: AppTheme.primary, size: 18),
+            Icon(isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart), color: editColor, size: 18),
             const SizedBox(width: 12),
-            Text(isLiked ? 'Eliminar de Me Gusta' : 'Guardar en Tus me gusta', style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+            Text(isLiked ? 'Eliminar de Me Gusta' : 'Guardar en Tus me gusta', style: TextStyle(color: editColor, fontSize: 13, fontWeight: FontWeight.w500)),
           ],
         ),
       ),
@@ -221,6 +228,10 @@ class TrackContextMenu {
     } else if (value == 'other_versions') {
       showOtherVersionsModal(context, track);
     } else if (value == 'like') {
+      if (!ref.read(canEditProvider)) {
+        AppToast.show(context, message: 'Sin conexión. No se puede modificar Tus me gusta offline.');
+        return;
+      }
       final result = await toggleTrackLike(ref, track);
       if (context.mounted && result.remoteFailed) {
         AppToast.show(context, message: 'La playlist ya no existe en la nube');
@@ -232,6 +243,10 @@ class TrackContextMenu {
         );
       }
     } else if (value == 'playlist') {
+      if (!ref.read(canEditProvider)) {
+        AppToast.show(context, message: 'Sin conexión. No se pueden modificar playlists offline.');
+        return;
+      }
       await showAddToPlaylistDialog(context, ref, track);
     }
   }
@@ -1110,7 +1125,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
             onSelected: (value) async {
               _handleOptionSelected(context, ref, value);
             },
-            itemBuilder: (ctx) => _buildMenuItems(isLiked, isDownloadedLocal),
+            itemBuilder: (ctx) => _buildMenuItems(isLiked, isDownloadedLocal, ref.watch(canEditProvider)),
           );
         }
 
@@ -1123,11 +1138,12 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     );
   }
 
-  List<PopupMenuEntry<String>> _buildMenuItems(bool isLiked, bool isDownloaded) {
+  List<PopupMenuEntry<String>> _buildMenuItems(bool isLiked, bool isDownloaded, bool canEdit) {
     return TrackContextMenu.buildMenuItems(
       widget.track,
       isLiked,
       isDownloaded,
+      canEdit: canEdit,
       onRemove: widget.onRemove,
       removeLabel: widget.removeLabel,
     );
@@ -1167,6 +1183,8 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     FocusManager.instance.primaryFocus?.unfocus();
     final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
     final isLiked = await ref.read(playlistDaoProvider).isTrackLiked(trackIdInt);
+    final canEdit = ref.read(canEditProvider);
+    final editColor = canEdit ? AppTheme.primary : AppTheme.muted;
 
     if (!context.mounted) return;
 
@@ -1199,6 +1217,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
           _OptionItem(
             icon: AppIcons.broken(SolarIcons.AddFolder),
             label: 'Agregar a playlist',
+            color: editColor,
             onTap: () {
               Navigator.pop(context);
               _handleOptionSelected(context, ref, 'playlist');
@@ -1207,6 +1226,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
           _OptionItem(
             icon: isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
             label: isLiked ? 'Eliminar de Me Gusta' : 'Agregar a Me Gusta',
+            color: editColor,
             onTap: () {
               Navigator.pop(context);
               _handleOptionSelected(context, ref, 'like');
@@ -1374,8 +1394,14 @@ class _OptionItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final Color color;
 
-  const _OptionItem({required this.icon, required this.label, required this.onTap});
+  const _OptionItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color = AppTheme.primary,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1386,13 +1412,13 @@ class _OptionItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         child: Row(
           children: [
-            Icon(icon, color: AppTheme.primary, size: 20),
+            Icon(icon, color: color, size: 20),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
-                  color: AppTheme.primary,
+                style: TextStyle(
+                  color: color,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),

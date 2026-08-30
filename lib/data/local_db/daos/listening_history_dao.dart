@@ -64,6 +64,25 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
   Future<void> markSynced(int id) => (update(listeningHistory)..where((t) => t.id.equals(id)))
       .write(ListeningHistoryCompanion(syncedAt: Value(DateTime.now())));
 
+  /// Ajusta los minutos escuchados de una entrada ya registrada.
+  ///
+  /// La escucha se inserta al cruzar el umbral (≈30s) para que sobreviva a que
+  /// el usuario cierre la app, pero en ese momento solo se conocen esos 30s. Al
+  /// terminar la reproducción se corrige con el tiempo real: sin esto, una
+  /// canción de 4 minutos escuchada entera contaba como 30 segundos y las
+  /// estadísticas de minutos salían muy por debajo de la realidad.
+  ///
+  /// Se vuelve a marcar como no sincronizada para que el nuevo valor suba a
+  /// Supabase (el upsert remoto usa `user_id,track_id,listened_at`, así que
+  /// actualiza la misma fila en vez de duplicarla).
+  Future<void> updateListenedDuration(int id, int durationListenedMs) =>
+      (update(listeningHistory)..where((t) => t.id.equals(id))).write(
+        ListeningHistoryCompanion(
+          durationListenedMs: Value(durationListenedMs),
+          syncedAt: const Value(null),
+        ),
+      );
+
   /// Fase 7.G.3: entradas crudas de una ventana de días, sin límite
   /// artificial (a diferencia de [getTopArtistIds], que sí limita a 100) --
   /// Estadísticas necesita exactitud sobre la ventana completa, no una

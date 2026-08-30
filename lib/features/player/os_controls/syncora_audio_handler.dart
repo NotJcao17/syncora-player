@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:audio_service/audio_service.dart';
+import '../../../data/apis/deezer_api.dart';
 import '../../../data/local_db/daos/playlist_dao.dart';
+import '../../../data/supabase/supabase_playlist_repository.dart';
+import '../../library/services/like_track_service.dart';
 import '../player_models.dart';
 import '../syncora_player_controller.dart';
 import '../audio_engine/audio_engine_state.dart' as engine_state;
@@ -13,6 +16,8 @@ import '../audio_engine/audio_engine_state.dart' as engine_state;
 class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
   SyncoraPlayerController _controller;
   PlaylistDao? _playlistDao;
+  SupabasePlaylistRepository? _supabaseRepo;
+  DeezerApi? _deezerApi;
 
   // Mismo motivo que el corazón (ver `_favoriteControl`): un `MediaControl`
   // con `action:` sirve para las acciones estándar de transporte, pero un botón
@@ -51,14 +56,28 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
   bool _isCurrentTrackLiked = false;
   String? _likedStateTrackId;
 
-  SyncoraAudioHandler(this._controller, {this._playlistDao}) {
+  SyncoraAudioHandler(
+    this._controller, {
+    PlaylistDao? playlistDao,
+    SupabasePlaylistRepository? supabaseRepo,
+    DeezerApi? deezerApi,
+  })  : _playlistDao = playlistDao, // ignore: prefer_initializing_formals
+        _supabaseRepo = supabaseRepo, // ignore: prefer_initializing_formals
+        _deezerApi = deezerApi { // ignore: prefer_initializing_formals
     _controller.addListener(_onControllerChanged);
     _onControllerChanged(); // Estado inicial
   }
 
   /// Actualiza la instancia del controlador cuando el provider se recrea.
-  void updateController(SyncoraPlayerController newController, {PlaylistDao? playlistDao}) {
+  void updateController(
+    SyncoraPlayerController newController, {
+    PlaylistDao? playlistDao,
+    SupabasePlaylistRepository? supabaseRepo,
+    DeezerApi? deezerApi,
+  }) {
     if (playlistDao != null) _playlistDao = playlistDao;
+    if (supabaseRepo != null) _supabaseRepo = supabaseRepo;
+    if (deezerApi != null) _deezerApi = deezerApi;
     if (_controller == newController) return;
     _controller.removeListener(_onControllerChanged);
     _controller = newController;
@@ -259,17 +278,19 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     final track = _controller.state.currentTrack;
     final playlistDao = _playlistDao;
     if (track == null || playlistDao == null) return;
-    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
-    final nowLiked = await playlistDao.toggleLikeTrack(
-      trackId: trackIdInt,
-      artistId: track.artistId ?? 0,
-      albumId: track.albumId ?? 0,
-      title: track.title,
-      artistName: track.artist,
-      albumName: track.album ?? '',
-      coverUrl: track.coverUrl,
-      durationMs: (track.duration ?? Duration.zero).inMilliseconds,
+    // Vía el servicio compartido: sube también a Supabase. Antes escribía solo
+    // en Drift y el "me gusta" desde la pantalla de bloqueo se revertía al
+    // recargar la biblioteca.
+    final repo = _supabaseRepo;
+    final api = _deezerApi;
+    if (repo == null || api == null) return;
+    final result = await toggleTrackLikeWith(
+      dao: playlistDao,
+      supabaseRepo: repo,
+      deezerApi: api,
+      track: track,
     );
+    final nowLiked = result.isLiked;
     // Ítem 4 (QA): sin esto el corazón nunca reflejaba el toggle -- nada más
     // dispara una republicación de `playbackState` tras esta acción (ver
     // docstring de `_publishPlaybackState`).

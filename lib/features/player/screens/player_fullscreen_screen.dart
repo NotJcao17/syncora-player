@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
+import '../../auth/local_mode_provider.dart';
 import '../../library/services/like_track_service.dart';
 import '../../../core/widgets/track_cover_image.dart';
 import '../../../data/local_db/database_provider.dart';
@@ -101,6 +102,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
         s.engine.processingState == AudioProcessingState.loading ||
         s.engine.processingState == AudioProcessingState.buffering));
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
+    final canEdit = ref.watch(canEditProvider);
 
     if (currentTrack == null) {
       return Scaffold(
@@ -283,10 +285,16 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                   IconButton(
                                     icon: Icon(
                                       _isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
-                                      color: _isLiked ? Colors.white : AppTheme.secondary,
+                                      // "Me gusta" escribe en Supabase: sin
+                                      // conexión (y sin modo local) se apaga,
+                                      // mismo patrón que el resto de la app.
+                                      color: !canEdit
+                                          ? AppTheme.muted
+                                          : (_isLiked ? Colors.white : AppTheme.secondary),
                                       size: 28,
                                     ),
-                                    onPressed: () => _toggleLike(currentTrack),
+                                    tooltip: canEdit ? 'Me gusta' : 'Sin conexión',
+                                    onPressed: canEdit ? () => _toggleLike(currentTrack) : null,
                                   ),
                                 ],
                               ),
