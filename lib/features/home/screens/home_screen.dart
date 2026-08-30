@@ -72,6 +72,22 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     _maybeRefreshStats(ref);
+
+    // Cuando vuelve la conexión, Inicio se recarga solo en vez de quedarse en
+    // "No pudimos cargar el contenido" esperando a que el usuario pulse
+    // Reintentar. Solo en la transición offline -> online: `ref.listen` no se
+    // dispara en los rebuilds normales, y ninguna de estas invalidaciones
+    // corre si el valor no cambió.
+    ref.listen<AsyncValue<bool>>(isConnectedProvider, (previous, next) {
+      final wasConnected = previous?.value ?? true;
+      final isConnected = next.value ?? true;
+      if (wasConnected || !isConnected) return;
+      ref.invalidate(personalizedSectionsProvider);
+      ref.invalidate(topChartsProvider);
+      ref.invalidate(editorialPlaylistsProvider);
+      ref.invalidate(newReleasesProvider);
+    });
+
     final isDesktop = MediaQuery.of(context).size.width >= 768;
     final personalizedAsync = ref.watch(personalizedSectionsProvider);
     final topChartsAsync = ref.watch(topChartsProvider);

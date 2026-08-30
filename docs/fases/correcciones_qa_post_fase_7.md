@@ -366,3 +366,35 @@ su artista es "Varios Artistas" — y ahí `record_type` vale `"album"`, **no**
 peticiones por pista contra una API limitada a 50 cada 5 s, para cambiar una
 miniatura. **No se implementó**; el detector correcto, si algún día se hace, es
 `album.artist.id == 5080`.
+
+### 6.9 Inicio vacío en el arranque en frío (Android) — la regresión recurrente
+
+Este fallo volvió al menos tres veces. La causa de que **reaparezca** es que el
+arreglo original (`startup_retry.dart`, §4) dependía de un presupuesto de
+reintentos demasiado corto para el dispositivo, así que basta con que el
+arranque se vuelva un poco más lento (o el teléfono un poco más ocupado) para
+que vuelva a fallar. No era un arreglo que se rompiera: era un arreglo
+calibrado justo en el límite.
+
+El dato que lo explica: el fallo de DNS del arranque en Android **vuelve en
+milisegundos** (`Failed host lookup`), no espera al `connectTimeout` de 10 s de
+Dio. Con 3 intentos y esperas de 600 ms y 1200 ms, los tres se agotaban en
+**menos de 2 segundos**. En un dispositivo que tarda más de eso en tener DNS
+utilizable, Inicio quedaba en "No pudimos cargar el contenido" en **todos** los
+arranques, y solo el botón Reintentar lo sacaba de ahí.
+
+Correcciones:
+
+1. El presupuesto se cuenta en **tiempo de reloj** (15 s), no en número de
+   intentos — así deja de depender de adivinar cuánto tarda un fallo. Con tope
+   de espera entre intentos (2 s) para que el backoff exponencial no se coma el
+   presupuesto en dos esperas largas.
+2. Corte por `shouldRetry`: si `isConnectedProvider` dice que no hay interfaz
+   de red, se relanza de inmediato sin quemar el presupuesto — el estado "Sin
+   conexión" sigue apareciendo al instante. Solo se **lee** ese provider,
+   nunca se modifica (§2.2).
+3. Inicio se recarga solo en la transición offline → online, en vez de esperar
+   a que el usuario pulse Reintentar.
+
+Test de regresión: una acción que solo funciona a partir de los 2.5 s de reloj.
+Con los valores anteriores falla; con el presupuesto nuevo pasa.

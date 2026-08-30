@@ -68,11 +68,16 @@ class _AppShellState extends ConsumerState<AppShell> {
         // que este primer sync moría en silencio y los cambios hechos en otro
         // dispositivo no aparecían hasta recargar a mano.
         try {
+          // `shouldRetry` corta el presupuesto si la red se cae a mitad del
+          // arranque, en vez de seguir reintentando 15 s contra nada.
+          bool networkStillPlausible() => ref.read(isConnectedProvider).value ?? true;
           await retryOnNetworkError(
             () => ref.read(syncServiceProvider).syncLibrary(force: false),
+            shouldRetry: networkStillPlausible,
           );
           await retryOnNetworkError(
             () => ref.read(syncServiceProvider).syncSavedAlbums(force: false),
+            shouldRetry: networkStillPlausible,
           );
         } catch (_) {}
       }
