@@ -227,8 +227,122 @@ void main() {
       expect(withTopic, isNotNull);
       expect(withoutTopic, isNotNull);
       // Mismo escenario salvo el sufijo "- Topic": la diferencia de score
-      // debe ser exactamente el bonus de canal (+30).
-      expect(withTopic!.score - withoutTopic!.score, equals(30));
+      // debe ser exactamente el bonus de canal.
+      //
+      // Este bonus era +30 y subió a +120 a propósito tras el caso
+      // "Ladders"/Mac Miller (ver `YtSearchMatcher.channelAuthorityBonus` y
+      // el grupo de regresión más abajo). No es un test viejo que se relajó:
+      // es la misma invariante ("el sufijo -Topic vale exactamente el bonus
+      // de canal") con el peso recalibrado.
+      expect(
+        withTopic!.score - withoutTopic!.score,
+        equals(YtSearchMatcher.channelAuthorityBonus),
+      );
+    });
+  });
+
+  /// Regresión del caso reportado en QA: reproduciendo "Ladders - Mac Miller"
+  /// sonó una pista instrumental (`zaas98hALf4`).
+  ///
+  /// El dato que decide el diagnóstico: ese vídeo se titula literalmente
+  /// "Ladders - Mac Miller (Official Audio)". No dice "instrumental",
+  /// "karaoke" ni "cover" en ninguna parte, así que **ninguna lista de
+  /// términos indeseados podía atraparlo** — la hipótesis de "faltan
+  /// penalizaciones por palabra clave" es falsa para este caso. Lo que sí lo
+  /// distingue del master real es el canal.
+  group('Regresión "Ladders": el master del sello gana al re-subido', () {
+    List<Map<String, dynamic>> ladderCandidates() => [
+          // Primero en relevancia de YouTube (bonus de posición máximo) y con
+          // el título mejor "vendido".
+          {
+            'videoId': 'zaas98hALf4',
+            'title': 'Ladders - Mac Miller (Official Audio)',
+            'author': 'Rap Uploads',
+            'durationSec': 239,
+          },
+          {
+            'videoId': 'realLadders',
+            'title': 'Ladders',
+            'author': 'Mac Miller - Topic',
+            'durationSec': 239,
+          },
+        ];
+
+    test('gana el canal "- Topic" pese a que el otro es primero y dice "Official Audio"', () {
+      final best = YtSearchMatcher.pickBest(
+        ladderCandidates(),
+        artist: 'Mac Miller',
+        title: 'Ladders',
+        durationSec: 239,
+      );
+
+      expect(best, isNotNull);
+      expect(best!.videoId, equals('realLadders'));
+      expect(best.authoritativeSource, isTrue);
+    });
+
+    test('"(Official Audio)" ya no vale más que ser el master del sello', () {
+      final ranked = YtSearchMatcher.pickTopCandidates(
+        ladderCandidates(),
+        artist: 'Mac Miller',
+        title: 'Ladders',
+        durationSec: 239,
+        topN: 5,
+      );
+
+      expect(ranked.length, equals(2));
+      final impostor = ranked.firstWhere((c) => c.videoId == 'zaas98hALf4');
+      final master = ranked.firstWhere((c) => c.videoId == 'realLadders');
+      expect(master.score, greaterThan(impostor.score));
+      // "official" + "audio" son dos términos, pero suman UN solo bonus.
+      expect(impostor.authoritativeSource, isFalse);
+    });
+
+    test('un resultado de YouTube Music cuenta como fuente autorizada', () {
+      // Ahí el autor llega como nombre de artista, sin sufijo "- Topic": sin
+      // la marca `source` el master quedaría indistinguible de una re-subida.
+      final best = YtSearchMatcher.pickBest(
+        [
+          {
+            'videoId': 'zaas98hALf4',
+            'title': 'Ladders - Mac Miller (Official Audio)',
+            'author': 'Rap Uploads',
+            'durationSec': 239,
+          },
+          {
+            'videoId': 'ytmusicLadd',
+            'title': 'Ladders',
+            'author': 'Mac Miller',
+            'durationSec': 239,
+            'source': 'ytmusic',
+          },
+        ],
+        artist: 'Mac Miller',
+        title: 'Ladders',
+        durationSec: 239,
+      );
+
+      expect(best, isNotNull);
+      expect(best!.videoId, equals('ytmusicLadd'));
+      expect(best.authoritativeSource, isTrue);
+    });
+
+    test('un backing track que SÍ se declara sigue descalificado de plano', () {
+      final best = YtSearchMatcher.pickBest(
+        [
+          {
+            'videoId': 'backingTrk1',
+            'title': 'Mac Miller - Ladders (Backing Track)',
+            'author': 'Mac Miller - Topic',
+            'durationSec': 239,
+          },
+        ],
+        artist: 'Mac Miller',
+        title: 'Ladders',
+        durationSec: 239,
+      );
+
+      expect(best, isNull);
     });
   });
 

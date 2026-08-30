@@ -875,7 +875,13 @@ globalThis.searchVideos = function(query, client, jsRequestId) {
               videoId: sid,
               title: sTitle,
               author: sAuthor,
-              durationSec: (s.duration && typeof s.duration.seconds === 'number') ? s.duration.seconds : null
+              durationSec: (s.duration && typeof s.duration.seconds === 'number') ? s.duration.seconds : null,
+              // Marca de procedencia: el shelf de canciones de YouTube Music
+              // son masters oficiales por construccion, nunca re-subidas ni
+              // karaokes. `YtSearchMatcher` lo puntua igual que un canal
+              // "- Topic"/VEVO -- y hace falta la marca porque aqui el autor
+              // llega como nombre de artista, sin el sufijo "- Topic".
+              source: 'ytmusic'
             });
             addedFromMusic++;
           }

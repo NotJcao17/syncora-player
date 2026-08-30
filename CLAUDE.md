@@ -179,4 +179,7 @@ pendiente 7.D.6 (prueba humana de crossfade en Windows y Android, ver `docs/fase
 - `docs/plan_buscador_importacion_matcher.md` — plan y estado del buscador/importación/matcher de
   YouTube (Fases 0/A/B/C/D).
 - `docs/fases/` — documentos de contexto y decisiones de arquitectura por fase.
+- `docs/fuentes_youtube_y_matching.md` — cuándo se usa YouTube y cuándo YouTube Music como
+  fuente de candidatos, cómo se rankean (`YtSearchMatcher`) y por qué las portadas de Deezer a
+  veces son de una recopilación. Leer antes de tocar `lib/core/extraction/`.
 - `docs/matriz_de_pruebas.md` — matriz de pruebas manuales que el humano ejecuta.

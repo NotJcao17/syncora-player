@@ -8,6 +8,12 @@ class CandidateVideo {
   final int score;
   final bool artistConfirmed;
 
+  /// El candidato viene de una fuente que, por construcción, solo contiene
+  /// masters oficiales: un canal `- Topic` (auto-generado por YouTube a
+  /// partir del master entregado por el sello), un canal VEVO, o la búsqueda
+  /// de canciones de YouTube Music. Ver [YtSearchMatcher.channelAuthorityBonus].
+  final bool authoritativeSource;
+
   const CandidateVideo({
     required this.videoId,
     required this.title,
@@ -15,6 +21,7 @@ class CandidateVideo {
     this.durationSec,
     required this.score,
     required this.artistConfirmed,
+    this.authoritativeSource = false,
   });
 }
 
@@ -44,6 +51,17 @@ class YtSearchMatcher {
     '1 hour',
     'tribute',
     'tributo',
+    // Uploads que son la base sin voz. No siempre lo dicen en el título
+    // (ver el caso "Ladders"), pero cuando lo dicen hay que descartarlos.
+    'backing track',
+    'no vocals',
+    'without vocals',
+    'vocals only',
+    'acapella',
+    'a capella',
+    'minus one',
+    'sin voz',
+    'sin voces',
   ];
 
   static const _goodTerms = [
@@ -60,6 +78,32 @@ class YtSearchMatcher {
   /// código anterior solo buscaba `vevo` en el título, donde casi nunca
   /// aparece, así que la señal era casi inerte.
   static const _goodChannelTerms = ['vevo', 'topic'];
+
+  /// Peso de la señal de canal autorizado (`- Topic`, VEVO, YouTube Music).
+  ///
+  /// **Sube de 30 a 120 a propósito** (caso real: "Ladders" de Mac Miller
+  /// sonaba en versión instrumental, vídeo `zaas98hALf4`). Ese vídeo se
+  /// titula literalmente "Ladders - Mac Miller (Official Audio)", así que
+  /// ninguna penalización por palabras clave podía atraparlo: no dice
+  /// "instrumental" en ningún lado. Lo que sí lo distingue del master real
+  /// es de dónde cuelga — un canal de re-subidas contra
+  /// "Mac Miller - Topic".
+  ///
+  /// Con los pesos viejos el impostor GANABA: se llevaba +30 por "official"
+  /// y otros +30 por "audio" (los `_goodTerms` sumaban por cada término
+  /// presente), mientras que el master auténtico solo sacaba +30 por el
+  /// canal. Es decir, escribir dos palabras de marketing en el título valía
+  /// el doble que ser el master del sello. Ahora el canal pesa más que
+  /// cualquier otra señal individual (incluida la duración exacta, +100),
+  /// porque es la única que un re-subidor no puede falsificar.
+  static const int channelAuthorityBonus = 120;
+
+  /// Tope TOTAL del bonus por términos de calidad en el TÍTULO
+  /// (`official`, `audio`, `lyrics`…). Antes cada término sumaba +30 por su
+  /// cuenta, así que "(Official Audio)" valía +60 — el doble que la señal de
+  /// canal. Son texto libre que cualquiera puede escribir, así que valen
+  /// como desempate menor, no como evidencia fuerte.
+  static const int maxTitleQualityBonus = 30;
 
   /// C1: mínimo de solapamiento de tokens entre el título esperado (Deezer) y
   /// el título del candidato para que este ni siquiera entre a puntuarse.
@@ -275,24 +319,25 @@ class YtSearchMatcher {
           (_containsPhrase(normTitle, bad) || _containsPhrase(normAuthor, bad)));
       if (isBadMatch) continue;
 
-      // 3. Bonificación por términos de calidad. Los límites de palabra de
-      // paso corrigen que "lyric" y "lyrics" contaran como dos señales
-      // separadas para el mismo video (antes vía `contains`, "Lyrics Video"
-      // matcheaba ambos términos y sumaba +60, el doble que "Official Video").
-      for (final good in _normGoodTerms) {
-        if (_containsPhrase(normTitle, good)) {
-          score += 30;
-        }
+      // 3. Bonificación por términos de calidad del título, ACOTADA a
+      // [maxTitleQualityBonus] en total. Sumar por cada término presente
+      // hacía que "(Official Audio)" (+60) pesara más que ser el master del
+      // sello (+30), que es justo lo que dejó sonar un instrumental
+      // re-subido por encima del original.
+      if (_normGoodTerms.any((good) => _containsPhrase(normTitle, good))) {
+        score += maxTitleQualityBonus;
       }
 
       // C3: señal de canal — "VEVO"/"- Topic" identifican al uploader, se
       // busca en el autor, no en el título (donde antes "vevo" era casi
-      // inerte porque casi nunca aparece ahí).
-      for (final good in _normGoodChannelTerms) {
-        if (_containsPhrase(normAuthor, good)) {
-          score += 30;
-        }
-      }
+      // inerte porque casi nunca aparece ahí). Un resultado que viene de la
+      // búsqueda de canciones de YouTube Music (`source: 'ytmusic'`) cuenta
+      // igual: ese catálogo son masters oficiales por construcción, y ahí el
+      // autor llega como nombre de artista, sin el sufijo "- Topic".
+      final fromYtMusic = (raw['source'] as String?) == 'ytmusic';
+      final authoritative = fromYtMusic ||
+          _normGoodChannelTerms.any((good) => _containsPhrase(normAuthor, good));
+      if (authoritative) score += channelAuthorityBonus;
 
       // 4. Coincidencia de artista confirmada (ver arriba).
       if (artistConfirmed) score += 50;
@@ -310,6 +355,7 @@ class YtSearchMatcher {
         durationSec: candidateDuration,
         score: score,
         artistConfirmed: artistConfirmed,
+        authoritativeSource: authoritative,
       ));
     }
 
