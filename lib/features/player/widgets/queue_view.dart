@@ -268,6 +268,12 @@ class _QueueViewState extends ConsumerState<QueueView> {
   }
 
   Future<void> _saveQueueAsPlaylist() async {
+    // Crea una playlist en Supabase: sin conexión solo llegaría a Drift y el
+    // sync la podaría entera (Pitfall #28).
+    if (!ref.read(canEditProvider)) {
+      AppToast.show(context, message: 'Sin conexión. No se pueden crear playlists offline.');
+      return;
+    }
     final state = ref.read(syncoraPlayerControllerProvider.notifier).state;
     final allTracks = <SyncoraTrack>[
       if (state.currentTrack != null) state.currentTrack!,
@@ -351,6 +357,8 @@ class _QueueViewState extends ConsumerState<QueueView> {
     final selectionCount = _selectedManual.length + _selectedAuto.length;
     final isConnected = ref.watch(isConnectedProvider).value ?? true;
     final isLocalMode = ref.watch(localModeProvider);
+    // Guardar la cola crea una playlist -> escritura en la nube (D-24).
+    final canEdit = ref.watch(canEditProvider);
 
     return Padding(
       // Las pildoras traen su propio padding interno, asi que un margen
@@ -396,7 +404,7 @@ class _QueueViewState extends ConsumerState<QueueView> {
                   ),
                 ),
               TextButton.icon(
-                onPressed: _saveQueueAsPlaylist,
+                onPressed: canEdit ? _saveQueueAsPlaylist : null,
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   backgroundColor: AppTheme.surfaceHover,
@@ -407,11 +415,15 @@ class _QueueViewState extends ConsumerState<QueueView> {
                 icon: Icon(
                   AppIcons.broken(SolarIcons.AddFolder),
                   size: 15,
-                  color: AppTheme.secondary,
+                  color: canEdit ? AppTheme.secondary : AppTheme.muted,
                 ),
-                label: const Text(
-                  'Guardar como playlist',
-                  style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600),
+                label: Text(
+                  canEdit ? 'Guardar como playlist' : 'Sin conexión',
+                  style: TextStyle(
+                    color: canEdit ? AppTheme.secondary : AppTheme.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               TextButton.icon(

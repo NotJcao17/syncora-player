@@ -22,6 +22,12 @@ class WindowsMediaControls {
   final PlaylistDao? _playlistDao;
   final SupabasePlaylistRepository? _supabaseRepo;
   final DeezerApi? _deezerApi;
+
+  /// `canEditProvider` (modo local || con conexión). Los botones del hover de
+  /// la barra de tareas son nativos (`ITaskbarList3`), no hay forma de
+  /// pintarlos deshabilitados con el patrón visual de la app, así que la
+  /// acción no se ejecuta y se avisa por `PlayerNotice`.
+  final bool Function()? _canEditGetter;
   late final SMTCWindows _smtc;
   StreamSubscription<PressedButton>? _buttonSub;
   DateTime _lastTimelineUpdate = DateTime.fromMillisecondsSinceEpoch(0);
@@ -51,6 +57,7 @@ bool get _isTestEnv {
     this._playlistDao,
     this._supabaseRepo,
     this._deezerApi,
+    this._canEditGetter,
   ]) {
     if (kIsWeb || !Platform.isWindows || _isTestEnv) return;
 
@@ -136,6 +143,14 @@ bool get _isTestEnv {
     final repo = _supabaseRepo;
     final api = _deezerApi;
     if (repo == null || api == null) return;
+    // Online-First: sin conexión la escritura solo llegaría a Drift y el
+    // sync la podaría. Mejor no hacer nada y avisar.
+    if (_canEditGetter?.call() == false) {
+      _controller.notifyActionBlockedOffline(
+        'Sin conexión. No se puede modificar Tus me gusta offline.',
+      );
+      return;
+    }
     final result = await toggleTrackLikeWith(
       dao: dao,
       supabaseRepo: repo,

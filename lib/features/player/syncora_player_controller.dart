@@ -320,6 +320,21 @@ class SyncoraPlayerController extends ChangeNotifier {
     );
   }
 
+  /// Aviso de "esta acción necesita internet", emitido por los adaptadores
+  /// del SO (pantalla de bloqueo de Android, botones del hover de la barra de
+  /// tareas de Windows). Esos controles no tienen UI que apagar, así que en
+  /// vez de deshabilitar un botón no ejecutan la acción y avisan por el mismo
+  /// canal de [PlayerNotice] que ya consume `app_shell.dart`.
+  void notifyActionBlockedOffline(String message) {
+    _state = _state.copyWith(
+      notice: _nextNotice(
+        kind: PlayerNoticeKind.blockedOffline,
+        message: message,
+      ),
+    );
+    notifyListeners();
+  }
+
   /// Contador monotónico de "sesión de contexto" (Fase 7.B, revisión: bug
   /// #1). Se incrementa en CADA llamada a [setQueue] (con o sin
   /// `activeContextId` — la mayoría de los call sites de la app, búsqueda/

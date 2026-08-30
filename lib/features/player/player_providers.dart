@@ -93,6 +93,7 @@ final syncoraPlayerControllerProvider =
         playlistDao,
         supabasePlaylistRepo,
         deezerApi,
+        () => ref.read(canEditProvider),
       );
       ref.onDispose(winControls.dispose);
     } catch (e) {
@@ -100,7 +101,13 @@ final syncoraPlayerControllerProvider =
     }
   } else if (!kIsWeb && Platform.isAndroid) {
     try {
-      _initAndroidAudioService(controller, playlistDao, supabasePlaylistRepo, deezerApi);
+      _initAndroidAudioService(
+        controller,
+        playlistDao,
+        supabasePlaylistRepo,
+        deezerApi,
+        () => ref.read(canEditProvider),
+      );
     } catch (e) {
       debugPrint('AndroidAudioService no disponible en este entorno: $e');
     }
@@ -114,6 +121,7 @@ void _initAndroidAudioService(
   PlaylistDao? playlistDao,
   SupabasePlaylistRepository? supabaseRepo,
   DeezerApi? deezerApi,
+  bool Function()? canEditGetter,
 ]) {
   final currentHandler = _globalAndroidAudioHandler;
   if (currentHandler != null) {
@@ -123,6 +131,7 @@ void _initAndroidAudioService(
         playlistDao: playlistDao,
         supabaseRepo: supabaseRepo,
         deezerApi: deezerApi,
+        canEditGetter: canEditGetter,
       );
     }
     return;
@@ -133,6 +142,7 @@ void _initAndroidAudioService(
       playlistDao: playlistDao,
       supabaseRepo: supabaseRepo,
       deezerApi: deezerApi,
+      canEditGetter: canEditGetter,
     ),
     config: const AudioServiceConfig(
       androidNotificationChannelId: 'com.syncora.player',

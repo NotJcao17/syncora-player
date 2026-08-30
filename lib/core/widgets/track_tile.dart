@@ -164,9 +164,9 @@ class TrackContextMenu {
           value: 'remove',
           child: Row(
             children: [
-              Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: AppTheme.primary, size: 18),
+              Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: editColor, size: 18),
               const SizedBox(width: 12),
-              Text(removeLabel, style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+              Text(removeLabel, style: TextStyle(color: editColor, fontSize: 13, fontWeight: FontWeight.w500)),
             ],
           ),
         ),
@@ -217,6 +217,12 @@ class TrackContextMenu {
         AppToast.show(context, message: 'Enlace copiado al portapapeles');
       }
     } else if (value == 'remove') {
+      // Quitar una pista de una playlist escribe en Supabase; sin conexión
+      // solo llegaría a Drift y el sync la repondría (Pitfall #28).
+      if (!ref.read(canEditProvider)) {
+        AppToast.show(context, message: 'Sin conexión. No se pueden modificar playlists offline.');
+        return;
+      }
       onRemove?.call();
     } else if (value == 'queue') {
       if (onAddToQueue != null) {
@@ -1253,6 +1259,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
             _OptionItem(
               icon: AppIcons.broken(SolarIcons.TrashBinTrash),
               label: widget.removeLabel,
+              color: editColor,
               onTap: () {
                 Navigator.pop(context);
                 _handleOptionSelected(context, ref, 'remove');

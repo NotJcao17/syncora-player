@@ -240,6 +240,17 @@ enum PlayerNoticeKind {
   /// distinto al de [logicalSkip] — nunca dice "no disponible — saltada",
   /// porque acá no hubo ningún skip, solo una pausa.
   persistentError,
+
+  /// Una acción que escribe en la nube se pidió desde un control del sistema
+  /// operativo (pantalla de bloqueo de Android, botones del hover de la barra
+  /// de tareas de Windows) sin conexión.
+  ///
+  /// Esos controles no tienen UI propia que se pueda deshabilitar con el
+  /// patrón visual del resto de la app (`AppTheme.muted` + tooltip "Sin
+  /// conexión"), así que la única alternativa a ejecutar la acción a medias
+  /// —escribiendo solo en Drift, que el sync después poda (Pitfall #28)— es
+  /// no ejecutarla y avisar por acá.
+  blockedOffline,
 }
 
 /// Aviso puntual del reproductor para la UI (Fase 7.C + H-6). Cada instancia

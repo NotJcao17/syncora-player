@@ -10,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../auth/auth_provider.dart';
+import '../../auth/local_mode_provider.dart';
 
 /// Modal bottom sheet / diálogo centrado para la selección de avatar basado en Dicebear seeds.
 class AvatarSelectorSheet extends ConsumerStatefulWidget {
@@ -113,6 +114,14 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
   }
 
   Future<void> _handleSelectSeed(String seed, String userId) async {
+    // Con cuenta, el avatar vive en `profiles` (Supabase). Sin conexión la
+    // selección no se puede persistir, así que no se aplica a medias. En modo
+    // local `userId` viene vacío y `canEdit` es `true`, así que el camino
+    // 100% local sigue funcionando igual.
+    if (userId.isNotEmpty && !ref.read(canEditProvider)) {
+      AppToast.show(context, message: 'Sin conexión. No se puede cambiar el avatar offline.');
+      return;
+    }
     setState(() {
       _selectedSeed = seed;
       _isSaving = true;

@@ -19,6 +19,13 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
   SupabasePlaylistRepository? _supabaseRepo;
   DeezerApi? _deezerApi;
 
+  /// `canEditProvider` (modo local || con conexión). Sin esto, el corazón de
+  /// la pantalla de bloqueo escribía en Drift estando offline y el siguiente
+  /// sync podaba el cambio (Pitfall #28). Acá no hay botón que deshabilitar
+  /// con el patrón visual de la app, así que la acción simplemente no se
+  /// ejecuta y se avisa por `PlayerNotice`.
+  bool Function()? _canEditGetter;
+
   // Mismo motivo que el corazón (ver `_favoriteControl`): un `MediaControl`
   // con `action:` sirve para las acciones estándar de transporte, pero un botón
   // propio en la notificación necesita `MediaControl.custom` con `name`, que es
@@ -61,9 +68,11 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     PlaylistDao? playlistDao,
     SupabasePlaylistRepository? supabaseRepo,
     DeezerApi? deezerApi,
+    bool Function()? canEditGetter,
   })  : _playlistDao = playlistDao, // ignore: prefer_initializing_formals
         _supabaseRepo = supabaseRepo, // ignore: prefer_initializing_formals
-        _deezerApi = deezerApi { // ignore: prefer_initializing_formals
+        _deezerApi = deezerApi, // ignore: prefer_initializing_formals
+        _canEditGetter = canEditGetter { // ignore: prefer_initializing_formals
     _controller.addListener(_onControllerChanged);
     _onControllerChanged(); // Estado inicial
   }
@@ -74,10 +83,12 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     PlaylistDao? playlistDao,
     SupabasePlaylistRepository? supabaseRepo,
     DeezerApi? deezerApi,
+    bool Function()? canEditGetter,
   }) {
     if (playlistDao != null) _playlistDao = playlistDao;
     if (supabaseRepo != null) _supabaseRepo = supabaseRepo;
     if (deezerApi != null) _deezerApi = deezerApi;
+    if (canEditGetter != null) _canEditGetter = canEditGetter;
     if (_controller == newController) return;
     _controller.removeListener(_onControllerChanged);
     _controller = newController;
@@ -284,6 +295,14 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     final repo = _supabaseRepo;
     final api = _deezerApi;
     if (repo == null || api == null) return;
+    // Online-First: sin conexión la escritura solo llegaría a Drift y el
+    // sync la podaría. Mejor no hacer nada y avisar.
+    if (_canEditGetter?.call() == false) {
+      _controller.notifyActionBlockedOffline(
+        'Sin conexión. No se puede modificar Tus me gusta offline.',
+      );
+      return;
+    }
     final result = await toggleTrackLikeWith(
       dao: playlistDao,
       supabaseRepo: repo,

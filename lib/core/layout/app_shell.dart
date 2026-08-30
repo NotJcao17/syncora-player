@@ -238,6 +238,12 @@ class _AppShellState extends ConsumerState<AppShell> {
           // de logicalSkip (acá no hubo ningún skip).
           AppToast.show(context, message: notice.message, duration: const Duration(seconds: 5));
           break;
+        case PlayerNoticeKind.blockedOffline:
+          // Acción pedida desde un control del SO (pantalla de bloqueo /
+          // barra de tareas) que necesita internet. Ahí no hay botón que
+          // deshabilitar, así que el aviso llega por acá.
+          AppToast.show(context, message: notice.message);
+          break;
       }
     });
 

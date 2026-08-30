@@ -164,6 +164,17 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   }
 
   Future<bool> _executeRemoteMutation(Future<void> Function() remoteTask) async {
+    // Red de seguridad, no solo un gate de UI: sin conexión el `select` de
+    // comprobación y `remoteTask` fallan, y ambos caminos de error de abajo
+    // interpretan ese fallo como "la playlist ya no existe en la nube" y
+    // BORRAN la copia local. Estando offline eso es pérdida de datos por un
+    // diagnóstico equivocado, así que se corta antes de llegar ahí.
+    if (!ref.read(canEditProvider)) {
+      if (mounted) {
+        AppToast.show(context, message: 'Sin conexión. No se pueden modificar playlists offline.');
+      }
+      return false;
+    }
     final dao = ref.read(playlistDaoProvider);
     if (_playlist != null && _playlist!.remoteId != null && !_playlist!.isLiked) {
       try {
@@ -807,13 +818,23 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
   Widget _buildPlaylistOptionsContent(BuildContext ctx, Playlist playlist, List<PlaylistTrack> tracks) {
     final isLocalMode = ref.read(localModeProvider);
+    // Online-First (D-24): editar, publicar, deduplicar, copiar a otra
+    // playlist y borrar escriben en Supabase. Sin conexión esas acciones
+    // escribían solo en Drift y el sync las revertía; peor todavía, el
+    // fallo remoto de `_executeRemoteMutation` se interpreta como "la
+    // playlist ya no existe en la nube" y borra la copia local. Copiar
+    // enlace y exportar CSV son 100% locales y siguen habilitadas.
+    final canEdit = ref.watch(canEditProvider);
+    final editColor = canEdit ? AppTheme.primary : AppTheme.muted;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (!playlist.isLiked) ...[
           ListTile(
-            leading: Icon(AppIcons.broken(SolarIcons.Pen), color: AppTheme.primary),
-            title: const Text('Editar información y portada', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+            leading: Icon(AppIcons.broken(SolarIcons.Pen), color: editColor),
+            title: Text('Editar información y portada', style: TextStyle(color: editColor, fontWeight: FontWeight.w600)),
+            enabled: canEdit,
+            subtitle: canEdit ? null : const Text('Sin conexión', style: TextStyle(color: AppTheme.muted, fontSize: 12)),
             onTap: () {
               Navigator.pop(ctx);
               _showEditPlaylistDialog(context, playlist);
@@ -837,12 +858,14 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           ListTile(
             leading: Icon(
               AppIcons.broken(playlist.isPublic ? SolarIcons.Lock : SolarIcons.Global),
-              color: AppTheme.primary,
+              color: editColor,
             ),
             title: Text(
               playlist.isPublic ? 'Hacer privada' : 'Hacer pública',
-              style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600),
+              style: TextStyle(color: editColor, fontWeight: FontWeight.w600),
             ),
+            enabled: canEdit,
+            subtitle: canEdit ? null : const Text('Sin conexión', style: TextStyle(color: AppTheme.muted, fontSize: 12)),
             onTap: () async {
               Navigator.pop(ctx);
               await _togglePublic(playlist);
@@ -860,8 +883,10 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
         ],
         if (tracks.isNotEmpty)
           ListTile(
-            leading: Icon(AppIcons.broken(SolarIcons.AddFolder), color: AppTheme.primary),
-            title: const Text('Agregar todas a otra playlist', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+            leading: Icon(AppIcons.broken(SolarIcons.AddFolder), color: editColor),
+            title: Text('Agregar todas a otra playlist', style: TextStyle(color: editColor, fontWeight: FontWeight.w600)),
+            enabled: canEdit,
+            subtitle: canEdit ? null : const Text('Sin conexión', style: TextStyle(color: AppTheme.muted, fontSize: 12)),
             onTap: () {
               Navigator.pop(ctx);
               _showAddAllToOtherPlaylistDialog(context, tracks);
@@ -869,8 +894,10 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           ),
         if (tracks.isNotEmpty)
           ListTile(
-            leading: Icon(AppIcons.broken(SolarIcons.CheckSquare), color: AppTheme.primary),
-            title: const Text('Eliminar canciones repetidas', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+            leading: Icon(AppIcons.broken(SolarIcons.CheckSquare), color: editColor),
+            title: Text('Eliminar canciones repetidas', style: TextStyle(color: editColor, fontWeight: FontWeight.w600)),
+            enabled: canEdit,
+            subtitle: canEdit ? null : const Text('Sin conexión', style: TextStyle(color: AppTheme.muted, fontSize: 12)),
             onTap: () {
               Navigator.pop(ctx);
               _deduplicatePlaylistTracks(playlist, tracks);
@@ -886,8 +913,10 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
         ),
         if (!playlist.isLiked)
           ListTile(
-            leading: Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: Colors.red),
-            title: const Text('Eliminar playlist', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+            leading: Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: canEdit ? Colors.red : AppTheme.muted),
+            title: Text('Eliminar playlist', style: TextStyle(color: canEdit ? Colors.red : AppTheme.muted, fontWeight: FontWeight.w600)),
+            enabled: canEdit,
+            subtitle: canEdit ? null : const Text('Sin conexión', style: TextStyle(color: AppTheme.muted, fontSize: 12)),
             onTap: () async {
               Navigator.pop(ctx);
               final confirm = await showDialog<bool>(
@@ -1429,6 +1458,19 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                               const SizedBox(height: 12),
                                               ListView.builder(
                                                 shrinkWrap: true,
+                                                // Causa real del "hueco vertical grande" entre el
+                                                // campo de texto y el primer resultado: un ListView
+                                                // vertical SIN `padding` explícito no usa cero --
+                                                // `BoxScrollView.build` le inyecta el padding
+                                                // vertical del MediaQuery ambiente (barra de
+                                                // estado/notch arriba, barra de gestos abajo). Esta
+                                                // pantalla no está dentro de un SafeArea, así que
+                                                // en Android eso sumaba decenas de píxeles de aire
+                                                // arriba del primer resultado. Medido: un ListView
+                                                // con 100px de contenido mide 172px bajo un
+                                                // MediaQuery de padding 48/24. Por eso quitar los
+                                                // `SizedBox` de alrededor no cambiaba nada.
+                                                padding: EdgeInsets.zero,
                                                 physics: const NeverScrollableScrollPhysics(),
                                                 itemCount: _searchResults.length > 8 ? 8 : _searchResults.length,
                                                 itemBuilder: (ctx, i) {

@@ -108,6 +108,12 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
 
   Future<void> _toggleSaveAlbum() async {
     if (_album == null) return;
+    if (!ref.read(canEditProvider)) {
+      if (mounted) {
+        AppToast.show(context, message: 'Sin conexión. No se pueden guardar álbumes offline.');
+      }
+      return;
+    }
     final savedDao = ref.read(savedAlbumDaoProvider);
     final supabaseAlbumRepo = ref.read(supabaseAlbumRepositoryProvider);
 
@@ -161,6 +167,9 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
     // Fase 7.I.8: control de sincronización manual, oculto en modo local
     // (guardar/quitar álbumes ya funciona 100% local sin este botón).
     final isLocalMode = ref.watch(localModeProvider);
+    // Online-First: guardar/quitar un álbum escribe en Supabase. Sin conexión
+    // solo llegaría a Drift y el siguiente sync lo podaría (Pitfall #28).
+    final canEdit = ref.watch(canEditProvider);
 
     if (_isLoading) {
       return const Scaffold(
@@ -435,11 +444,15 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                   IconButton(
                                     icon: Icon(
                                       _isSaved ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
-                                      color: _isSaved ? AppTheme.primary : AppTheme.secondary,
+                                      color: !canEdit
+                                          ? AppTheme.muted
+                                          : (_isSaved ? AppTheme.primary : AppTheme.secondary),
                                       size: 24,
                                     ),
-                                    onPressed: _toggleSaveAlbum,
-                                    tooltip: _isSaved ? 'Eliminar de guardados' : 'Guardar álbum',
+                                    onPressed: canEdit ? _toggleSaveAlbum : null,
+                                    tooltip: !canEdit
+                                        ? 'Sin conexión'
+                                        : (_isSaved ? 'Eliminar de guardados' : 'Guardar álbum'),
                                   ),
                                 ],
                               ),
