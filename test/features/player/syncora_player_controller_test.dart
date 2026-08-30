@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -292,6 +293,50 @@ class _FakeRestoredSessionStorage extends PlayerSessionStorage {
     required bool shuffle,
     String? activeContextId,
   }) async {}
+}
+
+/// Doble de [PlayerSessionStorage] que hace un round trip REAL por JSON en
+/// memoria (mismo `toJson`/`fromJson` que el archivo de disco), para poder
+/// verificar de punta a punta qué sobrevive a un reinicio de la app sin
+/// tocar el filesystem.
+class RoundTripSessionStorage extends PlayerSessionStorage {
+  Map<String, dynamic>? raw;
+  int saveCount = 0;
+
+  @override
+  Future<void> saveSession({
+    required SyncoraTrack? currentTrack,
+    required QueueOrigin? currentOrigin,
+    required List<SyncoraTrack> manualQueue,
+    required List<SyncoraTrack> autoQueue,
+    required List<SyncoraTrack> originalContextTracks,
+    required List<HistoryEntry> history,
+    required int positionSeconds,
+    double volume = 1.0,
+    required SyncoraRepeatMode repeatMode,
+    required bool shuffle,
+    String? activeContextId,
+  }) async {
+    saveCount++;
+    final session = PlayerSessionData(
+      currentTrack: currentTrack,
+      currentOrigin: currentOrigin,
+      manualQueue: manualQueue,
+      autoQueue: autoQueue,
+      originalContextTracks: originalContextTracks,
+      history: history,
+      positionSeconds: positionSeconds,
+      volume: volume,
+      repeatMode: repeatMode,
+      shuffle: shuffle,
+      activeContextId: activeContextId,
+    );
+    raw = jsonDecode(jsonEncode(session.toJson())) as Map<String, dynamic>;
+  }
+
+  @override
+  Future<PlayerSessionData?> loadSession() async =>
+      raw == null ? null : PlayerSessionData.fromJson(raw!);
 }
 
 /// Fake de [RadioService] (Fase 7.B): sobreescribe [generateBatch] para no
@@ -2437,6 +2482,190 @@ void main() {
       expect(restored, isNotNull);
       expect(restored!.volume, 0.65);
       expect(restored.positionSeconds, 30);
+    });
+  });
+
+  group('Restauracion de sesion: contexto de playlist y cola manual', () {
+    test('un reinicio conserva la playlist activa, la cola manual y la automatica', () async {
+      final storage = RoundTripSessionStorage();
+      final first = SyncoraPlayerController(
+        engine: FakeAudioEngine(),
+        extractionService: TestableExtractionService(),
+        sessionStorage: storage,
+      );
+      first.init();
+      await pumpEventQueue();
+
+      await first.setQueue(
+        const [
+          SyncoraTrack(id: 'p1', title: 'P1'),
+          SyncoraTrack(id: 'p2', title: 'P2'),
+          SyncoraTrack(id: 'p3', title: 'P3'),
+        ],
+        autoplay: false,
+        activeContextId: 'playlist_42',
+      );
+      first.addToQueue(const SyncoraTrack(id: 'm1', title: 'Manual 1'));
+      first.addToQueue(const SyncoraTrack(id: 'm2', title: 'Manual 2'));
+      await pumpEventQueue();
+      first.dispose();
+
+      final second = SyncoraPlayerController(
+        engine: FakeAudioEngine(),
+        extractionService: TestableExtractionService(),
+        sessionStorage: storage,
+      );
+      second.init();
+      await pumpEventQueue();
+
+      expect(second.state.activeContextId, 'playlist_42');
+      expect(second.state.currentTrack?.id, 'p1');
+      expect(second.state.manualQueue.map((t) => t.id).toList(), ['m1', 'm2']);
+      expect(second.state.autoQueue.map((t) => t.id).toList(), ['p2', 'p3']);
+      expect(
+        second.state.originalContextTracks.map((t) => t.id).toList(),
+        ['p1', 'p2', 'p3'],
+        reason: 'la automatica debe poder regenerarse desde la playlist original',
+      );
+      second.dispose();
+    });
+  });
+
+  group('Guardado periodico de la posicion de sesion', () {
+    late FakeAudioEngine engine;
+    late RoundTripSessionStorage storage;
+    late SyncoraPlayerController controller;
+
+    setUp(() async {
+      engine = FakeAudioEngine();
+      storage = RoundTripSessionStorage();
+      controller = SyncoraPlayerController(
+        engine: engine,
+        extractionService: TestableExtractionService(),
+        sessionStorage: storage,
+      );
+      controller.init();
+      await pumpEventQueue();
+    });
+
+    tearDown(() => controller.dispose());
+
+    test('mientras suena, un tick de posicion persiste la posicion nueva', () async {
+      await controller.setQueue(
+        const [SyncoraTrack(id: 'a', title: 'A'), SyncoraTrack(id: 'b', title: 'B')],
+        autoplay: false,
+      );
+      await pumpEventQueue();
+
+      // Antes del arreglo la sesion solo se guardaba en eventos discretos:
+      // el usuario podia escuchar minutos enteros y lo persistido seguia
+      // siendo la posicion del ultimo evento.
+      engine.emitState(AudioEngineState.initial.copyWith(
+        playing: true,
+        position: const Duration(seconds: 97),
+        processingState: AudioProcessingState.ready,
+      ));
+      await pumpEventQueue();
+
+      expect(storage.raw?['positionSeconds'], 97);
+    });
+
+    test('en pausa no se dispara ningun guardado periodico', () async {
+      await controller.setQueue(
+        const [SyncoraTrack(id: 'a', title: 'A')],
+        autoplay: false,
+      );
+      await pumpEventQueue();
+      final savesBefore = storage.saveCount;
+
+      engine.emitState(AudioEngineState.initial.copyWith(
+        playing: false,
+        position: const Duration(seconds: 120),
+      ));
+      await pumpEventQueue();
+
+      expect(storage.saveCount, savesBefore);
+    });
+  });
+
+  group('Barra de progreso tras restaurar sesion', () {
+    /// El audio ya arrancaba en el segundo correcto (via
+    /// `_restoredPositionSeconds`), pero la barra se veia en 0: el motor
+    /// sigue emitiendo su estado en reposo (posicion 0, sin reproducir) y
+    /// ese tick pisaba la posicion restaurada.
+    Future<SyncoraPlayerController> restoredController(
+      FakeAudioEngine engine,
+      RoundTripSessionStorage storage,
+    ) async {
+      final first = SyncoraPlayerController(
+        engine: FakeAudioEngine(),
+        extractionService: TestableExtractionService(),
+        sessionStorage: storage,
+      );
+      first.init();
+      await pumpEventQueue();
+      await first.setQueue(
+        const [SyncoraTrack(id: 'a', title: 'A'), SyncoraTrack(id: 'b', title: 'B')],
+        autoplay: false,
+      );
+      await pumpEventQueue();
+      first.dispose();
+
+      // Reescribe la sesion guardada con una posicion avanzada, como la
+      // dejaria el guardado periodico al cerrar la app a mitad de cancion.
+      storage.raw!['positionSeconds'] = 84;
+
+      final second = SyncoraPlayerController(
+        engine: engine,
+        extractionService: TestableExtractionService(),
+        sessionStorage: storage,
+      );
+      second.init();
+      await pumpEventQueue();
+      return second;
+    }
+
+    test('un tick en reposo del motor no devuelve la barra al segundo 0', () async {
+      final engine = FakeAudioEngine();
+      final controller = await restoredController(engine, RoundTripSessionStorage());
+      expect(controller.state.engine.position.inSeconds, 84);
+
+      engine.emitState(AudioEngineState.initial);
+      await pumpEventQueue();
+
+      expect(controller.state.engine.position.inSeconds, 84);
+      controller.dispose();
+    });
+
+    test('en cuanto el motor reproduce de verdad, manda la posicion real', () async {
+      final engine = FakeAudioEngine();
+      final controller = await restoredController(engine, RoundTripSessionStorage());
+
+      engine.emitState(AudioEngineState.initial.copyWith(
+        playing: true,
+        position: const Duration(seconds: 85),
+      ));
+      await pumpEventQueue();
+
+      expect(controller.state.engine.position.inSeconds, 85);
+      controller.dispose();
+    });
+
+    test('la posicion restaurada no se filtra a la pista siguiente', () async {
+      final engine = FakeAudioEngine();
+      final controller = await restoredController(engine, RoundTripSessionStorage());
+      expect(controller.state.engine.position.inSeconds, 84);
+
+      // Cambiar de pista invalida la ventana (esta atada al id de su duena).
+      await controller.playFromQueue(QueueOrigin.auto, 0);
+      await pumpEventQueue();
+
+      engine.emitState(AudioEngineState.initial);
+      await pumpEventQueue();
+
+      expect(controller.state.currentTrack?.id, 'b');
+      expect(controller.state.engine.position, Duration.zero);
+      controller.dispose();
     });
   });
 }

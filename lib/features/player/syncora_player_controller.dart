@@ -355,6 +355,28 @@ class SyncoraPlayerController extends ChangeNotifier {
   bool _disposed = false;
   int? _restoredPositionSeconds;
 
+  /// Id de la pista dueña de [_restoredPositionSeconds].
+  ///
+  /// Existe para que la posición restaurada NO pueda filtrarse a la pista
+  /// siguiente (regla de `correcciones_qa_post_fase_7.md` §2.3: una ventana
+  /// de supresión debe estar atada al id de su dueño o vencer sola). Sin
+  /// esto, la barra de progreso "arrancaba en el segundo viejo" en cada
+  /// pista posterior.
+  String? _restoredPositionTrackId;
+
+  /// Momento del último guardado de sesión disparado por el tick de
+  /// posición del motor. Ventana puramente temporal: si la reproducción
+  /// para, simplemente deja de guardarse — no hay ninguna bandera que
+  /// alguien deba acordarse de limpiar.
+  DateTime? _lastPeriodicSessionSave;
+
+  /// Cada cuánto se persiste la posición mientras suena algo.
+  ///
+  /// Antes la sesión solo se guardaba en eventos discretos (play, pause,
+  /// next…), así que cerrar la app en medio de una canción guardaba la
+  /// posición del último evento — normalmente el segundo 0 del play.
+  static const Duration _periodicSessionSaveInterval = Duration(seconds: 5);
+
   SyncoraPlayerState _state = SyncoraPlayerState.initial;
 
   SyncoraPlayerState get state => _state;
@@ -395,6 +417,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     String? activeContextId,
   }) async {
     _restoredPositionSeconds = null;
+    _restoredPositionTrackId = null;
     // 7.C.3: setQueue() es una intervención del usuario (nuevo contexto de
     // escucha) — no debe arrastrar un conteo de fallos lógicos de la sesión
     // de escucha anterior (ver docstring de `_consecutiveLogicalFailures`).
@@ -479,6 +502,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     if (index < 0 || index >= sourceQueue.length) return;
 
     _restoredPositionSeconds = null;
+    _restoredPositionTrackId = null;
 
     final target = sourceQueue[index];
     final remaining = sourceQueue.sublist(index + 1);
@@ -1119,6 +1143,7 @@ bool get _isTestEnv {
     // dejaba `_restoredPositionSeconds` seteado sin destino.
     if (session.currentTrack != null) {
       _restoredPositionSeconds = session.positionSeconds;
+      _restoredPositionTrackId = session.currentTrack!.id;
     }
     final restoredDuration = session.currentTrack?.duration ?? Duration.zero;
 
@@ -1746,6 +1771,7 @@ bool get _isTestEnv {
           ? Duration(seconds: _restoredPositionSeconds!)
           : null;
       _restoredPositionSeconds = null;
+      _restoredPositionTrackId = null;
 
       if (useCrossfade) {
         _log('[Play] Crossfade a descarga local: $localPath (${crossfadeDuration.inSeconds}s)');
@@ -1806,6 +1832,7 @@ bool get _isTestEnv {
               ? Duration(seconds: _restoredPositionSeconds!)
               : null;
           _restoredPositionSeconds = null;
+          _restoredPositionTrackId = null;
 
           await _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos);
 
@@ -1923,8 +1950,10 @@ bool get _isTestEnv {
 
     _trackListenProgress(engineState);
 
-    _state = _state.copyWith(engine: engineState);
+    _state = _state.copyWith(engine: _withRestoredPosition(engineState));
     _notify();
+
+    _maybeSavePositionPeriodically();
 
     // Fase 7.D (rediseño): revisa en cada tick si corresponde disparar un
     // crossfade preventivo antes de que la pista actual llegue a su fin
@@ -1953,6 +1982,50 @@ bool get _isTestEnv {
       // _handleExtractionError.
       _advanceAndPlay();
     }
+  }
+
+  /// Mantiene la posición restaurada visible en la barra hasta que la
+  /// reproducción arranque de verdad.
+  ///
+  /// `_restoreSession` deja la posición guardada en el estado, pero el motor
+  /// sigue emitiendo su propio estado en reposo (posición 0, sin reproducir)
+  /// y el tick siguiente la pisaba: por eso la barra "aparecía en el segundo
+  /// 0" aunque al pulsar Play el audio sí arrancara donde el usuario lo
+  /// dejó (eso lo resuelve `_restoredPositionSeconds` en `playCurrent`).
+  ///
+  /// La ventana no puede filtrarse a la pista siguiente: está atada al id de
+  /// la pista dueña ([_restoredPositionTrackId]) y solo aplica mientras el
+  /// motor reporte posición 0 y no esté reproduciendo. En cuanto suena algo,
+  /// deja de aplicarse sola — no hay bandera que limpiar (§2.3 de
+  /// `correcciones_qa_post_fase_7.md`).
+  AudioEngineState _withRestoredPosition(AudioEngineState engineState) {
+    final pending = _restoredPositionSeconds;
+    if (pending == null || pending <= 0) return engineState;
+    if (_restoredPositionTrackId == null) return engineState;
+    if (_state.currentTrack?.id != _restoredPositionTrackId) return engineState;
+    if (engineState.playing || engineState.position != Duration.zero) {
+      return engineState;
+    }
+    return engineState.copyWith(position: Duration(seconds: pending));
+  }
+
+  /// Persiste la sesión cada [_periodicSessionSaveInterval] mientras suena
+  /// algo, para que cerrar la app en medio de una canción no guarde la
+  /// posición del último evento discreto (normalmente el segundo 0).
+  ///
+  /// No escribe en el motor de audio ni programa temporizadores propios: se
+  /// engancha al tick que el motor ya emite. La escritura en disco es
+  /// atómica y single-flight (ver `PlayerSessionStorage`), así que subir la
+  /// frecuencia no puede corromper el archivo.
+  void _maybeSavePositionPeriodically() {
+    if (!_state.engine.playing) return;
+    final now = DateTime.now();
+    final last = _lastPeriodicSessionSave;
+    if (last != null && now.difference(last) < _periodicSessionSaveInterval) {
+      return;
+    }
+    _lastPeriodicSessionSave = now;
+    _saveSession();
   }
 
   Future<void> _onComplete() async {

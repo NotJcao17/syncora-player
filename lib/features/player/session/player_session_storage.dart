@@ -134,7 +134,24 @@ class PlayerSessionData {
 }
 
 class PlayerSessionStorage {
+  /// Permite apuntar el archivo de sesión a una ruta concreta en tests
+  /// (`getApplicationSupportDirectory` necesita el canal de plataforma de
+  /// `path_provider`, que no existe en un test unitario). En producción se
+  /// omite y la ruta se resuelve como siempre.
+  PlayerSessionStorage({File? overrideFile}) : _sessionFile = overrideFile;
+
   File? _sessionFile;
+
+  /// Última sesión pendiente de escribir. El controlador llama a
+  /// [saveSession] en cada play/pause/next/cambio de cola y, desde el
+  /// guardado periódico de posición, cada 5 s — un ritmo al que dos
+  /// escrituras se solapaban con facilidad.
+  PlayerSessionData? _pending;
+
+  /// Escritura en curso, si la hay. Junto con [_pending] forma un
+  /// *single-flight con coalescing*: nunca hay dos escrituras a la vez, y
+  /// una ráfaga de N guardados se colapsa en como mucho dos.
+  Future<void>? _writeLoop;
 
   Future<File> _getFile() async {
     if (_sessionFile != null) return _sessionFile!;
@@ -156,23 +173,54 @@ class PlayerSessionStorage {
     required bool shuffle,
     String? activeContextId,
   }) async {
+    _pending = PlayerSessionData(
+      currentTrack: currentTrack,
+      currentOrigin: currentOrigin,
+      manualQueue: manualQueue,
+      autoQueue: autoQueue,
+      originalContextTracks: originalContextTracks,
+      history: history,
+      positionSeconds: positionSeconds,
+      volume: volume,
+      repeatMode: repeatMode,
+      shuffle: shuffle,
+      activeContextId: activeContextId,
+    );
+
+    final running = _writeLoop;
+    if (running != null) return running;
+    final loop = _drainPending();
+    _writeLoop = loop;
+    return loop;
+  }
+
+  Future<void> _drainPending() async {
+    try {
+      while (_pending != null) {
+        final data = _pending!;
+        _pending = null;
+        await _writeAtomically(data);
+      }
+    } finally {
+      _writeLoop = null;
+    }
+  }
+
+  /// Escribe a un temporal y lo renombra encima del definitivo.
+  ///
+  /// El renombrado es atómico en Windows y en Android, así que el archivo de
+  /// sesión nunca puede quedar a medias. Antes se hacía `writeAsString`
+  /// directo sobre el archivo final: eso lo trunca primero y lo llena
+  /// después, así que un cierre de la app (o una segunda escritura solapada)
+  /// a mitad dejaba un JSON incompleto. `loadSession` no puede distinguir
+  /// eso de "no hay sesión" y devuelve `null` — es decir, **se perdía la
+  /// sesión entera**: la playlist que sonaba, la cola manual y la posición.
+  Future<void> _writeAtomically(PlayerSessionData data) async {
     try {
       final file = await _getFile();
-      final session = PlayerSessionData(
-        currentTrack: currentTrack,
-        currentOrigin: currentOrigin,
-        manualQueue: manualQueue,
-        autoQueue: autoQueue,
-        originalContextTracks: originalContextTracks,
-        history: history,
-        positionSeconds: positionSeconds,
-        volume: volume,
-        repeatMode: repeatMode,
-        shuffle: shuffle,
-        activeContextId: activeContextId,
-      );
-      final jsonStr = jsonEncode(session.toJson());
-      await file.writeAsString(jsonStr);
+      final tmp = File('${file.path}.tmp');
+      await tmp.writeAsString(jsonEncode(data.toJson()), flush: true);
+      await tmp.rename(file.path);
     } catch (e) {
       debugPrint('[PlayerSessionStorage] Error guardando sesión: $e');
     }
