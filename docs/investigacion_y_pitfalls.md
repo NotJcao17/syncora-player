@@ -134,3 +134,79 @@ Este documento recopila las trampas técnicas más comunes y destructivas al des
     3. **Ajuste de Escala / Tasa de Refresco:** Alinear las tasas de refresco (ej. 60Hz/144Hz) o factores de escala DPI en la configuración de pantalla de Windows entre ambos monitores para evitar el desfasaje del DWM presentation clock.
 
 
+
+---
+
+> Los pitfalls 26 a 30 se descubrieron **en producción**, durante la ronda de QA
+> posterior a la Fase 7, cada uno tras varios intentos fallidos de arreglo. El
+> relato completo (síntomas, intentos equivocados y por qué costaron tanto) está
+> en `docs/fases/correcciones_qa_post_fase_7.md`.
+
+## 26. `just_audio.play()` NO completa al empezar, sino al TERMINAR la pista
+
+*   **El Error:** `AudioPlayer.play()` de `just_audio` devuelve un `Future` que
+    completa cuando la reproducción **termina** (fin de pista, pausa o stop), no
+    cuando arranca. `JustAudioEngine.play()` hacía `return _player.play();`, así
+    que `await _engine.play()` en el controlador se bloqueaba durante toda la
+    canción.
+*   **El Síntoma:** el botón "siguiente" quedaba muerto tras el primer uso.
+    `skipToNext()` mantiene el guard `_isTransitioning` mientras espera, así que
+    el segundo tap salía por el guard **sin generar un solo log**. "Revivía" al
+    tocar la barra de progreso o poner otra canción, porque eso paraba el motor
+    y completaba el future pendiente.
+*   **Solo en Android:** `media_kit` (Windows) retorna en cuanto emite el
+    comando, así que el bug era invisible ahí.
+*   **La Regla:** nunca esperar `play()` de `just_audio` en un camino que
+    sostenga un guard o bloquee una transición de UI. El motor debe cumplir el
+    contrato "`play()` retorna cuando el comando se emitió", no cuando el audio
+    acabó.
+
+## 27. Los fakes de test deben imitar la asincronía real del motor
+
+*   **El Error:** el `FakeAudioEngine` de la suite emitía sus estados de forma
+    **síncrona** dentro de `setUrl`/`play`, y completaba `play()` de inmediato.
+    Los motores reales no hacen ninguna de las dos cosas.
+*   **El Síntoma:** 400+ tests en verde mientras el reproductor estaba roto en el
+    teléfono. El pitfall #26 era invisible para toda la suite.
+*   **La Regla:** un fake de motor de audio debe reproducir la **semántica** del
+    real (emisión asíncrona, `play()` que no completa hasta el final), no solo su
+    interfaz. Cuando un bug solo aparece en dispositivo, sospechar primero del
+    fake antes que del código de producción.
+
+## 28. Escribir solo en Drift = el sync lo borra
+
+*   **El Error:** varias acciones (corazón del mini reproductor, del reproductor
+    a pantalla completa, de la barra de tareas de Windows y de la pantalla de
+    bloqueo de Android) llamaban directo al DAO de Drift sin subir el cambio a
+    Supabase.
+*   **El Síntoma:** la acción parecía funcionar y se revertía al recargar. Es
+    consecuencia directa de la arquitectura Online-First (§3 del Documento
+    Maestro): Supabase es la fuente de la verdad, así que el sync poda toda fila
+    local que no exista en el servidor. **No es un bug de sincronización: es el
+    comportamiento correcto ante un dato que nunca se subió.**
+*   **La Regla:** toda escritura de biblioteca va por un servicio compartido que
+    persiste en ambos lados (ej. `lib/features/library/services/like_track_service.dart`).
+    Si una pantalla nueva llama al DAO directamente, es un bug.
+
+## 29. `null` en un `update` parcial: "no lo toques" vs. "ponlo a NULL"
+
+*   **El Error:** `SupabasePlaylistRepository.updatePlaylist` construía el mapa de
+    cambios con `if (coverUrl != null) updates['cover_url'] = coverUrl;`. No había
+    forma de expresar "guarda NULL".
+*   **El Síntoma:** volver a portada automática (o vaciar la descripción) se
+    guardaba en local pero nunca viajaba a la nube, y el siguiente sync restauraba
+    el valor viejo.
+*   **La Regla:** en updates parciales, un parámetro nulo es ambiguo. Usar flags
+    explícitos (`clearCoverUrl`, `clearDescription`) o un tipo envoltorio.
+
+## 30. Borrar por `track_id` elimina TODAS las copias
+
+*   **El Error:** "eliminar duplicados" borraba en local las filas sobrantes por su
+    id de fila (correcto) pero en Supabase llamaba a
+    `removeTrackFromPlaylist(remoteId, trackId)`, que borra **todas** las filas con
+    ese `track_id`, incluida la que se quería conservar.
+*   **El Síntoma:** quedaba 1 copia en local y 0 en la nube; al recargar, el sync
+    podaba la local y la canción desaparecía entera.
+*   **La Regla:** cuando la operación local es "por fila" y la remota es "por
+    valor", no son equivalentes. Tras un borrado remoto por valor hay que reponer
+    explícitamente lo que debía sobrevivir.
