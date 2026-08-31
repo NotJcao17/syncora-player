@@ -6,9 +6,13 @@ confusión hace imposible razonar sobre por qué a veces suena una versión
 equivocada.
 
 **Resumen en una línea:** no son dos fuentes alternativas entre las que la app
-elija — YouTube es siempre la fuente del **audio**, y YouTube Music es solo una
-**fuente extra de candidatos** dentro de la misma búsqueda, que se consulta
-únicamente cuando la búsqueda de vídeos devuelve pocos resultados.
+elija — YouTube es siempre la fuente del **audio**, y YouTube Music es una
+**fuente de candidatos** para el matching, que desde la segunda ronda de QA se
+consulta **primero**.
+
+> **Actualización (segunda ronda de QA).** El orden se invirtió: YouTube Music
+> es ahora el primer peldaño de la escalera de búsqueda y la búsqueda de vídeos
+> queda como fallback. La medición que lo justifica está en §4.
 
 ---
 
@@ -43,12 +47,13 @@ Se ejecutan en este orden, y **los candidatos se acumulan** entre intentos
 (dedup por `videoId`), no se reemplazan. Se corta en cuanto algún candidato
 supera el umbral de aceptación:
 
-| # | Query | Cliente Innertube |
+| # | Query | Fuente |
 | :-- | :--- | :--- |
-| 1 | `artista título` | `WEB` |
-| 2 | `artista título official audio` | `WEB` |
-| 3 | `artista título` | `ANDROID` |
-| 4 | solo el título | `WEB` |
+| 0 | `artista título` | **YouTube Music** (`type: 'song'`) |
+| 1 | `artista título` | búsqueda de vídeos, cliente `WEB` |
+| 2 | `artista título official audio` | búsqueda de vídeos, cliente `WEB` |
+| 3 | `artista título` | búsqueda de vídeos, cliente `ANDROID` |
+| 4 | solo el título | búsqueda de vídeos, cliente `WEB` |
 
 (el artista es solo el **principal**, no la lista de colaboradores separada por
 comas; al título se le quitan sufijos de versión tipo "- Remastered 2011").
@@ -66,7 +71,9 @@ Dentro de **cada** uno de esos intentos, la función JS `searchVideos`
    duración**).
 3. **`yt.music.search(query, {type: 'song'})` — YouTube Music.** Se consulta
    **solo si los pasos anteriores juntaron menos de 8 candidatos**, y sus
-   resultados se **añaden** a los que ya hubiera, no los reemplazan.
+   resultados se **añaden** a los que ya hubiera, no los reemplazan. Sigue
+   existiendo para las queries que el peldaño 0 no cubre (el hint "official
+   audio", el cliente ANDROID y el título pelado).
 
 > **Por qué ese umbral y no siempre:** el caso que lo motivó es un tema de
 > nicho que en YouTube solo existe como pista auto-generada de YouTube Music
@@ -77,10 +84,12 @@ Dentro de **cada** uno de esos intentos, la función JS `searchVideos`
 > pista tiene coste, y para temas populares la búsqueda de vídeos ya trae el
 > master correcto.
 
-**Consecuencia importante y contraintuitiva:** para una canción **popular**,
-YouTube Music **no se consulta nunca**, porque la búsqueda de vídeos ya
-devuelve ≥8 resultados. Ahí toda la responsabilidad de no elegir un karaoke o
-un re-subido recae en el ranking de `yt_search_matcher.dart` (§2).
+**Consecuencia importante y contraintuitiva (ya corregida, se documenta porque
+explica el caso "Ladders"):** con el orden anterior, para una canción
+**popular** YouTube Music **no se consultaba nunca**, porque la búsqueda de
+vídeos ya devolvía ≥8 resultados. Es decir, la fuente limpia se reservaba
+justo para los casos donde menos falta hacía, y en los populares —donde
+abundan las re-subidas— toda la responsabilidad recaía en el ranking.
 
 ### 1.4 De dónde sale el audio
 
@@ -207,3 +216,96 @@ peticiones cada 5 segundos por IP (Pitfall #4), y para cambiar una miniatura.
 investigar desde cero. Si alguna vez se hace, el detector correcto es
 `album.artist.id == 5080` (el "Varios Artistas" canónico de Deezer), nunca
 `record_type`.
+
+---
+
+## 4. Por qué YouTube Music va primero (medición, segunda ronda de QA)
+
+### 4.1 La elección original no fue "YouTube es mejor"
+
+Revisando `docs/fases/fase_4_correcciones.md`, `yt.music.search` entró como
+**"Nivel 3"** de una *cascada de resiliencia de parseo*: nivel 1 el parser
+estándar, nivel 2 el JSON crudo si el parser fallaba, nivel 3 YouTube Music.
+Nunca se evaluó como fuente primaria; era el último recurso si los otros dos
+niveles no devolvían nada. Más tarde (C14 del plan del buscador) se relajó a
+"si hay menos de 8 candidatos". O sea: **no existía una razón de calidad para
+preferir la búsqueda de vídeos** — era un orden heredado de un diseño pensado
+para otra cosa.
+
+Lo que sí existía era el **Pitfall #18**, que prohíbe `ANDROID_MUSIC` como
+cliente. Es un pitfall real pero **no aplica aquí**, y conviene dejar clara la
+distinción:
+
+- Pitfall #18 habla del cliente de **extracción** (`/player`), donde
+  `ANDROID_MUSIC` exige PoToken y devuelve 403.
+- `yt.music.search` usa el cliente **`WEB_REMIX`** (así lo mapea
+  `youtubei.js`: `CLIENTS.YTMUSIC.NAME = "WEB_REMIX"`) y solo contra
+  `/search`, que no exige PoToken.
+- La extracción del audio **no cambia**: sigue siendo `['ANDROID',
+  'ANDROID_VR', 'WEB']` sobre `/player`.
+
+**Verificado contra la API en vivo:** los ids de *art track* de YouTube Music
+(`TATXudfgu3E`, `m2zUrruKjDQ`, `juRFjpB5Ppg`, `pTYIf2pkxzQ`) se resuelven con
+el cliente `ANDROID` con `playabilityStatus: OK`, itag 18 presente y URLs
+directas. No hay ningún conflicto con el pitfall.
+
+### 4.2 Medición de cobertura y latencia
+
+Ocho consultas contra las dos APIs de Innertube (una muestra por consulta,
+desde una máquina de escritorio — indicativo, no un benchmark):
+
+| Consulta | YouTube Music (primer resultado) | Búsqueda de vídeos (primero) |
+| :--- | :--- | :--- |
+| Mac Miller Ladders | `TATXudfgu3E` Ladders · Swimming · 4:48 | `eU581WvbUyQ` "Mac Miller - Ladders" |
+| The Killers Mr. Brightside | `m2zUrruKjDQ` · Hot Fuss · 3:43 | canal `TheKillersMusic` |
+| Nacha Pop Chica de ayer | `zQDOIdBZYSY` · Nacha Pop · 3:29 | canal `D.J. Heliot` |
+| Bad Bunny Tití Me Preguntó | `juRFjpB5Ppg` · Un Verano Sin Ti · 4:04 | vídeo oficial |
+| Daft Punk One More Time | `wU26xVT_vBU` · 5:21 | vídeo oficial |
+| Coldplay Fix You live | `9_cDX9lt0to` Fix You (Live) · 5:01 | Live In São Paulo |
+| Charli xcx Guess | `u4SSOgZNYYM` (feat. billie eilish) · 2:24 | vídeo oficial |
+| Metallica Nothing Else Matters | `pTYIf2pkxzQ` · 6:29 | vídeo oficial |
+
+- **20 resultados en las 8 consultas**, y en las 8 el primero era el master
+  correcto.
+- **Latencia ~700 ms** contra ~1000 ms de la búsqueda de vídeos: no es más
+  lenta.
+- Trae **álbum y duración exacta**. Comprobado: Deezer da 287 s para "Ladders"
+  y el master de YT Music 288 s; para "Mr. Brightside", 223 s en ambos. La
+  búsqueda de vídeos no siempre trae duración (el camino de parseo crudo del
+  cliente ANDROID la pierde).
+- Cubre bien casos que no son "single de estudio": la consulta con "live"
+  devolvió la versión en directo, y la de Charli xcx la versión con
+  colaboración.
+
+**No es una petición de red extra.** En el caso común sustituye a la búsqueda
+de vídeos, que solo corre si de YouTube Music no sale ningún candidato
+aceptable. Una resolución típica sigue siendo **2 peticiones** (una de
+búsqueda + una de `/player`). Solo las pistas fuera del catálogo de YouTube
+Music pagan una petición de más.
+
+### 4.3 Bug encontrado por el camino: la vía de YouTube Music estaba muerta fuera del inglés
+
+`Search.songs` de `youtubei.js` busca el estante cuyo título sea **exactamente
+la cadena inglesa `"Songs"`**:
+
+```js
+get songs() {
+  return this.contents?.filterType(MusicShelf)
+    .find((section) => section.title.toString() === "Songs");
+}
+```
+
+Y YouTube Music localiza ese título según el `hl` de la sesión — que
+`youtubei.js` **no fija**: lo toma del propio `ytcfg` de YouTube
+(`device_info[0]`), es decir, de la IP del usuario. Medido: `hl=en` devuelve
+`'Songs'`, `hl=es`/`gl=MX` devuelve `'Canciones'`.
+
+Con `hl` en español, `musicSearch.songs` es `undefined`, el código hacía
+`shelf = null` y **esta vía aportaba cero candidatos, en silencio**. Explica
+por qué YouTube Music ayudaba unas veces sí y otras no.
+
+Corregido con `extractMusicSongRows`, que usa el getter cuando existe y si no
+recorre los estantes de `contents` directamente. Como la búsqueda ya va
+filtrada por `type: 'song'`, todos los estantes son de canciones, así que
+recorrerlos es correcto además de independiente del idioma. Verificado con
+Node contra fixtures de las dos formas de respuesta.

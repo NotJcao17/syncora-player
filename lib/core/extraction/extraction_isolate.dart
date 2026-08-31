@@ -356,12 +356,12 @@ class ExtractionIsolate {
         // solo como último recurso: para títulos genéricos (ej. "Antes De
         // Que Salga El Sol") devuelve sobre todo canciones homónimas de
         // otros artistas, así que no debe ser el segundo intento.
-        final attempts = <(String query, String client)>[];
-        void addAttempt(String q, String client) {
+        final attempts = <(String query, String client, String mode)>[];
+        void addAttempt(String q, String client, {String mode = 'video'}) {
           final t = q.trim();
           if (t.isEmpty) return;
-          if (attempts.any((a) => a.$1 == t && a.$2 == client)) return;
-          attempts.add((t, client));
+          if (attempts.any((a) => a.$1 == t && a.$2 == client && a.$3 == mode)) return;
+          attempts.add((t, client, mode));
         }
 
         // El orden importa y está calibrado contra el caso real que rompió:
@@ -373,6 +373,17 @@ class ExtractionIsolate {
         //     SearchMobileHeader") y cae a un parseo crudo que pierde la
         //     duración, así que solo se usa si WEB no resolvió.
         //  4. Título pelado, último recurso y solo para el pase estricto.
+        //  0. YouTube Music primero. Su catálogo son masters oficiales del
+        //     sello por construcción (pistas auto-generadas, `musicVideoType`
+        //     ATV), así que ahí no existen los karaokes ni los instrumentales
+        //     re-subidos con un título de marketing — el caso "Ladders" no
+        //     puede volver a ocurrir si la canción está en este catálogo.
+        //     Medido contra la API en vivo: devuelve título, artista, álbum y
+        //     duración exacta, y en 8 de 8 pruebas el primer resultado era el
+        //     master correcto. **No es una petición extra**: en el caso común
+        //     sustituye a la búsqueda de vídeos, que solo corre si de aquí no
+        //     sale ningún candidato aceptable.
+        addAttempt(baseQuery, 'WEB', mode: 'music');
         addAttempt(baseQuery, 'WEB');
         addAttempt('$baseQuery official audio', 'WEB');
         addAttempt(baseQuery, 'ANDROID');
@@ -399,15 +410,18 @@ class ExtractionIsolate {
         for (final attempt in attempts) {
           final query = attempt.$1;
           final client = attempt.$2;
-          sendLog('[IsolateJS] Buscando match para "$query" con cliente $client...');
+          final mode = attempt.$3;
+          final sourceLabel = mode == 'music' ? 'YouTube Music' : 'cliente $client';
+          sendLog('[IsolateJS] Buscando match para "$query" en $sourceLabel...');
           final candidates = await _trySearchWithClient(
             query: query,
             client: client,
+            mode: mode,
             jsRuntime: jsRuntime,
             sendLog: sendLog,
           );
           if (candidates == null || candidates.isEmpty) {
-            sendLog('[IsolateJS] Búsqueda sin candidatos con $client.');
+            sendLog('[IsolateJS] Búsqueda sin candidatos en $sourceLabel.');
             continue;
           }
 
@@ -693,17 +707,19 @@ class ExtractionIsolate {
     required String client,
     required JavascriptRuntime? jsRuntime,
     required void Function(String) sendLog,
+    String mode = 'video',
   }) async {
     if (jsRuntime == null) return null;
 
-    final jsRequestId = 'js_search_${DateTime.now().microsecondsSinceEpoch}_$client';
+    final jsRequestId = 'js_search_${DateTime.now().microsecondsSinceEpoch}_${client}_$mode';
     final completer = Completer<Map<String, dynamic>>();
     _jsSearchCompleters[jsRequestId] = completer;
 
     // C7: `jsonEncode` en vez de escapar a mano solo comillas simples (no
     // cubría backslashes, comillas dobles ni saltos de línea en el título).
     final code =
-        'globalThis.searchVideos(${jsonEncode(query)}, ${jsonEncode(client)}, ${jsonEncode(jsRequestId)});';
+        'globalThis.searchVideos(${jsonEncode(query)}, ${jsonEncode(client)}, '
+        '${jsonEncode(jsRequestId)}, ${jsonEncode(mode)});';
     final evalRes = jsRuntime.evaluate(code);
 
     if (evalRes.isError) {
@@ -720,12 +736,12 @@ class ExtractionIsolate {
         return (res['results'] as List).cast<Map<String, dynamic>>();
       }
       if (res.containsKey('error')) {
-        sendLog('[IsolateJS] searchVideos $client devolvió error: ${res['error']}');
+        sendLog('[IsolateJS] searchVideos $client/$mode devolvió error: ${res['error']}');
       }
       return null;
     } catch (e) {
       _jsSearchCompleters.remove(jsRequestId);
-      sendLog('[IsolateJS] Timeout en searchVideos para $client');
+      sendLog('[IsolateJS] Timeout en searchVideos para $client/$mode');
       return null;
     }
   }

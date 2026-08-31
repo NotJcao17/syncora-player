@@ -788,8 +788,74 @@ function extractVideoCandidatesFromRaw(data) {
   return results;
 }
 
-globalThis.searchVideos = function(query, client, jsRequestId) {
-  console.log('[JS] searchVideos iniciado query="' + query + '", client=' + client + ', reqId=' + jsRequestId);
+// Extrae las filas de canciones de una respuesta de yt.music.search.
+//
+// NO usa el getter `.songs` de youtubei.js: ese getter busca el estante cuyo
+// titulo sea exactamente la cadena inglesa "Songs", y YouTube Music localiza
+// ese titulo segun el `hl` de la sesion -- que youtubei.js toma del propio
+// ytcfg de YouTube, es decir, de la IP del usuario. Medido contra la API en
+// vivo: hl=en devuelve "Songs" y hl=es/MX devuelve "Canciones". Con cualquier
+// idioma que no sea ingles el getter devuelve undefined y esta via se quedaba
+// SIN CANDIDATOS en silencio.
+//
+// Como la busqueda ya va filtrada por `type: 'song'`, todos los estantes de la
+// respuesta son de canciones: recorrerlos todos es correcto ademas de
+// independiente del idioma.
+globalThis.extractMusicSongRows = function(musicSearch) {
+  var rows = [];
+  if (!musicSearch) return rows;
+
+  var shelf = musicSearch.songs;
+  if (shelf) {
+    if (Array.isArray(shelf)) return shelf.slice();
+    if (Array.isArray(shelf.contents)) return shelf.contents.slice();
+  }
+
+  var sections = musicSearch.contents;
+  if (!Array.isArray(sections)) return rows;
+  for (var i = 0; i < sections.length; i++) {
+    var section = sections[i];
+    if (section && Array.isArray(section.contents)) {
+      for (var j = 0; j < section.contents.length; j++) rows.push(section.contents[j]);
+    }
+  }
+  return rows;
+};
+
+// Normaliza una fila de YouTube Music al mismo shape que usa la busqueda de
+// videos. `parseSong` de youtubei.js rellena title/artists/duration/album para
+// las pistas auto-generadas del sello (musicVideoType ATV), que son
+// exactamente las que nos interesan.
+globalThis.musicRowToCandidate = function(s) {
+  if (!s || !s.id) return null;
+
+  var title = '';
+  if (s.title && s.title.text) title = String(s.title.text);
+  else if (typeof s.title === 'string') title = s.title;
+  else if (s.name) title = String(s.name);
+
+  var author = '';
+  if (s.artists && s.artists[0] && s.artists[0].name) author = String(s.artists[0].name);
+  else if (s.author && s.author.name) author = String(s.author.name);
+
+  return {
+    videoId: String(s.id),
+    title: title,
+    author: author,
+    durationSec: (s.duration && typeof s.duration.seconds === 'number') ? s.duration.seconds : null,
+    // Marca de procedencia: el shelf de canciones de YouTube Music son masters
+    // oficiales por construccion, nunca re-subidas ni karaokes.
+    // `YtSearchMatcher` lo puntua igual que un canal "- Topic"/VEVO -- y hace
+    // falta la marca porque aqui el autor llega como nombre de artista, sin el
+    // sufijo "- Topic".
+    source: 'ytmusic'
+  };
+};
+
+// `mode`: 'music' consulta SOLO el catalogo de YouTube Music; cualquier otro
+// valor mantiene la busqueda de videos de siempre.
+globalThis.searchVideos = function(query, client, jsRequestId, mode) {
+  console.log('[JS] searchVideos iniciado query="' + query + '", client=' + client + ', mode=' + (mode || 'video') + ', reqId=' + jsRequestId);
   (async function() {
     try {
       var InnertubeClass = globalThis.Innertube || (globalThis.YouTubeJS ? (globalThis.YouTubeJS.Innertube || globalThis.YouTubeJS.default) : null);
@@ -804,6 +870,34 @@ globalThis.searchVideos = function(query, client, jsRequestId) {
       }
 
       var results = [];
+
+      // Modo dedicado a YouTube Music: se usa como PRIMER intento de la
+      // escalera (ver `extraction_isolate.dart`). Devuelve solo masters
+      // oficiales, asi que evita de raiz los karaokes/instrumentales
+      // re-subidos con titulo de marketing.
+      if (mode === 'music') {
+        if (!yt.music || typeof yt.music.search !== 'function') {
+          console.log('[JS] searchVideos: este cliente no expone yt.music');
+          sendMessage('searchResult', JSON.stringify({ requestId: jsRequestId, results: [] }));
+          return;
+        }
+        try {
+          var mSearch = await yt.music.search(query, { type: 'song' });
+          var mRows = globalThis.extractMusicSongRows(mSearch);
+          var mSeen = {};
+          for (var mi = 0; mi < mRows.length; mi++) {
+            var cand = globalThis.musicRowToCandidate(mRows[mi]);
+            if (!cand || mSeen[cand.videoId]) continue;
+            mSeen[cand.videoId] = true;
+            results.push(cand);
+          }
+          console.log('[JS] searchVideos (music): ' + results.length + ' candidatos');
+        } catch (em) {
+          console.log('[JS searchVideos music excepción] ' + (em ? em.toString() : ''));
+        }
+        sendMessage('searchResult', JSON.stringify({ requestId: jsRequestId, results: results }));
+        return;
+      }
 
       // Intento 1: yt.search (Parser estándar de youtubei.js)
       try {
@@ -835,54 +929,28 @@ globalThis.searchVideos = function(query, client, jsRequestId) {
         }
       }
 
-      // Intento 3: YouTube Music. Antes solo corría si NO había ningún
-      // resultado; ahora también cuando hay pocos, y los añade a los que ya
-      // hubiera en vez de reemplazarlos. Motivo (caso real): un tema de
-      // nicho suele existir en YouTube solo como pista auto-generada de
-      // YouTube Music (canal "<Artista> - Topic"), y la búsqueda de vídeos
-      // normal devuelve 20 canciones homónimas de OTROS artistas — así que
-      // `results.length === 0` nunca se cumplía y jamás se llegaba a mirar
-      // donde sí estaba la canción.
+      // Intento 3: YouTube Music como red de rescate dentro de la busqueda de
+      // videos, cuando esta devolvio pocos candidatos.
+      //
+      // Sigue existiendo aunque la escalera ya consulte YouTube Music primero
+      // (`mode: 'music'`): esta rama tambien corre para las queries de la
+      // escalera que el paso de musica NO cubre (el hint "official audio", el
+      // cliente ANDROID y el titulo pelado). El dedup por videoId de
+      // `extraction_isolate.dart` evita que aporte duplicados.
       if (results.length < 8 && yt.music && typeof yt.music.search === 'function') {
         try {
           var seenMusic = {};
           for (var q = 0; q < results.length; q++) seenMusic[results[q].videoId] = true;
 
           var musicSearch = await yt.music.search(query, { type: 'song' });
-          var shelf = (musicSearch && musicSearch.songs) ? musicSearch.songs : null;
-          var songs = [];
-          if (Array.isArray(shelf)) songs = shelf;
-          else if (shelf && Array.isArray(shelf.contents)) songs = shelf.contents;
+          var songs = globalThis.extractMusicSongRows(musicSearch);
 
           var addedFromMusic = 0;
           for (var j = 0; j < songs.length; j++) {
-            var s = songs[j];
-            if (!s || !s.id) continue;
-            var sid = String(s.id);
-            if (seenMusic[sid]) continue;
-            seenMusic[sid] = true;
-
-            var sTitle = '';
-            if (s.title && s.title.text) sTitle = String(s.title.text);
-            else if (typeof s.title === 'string') sTitle = s.title;
-            else if (s.name) sTitle = String(s.name);
-
-            var sAuthor = '';
-            if (s.artists && s.artists[0] && s.artists[0].name) sAuthor = String(s.artists[0].name);
-            else if (s.author && s.author.name) sAuthor = String(s.author.name);
-
-            results.push({
-              videoId: sid,
-              title: sTitle,
-              author: sAuthor,
-              durationSec: (s.duration && typeof s.duration.seconds === 'number') ? s.duration.seconds : null,
-              // Marca de procedencia: el shelf de canciones de YouTube Music
-              // son masters oficiales por construccion, nunca re-subidas ni
-              // karaokes. `YtSearchMatcher` lo puntua igual que un canal
-              // "- Topic"/VEVO -- y hace falta la marca porque aqui el autor
-              // llega como nombre de artista, sin el sufijo "- Topic".
-              source: 'ytmusic'
-            });
+            var cand2 = globalThis.musicRowToCandidate(songs[j]);
+            if (!cand2 || seenMusic[cand2.videoId]) continue;
+            seenMusic[cand2.videoId] = true;
+            results.push(cand2);
             addedFromMusic++;
           }
           if (addedFromMusic > 0) {

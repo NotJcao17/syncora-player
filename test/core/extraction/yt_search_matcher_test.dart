@@ -251,6 +251,10 @@ void main() {
   /// penalizaciones por palabra clave" es falsa para este caso. Lo que sí lo
   /// distingue del master real es el canal.
   group('Regresión "Ladders": el master del sello gana al re-subido', () {
+    // Duraciones reales, medidas contra las APIs en vivo: Deezer da 287 s para
+    // "Ladders" (álbum Swimming) y el master de YouTube Music (`TATXudfgu3E`)
+    // da 4:48 = 288 s. El re-subido instrumental dura prácticamente lo mismo,
+    // que es justo por qué la duración no lo distingue.
     List<Map<String, dynamic>> ladderCandidates() => [
           // Primero en relevancia de YouTube (bonus de posición máximo) y con
           // el título mejor "vendido".
@@ -258,13 +262,13 @@ void main() {
             'videoId': 'zaas98hALf4',
             'title': 'Ladders - Mac Miller (Official Audio)',
             'author': 'Rap Uploads',
-            'durationSec': 239,
+            'durationSec': 287,
           },
           {
             'videoId': 'realLadders',
             'title': 'Ladders',
             'author': 'Mac Miller - Topic',
-            'durationSec': 239,
+            'durationSec': 287,
           },
         ];
 
@@ -273,7 +277,7 @@ void main() {
         ladderCandidates(),
         artist: 'Mac Miller',
         title: 'Ladders',
-        durationSec: 239,
+        durationSec: 287,
       );
 
       expect(best, isNotNull);
@@ -286,7 +290,7 @@ void main() {
         ladderCandidates(),
         artist: 'Mac Miller',
         title: 'Ladders',
-        durationSec: 239,
+        durationSec: 287,
         topN: 5,
       );
 
@@ -307,19 +311,19 @@ void main() {
             'videoId': 'zaas98hALf4',
             'title': 'Ladders - Mac Miller (Official Audio)',
             'author': 'Rap Uploads',
-            'durationSec': 239,
+            'durationSec': 287,
           },
           {
             'videoId': 'ytmusicLadd',
             'title': 'Ladders',
             'author': 'Mac Miller',
-            'durationSec': 239,
+            'durationSec': 287,
             'source': 'ytmusic',
           },
         ],
         artist: 'Mac Miller',
         title: 'Ladders',
-        durationSec: 239,
+        durationSec: 287,
       );
 
       expect(best, isNotNull);
@@ -334,12 +338,12 @@ void main() {
             'videoId': 'backingTrk1',
             'title': 'Mac Miller - Ladders (Backing Track)',
             'author': 'Mac Miller - Topic',
-            'durationSec': 239,
+            'durationSec': 287,
           },
         ],
         artist: 'Mac Miller',
         title: 'Ladders',
-        durationSec: 239,
+        durationSec: 287,
       );
 
       expect(best, isNull);
