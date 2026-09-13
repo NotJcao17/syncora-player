@@ -175,7 +175,23 @@ void _initAndroidAudioService(
     config: const AudioServiceConfig(
       androidNotificationChannelId: 'com.syncora.player',
       androidNotificationChannelName: 'Syncora Player',
-      androidNotificationOngoing: true,
+      // `androidNotificationOngoing` pasa a `false` porque `audio_service`
+      // tiene un assert que prohíbe combinarlo con
+      // `androidStopForegroundOnPause: false`. Se pierde poco: mientras el
+      // servicio siga en primer plano la notificación se mantiene igual, y en
+      // Android 14+ el sistema deja descartar las notificaciones de servicios
+      // en primer plano de todos modos.
+      androidNotificationOngoing: false,
+      // Ronda 3 bis: mantener el servicio en primer plano AUNQUE esté pausado.
+      //
+      // Con el default (`true`), al pausar se suelta el foreground service y
+      // la app pasa a ser un proceso de fondo corriente — candidata a que
+      // Android la mate en cuanto otra app pesada (Instagram, TikTok) pide
+      // memoria. Eso encaja con "la app se cerró por completo tras usar
+      // TikTok un par de minutos": el manejo de foco de audio que se añadió en
+      // A1 ahora SÍ pausa cuando otra app toma el foco, así que expone este
+      // camino mucho más que antes.
+      androidStopForegroundOnPause: false,
       // Android exige que el icono chico de la notificacion sea monocromo
       // (solo alfa): con `mipmap/ic_launcher`, que es a color, el sistema lo
       // dibujaba como un cuadro blanco o directamente lo omitia. El proyecto ya

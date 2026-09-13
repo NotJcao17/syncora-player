@@ -87,21 +87,24 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      // Ronda 3 bis: `useSafeArea` es lo que de verdad impide que la hoja se
+      // meta bajo la barra de estado y el recorte de la cámara. Calcularlo a
+      // mano con `MediaQuery.padding` desde dentro del `builder` no servía:
+      // ahí el padding superior ya viene consumido, así que el tope que se
+      // estaba aplicando no recortaba nada y la X quedaba tapada por el icono
+      // de la batería.
+      useSafeArea: true,
       backgroundColor: AppTheme.background,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         final mq = MediaQuery.of(ctx);
-        // Ronda 3 (E4): la hoja se abría con una altura fija del 85% de la
-        // pantalla y `top: 20` a secas, sin `SafeArea` ni asa. En pantallas
-        // altas eso la subía hasta pegar el título contra el borde superior
-        // (y contra el notch en algunos móviles). Ahora se descuenta el área
-        // segura de arriba y se añade el asa, como el resto de hojas de la
-        // app.
-        final maxHeight = mq.size.height - mq.padding.top - 12;
         return SizedBox(
-          height: (mq.size.height * 0.85).clamp(0.0, maxHeight),
+          // Con `useSafeArea` la hoja ya no puede pasar del área segura; el
+          // 0.8 deja además un margen visible del contenido de debajo, para
+          // que se lea como una hoja y no como una pantalla.
+          height: mq.size.height * 0.8,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

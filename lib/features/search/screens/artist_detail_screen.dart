@@ -55,7 +55,9 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
       case _DiscographyFilter.albumes:
         return _albums.where((a) => a.isFullAlbum).toList();
       case _DiscographyFilter.sencillos:
-        return _albums.where((a) => a.isSingleOrEp).toList();
+        return _albums.where((a) => a.recordType == 'single').toList();
+      case _DiscographyFilter.eps:
+        return _albums.where((a) => a.recordType == 'ep').toList();
     }
   }
 
@@ -63,6 +65,17 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   /// tipos, un filtro con una sola opción útil es ruido.
   bool get _showDiscographyFilter =>
       _albums.any((a) => a.isSingleOrEp) && _albums.any((a) => a.isFullAlbum);
+
+  /// Píldoras visibles: se omite la de un tipo que este artista no tiene
+  /// (muchos artistas no publican EPs, y una píldora que siempre da vacío es
+  /// ruido).
+  List<_DiscographyFilter> get _visibleDiscographyFilters => _DiscographyFilter.values
+      .where((f) =>
+          f == _DiscographyFilter.todo ||
+          (f == _DiscographyFilter.albumes && _albums.any((a) => a.isFullAlbum)) ||
+          (f == _DiscographyFilter.sencillos && _albums.any((a) => a.recordType == 'single')) ||
+          (f == _DiscographyFilter.eps && _albums.any((a) => a.recordType == 'ep')))
+      .toList();
 
   @override
   void initState() {
@@ -367,7 +380,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
-                          children: _DiscographyFilter.values.map((f) {
+                          children: _visibleDiscographyFilters.map((f) {
                             final selected = _discographyFilter == f;
                             return Padding(
                               padding: const EdgeInsets.only(right: 8),
@@ -499,10 +512,21 @@ class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
 }
 
 /// Filtro de la discografía del artista (ronda 3, F1).
+/// Filtro de la discografía por `record_type` de Deezer.
+///
+/// Ronda 3 bis: sencillos y EP van **separados**. Iban juntos bajo "Sencillos
+/// y EP" y el resultado desconcertaba, con razón: verificado contra la API en
+/// vivo, Deezer marca como `single` lanzamientos de hasta 3 pistas (el tema
+/// más sus remezclas) y como `ep` lanzamientos de 4-5. No es un fallo de
+/// clasificación nuestro — es cómo publica la industria — pero meterlos en una
+/// píldora que dice "Sencillos" hacía parecer que sí. Con las etiquetas
+/// separadas, un EP de 5 pistas aparece bajo "EP", que es exactamente lo que
+/// es.
 enum _DiscographyFilter {
   todo('Todo'),
   albumes('Álbumes'),
-  sencillos('Sencillos y EP');
+  sencillos('Sencillos'),
+  eps('EP');
 
   const _DiscographyFilter(this.label);
   final String label;

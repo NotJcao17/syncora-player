@@ -1364,9 +1364,16 @@ bool get _isTestEnv {
   ///   playlist o de shuffle.
   /// - **No toca la pista que suena**: regenerar no es saltar.
   ///
-  /// Si ya sonó todo el contexto, se rehace con el contexto completo en vez de
-  /// dejar la cola vacía — de lo contrario el botón no haría nada justo en el
-  /// momento en que más sentido tiene pulsarlo.
+  /// **Si ya sonó todo el contexto** (estás en la última pista y lo que queda
+  /// es radio), regenerar NO repone la playlist desde el principio: descarta
+  /// el bloque de radio y pide uno nuevo. Reponerla era lo que hacía antes y
+  /// se sentía raro con razón — estando en la última canción, "regenerar
+  /// cola" no debería devolverte media playlist que acabas de escuchar; lo
+  /// que quieres a esa altura son otras recomendaciones.
+  ///
+  /// Con la radio desactivada en Configuración no hay recomendaciones que
+  /// pedir, así que ahí sí se rehace con el contexto completo: es preferible
+  /// a que el botón deje la cola vacía.
   ///
   /// Devuelve `false` si no hay contexto del que regenerar (la UI usa eso para
   /// no ofrecer la acción).
@@ -1385,6 +1392,19 @@ bool get _isTestEnv {
     final played = _playedContextIds();
     var regenerated = context.where((t) => !played.contains(t.id)).toList();
     if (regenerated.isEmpty) {
+      final radioEnabled = _radioEnabledGetter?.call() ?? true;
+      if (radioEnabled) {
+        // Contexto agotado + radio disponible: vaciar es lo correcto. El
+        // `_maybeFetchRadio()` del final rellena con un lote nuevo, y el
+        // `_contextGeneration++` de arriba garantiza que el lote viejo que
+        // pudiera estar en vuelo se descarte.
+        _state = _state.copyWith(autoQueue: const []);
+        _log('[Queue] Contexto agotado: se descarta la radio vigente y se pide un lote nuevo.');
+        _notify();
+        _saveSession();
+        _maybeFetchRadio();
+        return true;
+      }
       regenerated = List<SyncoraTrack>.from(context)
         ..removeWhere((t) => t.id == _state.currentTrack?.id);
     }

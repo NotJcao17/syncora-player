@@ -190,15 +190,23 @@ class TrackContextMenu {
     String value, {
     VoidCallback? onAddToQueue,
     VoidCallback? onRemove,
+    VoidCallback? onNavigateAway,
   }) async {
     final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
 
     if (value == 'artist') {
       if ((track.artistId ?? 0) != 0) {
+        // [onNavigateAway] deja que la pantalla que abrió el menú se cierre
+        // antes de navegar (lo usa el reproductor a pantalla completa, que
+        // vive fuera del shell).
+        onNavigateAway?.call();
+        if (!context.mounted) return;
         context.push('/artist/${track.artistId}');
       }
     } else if (value == 'album') {
       if (track.albumId != null && track.albumId != 0) {
+        onNavigateAway?.call();
+        if (!context.mounted) return;
         context.push('/album/${track.albumId}');
       }
     } else if (value == 'download') {
@@ -290,6 +298,7 @@ class TrackContextMenu {
     VoidCallback? onAddToQueue,
     VoidCallback? onRemove,
     String removeLabel = 'Eliminar de la playlist',
+    VoidCallback? onNavigateAway,
   }) async {
     FocusManager.instance.primaryFocus?.unfocus();
     final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
@@ -308,6 +317,7 @@ class TrackContextMenu {
         value,
         onAddToQueue: onAddToQueue,
         onRemove: onRemove,
+        onNavigateAway: onNavigateAway,
       );
     }
 
@@ -640,6 +650,16 @@ class TrackTile extends ConsumerStatefulWidget {
   final VoidCallback? onRemove;
   final String removeLabel;
 
+  /// ¿Mantener pulsado abre el menú de opciones? (ronda 3 bis).
+  ///
+  /// `false` en la vista de Cola: ahí cada fila es además un `Dismissible`
+  /// (deslizar para eliminar) y un `ReorderableDragStartListener`, y el
+  /// `LongPressGestureRecognizer` del `InkWell` competía con ellos en la arena
+  /// de gestos. Un long-press declara victoria a los 500 ms sin movimiento,
+  /// que es justo lo que hace quien va a arrastrar una fila: apoyar el dedo y
+  /// después moverlo.
+  final bool enableLongPressMenu;
+
   const TrackTile({
     super.key,
     required this.track,
@@ -654,6 +674,7 @@ class TrackTile extends ConsumerStatefulWidget {
     this.onMorePressed,
     this.onRemove,
     this.removeLabel = 'Eliminar de la playlist',
+    this.enableLongPressMenu = true,
   });
 
   @override
@@ -842,15 +863,17 @@ class _TrackTileState extends ConsumerState<TrackTile> {
           child: InkWell(
             onTap: isMobile ? triggerPlay : null,
             onDoubleTap: isDesktop ? triggerPlay : null,
-            onLongPress: () {
-              HapticFeedback.mediumImpact();
-              FocusManager.instance.primaryFocus?.unfocus();
-              if (widget.onMorePressed != null) {
-                widget.onMorePressed!();
-              } else if (!isDesktop) {
-                _showTrackOptionsMenu(context, ref);
-              }
-            },
+            onLongPress: widget.enableLongPressMenu
+                ? () {
+                    HapticFeedback.mediumImpact();
+                    FocusManager.instance.primaryFocus?.unfocus();
+                    if (widget.onMorePressed != null) {
+                      widget.onMorePressed!();
+                    } else if (!isDesktop) {
+                      _showTrackOptionsMenu(context, ref);
+                    }
+                  }
+                : null,
             borderRadius: BorderRadius.circular(8),
             child: Container(
               decoration: BoxDecoration(

@@ -15,6 +15,14 @@ class SavedAlbumDao extends DatabaseAccessor<SyncoraDatabase> with _$SavedAlbumD
         ..orderBy([(t) => OrderingTerm(expression: t.addedAt, mode: OrderingMode.desc)]))
       .watch();
 
+  /// Marca el álbum como reproducido ahora (ronda 3 bis). Dato local, no
+  /// viaja al sync — ver `SavedAlbums.lastPlayedAt`. No-op si el álbum no
+  /// está guardado en la biblioteca, que es exactamente lo que se quiere:
+  /// solo se ordena lo que el usuario tiene guardado.
+  Future<void> touchLastPlayed(int albumId) =>
+      (update(savedAlbums)..where((t) => t.albumId.equals(albumId)))
+          .write(SavedAlbumsCompanion(lastPlayedAt: Value(DateTime.now())));
+
   Future<bool> isAlbumSaved(int albumId) async {
     final entry = await (select(savedAlbums)..where((t) => t.albumId.equals(albumId))).getSingleOrNull();
     return entry != null;

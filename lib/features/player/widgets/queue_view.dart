@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/layout/bottom_chrome_metrics.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/connectivity_service.dart';
@@ -40,16 +41,66 @@ class QueueView extends ConsumerStatefulWidget {
 
   /// Abre la cola dentro de una hoja modal (`AppBottomSheet`), cerrándola
   /// automáticamente al reproducir una pista.
+  /// Abre la cola: **pantalla completa en móvil**, diálogo centrado en
+  /// escritorio (directriz de UI del proyecto).
+  ///
+  /// Ronda 3 bis: en móvil era una hoja modal, y dentro de ella **ni reordenar
+  /// ni deslizar para eliminar funcionaban**. Desactivar el arrastre de la
+  /// hoja (`enableDrag: false`) no lo arregló — solo quitó la única forma que
+  /// había de cerrarla. La hoja modal aporta poco a una pantalla que es una
+  /// lista larga y editable, y mete su propio reconocedor de gestos verticales
+  /// alrededor de todo el contenido; una ruta normal no tiene nada de eso, y
+  /// además trae gratis el botón/gesto de atrás para cerrar.
   static Future<void> showSheet(BuildContext context) {
-    return AppBottomSheet.show(
-      context: context,
-      title: 'Cola de reproducción',
-      // Ronda 3 (B5): sin esto, reordenar no funcionaba en móvil. El gesto de
-      // arrastrar la hoja para cerrarla gana la arena de gestos contra el asa
-      // de reordenar de cada fila, así que el drag de la lista nunca llegaba
-      // a empezar. La hoja se sigue cerrando tocando fuera o con atrás.
-      enableDrag: false,
-      child: QueueView(onTrackSelected: () => AppBottomSheet.pop(context)),
+    final isDesktop = MediaQuery.of(context).size.width >= 720;
+    if (isDesktop) {
+      return AppBottomSheet.show(
+        context: context,
+        title: 'Cola de reproducción',
+        child: QueueView(onTrackSelected: () => AppBottomSheet.pop(context)),
+      );
+    }
+
+    // Navegador raíz: la cola ocupa la pantalla entera, por encima del shell.
+    return Navigator.of(context, rootNavigator: true).push<void>(
+      MaterialPageRoute<void>(
+        builder: (routeContext) => Scaffold(
+          backgroundColor: AppTheme.background,
+          appBar: AppBar(
+            backgroundColor: AppTheme.background,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(AppIcons.broken(SolarIcons.AltArrowDown), color: AppTheme.primary),
+              tooltip: 'Cerrar',
+              onPressed: () => Navigator.of(routeContext).pop(),
+            ),
+            title: const Text(
+              'Cola de reproducción',
+              style: TextStyle(
+                color: AppTheme.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+              ),
+            ),
+          ),
+          // Esta ruta tapa el shell entero: aquí no hay mini reproductor ni
+          // barra de navegación que esquivar, así que los avisos van pegados
+          // abajo (ver `BottomChromeScope`).
+          body: BottomChromeScope(
+            hasChrome: false,
+            child: SafeArea(
+              top: false,
+              child: QueueView(
+              onTrackSelected: () {
+                  if (Navigator.of(routeContext).canPop()) {
+                    Navigator.of(routeContext).pop();
+                  }
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -674,21 +725,6 @@ class _QueueViewState extends ConsumerState<QueueView> {
         return Row(
           key: itemKey,
           children: [
-            ReorderableDragStartListener(
-              index: i,
-              // Documento Maestro §10 (antipatrón 5): área táctil mínima
-              // 48x48dp. Sin este `SizedBox`, `Padding` sola solo aporta su
-              // propio tamaño (34x18) como área de arranque de drag, porque
-              // `Row` (CrossAxisAlignment.center por defecto) no estira sus
-              // hijos a la altura de la fila.
-              child: SizedBox(
-                width: 48,
-                height: 48,
-                child: Center(
-                  child: Icon(AppIcons.broken(SolarIcons.Sort), color: AppTheme.muted, size: 18),
-                ),
-              ),
-            ),
             Expanded(
               child: Dismissible(
                 key: ValueKey('${itemKey.value}_dismiss'),
@@ -718,6 +754,26 @@ class _QueueViewState extends ConsumerState<QueueView> {
                   onRemove: () => controller.removeFromQueue(origin, i),
                   onAddToQueue: () => controller.addToQueue(track),
                   removeLabel: 'Quitar de la cola',
+                  // Ronda 3 bis: mantener pulsado abría el menú de opciones y
+                  // su reconocedor competía con el deslizar y el arrastrar de
+                  // esta misma fila. En la cola el menú sigue disponible por
+                  // el botón de 3 puntos.
+                  enableLongPressMenu: false,
+                ),
+              ),
+            ),
+            // Ronda 3 bis: el asa pasa a la DERECHA (antes iba pegada al borde
+            // izquierdo, encima de la portada). Sigue siendo un área de 48x48
+            // (Documento Maestro §10, antipatrón 5): sin el `SizedBox`, el
+            // `Row` no estira su hijo a la altura de la fila y el área real de
+            // arranque del arrastre quedaba en 34x18.
+            ReorderableDragStartListener(
+              index: i,
+              child: SizedBox(
+                width: 48,
+                height: 48,
+                child: Center(
+                  child: Icon(AppIcons.broken(SolarIcons.Sort), color: AppTheme.muted, size: 18),
                 ),
               ),
             ),

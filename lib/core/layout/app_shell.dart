@@ -289,24 +289,25 @@ class _AppShellState extends ConsumerState<AppShell> {
           // oscurecia: el tono quedaba parecido pero nunca igual. Con
           // edge-to-edge y navegacion por gestos Android ignora
           // `systemNavigationBarColor`, asi que esto tiene que resolverse aca.
-          bottomNavigationBar: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const MiniPlayer(),
-              _MobileNavBar(
-                selectedIndex: selectedIndex,
-                onItemTapped: _onItemTapped,
-                hasTrack: hasTrack,
-                bottomInset: paddingBottom,
-              ),
-            ],
+          bottomNavigationBar: MeasuredBottomChrome(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const MiniPlayer(),
+                _MobileNavBar(
+                  selectedIndex: selectedIndex,
+                  onItemTapped: _onItemTapped,
+                  hasTrack: hasTrack,
+                  bottomInset: paddingBottom,
+                ),
+              ],
+            ),
           ),
         ),
         Positioned(
-          bottom: BottomChromeMetrics.floatingBottomOffset(
-            hasMiniPlayer: hasTrack,
-            bottomInset: paddingBottom,
-          ),
+          // Mismo alto medido que usan los avisos de `AppToast`, para que los
+          // dos floten exactamente igual de alto sobre el chrome inferior.
+          bottom: ref.watch(bottomChromeHeightProvider) + 12,
           left: 0,
           right: 0,
           child: const Center(
@@ -1015,13 +1016,15 @@ class _DesktopPlaylistItemState extends State<_DesktopPlaylistItem> {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: widget.title,
-      waitDuration: const Duration(milliseconds: 200),
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: InkWell(
+    // Ronda 3 bis: sin `Tooltip`. El título de la playlist ya se lee en la
+    // propia fila cuando la barra está expandida, así que el tooltip solo
+    // repetía lo que había al lado; y con la barra colapsada la portada
+    // identifica la playlist mejor que un texto flotante. (Los destinos de
+    // navegación sí lo conservan: ahí, colapsados, solo se ve un icono.)
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: InkWell(
           onTap: widget.onTap,
           borderRadius: BorderRadius.circular(8),
           child: Container(
@@ -1094,7 +1097,6 @@ class _DesktopPlaylistItemState extends State<_DesktopPlaylistItem> {
             ),
           ),
         ),
-      ),
     );
   }
 }

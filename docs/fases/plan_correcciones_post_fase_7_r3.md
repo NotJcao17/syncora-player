@@ -340,3 +340,49 @@ Toca D-1 (cola dual) y la sesión persistida: riesgo real, revisión independien
   lanzamientos personalizados.
 - Los ~10 `ListView` con `shrinkWrap` y sin `padding` explícito que arrastran el padding del
   `MediaQuery` (§6.3 de la ronda anterior). Se revisan si alguno da un síntoma concreto.
+
+---
+
+## Segunda tanda: correcciones de la ronda de pruebas en dispositivo
+
+Lo que el usuario probó y devolvió. Solo se listan los puntos que hubo que tocar; el resto quedó
+confirmado como correcto.
+
+- [x] **Cola en móvil: reordenar y deslizar seguían sin funcionar, y encima ya no se podía
+      cerrar.** `enableDrag: false` no era la solución — quitó la única forma de cerrar la hoja sin
+      arreglar los gestos. La cola pasa a ser una **ruta a pantalla completa** en móvil (diálogo
+      centrado en escritorio, como manda la directriz de UI): sin hoja modal no hay reconocedor de
+      arrastre vertical envolviendo la lista, y el botón/gesto de atrás cierra. Además el asa de
+      reordenar se mueve a la **derecha** y se desactiva el menú por pulsación larga dentro de la
+      cola (`TrackTile.enableLongPressMenu`), que competía con el deslizar y el arrastrar.
+- [x] **Crash al ir al artista desde el reproductor a pantalla completa**
+      (`!keyReservation.contains(key)`). Causa real: **ningún `pageBuilder` del router pasaba
+      `key: state.pageKey`**. Empujar una ruta del shell desde `/player` (que vive en el navegador
+      raíz) dejaba el shell apilado dos veces con la misma clave nula. Corregido en las 13 rutas.
+      Además, ir al artista/álbum desde el reproductor ahora lo **cierra antes** de navegar
+      (`onNavigateAway`), que es lo que se espera y deja una pila coherente.
+- [x] **Posición de los avisos.** Se abandonan las constantes: el shell **mide** su chrome inferior
+      real (`MeasuredBottomChrome`) y publica el alto; avisos y aviso de "sin conexión" lo leen. Las
+      rutas que tapan el shell (reproductor completo, pantalla de Cola) declaran
+      `BottomChromeScope(hasChrome: false)` y sus avisos van pegados abajo — eso es lo que dejaba
+      el aviso de "cola remezclada" flotando a media pantalla.
+- [x] **Búsqueda profunda demasiado alta en móvil.** `useSafeArea: true` en la hoja. Calcularlo a
+      mano con `MediaQuery.padding` desde dentro del `builder` no servía: ahí el padding superior
+      ya viene consumido.
+- [x] **Biblioteca sin botones de 3 puntos.** El menú se abre con click derecho (escritorio) o
+      pulsación larga (móvil), en lista y en cuadrícula. Orden, cuadrícula e indicador de "sonando
+      ahora" se extienden a **Álbumes** y **Descargados** (columna `SavedAlbums.lastPlayedAt`,
+      esquema v8, también solo local). Las tres secciones comparten ahora los mismos constructores
+      de fila y celda.
+- [x] **Regenerar cola con el contexto agotado.** Ya no repone la playlist desde el principio:
+      descarta la radio vigente y pide un lote nuevo. Reponerla se sentía raro con razón — estando
+      en la última canción no quieres media playlist que acabas de escuchar.
+- [x] **Sencillos y EP separados en la discografía.** Verificado contra la API en vivo: Deezer
+      marca como `single` lanzamientos de hasta 3 pistas y como `ep` los de 4-5. No era un fallo de
+      clasificación nuestro, pero meterlos bajo una píldora que decía "Sencillos" lo parecía.
+- [x] **La app se cerraba tras usar Instagram/TikTok.** `androidStopForegroundOnPause: false`: con
+      el default, pausar suelta el foreground service y la app queda como proceso de fondo
+      corriente, candidata al *low memory killer*. El manejo de foco de A1 hizo mucho más frecuente
+      ese camino, porque ahora sí se pausa cuando otra app toma el foco. Obliga a poner
+      `androidNotificationOngoing: false` (hay un assert en `audio_service` que lo exige).
+- [x] **Tooltip de las playlists en la barra lateral de escritorio:** quitado.

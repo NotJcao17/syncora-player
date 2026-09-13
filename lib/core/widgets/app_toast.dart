@@ -33,39 +33,45 @@ abstract class AppToast {
       final keyboardHeight = mediaQuery.viewInsets.bottom;
       final paddingBottom = mediaQuery.padding.bottom;
 
-      bool isFullscreenOrNoShell = false;
-      try {
-        final location = GoRouterState.of(context).matchedLocation;
-        isFullscreenOrNoShell = location == '/player' || location == '/auth';
-      } catch (_) {}
+      // ¿Se ve el chrome inferior del shell desde donde se disparó el aviso?
+      //
+      // Ronda 3 bis: antes esto se deducía de la ruta de GoRouter ('/player',
+      // '/auth'), y por eso un aviso lanzado desde la pantalla de Cola —que se
+      // empuja por encima del shell pero no cambia la ruta— se posicionaba
+      // como si el mini reproductor estuviera delante, y acababa flotando a
+      // media pantalla. Ahora lo declara el propio subárbol.
+      bool hasChrome = BottomChromeScope.hasChromeAt(context);
+      if (hasChrome) {
+        try {
+          final location = GoRouterState.of(context).matchedLocation;
+          if (location == '/player' || location == '/auth') hasChrome = false;
+        } catch (_) {}
+      }
 
+      // Alto REAL del chrome, medido por `MeasuredBottomChrome` en el shell
+      // (ver `bottom_chrome_metrics.dart`). Estimarlo con constantes es lo que
+      // dejaba el aviso montado sobre el mini reproductor cada vez que este
+      // cambiaba de alto.
+      double chromeHeight = 0;
       bool hasActiveMiniPlayer = false;
       try {
         final container = ProviderScope.containerOf(context, listen: false);
-        final currentTrack = container.read(currentTrackProvider);
-        hasActiveMiniPlayer = currentTrack != null;
+        hasActiveMiniPlayer = container.read(currentTrackProvider) != null;
+        chromeHeight = container.read(bottomChromeHeightProvider);
       } catch (_) {}
 
       double bottomMargin = 104.0;
       if (!isDesktop) {
         if (keyboardHeight > 0) {
           bottomMargin = keyboardHeight + 16.0;
-        } else if (isFullscreenOrNoShell) {
-          // En reproductor a pantalla completa o sin shell: pegado al borde inferior + 16px
+        } else if (!hasChrome) {
+          // Ruta a pantalla completa por encima del shell: pegado al borde.
           bottomMargin = 16.0 + paddingBottom;
         } else {
-          // Ronda 3 (E3): estas dos alturas estaban duplicadas aquí con
-          // valores distintos (144/72) a los que usa el aviso de "sin
-          // conexión" en `app_shell.dart` (152/80). Esos 8 px de menos
-          // dejaban el aviso montado sobre la esquina redondeada del mini
-          // reproductor. Ahora ambos salen del mismo sitio.
-          bottomMargin = BottomChromeMetrics.floatingBottomOffset(
-            hasMiniPlayer: hasActiveMiniPlayer,
-            bottomInset: paddingBottom,
-          );
+          bottomMargin = chromeHeight + 12.0;
         }
       } else {
-        if (isFullscreenOrNoShell) {
+        if (!hasChrome) {
           bottomMargin = 24.0;
         } else {
           bottomMargin = hasActiveMiniPlayer ? 104.0 : 32.0;

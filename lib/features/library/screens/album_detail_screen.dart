@@ -374,6 +374,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                               ? RadioService.pickShuffledStartIndex(syncoraTracks.length, math.Random())
                                               : 0;
                                           controller.setQueue(syncoraTracks, startIndex: startIndex, activeContextId: albumContextId);
+                                          ref.read(savedAlbumDaoProvider).touchLastPlayed(album.id);
                                           controller.play();
                                         }
                                       },
@@ -417,6 +418,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                               controller.toggleShuffle();
                                             } else {
                                               controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: albumContextId);
+                                          ref.read(savedAlbumDaoProvider).touchLastPlayed(album.id);
                                               if (!isShuffle) {
                                                 controller.toggleShuffle();
                                               }
@@ -506,6 +508,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                             showAlbum: true,
                             onTap: () {
                               controller.setQueue(syncoraTracks, startIndex: i, activeContextId: albumContextId);
+                                          ref.read(savedAlbumDaoProvider).touchLastPlayed(album.id);
                             },
                             onAddToQueue: () => controller.addToQueue(track),
                           );

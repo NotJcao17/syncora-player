@@ -244,6 +244,176 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     );
   }
 
+  /// Envuelve una tarjeta/fila de biblioteca con sus gestos de menú
+  /// contextual (ronda 3 bis).
+  ///
+  /// Sustituye al botón de 3 puntitos, que se quitó: en la cuadrícula quedaba
+  /// mal encima de la portada, y en la lista competía por el espacio del
+  /// título. El menú pasa a abrirse como en el resto de la app — click
+  /// derecho en escritorio, mantener pulsado en móvil — que además es donde
+  /// el usuario ya lo busca.
+  Widget _withContextMenu({
+    required Widget child,
+    required VoidCallback onTap,
+    required VoidCallback? onMenu,
+  }) {
+    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    return GestureDetector(
+      onSecondaryTap: isDesktop ? onMenu : null,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: isDesktop ? null : onMenu,
+        borderRadius: BorderRadius.circular(12),
+        child: child,
+      ),
+    );
+  }
+
+  /// Título de una fila/tarjeta de biblioteca, con el indicador de "sonando
+  /// ahora" (D3) delante cuando corresponde.
+  Widget _libraryTitle(String title, bool isActive, {double fontSize = 16}) {
+    return Row(
+      children: [
+        if (isActive) ...[
+          Icon(AppIcons.bold(SolarIcons.SoundwaveSquare),
+              color: AppTheme.accent, size: fontSize - 2),
+          const SizedBox(width: 6),
+        ],
+        Flexible(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: isActive ? AppTheme.accent : AppTheme.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: fontSize,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Fila de lista genérica de biblioteca (playlist o álbum).
+  Widget _libraryRow({
+    required Widget cover,
+    required String title,
+    required Widget subtitle,
+    required bool isActive,
+    required VoidCallback onTap,
+    VoidCallback? onMenu,
+    Widget? trailing,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: _withContextMenu(
+        onTap: onTap,
+        onMenu: onMenu,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(width: 64, height: 64, child: cover),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _libraryTitle(title, isActive),
+                    const SizedBox(height: 4),
+                    subtitle,
+                  ],
+                ),
+              ),
+              ?trailing,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Celda de cuadrícula genérica de biblioteca (playlist o álbum).
+  Widget _libraryGridCell({
+    required Widget cover,
+    required String title,
+    required Widget subtitle,
+    required bool isActive,
+    required VoidCallback onTap,
+    VoidCallback? onMenu,
+  }) {
+    return _withContextMenu(
+      onTap: onTap,
+      onMenu: onMenu,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox.expand(child: cover),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _libraryTitle(title, isActive, fontSize: 13),
+          const SizedBox(height: 2),
+          subtitle,
+        ],
+      ),
+    );
+  }
+
+  /// Delegado compartido de la cuadrícula: ancho máximo por celda en vez de un
+  /// número fijo de columnas, para que se adapte sola del móvil al escritorio.
+  SliverGridDelegate _libraryGridDelegate(bool isDesktop) =>
+      SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: isDesktop ? 200 : 180,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 0.78,
+      );
+
+  Widget _subtitleText(String text) => Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
+      );
+
+  /// Orden de álbumes guardados, con los mismos tres criterios que las
+  /// playlists. Los álbumes no se pueden fijar, así que aquí no hay bloque
+  /// de anclados.
+  List<SavedAlbum> _sortAlbums(List<SavedAlbum> input) {
+    final list = List<SavedAlbum>.from(input);
+    list.sort((a, b) {
+      switch (_sort) {
+        case _LibrarySort.recientesEscuchadas:
+          final aAt = a.lastPlayedAt;
+          final bAt = b.lastPlayedAt;
+          if (aAt == null && bAt == null) return b.addedAt.compareTo(a.addedAt);
+          if (aAt == null) return 1;
+          if (bAt == null) return -1;
+          return bAt.compareTo(aAt);
+        case _LibrarySort.recientesAgregadas:
+          return b.addedAt.compareTo(a.addedAt);
+        case _LibrarySort.alfabetico:
+          return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      }
+    });
+    return list;
+  }
+
+  /// Traduce el `activeContextId` del reproductor (`album_42`) al id de álbum.
+  static int? _albumIdFromContext(String? activeContextId) {
+    if (activeContextId == null) return null;
+    if (!activeContextId.startsWith('album_')) return null;
+    return int.tryParse(activeContextId.substring('album_'.length));
+  }
+
   /// Traduce el `activeContextId` del reproductor (`playlist_42`) al id de
   /// playlist, o `null` si el contexto activo no es una playlist (búsqueda,
   /// álbum, descargas...).
@@ -253,9 +423,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     return int.tryParse(activeContextId.substring('playlist_'.length));
   }
 
-  /// Celda de la vista en cuadrícula (ronda 3, D2): portada grande y el
-  /// título debajo, al estilo de Spotify. Comparte el menú de 3 puntos y el
-  /// indicador de "sonando ahora" (D3) con la vista de lista.
+  /// Celda de cuadrícula de una playlist (ronda 3, D2).
   Widget _buildPlaylistGridCell(
     Playlist playlist,
     PlaylistDao playlistDao,
@@ -263,83 +431,91 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     bool isLocalMode,
     int? activePlaylistId,
   ) {
-    final isActive = activePlaylistId == playlist.id;
-    return InkWell(
+    return _libraryGridCell(
+      cover: PlaylistCoverWidget(
+        coverUrl: playlist.coverUrl,
+        playlistId: playlist.id,
+        isLiked: playlist.isLiked,
+      ),
+      title: playlist.title,
+      isActive: activePlaylistId == playlist.id,
       onTap: () => context.push('/playlist/${playlist.id}'),
-      borderRadius: BorderRadius.circular(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: PlaylistCoverWidget(
-                    coverUrl: playlist.coverUrl,
-                    playlistId: playlist.id,
-                    isLiked: playlist.isLiked,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                if (!playlist.isLiked)
-                  Positioned(
-                    top: 2,
-                    right: 2,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.45),
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        icon: Icon(AppIcons.broken(SolarIcons.MenuDots),
-                            color: AppTheme.primary, size: 16),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                        onPressed: () =>
-                            _showPlaylistOptionsMenu(context, playlist, canEdit, isLocalMode),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              if (isActive) ...[
-                Icon(AppIcons.bold(SolarIcons.SoundwaveSquare),
-                    color: AppTheme.accent, size: 14),
-                const SizedBox(width: 4),
-              ],
-              Flexible(
-                child: Text(
-                  playlist.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: isActive ? AppTheme.accent : AppTheme.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          StreamBuilder<List<PlaylistTrack>>(
-            stream: playlistDao.watchTracksOrdered(playlist.id),
-            builder: (ctx, snap) {
-              final count = snap.data?.length ?? 0;
-              return Text(
-                count == 1 ? '1 canción' : '$count canciones',
-                style: const TextStyle(color: AppTheme.secondary, fontSize: 11),
-              );
-            },
-          ),
-        ],
+      onMenu: playlist.isLiked
+          ? null
+          : () => _showPlaylistOptionsMenu(context, playlist, canEdit, isLocalMode),
+      subtitle: StreamBuilder<List<PlaylistTrack>>(
+        stream: playlistDao.watchTracksOrdered(playlist.id),
+        builder: (ctx, snap) {
+          final count = snap.data?.length ?? 0;
+          return _subtitleText(count == 1 ? '1 canción' : '$count canciones');
+        },
       ),
     );
   }
+
+  /// Fila de lista de una playlist. [trailingLabel] la usa la sección de
+  /// Descargados para añadir "• Descargada" al subtítulo.
+  Widget _buildPlaylistRow(
+    Playlist playlist,
+    PlaylistDao playlistDao,
+    bool canEdit,
+    bool isLocalMode,
+    int? activePlaylistId, {
+    String? suffix,
+    Widget? trailing,
+  }) {
+    return _libraryRow(
+      cover: PlaylistCoverWidget(
+        coverUrl: playlist.coverUrl,
+        playlistId: playlist.id,
+        isLiked: playlist.isLiked,
+      ),
+      title: playlist.title,
+      isActive: activePlaylistId == playlist.id,
+      onTap: () => context.push('/playlist/${playlist.id}'),
+      onMenu: playlist.isLiked
+          ? null
+          : () => _showPlaylistOptionsMenu(context, playlist, canEdit, isLocalMode),
+      trailing: trailing,
+      subtitle: StreamBuilder<List<PlaylistTrack>>(
+        stream: playlistDao.watchTracksOrdered(playlist.id),
+        builder: (ctx, snap) {
+          final count = snap.data?.length ?? 0;
+          final countStr = count == 1 ? '1 canción' : '$count canciones';
+          final base = playlist.isLiked ? 'Playlist especial' : countStr;
+          return _subtitleText(suffix == null ? base : '$base • $suffix');
+        },
+      ),
+    );
+  }
+
+  Widget _buildAlbumCover(SavedAlbum album) => CachedNetworkImage(
+        imageUrl: album.coverUrl,
+        memCacheWidth: 400,
+        fit: BoxFit.cover,
+        errorWidget: (_, _, _) => Container(
+          color: AppTheme.surfaceHover,
+          child: Icon(AppIcons.broken(SolarIcons.Vinyl), color: AppTheme.muted, size: 28),
+        ),
+      );
+
+  Widget _buildAlbumRow(SavedAlbum album, int? activeAlbumId) => _libraryRow(
+        cover: _buildAlbumCover(album),
+        title: album.title,
+        isActive: activeAlbumId == album.albumId,
+        onTap: () => context.push('/album/${album.albumId}'),
+        onMenu: null,
+        subtitle: _subtitleText('Álbum • ${album.artistName}'),
+      );
+
+  Widget _buildAlbumGridCell(SavedAlbum album, int? activeAlbumId) => _libraryGridCell(
+        cover: _buildAlbumCover(album),
+        title: album.title,
+        isActive: activeAlbumId == album.albumId,
+        onTap: () => context.push('/album/${album.albumId}'),
+        onMenu: null,
+        subtitle: _subtitleText(album.artistName),
+      );
 
   Widget _buildPlaylistOptionsContent(BuildContext ctx, Playlist playlist, bool canEdit, bool isLocalMode) {
     return Column(
@@ -746,9 +922,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     // Ronda 3 (D3): id de la playlist que está sonando, si el contexto activo
     // del reproductor es una. Sale de `activeContextId`, que ya se guarda con
     // el formato `playlist_<id>` — sin peticiones ni streams nuevos.
-    final activePlaylistId = _playlistIdFromContext(
-      ref.watch(playerStateProvider.select((s) => s.activeContextId)),
-    );
+    final activeContextId = ref.watch(playerStateProvider.select((s) => s.activeContextId));
+    final activePlaylistId = _playlistIdFromContext(activeContextId);
+    final activeAlbumId = _albumIdFromContext(activeContextId);
 
     return SafeArea(
       child: Column(
@@ -1029,11 +1205,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       stream: savedAlbumDao.watchAllSavedAlbums(),
                       builder: (ctx, snapshot) {
                         final allAlbums = snapshot.data ?? [];
-                        final albums = allAlbums.where((a) {
+                        final albums = _sortAlbums(allAlbums.where((a) {
                           if (_localSearchQuery.isEmpty) return true;
                           return a.title.toLowerCase().contains(_localSearchQuery) ||
                               a.artistName.toLowerCase().contains(_localSearchQuery);
-                        }).toList();
+                        }).toList());
 
                         if (albums.isEmpty) {
                           return SingleChildScrollView(
@@ -1049,63 +1225,21 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           );
                         }
 
+                        if (_gridView) {
+                          return GridView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+                            gridDelegate: _libraryGridDelegate(isDesktop),
+                            itemCount: albums.length,
+                            itemBuilder: (ctx, i) => _buildAlbumGridCell(albums[i], activeAlbumId),
+                          );
+                        }
+
                         return ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
                           itemCount: albums.length,
-                          itemBuilder: (ctx, i) {
-                            final album = albums[i];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: InkWell(
-                                onTap: () => context.push('/album/${album.albumId}'),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  child: Row(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: SizedBox(
-                                          width: 64,
-                                          height: 64,
-                                          child: CachedNetworkImage(
-                                            imageUrl: album.coverUrl,
-                                            memCacheWidth: 300,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              album.title,
-                                              style: const TextStyle(
-                                                color: AppTheme.primary,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Álbum • ${album.artistName}',
-                                              style: const TextStyle(
-                                                color: AppTheme.secondary,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
+                          itemBuilder: (ctx, i) => _buildAlbumRow(albums[i], activeAlbumId),
                         );
                       },
                     )
@@ -1221,73 +1355,42 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                       );
                                     }
 
+                                    final ordered = _sortPlaylists(filteredPlaylists);
+                                    final descargada = Icon(
+                                      AppIcons.bold(SolarIcons.DownloadMinimalistic),
+                                      color: AppTheme.secondary,
+                                      size: 18,
+                                    );
+
+                                    if (_gridView) {
+                                      return GridView.builder(
+                                        physics: const AlwaysScrollableScrollPhysics(),
+                                        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+                                        gridDelegate: _libraryGridDelegate(isDesktop),
+                                        itemCount: ordered.length,
+                                        itemBuilder: (ctx, i) => _buildPlaylistGridCell(
+                                          ordered[i],
+                                          playlistDao,
+                                          canEdit,
+                                          isLocalMode,
+                                          activePlaylistId,
+                                        ),
+                                      );
+                                    }
+
                                     return ListView.builder(
                                       physics: const AlwaysScrollableScrollPhysics(),
                                       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-                                      itemCount: filteredPlaylists.length,
-                                      itemBuilder: (ctx, i) {
-                                        final playlist = filteredPlaylists[i];
-                                        final isLiked = playlist.isLiked;
-
-                                        return Padding(
-                                          padding: const EdgeInsets.only(bottom: 8.0),
-                                          child: InkWell(
-                                            onTap: () => context.push('/playlist/${playlist.id}'),
-                                            borderRadius: BorderRadius.circular(12),
-                                            child: Container(
-                                              padding: const EdgeInsets.all(8),
-                                              child: Row(
-                                                children: [
-                                                  PlaylistCoverWidget(
-                                                    coverUrl: playlist.coverUrl,
-                                                    playlistId: playlist.id,
-                                                    isLiked: isLiked,
-                                                    width: 64,
-                                                    height: 64,
-                                                    borderRadius: BorderRadius.circular(12),
-                                                  ),
-                                                  const SizedBox(width: 16),
-                                                  Expanded(
-                                                    child: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Text(
-                                                          playlist.title,
-                                                          style: const TextStyle(
-                                                            color: AppTheme.primary,
-                                                            fontWeight: FontWeight.bold,
-                                                            fontSize: 16,
-                                                          ),
-                                                        ),
-                                                        const SizedBox(height: 4),
-                                                        StreamBuilder<List<PlaylistTrack>>(
-                                                          stream: playlistDao.watchTracksOrdered(playlist.id),
-                                                          builder: (ctx, trackSnap) {
-                                                            final count = trackSnap.data?.length ?? 0;
-                                                            final countStr = count == 1 ? '1 canción' : '$count canciones';
-                                                            return Text(
-                                                              isLiked ? 'Playlist especial • Descargada' : '$countStr • Descargada',
-                                                              style: const TextStyle(
-                                                                color: AppTheme.secondary,
-                                                                fontSize: 13,
-                                                              ),
-                                                            );
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  Icon(
-                                                    AppIcons.bold(SolarIcons.DownloadMinimalistic),
-                                                    color: AppTheme.secondary,
-                                                    size: 18,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
+                                      itemCount: ordered.length,
+                                      itemBuilder: (ctx, i) => _buildPlaylistRow(
+                                        ordered[i],
+                                        playlistDao,
+                                        canEdit,
+                                        isLocalMode,
+                                        activePlaylistId,
+                                        suffix: 'Descargada',
+                                        trailing: descargada,
+                                      ),
                                     );
                                   },
                                 );
@@ -1323,17 +1426,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                               return GridView.builder(
                                 physics: const AlwaysScrollableScrollPhysics(),
                                 padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-                                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                                  // Ancho máximo por celda en vez de un número
-                                  // fijo de columnas: así la cuadrícula se
-                                  // adapta sola del móvil (2 columnas) al
-                                  // escritorio ancho sin romperse.
-                                  maxCrossAxisExtent: isDesktop ? 200 : 180,
-                                  mainAxisSpacing: 16,
-                                  crossAxisSpacing: 16,
-                                  // Portada cuadrada + dos líneas de texto.
-                                  childAspectRatio: 0.78,
-                                ),
+                                gridDelegate: _libraryGridDelegate(isDesktop),
                                 itemCount: playlists.length,
                                 itemBuilder: (ctx, i) => _buildPlaylistGridCell(
                                   playlists[i],
@@ -1349,89 +1442,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                               physics: const AlwaysScrollableScrollPhysics(),
                               padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
                               itemCount: playlists.length,
-                              itemBuilder: (ctx, i) {
-                                final playlist = playlists[i];
-                                final isLiked = playlist.isLiked;
-                                final isActive = activePlaylistId == playlist.id;
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: InkWell(
-                                    onTap: () => context.push('/playlist/${playlist.id}'),
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      child: Row(
-                                        children: [
-                                          PlaylistCoverWidget(
-                                            coverUrl: playlist.coverUrl,
-                                            playlistId: playlist.id,
-                                            isLiked: isLiked,
-                                            width: 64,
-                                            height: 64,
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    if (isActive) ...[
-                                                      // Ronda 3 (D3): cuál es
-                                                      // la playlist que suena.
-                                                      Icon(
-                                                        AppIcons.bold(SolarIcons.SoundwaveSquare),
-                                                        color: AppTheme.accent,
-                                                        size: 16,
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                    ],
-                                                    Flexible(
-                                                      child: Text(
-                                                        playlist.title,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        style: TextStyle(
-                                                          color: isActive
-                                                              ? AppTheme.accent
-                                                              : AppTheme.primary,
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 16,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                StreamBuilder<List<PlaylistTrack>>(
-                                                  stream: playlistDao.watchTracksOrdered(playlist.id),
-                                                  builder: (ctx, trackSnap) {
-                                                    final count = trackSnap.data?.length ?? 0;
-                                                    final countStr = count == 1 ? '1 canción' : '$count canciones';
-                                                    return Text(
-                                                      isLiked ? 'Playlist especial • $countStr' : countStr,
-                                                      style: const TextStyle(
-                                                        color: AppTheme.secondary,
-                                                        fontSize: 13,
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          if (!isLiked)
-                                            IconButton(
-                                              icon: Icon(AppIcons.broken(SolarIcons.MenuDots), color: AppTheme.secondary, size: 20),
-                                              onPressed: () => _showPlaylistOptionsMenu(context, playlist, canEdit, isLocalMode),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
+                              itemBuilder: (ctx, i) => _buildPlaylistRow(
+                                playlists[i],
+                                playlistDao,
+                                canEdit,
+                                isLocalMode,
+                                activePlaylistId,
+                              ),
                             );
                           },
                         ),

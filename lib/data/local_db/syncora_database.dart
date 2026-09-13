@@ -66,6 +66,12 @@ class SavedAlbums extends Table {
   TextColumn get artistName => text()();
   TextColumn get coverUrl => text()();
   DateTimeColumn get addedAt => dateTime().withDefault(currentDateAndTime)();
+
+  /// Última vez que se reprodujo este álbum desde este dispositivo (ronda 3
+  /// bis). Mismo criterio que `Playlists.lastPlayedAt`: **solo local**, no
+  /// viaja al sync. Alimenta el orden "escuchados recientemente" de
+  /// Biblioteca, que ahora también aplica a la sección de Álbumes.
+  DateTimeColumn get lastPlayedAt => dateTime().nullable()();
 }
 
 // Historial de escucha (para Wrapped en Fase 7)
@@ -130,7 +136,7 @@ class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration {
@@ -168,6 +174,9 @@ class SyncoraDatabase extends _$SyncoraDatabase {
         }
         if (from < 7) {
           await m.addColumn(playlists, playlists.lastPlayedAt);
+        }
+        if (from < 8) {
+          await m.addColumn(savedAlbums, savedAlbums.lastPlayedAt);
         }
       },
     );

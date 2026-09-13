@@ -227,13 +227,34 @@ void main() {
       c.dispose();
     });
 
-    test('con todo el contexto ya escuchado, rehace con el contexto completo', () async {
-      // Si no, el boton no haria nada justo cuando mas sentido tiene pulsarlo.
+    test('con el contexto agotado NO repone la playlist: refresca la radio', () async {
+      // Ronda 3 bis. Estando en la ultima cancion, "regenerar cola" devolvia
+      // media playlist ya escuchada. A esa altura lo que se quiere son otras
+      // recomendaciones, no repetir lo de antes.
       final c = _controller();
       await c.setQueue(_playlist(3), startIndex: 0, autoplay: false);
       await c.skipToNext();
       await c.skipToNext();
-      expect(c.state.autoQueue, isEmpty);
+      c.interleaveIntoAutoQueue(const [SyncoraTrack(id: 'radio-1', title: 'Radio 1')]);
+
+      final ok = c.regenerateAutoQueue();
+
+      expect(ok, isTrue);
+      expect(c.state.autoQueue, isEmpty,
+          reason: 'se descarta la radio vieja; el lote nuevo lo trae _maybeFetchRadio');
+      c.dispose();
+    });
+
+    test('sin radio, el contexto agotado si se repone (el boton debe hacer algo)', () async {
+      final c = SyncoraPlayerController(
+        engine: _SilentEngine(),
+        extractionService: _OkExtraction(),
+        radioEnabledGetter: () => false,
+      );
+      c.init();
+      await c.setQueue(_playlist(3), startIndex: 0, autoplay: false);
+      await c.skipToNext();
+      await c.skipToNext();
 
       final ok = c.regenerateAutoQueue();
 

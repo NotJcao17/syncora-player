@@ -6,6 +6,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../../../core/theme/app_icons.dart';
 import 'package:palette_generator/palette_generator.dart';
 
+import '../../../core/layout/bottom_chrome_metrics.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
@@ -167,7 +168,12 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     final dominantGradientColor = _dominantColor?.withValues(alpha: 0.35) ?? AppTheme.surfaceHover.withValues(alpha: 0.3);
 
     return Scaffold(
-      body: GestureDetector(
+      // El reproductor a pantalla completa tapa el shell: los avisos van
+      // pegados al borde inferior, no flotando sobre un mini reproductor que
+      // aquí no se ve.
+      body: BottomChromeScope(
+        hasChrome: false,
+        child: GestureDetector(
         onVerticalDragUpdate: (details) {
           if (details.delta.dy > 0 || _dragOffsetY > 0) {
             setState(() {
@@ -497,6 +503,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
             ),
           ),
         ),
+        ),
       ),
     );
   }
@@ -521,6 +528,15 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
       track,
       onAddToQueue: () =>
           ref.read(syncoraPlayerControllerProvider.notifier).addToQueue(track),
+      // Ronda 3 bis: ir al artista/álbum desde aquí dejaba el reproductor a
+      // pantalla completa debajo en la pila, y como esas pantallas viven
+      // dentro del shell, el shell acababa apilado dos veces. Cerrarlo antes
+      // deja una pila coherente, y además es lo que espera el usuario:
+      // navegar a la ficha del artista no es "abrir algo encima del
+      // reproductor", es salir de él.
+      onNavigateAway: () {
+        if (context.mounted && Navigator.of(context).canPop()) context.pop();
+      },
     );
   }
 }

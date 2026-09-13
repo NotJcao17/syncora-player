@@ -142,7 +142,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: '/auth',
-        pageBuilder: (context, state) => const NoTransitionPage(
+        pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
           child: AuthScreen(),
         ),
       ),
@@ -159,25 +160,29 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/',
-            pageBuilder: (context, state) => const NoTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
               child: HomeScreen(),
             ),
           ),
           GoRoute(
             path: '/home',
-            pageBuilder: (context, state) => const NoTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
               child: HomeScreen(),
             ),
           ),
           GoRoute(
             path: '/search',
-            pageBuilder: (context, state) => const NoTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
               child: SearchScreen(),
             ),
           ),
           GoRoute(
             path: '/library',
-            pageBuilder: (context, state) => const NoTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
               child: LibraryScreen(),
             ),
           ),
@@ -186,6 +191,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) {
               final id = state.pathParameters['id'] ?? '';
               return NoTransitionPage(
+                key: state.pageKey,
                 child: PlaylistDetailScreen(playlistId: id),
               );
             },
@@ -195,6 +201,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) {
               final id = state.pathParameters['id'] ?? '';
               return NoTransitionPage(
+                key: state.pageKey,
                 child: AlbumDetailScreen(albumId: id),
               );
             },
@@ -204,31 +211,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) {
               final id = state.pathParameters['id'] ?? '';
               return NoTransitionPage(
+                key: state.pageKey,
                 child: ArtistDetailScreen(artistId: id),
               );
             },
           ),
           GoRoute(
             path: '/settings',
-            pageBuilder: (context, state) => const NoTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
               child: SettingsScreen(),
             ),
           ),
           GoRoute(
             path: '/downloads',
-            pageBuilder: (context, state) => const NoTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
               child: DownloadsScreen(),
             ),
           ),
           GoRoute(
             path: '/stats',
-            pageBuilder: (context, state) => const NoTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
               child: StatsScreen(),
             ),
           ),
           GoRoute(
             path: '/history',
-            pageBuilder: (context, state) => const NoTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
               child: ListeningHistoryScreen(),
             ),
           ),
@@ -241,6 +253,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         path: '/player',
         pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
           child: const PlayerFullscreenScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return SlideTransition(
