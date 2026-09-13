@@ -173,7 +173,7 @@ Toca D-1 (cola dual) y la sesión persistida: riesgo real, revisión independien
   - Test de regresión: `setQueue(60 pistas, startIndex: 50, shuffle: true)` deja 59 en
     `autoQueue`, no 9.
 
-- [x] **B2 · Restaurar sesión: continuidad exacta, con red de seguridad.**
+- [x] **B2 · Restaurar sesión: continuidad exacta.**
       **Decisión del usuario (consultada al aprobar este plan): continuidad exacta.** Al reabrir la
       app, la cola automática se restaura tal cual quedó — mismo orden aleatorio, mismas canciones,
       incluidas las de radio que ya estuvieran anexadas. Es lo que hace Spotify al reanudar.
@@ -183,10 +183,16 @@ Toca D-1 (cola dual) y la sesión persistida: riesgo real, revisión independien
       la playlist completa en `autoQueue` las recomendadas no pueden colarse antes. El síntoma
       venía de H-R3-3 (la cola tenía 10 pistas en vez de 59), no de la restauración.
 
-      Lo único que se añade es la **red de seguridad para el caso degenerado**: si al restaurar la
-      cola automática no conserva ninguna pista del contexto pero el contexto original sí tiene
-      pistas que nunca sonaron (historial ∪ pista actual no las cubre), se repuebla desde el
-      contexto en vez de dejar que la radio ocupe ese hueco. **La cola manual no se toca** (D-2).
+      **Red de seguridad implementada y luego retirada tras la revisión independiente.** La primera
+      versión repoblaba la cola desde el contexto cuando la restaurada no conservaba ninguna pista
+      de él, para reparar sesiones guardadas por versiones afectadas por H-R3-3. La revisión
+      encontró que esa misma condición la cumple un caso legítimo: **el usuario que vacía la cola a
+      mano**. Deslizar para eliminar dejaba `autoQueue` sin contexto, y al siguiente arranque se le
+      devolvían todas — deshaciendo en silencio una acción explícita, en cada reinicio. Distinguir
+      ambos casos exigiría persistir "qué quitó el usuario a mano" (estado nuevo en
+      `PlayerSessionData`, invalidando las sesiones guardadas) para atender un problema de
+      migración puntual que además se arregla solo en cuanto el usuario vuelve a tocar una
+      playlist. No compensa: se retiró, con la justificación escrita en el propio controlador.
 
   - Consecuencia aceptada: *"al reiniciar en random vuelven a tocar las mismas canciones"* se queda
     como está, a propósito — reanudar significa continuar, no barajar de nuevo. Quien quiera otra
@@ -221,7 +227,7 @@ Toca D-1 (cola dual) y la sesión persistida: riesgo real, revisión independien
 
 ## Bundle C — Historial y estadísticas
 
-- [ ] **C1 · Deduplicar escuchas** (H-R3-5). Antes de insertar, `_recordListenEntry` consulta la
+- [x] **C1 · Deduplicar escuchas** (H-R3-5). Antes de insertar, `_recordListenEntry` consulta la
       última entrada de esa pista: si es de hace menos que `max(duración de la pista, 10 min)`, se
       **acumula sobre esa fila** (`updateListenedDuration`) en vez de insertar una nueva.
       Cubre los dos casos reportados (retroceder tras cruzar el umbral; partir una canción en dos
@@ -235,27 +241,27 @@ Toca D-1 (cola dual) y la sesión persistida: riesgo real, revisión independien
 
 ## Bundle D — Biblioteca
 
-- [ ] **D1 · Ordenar playlists.** Selector con tres criterios: *escuchadas recientemente*,
+- [x] **D1 · Ordenar playlists.** Selector con tres criterios: *escuchadas recientemente*,
       *agregadas recientemente*, *alfabético*. Requiere columna nueva `lastPlayedAt` en la tabla
       `Playlists` de Drift → **migración de esquema v6 → v7** (`addColumn`, nullable, sin tocar
       Supabase: "última escucha" es razonablemente un dato del dispositivo). Se escribe desde el
       `setQueue` con `activeContextId` de tipo `playlist_*`. La preferencia de orden se guarda
       local.
 
-- [ ] **D2 · Vista lista / cuadrícula.** Toggle en la cabecera de Biblioteca; en cuadrícula,
+- [x] **D2 · Vista lista / cuadrícula.** Toggle en la cabecera de Biblioteca; en cuadrícula,
       portada grande + título debajo (estilo Spotify), reusando `PlaylistCoverWidget`. Preferencia
       persistida local. Aplica a Playlists y Álbumes.
 
-- [ ] **D3 · Indicador de la playlist sonando.** En la fila/tarjeta cuya `playlist_<id>` coincida
+- [x] **D3 · Indicador de la playlist sonando.** En la fila/tarjeta cuya `playlist_<id>` coincida
       con `activeContextId`, marca visual (título en color de acento + ícono de onda). Sin
       peticiones ni streams nuevos: sale de `playerStateProvider.select((s) => s.activeContextId)`.
 
-- [ ] **D4 · Buscador dentro de la playlist.** El botón de lupa del detalle de playlist hoy hace
+- [x] **D4 · Buscador dentro de la playlist.** El botón de lupa del detalle de playlist hoy hace
       `context.push('/search')`. Pasa a abrir un campo de filtro **local** sobre las pistas de esa
       playlist (título / artista / álbum), sin llamadas de red. El buscador existente de "Agregar
       canciones" (que sí va a Deezer) se mantiene aparte, sin cambios.
 
-- [ ] **D5 · Sin números de pista en móvil.** `TrackTile` ya cambia de layout cuando `index` es
+- [x] **D5 · Sin números de pista en móvil.** `TrackTile` ya cambia de layout cuando `index` es
       `null` (muestra portada con overlay de play en vez del número). Pasar `index: isDesktop ? i : null`
       en el detalle de playlist. Revisión visual antes de darlo por bueno.
 
@@ -267,18 +273,18 @@ Toca D-1 (cola dual) y la sesión persistida: riesgo real, revisión independien
       inferior del contenedor, sin interacción (no clickeable), alimentada por
       `playerStateProvider.select` de posición/duración para no reconstruir el resto de la barra.
 
-- [ ] **E2 · Menú de 3 puntos completo en el reproductor a pantalla completa.** Hoy tiene solo
+- [x] **E2 · Menú de 3 puntos completo en el reproductor a pantalla completa.** Hoy tiene solo
       *Reproducir a continuación* y *Agregar a la cola*. Pasa a reusar el juego completo de
       `TrackContextMenu` (ir al artista, ir al álbum, agregar a playlist, me gusta, descargar,
       compartir, buscar otras versiones), respetando el gateado por `canEditProvider`.
 
-- [ ] **E3 · Posición del aviso de "me gusta" desde los 3 puntos.** `AppToast` calcula el margen
+- [x] **E3 · Posición del aviso de "me gusta" desde los 3 puntos.** `AppToast` calcula el margen
       inferior con ramas distintas según pantalla y presencia de mini reproductor; desde la hoja de
       3 puntos cae en una rama que no corresponde a lo que se ve. Se unifica el cálculo (una sola
       fuente para la altura de mini reproductor + barra de navegación) y se verifica en móvil que
       el aviso salga en el mismo sitio desde ambas entradas.
 
-- [ ] **E4 · Búsqueda profunda pegada al borde superior en móvil.** La hoja se abre con
+- [x] **E4 · Búsqueda profunda pegada al borde superior en móvil.** La hoja se abre con
       `height: 0.85 * screenHeight` y `top: 20`, sin `SafeArea` ni asa. Se alinea con el resto de
       hojas de la app (asa, respeto del notch, tope de altura que descuente el área segura).
 

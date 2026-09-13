@@ -1034,6 +1034,22 @@ bool get _isTestEnv {
   /// canónico para las pistas que vienen de ahí, preservando cualquier
   /// extra en su orden relativo actual, al final. Compara por `.id` porque
   /// `SyncoraTrack` no tiene `==` de valor.
+  ///
+  /// ## Asimetría deliberada con `setQueue` (ronda 3, anotada en revisión)
+  ///
+  /// Desde B1, tocar una pista **con aleatorio ya activo** arma la cola con la
+  /// playlist ENTERA menos la que suena. Activar aleatorio **a mitad de
+  /// reproducción**, en cambio, sigue mezclando solo lo que quedaba en cola,
+  /// sin recuperar lo anterior a la pista actual. Son dos acciones distintas y
+  /// se comportan distinto a propósito:
+  ///
+  /// - `setQueue` es "empiezo una escucha nueva, en aleatorio" → toda la
+  ///   playlist entra en juego.
+  /// - `setShuffle(true)` es "randomiza lo que me queda de esta sesión" → lo
+  ///   ya escuchado no vuelve, igual que no vuelve al pulsar aleatorio en
+  ///   cualquier otro reproductor.
+  ///
+  /// Queda anotado aquí porque la asimetría es fácil de leer como un bug.
   List<SyncoraTrack> _reorderAutoQueueForShuffle(bool shuffle) {
     final current = List<SyncoraTrack>.from(_state.autoQueue);
     if (shuffle) {
@@ -1287,8 +1303,6 @@ bool get _isTestEnv {
       ),
       clearError: true,
     );
-    _repopulateAutoQueueFromContextIfEmpty();
-
     await _engine.setVolume(session.volume);
     _notify();
     _log('[Session] Sesión restaurada: ${_state.manualQueue.length + _state.autoQueue.length} '
@@ -1307,43 +1321,35 @@ bool get _isTestEnv {
         if (_state.currentTrack != null) _state.currentTrack!.id,
       };
 
-  /// Red de seguridad al restaurar sesión (ronda 3, B2).
-  ///
-  /// La decisión de producto es **continuidad exacta**: al reabrir la app la
-  /// cola automática se restaura tal cual quedó, con su mismo orden aleatorio
-  /// y con las pistas de radio que ya tuviera anexadas. Reanudar significa
-  /// continuar, no barajar de nuevo — quien quiera otra mezcla tiene
-  /// "Regenerar cola" ([regenerateAutoQueue]).
-  ///
-  /// Lo único que se corrige aquí es el **caso degenerado**: que la cola
-  /// automática restaurada no conserve ninguna pista del contexto mientras el
-  /// contexto original sí tiene pistas que nunca sonaron. Ese estado podía
-  /// darse con sesiones guardadas por versiones anteriores, afectadas por
-  /// H-R3-3 (la cola se generaba recortada). Sin esto, el hueco lo llenaría
-  /// la radio y el usuario vería recomendaciones en vez del resto de su
-  /// playlist.
-  ///
-  /// Nunca toca la cola manual (D-2) ni la pista que suena. Lo que ya hubiera
-  /// de radio se conserva, pero **detrás** de la playlist.
-  void _repopulateAutoQueueFromContextIfEmpty() {
-    final context = _state.originalContextTracks;
-    if (context.isEmpty) return;
-
-    final contextIds = context.map((t) => t.id).toSet();
-    final autoHasContext = _state.autoQueue.any((t) => contextIds.contains(t.id));
-    if (autoHasContext) return;
-
-    final played = _playedContextIds();
-    final unplayed = context.where((t) => !played.contains(t.id)).toList();
-    if (unplayed.isEmpty) return;
-
-    if (_state.shuffle) unplayed.shuffle();
-    _state = _state.copyWith(
-      autoQueue: List.unmodifiable([...unplayed, ..._state.autoQueue]),
-    );
-    _log('[Session] Cola automática repoblada desde el contexto: '
-        '${unplayed.length} pistas que nunca sonaron.');
-  }
+  // ------------------------------------------------------------------
+  // Por qué NO hay una "red de seguridad" que repueble la cola al restaurar
+  // (ronda 3, B2 — retirado tras la revisión independiente)
+  // ------------------------------------------------------------------
+  //
+  // La primera versión de B2 repoblaba `autoQueue` desde el contexto cuando la
+  // cola restaurada no conservaba ninguna pista de él. La idea era reparar las
+  // sesiones guardadas por versiones afectadas por H-R3-3 (donde la cola se
+  // creaba recortada y acababa siendo solo radio).
+  //
+  // La revisión encontró que esa condición también la cumple un caso
+  // perfectamente legítimo: **el usuario vació la cola a mano**. Deslizar para
+  // eliminar las pistas que no quiere dejaba `autoQueue` sin contexto, y al
+  // siguiente arranque la red de seguridad se las devolvía todas. Es decir,
+  // deshacía en silencio una acción explícita del usuario, en cada reinicio y
+  // para siempre.
+  //
+  // Distinguir ambos casos exigiría persistir "qué quitó el usuario a mano",
+  // o sea estado nuevo en `PlayerSessionData` (y con ello invalidar las
+  // sesiones guardadas) para atender un problema de MIGRACIÓN puntual: una
+  // sesión afectada por H-R3-3 se arregla sola en cuanto el usuario vuelve a
+  // tocar una playlist, porque eso llama a `setQueue()` y regenera la cola
+  // entera y ya corregida. No compensa: cambiar un comportamiento permanente
+  // y equivocado por una comodidad de una sola vez.
+  //
+  // La restauración, por tanto, es **continuidad exacta y nada más** (que es
+  // además lo que se decidió como comportamiento de producto): se restaura lo
+  // guardado tal cual. Para rehacer la cola a voluntad está
+  // [regenerateAutoQueue], que es una acción explícita del usuario.
 
   /// Rehace la cola automática desde el contexto activo (ronda 3, B4).
   ///
@@ -1367,6 +1373,14 @@ bool get _isTestEnv {
   bool regenerateAutoQueue() {
     final context = _state.originalContextTracks;
     if (context.isEmpty) return false;
+
+    // Revisión de la ronda 3 (P2): sin esto, un lote de radio que ya estuviera
+    // en vuelo al pulsar el botón se anexaba igual al resolver, reintroduciendo
+    // en silencio las mismas sugerencias que "regenerar" acababa de descartar.
+    // `_fetchRadioBatch` descarta su resultado cuando la generación de contexto
+    // cambió, así que incrementarla aquí es exactamente el mecanismo que ya
+    // existe para `setQueue()`.
+    _contextGeneration++;
 
     final played = _playedContextIds();
     var regenerated = context.where((t) => !played.contains(t.id)).toList();
@@ -1517,6 +1531,26 @@ bool get _isTestEnv {
   /// minutos con el tiempo realmente escuchado (ver `_finalizeListenEntry`).
   int? _listenEntryId;
 
+  /// Milisegundos que ya tenía registrados la fila de [_listenEntryId] cuando
+  /// se reutilizó (ronda 3, C1). Cero para una fila recién insertada.
+  ///
+  /// Sin esto, reutilizar una escucha previa **perdería** los minutos ya
+  /// contabilizados: `_finalizeListenEntry` escribe el acumulado de ESTA
+  /// pasada, que arranca en cero. Con la base sumada, escuchar media canción,
+  /// cerrar la app y volver a terminarla acaba dando una sola escucha con los
+  /// minutos completos.
+  int _listenEntryBaseMs = 0;
+
+  /// Ventana mínima para considerar que una escucha es la continuación de
+  /// otra ya registrada, y no una reproducción nueva (C1).
+  ///
+  /// Se toma el mayor entre la duración de la pista y estos 10 minutos: poner
+  /// una sola canción dos veces seguidas a propósito son dos escuchas reales
+  /// y deben contar como tales, pero retroceder o retomarla al rato es la
+  /// misma. Diez minutos cubren con holgura "salgo de la app y vuelvo" sin
+  /// llegar a fusionar escuchas de sesiones realmente distintas.
+  static const Duration _listenDedupeWindow = Duration(minutes: 10);
+
   /// Debe llamarse con la pista que está a punto de empezar a sonar (o que
   /// se reinicia desde el principio), antes de tocar el motor. **Siempre**
   /// reinicia el acumulado incondicionalmente: cada llamada representa un
@@ -1535,6 +1569,7 @@ bool get _isTestEnv {
     _listenRecorded = false;
     _listenLastPosition = null;
     _listenEntryId = null;
+    _listenEntryBaseMs = 0;
   }
 
   /// Corrige los minutos de la escucha en curso con el total real acumulado.
@@ -1546,9 +1581,11 @@ bool get _isTestEnv {
   void _finalizeListenEntry() {
     final entryId = _listenEntryId;
     final dao = _listeningHistoryDao;
+    final base = _listenEntryBaseMs;
     _listenEntryId = null;
+    _listenEntryBaseMs = 0;
     if (entryId == null || dao == null) return;
-    final total = _listenAccumulated.inMilliseconds;
+    final total = base + _listenAccumulated.inMilliseconds;
     unawaited(() async {
       try {
         await dao.updateListenedDuration(entryId, total);
@@ -1586,6 +1623,37 @@ bool get _isTestEnv {
     }
   }
 
+  /// ¿La escucha anterior de [track] ya estaba **terminada**?
+  ///
+  /// Es la frontera entre "continuación" y "reproducción nueva a propósito", y
+  /// existe para no pisar una decisión de diseño anterior (Fase 7.0): en
+  /// repeat-one, **cada vuelta completa cuenta como una escucha propia**, y
+  /// hay un test que lo fija. Poner una canción dos veces seguidas queriendo
+  /// son dos escuchas reales; retroceder a mitad o retomarla al rato es una
+  /// sola.
+  ///
+  /// El 90% es el mismo criterio informal de "sonó entera" que usa cualquier
+  /// reproductor: deja margen para el fundido final y para que el motor no
+  /// emita el último tick de posición justo antes de completar.
+  ///
+  /// Sin duración conocida no se puede decidir, y se prefiere deduplicar: el
+  /// error de fusionar dos escuchas es menos visible que el de duplicar una,
+  /// que es justo el síntoma que se está corrigiendo.
+  bool _previousListenWasComplete(int previousMs, SyncoraTrack track) {
+    final duration = track.duration ?? Duration.zero;
+    if (duration <= Duration.zero) return false;
+    return previousMs >= duration.inMilliseconds * 0.9;
+  }
+
+  /// Ventana de deduplicación para [track]: el mayor entre su propia duración
+  /// y [_listenDedupeWindow]. Una canción larga necesita una ventana al menos
+  /// tan larga como ella para que "escuchar el final tras volver a la app"
+  /// siga contando como la misma escucha.
+  Duration _dedupeWindowFor(SyncoraTrack track) {
+    final duration = track.duration ?? Duration.zero;
+    return duration > _listenDedupeWindow ? duration : _listenDedupeWindow;
+  }
+
   Duration _listenThresholdFor(SyncoraTrack track) {
     const absoluteMin = Duration(seconds: 30);
     final duration = track.duration ?? Duration.zero;
@@ -1598,6 +1666,30 @@ bool get _isTestEnv {
     final dao = _listeningHistoryDao;
     if (dao == null) return;
     try {
+      // C1 (H-R3-5): si esta pista ya tiene una escucha reciente, esto es su
+      // continuación (el usuario retrocedió, o partió la canción entre dos
+      // sesiones de la app), no una reproducción nueva. Se reutiliza la fila
+      // en vez de insertar otra: antes cada arranque que cruzaba el umbral
+      // creaba una fila propia, que es por lo que aparecían canciones dos
+      // veces en el historial.
+      final windowStart = DateTime.now().subtract(_dedupeWindowFor(track));
+      final previous = await dao.findRecentEntryForTrack(track.deezerId, windowStart);
+      if (previous != null && !_previousListenWasComplete(previous.durationListenedMs, track)) {
+        _listenEntryId = previous.id;
+        _listenEntryBaseMs = previous.durationListenedMs;
+        await dao.updateListenedDuration(
+          previous.id,
+          _listenEntryBaseMs + accumulated.inMilliseconds,
+        );
+        _log('[Listen] Escucha continuada (fila ${previous.id}) en vez de una entrada nueva.');
+        try {
+          _onListenRecorded?.call();
+        } catch (e) {
+          _log('[Listen] Error disparando sync de historial: $e');
+        }
+        return;
+      }
+
       _listenEntryId = await dao.recordEntry(
         trackId: track.deezerId,
         artistId: track.artistId ?? 0,

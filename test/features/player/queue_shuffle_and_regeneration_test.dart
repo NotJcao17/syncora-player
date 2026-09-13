@@ -276,36 +276,32 @@ void main() {
       segunda.dispose();
     });
 
-    test('red de seguridad: una cola sin nada del contexto se repuebla', () async {
-      // Estado degenerado que dejaban las sesiones guardadas por versiones
-      // afectadas por H-R3-3. Sin esto, el hueco lo llenaria la radio y el
-      // usuario veria recomendaciones en vez del resto de su playlist.
+    test('lo que el usuario quito a mano NO vuelve al reabrir la app', () async {
+      // Revision de la ronda 3 (P1). La primera version de B2 repoblaba la
+      // cola desde el contexto cuando no quedaba nada de el, para reparar
+      // sesiones afectadas por H-R3-3. Pero esa misma condicion la cumple el
+      // usuario que vacia la cola a proposito: al siguiente arranque se le
+      // devolvian todas las pistas que habia quitado, en silencio y en cada
+      // reinicio. Se retiro la red de seguridad; este test fija que no vuelva.
       final storage = _MemorySessionStorage();
-      await storage.saveSession(
-        currentTrack: const SyncoraTrack(id: '1', title: 'Pista 1'),
-        currentOrigin: QueueOrigin.auto,
-        manualQueue: const [SyncoraTrack(id: 'manual-1', title: 'Manual')],
-        autoQueue: const [SyncoraTrack(id: 'radio-1', title: 'Radio 1')],
-        originalContextTracks: _playlist(20),
-        history: const [],
-        positionSeconds: 0,
-        repeatMode: SyncoraRepeatMode.off,
-        shuffle: false,
-      );
+      final primera = _controller(storage: storage);
+      await primera.setQueue(_playlist(3), startIndex: 0, autoplay: false);
+      // Desliza para eliminar las dos que quedaban en cola.
+      primera.removeFromQueue(QueueOrigin.auto, 1);
+      primera.removeFromQueue(QueueOrigin.auto, 0);
+      expect(primera.state.autoQueue, isEmpty);
+      primera.dispose();
 
-      final c = _controller(storage: storage);
+      final segunda = _controller(storage: storage);
       await pumpEventQueue();
 
-      final ids = c.state.autoQueue.map((t) => t.id).toList();
-      expect(ids.length, 20, reason: '19 del contexto sin sonar + la de radio');
-      expect(ids.last, 'radio-1', reason: 'la radio va DETRAS de la playlist');
-      expect(ids.contains('1'), isFalse, reason: 'la que suena no se duplica');
-      expect(c.state.manualQueue.map((t) => t.id).toList(), ['manual-1'],
-          reason: 'D-2: la cola manual no se toca nunca');
-      c.dispose();
+      expect(segunda.state.autoQueue, isEmpty,
+          reason: 'vaciar la cola a mano es una decision del usuario, no un estado a reparar');
+      expect(segunda.state.currentTrack?.id, '1');
+      segunda.dispose();
     });
 
-    test('la red de seguridad no se dispara si la cola conserva el contexto', () async {
+    test('la cola con radio anexada se restaura tal cual', () async {
       final storage = _MemorySessionStorage();
       await storage.saveSession(
         currentTrack: const SyncoraTrack(id: '1', title: 'Pista 1'),

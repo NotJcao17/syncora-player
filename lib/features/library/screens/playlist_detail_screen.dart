@@ -1309,6 +1309,11 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                       : 0;
                                                   controller.setQueue(sortedSyncoraTracks, startIndex: startIndex, activeContextId: playlistContextId);
                                                   controller.play();
+                                                  // D1: alimenta el orden
+                                                  // "escuchadas recientemente"
+                                                  // de Biblioteca. Dato local,
+                                                  // no viaja al sync.
+                                                  playlistDao.touchLastPlayed(playlist.id);
                                                 }
                                               },
                                             ),
@@ -1774,6 +1779,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                           startIndex: startIndex < 0 ? 0 : startIndex,
                                           activeContextId: playlistContextId,
                                         );
+                                        playlistDao.touchLastPlayed(playlist.id);
                                       },
                                       onRemove: () async {
                                         final ok = await _executeRemoteMutation(() async {

@@ -629,6 +629,79 @@ void main() {
       }
     }
 
+    // Ronda 3, C1 (H-R3-5). El registro se insertaba cada vez que se cruzaba
+    // el umbral, sin mirar si esa pista ya tenia una escucha reciente.
+    test('volver a la misma pista NO crea una segunda escucha', () async {
+      final track = SyncoraTrack(id: 't1', title: 'Larga', duration: const Duration(seconds: 200));
+      await controller.setQueue([track], autoplay: true);
+      await playSeconds(1, 35);
+
+      var history = await db.listeningHistoryDao.getRecentHistory();
+      expect(history.length, 1);
+
+      // El usuario da "anterior" y vuelve a esta pista: `_beginListenTracking`
+      // reinicia el acumulado, asi que se vuelve a cruzar el umbral.
+      await controller.setQueue([track], autoplay: true);
+      await playSeconds(1, 35);
+
+      history = await db.listeningHistoryDao.getRecentHistory();
+      expect(history.length, 1, reason: 'es la misma escucha continuada, no una reproduccion nueva');
+    });
+
+    test('la escucha continuada SUMA los minutos, no los pisa', () async {
+      // Escenario del reporte: media cancion, cerrar la app, volver y
+      // terminarla. Debe quedar una escucha con los minutos de las dos partes.
+      final track = SyncoraTrack(id: 't1', title: 'Larga', duration: const Duration(seconds: 400));
+      await controller.setQueue([track], autoplay: true);
+      await playSeconds(1, 40);
+
+      var history = await db.listeningHistoryDao.getRecentHistory();
+      final primeraParte = history.single.durationListenedMs;
+      expect(primeraParte, greaterThanOrEqualTo(30000));
+
+      await controller.setQueue([track], autoplay: true);
+      await playSeconds(1, 40);
+
+      history = await db.listeningHistoryDao.getRecentHistory();
+      expect(history.length, 1);
+      expect(
+        history.single.durationListenedMs,
+        greaterThan(primeraParte),
+        reason: 'reutilizar la fila no puede perder los minutos ya contados',
+      );
+    });
+
+    test('una escucha YA COMPLETA no se fusiona: es una reproduccion nueva', () async {
+      // Frontera de C1 con la decision de diseño de la Fase 7.0 (repeat-one
+      // cuenta cada vuelta). Poner la misma cancion otra vez despues de
+      // haberla escuchado entera son dos escuchas reales.
+      final track = SyncoraTrack(id: 't1', title: 'Corta', duration: const Duration(seconds: 40));
+      await controller.setQueue([track], autoplay: true);
+      await playSeconds(1, 40);
+
+      var history = await db.listeningHistoryDao.getRecentHistory();
+      expect(history.length, 1);
+
+      await controller.setQueue([track], autoplay: true);
+      await playSeconds(1, 40);
+
+      history = await db.listeningHistoryDao.getRecentHistory();
+      expect(history.length, 2, reason: 'sono entera dos veces: dos escuchas');
+    });
+
+    test('pistas distintas siguen registrandose por separado', () async {
+      final a = SyncoraTrack(id: 't1', title: 'A', duration: const Duration(seconds: 200));
+      final b = SyncoraTrack(id: 't2', title: 'B', duration: const Duration(seconds: 200));
+
+      await controller.setQueue([a], autoplay: true);
+      await playSeconds(1, 35);
+      await controller.setQueue([b], autoplay: true);
+      await playSeconds(1, 35);
+
+      final history = await db.listeningHistoryDao.getRecentHistory();
+      expect(history.length, 2);
+    });
+
     test('justo por debajo del umbral absoluto (29s de 200s) -> no registra', () async {
       final track = SyncoraTrack(id: 't1', title: 'Larga', duration: const Duration(seconds: 200));
       await controller.setQueue([track], autoplay: true);

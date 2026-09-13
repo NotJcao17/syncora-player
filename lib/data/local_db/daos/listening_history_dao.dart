@@ -24,6 +24,28 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
         ),
       );
 
+  /// Última escucha registrada de [trackId] a partir de [since], o `null` si
+  /// no hay ninguna en esa ventana (ronda 3, C1 / hallazgo H-R3-5).
+  ///
+  /// Sirve para no insertar una escucha nueva cuando en realidad es la
+  /// continuación de una que ya se contabilizó: retroceder a una canción que
+  /// ya cruzó el umbral, o partirla entre dos sesiones de la app (escuchar
+  /// medio tema, cerrar, volver y terminarlo). Los dos casos salían como dos
+  /// filas distintas, y por eso aparecían canciones dos veces en el historial
+  /// y las reproducciones se contaban de más en Estadísticas.
+  Future<ListeningHistoryData?> findRecentEntryForTrack(
+    int trackId,
+    DateTime since,
+  ) =>
+      (select(listeningHistory)
+            ..where((t) => t.trackId.equals(trackId) & t.listenedAt.isBiggerOrEqualValue(since))
+            ..orderBy([
+              (t) => OrderingTerm(expression: t.listenedAt, mode: OrderingMode.desc),
+              (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
+            ])
+            ..limit(1))
+          .getSingleOrNull();
+
   Future<List<ListeningHistoryData>> getRecentHistory({int limit = 50}) => (select(listeningHistory)
         ..orderBy([
           (t) => OrderingTerm(expression: t.listenedAt, mode: OrderingMode.desc),

@@ -15,12 +15,14 @@ import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/playlist_cover_widget.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
+import '../../../data/local_db/daos/playlist_dao.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/sync/sync_service.dart';
 import '../../auth/local_mode_provider.dart';
 import '../../download/download_provider.dart';
+import '../../player/player_providers.dart';
 import '../import_export/playlist_import_export_service.dart';
 import '../ai_playlist/ai_create_playlist_sheet.dart';
 import '../ai_playlist/ai_modify_playlist_sheet.dart';
@@ -40,6 +42,45 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   bool _showLocalSearch = false;
   final TextEditingController _localSearchController = TextEditingController();
   String _localSearchQuery = '';
+
+  /// Ronda 3 (D1/D2): criterio de orden y forma de la lista.
+  ///
+  /// No persisten entre reinicios — el proyecto todavía no tiene
+  /// `shared_preferences`, mismo caso (y no una regresión) que
+  /// `radioEnabledProvider` o `crossfadeDurationProvider`.
+  _LibrarySort _sort = _LibrarySort.recientesEscuchadas;
+  bool _gridView = false;
+
+  /// Orden de playlists. Las fijadas van SIEMPRE primero, sea cual sea el
+  /// criterio: fijar es una decisión explícita del usuario y no debe poder
+  /// perderse por cambiar de orden. Dentro de cada bloque manda [_sort].
+  List<Playlist> _sortPlaylists(List<Playlist> input) {
+    final list = List<Playlist>.from(input);
+    int byPinned(Playlist a, Playlist b) {
+      if (a.isPinned == b.isPinned) return 0;
+      return a.isPinned ? -1 : 1;
+    }
+
+    list.sort((a, b) {
+      final pinned = byPinned(a, b);
+      if (pinned != 0) return pinned;
+      switch (_sort) {
+        case _LibrarySort.recientesEscuchadas:
+          final aAt = a.lastPlayedAt;
+          final bAt = b.lastPlayedAt;
+          // Nunca reproducidas al final, y entre ellas por fecha de creación.
+          if (aAt == null && bAt == null) return b.createdAt.compareTo(a.createdAt);
+          if (aAt == null) return 1;
+          if (bAt == null) return -1;
+          return bAt.compareTo(aAt);
+        case _LibrarySort.recientesAgregadas:
+          return b.createdAt.compareTo(a.createdAt);
+        case _LibrarySort.alfabetico:
+          return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      }
+    });
+    return list;
+  }
 
   @override
   void initState() {
@@ -197,6 +238,103 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               }
             },
             child: const Text('Crear', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Traduce el `activeContextId` del reproductor (`playlist_42`) al id de
+  /// playlist, o `null` si el contexto activo no es una playlist (búsqueda,
+  /// álbum, descargas...).
+  static int? _playlistIdFromContext(String? activeContextId) {
+    if (activeContextId == null) return null;
+    if (!activeContextId.startsWith('playlist_')) return null;
+    return int.tryParse(activeContextId.substring('playlist_'.length));
+  }
+
+  /// Celda de la vista en cuadrícula (ronda 3, D2): portada grande y el
+  /// título debajo, al estilo de Spotify. Comparte el menú de 3 puntos y el
+  /// indicador de "sonando ahora" (D3) con la vista de lista.
+  Widget _buildPlaylistGridCell(
+    Playlist playlist,
+    PlaylistDao playlistDao,
+    bool canEdit,
+    bool isLocalMode,
+    int? activePlaylistId,
+  ) {
+    final isActive = activePlaylistId == playlist.id;
+    return InkWell(
+      onTap: () => context.push('/playlist/${playlist.id}'),
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: PlaylistCoverWidget(
+                    coverUrl: playlist.coverUrl,
+                    playlistId: playlist.id,
+                    isLiked: playlist.isLiked,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                if (!playlist.isLiked)
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: Icon(AppIcons.broken(SolarIcons.MenuDots),
+                            color: AppTheme.primary, size: 16),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        onPressed: () =>
+                            _showPlaylistOptionsMenu(context, playlist, canEdit, isLocalMode),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              if (isActive) ...[
+                Icon(AppIcons.bold(SolarIcons.SoundwaveSquare),
+                    color: AppTheme.accent, size: 14),
+                const SizedBox(width: 4),
+              ],
+              Flexible(
+                child: Text(
+                  playlist.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isActive ? AppTheme.accent : AppTheme.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          StreamBuilder<List<PlaylistTrack>>(
+            stream: playlistDao.watchTracksOrdered(playlist.id),
+            builder: (ctx, snap) {
+              final count = snap.data?.length ?? 0;
+              return Text(
+                count == 1 ? '1 canción' : '$count canciones',
+                style: const TextStyle(color: AppTheme.secondary, fontSize: 11),
+              );
+            },
           ),
         ],
       ),
@@ -605,6 +743,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final isLocalMode = ref.watch(localModeProvider);
     final canEdit = ref.watch(canEditProvider);
 
+    // Ronda 3 (D3): id de la playlist que está sonando, si el contexto activo
+    // del reproductor es una. Sale de `activeContextId`, que ya se guarda con
+    // el formato `playlist_<id>` — sin peticiones ni streams nuevos.
+    final activePlaylistId = _playlistIdFromContext(
+      ref.watch(playerStateProvider.select((s) => s.activeContextId)),
+    );
+
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -807,7 +952,70 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
+
+          // Ronda 3 (D1/D2): orden y forma de la lista.
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: PopupMenuButton<_LibrarySort>(
+                      initialValue: _sort,
+                      color: AppTheme.surface,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      onSelected: (v) => setState(() => _sort = v),
+                      itemBuilder: (ctx) => _LibrarySort.values
+                          .map((v) => PopupMenuItem<_LibrarySort>(
+                                value: v,
+                                child: Text(
+                                  v.label,
+                                  style: TextStyle(
+                                    color: v == _sort ? AppTheme.primary : AppTheme.secondary,
+                                    fontSize: 13,
+                                    fontWeight: v == _sort ? FontWeight.w700 : FontWeight.w500,
+                                  ),
+                                ),
+                              ))
+                          .toList(),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(AppIcons.broken(SolarIcons.SortVertical),
+                              color: AppTheme.secondary, size: 16),
+                          const SizedBox(width: 6),
+                          Text(
+                            _sort.label,
+                            style: const TextStyle(
+                              color: AppTheme.secondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: _gridView ? 'Ver como lista' : 'Ver como cuadrícula',
+                  onPressed: () => setState(() => _gridView = !_gridView),
+                  icon: Icon(
+                    _gridView
+                        ? AppIcons.broken(SolarIcons.List)
+                        : AppIcons.broken(SolarIcons.WidgetN4),
+                    color: AppTheme.secondary,
+                    size: 18,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 8),
 
           Expanded(
             child: RefreshIndicator(
@@ -1091,11 +1299,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           stream: playlistDao.watchAllPlaylists(),
                           builder: (ctx, snapshot) {
                             final allPlaylists = snapshot.data ?? [];
-                            final playlists = allPlaylists.where((p) {
+                            final playlists = _sortPlaylists(allPlaylists.where((p) {
                               if (_localSearchQuery.isEmpty) return true;
                               return p.title.toLowerCase().contains(_localSearchQuery) ||
                                   (p.description != null && p.description!.toLowerCase().contains(_localSearchQuery));
-                            }).toList();
+                            }).toList());
 
                             if (playlists.isEmpty) {
                               return SingleChildScrollView(
@@ -1111,6 +1319,32 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                               );
                             }
 
+                            if (_gridView) {
+                              return GridView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+                                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                                  // Ancho máximo por celda en vez de un número
+                                  // fijo de columnas: así la cuadrícula se
+                                  // adapta sola del móvil (2 columnas) al
+                                  // escritorio ancho sin romperse.
+                                  maxCrossAxisExtent: isDesktop ? 200 : 180,
+                                  mainAxisSpacing: 16,
+                                  crossAxisSpacing: 16,
+                                  // Portada cuadrada + dos líneas de texto.
+                                  childAspectRatio: 0.78,
+                                ),
+                                itemCount: playlists.length,
+                                itemBuilder: (ctx, i) => _buildPlaylistGridCell(
+                                  playlists[i],
+                                  playlistDao,
+                                  canEdit,
+                                  isLocalMode,
+                                  activePlaylistId,
+                                ),
+                              );
+                            }
+
                             return ListView.builder(
                               physics: const AlwaysScrollableScrollPhysics(),
                               padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
@@ -1118,6 +1352,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                               itemBuilder: (ctx, i) {
                                 final playlist = playlists[i];
                                 final isLiked = playlist.isLiked;
+                                final isActive = activePlaylistId == playlist.id;
 
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 8.0),
@@ -1141,13 +1376,32 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                Text(
-                                                  playlist.title,
-                                                  style: const TextStyle(
-                                                    color: AppTheme.primary,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 16,
-                                                  ),
+                                                Row(
+                                                  children: [
+                                                    if (isActive) ...[
+                                                      // Ronda 3 (D3): cuál es
+                                                      // la playlist que suena.
+                                                      Icon(
+                                                        AppIcons.bold(SolarIcons.SoundwaveSquare),
+                                                        color: AppTheme.accent,
+                                                        size: 16,
+                                                      ),
+                                                      const SizedBox(width: 6),
+                                                    ],
+                                                    Flexible(
+                                                      child: Text(
+                                                        playlist.title,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: TextStyle(
+                                                          color: isActive
+                                                              ? AppTheme.accent
+                                                              : AppTheme.primary,
+                                                          fontWeight: FontWeight.bold,
+                                                          fontSize: 16,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                                 const SizedBox(height: 4),
                                                 StreamBuilder<List<PlaylistTrack>>(
@@ -1187,4 +1441,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       ),
     );
   }
+}
+
+/// Criterios de orden de la biblioteca (ronda 3, D1).
+enum _LibrarySort {
+  recientesEscuchadas('Escuchadas recientemente'),
+  recientesAgregadas('Agregadas recientemente'),
+  alfabetico('Alfabético');
+
+  const _LibrarySort(this.label);
+  final String label;
 }
