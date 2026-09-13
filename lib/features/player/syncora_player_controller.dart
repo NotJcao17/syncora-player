@@ -266,6 +266,19 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// Umbral de disparo de radio/cola infinita (Fase 7.B, D-10): cuando
   /// `autoQueue` baja a esta cantidad de pistas o menos, se genera un lote
   /// nuevo en segundo plano.
+  ///
+  /// Ronda 3 (B3), verificado al revisar el requisito "la cola infinita solo
+  /// debe entrar cuando se acaba la playlist": **este umbral ya lo cumple, y
+  /// no hace falta contar aparte las pistas del contexto.** El lote de radio
+  /// siempre se anexa al FINAL de `autoQueue` (ver [_fetchRadioBatch]), así
+  /// que generarlo con 5 pistas de playlist por delante no adelanta nada: se
+  /// escuchan esas 5 y recién entonces empieza la radio. Lo que hacía que la
+  /// radio pareciera entrar antes de tiempo era H-R3-3 — la cola en aleatorio
+  /// se creaba recortada, así que el umbral se cruzaba a la cuarta canción de
+  /// una playlist de 60. Corregido eso (ver [setQueue]), el disparo cae donde
+  /// corresponde. Un contador extra de "pistas del contexto restantes" sería
+  /// además redundante por construcción: nunca puede superar a
+  /// `autoQueue.length`, así que jamás llegaría a decidir nada.
   static const int _radioTriggerThreshold = 5;
 
   /// Evita disparar fetches de radio concurrentes (Fase 7.B).
@@ -502,7 +515,25 @@ class SyncoraPlayerController extends ChangeNotifier {
     final rest = tracks.sublist(clampedStart + 1);
     // P1.6: si shuffle ya estaba activo, la autoQueue resultante debe salir
     // mezclada — no solo la que se regenera al togglear shuffle después.
-    final newAuto = _state.shuffle ? (List<SyncoraTrack>.from(rest)..shuffle()) : rest;
+    //
+    // H-R3-3 (ronda 3, bug real): en aleatorio la mezcla se hacía **solo
+    // sobre lo que venía después de [startIndex]**. Tocar la pista nº 50 de
+    // una playlist de 60 dejaba una cola de 10, no de 59, y las 49 anteriores
+    // no volvían a sonar en toda la sesión. Es el origen de "solo se
+    // reproducen ciertas canciones" y de que la radio entrara mucho antes de
+    // tiempo: con 10 pistas en cola, el umbral de radio (5) se cruzaba a la
+    // cuarta canción.
+    //
+    // En modo normal descartar lo anterior al índice SÍ es correcto y no se
+    // toca: ahí el orden es el de la lista y el usuario pidió empezar por
+    // ahí. En aleatorio no hay "antes" ni "después" — solo "esta primero, el
+    // resto barajado".
+    final List<SyncoraTrack> newAuto;
+    if (_state.shuffle) {
+      newAuto = [...tracks.sublist(0, clampedStart), ...rest]..shuffle();
+    } else {
+      newAuto = rest;
+    }
     final newHistory = _pushHistory(_state.history, _state.currentTrack, _state.currentOrigin);
 
     _state = _state.copyWith(
@@ -1256,14 +1287,104 @@ bool get _isTestEnv {
       ),
       clearError: true,
     );
+    _repopulateAutoQueueFromContextIfEmpty();
+
     await _engine.setVolume(session.volume);
     _notify();
-    _log('[Session] Sesión restaurada: ${session.manualQueue.length + session.autoQueue.length} '
+    _log('[Session] Sesión restaurada: ${_state.manualQueue.length + _state.autoQueue.length} '
         'pistas en cola, posición: ${session.positionSeconds}s, volumen: ${session.volume} (pausado)');
 
     if (session.currentTrack != null) {
       _prewarmSessionTrack(session.currentTrack!);
     }
+  }
+
+  /// Ids de todo lo que ya sonó en esta sesión de contexto (historial + la
+  /// pista actual). Compartido por la red de seguridad de restauración (B2) y
+  /// por [regenerateAutoQueue] (B4).
+  Set<String> _playedContextIds() => {
+        ..._state.history.map((h) => h.track.id),
+        if (_state.currentTrack != null) _state.currentTrack!.id,
+      };
+
+  /// Red de seguridad al restaurar sesión (ronda 3, B2).
+  ///
+  /// La decisión de producto es **continuidad exacta**: al reabrir la app la
+  /// cola automática se restaura tal cual quedó, con su mismo orden aleatorio
+  /// y con las pistas de radio que ya tuviera anexadas. Reanudar significa
+  /// continuar, no barajar de nuevo — quien quiera otra mezcla tiene
+  /// "Regenerar cola" ([regenerateAutoQueue]).
+  ///
+  /// Lo único que se corrige aquí es el **caso degenerado**: que la cola
+  /// automática restaurada no conserve ninguna pista del contexto mientras el
+  /// contexto original sí tiene pistas que nunca sonaron. Ese estado podía
+  /// darse con sesiones guardadas por versiones anteriores, afectadas por
+  /// H-R3-3 (la cola se generaba recortada). Sin esto, el hueco lo llenaría
+  /// la radio y el usuario vería recomendaciones en vez del resto de su
+  /// playlist.
+  ///
+  /// Nunca toca la cola manual (D-2) ni la pista que suena. Lo que ya hubiera
+  /// de radio se conserva, pero **detrás** de la playlist.
+  void _repopulateAutoQueueFromContextIfEmpty() {
+    final context = _state.originalContextTracks;
+    if (context.isEmpty) return;
+
+    final contextIds = context.map((t) => t.id).toSet();
+    final autoHasContext = _state.autoQueue.any((t) => contextIds.contains(t.id));
+    if (autoHasContext) return;
+
+    final played = _playedContextIds();
+    final unplayed = context.where((t) => !played.contains(t.id)).toList();
+    if (unplayed.isEmpty) return;
+
+    if (_state.shuffle) unplayed.shuffle();
+    _state = _state.copyWith(
+      autoQueue: List.unmodifiable([...unplayed, ..._state.autoQueue]),
+    );
+    _log('[Session] Cola automática repoblada desde el contexto: '
+        '${unplayed.length} pistas que nunca sonaron.');
+  }
+
+  /// Rehace la cola automática desde el contexto activo (ronda 3, B4).
+  ///
+  /// Pensado para los dos modos en que la cola "se siente rancia": aleatorio
+  /// (quiero otra mezcla) y radio (quiero otras recomendaciones). Descarta el
+  /// bloque de radio vigente, porque si no lo hiciera el usuario seguiría
+  /// viendo exactamente las mismas sugerencias.
+  ///
+  /// Invariantes que respeta:
+  /// - **No toca la cola manual** (D-2): lo que el usuario encoló a mano
+  ///   sobrevive a cualquier regeneración, igual que sobrevive a un cambio de
+  ///   playlist o de shuffle.
+  /// - **No toca la pista que suena**: regenerar no es saltar.
+  ///
+  /// Si ya sonó todo el contexto, se rehace con el contexto completo en vez de
+  /// dejar la cola vacía — de lo contrario el botón no haría nada justo en el
+  /// momento en que más sentido tiene pulsarlo.
+  ///
+  /// Devuelve `false` si no hay contexto del que regenerar (la UI usa eso para
+  /// no ofrecer la acción).
+  bool regenerateAutoQueue() {
+    final context = _state.originalContextTracks;
+    if (context.isEmpty) return false;
+
+    final played = _playedContextIds();
+    var regenerated = context.where((t) => !played.contains(t.id)).toList();
+    if (regenerated.isEmpty) {
+      regenerated = List<SyncoraTrack>.from(context)
+        ..removeWhere((t) => t.id == _state.currentTrack?.id);
+    }
+    if (_state.shuffle) regenerated.shuffle();
+
+    _state = _state.copyWith(autoQueue: List.unmodifiable(regenerated));
+    _log('[Queue] Cola automática regenerada: ${regenerated.length} pistas '
+        '(shuffle: ${_state.shuffle}).');
+    _notify();
+    _saveSession();
+    // La cola quedó otra vez por encima del umbral, así que la radio no se
+    // dispara ya; volverá a hacerlo sola cuando el contexto se agote.
+    _maybeFetchRadio();
+    return true;
   }
 
   /// Precalienta silenciosamente la extracción de la URL en segundo plano tras restaurar sesión,

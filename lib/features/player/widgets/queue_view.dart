@@ -44,6 +44,11 @@ class QueueView extends ConsumerStatefulWidget {
     return AppBottomSheet.show(
       context: context,
       title: 'Cola de reproducción',
+      // Ronda 3 (B5): sin esto, reordenar no funcionaba en móvil. El gesto de
+      // arrastrar la hoja para cerrarla gana la arena de gestos contra el asa
+      // de reordenar de cada fila, así que el drag de la lista nunca llegaba
+      // a empezar. La hoja se sigue cerrando tocando fuera o con atrás.
+      enableDrag: false,
       child: QueueView(onTrackSelected: () => AppBottomSheet.pop(context)),
     );
   }
@@ -352,8 +357,26 @@ class _QueueViewState extends ConsumerState<QueueView> {
     }
   }
 
+  /// Ronda 3 (B4). Rehace la cola automática desde el contexto activo
+  /// descartando el bloque de radio vigente. No toca la cola manual (D-2) ni
+  /// la pista que suena — ver `SyncoraPlayerController.regenerateAutoQueue`.
+  void _regenerateQueue() {
+    final controller = ref.read(syncoraPlayerControllerProvider.notifier);
+    final shuffle = controller.state.isShuffle;
+    if (!controller.regenerateAutoQueue()) return;
+    if (!mounted) return;
+    AppToast.show(
+      context,
+      message: shuffle ? 'Cola remezclada' : 'Cola regenerada',
+    );
+  }
+
   Widget _buildToolbar(bool hasSelection) {
     final controller = ref.read(syncoraPlayerControllerProvider.notifier);
+    // Solo tiene sentido regenerar si hay un contexto (playlist/álbum) del
+    // que rehacer la cola: sin él, el botón no tendría nada que hacer.
+    final hasContext = ref.watch(playerStateProvider
+        .select((s) => s.originalContextTracks.isNotEmpty));
     final selectionCount = _selectedManual.length + _selectedAuto.length;
     final isConnected = ref.watch(isConnectedProvider).value ?? true;
     final isLocalMode = ref.watch(localModeProvider);
@@ -398,6 +421,30 @@ class _QueueViewState extends ConsumerState<QueueView> {
                     'Mejorar cola con IA',
                     style: TextStyle(
                       color: isConnected ? AppTheme.primary : AppTheme.muted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              if (hasContext)
+                TextButton.icon(
+                  onPressed: _regenerateQueue,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    backgroundColor: AppTheme.surfaceHover,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  icon: Icon(
+                    AppIcons.broken(SolarIcons.Refresh),
+                    size: 15,
+                    color: AppTheme.secondary,
+                  ),
+                  label: const Text(
+                    'Regenerar cola',
+                    style: TextStyle(
+                      color: AppTheme.secondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),

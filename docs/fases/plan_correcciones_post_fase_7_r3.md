@@ -166,14 +166,14 @@ independiente (subagente) + tanda de pruebas en dispositivo del humano.
 
 Toca D-1 (cola dual) y la sesión persistida: riesgo real, revisión independiente obligatoria.
 
-- [ ] **B1 · Shuffle desde un índice mezcla la playlist completa** (H-R3-3). En `setQueue`, si
+- [x] **B1 · Shuffle desde un índice mezcla la playlist completa** (H-R3-3). En `setQueue`, si
       `shuffle` está activo, la cola automática se arma con **todas** las pistas del contexto menos
       la que arranca, mezcladas — no con `sublist(startIndex + 1)`. Sin shuffle, el comportamiento
       actual se mantiene intacto.
   - Test de regresión: `setQueue(60 pistas, startIndex: 50, shuffle: true)` deja 59 en
     `autoQueue`, no 9.
 
-- [ ] **B2 · Restaurar sesión: continuidad exacta, con red de seguridad.**
+- [x] **B2 · Restaurar sesión: continuidad exacta, con red de seguridad.**
       **Decisión del usuario (consultada al aprobar este plan): continuidad exacta.** Al reabrir la
       app, la cola automática se restaura tal cual quedó — mismo orden aleatorio, mismas canciones,
       incluidas las de radio que ya estuvieran anexadas. Es lo que hace Spotify al reanudar.
@@ -192,26 +192,26 @@ Toca D-1 (cola dual) y la sesión persistida: riesgo real, revisión independien
     como está, a propósito — reanudar significa continuar, no barajar de nuevo. Quien quiera otra
     mezcla tiene **B4 (Regenerar cola)**.
 
-- [ ] **B3 · La radio solo entra cuando el contexto se agotó.** El umbral actual
+- [x] **B3 · La radio solo entra cuando el contexto se agotó.** El umbral actual
       (`autoQueue.length <= 5`) pasa a contar **solo pistas del contexto original** que quedan en
       `autoQueue`. Con B1+B2 el efecto práctico es el que pidió el usuario: la cola infinita empieza
       cuando termina la última de la playlist (modo normal) o cuando ya sonaron todas (modo
       aleatorio). El lote se sigue anexando **al final**, así que nunca se cuela antes de una pista
       de la playlist.
 
-- [ ] **B4 · Regenerar cola.** Acción nueva `controller.regenerateAutoQueue()` + entrada en la
+- [x] **B4 · Regenerar cola.** Acción nueva `controller.regenerateAutoQueue()` + entrada en la
       barra de la vista de Cola, visible solo cuando hay contexto activo o radio habilitada:
       rehace la cola automática desde el contexto (remezclando si shuffle) y descarta el bloque de
       radio vigente. **Nunca toca la cola manual** (D-2) ni la pista sonando.
 
-- [ ] **B5 · Reordenar la cola en móvil.** Causa probable: el `VerticalDragGestureRecognizer` de
+- [x] **B5 · Reordenar la cola en móvil.** Causa probable: el `VerticalDragGestureRecognizer` de
       `showModalBottomSheet` (`enableDrag: true` por defecto) gana la arena contra el
       `ReorderableDragStartListener` del asa. Corrección: `AppBottomSheet.show` acepta `enableDrag`
       y la hoja de la cola lo pasa en `false` (se cierra por el botón/gesto de fondo, no
       arrastrando la lista). Verificación visual en Chrome con viewport móvil antes de dar por
       bueno; si el gesto sigue perdiendo, se pasa la cola a ruta de pantalla completa en móvil.
 
-- [ ] **B6 · Deslizar a la izquierda para eliminar en la cola.** El `Dismissible` ya existe; queda
+- [x] **B6 · Deslizar a la izquierda para eliminar en la cola.** El `Dismissible` ya existe; queda
       verificar que funciona una vez resuelto B5 (hoy compite con el mismo gesto) y que el índice
       que se pasa a `removeFromQueue` sigue siendo válido tras el `onDismissed`.
 

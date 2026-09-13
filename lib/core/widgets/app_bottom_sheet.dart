@@ -14,11 +14,22 @@ class AppBottomSheet extends StatelessWidget {
     this.maxHeightFactor = 0.85,
   });
 
+  /// [enableDrag] `false` desactiva el gesto de arrastrar la hoja hacia abajo
+  /// para cerrarla (ronda 3, B5).
+  ///
+  /// Hace falta cuando el contenido tiene su **propio** gesto de arrastre
+  /// vertical, como la lista reordenable de la cola: el
+  /// `VerticalDragGestureRecognizer` que `showModalBottomSheet` monta sobre
+  /// toda la hoja compite en la arena de gestos contra el
+  /// `ReorderableDragStartListener` del asa de cada fila, y el resultado es
+  /// que reordenar no funciona. La hoja se sigue pudiendo cerrar tocando
+  /// fuera o con el botón de atrás.
   static Future<T?> show<T>({
     required BuildContext context,
     required Widget child,
     String? title,
     double maxHeightFactor = 0.85,
+    bool enableDrag = true,
   }) {
     final isDesktop = MediaQuery.of(context).size.width >= 720;
     if (isDesktop) {
@@ -57,6 +68,7 @@ class AppBottomSheet extends StatelessWidget {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
+      enableDrag: enableDrag,
       backgroundColor: Colors.transparent,
       builder: (ctx) => AppBottomSheet(
         title: title,
