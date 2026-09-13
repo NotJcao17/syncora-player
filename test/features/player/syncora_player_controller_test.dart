@@ -69,13 +69,21 @@ class FakeAudioEngine implements AudioEngine {
   /// El motor lanza al intentar cargar (fuente invalida, headers rechazados).
   bool throwOnSetUrl = false;
 
+  /// Cuantas de las primeras llamadas a `setUrl` fallan cuando
+  /// [throwOnSetUrl] esta activo. `null` = fallan todas (comportamiento
+  /// original). Ronda 3 (A3): permite simular el caso real que motivo el
+  /// reintento -- un fallo transitorio que el segundo intento resuelve.
+  int? failSetUrlTimes;
+
   @override
   Future<void> setUrl(String url, {Map<String, String>? headers, Duration? initialPosition}) async {
     lastUrl = url;
     setUrlCallCount++;
-    if (stallSetUrl || throwOnSetUrl) {
+    final shouldThrow =
+        throwOnSetUrl && (failSetUrlTimes == null || setUrlCallCount <= failSetUrlTimes!);
+    if (stallSetUrl || shouldThrow) {
       emitState(_state.copyWith(processingState: AudioProcessingState.loading));
-      if (throwOnSetUrl) throw StateError('el motor no pudo abrir la fuente');
+      if (shouldThrow) throw StateError('el motor no pudo abrir la fuente');
       await Completer<void>().future; // nunca completa
       return;
     }
@@ -2545,9 +2553,16 @@ void main() {
       controller.dispose();
     });
 
-    test('no se reintenta solo: el motor recibe una unica carga', () async {
+    test('una carga colgada NO se reintenta: el motor recibe una unica carga', () async {
       // Regla de §2.1 de correcciones_qa_post_fase_7.md: nada puede volver a
       // escribir en el motor fuera del camino del controlador.
+      //
+      // Ronda 3 (A3): el controlador SI concede un reintento cuando la carga
+      // LANZA (ver el test de abajo), pero nunca cuando se AGOTA EL TECHO DE
+      // ESPERA. La diferencia importa: un timeout significa que el future de
+      // carga sigue vivo dentro del motor, asi que volver a llamarlo dejaria
+      // dos cargas pisandose sobre la misma instancia -- exactamente el fallo
+      // que §2.1 documenta. Este test fija esa frontera.
       final engine = FakeAudioEngine()..stallSetUrl = true;
       final controller = await playingController(engine);
 
@@ -2559,19 +2574,54 @@ void main() {
       controller.dispose();
     });
 
+    test('si la carga lanza, se concede exactamente un reintento', () async {
+      // Ronda 3 (A3). Sintoma reportado en Android: "Error 'No se pudo
+      // iniciar X' en algunas canciones, ponerla de nuevo o dar next lo
+      // soluciona". Si repetir la accion arregla el problema, el reintento
+      // puede hacerlo el propio camino de reproduccion.
+      final engine = FakeAudioEngine()..throwOnSetUrl = true;
+      final controller = await playingController(engine);
+
+      await controller.setQueue(const [SyncoraTrack(id: 'a', title: 'A')]);
+      await pumpEventQueue();
+
+      // Dos cargas: el intento original y UN reintento. Ni una mas.
+      expect(engine.setUrlCallCount, 2);
+      expect(controller.state.engine.processingState, AudioProcessingState.idle);
+      expect(controller.state.notice?.kind, PlayerNoticeKind.persistentError);
+      controller.dispose();
+    });
+
+    test('el reintento recupera la reproduccion si el segundo intento funciona', () async {
+      final engine = FakeAudioEngine()..throwOnSetUrl = true;
+      final controller = await playingController(engine);
+      // Solo el primer intento falla: el reintento debe dejar la pista sonando
+      // sin que el usuario se entere de nada.
+      engine.failSetUrlTimes = 1;
+
+      await controller.setQueue(const [SyncoraTrack(id: 'a', title: 'A')]);
+      await pumpEventQueue();
+
+      expect(engine.setUrlCallCount, 2);
+      expect(controller.state.engine.processingState, AudioProcessingState.ready);
+      expect(controller.state.notice?.kind, isNot(PlayerNoticeKind.persistentError));
+      controller.dispose();
+    });
+
     test('tras el fallo, pulsar reproducir rehace la carga desde cero', () async {
       final engine = FakeAudioEngine()..throwOnSetUrl = true;
       final controller = await playingController(engine);
 
       await controller.setQueue(const [SyncoraTrack(id: 'a', title: 'A')]);
       await pumpEventQueue();
-      expect(engine.setUrlCallCount, 1);
+      // Intento original + el reintento automatico de A3.
+      expect(engine.setUrlCallCount, 2);
 
       engine.throwOnSetUrl = false;
       await controller.play();
       await pumpEventQueue();
 
-      expect(engine.setUrlCallCount, 2);
+      expect(engine.setUrlCallCount, 3);
       expect(controller.state.engine.processingState, AudioProcessingState.ready);
       controller.dispose();
     });

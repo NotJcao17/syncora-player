@@ -31,11 +31,20 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
   // propio en la notificación necesita `MediaControl.custom` con `name`, que es
   // lo que enruta el click hacia `customAction()` (ya maneja 'toggleShuffle').
   // Sin eso el botón no llegaba a dibujarse.
-  static final MediaControl _shuffleControl = MediaControl.custom(
-    androidIcon: 'drawable/ic_shuffle',
-    label: 'Shuffle',
-    name: 'toggleShuffle',
-  );
+  // Ronda 3 (A6): antes era una constante con `ic_shuffle` fijo, así que el
+  // botón se veía idéntico con aleatorio activado o apagado y no había forma
+  // de saber el modo desde la pantalla de bloqueo. Ahora alterna entre dos
+  // drawables, exactamente el mismo patrón que ya usa `_favoriteControl`
+  // para el corazón.
+  MediaControl get _shuffleControl => MediaControl.custom(
+        androidIcon: _controller.state.isShuffle
+            ? 'drawable/ic_shuffle'
+            : 'drawable/ic_shuffle_off',
+        label: _controller.state.isShuffle
+            ? 'Aleatorio activado'
+            : 'Aleatorio desactivado',
+        name: 'toggleShuffle',
+      );
 
   // Ítem 4 (QA): el corazón vivía como `MediaControl` FIJO con un único
   // ícono relleno (`ic_heart`) -- por eso se veía "liked" siempre, sin
@@ -166,7 +175,10 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
         androidCompactActionIndices: const [1, 2, 3],
         shuffleMode: state.isShuffle ? AudioServiceShuffleMode.all : AudioServiceShuffleMode.none,
         repeatMode: _mapRepeatMode(state.repeatMode),
-        processingState: _mapProcessingState(engineState.processingState),
+        processingState: _mapProcessingState(
+          engineState.processingState,
+          isPreparing: _controller.isPreparingPlayback && track != null,
+        ),
         playing: isPlaying,
         updatePosition: engineState.position,
         bufferedPosition: engineState.bufferedPosition,
@@ -213,10 +225,30 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     }
   }
 
-  AudioProcessingState _mapProcessingState(engine_state.AudioProcessingState state) {
+  /// Traduce el estado del motor al de `audio_service`.
+  ///
+  /// Ronda 3 (H-R3-2): [isPreparing] existe por un motivo muy concreto. Entre
+  /// pista y pista, el camino de reproducción del controlador llama a
+  /// `_engine.stop()` antes de cargar la fuente nueva, y el motor emite
+  /// `idle`. `audio_service` interpreta `idle` como "ya no hay sesión de
+  /// reproducción" y **destruye la notificación, soltando el foreground
+  /// service**. De ahí salían dos síntomas de las pruebas en Android que
+  /// parecían independientes: el reproductor de la pantalla de bloqueo
+  /// desapareciendo un segundo en cada cambio de pista, y los varios minutos
+  /// de silencio con la pantalla apagada (sin FGS vivo el sistema congela el
+  /// proceso justo mientras se está extrayendo la URL de la pista
+  /// siguiente).
+  ///
+  /// Publicar `loading` en esa ventana es además lo semánticamente correcto:
+  /// hay una pista activa y se está preparando. El estado que ve la **UI**
+  /// de la app no cambia — esto solo afecta a lo que se le publica al SO.
+  AudioProcessingState _mapProcessingState(
+    engine_state.AudioProcessingState state, {
+    bool isPreparing = false,
+  }) {
     switch (state) {
       case engine_state.AudioProcessingState.idle:
-        return AudioProcessingState.idle;
+        return isPreparing ? AudioProcessingState.loading : AudioProcessingState.idle;
       case engine_state.AudioProcessingState.loading:
         return AudioProcessingState.loading;
       case engine_state.AudioProcessingState.buffering:

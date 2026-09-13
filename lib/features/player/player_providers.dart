@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
@@ -16,6 +17,7 @@ import '../../data/supabase/supabase_providers.dart';
 import '../../data/sync/sync_service.dart';
 import '../auth/local_mode_provider.dart';
 import 'audio_engine/audio_engine_factory.dart';
+import 'audio_focus_service.dart';
 import 'os_controls/syncora_audio_handler.dart';
 import 'os_controls/windows_media_controls.dart';
 import 'player_models.dart';
@@ -110,6 +112,23 @@ final syncoraPlayerControllerProvider =
       );
     } catch (e) {
       debugPrint('AndroidAudioService no disponible en este entorno: $e');
+    }
+    // H-R3-1: foco de audio e interrupciones (alarma, llamada, historia de
+    // Instagram, auriculares desconectados). Solo Android: en Windows no hay
+    // un modelo de foco equivalente y `media_kit` convive con el resto del
+    // sistema sin pedirlo.
+    if (!_isTestEnv) {
+      try {
+        final focus = AudioFocusService(
+          onPause: controller.pause,
+          onResume: controller.play,
+          isPlaying: () => controller.state.engine.playing,
+        );
+        unawaited(focus.attach());
+        ref.onDispose(focus.dispose);
+      } catch (e) {
+        debugPrint('AudioFocusService no disponible en este entorno: $e');
+      }
     }
   }
 

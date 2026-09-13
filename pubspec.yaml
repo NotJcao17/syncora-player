@@ -40,6 +40,10 @@ dependencies:
   go_router: ^17.3.0
   just_audio: ^0.10.6
   audio_service: ^0.18.19
+  # Ronda 3 (H-R3-1): ya venía como dependencia transitiva de just_audio /
+  # audio_service, pero sin usarse. Se promueve a directa porque ahora la app
+  # sí gestiona foco de audio e interrupciones (`audio_focus_service.dart`).
+  audio_session: ^0.2.4
   media_kit: ^1.2.6
   media_kit_libs_windows_audio: ^1.0.9
   smtc_windows: ^1.1.0

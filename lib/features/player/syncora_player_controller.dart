@@ -411,6 +411,34 @@ class SyncoraPlayerController extends ChangeNotifier {
   // recursivas mientras una extracción está en curso.
   bool _isTransitioning = false;
 
+  /// Generación de `_playCurrentInternal` dueña de la ventana "estoy
+  /// preparando la pista siguiente" (ronda 3, hallazgo H-R3-2).
+  ///
+  /// Existe para los adaptadores del SO, no para la UI: entre pista y pista
+  /// el camino de reproducción llama a `_engine.stop()`, y el motor emite
+  /// `processingState: idle`. `audio_service` interpreta ese `idle` como
+  /// "ya no hay sesión de reproducción" y **destruye la notificación,
+  /// soltando el foreground service**. Eso explicaba dos síntomas de las
+  /// pruebas en Android: el reproductor de la pantalla de bloqueo
+  /// desapareciendo un segundo en cada cambio de pista, y —con la pantalla
+  /// apagada— varios minutos de silencio entre canciones, porque sin FGS
+  /// vivo el sistema congela el proceso justo mientras el isolate de
+  /// extracción está resolviendo la URL siguiente.
+  ///
+  /// Se compara por generación (no un `bool`) porque `_playCurrentInternal`
+  /// se reentra legítimamente (reintento de extracción, cascada de
+  /// auto-skip): el `finally` de una llamada vieja no debe cerrar la
+  /// ventana de una llamada más nueva. Y no puede quedarse pegada: la
+  /// ventana la acota el propio `_engineLoadTimeout` (30 s), no una bandera
+  /// que alguien deba acordarse de limpiar (§2.3 de
+  /// `correcciones_qa_post_fase_7.md`).
+  int? _preparingPlaybackGeneration;
+
+  /// ¿El controlador está en medio de arrancar una pista? Lo consume
+  /// `SyncoraAudioHandler` para publicar `loading` en vez de `idle` durante
+  /// la transición. Ver [_preparingPlaybackGeneration].
+  bool get isPreparingPlayback => _preparingPlaybackGeneration != null;
+
   /// Inicializa suscripciones a los streams del motor y restaura sesión guardada.
   void init() {
     _engineSub = _engine.stateStream.listen(_onEngineState);
@@ -978,6 +1006,22 @@ bool get _isTestEnv {
 
   void clearError() {
     _state = _state.copyWith(clearError: true);
+    _notify();
+  }
+
+  /// Quita la marca "no disponible esta sesión" (D-21) de [trackId].
+  ///
+  /// El marcado sigue siendo de sesión y sin persistir, pero hasta la ronda 3
+  /// **no tenía salida**: una pista marcada por un fallo puntual de
+  /// extracción quedaba bloqueada en toda la UI hasta reiniciar la app
+  /// (reportado en pruebas de Android: *"la canción aparecía no disponible,
+  /// reiniciar la app lo arregló"*). Ahora tocarla explícitamente limpia la
+  /// marca y vuelve a intentarlo: el reintento lo decide el usuario, que es
+  /// la misma regla que ya aplica al reintento tras un fallo de carga.
+  void clearUnavailable(String trackId) {
+    if (!_state.unavailableTrackIds.contains(trackId)) return;
+    final updated = Set<String>.from(_state.unavailableTrackIds)..remove(trackId);
+    _state = _state.copyWith(unavailableTrackIds: Set.unmodifiable(updated));
     _notify();
   }
 
@@ -1729,9 +1773,68 @@ bool get _isTestEnv {
   }
 
   Future<void> _playCurrentInternal(SyncoraTrack track) async {
+    final myGeneration = ++_playGeneration;
+    // H-R3-2: la ventana se abre ANTES del `stop()` del motor, que es
+    // exactamente el punto donde se emitía `idle` y `audio_service` soltaba
+    // el foreground service. Ver [_preparingPlaybackGeneration].
+    _preparingPlaybackGeneration = myGeneration;
+    try {
+      await _playCurrentGuarded(track, myGeneration);
+    } finally {
+      // Solo cierra la ventana quien la abrió: una llamada reentrante
+      // (reintento de extracción, cascada de auto-skip) tiene una
+      // generación más nueva y es ella la que manda ahora.
+      if (_preparingPlaybackGeneration == myGeneration) {
+        _preparingPlaybackGeneration = null;
+        // Republica el estado ya sin la ventana abierta. Sin esto, un fallo
+        // de carga (`_failPlaybackLoad`, que notifica DENTRO del try) dejaba
+        // al adaptador del SO con el último `idle` traducido a `loading`, y
+        // la notificación se quedaba girando.
+        _notify();
+      }
+    }
+  }
+
+  /// Carga una fuente en el motor concediendo **un** reintento inmediato si
+  /// la primera llamada lanza (ronda 3, A3).
+  ///
+  /// El síntoma que corrige: *"Error 'No se pudo iniciar X' en algunas
+  /// canciones; ponerla de nuevo o dar next lo soluciona"*. Si volver a
+  /// pulsar arregla el problema, un reintento automático hace exactamente lo
+  /// mismo sin que el usuario tenga que enterarse.
+  ///
+  /// Dos restricciones deliberadas:
+  /// - **Un solo reintento**, en el mismo y único camino de reproducción del
+  ///   controlador. Nada de vigilantes en segundo plano: eso ya rompió el
+  ///   skip una vez (§2.1 de `correcciones_qa_post_fase_7.md`).
+  /// - **Un `TimeoutException` NO se reintenta.** Un timeout significa que
+  ///   el future de carga sigue pendiente dentro del motor; volver a
+  ///   llamarlo dejaría dos cargas pisándose sobre la misma instancia
+  ///   (y en Android el wrapper de crossfade gestiona dos). Se propaga tal
+  ///   cual para que lo atienda `_failPlaybackLoad`.
+  Future<void> _loadSourceWithOneRetry(
+    Future<void> Function() load, {
+    required bool Function() isStale,
+  }) async {
+    try {
+      await load().timeout(_engineLoadTimeout);
+      return;
+    } on TimeoutException {
+      rethrow;
+    } catch (e) {
+      if (isStale()) rethrow;
+      _log('[Play] La carga en el motor falló ($e). Un reintento.');
+    }
+    // La primera llamada lanzó (no quedó pendiente), así que el motor está
+    // libre: se puede dejar en un estado conocido antes de reintentar.
+    await _engine.stop();
+    if (isStale()) return;
+    await load().timeout(_engineLoadTimeout);
+  }
+
+  Future<void> _playCurrentGuarded(SyncoraTrack track, int myGeneration) async {
     _beginListenTracking(track);
 
-    final myGeneration = ++_playGeneration;
     bool isStale() => myGeneration != _playGeneration;
 
     // Este camino (skip manual, playFromQueue, setQueue, reintentos, cascada
@@ -1800,9 +1903,10 @@ bool get _isTestEnv {
           await _engine.crossfadeToLocalSource(localPath, crossfadeDuration);
         } else {
           _log('[Play] Pista local descargada encontrada: $localPath. Cargando sin pasar por ExtractionIsolate.');
-          await _engine
-              .setLocalSource(localPath, initialPosition: initialPos)
-              .timeout(_engineLoadTimeout);
+          await _loadSourceWithOneRetry(
+            () => _engine.setLocalSource(localPath, initialPosition: initialPos),
+            isStale: isStale,
+          );
           _log('[Play] Fuente local cargada por el motor.');
 
           if (initialPos != null) {
@@ -1872,9 +1976,10 @@ bool get _isTestEnv {
           // motor; si aparecen los dos y tampoco arranca, el motor acepto el
           // comando y no llego a bufferear. Son investigaciones opuestas.
           final loadStarted = DateTime.now();
-          await _engine
-              .setUrl(streamUrl, headers: headers, initialPosition: initialPos)
-              .timeout(_engineLoadTimeout);
+          await _loadSourceWithOneRetry(
+            () => _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos),
+            isStale: isStale,
+          );
           _log('[Play] Fuente cargada por el motor en '
               '${DateTime.now().difference(loadStarted).inMilliseconds}ms.');
 

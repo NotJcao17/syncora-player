@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,37 +34,67 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
   bool _isLiked = false;
   double _dragOffsetY = 0.0;
 
+  /// Id de la pista dueña del color de fondo vigente. Ronda 3 (H-R3-4): la
+  /// paleta se extraía **solo en `initState`**, así que con la pantalla
+  /// abierta el fondo se quedaba con el color de la pista que sonaba al
+  /// abrirla. De ahí el caso reportado en pruebas: portada roja con el fondo
+  /// completamente verde, que era el de un álbum vecino en la cola.
+  ///
+  /// También sirve de guard de carrera: `PaletteGenerator` es asíncrono y
+  /// puede resolver cuando ya suena otra pista; una respuesta que no
+  /// corresponde al id vigente se descarta en vez de pisar el color bueno.
+  String? _paletteTrackId;
+
+  /// Mismo problema y mismo patrón para el corazón: sin esto se quedaba con
+  /// el estado "me gusta" de la pista con la que se abrió la pantalla.
+  String? _likedTrackId;
+
+  /// Generación de la consulta de "me gusta". Sin esto, tocar el corazón
+  /// mientras una consulta para la MISMA pista sigue en vuelo dejaba que la
+  /// respuesta vieja pisara el valor recién escrito (la comparación por id no
+  /// distingue esos dos casos porque el id es el mismo).
+  int _likedRequest = 0;
+
   @override
   void initState() {
     super.initState();
-    _extractPalette();
-    _checkIsLiked();
+    final track = ref.read(currentTrackProvider);
+    if (track != null) {
+      _extractPalette(track);
+      _checkIsLiked(track);
+    }
   }
 
-  Future<void> _checkIsLiked() async {
-    final track = ref.read(currentTrackProvider);
-    if (track == null) return;
+  Future<void> _checkIsLiked(SyncoraTrack track) async {
+    _likedTrackId = track.id;
+    final request = ++_likedRequest;
     final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
     final dao = ref.read(playlistDaoProvider);
     final liked = await dao.isTrackLiked(trackIdInt);
-    if (mounted) setState(() => _isLiked = liked);
+    if (!mounted || _likedTrackId != track.id || _likedRequest != request) return;
+    setState(() => _isLiked = liked);
   }
 
-  void _extractPalette() async {
-    final track = ref.read(currentTrackProvider);
-    if (track == null || track.coverUrl.isEmpty) return;
+  Future<void> _extractPalette(SyncoraTrack track) async {
+    _paletteTrackId = track.id;
+    if (track.coverUrl.isEmpty) {
+      if (mounted) setState(() => _dominantColor = null);
+      return;
+    }
 
     try {
       final palette = await PaletteGenerator.fromImageProvider(
-        NetworkImage(track.coverUrl),
+        // Reusa la copia ya cacheada en disco en vez de descargar la portada
+        // una segunda vez solo para sacarle el color.
+        CachedNetworkImageProvider(track.coverUrl),
         maximumColorCount: 8,
       );
-      if (mounted && palette.dominantColor != null) {
-        setState(() {
-          _dominantColor = palette.dominantColor!.color;
-        });
-      }
-    } catch (_) {}
+      if (!mounted || _paletteTrackId != track.id) return;
+      setState(() => _dominantColor = palette.dominantColor?.color);
+    } catch (_) {
+      if (!mounted || _paletteTrackId != track.id) return;
+      setState(() => _dominantColor = null);
+    }
   }
 
   Future<void> _toggleLike(SyncoraTrack track) async {
@@ -72,6 +103,10 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     final result = await toggleTrackLike(ref, track);
 
     if (mounted) {
+      // Invalida cualquier consulta de "me gusta" en vuelo para esta misma
+      // pista: el valor recién escrito es más nuevo que el que devuelva ella.
+      _likedRequest++;
+      _likedTrackId = track.id;
       setState(() => _isLiked = result.isLiked);
       if (result.remoteFailed) {
         AppToast.show(context, message: 'La playlist ya no existe en la nube');
@@ -94,6 +129,14 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
 
   @override
   Widget build(BuildContext context) {
+    // H-R3-4: recalcular color de fondo y estado de "me gusta" en cada cambio
+    // de pista, no solo al abrir la pantalla.
+    ref.listen<SyncoraTrack?>(currentTrackProvider, (previous, next) {
+      if (next == null || previous?.id == next.id) return;
+      _extractPalette(next);
+      _checkIsLiked(next);
+    });
+
     final currentTrack = ref.watch(currentTrackProvider);
     final isPlaying = ref.watch(isPlayingProvider);
     final isShuffle = ref.watch(playerStateProvider.select((s) => s.isShuffle));

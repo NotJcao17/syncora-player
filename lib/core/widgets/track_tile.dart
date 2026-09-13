@@ -624,6 +624,20 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         // marca de sesión, priorizando conexión como razón principal
         // (si ni siquiera hay red, eso es lo que el usuario necesita
         // saber, más allá de si además está marcada).
+        //
+        // Ronda 3 (A4): con conexión y solo la marca de sesión en contra, un
+        // tap explícito ya no es un callejón sin salida. Antes la pista
+        // quedaba bloqueada hasta reiniciar la app (reportado en pruebas de
+        // Android); ahora el tap limpia la marca y vuelve a intentarlo —
+        // el reintento lo decide el usuario, igual que tras un fallo de
+        // carga. D-21 se mantiene: la marca sigue siendo de sesión y no se
+        // persiste.
+        if (isConnected && isMarkedUnavailableThisSession) {
+          ref.read(syncoraPlayerControllerProvider.notifier).clearUnavailable(widget.track.id);
+          AppToast.show(context, message: 'Reintentando "${widget.track.title}"...');
+          widget.onTap?.call();
+          return;
+        }
         final message = isConnected
             ? 'No disponible en este dispositivo'
             : 'No disponible sin conexión';

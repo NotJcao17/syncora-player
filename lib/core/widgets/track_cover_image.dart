@@ -13,7 +13,7 @@ import '../utils/deezer_image.dart';
 /// .downloadAndCacheCover`), pero solo la pantalla de Descargas la usaba: el
 /// resto de la app pedía siempre la URL remota, así que sin conexión las
 /// portadas de canciones descargadas aparecían vacías.
-class TrackCoverImage extends StatelessWidget {
+class TrackCoverImage extends StatefulWidget {
   final String coverUrl;
   final int? trackId;
 
@@ -47,23 +47,76 @@ class TrackCoverImage extends StatelessWidget {
   });
 
   @override
+  State<TrackCoverImage> createState() => _TrackCoverImageState();
+}
+
+class _TrackCoverImageState extends State<TrackCoverImage> {
+  /// Reintentos ya consumidos para la URL vigente (ronda 3, A7).
+  ///
+  /// Síntoma que corrige: *"algunas portadas no se ven en el celular en
+  /// ciertas ejecuciones, creo que después de que haya pasado un tiempo"*.
+  /// La causa más probable es la misma que ya costó tres rondas en Inicio
+  /// (§6.9 de `correcciones_qa_post_fase_7.md`): en un arranque en frío
+  /// Android tarda un par de segundos en tener DNS utilizable, las primeras
+  /// cargas de imagen fallan, y `CachedNetworkImage` se queda mostrando su
+  /// `errorWidget` para ese widget hasta que algo lo reconstruya — cosa que
+  /// en una lista que no se toca no pasa nunca.
+  ///
+  /// Reintento **acotado y decreciente en frecuencia**, no un bucle: dos
+  /// intentos extra por portada como mucho. Cambiar la key fuerza a
+  /// `CachedNetworkImage` a rehacer la petición (Flutter ya saca del
+  /// `ImageCache` las entradas que fallaron, así que no hay nada rancio que
+  /// invalidar a mano).
+  int _attempt = 0;
+  bool _retryScheduled = false;
+
+  static const int _maxRetries = 2;
+  static const List<Duration> _retryDelays = [
+    Duration(seconds: 2),
+    Duration(seconds: 6),
+  ];
+
+  @override
+  void didUpdateWidget(TrackCoverImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Portada distinta: el presupuesto de reintentos se reinicia.
+    if (oldWidget.coverUrl != widget.coverUrl || oldWidget.trackId != widget.trackId) {
+      _attempt = 0;
+      _retryScheduled = false;
+    }
+  }
+
+  void _scheduleRetry() {
+    if (_retryScheduled || _attempt >= _maxRetries) return;
+    _retryScheduled = true;
+    final delay = _retryDelays[_attempt.clamp(0, _retryDelays.length - 1)];
+    Future<void>.delayed(delay, () {
+      if (!mounted) return;
+      setState(() {
+        _attempt++;
+        _retryScheduled = false;
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final fallback = placeholder ??
+    final fallback = widget.placeholder ??
         Container(
-          width: width,
-          height: height,
+          width: widget.width,
+          height: widget.height,
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
         );
 
-    final local = CoverCacheService.localCoverFileSync(trackId);
+    final local = CoverCacheService.localCoverFileSync(widget.trackId);
 
     Widget localImage(File file) => Image.file(
           file,
-          width: width,
-          height: height,
-          fit: fit,
-          cacheWidth: memCacheWidth,
-          cacheHeight: memCacheHeight,
+          width: widget.width,
+          height: widget.height,
+          fit: widget.fit,
+          cacheWidth: widget.memCacheWidth,
+          cacheHeight: widget.memCacheHeight,
           // `Image.file` usa por defecto un filtrado mas basto que el de
           // `CachedNetworkImage`.
           filterQuality: FilterQuality.medium,
@@ -71,20 +124,30 @@ class TrackCoverImage extends StatelessWidget {
         );
 
     // Miniaturas: el archivo local basta y evita ir a la red.
-    if (preferredSize == null && local != null) return localImage(local);
+    if (widget.preferredSize == null && local != null) return localImage(local);
 
-    if (coverUrl.isEmpty) return local != null ? localImage(local) : fallback;
+    if (widget.coverUrl.isEmpty) return local != null ? localImage(local) : fallback;
+
+    final url = widget.preferredSize != null
+        ? DeezerImage.atSize(widget.coverUrl, widget.preferredSize!)
+        : widget.coverUrl;
 
     return CachedNetworkImage(
-      imageUrl: preferredSize != null ? DeezerImage.atSize(coverUrl, preferredSize!) : coverUrl,
-      width: width,
-      height: height,
-      fit: fit,
-      memCacheWidth: memCacheWidth,
-      memCacheHeight: memCacheHeight,
+      key: ValueKey('$url#$_attempt'),
+      imageUrl: url,
+      width: widget.width,
+      height: widget.height,
+      fit: widget.fit,
+      memCacheWidth: widget.memCacheWidth,
+      memCacheHeight: widget.memCacheHeight,
       filterQuality: FilterQuality.medium,
       placeholder: (_, _) => local != null ? localImage(local) : fallback,
-      errorWidget: (_, _, _) => local != null ? localImage(local) : fallback,
+      errorWidget: (_, _, _) {
+        // Se agenda fuera del build: llamar a setState desde aquí dispararía
+        // un rebuild en mitad del propio build.
+        _scheduleRetry();
+        return local != null ? localImage(local) : fallback;
+      },
     );
   }
 }
