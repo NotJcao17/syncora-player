@@ -386,3 +386,13 @@ confirmado como correcto.
       ese camino, porque ahora sí se pausa cuando otra app toma el foco. Obliga a poner
       `androidNotificationOngoing: false` (hay un assert en `audio_service` que lo exige).
 - [x] **Tooltip de las playlists en la barra lateral de escritorio:** quitado.
+- [x] **Ícono de aleatorio de la notificación: ahora es el de Solar.** El anterior
+      (`ic_shuffle.xml`) era un vector de Material añadido a mano, no un recurso por defecto de
+      Android: los iconos Solar del resto de la app vienen del paquete `flutty_solar_icons`, que es
+      una **fuente de iconos** y por tanto solo la puede dibujar Flutter — una acción de
+      notificación necesita un `drawable` nativo. Se resolvió extrayendo el glifo real
+      (`SolarBroken.ttf`, codepoint `0xe49d`) con `fontTools` y convirtiéndolo a VectorDrawable; el
+      volteo de eje Y (las fuentes van con Y hacia arriba, VectorDrawable hacia abajo) se hace con
+      un `<group android:scaleY="-1" android:pivotY="500">`. El estado "apagado" es el mismo glifo
+      al 50% de opacidad con una barra diagonal encima. **Si hiciera falta regenerarlos**, el
+      método está aquí descrito: no hay SVGs en el paquete, solo los TTF.
