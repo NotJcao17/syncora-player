@@ -91,18 +91,46 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => SizedBox(
-        height: MediaQuery.of(ctx).size.height * 0.85,
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+      builder: (ctx) {
+        final mq = MediaQuery.of(ctx);
+        // Ronda 3 (E4): la hoja se abría con una altura fija del 85% de la
+        // pantalla y `top: 20` a secas, sin `SafeArea` ni asa. En pantallas
+        // altas eso la subía hasta pegar el título contra el borde superior
+        // (y contra el notch en algunos móviles). Ahora se descuenta el área
+        // segura de arriba y se añade el asa, como el resto de hojas de la
+        // app.
+        final maxHeight = mq.size.height - mq.padding.top - 12;
+        return SizedBox(
+          height: (mq.size.height * 0.85).clamp(0.0, maxHeight),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 10, bottom: 6),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.muted.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 8,
+                    bottom: mq.viewInsets.bottom + 16,
+                  ),
+                  child: const _DeepSearchModalContent(),
+                ),
+              ),
+            ],
           ),
-          child: const _DeepSearchModalContent(),
-        ),
-      ),
+        );
+      },
     );
   }
 

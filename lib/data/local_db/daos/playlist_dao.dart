@@ -24,6 +24,17 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
         ]))
       .watch();
 
+  /// Marca la playlist como reproducida ahora (ronda 3, D1).
+  ///
+  /// Alimenta el orden "escuchadas recientemente" de Biblioteca. Es un dato
+  /// local: no viaja a Supabase (ver el docstring de `Playlists.lastPlayedAt`),
+  /// así que se escribe directo al DAO sin pasar por el servicio compartido —
+  /// el Pitfall #28 aplica a datos que el sync poda, y este no es uno de
+  /// ellos.
+  Future<void> touchLastPlayed(int id) =>
+      (update(playlists)..where((t) => t.id.equals(id)))
+          .write(PlaylistsCompanion(lastPlayedAt: Value(DateTime.now())));
+
   Future<Playlist?> getPlaylistById(int id) =>
       (select(playlists)..where((t) => t.id.equals(id))).getSingleOrNull();
 

@@ -139,6 +139,16 @@ class TrackContextMenu {
         ),
       ),
       PopupMenuItem(
+        value: 'play_next',
+        child: Row(
+          children: [
+            Icon(AppIcons.broken(SolarIcons.PlayCircle), color: AppTheme.primary, size: 18),
+            const SizedBox(width: 12),
+            const Text('Reproducir a continuación', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+      PopupMenuItem(
         value: 'queue',
         child: Row(
           children: [
@@ -231,6 +241,14 @@ class TrackContextMenu {
           AppToast.show(context, message: '"${track.title}" agregada a la cola');
         }
       }
+    } else if (value == 'play_next') {
+      // Ronda 3 (E2): estaba solo en el menú del reproductor a pantalla
+      // completa. Es útil desde cualquier lista, así que vive aquí con el
+      // resto. Va a la cola MANUAL (D-2), como cualquier acción explícita.
+      ref.read(syncoraPlayerControllerProvider.notifier).playNext(track);
+      if (context.mounted) {
+        AppToast.show(context, message: 'Se reproducirá a continuación');
+      }
     } else if (value == 'other_versions') {
       showOtherVersionsModal(context, track);
     } else if (value == 'like') {
@@ -255,6 +273,112 @@ class TrackContextMenu {
       }
       await showAddToPlaylistDialog(context, ref, track);
     }
+  }
+
+  /// Hoja de opciones completa de una pista (la versión táctil del menú de 3
+  /// puntos).
+  ///
+  /// Ronda 3 (E2): vivía dentro de `_TrackTileState`, atada a `widget.track`,
+  /// así que el reproductor a pantalla completa no podía reusarla y tenía su
+  /// propio menú con solo dos opciones ("reproducir a continuación" y
+  /// "agregar a la cola"). Extraída aquí, ambos sitios ofrecen exactamente lo
+  /// mismo y no pueden divergir.
+  static Future<void> showOptionsSheet(
+    BuildContext context,
+    WidgetRef ref,
+    SyncoraTrack track, {
+    VoidCallback? onAddToQueue,
+    VoidCallback? onRemove,
+    String removeLabel = 'Eliminar de la playlist',
+  }) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
+    final isLiked = await ref.read(playlistDaoProvider).isTrackLiked(trackIdInt);
+    final canEdit = ref.read(canEditProvider);
+    final editColor = canEdit ? AppTheme.primary : AppTheme.muted;
+
+    if (!context.mounted) return;
+
+    void select(String value) {
+      Navigator.pop(context);
+      handleOptionSelected(
+        context,
+        ref,
+        track,
+        value,
+        onAddToQueue: onAddToQueue,
+        onRemove: onRemove,
+      );
+    }
+
+    await AppBottomSheet.show(
+      context: context,
+      title: track.title,
+      child: ListView(
+        shrinkWrap: true,
+        physics: const ClampingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        children: [
+          if ((track.artistId ?? 0) != 0)
+            _OptionItem(
+              icon: AppIcons.broken(SolarIcons.User),
+              label: 'Ir al artista',
+              onTap: () => select('artist'),
+            ),
+          if (track.albumId != null && track.albumId != 0)
+            _OptionItem(
+              icon: AppIcons.broken(SolarIcons.Vinyl),
+              label: 'Ir al álbum',
+              onTap: () => select('album'),
+            ),
+          _OptionItem(
+            icon: AppIcons.broken(SolarIcons.AddFolder),
+            label: 'Agregar a playlist',
+            color: editColor,
+            onTap: () => select('playlist'),
+          ),
+          _OptionItem(
+            icon: isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
+            label: isLiked ? 'Eliminar de Me Gusta' : 'Agregar a Me Gusta',
+            color: editColor,
+            onTap: () => select('like'),
+          ),
+          _OptionItem(
+            icon: AppIcons.broken(SolarIcons.PlayCircle),
+            label: 'Reproducir a continuación',
+            onTap: () => select('play_next'),
+          ),
+          _OptionItem(
+            icon: AppIcons.broken(SolarIcons.PlaylistMinimalisticN2),
+            label: 'Agregar a la cola',
+            onTap: () => select('queue'),
+          ),
+          _OptionItem(
+            icon: AppIcons.broken(SolarIcons.CloudDownload),
+            label: 'Descargar',
+            onTap: () => select('download'),
+          ),
+          _OptionItem(
+            icon: AppIcons.broken(SolarIcons.Share),
+            label: 'Compartir',
+            onTap: () => select('share'),
+          ),
+          if ((track.artistId ?? 0) != 0)
+            _OptionItem(
+              icon: AppIcons.broken(SolarIcons.Magnifer),
+              label: 'Buscar otras versiones',
+              onTap: () => select('other_versions'),
+            ),
+          if (onRemove != null)
+            _OptionItem(
+              icon: AppIcons.broken(SolarIcons.TrashBinTrash),
+              label: removeLabel,
+              color: editColor,
+              onTap: () => select('remove'),
+            ),
+        ],
+      ),
+    );
   }
 
   static Future<void> showAddToPlaylistDialog(BuildContext context, WidgetRef ref, SyncoraTrack track) async {
@@ -1201,88 +1325,14 @@ class _TrackTileState extends ConsumerState<TrackTile> {
     );
   }
 
-  void _showTrackOptionsMenu(BuildContext context, WidgetRef ref) async {
-    FocusManager.instance.primaryFocus?.unfocus();
-    final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
-    final isLiked = await ref.read(playlistDaoProvider).isTrackLiked(trackIdInt);
-    final canEdit = ref.read(canEditProvider);
-    final editColor = canEdit ? AppTheme.primary : AppTheme.muted;
-
-    if (!context.mounted) return;
-
-    AppBottomSheet.show(
-      context: context,
-      title: widget.track.title,
-      child: ListView(
-        shrinkWrap: true,
-        physics: const ClampingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        children: [
-          if ((widget.track.artistId ?? 0) != 0)
-            _OptionItem(
-              icon: AppIcons.broken(SolarIcons.User),
-              label: 'Ir al artista',
-              onTap: () {
-                Navigator.pop(context);
-                _handleOptionSelected(context, ref, 'artist');
-              },
-            ),
-          if (widget.track.albumId != null && widget.track.albumId != 0)
-            _OptionItem(
-              icon: AppIcons.broken(SolarIcons.Vinyl),
-              label: 'Ir al álbum',
-              onTap: () {
-                Navigator.pop(context);
-                _handleOptionSelected(context, ref, 'album');
-              },
-            ),
-          _OptionItem(
-            icon: AppIcons.broken(SolarIcons.AddFolder),
-            label: 'Agregar a playlist',
-            color: editColor,
-            onTap: () {
-              Navigator.pop(context);
-              _handleOptionSelected(context, ref, 'playlist');
-            },
-          ),
-          _OptionItem(
-            icon: isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
-            label: isLiked ? 'Eliminar de Me Gusta' : 'Agregar a Me Gusta',
-            color: editColor,
-            onTap: () {
-              Navigator.pop(context);
-              _handleOptionSelected(context, ref, 'like');
-            },
-          ),
-          _OptionItem(
-            icon: AppIcons.broken(SolarIcons.PlaylistMinimalisticN2),
-            label: 'Agregar a la cola',
-            onTap: () {
-              Navigator.pop(context);
-              _handleOptionSelected(context, ref, 'queue');
-            },
-          ),
-          if ((widget.track.artistId ?? 0) != 0)
-            _OptionItem(
-              icon: AppIcons.broken(SolarIcons.Magnifer),
-              label: 'Buscar otras versiones',
-              onTap: () {
-                Navigator.pop(context);
-                _handleOptionSelected(context, ref, 'other_versions');
-              },
-            ),
-          if (widget.onRemove != null)
-            _OptionItem(
-              icon: AppIcons.broken(SolarIcons.TrashBinTrash),
-              label: widget.removeLabel,
-              color: editColor,
-              onTap: () {
-                Navigator.pop(context);
-                _handleOptionSelected(context, ref, 'remove');
-              },
-            ),
-        ],
-      ),
+  void _showTrackOptionsMenu(BuildContext context, WidgetRef ref) {
+    TrackContextMenu.showOptionsSheet(
+      context,
+      ref,
+      widget.track,
+      onAddToQueue: widget.onAddToQueue,
+      onRemove: widget.onRemove,
+      removeLabel: widget.removeLabel,
     );
   }
 }

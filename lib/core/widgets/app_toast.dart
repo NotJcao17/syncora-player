@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/player/player_providers.dart';
+import '../layout/bottom_chrome_metrics.dart';
 import '../theme/app_icons.dart';
 
 
@@ -52,12 +53,16 @@ abstract class AppToast {
         } else if (isFullscreenOrNoShell) {
           // En reproductor a pantalla completa o sin shell: pegado al borde inferior + 16px
           bottomMargin = 16.0 + paddingBottom;
-        } else if (hasActiveMiniPlayer) {
-          // Con mini-reproductor activo: por encima del mini-reproductor
-          bottomMargin = 144.0 + paddingBottom;
         } else {
-          // Con mini-reproductor oculto: pegado sobre la barra de navegación
-          bottomMargin = 72.0 + paddingBottom;
+          // Ronda 3 (E3): estas dos alturas estaban duplicadas aquí con
+          // valores distintos (144/72) a los que usa el aviso de "sin
+          // conexión" en `app_shell.dart` (152/80). Esos 8 px de menos
+          // dejaban el aviso montado sobre la esquina redondeada del mini
+          // reproductor. Ahora ambos salen del mismo sitio.
+          bottomMargin = BottomChromeMetrics.floatingBottomOffset(
+            hasMiniPlayer: hasActiveMiniPlayer,
+            bottomInset: paddingBottom,
+          );
         }
       } else {
         if (isFullscreenOrNoShell) {

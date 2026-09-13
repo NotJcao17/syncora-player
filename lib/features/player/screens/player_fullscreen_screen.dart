@@ -7,9 +7,9 @@ import '../../../core/theme/app_icons.dart';
 import 'package:palette_generator/palette_generator.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
+import '../../../core/widgets/track_tile.dart' show TrackContextMenu;
 import '../../auth/local_mode_provider.dart';
 import '../../library/services/like_track_service.dart';
 import '../../../core/widgets/track_cover_image.dart';
@@ -509,34 +509,18 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
   }
 
 
+  /// Ronda 3 (E2): antes este menú tenía solo dos opciones ("reproducir a
+  /// continuación" y "agregar a la cola"), mientras que el mismo botón de 3
+  /// puntos en cualquier lista ofrecía ocho. Ahora reusa la hoja compartida
+  /// de `TrackContextMenu`, con las dos entradas propias del reproductor
+  /// (encolar a continuación / al final) delante — así no pueden divergir.
   void _showTrackOptionsMenu(BuildContext context, SyncoraTrack track) {
-    final controller = ref.read(syncoraPlayerControllerProvider.notifier);
-    AppBottomSheet.show(
-      context: context,
-      title: track.title,
-      child: ListView(
-        shrinkWrap: true,
-        children: [
-          ListTile(
-            leading: Icon(AppIcons.broken(SolarIcons.PlayCircle), color: AppTheme.primary),
-            title: const Text('Reproducir a continuación', style: TextStyle(color: AppTheme.primary)),
-            onTap: () {
-              controller.playNext(track);
-              Navigator.pop(context);
-              AppToast.show(context, message: 'Se reproducirá a continuación');
-            },
-          ),
-          ListTile(
-            leading: Icon(AppIcons.broken(SolarIcons.AddFolder), color: AppTheme.primary),
-            title: const Text('Agregar a la cola', style: TextStyle(color: AppTheme.primary)),
-            onTap: () {
-              controller.addToQueue(track);
-              Navigator.pop(context);
-              AppToast.show(context, message: 'Se agregó a la cola');
-            },
-          ),
-        ],
-      ),
+    TrackContextMenu.showOptionsSheet(
+      context,
+      ref,
+      track,
+      onAddToQueue: () =>
+          ref.read(syncoraPlayerControllerProvider.notifier).addToQueue(track),
     );
   }
 }

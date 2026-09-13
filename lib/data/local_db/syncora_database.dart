@@ -26,6 +26,16 @@ class Playlists extends Table {
   IntColumn get orderIndex => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  /// Última vez que se empezó a reproducir esta playlist (ronda 3, D1).
+  ///
+  /// **Solo local, a propósito.** No tiene columna en Supabase ni viaja en el
+  /// sync: "lo que escuché más recientemente" es razonablemente un dato del
+  /// dispositivo, y mantenerlo local evita sumar otra migración a la lista de
+  /// pasos manuales pendientes del proyecto. `null` = nunca reproducida desde
+  /// este dispositivo, que es lo que ordena al final de la vista "escuchadas
+  /// recientemente".
+  DateTimeColumn get lastPlayedAt => dateTime().nullable()();
 }
 
 // Pistas en playlists — desnormalizada (Documento Maestro §3)
@@ -120,7 +130,7 @@ class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration {
@@ -155,6 +165,9 @@ class SyncoraDatabase extends _$SyncoraDatabase {
         }
         if (from < 6) {
           await m.createTable(statsMetadataCache);
+        }
+        if (from < 7) {
+          await m.addColumn(playlists, playlists.lastPlayedAt);
         }
       },
     );

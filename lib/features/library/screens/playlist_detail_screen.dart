@@ -60,6 +60,40 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   Playlist? _playlist;
   bool _isLoadingHeader = true;
   bool _showAddSongsSearch = false;
+
+  /// Ronda 3 (D4): filtro LOCAL sobre las pistas de esta playlist.
+  ///
+  /// El botón de lupa de la cabecera hacía `context.push('/search')`, o sea te
+  /// sacaba de la playlist a la búsqueda global de Deezer — justo lo contrario
+  /// de "buscar dentro de esta playlist". Esto no hace ninguna petición: filtra
+  /// por título, artista y álbum sobre lo que ya está en memoria.
+  ///
+  /// No se confunde con `_showAddSongsSearch`, que es el buscador de Deezer
+  /// para AÑADIR canciones y sigue igual.
+  bool _showTrackFilter = false;
+  String _trackFilterQuery = '';
+  final TextEditingController _trackFilterController = TextEditingController();
+
+  List<_TrackPair> _applyTrackFilter(List<_TrackPair> pairs) {
+    final q = _trackFilterQuery.trim().toLowerCase();
+    if (q.isEmpty) return pairs;
+    return pairs.where((p) {
+      final t = p.playlistTrack;
+      return t.title.toLowerCase().contains(q) ||
+          t.artistName.toLowerCase().contains(q) ||
+          t.albumName.toLowerCase().contains(q);
+    }).toList();
+  }
+
+  void _toggleTrackFilter() {
+    setState(() {
+      _showTrackFilter = !_showTrackFilter;
+      if (!_showTrackFilter) {
+        _trackFilterQuery = '';
+        _trackFilterController.clear();
+      }
+    });
+  }
   final TextEditingController _addSongsController = TextEditingController();
   List<DeezerTrack> _searchResults = [];
   bool _isSearchingSongs = false;
@@ -79,6 +113,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   @override
   void dispose() {
     _addSongsController.dispose();
+    _trackFilterController.dispose();
     super.dispose();
   }
 
@@ -1085,6 +1120,11 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
               final sortedPairs = _sortTrackPairs(rawPairs);
               final sortedSyncoraTracks = sortedPairs.map((p) => p.syncoraTrack).toList();
+              // D4: el filtro afecta a lo que se PINTA, no a lo que se
+              // reproduce. Tocar una canción filtrada sigue encolando la
+              // playlist completa (`sortedSyncoraTracks`), que es lo que
+              // espera cualquiera: filtrar es buscar, no recortar la cola.
+              final visiblePairs = _applyTrackFilter(sortedPairs);
 
               final rawSyncoraTracks = rawPairs.map((p) => p.syncoraTrack).toList();
 
@@ -1650,23 +1690,90 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                     ),
                                   ),
                                 ),
+                              if (_showTrackFilter)
+                                SliverPadding(
+                                  padding: EdgeInsets.fromLTRB(isDesktop ? 32 : 12, 4, isDesktop ? 32 : 12, 8),
+                                  sliver: SliverToBoxAdapter(
+                                    child: TextField(
+                                      controller: _trackFilterController,
+                                      autofocus: true,
+                                      onChanged: (v) => setState(() => _trackFilterQuery = v),
+                                      style: const TextStyle(color: AppTheme.primary, fontSize: 14),
+                                      decoration: InputDecoration(
+                                        hintText: 'Buscar en esta playlist',
+                                        hintStyle: const TextStyle(color: AppTheme.secondary, fontSize: 14),
+                                        prefixIcon: Icon(AppIcons.broken(SolarIcons.Magnifer),
+                                            color: AppTheme.secondary, size: 18),
+                                        suffixIcon: _trackFilterQuery.isEmpty
+                                            ? null
+                                            : IconButton(
+                                                icon: Icon(AppIcons.broken(SolarIcons.CloseCircle),
+                                                    color: AppTheme.secondary, size: 18),
+                                                onPressed: () {
+                                                  _trackFilterController.clear();
+                                                  setState(() => _trackFilterQuery = '');
+                                                },
+                                              ),
+                                        filled: true,
+                                        fillColor: AppTheme.surface,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (_showTrackFilter && visiblePairs.isEmpty && sortedPairs.isNotEmpty)
+                                SliverPadding(
+                                  padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12, vertical: 24),
+                                  sliver: const SliverToBoxAdapter(
+                                    child: Center(
+                                      child: Text(
+                                        'Ninguna canción de esta playlist coincide',
+                                        style: TextStyle(color: AppTheme.secondary),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               SliverPadding(
                                 padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12),
                                 sliver: SliverList.builder(
-                                  itemCount: sortedPairs.length,
+                                  itemCount: visiblePairs.length,
                                   itemBuilder: (ctx, i) {
-                                    final pair = sortedPairs[i];
+                                    final pair = visiblePairs[i];
                                     final track = pair.syncoraTrack;
                                     final playlistTrack = pair.playlistTrack;
                                     final isPlayingTrack = currentTrack?.id == track.id;
 
                                     return TrackTile(
                                       track: track,
-                                      index: i,
+                                      // Ronda 3 (D5): sin numeración en móvil.
+                                      // `TrackTile` ya cambia de layout con
+                                      // `index` nulo: en vez del número pinta
+                                      // la portada con su overlay de play, que
+                                      // es más útil en una pantalla estrecha
+                                      // (y es lo que hace Spotify). En
+                                      // escritorio la columna numerada sí
+                                      // aporta, así que se conserva.
+                                      index: isDesktop ? i : null,
                                       isPlaying: isPlayingTrack,
                                       showAlbum: true,
                                       onTap: () {
-                                        controller.setQueue(sortedSyncoraTracks, startIndex: i, activeContextId: playlistContextId);
+                                        // El índice tiene que ser el de la
+                                        // lista completa: con el filtro activo,
+                                        // `i` es la posición dentro de lo
+                                        // filtrado y encolaría la canción
+                                        // equivocada.
+                                        final startIndex = sortedPairs
+                                            .indexWhere((p) => p.playlistTrack.id == pair.playlistTrack.id);
+                                        controller.setQueue(
+                                          sortedSyncoraTracks,
+                                          startIndex: startIndex < 0 ? 0 : startIndex,
+                                          activeContextId: playlistContextId,
+                                        );
                                       },
                                       onRemove: () async {
                                         final ok = await _executeRemoteMutation(() async {
@@ -1739,8 +1846,17 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                               color: Colors.black.withValues(alpha: 0.35),
                             ),
                             child: IconButton(
-                              icon: Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.primary, size: 18),
-                              onPressed: () => context.push('/search'),
+                              icon: Icon(
+                                _showTrackFilter
+                                    ? AppIcons.broken(SolarIcons.CloseCircle)
+                                    : AppIcons.broken(SolarIcons.Magnifer),
+                                color: AppTheme.primary,
+                                size: 18,
+                              ),
+                              tooltip: _showTrackFilter
+                                  ? 'Cerrar búsqueda'
+                                  : 'Buscar en esta playlist',
+                              onPressed: _toggleTrackFilter,
                               padding: EdgeInsets.zero,
                             ),
                           ),

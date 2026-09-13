@@ -1,3 +1,4 @@
+import 'bottom_chrome_metrics.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -302,7 +303,10 @@ class _AppShellState extends ConsumerState<AppShell> {
           ),
         ),
         Positioned(
-          bottom: (hasTrack ? 152.0 : 80.0) + paddingBottom,
+          bottom: BottomChromeMetrics.floatingBottomOffset(
+            hasMiniPlayer: hasTrack,
+            bottomInset: paddingBottom,
+          ),
           left: 0,
           right: 0,
           child: const Center(
