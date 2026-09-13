@@ -61,7 +61,26 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
-### Estado actual (última actualización: 2026-08-22)
+### Estado actual (última actualización: 2026-09-12)
+
+**Tercera ronda de correcciones post-Fase 7: completa.** Plan, diagnóstico y estado en
+`docs/fases/plan_correcciones_post_fase_7_r3.md` (leerlo antes de tocar reproductor, cola o
+biblioteca). Cinco causas raíz confirmadas leyendo código, documentadas ahí como **H-R3-1 a
+H-R3-5** — no volver a descubrirlas: no había manejo de foco de audio en Android; se publicaba
+`idle` al SO entre pista y pista y eso soltaba el foreground service; `setQueue` en aleatorio
+mezclaba solo la cola posterior al índice; la paleta del reproductor a pantalla completa solo se
+calculaba en `initState`; y el historial insertaba una fila por cada arranque de la misma pista.
+
+Dos decisiones de esa ronda que conviene no revertir por descuido: **la restauración de sesión es
+continuidad exacta y no repuebla nada** (una "red de seguridad" que lo hacía resucitaba las pistas
+que el usuario quitaba a mano — ver la justificación escrita en `syncora_player_controller.dart`),
+y **la deduplicación de escuchas no aplica a una escucha ya completa**, para respetar la decisión
+de la Fase 7.0 de que cada vuelta de repeat-one cuenta por separado.
+
+Pendiente: las pruebas en dispositivo de esa ronda (Android y Windows) más los pasos manuales de
+infraestructura que siguen abajo.
+
+### Estado de la Fase 7 (última actualización: 2026-08-22)
 
 **Fase 7 completa.** Cerradas, commiteadas y pusheadas a `master` (ver
 `docs/fases/fase_7_{0,a,b,c,d,e,f,g,h,i}.md` para el detalle de cada una): **7.0, 7.A, 7.B, 7.C,
