@@ -660,6 +660,20 @@ class TrackTile extends ConsumerStatefulWidget {
   /// después moverlo.
   final bool enableLongPressMenu;
 
+  /// ¿Deslizar a la derecha añade la pista a la cola?
+  ///
+  /// `false` en la vista de Cola, y **esta era la causa real** de que ahí no
+  /// se pudiera deslizar para eliminar. `TrackTile` se envuelve en su propio
+  /// `Dismissible` (dirección `startToEnd`) en cuanto recibe `onAddToQueue` —
+  /// que es justo lo que le pasa la cola para su menú de 3 puntos. Ese
+  /// `Dismissible` interno es descendiente del que pone la cola, así que gana
+  /// la arena de gestos horizontales y se come también los deslizamientos
+  /// hacia la izquierda, que él no acepta. Resultado: no pasaba nada.
+  ///
+  /// Además, dentro de la cola "añadir a la cola" no significaría nada: la
+  /// pista ya está ahí.
+  final bool enableSwipeToQueue;
+
   const TrackTile({
     super.key,
     required this.track,
@@ -675,6 +689,7 @@ class TrackTile extends ConsumerStatefulWidget {
     this.onRemove,
     this.removeLabel = 'Eliminar de la playlist',
     this.enableLongPressMenu = true,
+    this.enableSwipeToQueue = true,
   });
 
   @override
@@ -1033,7 +1048,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
 
 
     // Swipe a la cola en móvil (umbral 40-50% con retorno suave y haptic feedback)
-    if (isMobile && widget.onAddToQueue != null) {
+    if (isMobile && widget.enableSwipeToQueue && widget.onAddToQueue != null) {
       return Dismissible(
         key: Key('track_dismiss_${widget.track.id}_${widget.index}'),
         direction: DismissDirection.startToEnd,

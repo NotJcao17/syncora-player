@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/layout/bottom_chrome_metrics.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/connectivity_service.dart';
@@ -41,66 +40,22 @@ class QueueView extends ConsumerStatefulWidget {
 
   /// Abre la cola dentro de una hoja modal (`AppBottomSheet`), cerrándola
   /// automáticamente al reproducir una pista.
-  /// Abre la cola: **pantalla completa en móvil**, diálogo centrado en
-  /// escritorio (directriz de UI del proyecto).
+  /// Abre la cola dentro de una hoja modal (`AppBottomSheet`).
   ///
-  /// Ronda 3 bis: en móvil era una hoja modal, y dentro de ella **ni reordenar
-  /// ni deslizar para eliminar funcionaban**. Desactivar el arrastre de la
-  /// hoja (`enableDrag: false`) no lo arregló — solo quitó la única forma que
-  /// había de cerrarla. La hoja modal aporta poco a una pantalla que es una
-  /// lista larga y editable, y mete su propio reconocedor de gestos verticales
-  /// alrededor de todo el contenido; una ruta normal no tiene nada de eso, y
-  /// además trae gratis el botón/gesto de atrás para cerrar.
+  /// Ronda 3 bis: `enableDrag: false` desactiva el arrastre de la hoja
+  /// **entera**, que competía con el reordenar y el deslizar de cada fila,
+  /// pero la hoja se sigue bajando arrastrando desde el asa/título — igual que
+  /// el reproductor a pantalla completa (ver `AppBottomSheet`).
+  ///
+  /// **No se cierra al tocar una canción**: elegir qué suena ahora no es
+  /// motivo para perder de vista la cola, y lo normal es seguir ajustándola
+  /// justo después.
   static Future<void> showSheet(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width >= 720;
-    if (isDesktop) {
-      return AppBottomSheet.show(
-        context: context,
-        title: 'Cola de reproducción',
-        child: QueueView(onTrackSelected: () => AppBottomSheet.pop(context)),
-      );
-    }
-
-    // Navegador raíz: la cola ocupa la pantalla entera, por encima del shell.
-    return Navigator.of(context, rootNavigator: true).push<void>(
-      MaterialPageRoute<void>(
-        builder: (routeContext) => Scaffold(
-          backgroundColor: AppTheme.background,
-          appBar: AppBar(
-            backgroundColor: AppTheme.background,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(AppIcons.broken(SolarIcons.AltArrowDown), color: AppTheme.primary),
-              tooltip: 'Cerrar',
-              onPressed: () => Navigator.of(routeContext).pop(),
-            ),
-            title: const Text(
-              'Cola de reproducción',
-              style: TextStyle(
-                color: AppTheme.primary,
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-              ),
-            ),
-          ),
-          // Esta ruta tapa el shell entero: aquí no hay mini reproductor ni
-          // barra de navegación que esquivar, así que los avisos van pegados
-          // abajo (ver `BottomChromeScope`).
-          body: BottomChromeScope(
-            hasChrome: false,
-            child: SafeArea(
-              top: false,
-              child: QueueView(
-              onTrackSelected: () {
-                  if (Navigator.of(routeContext).canPop()) {
-                    Navigator.of(routeContext).pop();
-                  }
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
+    return AppBottomSheet.show(
+      context: context,
+      title: 'Cola de reproducción',
+      enableDrag: false,
+      child: const QueueView(),
     );
   }
 
@@ -759,6 +714,11 @@ class _QueueViewState extends ConsumerState<QueueView> {
                   // esta misma fila. En la cola el menú sigue disponible por
                   // el botón de 3 puntos.
                   enableLongPressMenu: false,
+                  // Y esta era la causa REAL de que no se pudiera deslizar
+                  // para eliminar: el `Dismissible` interno de `TrackTile`
+                  // (deslizar para encolar) se comía el gesto. Ver
+                  // `TrackTile.enableSwipeToQueue`.
+                  enableSwipeToQueue: false,
                 ),
               ),
             ),

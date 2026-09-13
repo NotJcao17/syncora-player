@@ -60,6 +60,23 @@ class PlaylistCoverWidget extends ConsumerWidget {
     this.memCacheHeight,
   });
 
+  /// Icono centrado cuyo tamaño depende del tamaño REAL de la caja.
+  ///
+  /// Ronda 3 bis: antes se decidía con `width != null && width! < 100`, así
+  /// que cualquier llamador que dejara que el padre fijara el tamaño (lo
+  /// normal desde el refactor de Biblioteca: un `SizedBox` de 64 por fuera y
+  /// `width` nulo) caía en la rama de 56 px. De ahí el corazón gigantesco de
+  /// "Tus me gusta" en móvil. Medir la caja real no puede equivocarse.
+  Widget _centeredIcon(IconData icon, Color color) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final box = constraints.biggest.shortestSide;
+        final size = box.isFinite ? (box * 0.42).clamp(16.0, 56.0) : 28.0;
+        return Center(child: Icon(icon, color: color, size: size));
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final effectiveRadius = borderRadius ?? BorderRadius.circular(16);
@@ -72,13 +89,7 @@ class PlaylistCoverWidget extends ConsumerWidget {
         decoration: const BoxDecoration(
           gradient: AppTheme.gradientLiked,
         ),
-        child: Center(
-          child: Icon(
-            AppIcons.bold(SolarIcons.Heart),
-            color: Colors.white,
-            size: (width != null && width! < 100) ? 28 : 56,
-          ),
-        ),
+        child: _centeredIcon(AppIcons.bold(SolarIcons.Heart), Colors.white),
       );
     }
     // 2. Si tiene portada personalizada explícita (degradado, color, archivo local o URL)
@@ -89,27 +100,20 @@ class PlaylistCoverWidget extends ConsumerWidget {
         final gradient = presetGradients[index % presetGradients.length];
         content = Container(
           decoration: BoxDecoration(gradient: gradient),
-          child: Center(
-            child: Icon(
-              AppIcons.broken(SolarIcons.MusicNote),
-              color: Colors.white.withValues(alpha: 0.9),
-              size: (width != null && width! < 100) ? 28 : 56,
-            ),
+          child: _centeredIcon(
+            AppIcons.broken(SolarIcons.MusicNote),
+            Colors.white.withValues(alpha: 0.9),
           ),
         );
       } else if (cover.startsWith('color:')) {
         final hexStr = cover.substring('color:'.length).replaceAll('#', '');
         final intVal = int.tryParse(hexStr.length == 6 ? 'FF$hexStr' : hexStr, radix: 16) ?? 0xFF1DB954;
-        content = Container(
-          color: Color(intVal),
-          child: Center(
-            child: Icon(
-              AppIcons.broken(SolarIcons.MusicNote),
-              color: Colors.white.withValues(alpha: 0.9),
-              size: (width != null && width! < 100) ? 28 : 56,
-            ),
-          ),
-        );
+        // Ronda 3 bis: color liso y nada más. Si el usuario eligió un color
+        // como portada, eso ES la portada — la nota musical encima la
+        // convertía en un marcador de posición, que es justo lo contrario.
+        // (Los degradados sí conservan el icono: ahí el icono es lo único que
+        // distingue una portada elegida a propósito de un fondo decorativo.)
+        content = Container(color: Color(intVal));
       } else if (!kIsWeb && (cover.startsWith('/') || cover.contains(':\\') || cover.startsWith('file:'))) {
         final filePath = cover.startsWith('file://') ? cover.replaceFirst('file://', '') : cover;
         final file = File(filePath);
@@ -232,13 +236,7 @@ class PlaylistCoverWidget extends ConsumerWidget {
   Widget _buildFallbackIcon() {
     return Container(
       color: AppTheme.surfaceActive,
-      child: Center(
-        child: Icon(
-          AppIcons.broken(SolarIcons.MusicNote),
-          color: AppTheme.muted,
-          size: (width != null && width! < 100) ? 28 : 56,
-        ),
-      ),
+      child: _centeredIcon(AppIcons.broken(SolarIcons.MusicNote), AppTheme.muted),
     );
   }
 

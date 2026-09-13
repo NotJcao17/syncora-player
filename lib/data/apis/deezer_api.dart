@@ -371,9 +371,20 @@ class DeezerApi {
     });
   }
 
-  Future<List<DeezerAlbum>> getArtistAlbums(int id) async {
+  /// Discografía del artista.
+  ///
+  /// ⚠️ **`/artist/{id}/albums` devuelve solo 25 entradas sin `limit`
+  /// explícito** (verificado contra la API en vivo: Coldplay tiene 121 y
+  /// llegaban 25). Como la lista viene ordenada por fecha, esas 25 eran casi
+  /// todo lanzamientos recientes — por eso el filtro de "Sencillos" mostraba
+  /// dos, no las decenas que el artista tiene. No era un problema de la
+  /// clasificación de Deezer: era nuestro, por no paginar.
+  ///
+  /// [limit] generoso a propósito: es UNA petición y cubre discografías muy
+  /// largas sin tener que encadenar páginas.
+  Future<List<DeezerAlbum>> getArtistAlbums(int id, {int limit = 300}) async {
     return _rateLimiter.run(() async {
-      final response = await _dio.get('/artist/$id/albums');
+      final response = await _dio.get('/artist/$id/albums', queryParameters: {'limit': limit});
       if (response.data == null || response.data['data'] is! List) return [];
       final list = response.data['data'] as List;
       final albums = list.map((item) => DeezerAlbum.fromJson(Map<String, dynamic>.from(item as Map))).toList();

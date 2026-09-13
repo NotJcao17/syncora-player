@@ -284,6 +284,16 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// Evita disparar fetches de radio concurrentes (Fase 7.B).
   bool _isFetchingRadio = false;
 
+  /// Generación del fetch de radio dueño de [_isFetchingRadio] (ronda 3 bis).
+  ///
+  /// Sin esto, "Regenerar cola" estando ya en las canciones de radio no hacía
+  /// nada: si había un lote en vuelo, `_maybeFetchRadio()` salía por el guard
+  /// de concurrencia, y el lote viejo se descartaba después por el cambio de
+  /// `_contextGeneration`. Resultado: cola vacía y ni una sugerencia nueva.
+  /// Ahora el disparo forzado ignora ese guard, y el `finally` del lote viejo
+  /// solo libera la bandera si sigue siendo el dueño.
+  int _radioFetchGeneration = 0;
+
   /// Umbral del guard de cascada de auto-skip lógico (7.C.3): al llegar a
   /// esta cantidad de fallos lógicos SEGUIDOS (sin ningún éxito de
   /// reproducción entre medio), el auto-skip se detiene en vez de seguir
@@ -1391,7 +1401,17 @@ bool get _isTestEnv {
 
     final played = _playedContextIds();
     var regenerated = context.where((t) => !played.contains(t.id)).toList();
-    if (regenerated.isEmpty) {
+
+    // ¿Ya estamos escuchando radio? Se decide por la pista que SUENA, no por
+    // si quedan pistas del contexto sin marcar como escuchadas (ronda 3 bis).
+    // El historial está acotado a 50 entradas, así que en una playlist larga
+    // las primeras se caen de él y `regenerated` volvía a salir no vacío aun
+    // estando de lleno en la radio: el botón reponía playlist en vez de pedir
+    // sugerencias nuevas, que es lo que se espera a esa altura.
+    final current = _state.currentTrack;
+    final playingRadio = current != null && !context.any((t) => t.id == current.id);
+
+    if (playingRadio || regenerated.isEmpty) {
       final radioEnabled = _radioEnabledGetter?.call() ?? true;
       if (radioEnabled) {
         // Contexto agotado + radio disponible: vaciar es lo correcto. El
@@ -1399,10 +1419,13 @@ bool get _isTestEnv {
         // `_contextGeneration++` de arriba garantiza que el lote viejo que
         // pudiera estar en vuelo se descarte.
         _state = _state.copyWith(autoQueue: const []);
-        _log('[Queue] Contexto agotado: se descarta la radio vigente y se pide un lote nuevo.');
+        _log('[Queue] Radio en curso: se descarta el lote vigente y se pide uno nuevo.');
         _notify();
         _saveSession();
-        _maybeFetchRadio();
+        // `force`: el guard de concurrencia sale sobrando aquí. Es una acción
+        // explícita del usuario y el lote en vuelo (si lo hay) ya quedó
+        // invalidado por el `_contextGeneration++` de arriba.
+        _maybeFetchRadio(force: true);
         return true;
       }
       regenerated = List<SyncoraTrack>.from(context)
@@ -1750,15 +1773,16 @@ bool get _isTestEnv {
   /// `autoQueue` todavía tiene más de [_radioTriggerThreshold] pistas, o si
   /// no hay conexión (revisión: bug #5 — evita 5 peticiones condenadas de
   /// antemano en cada cambio de pista mientras el usuario está offline).
-  void _maybeFetchRadio() {
+  void _maybeFetchRadio({bool force = false}) {
     final service = _radioService;
     if (service == null) return;
-    if (_isFetchingRadio) return;
+    if (!force && _isFetchingRadio) return;
     if (!(_radioEnabledGetter?.call() ?? true)) return;
-    if (_state.autoQueue.length > _radioTriggerThreshold) return;
+    if (!force && _state.autoQueue.length > _radioTriggerThreshold) return;
     if (_isConnectedGetter?.call() == false) return;
 
     _isFetchingRadio = true;
+    final myFetch = ++_radioFetchGeneration;
     // Snapshot de la "sesión de contexto" en el momento del disparo (ver
     // _fetchRadioBatch): si el usuario cambia de contexto antes de que
     // resuelva, el resultado se descarta en silencio para no anexar un lote
@@ -1785,6 +1809,7 @@ bool get _isTestEnv {
       contextTracks: contextTracks,
       excludeIds: excludeIds,
       requestGeneration: requestGeneration,
+      fetchGeneration: myFetch,
     ));
   }
 
@@ -1797,6 +1822,7 @@ bool get _isTestEnv {
     required List<SyncoraTrack> contextTracks,
     required Set<String> excludeIds,
     required int requestGeneration,
+    required int fetchGeneration,
   }) async {
     try {
       final batch = await service.generateBatch(
@@ -1825,7 +1851,10 @@ bool get _isTestEnv {
     } catch (e) {
       _log('[Radio] Error generando lote de radio: $e');
     } finally {
-      _isFetchingRadio = false;
+      // Solo libera la bandera quien sigue siendo el fetch vigente: un lote
+      // viejo que resuelve tarde no debe abrirle la puerta a otro mientras el
+      // forzado sigue en marcha.
+      if (_radioFetchGeneration == fetchGeneration) _isFetchingRadio = false;
     }
   }
 
@@ -2464,6 +2493,20 @@ bool get _isTestEnv {
   }
 
   Future<void> _onComplete() async {
+    // Guard contra "estaba en pausa y de repente se puso a sonar sola"
+    // (reportado en Windows). `media_kit` puede emitir una completion espuria
+    // con el motor parado; atenderla dispara `skipToNext()`, que reproduce.
+    //
+    // La condición es precisa a propósito: `_lastPauseWasUserInitiated` solo
+    // está en `true` cuando la última acción de transporte fue una pausa
+    // PEDIDA POR EL USUARIO sin un play posterior (ver [pause]/[play]). El
+    // fin natural de una pista nunca pasa por ahí, así que esto no puede
+    // frenar un avance legítimo.
+    if (_lastPauseWasUserInitiated && !_state.engine.playing) {
+      _log('[Play] Fin de pista ignorado: el usuario tiene la reproducción en pausa.');
+      return;
+    }
+
     // Completar naturalmente implica haber sonado el 100% de la pista, así
     // que en la inmensa mayoría de los casos el umbral D-16 ya se cruzó
     // durante `_trackListenProgress` (llamado en cada tick de posición). Esta

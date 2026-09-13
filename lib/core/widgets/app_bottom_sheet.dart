@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 /// Modal Bottom Sheet personalizado con fondo sólido #1E2633 y handle bar.
-class AppBottomSheet extends StatelessWidget {
+class AppBottomSheet extends StatefulWidget {
   final String? title;
   final Widget child;
   final double maxHeightFactor;
@@ -14,16 +14,19 @@ class AppBottomSheet extends StatelessWidget {
     this.maxHeightFactor = 0.85,
   });
 
-  /// [enableDrag] `false` desactiva el gesto de arrastrar la hoja hacia abajo
-  /// para cerrarla (ronda 3, B5).
+  /// [enableDrag] `false` desactiva el gesto de arrastrar la hoja **entera**
+  /// hacia abajo para cerrarla.
   ///
-  /// Hace falta cuando el contenido tiene su **propio** gesto de arrastre
-  /// vertical, como la lista reordenable de la cola: el
-  /// `VerticalDragGestureRecognizer` que `showModalBottomSheet` monta sobre
-  /// toda la hoja compite en la arena de gestos contra el
-  /// `ReorderableDragStartListener` del asa de cada fila, y el resultado es
-  /// que reordenar no funciona. La hoja se sigue pudiendo cerrar tocando
-  /// fuera o con el botón de atrás.
+  /// Hace falta cuando el contenido tiene su propio gesto vertical, como la
+  /// lista reordenable de la cola: el `VerticalDragGestureRecognizer` que
+  /// `showModalBottomSheet` monta alrededor de todo el contenido compite con
+  /// los gestos de cada fila.
+  ///
+  /// **La hoja se sigue pudiendo bajar a mano**: el asa y el título de arriba
+  /// siempre llevan su propio arrastre (ronda 3 bis), igual que el reproductor
+  /// a pantalla completa. Así conviven el "deslizar para cerrar" de toda la
+  /// vida y los gestos del contenido, porque cada uno vive en una zona
+  /// distinta de la pantalla.
   static Future<T?> show<T>({
     required BuildContext context,
     required Widget child,
@@ -99,51 +102,90 @@ class AppBottomSheet extends StatelessWidget {
 
 
   @override
+  State<AppBottomSheet> createState() => _AppBottomSheetState();
+}
+
+class _AppBottomSheetState extends State<AppBottomSheet> {
+  /// Desplazamiento vertical del arrastre en curso sobre la cabecera.
+  double _dragOffsetY = 0;
+
+  void _onHeaderDragUpdate(DragUpdateDetails details) {
+    // Solo hacia abajo: tirar hacia arriba no hace nada (la hoja ya está en su
+    // sitio), igual que en el reproductor a pantalla completa.
+    if (details.delta.dy <= 0 && _dragOffsetY <= 0) return;
+    setState(() {
+      _dragOffsetY = (_dragOffsetY + details.delta.dy).clamp(0.0, 600.0);
+    });
+  }
+
+  void _onHeaderDragEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    if (_dragOffsetY > 110 || velocity > 350) {
+      Navigator.of(context).maybePop();
+      return;
+    }
+    setState(() => _dragOffsetY = 0);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
-    final maxHeight = mediaQuery.size.height * maxHeightFactor;
+    final maxHeight = mediaQuery.size.height * widget.maxHeightFactor;
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      decoration: const BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: AppTheme.surfaceUpShadow,
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Handle Bar
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 10, bottom: 8),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.muted.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+    final header = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onVerticalDragUpdate: _onHeaderDragUpdate,
+      onVerticalDragEnd: _onHeaderDragEnd,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 8),
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.muted.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            if (title != null) ...[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                child: Text(
-                  title!,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
+          ),
+          if (widget.title != null) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              child: Text(
+                widget.title!,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
               ),
-              const Divider(height: 1, color: AppTheme.surfaceHover),
-            ],
-            Flexible(
-              child: child,
             ),
+            const Divider(height: 1, color: AppTheme.surfaceHover),
           ],
+        ],
+      ),
+    );
+
+    return Transform.translate(
+      offset: Offset(0, _dragOffsetY),
+      child: Container(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        decoration: const BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: AppTheme.surfaceUpShadow,
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              header,
+              Flexible(child: widget.child),
+            ],
+          ),
         ),
       ),
     );

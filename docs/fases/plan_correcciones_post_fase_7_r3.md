@@ -396,3 +396,48 @@ confirmado como correcto.
       un `<group android:scaleY="-1" android:pivotY="500">`. El estado "apagado" es el mismo glifo
       al 50% de opacidad con una barra diagonal encima. **Si hiciera falta regenerarlos**, el
       método está aquí descrito: no hay SVGs en el paquete, solo los TTF.
+
+---
+
+## Tercera tanda: segunda ronda de pruebas en dispositivo
+
+- [x] **Deslizar para eliminar en la cola: la causa real.** Dos intentos anteriores fallaron porque
+      se buscó en el sitio equivocado (la hoja modal). El culpable era `TrackTile`, que **se
+      envuelve en su propio `Dismissible`** (deslizar → añadir a la cola) en cuanto recibe
+      `onAddToQueue` — justo lo que le pasa la cola para su menú. Ese `Dismissible` interno es
+      descendiente del de la cola, gana la arena de gestos horizontales y se come también los
+      deslizamientos a la izquierda, que él no acepta. Nuevo flag `TrackTile.enableSwipeToQueue`,
+      en `false` dentro de la cola (donde "añadir a la cola" no significaría nada).
+      **Lección repetida (§1 de la ronda anterior): el síntoma estaba una capa por debajo de donde
+      se buscó, y las dos primeras correcciones fueron a la capa equivocada.**
+- [x] **La cola vuelve a ser hoja modal.** Convertirla en ruta a pantalla completa fue pasarse de
+      frenada. Ahora `AppBottomSheet` lleva **su propio arrastre en el asa y el título**: se baja a
+      mano como el reproductor a pantalla completa, y el contenido conserva sus gestos porque cada
+      uno vive en una zona distinta. Además **tocar una canción ya no cierra la cola**.
+- [x] **Regenerar cola estando ya en la radio.** No hacía nada: si había un lote en vuelo,
+      `_maybeFetchRadio()` salía por el guard de concurrencia y el lote viejo se descartaba después
+      por el cambio de `_contextGeneration` — cola vacía y ni una sugerencia. Ahora el disparo es
+      `force`, y `_isFetchingRadio` se libera por generación (`_radioFetchGeneration`). "Estamos en
+      radio" se decide por **la pista que suena**, no por si quedan pistas del contexto sin marcar:
+      el historial está acotado a 50, así que en una playlist larga la señal anterior fallaba.
+- [x] **Discografía truncada a 25 entradas — era nuestro, no de Deezer.**
+      `/artist/{id}/albums` devuelve 25 sin `limit` explícito (verificado en vivo: Coldplay tiene
+      121 y llegaban 25). Como la lista viene por fecha, esas 25 eran casi todo lanzamientos
+      recientes, y por eso "Sencillos" mostraba dos. Corregido con `limit: 300` en una sola
+      petición. Las píldoras separadas de Sencillos y EP se mantienen: ahora sí muestran todo.
+- [x] **Corazón gigante en la portada de "Tus me gusta".** El tamaño se decidía con
+      `width != null && width! < 100`, así que cualquier llamador que dejara el tamaño al padre
+      (lo normal tras el refactor de Biblioteca) caía en la rama de 56 px. Ahora se mide la caja
+      real con `LayoutBuilder`.
+- [x] **Portada de color liso sin nota musical.** Si el usuario eligió un color, eso ES la
+      portada; el icono encima la convertía en un marcador de posición. Los degradados lo
+      conservan: ahí es lo único que los distingue de un fondo decorativo.
+- [x] **Portadas de Biblioteca demasiado redondeadas.** Doble recorte: el contenedor externo
+      clipaba a 12 y `PlaylistCoverWidget` por dentro a su default de 16, y ganaba el más redondo.
+      Ahora ambos a 10.
+- [x] **"Estaba en pausa y se puso a sonar sola" (Windows).** `media_kit` puede emitir una
+      completion espuria con el motor parado, y atenderla dispara `skipToNext()`, que reproduce.
+      Guard en `_onComplete`, deliberadamente estrecho: solo ignora la completion si la última
+      acción de transporte fue una **pausa pedida por el usuario** sin play posterior
+      (`lastPauseWasUserInitiated`). El fin natural de una pista nunca pasa por ahí, así que no
+      puede frenar un avance legítimo — hay un test para cada mitad del contrato.

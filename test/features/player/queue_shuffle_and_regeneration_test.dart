@@ -245,6 +245,27 @@ void main() {
       c.dispose();
     });
 
+    test('escuchando radio con playlist larga, tambien refresca la radio', () async {
+      // Ronda 3 bis. El historial esta acotado a 50 entradas, asi que en una
+      // playlist larga las primeras se caen de el y "quedan pistas sin
+      // escuchar" aunque estemos de lleno en la radio. Antes eso hacia que el
+      // boton repusiera playlist en vez de pedir sugerencias nuevas.
+      final c = _controller();
+      await c.setQueue(_playlist(80), startIndex: 0, autoplay: false);
+      // Se fuerza el estado "suena una pista que NO es del contexto", que es
+      // exactamente como se ve estar escuchando radio.
+      c.playNext(const SyncoraTrack(id: 'radio-9', title: 'Radio 9'));
+      await c.skipToNext();
+      expect(c.state.currentTrack?.id, 'radio-9');
+
+      final ok = c.regenerateAutoQueue();
+
+      expect(ok, isTrue);
+      expect(c.state.autoQueue, isEmpty,
+          reason: 'estando en radio se descarta el lote vigente, no se repone la playlist');
+      c.dispose();
+    });
+
     test('sin radio, el contexto agotado si se repone (el boton debe hacer algo)', () async {
       final c = SyncoraPlayerController(
         engine: _SilentEngine(),

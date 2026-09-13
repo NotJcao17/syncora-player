@@ -315,7 +315,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           child: Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 child: SizedBox(width: 64, height: 64, child: cover),
               ),
               const SizedBox(width: 16),
@@ -354,7 +354,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         children: [
           Expanded(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               child: SizedBox.expand(child: cover),
             ),
           ),
@@ -436,6 +436,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         coverUrl: playlist.coverUrl,
         playlistId: playlist.id,
         isLiked: playlist.isLiked,
+        // Ronda 3 bis: sin esto el widget clipaba por dentro con su radio por
+        // defecto (16) mientras el contenedor de fuera usaba 12, y ganaba el
+        // más redondeado. Por eso las portadas de Biblioteca se veían más
+        // redondas que en el resto de la app.
+        borderRadius: BorderRadius.circular(10),
       ),
       title: playlist.title,
       isActive: activePlaylistId == playlist.id,
@@ -469,6 +474,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         coverUrl: playlist.coverUrl,
         playlistId: playlist.id,
         isLiked: playlist.isLiked,
+        // Ronda 3 bis: sin esto el widget clipaba por dentro con su radio por
+        // defecto (16) mientras el contenedor de fuera usaba 12, y ganaba el
+        // más redondeado. Por eso las portadas de Biblioteca se veían más
+        // redondas que en el resto de la app.
+        borderRadius: BorderRadius.circular(10),
       ),
       title: playlist.title,
       isActive: activePlaylistId == playlist.id,

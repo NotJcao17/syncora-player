@@ -2700,6 +2700,58 @@ void main() {
     });
   });
 
+  group('Pausa del usuario y fin de pista espurio (ronda 3 bis)', () {
+    test('una completion con el motor parado NO reanuda tras una pausa del usuario', () async {
+      // Reportado en Windows: "la musica estaba pausada y de repente se puso
+      // play sin que yo interactuara". `media_kit` puede emitir una
+      // completion espuria con el motor parado, y atenderla dispara
+      // skipToNext(), que reproduce.
+      final engine = FakeAudioEngine();
+      final controller = SyncoraPlayerController(
+        engine: engine,
+        extractionService: TestableExtractionService(),
+      );
+      controller.init();
+      await controller.setQueue(const [
+        SyncoraTrack(id: 'a', title: 'A'),
+        SyncoraTrack(id: 'b', title: 'B'),
+      ]);
+      await pumpEventQueue();
+
+      await controller.pause();
+      engine.emitState(controller.state.engine.copyWith(playing: false));
+      await pumpEventQueue();
+
+      engine.triggerCompletion();
+      await pumpEventQueue();
+
+      expect(controller.state.currentTrack?.id, 'a',
+          reason: 'no debe avanzar ni arrancar sola estando en pausa del usuario');
+      controller.dispose();
+    });
+
+    test('el fin de pista normal sigue avanzando', () async {
+      // La otra mitad del contrato: el guard no puede frenar un avance real.
+      final engine = FakeAudioEngine();
+      final controller = SyncoraPlayerController(
+        engine: engine,
+        extractionService: TestableExtractionService(),
+      );
+      controller.init();
+      await controller.setQueue(const [
+        SyncoraTrack(id: 'a', title: 'A'),
+        SyncoraTrack(id: 'b', title: 'B'),
+      ]);
+      await pumpEventQueue();
+
+      engine.triggerCompletion();
+      await pumpEventQueue();
+
+      expect(controller.state.currentTrack?.id, 'b');
+      controller.dispose();
+    });
+  });
+
   group('Restauracion de sesion: contexto de playlist y cola manual', () {
     test('un reinicio conserva la playlist activa, la cola manual y la automatica', () async {
       final storage = RoundTripSessionStorage();
