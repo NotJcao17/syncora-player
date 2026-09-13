@@ -632,10 +632,12 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         // el reintento lo decide el usuario, igual que tras un fallo de
         // carga. D-21 se mantiene: la marca sigue siendo de sesión y no se
         // persiste.
-        if (isConnected && isMarkedUnavailableThisSession) {
+        // `onTap == null` (p. ej. filas que no arrancan reproducción): sin
+        // destino al que reintentar, prometer "Reintentando..." sería mentir.
+        if (isConnected && isMarkedUnavailableThisSession && widget.onTap != null) {
           ref.read(syncoraPlayerControllerProvider.notifier).clearUnavailable(widget.track.id);
           AppToast.show(context, message: 'Reintentando "${widget.track.title}"...');
-          widget.onTap?.call();
+          widget.onTap!();
           return;
         }
         final message = isConnected

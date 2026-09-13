@@ -120,11 +120,20 @@ final syncoraPlayerControllerProvider =
     if (!_isTestEnv) {
       try {
         final focus = AudioFocusService(
-          onPause: controller.pause,
+          // `userInitiated: false` — esta pausa la pide el sistema, no el
+          // usuario. Es lo que permite distinguir después si conviene
+          // reanudar al acabar la interrupción.
+          onPause: () => controller.pause(userInitiated: false),
           onResume: controller.play,
           isPlaying: () => controller.state.engine.playing,
+          wasPausedByUser: () => controller.lastPauseWasUserInitiated,
         );
-        unawaited(focus.attach());
+        // El `try/catch` de fuera solo atrapa fallos SÍNCRONOS; `attach()`
+        // hace await sobre el plugin, así que sus errores llegarían como
+        // error de Future no capturado y el fallo quedaría sin rastro.
+        unawaited(focus.attach().catchError(
+          (Object e) => debugPrint('AudioFocusService: fallo al conectar la sesión de audio: $e'),
+        ));
         ref.onDispose(focus.dispose);
       } catch (e) {
         debugPrint('AudioFocusService no disponible en este entorno: $e');

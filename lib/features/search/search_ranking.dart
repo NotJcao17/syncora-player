@@ -235,6 +235,95 @@ class SearchRanking {
     return top;
   }
 
+  /// ¿La entrada tiene pinta de ser el **sencillo** de la canción en vez de
+  /// su aparición en un álbum?
+  ///
+  /// Señal barata y sin peticiones extra: en un sencillo, Deezer casi siempre
+  /// titula el álbum igual que la pista (a veces con un sufijo tipo
+  /// "- Single" / "EP", que [baseTitle] ya recorta). Los campos usados vienen
+  /// ya en la respuesta de `/search`, a diferencia de `record_type`, que
+  /// **no** llega en el `album` embebido y exigiría un `/album/{id}` por cada
+  /// pista (ver §6.8 de `correcciones_qa_post_fase_7.md`, donde se descartó
+  /// justamente por eso).
+  static bool looksLikeSingleRelease(DeezerTrack track) {
+    if (track.albumTitle.isEmpty) return false;
+    final album = _withoutReleaseTypeSuffix(baseTitle(track.albumTitle));
+    if (album.isEmpty) return false;
+    return album == baseTitle(track.title);
+  }
+
+  /// Quita el sufijo de tipo de lanzamiento que Deezer suele añadir al
+  /// título del álbum de un sencillo ("Espresso - Single", "Von dutch EP").
+  /// Se aplica ya sobre texto normalizado, así que la puntuación no está.
+  static String _withoutReleaseTypeSuffix(String normalizedAlbum) =>
+      normalizedAlbum.replaceFirst(RegExp(r'\s+(single|ep)$'), '').trim();
+
+  /// Fracción mínima de popularidad que debe conservar la versión de álbum
+  /// para que se la prefiera sobre el sencillo.
+  ///
+  /// Existe por el caso de §6.8 de `correcciones_qa_post_fase_7.md`: Deezer
+  /// devuelve entradas de recopilaciones ("Varios Artistas") indistinguibles
+  /// de un álbum real sin pedir `/album/{id}` aparte. Promover a ciegas
+  /// cualquier "versión de álbum" podría ascender justamente una de esas.
+  /// Exigir que conserve la mayor parte de la popularidad del sencillo deja
+  /// pasar los casos que importan (la misma grabación publicada en las dos
+  /// formas, con `rank` parecido) y descarta las entradas marginales.
+  static const double albumVersionMinRankRatio = 0.6;
+
+  /// Tolerancia de duración para considerar que dos entradas son **la misma
+  /// grabación** publicada en formatos distintos.
+  static const int sameRecordingToleranceSec = 3;
+
+  /// Clave de agrupación de "la misma grabación del mismo artista".
+  ///
+  /// Usa el título **normalizado completo**, no [baseTitle]. Es deliberado y
+  /// costó un test de regresión: [baseTitle] recorta los sufijos de
+  /// colaboración, así que agrupaba "3 A.M." con "3 A.M. (feat. Tommy
+  /// Torres)" de Jesse & Joy — dos grabaciones distintas, no dos formatos de
+  /// la misma. La duración termina de discriminar.
+  static String _recordingKey(DeezerTrack t) => '${t.artistId}|${normalize(t.title)}';
+
+  static bool _isSameRecording(DeezerTrack a, DeezerTrack b) =>
+      _recordingKey(a) == _recordingKey(b) &&
+      (a.durationSec - b.durationSec).abs() <= sameRecordingToleranceSec;
+
+  /// Prefiere la versión de álbum sobre el sencillo cuando ambas son la misma
+  /// grabación del mismo artista (ronda 3, F3).
+  ///
+  /// **Es un intercambio posicional, no un ajuste de puntuación.** La primera
+  /// versión sí restaba puntos, y eso tuvo un efecto colateral real que
+  /// descubrió la suite: para la query "3A.M.", penalizar el sencillo de
+  /// Jesse & Joy lo hizo caer por debajo de "3AM" de Matchbox Twenty — una
+  /// canción **de otro artista**, que no tenía nada que ver con el desempate.
+  /// Restar puntos deja que cualquier tercero se cuele por la rendija; un
+  /// intercambio entre dos entradas del mismo grupo no puede alterar el orden
+  /// relativo de nada más, por construcción.
+  static List<DeezerTrack> preferAlbumOverSingle(List<DeezerTrack> ranked) {
+    final result = List<DeezerTrack>.from(ranked);
+    for (var i = 0; i < result.length; i++) {
+      final single = result[i];
+      if (!looksLikeSingleRelease(single)) continue;
+
+      for (var j = i + 1; j < result.length; j++) {
+        final candidate = result[j];
+        if (looksLikeSingleRelease(candidate)) continue;
+        if (!_isSameRecording(single, candidate)) continue;
+
+        final singleRank = single.rank ?? 0;
+        final candidateRank = candidate.rank ?? 0;
+        if (singleRank > 0 && candidateRank < singleRank * albumVersionMinRankRatio) {
+          // La "versión de álbum" es marginal (probable recopilación): se
+          // deja el sencillo donde está.
+          break;
+        }
+        result[i] = candidate;
+        result[j] = single;
+        break;
+      }
+    }
+    return result;
+  }
+
   /// Ordena canciones por texto + popularidad + (si aplica) bonus del artista
   /// dominante de la búsqueda.
   static List<DeezerTrack> rankTracks(
@@ -251,7 +340,9 @@ class SearchRanking {
       return _Scored(t, ts + ps + bonus);
     }).toList();
     scored.sort((a, b) => b.score.compareTo(a.score));
-    return scored.map((s) => s.value).toList();
+    // F3 va DESPUÉS de ordenar, y como intercambio dentro del grupo: así no
+    // puede tocar el orden relativo de ninguna otra canción.
+    return preferAlbumOverSingle(scored.map((s) => s.value).toList());
   }
 }
 

@@ -10,6 +10,18 @@ class DeezerAlbum {
   final String releaseDate;
   final List<DeezerTrack> tracks;
 
+  /// `record_type` de Deezer: `album`, `single`, `ep` o `compilation`.
+  ///
+  /// Ronda 3 (F1): el campo ya venía en la respuesta de
+  /// `/artist/{id}/albums` y se estaba descartando, así que la discografía
+  /// mezclaba álbumes con sencillos sin forma de separarlos. Leerlo no
+  /// cuesta ninguna petición extra.
+  ///
+  /// Cadena vacía = el endpoint no lo trae (p. ej. `/album/{id}` embebido en
+  /// otra respuesta); en ese caso [isSingleOrEp] devuelve `false` y el álbum
+  /// se trata como álbum, que es el caso mayoritario.
+  final String recordType;
+
   const DeezerAlbum({
     required this.id,
     required this.title,
@@ -19,7 +31,16 @@ class DeezerAlbum {
     required this.trackCount,
     required this.releaseDate,
     this.tracks = const [],
+    this.recordType = '',
   });
+
+  /// ¿Es un lanzamiento corto (sencillo o EP) en vez de un álbum?
+  bool get isSingleOrEp => recordType == 'single' || recordType == 'ep';
+
+  /// ¿Es un álbum propiamente dicho? Las recopilaciones cuentan como álbum
+  /// para el filtro de la discografía: no son sencillos, y esconderlas del
+  /// todo perdería lanzamientos reales.
+  bool get isFullAlbum => !isSingleOrEp;
 
   factory DeezerAlbum.fromJson(Map<String, dynamic> json) {
     final artistMap = json['artist'] as Map<String, dynamic>? ?? {};
@@ -52,6 +73,7 @@ class DeezerAlbum {
       trackCount: json['nb_tracks'] as int? ?? tracksList.length,
       releaseDate: json['release_date'] as String? ?? '',
       tracks: tracksList,
+      recordType: (json['record_type'] as String? ?? '').toLowerCase(),
     );
   }
 
@@ -63,5 +85,6 @@ class DeezerAlbum {
         'cover_medium': coverUrl,
         'nb_tracks': trackCount,
         'release_date': releaseDate,
+        'record_type': recordType,
       };
 }

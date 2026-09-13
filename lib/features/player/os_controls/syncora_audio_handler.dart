@@ -242,6 +242,26 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
   /// Publicar `loading` en esa ventana es además lo semánticamente correcto:
   /// hay una pista activa y se está preparando. El estado que ve la **UI**
   /// de la app no cambia — esto solo afecta a lo que se le publica al SO.
+  ///
+  /// ## Limitación conocida (revisión de la ronda 3, P2)
+  ///
+  /// `setQueue` y `_advanceAndPlay` notifican **antes** de que la ventana se
+  /// abra (`isPreparingPlayback` todavía es `false` en ese `_notify()`). En el
+  /// caso normal eso es inofensivo: el motor aún reporta el snapshot
+  /// `ready`/`playing` de la pista anterior, así que no se publica `idle`. El
+  /// hueco queda cuando el motor **ya estaba en `idle`** al asignarse la pista
+  /// nueva (justo tras un `_failPlaybackLoad`, tras un `stop()` explícito, o
+  /// en un arranque en frío): ahí se publica un `idle` con pista activa
+  /// durante un tick antes de que la ventana se abra.
+  ///
+  /// No se cierra a propósito. Hacerlo exigiría abrir la ventana desde
+  /// `setQueue`/`_advanceAndPlay` adivinando la generación que tomará
+  /// `_playCurrentInternal` — una bandera acoplada a un detalle interno y con
+  /// un dueño difuso, justo lo que prohíbe §2.3 de
+  /// `correcciones_qa_post_fase_7.md`. El coste del hueco es un parpadeo de
+  /// notificación en un caso que además arranca desde "no había nada
+  /// sonando"; el coste del arreglo es una bandera que se puede quedar
+  /// pegada.
   AudioProcessingState _mapProcessingState(
     engine_state.AudioProcessingState state, {
     bool isPreparing = false,

@@ -63,10 +63,18 @@ class _TrackCoverImageState extends State<TrackCoverImage> {
   /// en una lista que no se toca no pasa nunca.
   ///
   /// Reintento **acotado y decreciente en frecuencia**, no un bucle: dos
-  /// intentos extra por portada como mucho. Cambiar la key fuerza a
-  /// `CachedNetworkImage` a rehacer la petición (Flutter ya saca del
+  /// intentos extra como mucho, con esperas de 2 s y 6 s. Cambiar la key
+  /// fuerza a `CachedNetworkImage` a rehacer la petición (Flutter ya saca del
   /// `ImageCache` las entradas que fallaron, así que no hay nada rancio que
   /// invalidar a mano).
+  ///
+  /// Precisión sobre el alcance del tope (revisión de la ronda 3): el
+  /// presupuesto es **por instancia de `State`**, no por URL. En una lista con
+  /// reciclado, sacar una fila de pantalla y volver a traerla destruye y
+  /// recrea su `State`, así que ese tope se renueva. Se acepta a propósito:
+  /// las esperas de 2 s/6 s siguen aplicando en cada ciclo, así que no puede
+  /// degenerar en una ráfaga, y llevar el presupuesto a una tabla global por
+  /// URL costaría una estructura que habría que podar a mano.
   int _attempt = 0;
   bool _retryScheduled = false;
 

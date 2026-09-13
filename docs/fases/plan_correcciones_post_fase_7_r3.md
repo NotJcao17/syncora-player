@@ -106,7 +106,7 @@ sospecha del usuario sobre las estadísticas.
 Objetivo: que la app se comporte como cualquier reproductor serio ante interrupciones y pantalla
 apagada. Es el bundle con más impacto y el más delicado.
 
-- [ ] **A1 · Sesión de audio e interrupciones.** Promover `audio_session` a dependencia directa
+- [x] **A1 · Sesión de audio e interrupciones.** Promover `audio_session` a dependencia directa
       (`^0.2.4`, ya en el lock). Un servicio nuevo `lib/features/player/audio_focus_service.dart`:
   - `AudioSession.instance.configure(AudioSessionConfiguration.music())` una sola vez al arrancar.
   - `interruptionEventStream`: al comenzar, `duck` → bajar volumen; `pause`/`unknown` → pausar
@@ -120,7 +120,7 @@ apagada. Es el bundle con más impacto y el más delicado.
   - Test: un doble de sesión que emita eventos de interrupción y verifique la máquina de estados
     (pausa por interrupción → reanuda; pausa del usuario durante la interrupción → NO reanuda).
 
-- [ ] **A2 · No soltar el foreground service entre pistas** (H-R3-2). El controlador expone
+- [x] **A2 · No soltar el foreground service entre pistas** (H-R3-2). El controlador expone
       `bool get isPreparingPlayback`, puesto en `true` al entrar a `_playCurrentInternal` y
       liberado en un `finally` (acotado de por sí por `_engineLoadTimeout` de 30 s, así que no
       puede quedarse pegado — cumple la regla de §2.3). `SyncoraAudioHandler._publishPlaybackState`
@@ -129,28 +129,28 @@ apagada. Es el bundle con más impacto y el más delicado.
       transición.
   - Test: el handler publica `loading`, nunca `idle`, durante una transición simulada.
 
-- [ ] **A3 · Un reintento acotado ante fallo de carga del motor.** `_failPlaybackLoad` hoy muestra
+- [x] **A3 · Un reintento acotado ante fallo de carga del motor.** `_failPlaybackLoad` hoy muestra
       *"No se pudo iniciar X"* al primer fallo. Se añade **un** reintento inmediato dentro del mismo
       camino de reproducción (nada de vigilantes en background) antes de rendirse. La política
       403/red existente (`RetryPolicy`, máx. 1 reintento, Pitfall #11/#14) no se toca.
 
-- [ ] **A4 · Salida para "canción no disponible" sin reiniciar la app.** Hoy `unavailableTrackIds`
+- [x] **A4 · Salida para "canción no disponible" sin reiniciar la app.** Hoy `unavailableTrackIds`
       es de sesión y `track_tile` bloquea el tap con *"No disponible en este dispositivo"* sin
       forma de reintentar. Se añade `controller.clearUnavailable(trackId)` y se cambia el tap sobre
       una pista marcada por "limpiar marca + reintentar una vez", en vez del toast muerto.
       (D-21 se mantiene: el marcado sigue siendo de sesión y no se persiste.)
 
-- [ ] **A5 · Paleta y corazón del reproductor a pantalla completa** (H-R3-4). `ref.listen` sobre
+- [x] **A5 · Paleta y corazón del reproductor a pantalla completa** (H-R3-4). `ref.listen` sobre
       `currentTrackProvider` para recalcular ambos al cambiar de pista, con la respuesta de
       `PaletteGenerator` atada al id de la pista que la pidió (descartar si llegó tarde). Se
       aprovecha para usar la portada ya cacheada en vez de un `NetworkImage` crudo.
 
-- [ ] **A6 · Ícono de aleatorio con estado en la notificación.** `_shuffleControl` es hoy una
+- [x] **A6 · Ícono de aleatorio con estado en la notificación.** `_shuffleControl` es hoy una
       constante con `drawable/ic_shuffle` fijo. Pasa a getter que alterna entre `ic_shuffle` (activo)
       e `ic_shuffle_off` (nuevo `drawable/` a crear, variante tachada/apagada), igual que ya hace
       `_favoriteControl` con el corazón.
 
-- [ ] **A7 · Portadas que dejan de verse tras un rato en el móvil.** Diagnóstico previsto: cuando
+- [x] **A7 · Portadas que dejan de verse tras un rato en el móvil.** Diagnóstico previsto: cuando
       una carga falla (típicamente DNS no listo en frío, §6.9 de la ronda anterior),
       `CachedNetworkImage` se queda en `errorWidget` para ese widget hasta que se reconstruya.
       Corrección acotada: un reintento único y diferido dentro de `TrackCoverImage`, y re-emisión en
@@ -263,7 +263,7 @@ Toca D-1 (cola dual) y la sesión persistida: riesgo real, revisión independien
 
 ## Bundle E — Reproductor y detalles de UI
 
-- [ ] **E1 · Mini barra de progreso en el mini reproductor móvil.** Franja de 2 px pegada al borde
+- [x] **E1 · Mini barra de progreso en el mini reproductor móvil.** Franja de 2 px pegada al borde
       inferior del contenedor, sin interacción (no clickeable), alimentada por
       `playerStateProvider.select` de posición/duración para no reconstruir el resto de la barra.
 
@@ -286,19 +286,19 @@ Toca D-1 (cola dual) y la sesión persistida: riesgo real, revisión independien
 
 ## Bundle F — Deezer y metadatos
 
-- [ ] **F1 · Separar álbumes de sencillos en la discografía.** `/artist/{id}/albums` devuelve
+- [x] **F1 · Separar álbumes de sencillos en la discografía.** `/artist/{id}/albums` devuelve
       `record_type` (`album` / `single` / `ep` / `compilation`) y hoy el modelo `DeezerAlbum` lo
       descarta. Se añade el campo y un filtro en la pantalla de artista (píldoras: *Álbumes* /
       *Sencillos y EP* / *Todo*). **Coste cero en peticiones**: el dato ya viene en la respuesta que
       se pide hoy.
 
-- [ ] **F2 · Más canciones populares del artista.** `/artist/{id}/top` sin `limit` devuelve **5**
+- [x] **F2 · Más canciones populares del artista.** `/artist/{id}/top` sin `limit` devuelve **5**
       (no 10 — ya está confirmado contra la API en vivo y documentado en `getArtistTopTracksExpanded`).
       Se pasa a pedir `limit: 10` en la carga inicial, mostrar 5 y revelar las otras 5 con
       *Mostrar más*, **sin segunda petición**. Detalle técnico y respuesta a la pregunta del
       usuario, más abajo.
 
-- [ ] **F3 · Preferir la versión de álbum sobre el sencillo.** Desempate barato en `SearchRanking.rankTracks`:
+- [x] **F3 · Preferir la versión de álbum sobre el sencillo.** Desempate barato en `SearchRanking.rankTracks`:
       penalización pequeña y acotada cuando el nombre del álbum del resultado coincide con el
       título de la pista (firma típica del sencillo) **y** existe otro candidato del mismo artista
       con el mismo título base. Es un desempate de unos pocos puntos sobre una escala de ~200, así

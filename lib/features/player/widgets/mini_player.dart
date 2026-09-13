@@ -61,13 +61,18 @@ class MiniPlayer extends ConsumerWidget {
     return GestureDetector(
       onTap: () => context.push('/player'),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        // Ronda 3 (E1): el padding inferior baja de 12 a 8 para dejar sitio a
+        // la barra de progreso sin que el mini reproductor crezca.
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
         decoration: const BoxDecoration(
           color: AppTheme.primary, // bg-primary
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           boxShadow: AppTheme.miniPlayerShadow,
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
           children: [
             // Portada 48x48 (w-12 h-12 rounded-lg) con Hero tag
             Hero(
@@ -152,6 +157,14 @@ class MiniPlayer extends ConsumerWidget {
                 ),
               ),
             ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Ronda 3 (E1): barra de progreso decorativa al estilo Spotify.
+            // Deliberadamente NO interactiva: el mini reproductor entero es un
+            // area de toque que abre el reproductor completo, y meter un
+            // gesto de arrastre de 2px de alto dentro competiria con el.
+            const _MiniPlayerProgressBar(),
           ],
         ),
       ),
@@ -960,4 +973,35 @@ class _DesktopVolumeControlsState extends State<_DesktopVolumeControls> {
   }
 }
 
+/// Barra de progreso fina del mini reproductor movil (ronda 3, E1).
+///
+/// Widget propio y con `select` sobre posicion/duracion para que el tick del
+/// motor (varias veces por segundo) reconstruya SOLO estos 2 px, y no la
+/// portada, el marquee del titulo y el corazon del mini reproductor entero.
+class _MiniPlayerProgressBar extends ConsumerWidget {
+  const _MiniPlayerProgressBar();
 
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final position = ref.watch(playerStateProvider.select((s) => s.engine.position));
+    final duration = ref.watch(playerStateProvider.select((s) => s.engine.duration));
+
+    final totalMs = duration.inMilliseconds;
+    final ratio = totalMs > 0
+        ? (position.inMilliseconds / totalMs).clamp(0.0, 1.0)
+        : 0.0;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(2),
+      child: LinearProgressIndicator(
+        value: ratio,
+        minHeight: 2,
+        // El mini reproductor movil tiene fondo `primary` (claro), asi que la
+        // barra va en `background` (oscuro) para que contraste, al reves que
+        // en el resto de la app.
+        backgroundColor: AppTheme.background.withValues(alpha: 0.18),
+        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.background),
+      ),
+    );
+  }
+}

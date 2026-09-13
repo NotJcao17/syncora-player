@@ -71,7 +71,7 @@ class DeezerApi {
   final RateLimiter _rateLimiter;
 
   final _LruCache<String, DeezerSearchResult> _searchCache = _LruCache(maxSize: 10);
-  final _LruCache<int, List<DeezerTrack>> _topTracksCache = _LruCache(maxSize: 20);
+  final _LruCache<String, List<DeezerTrack>> _topTracksCache = _LruCache(maxSize: 20);
   final _LruCache<int, DeezerTrack> _trackCache = _LruCache(maxSize: 30);
   final _LruCache<int, List<DeezerTrack>> _artistRadioCache = _LruCache(maxSize: 20);
   final _LruCache<int, List<DeezerArtist>> _artistRelatedCache = _LruCache(maxSize: 20);
@@ -315,12 +315,27 @@ class DeezerApi {
     });
   }
 
-  Future<List<DeezerTrack>> getArtistTopTracks(int id) async {
-    final cached = _topTracksCache.get(id);
+  /// Canciones más escuchadas de un artista (`/artist/{id}/top`).
+  ///
+  /// ⚠️ **Sin `limit` explícito, Deezer devuelve 5 resultados, no 10**
+  /// (confirmado contra la API en vivo; ver también
+  /// [getArtistTopTracksExpanded]). Por eso [limit] tiene un default propio
+  /// en vez de dejar que decida el servidor.
+  ///
+  /// Ronda 3 (F2): la pantalla de artista pide 10 de una sola vez y muestra
+  /// 5, revelando el resto con "Mostrar más" sin una segunda petición.
+  ///
+  /// La caché se indexa por `(id, limit)`: una llamada con límite bajo no
+  /// debe dejar en caché una lista corta que luego se devuelva a quien pidió
+  /// más (mismo motivo por el que [getArtistTopTracksExpanded] no comparte
+  /// caché con este método).
+  Future<List<DeezerTrack>> getArtistTopTracks(int id, {int limit = 10}) async {
+    final cacheKey = '$id:$limit';
+    final cached = _topTracksCache.get(cacheKey);
     if (cached != null) return cached;
 
     return _rateLimiter.run(() async {
-      final response = await _dio.get('/artist/$id/top');
+      final response = await _dio.get('/artist/$id/top', queryParameters: {'limit': limit});
       if (response.data == null || response.data['data'] is! List) return [];
       final list = response.data['data'] as List;
       final tracks = list
@@ -328,7 +343,7 @@ class DeezerApi {
           .map((item) => DeezerTrack.fromJson(Map<String, dynamic>.from(item as Map)))
           .toList();
       tracks.sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
-      _topTracksCache.put(id, tracks);
+      _topTracksCache.put(cacheKey, tracks);
       return tracks;
     });
   }

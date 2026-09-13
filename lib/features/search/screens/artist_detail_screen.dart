@@ -35,6 +35,35 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   List<DeezerTrack> _topTracks = [];
   List<DeezerAlbum> _albums = [];
 
+  /// Ronda 3 (F2): `/artist/{id}/top` sin `limit` devuelve 5 resultados, no
+  /// 10. Se piden [_topTracksFetched] de una vez y se muestran
+  /// [_topTracksCollapsed]; "Mostrar más" revela el resto **sin una segunda
+  /// petición**, que es la razón de pedir de más desde el principio.
+  static const int _topTracksFetched = 10;
+  static const int _topTracksCollapsed = 5;
+  bool _showAllTopTracks = false;
+
+  /// Ronda 3 (F1): filtro de discografía. Deezer ya manda `record_type` en
+  /// `/artist/{id}/albums`, así que separar álbumes de sencillos no cuesta
+  /// ninguna petición extra.
+  _DiscographyFilter _discographyFilter = _DiscographyFilter.todo;
+
+  List<DeezerAlbum> get _filteredAlbums {
+    switch (_discographyFilter) {
+      case _DiscographyFilter.todo:
+        return _albums;
+      case _DiscographyFilter.albumes:
+        return _albums.where((a) => a.isFullAlbum).toList();
+      case _DiscographyFilter.sencillos:
+        return _albums.where((a) => a.isSingleOrEp).toList();
+    }
+  }
+
+  /// ¿Vale la pena pintar las píldoras? Si el artista no tiene de los dos
+  /// tipos, un filtro con una sola opción útil es ruido.
+  bool get _showDiscographyFilter =>
+      _albums.any((a) => a.isSingleOrEp) && _albums.any((a) => a.isFullAlbum);
+
   @override
   void initState() {
     super.initState();
@@ -62,7 +91,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
       final api = ref.read(deezerApiProvider);
       final results = await Future.wait([
         api.getArtist(id),
-        api.getArtistTopTracks(id),
+        api.getArtistTopTracks(id, limit: _topTracksFetched),
         api.getArtistAlbums(id),
       ]);
 
@@ -79,6 +108,12 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
           _topTracks = results[1] as List<DeezerTrack>;
           _albums = rawAlbums;
           _isLoading = false;
+          _showAllTopTracks = false;
+          if (_discographyFilter != _DiscographyFilter.todo && _filteredAlbums.isEmpty) {
+            // El artista recargado no tiene nada del tipo filtrado: no dejar
+            // la pantalla vacía por un filtro que ya no aplica.
+            _discographyFilter = _DiscographyFilter.todo;
+          }
         });
       }
     } catch (e) {
@@ -116,6 +151,12 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
     final artist = _artist!;
     final syncoraTracks = _topTracks.map((t) => t.toSyncoraTrack()).toList();
+    final visibleTopTracks = _showAllTopTracks
+        ? syncoraTracks.length
+        : (syncoraTracks.length < _topTracksCollapsed
+            ? syncoraTracks.length
+            : _topTracksCollapsed);
+    final visibleAlbums = _filteredAlbums;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -264,18 +305,48 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                     index: i,
                     isPlaying: currentTrack?.id == track.id,
                     onTap: () {
+                      // La cola se arma SIEMPRE con el top completo, se estén
+                      // mostrando 5 o 10: colapsar la lista es una decisión
+                      // visual, no debe recortar lo que suena después.
                       controller.setQueue(syncoraTracks, startIndex: i);
                     },
                     onAddToQueue: () => controller.addToQueue(track),
                   );
                 },
-                childCount: syncoraTracks.length,
+                childCount: visibleTopTracks,
               ),
             ),
           ),
 
+          if (syncoraTracks.length > _topTracksCollapsed)
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(isDesktop ? 32 : 20, 4, isDesktop ? 32 : 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () => setState(() => _showAllTopTracks = !_showAllTopTracks),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: const Size(0, 40),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      _showAllTopTracks ? 'Mostrar menos' : 'Mostrar más',
+                      style: const TextStyle(
+                        color: AppTheme.secondary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
           // Discografía
-          if (_albums.isNotEmpty)
+          if (visibleAlbums.isNotEmpty)
             SliverPadding(
               padding: EdgeInsets.symmetric(
                 horizontal: isDesktop ? 32 : 20,
@@ -291,6 +362,42 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                             fontWeight: FontWeight.w700,
                           ),
                     ),
+                    if (_showDiscographyFilter) ...[
+                      const SizedBox(height: 12),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _DiscographyFilter.values.map((f) {
+                            final selected = _discographyFilter == f;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text(f.label),
+                                selected: selected,
+                                onSelected: (val) {
+                                  if (val) setState(() => _discographyFilter = f);
+                                },
+                                selectedColor: AppTheme.primary,
+                                backgroundColor: AppTheme.surface,
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                labelStyle: TextStyle(
+                                  color: selected ? AppTheme.background : AppTheme.primary,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                ),
+                                shape: StadiumBorder(
+                                  side: BorderSide(
+                                    color: selected ? AppTheme.primary : AppTheme.surfaceHover,
+                                  ),
+                                ),
+                                showCheckmark: false,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     SizedBox(
                       height: 220,
@@ -305,15 +412,19 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                         ),
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          itemCount: _albums.length,
+                          itemCount: visibleAlbums.length,
                           separatorBuilder: (ctx, index) => const SizedBox(width: 16),
                           itemBuilder: (ctx, i) {
-                            final album = _albums[i];
-                            final subtitleText = album.trackCount > 0
-                                ? '${album.trackCount} canciones'
-                                : (album.releaseDate.length >= 4
-                                    ? album.releaseDate.substring(0, 4)
-                                    : 'Álbum');
+                            final album = visibleAlbums[i];
+                            final year = album.releaseDate.length >= 4
+                                ? album.releaseDate.substring(0, 4)
+                                : '';
+                            // Con el filtro visible, el tipo de lanzamiento es
+                            // la información que ayuda a distinguirlos.
+                            final tipo = album.isSingleOrEp
+                                ? (album.recordType == 'ep' ? 'EP' : 'Sencillo')
+                                : 'Álbum';
+                            final subtitleText = year.isNotEmpty ? '$tipo • $year' : tipo;
                             return SizedBox(
                               width: isDesktop ? 192 : 144,
                               child: PlaylistCard(
@@ -385,4 +496,14 @@ class _HeaderPlayButtonState extends State<_HeaderPlayButton> {
       ),
     );
   }
+}
+
+/// Filtro de la discografía del artista (ronda 3, F1).
+enum _DiscographyFilter {
+  todo('Todo'),
+  albumes('Álbumes'),
+  sencillos('Sencillos y EP');
+
+  const _DiscographyFilter(this.label);
+  final String label;
 }

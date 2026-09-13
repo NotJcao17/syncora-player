@@ -15,23 +15,47 @@ import 'package:syncora_player/features/player/audio_focus_service.dart';
 void main() {
   late List<String> calls;
   late bool playing;
+
+  /// Espeja `SyncoraPlayerController.lastPauseWasUserInitiated`: la pausa que
+  /// pide el propio servicio NO es del usuario; la que simula el test con
+  /// [pausaManual] sí.
+  late bool pausedByUser;
   late AudioFocusService service;
+
+  /// El usuario pulsa pausa a mano (p. ej. abriendo la app en mitad de una
+  /// llamada).
+  void pausaManual() {
+    playing = false;
+    pausedByUser = true;
+    calls.add('pausa-del-usuario');
+  }
+
+  /// El usuario pulsa reproducir a mano.
+  void reproduceManual() {
+    playing = true;
+    pausedByUser = false;
+    calls.add('play-del-usuario');
+  }
 
   AudioFocusService build() => AudioFocusService(
         onPause: () async {
           calls.add('pause');
           playing = false;
+          pausedByUser = false;
         },
         onResume: () async {
           calls.add('resume');
           playing = true;
+          pausedByUser = false;
         },
         isPlaying: () => playing,
+        wasPausedByUser: () => pausedByUser,
       );
 
   setUp(() {
     calls = [];
     playing = true;
+    pausedByUser = false;
     service = build();
   });
 
@@ -53,23 +77,52 @@ void main() {
       expect(calls, ['pause', 'resume']);
     });
 
-    test('si el usuario pausa durante la interrupcion, NO se reanuda solo', () async {
-      // Este es el caso que hace falta proteger: el usuario decide pausar
-      // mientras suena la alarma. Al acabar la alarma la musica no debe
-      // volver sola -- la ultima intencion explicita fue "pausado".
+    test('si el usuario pausa a mano DURANTE la interrupcion, NO se reanuda', () async {
+      // Revision de la ronda 3 (P1): la version anterior de este test corria
+      // una interrupcion entera y solo DESPUES marcaba la app como pausada,
+      // asi que nunca metia una accion del usuario entre el `begin` y el
+      // `end` de la MISMA interrupcion -- pasaba igual con el bug presente.
+      //
+      // Escenario real: entra una llamada, la musica se auto-pausa, el
+      // usuario abre la app y le da a reproducir y luego a pausa porque no
+      // quiere que vuelva. Al colgar, la musica no debe volver sola.
       service.handleInterruption(begin(AudioInterruptionType.pause));
       await pumpEventQueue();
+      expect(calls, ['pause']);
 
-      // Una interrupcion nueva que llega ya con la app pausada no vuelve a
-      // marcar "pausado por interrupcion"...
+      // ... el usuario interviene, con la interrupcion todavia en curso.
+      reproduceManual();
+      pausaManual();
+
       service.handleInterruption(end(AudioInterruptionType.pause));
       await pumpEventQueue();
-      calls.clear();
+
+      expect(
+        calls.contains('resume'),
+        isFalse,
+        reason: 'la ultima intencion explicita del usuario fue "pausado"',
+      );
+    });
+
+    test('si el usuario reanuda a mano durante la interrupcion, no se duplica el play', () async {
+      service.handleInterruption(begin(AudioInterruptionType.pause));
+      await pumpEventQueue();
+      reproduceManual();
+
+      service.handleInterruption(end(AudioInterruptionType.pause));
+      await pumpEventQueue();
+
+      expect(calls.contains('resume'), isFalse, reason: 'ya estaba sonando');
+    });
+
+    test('si ya estaba pausado antes de la interrupcion, no pasa nada', () async {
       playing = false;
+      pausedByUser = true;
 
       service.handleInterruption(begin(AudioInterruptionType.pause));
       service.handleInterruption(end(AudioInterruptionType.pause));
       await pumpEventQueue();
+
       expect(calls, isEmpty, reason: 'nada que pausar ni que reanudar');
     });
 

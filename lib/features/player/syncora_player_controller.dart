@@ -571,6 +571,9 @@ class SyncoraPlayerController extends ChangeNotifier {
   }
 
   Future<void> play() async {
+    // Suena algo otra vez: la pausa anterior ya no describe ningún estado
+    // vigente (ver [pause] / [lastPauseWasUserInitiated]).
+    _lastPauseWasUserInitiated = false;
     if (_state.engine.processingState == AudioProcessingState.idle && _state.currentTrack != null) {
       await playCurrent();
     } else {
@@ -578,10 +581,29 @@ class SyncoraPlayerController extends ChangeNotifier {
     }
   }
 
-  Future<void> pause() async {
+  /// Pausa la reproducción.
+  ///
+  /// [userInitiated] distingue "el usuario pulsó pausa" de "el sistema nos
+  /// quitó el foco" (ronda 3, A1). Lo consume `AudioFocusService` para no
+  /// devolverle la música en la cara a alguien que la paró a propósito
+  /// mientras sonaba una alarma o una llamada: al acabar la interrupción solo
+  /// se reanuda si la última pausa NO fue del usuario.
+  ///
+  /// El valor por defecto es `true` a propósito — todos los llamadores
+  /// existentes (botón del reproductor, mini reproductor, pantalla de
+  /// bloqueo, barra de tareas) son acciones explícitas del usuario; el único
+  /// que pasa `false` es el manejo de foco de audio.
+  Future<void> pause({bool userInitiated = true}) async {
+    _lastPauseWasUserInitiated = userInitiated;
     await _engine.pause();
     _saveSession();
   }
+
+  /// ¿La última pausa la pidió el usuario (y no una interrupción del
+  /// sistema)? Ver [pause]. Se limpia al volver a reproducir, así que nunca
+  /// describe una pausa que ya dejó de existir.
+  bool get lastPauseWasUserInitiated => _lastPauseWasUserInitiated;
+  bool _lastPauseWasUserInitiated = false;
 
   Future<void> seek(Duration position) async {
     await _engine.seek(position);
@@ -1900,7 +1922,18 @@ bool get _isTestEnv {
       try {
         if (useCrossfade) {
           _log('[Play] Crossfade a descarga local: $localPath (${crossfadeDuration.inSeconds}s)');
-          await _engine.crossfadeToLocalSource(localPath, crossfadeDuration);
+          // Revisión de la ronda 3 (P1): este camino era el único de
+          // `_playCurrentGuarded` sin techo de espera. `crossfadeToLocalSource`
+          // espera por dentro a `setLocalSource` + `play()` del motor entrante
+          // sin timeout propio, así que una carga nativa colgada dejaba este
+          // método sin retornar nunca — y con él, el `finally` que cierra la
+          // ventana de `_preparingPlaybackGeneration` (que se documenta como
+          // "acotada por `_engineLoadTimeout`": sin esto, ahí no lo estaba).
+          // Al vencer, lo recoge el mismo `catch` de abajo que el resto de
+          // fallos de carga.
+          await _engine
+              .crossfadeToLocalSource(localPath, crossfadeDuration)
+              .timeout(_engineLoadTimeout);
         } else {
           _log('[Play] Pista local descargada encontrada: $localPath. Cargando sin pasar por ExtractionIsolate.');
           await _loadSourceWithOneRetry(

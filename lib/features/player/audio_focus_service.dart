@@ -49,15 +49,21 @@ class AudioFocusService {
     required Future<void> Function() onPause,
     required Future<void> Function() onResume,
     required bool Function() isPlaying,
+    required bool Function() wasPausedByUser,
     void Function(String message)? log,
   })  : _onPause = onPause, // ignore: prefer_initializing_formals
         _onResume = onResume, // ignore: prefer_initializing_formals
         _isPlaying = isPlaying, // ignore: prefer_initializing_formals
+        _wasPausedByUser = wasPausedByUser, // ignore: prefer_initializing_formals
         _log = log; // ignore: prefer_initializing_formals
 
   final Future<void> Function() _onPause;
   final Future<void> Function() _onResume;
   final bool Function() _isPlaying;
+
+  /// ¿La pausa vigente la pidió el usuario? Ver
+  /// `SyncoraPlayerController.lastPauseWasUserInitiated`.
+  final bool Function() _wasPausedByUser;
   final void Function(String message)? _log;
 
   StreamSubscription<AudioInterruptionEvent>? _interruptionSub;
@@ -115,7 +121,7 @@ class AudioFocusService {
       case AudioInterruptionType.duck:
         break;
       case AudioInterruptionType.pause:
-        if (_pausedByInterruption) {
+        if (_pausedByInterruption && _shouldResume()) {
           _log?.call('[Focus] Fin de la interrupción: reanudando.');
           unawaited(_onResume());
         }
@@ -125,6 +131,29 @@ class AudioFocusService {
         break;
     }
     _pausedByInterruption = false;
+  }
+
+  /// ¿Corresponde devolver la música al terminar la interrupción?
+  ///
+  /// Revisión de la ronda 3 (P1): mirar solo [_pausedByInterruption] no
+  /// bastaba. Esa marca se decide al EMPEZAR la interrupción y nada observaba
+  /// lo que el usuario hiciera entre el principio y el final. Escenario real:
+  /// entra una llamada, la música se auto-pausa, el usuario abre la app y la
+  /// pausa a mano porque no quiere que vuelva; al colgar, la música volvía
+  /// igual, pisando su última acción explícita.
+  ///
+  /// Dos comprobaciones al final de la interrupción cierran el hueco:
+  /// - si ya está sonando, no hay nada que reanudar (el usuario le dio a
+  ///   reproducir durante la interrupción);
+  /// - si la pausa vigente la pidió el usuario, esa es la intención más
+  ///   reciente y manda sobre la nuestra.
+  bool _shouldResume() {
+    if (_isPlaying()) return false;
+    if (_wasPausedByUser()) {
+      _log?.call('[Focus] Fin de la interrupción: el usuario pausó a mano, no se reanuda.');
+      return false;
+    }
+    return true;
   }
 
   /// Auriculares/Bluetooth desconectados. Comportamiento estándar de
