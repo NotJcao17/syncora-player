@@ -504,3 +504,36 @@ nada más. Sus tests están en `test/features/search/album_vs_single_ranking_tes
       resto de listas) no significaría nada sobre algo que ya está en la cola: solo dejaría un
       duplicado. Y montarlo como un `Dismissible` anidado es justamente lo que rompía el deslizar
       (ver `TrackTile.enableSwipeToQueue`).
+
+---
+
+## Sexta tanda: reordenar la cola, al tercer intento
+
+Vale la pena contar los dos intentos fallidos, porque el motivo por el que
+fallaron no se ve leyendo el widget y es fácil volver a caer.
+
+- [x] **Reordenar en táctil, tercer y definitivo enfoque.**
+  1. *Arrastre inmediato sobre el asa.* El reconocedor del asa y el `Scrollable` de alrededor
+     aceptan los dos al superar **el mismo** umbral (`kTouchSlop`), así que quién gana depende del
+     orden en la arena de gestos: literalmente una moneda al aire. Síntoma: "la mitad de las veces
+     termino arrastrando la pantalla".
+  2. *Pulsación larga sobre la fila entera*, que es lo que hace `ReorderableListView` de Flutter en
+     táctil. **Salió peor.** `DelayedMultiDragGestureRecognizer` se descarta a sí mismo si el dedo
+     se mueve más de `kTouchSlop` antes de cumplirse el medio segundo, y sostener el dedo
+     perfectamente quieto en un móvil es justo lo que nadie hace. Síntoma: cinco intentos para
+     mover una canción.
+  3. **Lo que funciona:** seguir con arrastre inmediato, pero dejar de competir de igual a igual.
+     `ReorderableDragStartListener` construye su reconocedor con los `gestureSettings` del
+     `MediaQuery` más cercano, así que envolviendo **solo el asa** en un `MediaQuery` con
+     `touchSlop: 4` el arrastre acepta a los pocos píxeles mientras el scroll sigue esperando al
+     umbral normal. Deja de ser una carrera: el asa gana siempre, y solo el asa. El asa crece a
+     56x56 por comodidad.
+     Test: `test/features/player/queue_drag_handle_test.dart` fija la propiedad que lo hace
+     funcionar (el asa ve un `touchSlop` estrictamente menor que su entorno) en vez de simular una
+     arena de gestos que en un test de widget no reproduce la carrera real.
+- [x] **Deslizar a la derecha en la cola, retirado.** Bajar al final de la cola y volver encolaba
+      tres canciones sin querer. Subir `dismissThresholds` no lo cierra: el `Dismissible` de
+      Flutter **se salta el umbral cuando detecta un "fling"** (velocidad > 700 px/s en el eje), así
+      que un flick rápido y algo diagonal lo confirma igual. Dentro de la cola esa acción era un
+      atajo y sigue en el menú de 3 puntos; eliminar, en cambio, es lo que el Documento Maestro
+      pide para este gesto (§2.1.5) y se queda, con el umbral en 0.6.

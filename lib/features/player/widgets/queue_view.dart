@@ -1,5 +1,5 @@
+import 'package:flutter/gestures.dart' show DeviceGestureSettings;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_icons.dart';
@@ -609,7 +609,6 @@ class _QueueViewState extends ConsumerState<QueueView> {
   /// participa del auto-scroll al arrastrar cerca del borde en colas largas.
   Widget _buildSectionSliver(QueueOrigin origin, List<SyncoraTrack> tracks) {
     final controller = ref.read(syncoraPlayerControllerProvider.notifier);
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
     final selected = origin == QueueOrigin.manual ? _selectedManual : _selectedAuto;
     final keys = _stableKeysFor(origin, tracks);
 
@@ -684,58 +683,29 @@ class _QueueViewState extends ConsumerState<QueueView> {
             Expanded(
               child: Dismissible(
                 key: ValueKey('${itemKey.value}_dismiss'),
-                // Ronda 3 bis: los dos sentidos, en UN solo `Dismissible`.
+                // Ronda 3 bis (segunda pasada): **solo hacia la izquierda**.
                 //
-                // Izquierda = quitar de la cola. Derecha = reproducir a
-                // continuación, que es la acción útil aquí: "agregar a la
-                // cola" (lo que hace el deslizar en el resto de listas) no
-                // significaría nada sobre algo que YA está en la cola, solo
-                // dejaría un duplicado. Y montarlo como un segundo
-                // `Dismissible` anidado es exactamente lo que rompía el
-                // deslizar (ver `TrackTile.enableSwipeToQueue`).
-                direction: DismissDirection.horizontal,
+                // El deslizar a la derecha ("reproducir a continuación") se
+                // retiró: en una pantalla que es puro scroll vertical,
+                // resultaba tan fácil dispararlo sin querer que bajar hasta el
+                // final de la cola y volver encolaba tres canciones solas. El
+                // `Dismissible` de Flutter además **se lleva por delante el
+                // umbral cuando detecta un "fling"** (velocidad > 700 px/s en
+                // el eje), así que subir `dismissThresholds` no cierra ese
+                // camino: un flick rápido y algo diagonal lo confirma igual.
+                //
+                // Quitarlo cuesta poco: dentro de la cola esa acción es un
+                // atajo, y sigue disponible en el menú de 3 puntos de cada
+                // fila. Eliminar, en cambio, es lo que el Documento Maestro
+                // pide explícitamente para este gesto (§2.1.5).
+                direction: DismissDirection.endToStart,
                 dismissThresholds: const {
-                  DismissDirection.endToStart: 0.45,
-                  DismissDirection.startToEnd: 0.45,
-                },
-                confirmDismiss: (direction) async {
-                  if (direction == DismissDirection.startToEnd) {
-                    HapticFeedback.mediumImpact();
-                    controller.playNext(track);
-                    if (context.mounted) {
-                      AppToast.show(context, message: 'Se reproducirá a continuación');
-                    }
-                    // `false`: la fila no desaparece; `playNext` ya la movió a
-                    // la cola manual y el estado se encarga de repintar.
-                    return false;
-                  }
-                  return true;
+                  DismissDirection.endToStart: 0.6,
                 },
                 onDismissed: (_) {
                   controller.removeFromQueue(origin, i);
                 },
                 background: Container(
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.only(left: 16),
-                  color: AppTheme.accent.withValues(alpha: 0.25),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(AppIcons.broken(SolarIcons.PlayCircle),
-                          color: AppTheme.primary, size: 20),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Reproducir a continuación',
-                        style: TextStyle(
-                          color: AppTheme.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                secondaryBackground: Container(
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 16),
                   color: Colors.red.withValues(alpha: 0.2),
@@ -770,51 +740,59 @@ class _QueueViewState extends ConsumerState<QueueView> {
                 ),
               ),
             ),
-            // El asa es sobre todo una PISTA VISUAL de que la fila se puede
-            // reordenar. En escritorio además arranca el arrastre al instante;
-            // en táctil el arrastre lo inicia la pulsación larga sobre la fila
-            // entera (ver abajo).
-            if (isDesktop)
-              ReorderableDragStartListener(
-                index: i,
-                child: _dragHandle(),
-              )
-            else
-              _dragHandle(),
+            // El asa arranca el arrastre de reordenar, y **gana la arena de
+            // gestos de forma determinista** — ver `_dragHandle`.
+            ReorderableDragStartListener(
+              index: i,
+              child: _dragHandle(context),
+            ),
           ],
         );
 
-        // Ronda 3 bis: en táctil, el arrastre se inicia con **pulsación larga
-        // sobre toda la fila**, no con un arrastre inmediato sobre el asa.
-        //
-        // El motivo es una carrera real en la arena de gestos: el arrastre
-        // inmediato del asa y el scroll vertical de la lista aceptan los dos
-        // al superar el mismo umbral de desplazamiento, así que quién gana
-        // depende del orden — de ahí el "la mitad de las veces termino
-        // arrastrando la pantalla". La pulsación larga no compite: gana sola
-        // al cumplirse el tiempo. Es lo que hace el propio
-        // `ReorderableListView` de Flutter, que usa el listener inmediato en
-        // escritorio y el retardado en táctil.
-        //
-        // Dentro de la cola no hay conflicto con el menú de opciones porque
-        // ahí la pulsación larga está desactivada (`enableLongPressMenu`).
-        return isDesktop
-            ? KeyedSubtree(key: itemKey, child: row)
-            : ReorderableDelayedDragStartListener(
-                key: itemKey,
-                index: i,
-                child: row,
-              );
+        return KeyedSubtree(key: itemKey, child: row);
       },
     );
   }
 
-  Widget _dragHandle() => SizedBox(
+  /// Asa de reordenar.
+  ///
+  /// Ronda 3 bis (tercera pasada). Historia corta de dos intentos fallidos,
+  /// porque el porqué importa más que el arreglo:
+  ///
+  /// 1. **Arrastre inmediato a secas.** El reconocedor del asa y el scroll
+  ///    vertical de la lista aceptan los dos al superar **el mismo** umbral de
+  ///    desplazamiento (`kTouchSlop`), así que quién gana depende del orden en
+  ///    la arena: una moneda al aire, y de ahí el "la mitad de las veces
+  ///    termino arrastrando la pantalla".
+  /// 2. **Pulsación larga sobre la fila** (lo que hace `ReorderableListView`
+  ///    de Flutter en táctil). Salió peor: `DelayedMultiDragGestureRecognizer`
+  ///    **se descarta a sí mismo si el dedo se mueve más de `kTouchSlop` antes
+  ///    de cumplirse el medio segundo**, y sostener el dedo perfectamente
+  ///    quieto en un móvil es justo lo que nadie hace. Cinco intentos para
+  ///    mover una canción.
+  ///
+  /// Lo que sí funciona: seguir con arrastre **inmediato**, pero dejar de
+  /// competir de igual a igual. `ReorderableDragStartListener` construye su
+  /// reconocedor con los `gestureSettings` del `MediaQuery` más cercano, así
+  /// que envolviendo **solo el asa** en un `MediaQuery` con un `touchSlop`
+  /// pequeño, el arrastre de reordenar acepta a los pocos píxeles mientras el
+  /// `Scrollable` de alrededor sigue esperando al umbral normal. Deja de ser
+  /// una carrera: el asa gana siempre, y solo el asa — el resto de la fila
+  /// scrollea como antes.
+  Widget _dragHandle(BuildContext context) {
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        gestureSettings: const DeviceGestureSettings(touchSlop: 4),
+      ),
+      child: SizedBox(
         // Documento Maestro §10 (antipatrón 5): área táctil mínima 48x48dp.
-        width: 48,
-        height: 48,
+        // Se le da algo más de ancho porque es el único punto de agarre.
+        width: 56,
+        height: 56,
         child: Center(
-          child: Icon(AppIcons.broken(SolarIcons.Sort), color: AppTheme.muted, size: 18),
+          child: Icon(AppIcons.broken(SolarIcons.Sort), color: AppTheme.muted, size: 20),
         ),
-      );
+      ),
+    );
+  }
 }
