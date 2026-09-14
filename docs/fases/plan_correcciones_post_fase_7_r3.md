@@ -441,3 +441,34 @@ confirmado como correcto.
       acción de transporte fue una **pausa pedida por el usuario** sin play posterior
       (`lastPauseWasUserInitiated`). El fin natural de una pista nunca pasa por ahí, así que no
       puede frenar un avance legítimo — hay un test para cada mitad del contrato.
+
+---
+
+## Cuarta tanda: últimos detalles de la ronda de pruebas
+
+- [x] **Regenerar cola dos veces seguidas no hacía nada la segunda vez.** El conjunto de exclusión
+      de la radio se arma con lo que hay en las colas, y regenerar **las vacía justo antes de
+      pedir** — así que las sugerencias recién descartadas volvían a estar disponibles. Encima
+      `DeezerApi` cachea `/artist/{id}/radio`, de modo que las mismas semillas devuelven la misma
+      lista: el segundo lote era idéntico al primero y parecía que el botón estaba muerto.
+      Corregido con una memoria de sesión de lo ya sugerido (`_recentRadioSuggestions`, FIFO
+      acotada a 400 ids) que se suma a las exclusiones.
+      **Es una preferencia de variedad, no una regla dura:** si con ella el lote sale vacío, se
+      reintenta sin ella antes que dejar la cola sin nada. Y ese reintento solo ocurre si la
+      memoria tenía algo que filtrar — sin eso, un lote vacío gastaría dos peticiones en vez de
+      una. De paso, `FakeRadioService` ahora **respeta `excludeIds`** (Pitfall #27: un doble debe
+      imitar la semántica, no solo la firma); sin eso ninguno de estos tests podía comprobar nada.
+- [x] **Avisos disparados desde dentro de una hoja modal.** `AppBottomSheet` declara ahora
+      `BottomChromeScope(hasChrome: false)`: una hoja tapa el mini reproductor y la barra de
+      navegación, así que esquivarlos dejaba el aviso flotando a media hoja (se veía con "cola
+      regenerada").
+- [x] **Portada de degradado también sin nota musical**, igual que la de color liso.
+
+### Nota sobre F3 (preferir la versión de álbum sobre el sencillo)
+
+Sin fallos en las pruebas, así que se da por buena. Queda anotado **cómo revertirla** si algún día
+resulta que empeora resultados que hoy son correctos: vive entera en
+`SearchRanking.preferAlbumOverSingle`, y basta con dejar de llamarla al final de `rankTracks`
+(devolver `scored.map((s) => s.value).toList()` tal cual). No toca `YtSearchMatcher` ni el
+importador CSV — es solo el orden de los resultados de Deezer — así que quitarla no puede arrastrar
+nada más. Sus tests están en `test/features/search/album_vs_single_ranking_test.dart`.

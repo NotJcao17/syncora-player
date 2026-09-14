@@ -98,21 +98,16 @@ class PlaylistCoverWidget extends ConsumerWidget {
       if (cover.startsWith('gradient:')) {
         final index = int.tryParse(cover.substring('gradient:'.length)) ?? 0;
         final gradient = presetGradients[index % presetGradients.length];
-        content = Container(
-          decoration: BoxDecoration(gradient: gradient),
-          child: _centeredIcon(
-            AppIcons.broken(SolarIcons.MusicNote),
-            Colors.white.withValues(alpha: 0.9),
-          ),
-        );
+        // Igual que con el color liso: si el usuario eligió este degradado como
+        // portada, eso ES la portada. La nota musical encima la hacía parecer
+        // un marcador de posición.
+        content = Container(decoration: BoxDecoration(gradient: gradient));
       } else if (cover.startsWith('color:')) {
         final hexStr = cover.substring('color:'.length).replaceAll('#', '');
         final intVal = int.tryParse(hexStr.length == 6 ? 'FF$hexStr' : hexStr, radix: 16) ?? 0xFF1DB954;
         // Ronda 3 bis: color liso y nada más. Si el usuario eligió un color
         // como portada, eso ES la portada — la nota musical encima la
         // convertía en un marcador de posición, que es justo lo contrario.
-        // (Los degradados sí conservan el icono: ahí el icono es lo único que
-        // distingue una portada elegida a propósito de un fondo decorativo.)
         content = Container(color: Color(intVal));
       } else if (!kIsWeb && (cover.startsWith('/') || cover.contains(':\\') || cover.startsWith('file:'))) {
         final filePath = cover.startsWith('file://') ? cover.replaceFirst('file://', '') : cover;

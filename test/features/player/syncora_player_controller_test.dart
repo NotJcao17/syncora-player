@@ -375,6 +375,12 @@ class FakeRadioService extends RadioService {
   int callCount = 0;
   List<SyncoraTrack>? lastContextTracks;
   Set<String>? lastExcludeIds;
+
+  /// Todos los sets de exclusion recibidos, en orden. Hace falta porque un
+  /// mismo disparo puede hacer DOS llamadas (el intento filtrado por la
+  /// memoria de sugerencias y, si sale vacio, el reintento permitiendo
+  /// repetir), y `lastExcludeIds` solo conserva el segundo.
+  final List<Set<String>> excludeIdsHistory = [];
   Completer<List<SyncoraTrack>>? _held;
 
   /// Retiene la resolución de la próxima llamada a `generateBatch` hasta que
@@ -396,12 +402,17 @@ class FakeRadioService extends RadioService {
     callCount++;
     lastContextTracks = contextTracks;
     lastExcludeIds = excludeIds;
+    excludeIdsHistory.add(excludeIds);
     final held = _held;
     if (held != null) {
       _held = null;
       return held.future;
     }
-    return nextBatch;
+    // El servicio real NUNCA devuelve algo que esté en `excludeIds` (Pitfall
+    // #27: un doble debe imitar la semántica, no solo la firma). Sin esto no
+    // se podía comprobar que la memoria de sugerencias de la ronda 3 bis
+    // hiciera efecto.
+    return nextBatch.where((t) => !excludeIds.contains(t.id)).toList();
   }
 }
 
@@ -1644,6 +1655,64 @@ void main() {
     // Revisión independiente de 7.B, bug #2: faltaba incluir el historial de
     // reproducción en el set de exclusión, así que la radio podía reofrecer
     // una pista que el usuario ya escuchó y dejó atrás.
+    // Ronda 3 bis: pulsar "Regenerar cola" dos veces seguidas devolvia el
+    // MISMO lote. El set de exclusion se arma con lo que hay en las colas, y
+    // regenerar las vacia justo antes de pedir, asi que las sugerencias recien
+    // descartadas volvian a estar disponibles (y `DeezerApi` cachea
+    // /artist/{id}/radio, con lo que las mismas semillas dan la misma lista).
+    test('regenerar dos veces excluye lo que la radio ya habia sugerido', () async {
+      radioService.nextBatch = const [
+        SyncoraTrack(id: 'r1', title: 'R1', artistId: 9),
+        SyncoraTrack(id: 'r2', title: 'R2', artistId: 9),
+      ];
+      final controller = buildController();
+      controller.init();
+      addTearDown(controller.dispose);
+
+      await controller.setQueue(
+        const [SyncoraTrack(id: 'c1', title: 'C1', artistId: 1)],
+        autoplay: true,
+      );
+      await pumpEventQueue();
+      expect(controller.state.autoQueue.map((t) => t.id), containsAll(['r1', 'r2']));
+
+      // El usuario pide otras sugerencias.
+      controller.regenerateAutoQueue();
+      await pumpEventQueue();
+
+      // El primer intento del disparo nuevo es el que lleva la memoria; si
+      // vuelve vacio hay un reintento sin ella, y ese es el que quedaria en
+      // `lastExcludeIds`.
+      expect(radioService.excludeIdsHistory.length, greaterThanOrEqualTo(2));
+      final intentoFiltrado = radioService.excludeIdsHistory[
+          radioService.excludeIdsHistory.length - 2];
+      expect(intentoFiltrado, contains('r1'));
+      expect(intentoFiltrado, contains('r2'));
+    });
+
+    test('si no quedan sugerencias nuevas, se permite repetir antes que dejar la cola vacia', () async {
+      // La memoria de sugerencias es una preferencia de variedad, no una
+      // regla que pueda dejar al usuario sin nada que sonar.
+      radioService.nextBatch = const [SyncoraTrack(id: 'r1', title: 'R1', artistId: 9)];
+      final controller = buildController();
+      controller.init();
+      addTearDown(controller.dispose);
+
+      await controller.setQueue(
+        const [SyncoraTrack(id: 'c1', title: 'C1', artistId: 1)],
+        autoplay: true,
+      );
+      await pumpEventQueue();
+      final trasPrimera = radioService.callCount;
+
+      controller.regenerateAutoQueue();
+      await pumpEventQueue();
+
+      expect(radioService.callCount, trasPrimera + 2,
+          reason: 'primer intento filtrado (vacio) + reintento permitiendo repetir');
+      expect(controller.state.autoQueue.map((t) => t.id), contains('r1'));
+    });
+
     test('el set de exclusión enviado a generateBatch incluye el historial de reproducción', () async {
       final controller = buildController();
       controller.init();

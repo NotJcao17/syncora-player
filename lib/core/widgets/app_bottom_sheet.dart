@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../layout/bottom_chrome_metrics.dart';
 import '../theme/app_theme.dart';
 
 /// Modal Bottom Sheet personalizado con fondo sólido #1E2633 y handle bar.
@@ -178,13 +179,20 @@ class _AppBottomSheetState extends State<AppBottomSheet> {
         ),
         child: SafeArea(
           top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              header,
-              Flexible(child: widget.child),
-            ],
+          // Una hoja modal tapa el mini reproductor y la barra de navegación,
+          // así que los avisos disparados desde dentro no deben esquivarlos:
+          // sin esto, el aviso de "cola regenerada" aparecía a la altura del
+          // chrome, o sea flotando en mitad de la propia hoja.
+          child: BottomChromeScope(
+            hasChrome: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                header,
+                Flexible(child: widget.child),
+              ],
+            ),
           ),
         ),
       ),

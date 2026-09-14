@@ -294,6 +294,29 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// solo libera la bandera si sigue siendo el dueño.
   int _radioFetchGeneration = 0;
 
+  /// Ids que la radio ya ofreció en esta sesión (ronda 3 bis).
+  ///
+  /// Sin esta memoria, pulsar "Regenerar cola" dos veces seguidas devolvía
+  /// **exactamente el mismo lote**: el conjunto de exclusión se arma con lo
+  /// que hay en las colas, y regenerar las vacía justo antes de pedir, así que
+  /// las sugerencias recién descartadas volvían a estar disponibles. Encima
+  /// `DeezerApi` cachea `/artist/{id}/radio`, de modo que las mismas semillas
+  /// devuelven la misma lista. Resultado: la primera vez parecía funcionar y
+  /// la segunda no hacía nada visible.
+  ///
+  /// Acotado a [_radioSuggestionMemoryCap] por FIFO para que no crezca sin
+  /// límite en una sesión larga, y se ignora por completo si con él el lote
+  /// sale vacío (ver [_fetchRadioBatch]): es una preferencia de variedad, no
+  /// una regla que pueda dejar la cola sin nada.
+  final List<String> _recentRadioSuggestions = [];
+  static const int _radioSuggestionMemoryCap = 400;
+
+  void _rememberRadioSuggestions(Iterable<String> ids) {
+    _recentRadioSuggestions.addAll(ids);
+    final excess = _recentRadioSuggestions.length - _radioSuggestionMemoryCap;
+    if (excess > 0) _recentRadioSuggestions.removeRange(0, excess);
+  }
+
   /// Umbral del guard de cascada de auto-skip lógico (7.C.3): al llegar a
   /// esta cantidad de fallos lógicos SEGUIDOS (sin ningún éxito de
   /// reproducción entre medio), el auto-skip se detiene en vez de seguir
@@ -1825,11 +1848,29 @@ bool get _isTestEnv {
     required int fetchGeneration,
   }) async {
     try {
-      final batch = await service.generateBatch(
+      // Primer intento excluyendo además lo ya sugerido en esta sesión, para
+      // que regenerar traiga de verdad algo distinto.
+      final memory = Set<String>.from(_recentRadioSuggestions);
+      var batch = await service.generateBatch(
         contextTracks: contextTracks,
-        excludeIds: excludeIds,
+        excludeIds: memory.isEmpty ? excludeIds : {...excludeIds, ...memory},
       );
-      if (_disposed || batch.isEmpty) return;
+      if (_disposed) return;
+      // El reintento solo tiene sentido si la memoria pudo haber recortado
+      // algo: sin ella, un lote vacío es sencillamente un lote vacío y pedirlo
+      // otra vez sería una petición tirada a la basura.
+      if (batch.isEmpty && memory.isNotEmpty) {
+        // El pozo de sugerencias nuevas se agotó. Preferir repetir antes que
+        // dejar la cola vacía: la memoria de sugerencias es una preferencia
+        // de variedad, no una restricción dura.
+        _log('[Radio] Sin sugerencias nuevas: se reintenta permitiendo repetir.');
+        batch = await service.generateBatch(
+          contextTracks: contextTracks,
+          excludeIds: excludeIds,
+        );
+        if (_disposed) return;
+      }
+      if (batch.isEmpty) return;
 
       // Condición de carrera del modelo de cola dual: si por el tiempo que
       // tardó el fetch el usuario ya arrancó una sesión de contexto nueva
@@ -1843,6 +1884,7 @@ bool get _isTestEnv {
         return;
       }
 
+      _rememberRadioSuggestions(batch.map((t) => t.id));
       final updatedAuto = List<SyncoraTrack>.from(_state.autoQueue)..addAll(batch);
       _state = _state.copyWith(autoQueue: List.unmodifiable(updatedAuto));
       _log('[Radio] ${batch.length} pistas de radio añadidas a la cola automática.');
