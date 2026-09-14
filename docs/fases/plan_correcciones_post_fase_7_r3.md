@@ -472,3 +472,35 @@ resulta que empeora resultados que hoy son correctos: vive entera en
 (devolver `scored.map((s) => s.value).toList()` tal cual). No toca `YtSearchMatcher` ni el
 importador CSV — es solo el orden de los resultados de Deezer — así que quitarla no puede arrastrar
 nada más. Sus tests están en `test/features/search/album_vs_single_ranking_test.dart`.
+
+---
+
+## Quinta tanda: rendimiento de listas y gestos de la cola
+
+- [x] **Reordenar la cola en táctil era una moneda al aire.** El asa usaba
+      `ReorderableDragStartListener` (arrastre inmediato), y ese reconocedor y el scroll vertical
+      de la lista **aceptan los dos al superar el mismo umbral de desplazamiento**: quién gana
+      depende del orden en la arena de gestos, de ahí el "la mitad de las veces termino arrastrando
+      la pantalla". No era el tamaño del asa. En táctil se pasa a
+      `ReorderableDelayedDragStartListener` **sobre la fila entera** (pulsación larga → arrastrar),
+      que no compite con nadie porque gana sola al cumplirse el tiempo; el asa se queda como pista
+      visual. En escritorio sigue el arrastre inmediato sobre el asa. **Es exactamente lo que hace
+      `ReorderableListView` de Flutter**, que usa el listener inmediato en escritorio y el retardado
+      en táctil, y por este mismo motivo. Dentro de la cola no hay choque con el menú porque ahí la
+      pulsación larga ya estaba desactivada.
+- [x] **Scroll trabado en listas de canciones — dos causas, las dos reales.**
+      1. **Un stream de Drift por fila visible.** Cada `TrackTile` abría su propio
+         `watchDownloadedTrackProvider(id)`, creándose y destruyéndose a cada scroll. Ahora hay un
+         único `downloadStatesProvider` (`trackId` → `downloadState`, proyectando solo esas dos
+         columnas) y cada fila se queda con su entrada vía `select`, así que además solo se
+         reconstruye cuando cambia SU estado.
+      2. **Portadas decodificadas a 300 px para celdas de 48 dp** (~4x la memoria y el tiempo
+         necesarios). Bajado a 180 en la lista de pistas, el mini reproductor y los resultados de
+         búsqueda.
+- [x] **Encolar canciones sin querer al hacer scroll.** El umbral del deslizar-para-encolar sube de
+      0.4 a 0.6: exige un gesto claramente deliberado, sin dificultárselo a quien sí lo quiere.
+- [x] **Deslizar en la cola, en los dos sentidos.** Izquierda = quitar; derecha = **reproducir a
+      continuación**, en un único `Dismissible`. "Agregar a la cola" (lo que hace el deslizar en el
+      resto de listas) no significaría nada sobre algo que ya está en la cola: solo dejaría un
+      duplicado. Y montarlo como un `Dismissible` anidado es justamente lo que rompía el deslizar
+      (ver `TrackTile.enableSwipeToQueue`).

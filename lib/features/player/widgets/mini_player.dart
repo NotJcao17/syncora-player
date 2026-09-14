@@ -86,7 +86,7 @@ class MiniPlayer extends ConsumerWidget {
                       ? TrackCoverImage(
                           coverUrl: currentTrack.coverUrl,
                           trackId: int.tryParse(currentTrack.id),
-                          memCacheWidth: 300,
+                          memCacheWidth: 180,
                           placeholder: _buildPlaceholder(),
                         )
                       : _buildPlaceholder(),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_icons.dart';
@@ -608,6 +609,7 @@ class _QueueViewState extends ConsumerState<QueueView> {
   /// participa del auto-scroll al arrastrar cerca del borde en colas largas.
   Widget _buildSectionSliver(QueueOrigin origin, List<SyncoraTrack> tracks) {
     final controller = ref.read(syncoraPlayerControllerProvider.notifier);
+    final isDesktop = MediaQuery.of(context).size.width >= 768;
     final selected = origin == QueueOrigin.manual ? _selectedManual : _selectedAuto;
     final keys = _stableKeysFor(origin, tracks);
 
@@ -677,17 +679,63 @@ class _QueueViewState extends ConsumerState<QueueView> {
         // horizontal) compitan por la misma área táctil y uno quede
         // inutilizable. El listener ahora envuelve solo el ícono de
         // "agarre" — el resto de la fila queda libre para su propio swipe.
-        return Row(
-          key: itemKey,
+        final row = Row(
           children: [
             Expanded(
               child: Dismissible(
                 key: ValueKey('${itemKey.value}_dismiss'),
-                direction: DismissDirection.endToStart,
+                // Ronda 3 bis: los dos sentidos, en UN solo `Dismissible`.
+                //
+                // Izquierda = quitar de la cola. Derecha = reproducir a
+                // continuación, que es la acción útil aquí: "agregar a la
+                // cola" (lo que hace el deslizar en el resto de listas) no
+                // significaría nada sobre algo que YA está en la cola, solo
+                // dejaría un duplicado. Y montarlo como un segundo
+                // `Dismissible` anidado es exactamente lo que rompía el
+                // deslizar (ver `TrackTile.enableSwipeToQueue`).
+                direction: DismissDirection.horizontal,
+                dismissThresholds: const {
+                  DismissDirection.endToStart: 0.45,
+                  DismissDirection.startToEnd: 0.45,
+                },
+                confirmDismiss: (direction) async {
+                  if (direction == DismissDirection.startToEnd) {
+                    HapticFeedback.mediumImpact();
+                    controller.playNext(track);
+                    if (context.mounted) {
+                      AppToast.show(context, message: 'Se reproducirá a continuación');
+                    }
+                    // `false`: la fila no desaparece; `playNext` ya la movió a
+                    // la cola manual y el estado se encarga de repintar.
+                    return false;
+                  }
+                  return true;
+                },
                 onDismissed: (_) {
                   controller.removeFromQueue(origin, i);
                 },
                 background: Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 16),
+                  color: AppTheme.accent.withValues(alpha: 0.25),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(AppIcons.broken(SolarIcons.PlayCircle),
+                          color: AppTheme.primary, size: 20),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Reproducir a continuación',
+                        style: TextStyle(
+                          color: AppTheme.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                secondaryBackground: Container(
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 16),
                   color: Colors.red.withValues(alpha: 0.2),
@@ -722,24 +770,51 @@ class _QueueViewState extends ConsumerState<QueueView> {
                 ),
               ),
             ),
-            // Ronda 3 bis: el asa pasa a la DERECHA (antes iba pegada al borde
-            // izquierdo, encima de la portada). Sigue siendo un área de 48x48
-            // (Documento Maestro §10, antipatrón 5): sin el `SizedBox`, el
-            // `Row` no estira su hijo a la altura de la fila y el área real de
-            // arranque del arrastre quedaba en 34x18.
-            ReorderableDragStartListener(
-              index: i,
-              child: SizedBox(
-                width: 48,
-                height: 48,
-                child: Center(
-                  child: Icon(AppIcons.broken(SolarIcons.Sort), color: AppTheme.muted, size: 18),
-                ),
-              ),
-            ),
+            // El asa es sobre todo una PISTA VISUAL de que la fila se puede
+            // reordenar. En escritorio además arranca el arrastre al instante;
+            // en táctil el arrastre lo inicia la pulsación larga sobre la fila
+            // entera (ver abajo).
+            if (isDesktop)
+              ReorderableDragStartListener(
+                index: i,
+                child: _dragHandle(),
+              )
+            else
+              _dragHandle(),
           ],
         );
+
+        // Ronda 3 bis: en táctil, el arrastre se inicia con **pulsación larga
+        // sobre toda la fila**, no con un arrastre inmediato sobre el asa.
+        //
+        // El motivo es una carrera real en la arena de gestos: el arrastre
+        // inmediato del asa y el scroll vertical de la lista aceptan los dos
+        // al superar el mismo umbral de desplazamiento, así que quién gana
+        // depende del orden — de ahí el "la mitad de las veces termino
+        // arrastrando la pantalla". La pulsación larga no compite: gana sola
+        // al cumplirse el tiempo. Es lo que hace el propio
+        // `ReorderableListView` de Flutter, que usa el listener inmediato en
+        // escritorio y el retardado en táctil.
+        //
+        // Dentro de la cola no hay conflicto con el menú de opciones porque
+        // ahí la pulsación larga está desactivada (`enableLongPressMenu`).
+        return isDesktop
+            ? KeyedSubtree(key: itemKey, child: row)
+            : ReorderableDelayedDragStartListener(
+                key: itemKey,
+                index: i,
+                child: row,
+              );
       },
     );
   }
+
+  Widget _dragHandle() => SizedBox(
+        // Documento Maestro §10 (antipatrón 5): área táctil mínima 48x48dp.
+        width: 48,
+        height: 48,
+        child: Center(
+          child: Icon(AppIcons.broken(SolarIcons.Sort), color: AppTheme.muted, size: 18),
+        ),
+      );
 }

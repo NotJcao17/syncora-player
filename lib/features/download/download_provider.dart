@@ -18,6 +18,14 @@ final watchDownloadedTrackProvider = StreamProvider.family<DownloadedTrack?, int
   return dao.watchByTrackId(trackId);
 });
 
+/// Estado de descarga de todas las pistas en un único stream (ronda 3 bis).
+/// Lo consume `TrackTile` con `select`, de modo que una fila solo se
+/// reconstruye cuando cambia SU estado. Ver `watchDownloadStates`.
+final downloadStatesProvider = StreamProvider<Map<int, int>>((ref) {
+  final dao = ref.watch(downloadedTrackDaoProvider);
+  return dao.watchDownloadStates();
+});
+
 final watchAllDownloadedTracksProvider = StreamProvider<List<DownloadedTrack>>((ref) {
   final dao = ref.watch(downloadedTrackDaoProvider);
   return dao.watchAllDownloaded();

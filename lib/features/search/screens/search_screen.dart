@@ -660,7 +660,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           height: 56,
                           child: CachedNetworkImage(
                             imageUrl: artist.pictureUrl,
-                            memCacheWidth: 300,
+                            memCacheWidth: 180,
                             fit: BoxFit.cover,
                             errorWidget: (_, _, _) => Container(
                               color: AppTheme.surfaceHover,

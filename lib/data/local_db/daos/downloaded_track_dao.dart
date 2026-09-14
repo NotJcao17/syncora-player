@@ -37,6 +37,27 @@ class DownloadedTrackDao extends DatabaseAccessor<SyncoraDatabase> with _$Downlo
     return (select(downloadedTracks)..where((t) => t.downloadState.equals(2))).watch();
   }
 
+  /// Estado de descarga de TODAS las pistas en **un solo stream**
+  /// (`trackId` -> `downloadState`).
+  ///
+  /// Ronda 3 bis: cada `TrackTile` abría su propio `watchByTrackId`, o sea un
+  /// stream de Drift **por fila visible**, creándose y destruyéndose a cada
+  /// scroll. Era una de las dos causas del scroll trabado en las listas de
+  /// canciones. Con esta consulta hay un único stream para toda la app y cada
+  /// fila se queda con su entrada vía `select`.
+  ///
+  /// Solo proyecta las dos columnas que la UI necesita: emitir las filas
+  /// enteras (título, portada, rutas) por cada cambio de descarga sería
+  /// gratuito de más.
+  Stream<Map<int, int>> watchDownloadStates() {
+    final query = selectOnly(downloadedTracks)
+      ..addColumns([downloadedTracks.trackId, downloadedTracks.downloadState]);
+    return query.watch().map((rows) => {
+          for (final row in rows)
+            row.read(downloadedTracks.trackId)!: row.read(downloadedTracks.downloadState)!,
+        });
+  }
+
   Stream<DownloadedTrack?> watchByTrackId(int trackId) {
     return (select(downloadedTracks)..where((t) => t.trackId.equals(trackId))).watchSingleOrNull();
   }

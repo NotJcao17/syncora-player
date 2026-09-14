@@ -721,11 +721,17 @@ class _TrackTileState extends ConsumerState<TrackTile> {
 
     final trackDeezerId = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
 
-    final downloadedTrackAsync = ref.watch(watchDownloadedTrackProvider(trackDeezerId));
-    final downloadedTrack = downloadedTrackAsync.value;
+    // Ronda 3 bis: antes cada fila abría su propio stream de Drift
+    // (`watchDownloadTrackProvider(id)`), o sea uno por fila visible,
+    // creándose y destruyéndose a cada scroll. Ahora hay un único stream para
+    // toda la app y el `select` deja que esta fila se reconstruya solo cuando
+    // cambia SU estado de descarga.
+    final downloadState = ref.watch(
+      downloadStatesProvider.select((s) => s.value?[trackDeezerId]),
+    );
 
-    final isDownloadedLocal = (downloadedTrack?.downloadState == 2) || widget.isDownloaded;
-    final isDownloadingLocal = downloadedTrack?.downloadState == 1;
+    final isDownloadedLocal = (downloadState == 2) || widget.isDownloaded;
+    final isDownloadingLocal = downloadState == 1;
 
     // Fase 7.C.2 (D-21): pistas que el auto-skip lógico ya marcó como rotas
     // esta sesión (fallo notFound/unknownError, ver syncora_player_controller
@@ -769,7 +775,10 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                 : TrackCoverImage(
                     coverUrl: widget.track.coverUrl,
                     trackId: int.tryParse(widget.track.id),
-                    memCacheWidth: 300,
+                    // 48 dp de alto: decodificar a 300 costaba ~4x la memoria
+                    // y el tiempo de decodificación necesarios, y era la otra
+                    // causa del scroll trabado.
+                    memCacheWidth: 180,
                     placeholder: _buildPlaceholder(),
                   ))
             : _buildPlaceholder(),
@@ -1052,8 +1061,13 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       return Dismissible(
         key: Key('track_dismiss_${widget.track.id}_${widget.index}'),
         direction: DismissDirection.startToEnd,
+        // Ronda 3 bis: umbral subido de 0.4 a 0.6. Con el scroll de las listas
+        // ya aligerado sigue siendo fácil que el dedo derive en diagonal, y
+        // encolar una canción sin querer mientras se hace scroll es molesto y
+        // silencioso. Exigir un deslizamiento claramente deliberado no hace
+        // más difícil el gesto a quien lo quiere hacer.
         dismissThresholds: const {
-          DismissDirection.startToEnd: 0.4,
+          DismissDirection.startToEnd: 0.6,
         },
         movementDuration: const Duration(milliseconds: 200),
         confirmDismiss: (direction) async {
