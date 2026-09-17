@@ -22,6 +22,17 @@ class DeezerAlbum {
   /// se trata como álbum, que es el caso mayoritario.
   final String recordType;
 
+  /// `genre_id` de Deezer (`/album/{id}`), o `0` si el endpoint no lo trae
+  /// (los álbumes embebidos en otras respuestas no lo incluyen).
+  ///
+  /// Es la única fuente barata de género que expone la API para algo que el
+  /// usuario ya escuchó: ni `/search` ni `/artist/{id}/top` traen género, y
+  /// la columna `genre` de `listening_history` queda en NULL en el flujo
+  /// normal de reproducción (ver el comentario de 7.0.3 en
+  /// `syncora_player_controller.dart`). De acá sale el "Mix de género" de
+  /// Inicio.
+  final int genreId;
+
   const DeezerAlbum({
     required this.id,
     required this.title,
@@ -32,6 +43,7 @@ class DeezerAlbum {
     required this.releaseDate,
     this.tracks = const [],
     this.recordType = '',
+    this.genreId = 0,
   });
 
   /// ¿Es un lanzamiento corto (sencillo o EP) en vez de un álbum?
@@ -74,6 +86,7 @@ class DeezerAlbum {
       releaseDate: json['release_date'] as String? ?? '',
       tracks: tracksList,
       recordType: (json['record_type'] as String? ?? '').toLowerCase(),
+      genreId: json['genre_id'] as int? ?? 0,
     );
   }
 
@@ -86,5 +99,6 @@ class DeezerAlbum {
         'nb_tracks': trackCount,
         'release_date': releaseDate,
         'record_type': recordType,
+        'genre_id': genreId,
       };
 }

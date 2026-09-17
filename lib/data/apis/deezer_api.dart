@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../features/search/search_ranking.dart';
 import '../models/deezer/deezer_album.dart';
 import '../models/deezer/deezer_artist.dart';
+import '../models/deezer/deezer_genre.dart';
 import '../models/deezer/deezer_playlist.dart';
 import '../models/deezer/deezer_search_result.dart';
 import '../models/deezer/deezer_track.dart';
@@ -512,5 +513,109 @@ class DeezerApi {
       return list.map((item) => DeezerAlbum.fromJson(Map<String, dynamic>.from(item as Map))).toList();
     });
   }
-}
 
+  // ---------------------------------------------------------------------
+  // Catálogo por género, radios editoriales y playlists (Inicio / Explorar)
+  // ---------------------------------------------------------------------
+
+  /// Usuario oficial `Deezer Charts`, dueño de las ~100 playlists "Top {país}"
+  /// que Deezer mantiene al día (verificado en vivo: `Top Worldwide`,
+  /// `Top Mexico`, `Top Brazil`, ... de 100 pistas cada una).
+  ///
+  /// Es la única forma de tener tops **por país** con esta API pública:
+  /// `/chart/0` existe pero es geo-IP, sin parámetro de país.
+  static const int deezerChartsUserId = 637006841;
+
+  /// Lista de géneros del catálogo (`/genre`).
+  ///
+  /// Excluye el id 0 ("Todos"), que no es un género real sino el comodín que
+  /// usan `/chart/0` y `/editorial/0`.
+  ///
+  /// Los nombres llegan **ya localizados** por región (desde México:
+  /// "Reggaetón", "Música Mexicana", "Clásica"), así que no hay que traducir
+  /// ni mantener listas a mano.
+  Future<List<DeezerGenre>> getGenres() async {
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/genre');
+      if (response.data == null || response.data['data'] is! List) return [];
+      return (response.data['data'] as List)
+          .whereType<Map>()
+          .map((item) => DeezerGenre.fromJson(Map<String, dynamic>.from(item)))
+          .where((g) => g.id != 0)
+          .toList();
+    });
+  }
+
+  /// Chart completo de un género (`/chart/{genre_id}`).
+  ///
+  /// Trae pistas, álbumes, artistas y playlists **en una sola petición** — es
+  /// lo que alimenta la pantalla de género entera con un único request.
+  Future<DeezerGenreChart> getGenreChart(int genreId, {int limit = 50}) async {
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/chart/$genreId', queryParameters: {'limit': limit});
+      if (response.data is! Map) return const DeezerGenreChart();
+      return DeezerGenreChart.fromJson(Map<String, dynamic>.from(response.data as Map));
+    });
+  }
+
+  /// Radios editoriales de un género (`/genre/{id}/radios`).
+  Future<List<DeezerRadio>> getGenreRadios(int genreId) async {
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/genre/$genreId/radios');
+      if (response.data == null || response.data['data'] is! List) return [];
+      return (response.data['data'] as List)
+          .whereType<Map>()
+          .map((item) => DeezerRadio.fromJson(Map<String, dynamic>.from(item)))
+          .where((r) => r.id != 0)
+          .toList();
+    });
+  }
+
+  /// Pistas de una radio editorial (`/radio/{id}/tracks`).
+  ///
+  /// ⚠️ **No es determinista**: dos llamadas seguidas devuelven selecciones
+  /// distintas (verificado contra la API en vivo). Quien la consuma tiene que
+  /// tratar el resultado como una tirada, no como una lista estable — ver
+  /// `mix_engine.dart`, que congela la tirada por sesión.
+  Future<List<DeezerTrack>> getRadioTracks(int radioId) async {
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/radio/$radioId/tracks');
+      if (response.data == null || response.data['data'] is! List) return [];
+      return (response.data['data'] as List)
+          .whereType<Map>()
+          .where((item) => (item['duration'] as int? ?? 0) > 60 && item['type'] != 'podcast')
+          .map((item) => DeezerTrack.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+    });
+  }
+
+  /// Playlist de Deezer con todas sus pistas (`/playlist/{id}`).
+  ///
+  /// A diferencia de las radios, una playlist **sí** es un objeto estable: el
+  /// mismo id devuelve el mismo contenido hasta que Deezer la actualiza.
+  Future<DeezerPlaylist> getPlaylist(int id) async {
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/playlist/$id');
+      return DeezerPlaylist.fromJson(Map<String, dynamic>.from(response.data as Map));
+    });
+  }
+
+  /// Las playlists "Top {país}" oficiales de Deezer, en **una** petición.
+  ///
+  /// Filtra el ruido del listado: la "Canciones favoritas" vacía del usuario y
+  /// cualquier playlist sin pistas.
+  Future<List<DeezerPlaylist>> getCountryTopPlaylists() async {
+    return _rateLimiter.run(() async {
+      final response = await _dio.get(
+        '/user/$deezerChartsUserId/playlists',
+        queryParameters: {'limit': 100},
+      );
+      if (response.data == null || response.data['data'] is! List) return [];
+      return (response.data['data'] as List)
+          .whereType<Map>()
+          .map((item) => DeezerPlaylist.fromJson(Map<String, dynamic>.from(item)))
+          .where((p) => p.nbTracks > 0 && p.title.toLowerCase().startsWith('top '))
+          .toList();
+    });
+  }
+}

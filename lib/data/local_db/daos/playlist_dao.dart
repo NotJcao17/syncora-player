@@ -200,4 +200,34 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
               (t.title.lower().like(q) | t.artistName.lower().like(q))))
         .get();
   }
+
+  /// Una fila de ejemplo por cada `trackId` pedido, mirando en TODAS las
+  /// playlists locales.
+  ///
+  /// Sirve para reconstruir pistas completas (título, artista, portada,
+  /// duración) a partir de los IDs sueltos que guarda `listening_history`,
+  /// que solo almacena identificadores. Sin esto, armar el mix "On Repeat"
+  /// costaría una petición a `/track/{id}` por cada canción; con esto, la
+  /// mayoría se resuelven gratis y sin conexión.
+  Future<Map<int, PlaylistTrack>> findTracksByIds(Set<int> trackIds) async {
+    if (trackIds.isEmpty) return {};
+    final rows = await (select(playlistTracks)..where((t) => t.trackId.isIn(trackIds))).get();
+    final out = <int, PlaylistTrack>{};
+    for (final row in rows) {
+      out.putIfAbsent(row.trackId, () => row);
+    }
+    return out;
+  }
+
+  /// Una fila de ejemplo por cada `artistId` pedido, para recuperar el nombre
+  /// del artista sin gastar una llamada a `/artist/{id}`.
+  Future<Map<int, PlaylistTrack>> findTracksByArtistIds(Set<int> artistIds) async {
+    if (artistIds.isEmpty) return {};
+    final rows = await (select(playlistTracks)..where((t) => t.artistId.isIn(artistIds))).get();
+    final out = <int, PlaylistTrack>{};
+    for (final row in rows) {
+      out.putIfAbsent(row.artistId, () => row);
+    }
+    return out;
+  }
 }
