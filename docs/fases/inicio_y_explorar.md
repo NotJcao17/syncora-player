@@ -1,0 +1,178 @@
+# Inicio y Explorar — rediseño post-Fase 7
+
+**Fecha:** 2026-09-17
+**Estado:** implementado (bundles A, B y C), pendiente de pruebas en dispositivo.
+
+Esta ronda rehace la pantalla de Inicio, hace funcionales los botones de género de Búsqueda y
+agrega tres pantallas nuevas (playlist de Deezer, género, mix).
+
+---
+
+## 1. Qué expone la API pública de Deezer (verificado en vivo, 2026-09-17)
+
+Todo lo de esta tabla se probó con peticiones reales. **No hace falta volver a investigarlo.**
+
+### Endpoints que ya usábamos
+
+`/search[/track|artist|album]`, `/track/{id}`, `/track/{id}/related`, `/album/{id}`,
+`/artist/{id}`, `/artist/{id}/top`, `/artist/{id}/albums`, `/artist/{id}/radio`,
+`/artist/{id}/related`, `/chart/0/{tracks,albums,playlists}`.
+
+### Endpoints nuevos incorporados en esta ronda
+
+| Endpoint | Qué devuelve |
+| :--- | :--- |
+| `/genre` | 27 géneros con id, nombre **ya localizado por región** (desde México: "Reggaetón", "Música Mexicana", "Clásica") e imagen oficial hasta 1000 px. El id 0 es el comodín "Todos", no un género. |
+| `/chart/{genre_id}` | **En una sola petición**: `tracks`, `albums`, `artists`, `playlists`, `podcasts` del género. Es lo que alimenta toda la pantalla de género. |
+| `/genre/{id}/radios` | Radios editoriales del género (37 solo para Pop). |
+| `/radio/{id}/tracks` | 25 pistas listas para reproducir. **No determinista** (ver §2). |
+| `/playlist/{id}` | Playlist completa con `tracks.data`. Objeto estable, a diferencia de las radios. |
+| `/user/637006841/playlists?limit=100` | Las **102 playlists "Top {país}" oficiales** de Deezer (usuario `Deezer Charts`), de 100 pistas cada una: Top Worldwide, Top Mexico, Top Brazil, Top Japan, Top France… Una sola petición para el catálogo entero. |
+| `/album/{id}` → `genre_id` | Única fuente barata de género para algo que el usuario ya escuchó. |
+
+### Probados y descartados
+
+- **`/editorial/{id}/releases` está muerto**: devuelve `{"data":[],"total":0}` con cualquier id
+  (probado con 0, 132, 152). **Deezer no tiene endpoint de novedades.** Las novedades se calculan
+  en cliente filtrando `/artist/{id}/albums` por `release_date` (`MixEngine.filterRecentReleases`).
+- **`/radio/top`** devuelve `{"error":{"type":"Exception"}}`.
+- **`/artist/{id}/playlists`** trae ruido sin relación con el artista (para Coldplay devolvió
+  "Star Academy 2025/2026").
+- `/chart/0/albums` son los álbumes **más escuchados**, no los más nuevos — solo sirve de respaldo.
+
+### Límites duros
+
+- Sin API key **no hay usuario de Deezer**: no existe Flow ni ninguna personalización del lado de
+  ellos. Toda la personalización sale de nuestro `listening_history`.
+- `/chart/0` es **geo-IP**, sin parámetro de país. Los tops por país solo se consiguen por las
+  playlists de `Deezer Charts`.
+- Rate limit 50 req/5 s por IP, ya cubierto por el `RateLimiter` de `DeezerApi`.
+
+### Billboard: descartado
+
+No hay API pública oficial (Billboard cerró la suya; hoy solo licencia comercial). Las opciones
+eran scrapers de terceros en RapidAPI (de pago, ToS gris) o el dataset abierto
+`mhollingshead/billboard-hot-100` en GitHub, que **sí está vivo y actualizado semanalmente**, pero
+cuyas entradas son solo texto `{song, artist}`: reproducirlo exigiría matchear 100 búsquedas contra
+Deezer. Se decidió no incorporarlo — los tops de Deezer cubren el caso.
+
+---
+
+## 2. Hallazgo clave: las radios de Deezer no son estables
+
+Pedir `/artist/{id}/radio` y `/radio/{id}/tracks` **dos veces con un segundo de diferencia devuelve
+listas distintas** (verificado). Una radio es un generador, no una colección. Consecuencias de
+diseño, ya implementadas:
+
+- **No se puede "seguir" una radio**: no hay nada estable a lo que apuntar.
+- **Syncora no sigue ninguna playlist remota, ni siquiera las que sí son estables.** Guardar es
+  **copiar** (`save_collection_service.dart`). El motivo es que nuestro modelo de biblioteca copia
+  pistas a `playlist_tracks`, lo que da gratis offline, descarga y edición; una playlist "seguida"
+  necesitaría estado no editable en toda la UI y reglas nuevas de sync. **Decisión cerrada, no es
+  una fase 8 pendiente.**
+
+---
+
+## 3. Cómo funcionan los mixes
+
+Implementación en `lib/features/home/mixes/`.
+
+- **Nunca se persisten solos.** `mixesProvider` es un `FutureProvider` **no `autoDispose`** a
+  propósito: el mix se genera una vez por arranque de la app y vive en memoria, así que entrar y
+  salir de su pantalla muestra siempre la misma lista. Al reabrir la app se genera de nuevo.
+  Sin esa regla, Inicio iría creando decenas de playlists fantasma.
+- **Solo tocan la base de datos si el usuario pulsa Guardar**, y entonces dejan de ser un mix:
+  pasan a ser una playlist suya, con fecha en el nombre ("On Repeat · 17 sep"), congelada.
+- **Cadencias** (claves de periodo calculadas en cliente, `MixEngine.weekKey`/`dayKey` — **sin cron,
+  sin servidor**): On Repeat es semanal sobre una ventana de 30 días; los mixes de artista, de
+  género y el de descubrimiento son diarios. Dentro del periodo, la selección "al azar" es
+  determinista (`shuffleDeterministic` con semilla derivada de la clave).
+
+Los cuatro mixes:
+
+| Mix | Fuente | Peticiones |
+| :--- | :--- | :--- |
+| On Repeat | historial local, ≥2 escuchas en 30 días, resuelto contra `playlist_tracks` y descargas antes de tocar la red (`TrackResolver`, tope de 12 lookups remotos) | 0–12, casi siempre 0 |
+| Mix de {artista} ×2 | `/artist/{id}/radio` de sus top artistas | 2 |
+| Mix de {género} | álbum más escuchado → `genre_id` → `/chart/{genre_id}` | 2, cacheadas |
+| Descubrimiento | `/artist/{id}/related` → radio de un relacionado, quitando lo ya escuchado | 2 |
+
+---
+
+## 4. Caché de catálogo
+
+`lib/core/cache/api_cache.dart`: caché en archivos con TTL, escritura atómica y capa en memoria
+acotada a 24 entradas. **No usa Drift** para no tener que subir `schemaVersion` y escribir una
+migración por lo que es, literalmente, un archivo con fecha.
+
+TTLs: catálogo estable (géneros, tops por país, fichas de artista/álbum) 7 días; charts y
+editoriales 6 h; discografías 24 h. **Las radios no se cachean nunca** (§2).
+
+Si la red falla y hay una copia vencida, se devuelve la copia vencida en vez de propagar el error:
+más vale un chart de ayer que una pantalla vacía. Esto es lo que hace que Inicio ya no arranque en
+blanco ni quede vacía sin conexión.
+
+---
+
+## 5. Pantalla de Inicio
+
+Orden pensado para que **lo local se pinte primero** (todo lo de las cuatro primeras secciones sale
+de Drift: aparece en el primer frame y funciona sin red):
+
+1. Saludo, avatar, ajustes
+2. **Tu semana** — minutos + top 3 artistas + top 3 canciones (`weekly_highlights_panel.dart`).
+   Pensado como la entrada al dashboard de la Fase 8, no como algo a tirar.
+3. Accesos rápidos (Tus me gusta, Descargas, Estadísticas)
+4. **Escuchado recientemente** — primer consumidor real de `playlists.lastPlayedAt` y
+   `savedAlbums.lastPlayedAt`, que se escribían desde la ronda 3 y nadie leía
+5. **Tus mixes**
+6. **Novedades de tus artistas** (respaldo: álbumes destacados del chart)
+7. **Tops del mundo** — destacados con México primero, y "Ver todos" abre un selector buscable con
+   los 102 países (diálogo centrado en PC, hoja en móvil)
+8. **Playlists editoriales**
+9. **Porque escuchaste a {artista}**
+10. **Explorar por género**
+
+**Regla de diseño:** ninguna canción individual se presenta como si fuera una colección. Todas las
+tarjetas son playlists, álbumes, mixes, artistas o géneros. Las únicas canciones sueltas son las
+tres filas del resumen semanal, que son un dato y se ven como tal. Por eso desapareció la sección
+"Éxitos Globales", que pintaba cinco canciones sueltas: la reemplaza Top Worldwide.
+
+Coste: ~12 peticiones en el primer arranque, 0–2 en los siguientes gracias al caché.
+
+---
+
+## 6. Bugs corregidos de paso
+
+1. **Las playlists editoriales no llevaban a ningún lado**: su `onTap` era
+   `AppToast.show(context, message: 'Playlist: ...')`. Ahora abren `/deezer-playlist/:id`.
+2. **"Top Global 50" del acceso rápido** navegaba a `/search` y su portada era una URL con el hash
+   MD5 de la cadena vacía — imagen rota permanente. Eliminado; los tops tienen su propia sección.
+3. **Los botones de género de Búsqueda solo escribían texto en el buscador** (el botón "Pop"
+   buscaba el texto "pop"). Ahora abren `/genre/:id`, y los 6 géneros escritos a mano pasaron a ser
+   los 27 reales de `/genre`, con imagen oficial.
+4. **Personalización pobre**: `personalizedSectionsProvider` gastaba 6 peticiones para mostrar los
+   top tracks de 3 artistas (lo mismo que ya se ve en la pantalla de artista) y, sin historial,
+   caía a Coldplay/Bad Bunny/Dua Lipa hardcodeados. Sustituido por mixes y una degradación por
+   contenido real (tops + editoriales + géneros).
+
+## 7. Corregidos en la autorrevisión del diff
+
+- El subtítulo del mix de descubrimiento sacaba el nombre de la semilla de la primera pista de la
+  radio, que **no es el artista semilla** (una radio devuelve sobre todo canciones de otros), así
+  que ponía un nombre casi al azar.
+- La capa en memoria del caché no tenía techo: cada playlist abierta dejaba sus 100 pistas ya
+  decodificadas vivas toda la sesión.
+- `deezerPlaylistProvider` y `deezerGenreChartProvider` pasaron a `autoDispose` por el mismo motivo.
+
+---
+
+## 8. Pendiente
+
+- Pruebas en dispositivo (Android y Windows) de las cuatro pantallas nuevas.
+- El bug reportado de "Inicio vieja y después la nueva" no se pudo reproducir y es de hace varias
+  fases. No se encontró ninguna pantalla de Inicio duplicada en el código (hay un solo
+  `HomeScreen`, y `/` y `/home` apuntan al mismo). Las dos hipótesis que quedaron sin descartar
+  son un parpadeo de layout móvil→escritorio en el primer frame de Windows
+  (`isDesktop = width >= 768`) y un doble montaje por el redirect de auth. Inicio se reescribió
+  entera en esta ronda, así que conviene volver a mirarlo en las pruebas de dispositivo.
