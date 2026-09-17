@@ -57,7 +57,7 @@ final mixesProvider = FutureProvider<List<SyncoraMix>>((ref) async {
   await _addOnRepeatMix(mixes, entries, resolver, now);
   await _addArtistMixes(mixes, ref, entries, api, now);
   await _addGenreMix(mixes, ref, entries, now, daySeed);
-  await _addDiscoveryMix(mixes, entries, api, now, daySeed);
+  await _addDiscoveryMix(mixes, ref, entries, api, now, daySeed);
 
   return mixes;
 });
@@ -187,6 +187,7 @@ Future<void> _addGenreMix(
 
 Future<void> _addDiscoveryMix(
   List<SyncoraMix> mixes,
+  Ref ref,
   List<ListeningHistoryData> entries,
   DeezerApi api,
   DateTime now,
@@ -210,10 +211,15 @@ Future<void> _addDiscoveryMix(
     final fresh = radio.where((t) => !alreadyHeard.contains(t.id)).toList();
     if (fresh.length < _minTracksPerMix) return;
 
+    // El nombre tiene que ser el del artista semilla, no el de la primera
+    // pista de su radio: una radio está sembrada en un artista pero devuelve
+    // sobre todo canciones de OTROS, así que aquello ponía un nombre casi al
+    // azar en el subtítulo. `deezerArtistProvider` está cacheado, no cuesta
+    // una petición nueva.
     String seedName = 'lo que escuchás';
     try {
-      final seedRadio = await api.getArtistRadio(seedArtistId);
-      if (seedRadio.isNotEmpty) seedName = seedRadio.first.artistName;
+      final seedArtist = await ref.read(deezerArtistProvider(seedArtistId).future);
+      if (seedArtist.name.isNotEmpty) seedName = seedArtist.name;
     } catch (_) {}
 
     mixes.add(SyncoraMix(

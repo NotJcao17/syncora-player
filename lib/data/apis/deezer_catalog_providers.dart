@@ -49,7 +49,7 @@ final deezerGenresProvider = FutureProvider<List<DeezerGenre>>((ref) async {
 /// Chart completo de un género: pistas, álbumes, artistas y playlists en una
 /// sola petición a `/chart/{genre_id}`.
 final deezerGenreChartProvider =
-    FutureProvider.family<DeezerGenreChart, int>((ref, genreId) async {
+    FutureProvider.autoDispose.family<DeezerGenreChart, int>((ref, genreId) async {
   final api = ref.watch(deezerApiProvider);
   final cache = ref.watch(apiCacheProvider);
   return cache.fetch<DeezerGenreChart>(
@@ -87,8 +87,12 @@ final deezerGenreRadiosProvider =
 ///
 /// TTL corto comparado con el resto del catálogo: los "Top {país}" cambian
 /// a diario y es justo lo que el usuario espera ver fresco.
+///
+/// `autoDispose`: cada playlist abierta trae hasta 100 pistas, y mantenerlas
+/// todas vivas durante la sesión no aporta nada — al volver a entrar se
+/// reconstruyen desde el caché en disco, sin red.
 final deezerPlaylistProvider =
-    FutureProvider.family<DeezerPlaylist, int>((ref, playlistId) async {
+    FutureProvider.autoDispose.family<DeezerPlaylist, int>((ref, playlistId) async {
   final api = ref.watch(deezerApiProvider);
   final cache = ref.watch(apiCacheProvider);
   return cache.fetch<DeezerPlaylist>(

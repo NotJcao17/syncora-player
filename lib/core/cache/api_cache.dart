@@ -33,7 +33,22 @@ class ApiCache {
   /// Capa en memoria por encima del disco: dentro de una misma sesión, varias
   /// secciones de Inicio piden la misma clave (p. ej. la lista de géneros) y
   /// no tiene sentido releer y re-decodificar el archivo cada vez.
+  ///
+  /// Acotada: cada playlist abierta guarda aquí sus 100 pistas ya decodificadas
+  /// y una sesión larga las iría acumulando sin techo. Al pasarse de
+  /// [_maxMemoryEntries] se descarta la más antigua (el disco sigue teniendo
+  /// todo, así que descartar solo cuesta una lectura de archivo).
   final Map<String, _MemoryEntry> _memory = {};
+
+  static const int _maxMemoryEntries = 24;
+
+  void _rememberInMemory(String key, Object? payload, DateTime cachedAt) {
+    _memory.remove(key);
+    if (_memory.length >= _maxMemoryEntries) {
+      _memory.remove(_memory.keys.first);
+    }
+    _memory[key] = _MemoryEntry(payload: payload, cachedAt: cachedAt);
+  }
 
   /// En tests no hay `path_provider`, así que el caché vive solo en memoria.
   static bool get _isTestEnv => !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
@@ -55,10 +70,9 @@ class ApiCache {
     }();
   }
 
-  static String _fileNameFor(String key) {
-    final safe = key.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_');
-    return '$safe.json';
-  }
+  static String _sanitize(String key) => key.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_');
+
+  static String _fileNameFor(String key) => '${_sanitize(key)}.json';
 
   /// Devuelve el JSON guardado para [key] si existe y no superó [ttl].
   Future<Object?> read(String key, Duration ttl) async {
@@ -82,7 +96,7 @@ class ApiCache {
       final cachedAt = DateTime.fromMillisecondsSinceEpoch(cachedAtMs);
       if (DateTime.now().difference(cachedAt) > ttl) return null;
       final payload = decoded['payload'];
-      _memory[key] = _MemoryEntry(payload: payload, cachedAt: cachedAt);
+      _rememberInMemory(key, payload, cachedAt);
       return payload;
     } catch (_) {
       // Archivo corrupto o a medio escribir: se trata como "no hay caché".
@@ -91,7 +105,7 @@ class ApiCache {
   }
 
   Future<void> write(String key, Object payload) async {
-    _memory[key] = _MemoryEntry(payload: payload, cachedAt: DateTime.now());
+    _rememberInMemory(key, payload, DateTime.now());
 
     final dir = await _resolveDirectory();
     if (dir == null) return;
@@ -164,7 +178,7 @@ class ApiCache {
       await for (final entity in dir.list()) {
         if (entity is! File) continue;
         final name = p.basenameWithoutExtension(entity.path);
-        if (name.startsWith(_fileNameFor(prefix).replaceAll('.json', ''))) {
+        if (name.startsWith(_sanitize(prefix))) {
           try {
             await entity.delete();
           } catch (_) {}
