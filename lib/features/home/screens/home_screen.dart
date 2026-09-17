@@ -3,22 +3,41 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import '../../auth/auth_provider.dart';
-import '../../auth/local_mode_provider.dart';
+
+import '../../../core/cache/api_cache.dart';
 import '../../../core/theme/app_icons.dart';
-import '../../../core/utils/connectivity_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/skeleton_box.dart';
-import '../../../core/widgets/track_tile.dart';
-import '../../player/player_providers.dart';
-import '../../stats/stats_providers.dart';
+import '../../../data/apis/deezer_catalog_providers.dart';
+import '../../../data/models/deezer/deezer_playlist.dart';
 import '../../../data/sync/sync_cache_manager.dart';
 import '../../../data/sync/sync_service.dart';
+import '../../auth/auth_provider.dart';
+import '../../auth/local_mode_provider.dart';
+import '../../stats/stats_providers.dart';
 import '../home_providers.dart';
+import '../mixes/mix_models.dart';
+import '../mixes/mix_providers.dart';
+import '../widgets/home_sections.dart';
+import '../widgets/weekly_highlights_panel.dart';
 
-/// Pantalla Principal conectada a Deezer API real y datos personalizados del usuario.
+/// Pantalla de Inicio.
+///
+/// Orden pensado para que **lo instantáneo y lo que funciona sin conexión se
+/// pinte primero**: resumen de la semana, escuchado recientemente y accesos
+/// rápidos salen enteros de Drift, así que aparecen en el primer frame incluso
+/// en un arranque en frío o sin red. Todo lo que depende de Deezer viene
+/// después y está cacheado en disco con TTL (ver `api_cache.dart`), así que a
+/// partir del segundo arranque también se pinta al instante.
+///
+/// Regla de diseño de esta pantalla: **ninguna canción individual se presenta
+/// como si fuera una colección**. Las tarjetas son siempre playlists, álbumes,
+/// mixes, artistas o géneros. Las únicas canciones sueltas que aparecen son
+/// las tres filas del resumen semanal, que son un dato estadístico y se ven
+/// como tal.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -47,27 +66,36 @@ class HomeScreen extends ConsumerWidget {
       ref.invalidate(monthlyStatsProvider);
       ref.invalidate(yearlyStatsProvider);
       ref.invalidate(allTimeStatsProvider);
+      ref.invalidate(weeklyHighlightsProvider);
     });
   }
 
-  bool _isLoadingAny(
-    AsyncValue a,
-    AsyncValue b,
-    AsyncValue c,
-    AsyncValue d,
-  ) =>
-      a.isLoading || b.isLoading || c.isLoading || d.isLoading;
+  /// Recarga las secciones locales y las de catálogo.
+  ///
+  /// Para las de catálogo no basta con invalidar el provider: volvería a leer
+  /// el mismo archivo de caché todavía fresco y el gesto no haría nada
+  /// visible. Por eso se borran antes sus claves — solo las de las secciones
+  /// que este gesto refresca, no el caché entero.
+  Future<void> _refreshAll(WidgetRef ref) async {
+    final cache = ref.read(apiCacheProvider);
+    await Future.wait([
+      cache.removeWithPrefix('editorial_playlists'),
+      cache.removeWithPrefix('chart_albums'),
+      cache.removeWithPrefix('country_tops'),
+      cache.removeWithPrefix('artist_albums_'),
+    ]);
 
-  bool _hasAnyContent(
-    AsyncValue<List> a,
-    AsyncValue<List> b,
-    AsyncValue<List> c,
-    AsyncValue<List> d,
-  ) =>
-      (a.value?.isNotEmpty ?? false) ||
-      (b.value?.isNotEmpty ?? false) ||
-      (c.value?.isNotEmpty ?? false) ||
-      (d.value?.isNotEmpty ?? false);
+    ref.invalidate(recentlyPlayedProvider);
+    ref.invalidate(weeklyHighlightsProvider);
+    ref.invalidate(mixesProvider);
+    ref.invalidate(editorialPlaylistsProvider);
+    ref.invalidate(newReleasesProvider);
+    ref.invalidate(newReleasesFromArtistsProvider);
+    ref.invalidate(deezerCountryTopsProvider);
+    ref.invalidate(homeCountryTopsProvider);
+    ref.invalidate(relatedArtistsProvider);
+    ref.invalidate(deezerGenresProvider);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -76,567 +104,724 @@ class HomeScreen extends ConsumerWidget {
     // Cuando vuelve la conexión, Inicio se recarga solo en vez de quedarse en
     // "No pudimos cargar el contenido" esperando a que el usuario pulse
     // Reintentar. Solo en la transición offline -> online: `ref.listen` no se
-    // dispara en los rebuilds normales, y ninguna de estas invalidaciones
-    // corre si el valor no cambió.
+    // dispara en los rebuilds normales.
     ref.listen<AsyncValue<bool>>(isConnectedProvider, (previous, next) {
       final wasConnected = previous?.value ?? true;
       final isConnected = next.value ?? true;
       if (wasConnected || !isConnected) return;
-      ref.invalidate(personalizedSectionsProvider);
-      ref.invalidate(topChartsProvider);
       ref.invalidate(editorialPlaylistsProvider);
       ref.invalidate(newReleasesProvider);
+      ref.invalidate(newReleasesFromArtistsProvider);
+      ref.invalidate(homeCountryTopsProvider);
+      ref.invalidate(relatedArtistsProvider);
+      ref.invalidate(deezerGenresProvider);
+      ref.invalidate(mixesProvider);
     });
 
     final isDesktop = MediaQuery.of(context).size.width >= 768;
-    final personalizedAsync = ref.watch(personalizedSectionsProvider);
-    final topChartsAsync = ref.watch(topChartsProvider);
-    final playlistsAsync = ref.watch(editorialPlaylistsProvider);
-    final newReleasesAsync = ref.watch(newReleasesProvider);
+    final horizontalPadding = isDesktop ? 32.0 : 20.0;
+
+    final editorialAsync = ref.watch(editorialPlaylistsProvider);
+    final countryTopsAsync = ref.watch(homeCountryTopsProvider);
+    final genresAsync = ref.watch(deezerGenresProvider);
 
     return SafeArea(
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          // Header Top Bar
-          SliverPadding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 32 : 20,
-              vertical: isDesktop ? 24 : 16,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      if (!isDesktop) ...[
-                        Builder(
-                          builder: (ctx) {
-                            final profileAsync = ref.watch(profileProvider);
-                            final user = ref.watch(currentUserProvider);
-                            final isLocalMode = ref.watch(localModeProvider);
-                            // 7.I.4: seed local en vez de `profiles.avatar_seed`
-                            // (que no existe sin cuenta) cuando aplica.
-                            final localSeedAsync = isLocalMode ? ref.watch(localAvatarSeedProvider) : null;
-                            final seed = isLocalMode
-                                ? (localSeedAsync?.value ?? 'default')
-                                : (profileAsync.value?['avatar_seed'] as String? ?? user?.id ?? 'default');
-                            final avatarUrl = 'https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=$seed';
+      child: RefreshIndicator(
+        onRefresh: () => _refreshAll(ref),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            _buildHeader(context, ref, isDesktop, horizontalPadding),
 
-                            return GestureDetector(
-                              onTap: () => context.push('/settings'),
-                              child: ClipRRect(
-                                borderRadius: const BorderRadius.all(Radius.circular(999)),
-                                child: Container(
-                                  width: 32,
-                                  height: 32,
-                                  color: AppTheme.surfaceActive,
-                                  child: SvgPicture.network(
-                                    avatarUrl,
-                                    width: 32,
-                                    height: 32,
-                                    fit: BoxFit.cover,
-                                    placeholderBuilder: (_) => const Icon(
-                                      Icons.person,
-                                      size: 20,
-                                      color: AppTheme.secondary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      Text(
-                        _getGreeting(),
-                        style: (isDesktop
-                                ? Theme.of(context).textTheme.headlineMedium
-                                : Theme.of(context).textTheme.titleLarge)
-                            ?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.primary,
-                              fontSize: isDesktop ? 26 : 20,
-                              letterSpacing: -0.5,
-                            ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Tooltip(
-                        message: 'Notificaciones',
-                        child: IconButton(
-                          icon: Icon(AppIcons.broken(SolarIcons.Bell), color: AppTheme.primary, size: 22),
-                          onPressed: () => AppToast.show(context, message: 'Notificaciones próximamente'),
-                        ),
-                      ),
-                      Tooltip(
-                        message: 'Configuración',
-                        child: IconButton(
-                          icon: Icon(AppIcons.broken(SolarIcons.Settings), color: AppTheme.primary, size: 22),
-                          onPressed: () => context.push('/settings'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Fase 7.G.6: tarjeta compacta de estadísticas semanales (Documento
-          // Maestro §2.1.1). Sin tarjeta si no hay datos (usuario nuevo), en
-          // vez de mostrarla en 0 -- evita ruido visual en el primer uso.
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-            sliver: SliverToBoxAdapter(
-              child: Consumer(
-                builder: (context, ref, _) {
-                  final weeklyAsync = ref.watch(weeklyStatsProvider);
-                  final snapshot = weeklyAsync.value;
-                  if (snapshot == null || snapshot.isEmpty) return const SizedBox.shrink();
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Material(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () => context.push('/stats'),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          child: Row(
-                            children: [
-                              Icon(AppIcons.broken(SolarIcons.Chart), color: AppTheme.accent, size: 22),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Tus minutos esta semana: ${snapshot.totalMinutes > 0 ? "${snapshot.totalMinutes} min" : "< 1 min"}',
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                              ),
-                              Text('Ver más', style: Theme.of(context).textTheme.labelMedium),
-                              const SizedBox(width: 4),
-                              Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 16),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-
-          // Sin esto, cuando las cuatro secciones fallan (el caso típico: sin
-          // conexión, ya que todas dependen de Deezer) cada una colapsaba a un
-          // `SizedBox.shrink()` y la pantalla quedaba completamente vacía, sin
-          // ninguna explicación.
-          if (!_isLoadingAny(personalizedAsync, topChartsAsync, playlistsAsync, newReleasesAsync) &&
-              !_hasAnyContent(personalizedAsync, topChartsAsync, playlistsAsync, newReleasesAsync))
+            // --- Todo lo de abajo es local: se pinta sin red y sin esperas ---
             SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20, vertical: 32),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    Icon(
-                      AppIcons.broken(
-                        (ref.watch(isConnectedProvider).value ?? true) ? SolarIcons.Refresh : SolarIcons.WiFiRouter,
-                      ),
-                      color: AppTheme.muted,
-                      size: 40,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      (ref.watch(isConnectedProvider).value ?? true)
-                          ? 'No pudimos cargar el contenido'
-                          : 'Sin conexión',
-                      style: const TextStyle(color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      (ref.watch(isConnectedProvider).value ?? true)
-                          ? 'Revisa tu conexión e inténtalo de nuevo.'
-                          : 'Tu biblioteca y tus descargas siguen disponibles.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        ref.invalidate(personalizedSectionsProvider);
-                        ref.invalidate(topChartsProvider);
-                        ref.invalidate(editorialPlaylistsProvider);
-                        ref.invalidate(newReleasesProvider);
-                      },
-                      icon: Icon(AppIcons.broken(SolarIcons.Refresh), size: 16),
-                      label: const Text('Reintentar'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primary,
-                        side: const BorderSide(color: AppTheme.surfaceHover),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              sliver: const SliverToBoxAdapter(child: WeeklyHighlightsPanel()),
             ),
+            _buildQuickAccess(context, horizontalPadding),
+            _buildRecentlyPlayed(context, ref, isDesktop, horizontalPadding),
+            _buildMixes(context, ref, isDesktop, horizontalPadding),
 
-          // Acceso rápido: Tus me gusta y accesos directos
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-            sliver: SliverToBoxAdapter(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final crossCount = constraints.maxWidth > 700 ? 4 : 2;
-                  final quickItems = [
-                    {
-                      'title': 'Tus me gusta',
-                      'cover': '',
-                      'isLiked': true,
-                      'route': '/playlist/liked',
-                    },
-                    {
-                      'title': 'Top Global 50',
-                      'cover': 'https://e-cdns-images.dzcdn.net/images/cover/d41d8cd98f00b204e9800998ecf8427e/250x250-000000-80-0-0.jpg',
-                      'route': '/search',
-                    },
-                  ];
+            // --- De acá para abajo, catálogo de Deezer (cacheado) ---
+            _buildNewReleases(context, ref, isDesktop, horizontalPadding),
+            _buildCountryTops(context, ref, isDesktop, horizontalPadding, countryTopsAsync),
+            _buildEditorial(context, ref, isDesktop, horizontalPadding, editorialAsync),
+            _buildRelatedArtists(context, ref, isDesktop, horizontalPadding),
+            _buildGenres(context, ref, isDesktop, horizontalPadding),
 
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossCount,
-                      mainAxisExtent: 56,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                    ),
-                    itemCount: quickItems.length,
-                    itemBuilder: (ctx, i) {
-                      final item = quickItems[i];
-                      final isLiked = item['isLiked'] == true;
+            // El aviso de "sin contenido" va al final: si las secciones
+            // locales sí tienen datos, no tiene sentido gritar un error
+            // arriba de todo solo porque Deezer no contesta.
+            if (_catalogIsEmpty(editorialAsync, countryTopsAsync, genresAsync))
+              _buildEmptyCatalogNotice(context, ref, horizontalPadding),
 
-                      return InkWell(
-                        onTap: () => context.push(item['route'] as String),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppTheme.surface,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
-                                child: SizedBox(
-                                  width: 56,
-                                  height: 56,
-                                  child: isLiked
-                                      ? Container(
-                                          decoration: const BoxDecoration(
-                                            gradient: AppTheme.gradientLiked,
-                                          ),
-                                          child: Icon(AppIcons.bold(SolarIcons.Heart), color: Colors.white, size: 24),
-                                        )
-                                      : CachedNetworkImage(
-                                          imageUrl: item['cover'] as String,
-                                          fit: BoxFit.cover,
-                                          errorWidget: (_, _, _) => Container(color: AppTheme.surfaceHover),
-                                        ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  item['title'] as String,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: AppTheme.primary,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-          // Sección: Hecho para ti (Personalizada según el historial de escucha)
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-            sliver: SliverToBoxAdapter(
-              child: personalizedAsync.when(
-                data: (sections) {
-                  if (sections.isEmpty) return const SizedBox.shrink();
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Hecho para ti',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.primary,
-                            ),
-                      ),
-                      const SizedBox(height: 16),
-                      ...sections.map((sec) => _buildArtistSection(context, ref, sec, isDesktop)),
-                    ],
-                  );
-                },
-                loading: () => _buildHorizontalSkeleton(isDesktop),
-                error: (e, s) => const SizedBox.shrink(),
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-          // Sección: Éxitos Globales (Top Charts)
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-            sliver: SliverToBoxAdapter(
-              child: topChartsAsync.when(
-                data: (tracks) {
-                  if (tracks.isEmpty) return const SizedBox.shrink();
-                  final syncoraTracks = tracks.map((t) => t.toSyncoraTrack()).toList();
-                  final displayTracks = syncoraTracks.take(5).toList();
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Éxitos Globales',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.primary,
-                            ),
-                      ),
-                      const SizedBox(height: 12),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: displayTracks.length,
-                        itemBuilder: (ctx, i) {
-                          final track = displayTracks[i];
-                          final currentTrack = ref.watch(currentTrackProvider);
-                          final isPlaying = currentTrack?.id == track.id;
-
-                          return TrackTile(
-                            track: track,
-                            isPlaying: isPlaying,
-                            onTap: () {
-                              final controller = ref.read(syncoraPlayerControllerProvider.notifier);
-                              controller.setQueue(syncoraTracks, startIndex: i);
-                            },
-                            onAddToQueue: () {
-                              ref.read(syncoraPlayerControllerProvider.notifier).addToQueue(track);
-                            },
-                          );
-                        },
-                      ),
-                    ],
-                  );
-                },
-                loading: () => const SkeletonBox(height: 180, borderRadius: 16),
-                error: (e, s) => const SizedBox.shrink(),
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-          // Sección: Playlists Editoriales
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-            sliver: SliverToBoxAdapter(
-              child: playlistsAsync.when(
-                data: (playlists) {
-                  if (playlists.isEmpty) return const SizedBox.shrink();
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Playlists Editoriales',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.primary,
-                            ),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: isDesktop ? 240 : 200,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: playlists.length,
-                          separatorBuilder: (ctx, index) => const SizedBox(width: 16),
-                          itemBuilder: (ctx, i) {
-                            final pl = playlists[i];
-                            return SizedBox(
-                              width: isDesktop ? 180 : 140,
-                              child: PlaylistCard(
-                                title: pl.title,
-                                subtitle: '${pl.nbTracks} canciones • ${pl.userName}',
-                                coverUrl: pl.pictureUrl,
-                                onTap: () => AppToast.show(context, message: 'Playlist: ${pl.title}'),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-                loading: () => _buildHorizontalSkeleton(isDesktop),
-                error: (e, s) => const SizedBox.shrink(),
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-          // Sección: Nuevos Lanzamientos
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-            sliver: SliverToBoxAdapter(
-              child: newReleasesAsync.when(
-                data: (albums) {
-                  if (albums.isEmpty) return const SizedBox.shrink();
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Nuevos Lanzamientos',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.primary,
-                            ),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: isDesktop ? 240 : 200,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: albums.length,
-                          separatorBuilder: (ctx, index) => const SizedBox(width: 16),
-                          itemBuilder: (ctx, i) {
-                            final album = albums[i];
-                            return SizedBox(
-                              width: isDesktop ? 180 : 140,
-                              child: PlaylistCard(
-                                title: album.title,
-                                subtitle: 'Álbum • ${album.artistName}',
-                                coverUrl: album.coverUrl,
-                                onTap: () => context.push('/album/${album.id}'),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-                loading: () => _buildHorizontalSkeleton(isDesktop),
-                error: (e, s) => const SizedBox.shrink(),
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 40)),
-        ],
+            const SliverToBoxAdapter(child: SizedBox(height: 48)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildArtistSection(
-    BuildContext context,
-    WidgetRef ref,
-    PersonalizedArtistSection sec,
-    bool isDesktop,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+  bool _catalogIsEmpty(AsyncValue<List> a, AsyncValue<List> b, AsyncValue<List> c) {
+    if (a.isLoading || b.isLoading || c.isLoading) return false;
+    return (a.value?.isEmpty ?? true) && (b.value?.isEmpty ?? true) && (c.value?.isEmpty ?? true);
+  }
+
+  // -------------------------------------------------------------------------
+  // Cabecera
+  // -------------------------------------------------------------------------
+
+  Widget _buildHeader(BuildContext context, WidgetRef ref, bool isDesktop, double padding) {
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: padding, vertical: isDesktop ? 24 : 16),
+      sliver: SliverToBoxAdapter(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: Text(
-                'Basado en tu gusto: ${sec.artist.name}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppTheme.primary,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                ),
+              child: Row(
+                children: [
+                  if (!isDesktop) ...[
+                    const _ProfileAvatar(),
+                    const SizedBox(width: 10),
+                  ],
+                  Flexible(
+                    child: Text(
+                      _getGreeting(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: (isDesktop
+                              ? Theme.of(context).textTheme.headlineMedium
+                              : Theme.of(context).textTheme.titleLarge)
+                          ?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primary,
+                            fontSize: isDesktop ? 26 : 20,
+                            letterSpacing: -0.5,
+                          ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-            TextButton(
-              onPressed: () => context.push('/artist/${sec.artist.id}'),
-              child: const Text('Ver artista', style: TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold)),
+            Row(
+              children: [
+                Tooltip(
+                  message: 'Notificaciones',
+                  child: IconButton(
+                    icon: Icon(AppIcons.broken(SolarIcons.Bell), color: AppTheme.primary, size: 22),
+                    onPressed: () => AppToast.show(context, message: 'Notificaciones próximamente'),
+                  ),
+                ),
+                Tooltip(
+                  message: 'Configuración',
+                  child: IconButton(
+                    icon: Icon(AppIcons.broken(SolarIcons.Settings), color: AppTheme.primary, size: 22),
+                    onPressed: () => context.push('/settings'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: isDesktop ? 240 : 200,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: sec.tracks.length,
-            separatorBuilder: (ctx, index) => const SizedBox(width: 16),
-            itemBuilder: (ctx, i) {
-              final track = sec.tracks[i];
-              return SizedBox(
-                width: isDesktop ? 180 : 140,
-                child: PlaylistCard(
-                  title: track.title,
-                  subtitle: track.artistName,
-                  coverUrl: track.coverUrl,
-                  onTap: () {
-                    final syncoraTracks = sec.tracks.map((t) => t.toSyncoraTrack()).toList();
-                    ref.read(syncoraPlayerControllerProvider.notifier).setQueue(syncoraTracks, startIndex: i);
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
+      ),
     );
   }
 
-  Widget _buildHorizontalSkeleton(bool isDesktop) {
+  // -------------------------------------------------------------------------
+  // Accesos rápidos
+  // -------------------------------------------------------------------------
+
+  Widget _buildQuickAccess(BuildContext context, double padding) {
+    // Antes había acá un "Top Global 50" que llevaba a `/search` y cuya portada
+    // era una URL con el hash MD5 de la cadena vacía — o sea, una imagen rota
+    // permanente. Los tops de verdad ahora tienen su propia sección.
+    final items = [
+      (
+        title: 'Tus me gusta',
+        icon: AppIcons.bold(SolarIcons.Heart),
+        gradient: AppTheme.gradientLiked,
+        route: '/playlist/liked',
+      ),
+      (
+        title: 'Descargas',
+        icon: AppIcons.broken(SolarIcons.DownloadMinimalistic),
+        gradient: null,
+        route: '/downloads',
+      ),
+      (
+        title: 'Estadísticas',
+        icon: AppIcons.broken(SolarIcons.Chart),
+        gradient: null,
+        route: '/stats',
+      ),
+    ];
+
+    return SliverPadding(
+      padding: EdgeInsets.fromLTRB(padding, 4, padding, 0),
+      sliver: SliverToBoxAdapter(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final crossCount = constraints.maxWidth > 700 ? 3 : 1;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossCount,
+                mainAxisExtent: 56,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: items.length,
+              itemBuilder: (ctx, i) {
+                final item = items[i];
+                return InkWell(
+                  onTap: () => context.push(item.route),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                          child: Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              gradient: item.gradient,
+                              color: item.gradient == null ? AppTheme.surfaceHover : null,
+                            ),
+                            child: Icon(item.icon, color: Colors.white, size: 22),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            item.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppTheme.primary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Secciones
+  // -------------------------------------------------------------------------
+
+  Widget _buildRecentlyPlayed(BuildContext context, WidgetRef ref, bool isDesktop, double padding) {
+    final async = ref.watch(recentlyPlayedProvider);
+    final items = async.value ?? const [];
+    if (items.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+    return HomeSection(
+      title: 'Escuchado recientemente',
+      isDesktop: isDesktop,
+      padding: padding,
+      child: HomeCardRow(
+        isDesktop: isDesktop,
+        padding: padding,
+        itemCount: items.length,
+        itemBuilder: (i) {
+          final item = items[i];
+          return PlaylistCard(
+            title: item.title,
+            subtitle: item.subtitle,
+            coverUrl: item.coverUrl,
+            playlistId: item.localPlaylistId,
+            onTap: () => context.push(item.route),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMixes(BuildContext context, WidgetRef ref, bool isDesktop, double padding) {
+    final async = ref.watch(mixesProvider);
+
+    if (async.isLoading) {
+      return HomeSection(
+        title: 'Tus mixes',
+        isDesktop: isDesktop,
+        padding: padding,
+        child: HomeCardRowSkeleton(isDesktop: isDesktop, padding: padding),
+      );
+    }
+
+    final mixes = async.value ?? const <SyncoraMix>[];
+    if (mixes.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+    return HomeSection(
+      title: 'Tus mixes',
+      subtitle: 'Se renuevan solos. Guarda uno si quieres conservarlo tal cual.',
+      isDesktop: isDesktop,
+      padding: padding,
+      child: HomeCardRow(
+        isDesktop: isDesktop,
+        padding: padding,
+        itemCount: mixes.length,
+        itemBuilder: (i) {
+          final mix = mixes[i];
+          return PlaylistCard(
+            title: mix.title,
+            subtitle: '${mix.tracks.length} canciones',
+            coverUrl: mix.coverUrl,
+            onTap: () => context.push('/mix/${Uri.encodeComponent(mix.key)}'),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildNewReleases(BuildContext context, WidgetRef ref, bool isDesktop, double padding) {
+    final fromArtists = ref.watch(newReleasesFromArtistsProvider);
+    final fallback = ref.watch(newReleasesProvider);
+
+    // Si el usuario tiene historial, se prefieren las novedades de SUS
+    // artistas; si no (instalación nueva), el chart de álbumes hace de
+    // respaldo en vez de dejar un hueco.
+    final personal = fromArtists.value ?? const [];
+    final usePersonal = personal.isNotEmpty;
+    final albums = usePersonal ? personal : (fallback.value ?? const []);
+
+    if (albums.isEmpty) {
+      if (fromArtists.isLoading || fallback.isLoading) {
+        return HomeSection(
+          title: 'Novedades',
+          isDesktop: isDesktop,
+          padding: padding,
+          child: HomeCardRowSkeleton(isDesktop: isDesktop, padding: padding),
+        );
+      }
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
+    return HomeSection(
+      title: usePersonal ? 'Novedades de tus artistas' : 'Álbumes destacados',
+      isDesktop: isDesktop,
+      padding: padding,
+      child: HomeCardRow(
+        isDesktop: isDesktop,
+        padding: padding,
+        itemCount: albums.length,
+        itemBuilder: (i) {
+          final album = albums[i];
+          return PlaylistCard(
+            title: album.title,
+            subtitle: usePersonal && album.releaseDate.isNotEmpty
+                ? '${album.artistName} • ${album.releaseDate}'
+                : 'Álbum • ${album.artistName}',
+            coverUrl: album.coverUrl,
+            onTap: () => context.push('/album/${album.id}'),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCountryTops(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDesktop,
+    double padding,
+    AsyncValue<List<DeezerPlaylist>> async,
+  ) {
+    if (async.isLoading) {
+      return HomeSection(
+        title: 'Tops del mundo',
+        isDesktop: isDesktop,
+        padding: padding,
+        child: HomeCardRowSkeleton(isDesktop: isDesktop, padding: padding),
+      );
+    }
+
+    final all = async.value ?? const <DeezerPlaylist>[];
+    if (all.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+    // Solo los destacados en Inicio; el resto (son más de 100 países) vive
+    // detrás de "Ver todos", que abre un selector buscable — así la sección no
+    // se vuelve invasiva.
+    final featured = all.take(homeFeaturedCountryTops.length).toList();
+
+    return HomeSection(
+      title: 'Tops del mundo',
+      isDesktop: isDesktop,
+      padding: padding,
+      action: all.length > featured.length
+          ? HomeSectionAction(
+              label: 'Ver todos',
+              onPressed: () => showCountryTopsPicker(context, all),
+            )
+          : null,
+      child: HomeCardRow(
+        isDesktop: isDesktop,
+        padding: padding,
+        itemCount: featured.length,
+        itemBuilder: (i) {
+          final playlist = featured[i];
+          return PlaylistCard(
+            title: playlist.title,
+            subtitle: '${playlist.nbTracks} canciones',
+            coverUrl: playlist.pictureUrl,
+            onTap: () => context.push('/deezer-playlist/${playlist.id}'),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEditorial(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDesktop,
+    double padding,
+    AsyncValue<List<DeezerPlaylist>> async,
+  ) {
+    if (async.isLoading) {
+      return HomeSection(
+        title: 'Playlists editoriales',
+        isDesktop: isDesktop,
+        padding: padding,
+        child: HomeCardRowSkeleton(isDesktop: isDesktop, padding: padding),
+      );
+    }
+
+    final playlists = async.value ?? const <DeezerPlaylist>[];
+    if (playlists.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+    return HomeSection(
+      title: 'Playlists editoriales',
+      isDesktop: isDesktop,
+      padding: padding,
+      child: HomeCardRow(
+        isDesktop: isDesktop,
+        padding: padding,
+        itemCount: playlists.length,
+        itemBuilder: (i) {
+          final playlist = playlists[i];
+          return PlaylistCard(
+            title: playlist.title,
+            subtitle: '${playlist.nbTracks} canciones • ${playlist.userName}',
+            coverUrl: playlist.pictureUrl,
+            // Antes esto solo mostraba un toast con el nombre: no había
+            // ninguna forma de abrir una playlist editorial.
+            onTap: () => context.push('/deezer-playlist/${playlist.id}'),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRelatedArtists(BuildContext context, WidgetRef ref, bool isDesktop, double padding) {
+    final suggestion = ref.watch(relatedArtistsProvider).value;
+    if (suggestion == null || suggestion.artists.isEmpty) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
+    return HomeSection(
+      title: 'Porque escuchaste a ${suggestion.seedArtistName}',
+      isDesktop: isDesktop,
+      padding: padding,
+      child: SizedBox(
+        height: isDesktop ? 190 : 160,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.symmetric(horizontal: padding),
+          itemCount: suggestion.artists.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 16),
+          itemBuilder: (ctx, i) {
+            final artist = suggestion.artists[i];
+            return HomeArtistCircle(
+              name: artist.name,
+              pictureUrl: artist.pictureUrl,
+              size: isDesktop ? 130 : 110,
+              onTap: () => context.push('/artist/${artist.id}'),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGenres(BuildContext context, WidgetRef ref, bool isDesktop, double padding) {
+    final genres = ref.watch(deezerGenresProvider).value ?? const [];
+    if (genres.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+    return HomeSection(
+      title: 'Explorar por género',
+      isDesktop: isDesktop,
+      padding: padding,
+      child: SizedBox(
+        height: 96,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.symmetric(horizontal: padding),
+          itemCount: genres.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 12),
+          itemBuilder: (ctx, i) {
+            final genre = genres[i];
+            return SizedBox(
+              width: 160,
+              child: HomeGenreTile(
+                name: genre.name,
+                imageUrl: genre.pictureUrl,
+                onTap: () => context.push(
+                  '/genre/${genre.id}?name=${Uri.encodeComponent(genre.name)}',
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyCatalogNotice(BuildContext context, WidgetRef ref, double padding) {
+    final isConnected = ref.watch(isConnectedProvider).value ?? true;
+
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: padding, vertical: 32),
+      sliver: SliverToBoxAdapter(
+        child: Column(
+          children: [
+            Icon(
+              AppIcons.broken(isConnected ? SolarIcons.Refresh : SolarIcons.WiFiRouter),
+              color: AppTheme.muted,
+              size: 40,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isConnected ? 'No pudimos cargar el contenido' : 'Sin conexión',
+              style: const TextStyle(color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              isConnected
+                  ? 'Revisa tu conexión e inténtalo de nuevo.'
+                  : 'Tu biblioteca y tus descargas siguen disponibles.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () => _refreshAll(ref),
+              icon: Icon(AppIcons.broken(SolarIcons.Refresh), size: 16),
+              label: const Text('Reintentar'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primary,
+                side: const BorderSide(color: AppTheme.surfaceHover),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileAvatar extends ConsumerWidget {
+  const _ProfileAvatar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(profileProvider);
+    final user = ref.watch(currentUserProvider);
+    final isLocalMode = ref.watch(localModeProvider);
+    // 7.I.4: seed local en vez de `profiles.avatar_seed` (que no existe sin
+    // cuenta) cuando aplica.
+    final localSeedAsync = isLocalMode ? ref.watch(localAvatarSeedProvider) : null;
+    final seed = isLocalMode
+        ? (localSeedAsync?.value ?? 'default')
+        : (profileAsync.value?['avatar_seed'] as String? ?? user?.id ?? 'default');
+
+    return GestureDetector(
+      onTap: () => context.push('/settings'),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(999)),
+        child: Container(
+          width: 32,
+          height: 32,
+          color: AppTheme.surfaceActive,
+          child: SvgPicture.network(
+            'https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=$seed',
+            width: 32,
+            height: 32,
+            fit: BoxFit.cover,
+            placeholderBuilder: (_) => const Icon(Icons.person, size: 20, color: AppTheme.secondary),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Selector de tops por país.
+///
+/// Ventana centrada en escritorio y hoja en móvil, como manda la guía de UI
+/// del proyecto. Con más de 100 países, lleva buscador: recorrer la lista a
+/// mano sería peor que no tener la función.
+Future<void> showCountryTopsPicker(BuildContext context, List<DeezerPlaylist> playlists) {
+  final isDesktop = MediaQuery.of(context).size.width >= 768;
+
+  if (isDesktop) {
+    return showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: AppTheme.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 80, vertical: 48),
+        child: SizedBox(
+          width: 520,
+          height: 600,
+          child: _CountryTopsList(playlists: playlists),
+        ),
+      ),
+    );
+  }
+
+  return showModalBottomSheet(
+    context: context,
+    backgroundColor: AppTheme.background,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) => SizedBox(
+      height: MediaQuery.of(ctx).size.height * 0.75,
+      child: _CountryTopsList(playlists: playlists),
+    ),
+  );
+}
+
+class _CountryTopsList extends StatefulWidget {
+  final List<DeezerPlaylist> playlists;
+
+  const _CountryTopsList({required this.playlists});
+
+  @override
+  State<_CountryTopsList> createState() => _CountryTopsListState();
+}
+
+class _CountryTopsListState extends State<_CountryTopsList> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _query.trim().toLowerCase();
+    final filtered = query.isEmpty
+        ? widget.playlists
+        : widget.playlists.where((p) => p.title.toLowerCase().contains(query)).toList();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Tops por país',
+            style: TextStyle(color: AppTheme.primary, fontSize: 20, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            autofocus: false,
+            style: const TextStyle(color: AppTheme.primary),
+            decoration: InputDecoration(
+              hintText: 'Buscar país…',
+              hintStyle: const TextStyle(color: AppTheme.secondary),
+              prefixIcon: Icon(AppIcons.broken(SolarIcons.Magnifer), color: AppTheme.secondary, size: 18),
+              filled: true,
+              fillColor: AppTheme.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            onChanged: (value) => setState(() => _query = value),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: filtered.isEmpty
+                ? const Center(
+                    child: Text(
+                      'Ningún país coincide',
+                      style: TextStyle(color: AppTheme.secondary),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: filtered.length,
+                    itemBuilder: (ctx, i) {
+                      final playlist = filtered[i];
+                      return ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: playlist.pictureUrl.isEmpty
+                                ? Container(color: AppTheme.surfaceHover)
+                                : CachedNetworkImage(imageUrl: playlist.pictureUrl, fit: BoxFit.cover),
+                          ),
+                        ),
+                        title: Text(
+                          playlist.title,
+                          style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          '${playlist.nbTracks} canciones',
+                          style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
+                        ),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          context.push('/deezer-playlist/${playlist.id}');
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Esqueleto reutilizado mientras cargan las filas de tarjetas.
+class HomeCardRowSkeleton extends StatelessWidget {
+  final bool isDesktop;
+  final double padding;
+
+  const HomeCardRowSkeleton({super.key, required this.isDesktop, required this.padding});
+
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
       height: isDesktop ? 240 : 200,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: padding),
         itemCount: 4,
-        separatorBuilder: (ctx, index) => const SizedBox(width: 16),
-        itemBuilder: (ctx, index) => SkeletonBox(
+        separatorBuilder: (_, _) => const SizedBox(width: 16),
+        itemBuilder: (ctx, i) => SizedBox(
           width: isDesktop ? 180 : 140,
-          height: 200,
-          borderRadius: 16,
+          child: const SkeletonBox(height: 180, borderRadius: 16),
         ),
       ),
     );

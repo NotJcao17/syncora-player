@@ -148,6 +148,31 @@ class ApiCache {
     }
   }
 
+  /// Borra las entradas cuya clave empieza por [prefix].
+  ///
+  /// Lo usa el "tirar para recargar" de Inicio: invalidar los providers no
+  /// alcanza, porque volverían a leer el mismo archivo todavía fresco y el
+  /// gesto no haría nada visible. Se borran solo las claves de las secciones
+  /// que el gesto refresca, no el caché entero.
+  Future<void> removeWithPrefix(String prefix) async {
+    _memory.removeWhere((key, _) => key.startsWith(prefix));
+
+    final dir = await _resolveDirectory();
+    if (dir == null) return;
+    try {
+      if (!await dir.exists()) return;
+      await for (final entity in dir.list()) {
+        if (entity is! File) continue;
+        final name = p.basenameWithoutExtension(entity.path);
+        if (name.startsWith(_fileNameFor(prefix).replaceAll('.json', ''))) {
+          try {
+            await entity.delete();
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+  }
+
   /// Borra todo el caché de catálogo (usado por "borrar caché" de Ajustes).
   Future<void> clear() async {
     _memory.clear();

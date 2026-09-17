@@ -13,7 +13,14 @@ void main() {
   });
 
   tearDown(() async {
-    if (await tempDir.exists()) await tempDir.delete(recursive: true);
+    // `fetch` escribe en disco sin esperar (no bloquea al llamador), así que
+    // en Windows el borrado puede chocar con una escritura todavía en vuelo y
+    // fallar con "el proceso no tiene acceso al archivo". Es limpieza de un
+    // directorio temporal, no una aserción: si no se puede borrar ahora, lo
+    // barre el sistema operativo.
+    try {
+      if (await tempDir.exists()) await tempDir.delete(recursive: true);
+    } catch (_) {}
   });
 
   test('devuelve lo guardado mientras no venza el TTL', () async {
