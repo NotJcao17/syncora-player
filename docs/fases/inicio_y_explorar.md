@@ -167,7 +167,69 @@ Coste: ~12 peticiones en el primer arranque, 0–2 en los siguientes gracias al 
 
 ---
 
-## 8. Pendiente
+## 8. Hallazgos de la primera ronda de pruebas en dispositivo (2026-09-17)
+
+### H-IE-1 — Duplicados masivos al instalar de cero (bug **preexistente**, no de esta ronda)
+
+Instalar la app limpia sobre una cuenta ya poblada dejaba **cada playlist y cada "me gusta"
+duplicados**, y reabrir no lo arreglaba.
+
+Causa raíz: `SyncService` no tenía guarda de reentrancia y hay **tres disparadores** de
+`syncLibrary` que pueden coincidir — iniciar sesión (`auth_screen`), arrancar la app
+(`AppShell.initState`) y abrir Biblioteca. El chequeo `isExpired('library')` no los serializa
+porque `markSynced` se escribe **al terminar**: las tres corridas pasaban el chequeo, las tres
+leían la base local vacía y las tres insertaban lo mismo.
+
+Y se agravaba solo: con dos filas compartiendo `remoteId`, `getPlaylistByRemoteId` usaba
+`getSingleOrNull()`, que **lanza**, y el `catch (_) {}` de `SyncService` se comía la excepción —
+la sincronización quedaba rota en silencio para siempre.
+
+Corregido con: guarda de reentrancia (`_runExclusive`), consultas tolerantes a filas repetidas
+(`getPlaylistByRemoteId`, `getLikedPlaylist`, `isTrackLiked`), deduplicación de lo que llega del
+servidor, y `PlaylistDao.repairDuplicates()` corriendo en cada arranque para sanar las bases que
+ya quedaron sucias (nadie tiene que borrar los datos de la app a mano). Cubierto por
+`test/data/local_db/daos/playlist_repair_test.dart` y un test de concurrencia en
+`sync_service_test.dart`.
+
+⚠️ **Trampa de Dart que costó encontrar** (documentada en el código): la primera versión de la
+guarda usaba `action().whenComplete(() => _inFlight.remove(key))`. `Map.remove` **devuelve** el
+valor quitado — que es el propio `Future` que se está registrando — y `whenComplete` espera a lo
+que devuelva su callback: el future terminaba esperándose a sí mismo y la sincronización se
+colgaba para siempre. Cuerpo de bloque, nunca flecha.
+
+### H-IE-2 — `/chart/{genre_id}` devuelve los mismos artistas para todos los géneros
+
+Verificado en vivo: `tracks`, `albums` y `playlists` sí cambian con el género, pero `artists`
+contesta **la misma lista global** con cualquier `genre_id`, y `/genre/{id}/artists` tiene el mismo
+defecto. Por eso "Artistas de Rock" mostraba a Peso Pluma y La Arrolladora. Es una limitación de
+Deezer, no un bug nuestro. Solución: los artistas del género se **derivan de sus pistas**, que sí
+son del género, y la foto sale de `https://api.deezer.com/artist/{id}/image` (302 → CDN), sin
+peticiones extra.
+
+### H-IE-3 — `/artist/{id}/albums` no trae el objeto `artist`
+
+Por eso "Novedades de tus artistas" mostraba "Artista Desconocido" en todo. El nombre se rellena
+en el provider con la ficha del artista, que ya está cacheada.
+
+### H-IE-4 — Los carruseles no se podían recorrer en escritorio
+
+Un `ListView` horizontal solo responde a gestos táctiles: Flutter excluye el ratón de
+`dragDevices` y la rueda desplaza la página en vertical. En Windows el usuario veía las primeras
+tarjetas y no tenía **ninguna** forma de llegar al resto. Resuelto con
+`core/widgets/horizontal_scroller.dart`: arrastre con ratón habilitado más flechas en los bordes
+al pasar el cursor. Deliberadamente **no** se secuestra la rueda del ratón — sobre un carrusel
+debe seguir desplazando la página.
+
+### H-IE-5 — Reproducción lenta al arrancar (mitigado, causa **no confirmada**)
+
+Reportado como "tarda más y va trabada al empezar". No se perfiló, así que no está confirmado qué
+lo causa. Mitigación aplicada sobre la hipótesis más plausible (la ráfaga de trabajo que Inicio
+dispara al montarse compitiendo con el arranque del reproductor): los providers derivados del
+historial esperan a que termine el primer frame (`settleAfterFirstPaint`), y el tope de búsquedas
+remotas de `TrackResolver` bajó de 12 a 6. **Requiere volver a probarlo en dispositivo**; si sigue
+igual, hay que perfilar en vez de seguir adivinando.
+
+## 9. Pendiente
 
 - Pruebas en dispositivo (Android y Windows) de las cuatro pantallas nuevas.
 - El bug reportado de "Inicio vieja y después la nueva" no se pudo reproducir y es de hace varias
