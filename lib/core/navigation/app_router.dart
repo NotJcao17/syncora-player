@@ -8,6 +8,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/auth/local_mode_provider.dart';
 import '../../features/auth/screens/auth_screen.dart';
 import '../../features/download/screens/downloads_screen.dart';
+import '../../features/catalog/screens/deezer_playlist_screen.dart';
+import '../../features/catalog/screens/genre_screen.dart';
+import '../../features/catalog/screens/mix_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 
 import '../../features/library/screens/album_detail_screen.dart';
@@ -203,6 +206,44 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return NoTransitionPage(
                 key: state.pageKey,
                 child: AlbumDetailScreen(albumId: id),
+              );
+            },
+          ),
+          // Playlist de Deezer (editoriales, tops por país, playlists de
+          // género). No es una playlist del usuario: se lee del catálogo y
+          // solo se copia a la biblioteca si él lo pide.
+          GoRoute(
+            path: '/deezer-playlist/:id',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: DeezerPlaylistScreen(playlistId: id),
+              );
+            },
+          ),
+          // Género. `name` viaja como query para poder pintar la cabecera sin
+          // esperar a la red; si se entra por enlace directo, se resuelve
+          // contra el catálogo de géneros.
+          GoRoute(
+            path: '/genre/:id',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: GenreScreen(genreId: id, genreName: state.uri.queryParameters['name']),
+              );
+            },
+          ),
+          // Mix generado por Syncora. La clave lleva ':' (tipo:semilla:periodo)
+          // y viaja codificada para no chocar con la sintaxis de rutas.
+          GoRoute(
+            path: '/mix/:key',
+            pageBuilder: (context, state) {
+              final rawKey = state.pathParameters['key'] ?? '';
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: MixScreen(mixKey: Uri.decodeComponent(rawKey)),
               );
             },
           ),

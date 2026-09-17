@@ -189,12 +189,13 @@ final deezerArtistAlbumsProvider =
 
 /// Pistas de una radio editorial de Deezer.
 ///
-/// ⚠️ **Sin caché a propósito**: `/radio/{id}/tracks` no es determinista, así
-/// que cachearlo daría una falsa sensación de estabilidad. La estabilidad la
-/// da el provider que consume esto (ver `mix_providers.dart`), manteniendo
-/// viva la tirada durante la sesión.
+/// ⚠️ **Sin caché y `autoDispose` a propósito**: `/radio/{id}/tracks` no es
+/// determinista, así que cachearlo daría una falsa sensación de estabilidad.
+/// Cada vez que se lanza una radio se quiere una tirada nueva; la estabilidad
+/// que sí importa (la de los mixes) la da `mix_providers.dart`, manteniendo
+/// viva su tirada durante toda la sesión.
 final deezerRadioTracksProvider =
-    FutureProvider.family<List<DeezerTrack>, int>((ref, radioId) async {
+    FutureProvider.autoDispose.family<List<DeezerTrack>, int>((ref, radioId) async {
   final api = ref.watch(deezerApiProvider);
   return retryOnNetworkError(
     () => api.getRadioTracks(radioId),

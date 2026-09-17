@@ -6,7 +6,6 @@ import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_artist.dart';
-import '../../player/player_models.dart';
 import 'mix_engine.dart';
 import 'mix_models.dart';
 import 'track_resolver.dart';
@@ -226,42 +225,4 @@ Future<void> _addDiscoveryMix(
       tracks: fresh.take(_maxTracksPerMix).map((t) => t.toSyncoraTrack()).toList(),
     ));
   } catch (_) {}
-}
-
-/// Convierte un mix en una playlist local de verdad.
-///
-/// Es la **única** ruta por la que un mix toca la base de datos, y solo se
-/// dispara con una acción explícita del usuario. La playlist resultante es
-/// una foto fija: a partir de acá es suya, se sincroniza y se edita como
-/// cualquier otra.
-Future<int> saveMixAsPlaylist({
-  required SyncoraMix mix,
-  required Ref ref,
-  DateTime? now,
-}) async {
-  final dao = ref.read(playlistDaoProvider);
-  final playlistId = await dao.createPlaylist(
-    title: mix.savedTitle(now ?? DateTime.now()),
-    description: mix.subtitle,
-    coverUrl: mix.coverUrl.isNotEmpty ? mix.coverUrl : null,
-  );
-
-  for (final track in mix.tracks) {
-    await dao.addTrackToPlaylist(
-      playlistId: playlistId,
-      trackId: track.deezerId,
-      artistId: track.artistId ?? 0,
-      albumId: track.albumId ?? 0,
-      title: track.title,
-      artistName: track.artist,
-      albumName: track.album ?? '',
-      coverUrl: track.coverUrl,
-      durationMs: track.duration?.inMilliseconds ?? 0,
-      genre: track.genre,
-      contributorsJson:
-          track.artists.length > 1 ? SyncoraArtistRef.encodeList(track.artists) : null,
-    );
-  }
-
-  return playlistId;
 }

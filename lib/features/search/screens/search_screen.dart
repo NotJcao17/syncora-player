@@ -11,6 +11,7 @@ import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/skeleton_box.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_api.dart';
+import '../../../data/apis/deezer_catalog_providers.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/models/deezer/deezer_album.dart';
 import '../../../data/models/deezer/deezer_artist.dart';
@@ -43,13 +44,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     {'name': 'Álbumes', 'type': DeezerSearchType.album},
   ];
 
-  final List<Map<String, dynamic>> _categories = const [
-    {'name': 'Pop', 'color': AppTheme.genrePop},
-    {'name': 'Hip-Hop', 'color': AppTheme.genreHipHop},
-    {'name': 'Rock', 'color': AppTheme.genreRock},
-    {'name': 'Electrónica', 'color': AppTheme.genreElectronic},
-    {'name': 'Indie', 'color': Color(0xFF6D28D9)},
-    {'name': 'Lofi & Chill', 'color': Color(0xFF0369A1)},
+  /// Paleta de respaldo para las tarjetas de género.
+  ///
+  /// Antes esta lista ERA el catálogo: seis géneros escritos a mano cuyo
+  /// único efecto al tocarlos era escribir su nombre en el buscador (el botón
+  /// "Pop" buscaba el texto "pop"). Ahora los géneros vienen de `/genre` —
+  /// 27, con nombre ya localizado e imagen oficial — y estos colores solo se
+  /// usan detrás de la imagen mientras carga, o si no hay imagen.
+  static const List<Color> _genreColors = [
+    AppTheme.genrePop,
+    AppTheme.genreHipHop,
+    AppTheme.genreRock,
+    AppTheme.genreElectronic,
+    Color(0xFF6D28D9),
+    Color(0xFF0369A1),
+    Color(0xFFB45309),
+    Color(0xFF15803D),
   ];
 
   @override
@@ -482,6 +492,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildExploreCategories(bool isDesktop) {
+    final genresAsync = ref.watch(deezerGenresProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -493,40 +505,36 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
         ),
         const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isDesktop ? 5 : 2,
-            childAspectRatio: 1.6,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
+        genresAsync.when(
+          loading: () => GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: _genreGridDelegate(isDesktop),
+            itemCount: 6,
+            itemBuilder: (ctx, i) => const SkeletonBox(height: 80, borderRadius: 12),
           ),
-          itemCount: _categories.length,
-          itemBuilder: (ctx, i) {
-            final cat = _categories[i];
-            return InkWell(
-              onTap: () {
-                FocusManager.instance.primaryFocus?.unfocus();
-                _searchController.text = cat['name'] as String;
-                ref.read(searchProvider.notifier).setQuery(cat['name'] as String);
+          // Sin conexión y sin caché no hay géneros que ofrecer; el buscador
+          // de arriba sigue siendo utilizable, así que no se grita un error.
+          error: (e, _) => const SizedBox.shrink(),
+          data: (genres) {
+            if (genres.isEmpty) return const SizedBox.shrink();
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: _genreGridDelegate(isDesktop),
+              itemCount: genres.length,
+              itemBuilder: (ctx, i) {
+                final genre = genres[i];
+                return _GenreTile(
+                  name: genre.name,
+                  imageUrl: genre.pictureUrl,
+                  color: _genreColors[i % _genreColors.length],
+                  onTap: () {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                    context.push('/genre/${genre.id}?name=${Uri.encodeComponent(genre.name)}');
+                  },
+                );
               },
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: cat['color'] as Color,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  cat['name'] as String,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
             );
           },
         ),
@@ -534,6 +542,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       ],
     );
   }
+
+  static SliverGridDelegateWithFixedCrossAxisCount _genreGridDelegate(bool isDesktop) =>
+      SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isDesktop ? 5 : 2,
+        childAspectRatio: 1.6,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      );
 
   Widget _buildSearchResults(SearchState state, bool isDesktop) {
     final result = state.result;
@@ -1393,6 +1409,66 @@ class _CollaborationSearchTabState extends ConsumerState<_CollaborationSearchTab
           Center(child: _SearchMoreButton(isLoading: _isSearchingMore, onPressed: _searchMore)),
         ],
       ],
+    );
+  }
+}
+
+/// Tarjeta de un género en "Explorar todo".
+///
+/// La imagen oficial de Deezer va de fondo con un velo oscuro encima: sin el
+/// velo, esos collages claros dejaban el nombre ilegible.
+class _GenreTile extends StatelessWidget {
+  final String name;
+  final String imageUrl;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _GenreTile({
+    required this.name,
+    required this.imageUrl,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(color: color),
+            if (imageUrl.isNotEmpty)
+              CachedNetworkImage(
+                imageUrl: imageUrl,
+                fit: BoxFit.cover,
+                fadeInDuration: const Duration(milliseconds: 200),
+                errorWidget: (_, _, _) => const SizedBox.shrink(),
+              ),
+            Container(color: Colors.black.withValues(alpha: 0.42)),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
