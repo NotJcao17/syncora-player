@@ -49,6 +49,10 @@ class CollectionScaffold extends ConsumerStatefulWidget {
   /// Mensaje cuando la colección no tiene ninguna pista reproducible.
   final String emptyMessage;
 
+  /// Portada a medida, para colecciones sin carátula propia (el mix
+  /// "On Repeat" usa color + ícono, como "Tus me gusta").
+  final Widget? coverOverride;
+
   const CollectionScaffold({
     super.key,
     required this.label,
@@ -60,6 +64,7 @@ class CollectionScaffold extends ConsumerStatefulWidget {
     this.actions = const [],
     this.onRefresh,
     this.emptyMessage = 'No hay canciones para mostrar.',
+    this.coverOverride,
   });
 
   @override
@@ -87,6 +92,9 @@ class _CollectionScaffoldState extends ConsumerState<CollectionScaffold> {
   }
 
   Future<void> _extractPalette() async {
+    // Con portada generada no hay imagen de la que sacar color; el degradado
+    // se queda con el tono neutro por defecto.
+    if (widget.coverOverride != null) return;
     final url = widget.coverUrl;
     if (url.isEmpty || url == _paletteSourceUrl) return;
     _paletteSourceUrl = url;
@@ -246,9 +254,10 @@ class _CollectionScaffoldState extends ConsumerState<CollectionScaffold> {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(radius),
-          child: widget.coverUrl.isEmpty
-              ? Icon(AppIcons.broken(SolarIcons.MusicLibrary), color: AppTheme.secondary, size: size * 0.3)
-              : CachedNetworkImage(imageUrl: widget.coverUrl, fit: BoxFit.cover),
+          child: widget.coverOverride ??
+              (widget.coverUrl.isEmpty
+                  ? Icon(AppIcons.broken(SolarIcons.MusicLibrary), color: AppTheme.secondary, size: size * 0.3)
+                  : CachedNetworkImage(imageUrl: widget.coverUrl, fit: BoxFit.cover)),
         ),
       );
 

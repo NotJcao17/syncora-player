@@ -43,6 +43,38 @@ class SyncService {
 
   bool get _isTestEnv => Platform.environment.containsKey('FLUTTER_TEST');
 
+  /// Corridas en vuelo, por operación.
+  ///
+  /// **Bug real, encontrado en pruebas en dispositivo:** hay tres disparadores
+  /// de `syncLibrary` que pueden coincidir en el tiempo — iniciar sesión
+  /// (`auth_screen`), arrancar la app (`AppShell.initState`) y abrir
+  /// Biblioteca. El chequeo `!_cacheManager.isExpired(...)` no alcanzaba para
+  /// serializarlos porque `markSynced` se escribe recién **al terminar**: las
+  /// tres corridas pasaban el chequeo, las tres leían la base local vacía y
+  /// las tres insertaban lo mismo. En una instalación nueva sobre una cuenta
+  /// ya poblada eso dejaba cada playlist duplicada y cada pista de "Tus me
+  /// gusta" duplicada.
+  ///
+  /// Con esto, quien llegue segundo **espera a la corrida en curso** en vez de
+  /// empezar otra en paralelo.
+  final Map<String, Future<void>> _inFlight = {};
+
+  Future<void> _runExclusive(String key, Future<void> Function() action) {
+    final existing = _inFlight[key];
+    if (existing != null) return existing;
+
+    // Cuerpo de bloque, NO flecha: `Map.remove` devuelve el valor quitado —
+    // que acá es el propio `Future` que estamos registrando— y `whenComplete`
+    // espera a lo que su callback devuelva. Con `() => _inFlight.remove(key)`
+    // el future terminaba esperándose a sí mismo y la sincronización se
+    // colgaba para siempre (los tests de `SyncService` se quedaban en timeout).
+    final future = action().whenComplete(() {
+      _inFlight.remove(key);
+    });
+    _inFlight[key] = future;
+    return future;
+  }
+
   Future<void> syncOnStartup() async {
     if (_isTestEnv) return;
 
@@ -65,13 +97,15 @@ class SyncService {
       return;
     }
 
-    try {
-      await _syncPlaylistsAndTracks();
-      await _syncSavedAlbumsInternal();
-      _cacheManager.markSynced('library');
-    } catch (_) {
-      // Network/offline error caught silently, fallback to local DB
-    }
+    return _runExclusive('library', () async {
+      try {
+        await _syncPlaylistsAndTracks();
+        await _syncSavedAlbumsInternal();
+        _cacheManager.markSynced('library');
+      } catch (_) {
+        // Network/offline error caught silently, fallback to local DB
+      }
+    });
   }
 
   Future<void> syncPlaylistDetail(String playlistRemoteId, {bool force = false}) async {
@@ -141,20 +175,24 @@ class SyncService {
       return;
     }
 
-    try {
-      await _syncSavedAlbumsInternal();
-      _cacheManager.markSynced('saved_albums');
-    } catch (_) {
-      // Network/offline error caught silently, fallback to local DB
-    }
+    return _runExclusive('saved_albums', () async {
+      try {
+        await _syncSavedAlbumsInternal();
+        _cacheManager.markSynced('saved_albums');
+      } catch (_) {
+        // Network/offline error caught silently, fallback to local DB
+      }
+    });
   }
 
   Future<void> syncListeningHistory() async {
-    try {
-      await _syncListeningHistoryInternal();
-    } catch (_) {
-      // Network/offline error caught silently
-    }
+    return _runExclusive('listening_history', () async {
+      try {
+        await _syncListeningHistoryInternal();
+      } catch (_) {
+        // Network/offline error caught silently
+      }
+    });
   }
 
   /// Cooldown corto (no los 5 min por defecto de [SyncCacheManager]) para el
@@ -178,6 +216,23 @@ class SyncService {
     }
     _cacheManager.markSynced('listening_history_push');
     await syncListeningHistory();
+  }
+
+  /// Quita pistas repetidas (mismo `track_id`) de lo que llega del servidor.
+  ///
+  /// Sin esto, una fila duplicada en `playlist_tracks` de Supabase se copiaba
+  /// tal cual a la base local en cada sincronización: el bucle de inserción
+  /// recorre la lista completa, mientras que el de poda compara contra un
+  /// conjunto, así que el duplicado nunca se eliminaba.
+  static List<Map<String, dynamic>> _dedupeRemoteTracks(List<Map<String, dynamic>> tracks) {
+    final seen = <int>{};
+    final out = <Map<String, dynamic>>[];
+    for (final track in tracks) {
+      final id = (track['track_id'] as num?)?.toInt();
+      if (id == null || !seen.add(id)) continue;
+      out.add(track);
+    }
+    return out;
   }
 
   Future<void> _syncPlaylistsAndTracks() async {
@@ -247,7 +302,9 @@ class SyncService {
         }
       }
 
-      final remoteTracks = await _playlistRepo.fetchPlaylistTracks(remoteId);
+      final remoteTracks = _dedupeRemoteTracks(
+        await _playlistRepo.fetchPlaylistTracks(remoteId),
+      );
       final localTracks =
           await _playlistDao.getTracksOrdered(localPlaylistId);
       final localTrackIds = localTracks.map((t) => t.trackId).toSet();

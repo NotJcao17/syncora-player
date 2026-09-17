@@ -167,6 +167,39 @@ void main() {
       expect(likedLocal.remoteId, equals('liked_1'));
     });
 
+    // Bug real encontrado en pruebas en dispositivo: instalar la app de cero
+    // sobre una cuenta ya poblada dejaba TODO duplicado, porque iniciar
+    // sesión, arrancar la app y abrir Biblioteca disparaban `syncLibrary` a la
+    // vez y el flag de "ya sincronizado" se escribía recién al final.
+    test('dos syncLibrary simultáneos ejecutan una sola corrida, no dos', () async {
+      final mockRepo = MockSupabasePlaylistRepository()
+        ..userPlaylists = [
+          {'id': 'p1', 'title': 'Importada', 'is_liked': false},
+        ]
+        ..fetchDelay = const Duration(milliseconds: 40);
+
+      final mockSyncService = SyncService(
+        playlistRepo: mockRepo,
+        albumRepo: SupabaseAlbumRepository(),
+        historyRepo: SupabaseHistoryRepository(),
+        playlistDao: db.playlistDao,
+        savedAlbumDao: db.savedAlbumDao,
+        listeningHistoryDao: db.listeningHistoryDao,
+        cacheManager: cacheManager,
+      );
+
+      await Future.wait([
+        mockSyncService.syncLibrary(force: true),
+        mockSyncService.syncLibrary(force: true),
+      ]);
+
+      expect(mockRepo.fetchPlaylistTracksCalls, 1);
+
+      final imported =
+          (await db.playlistDao.getAllPlaylists()).where((p) => p.title == 'Importada').toList();
+      expect(imported.length, 1);
+    });
+
     // Fase 7.0.1/7.0.5: la sincronización de historial ya no debe reinsertar
     // en cada corrida las mismas filas (bug H-2 del plan de Fase 7).
     group('_syncListeningHistoryInternal (historial de escucha)', () {
@@ -378,13 +411,27 @@ class MockSupabasePlaylistRepository extends SupabasePlaylistRepository {
   Map<String, List<Map<String, dynamic>>> playlistTracksMap = {};
   List<String> deletedPlaylistIds = [];
 
+  /// Cuántas veces se pidieron las pistas de una playlist. Una corrida de
+  /// `syncLibrary` lo hace una vez por playlist, así que sirve para detectar
+  /// corridas simultáneas.
+  ///
+  /// No se cuenta `fetchUserPlaylists` porque una sola corrida ya la llama dos
+  /// veces (hay una recomprobación al final para recuperar el `remoteId` de
+  /// "Tus me gusta"), así que ese contador no distingue una corrida de dos.
+  int fetchPlaylistTracksCalls = 0;
+
+  /// Retraso artificial, para poder solapar dos llamadas en un test.
+  Duration fetchDelay = Duration.zero;
+
   @override
   Future<List<Map<String, dynamic>>> fetchUserPlaylists() async {
+    if (fetchDelay > Duration.zero) await Future<void>.delayed(fetchDelay);
     return userPlaylists;
   }
 
   @override
   Future<List<Map<String, dynamic>>> fetchPlaylistTracks(String playlistId) async {
+    fetchPlaylistTracksCalls++;
     return playlistTracksMap[playlistId] ?? [];
   }
 

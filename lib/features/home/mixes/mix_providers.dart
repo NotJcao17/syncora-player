@@ -4,6 +4,7 @@ import '../../../data/apis/deezer_catalog_providers.dart';
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
+import '../../../core/utils/startup_retry.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_artist.dart';
 import 'mix_engine.dart';
@@ -49,6 +50,10 @@ final mixesProvider = FutureProvider<List<SyncoraMix>>((ref) async {
 
   final entries = await historyDao.getRecentHistory(limit: 500);
   if (entries.length < _minHistoryEntriesForMixes) return const [];
+
+  // Los mixes no son urgentes: que el primer frame y una reproducción
+  // inmediata ganen la carrera por el hilo principal y por la red.
+  await settleAfterFirstPaint();
 
   final now = DateTime.now();
   final daySeed = MixEngine.seedFrom(MixEngine.dayKey(now));

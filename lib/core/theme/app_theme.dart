@@ -30,6 +30,18 @@ class AppTheme {
     colors: [Color(0xFF6366F1), Color(0xFF9333EA)],
   );
 
+  /// Gradiente de los mixes con portada generada (On Repeat).
+  ///
+  /// Mismo criterio que [gradientLiked]: una lista que la app arma sola no
+  /// tiene una portada propia, y heredar la carátula de su primera canción
+  /// hace creer que el mix "es" ese álbum. Un color con su ícono se lee al
+  /// instante como lo que es.
+  static const LinearGradient gradientMix = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF0EA5E9), Color(0xFF2563EB)],
+  );
+
   // --- Sombras (calcadas de tailwind-config.js boxShadow) ---
   /// shadow-glow: 0 0 20px rgba(255,255,255,0.15) — botones play, portadas destacadas.
   static const List<BoxShadow> glowShadow = [

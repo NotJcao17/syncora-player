@@ -17,6 +17,11 @@ class PlaylistCard extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onPlayTap;
 
+  /// Portada a medida, para colecciones que no tienen una imagen propia
+  /// (p. ej. el mix "On Repeat", que usa color + ícono como "Tus me gusta").
+  /// Cuando se pasa, reemplaza por completo a [coverUrl]/[playlistId]/[tracks].
+  final Widget? coverOverride;
+
   const PlaylistCard({
     super.key,
     required this.title,
@@ -28,6 +33,7 @@ class PlaylistCard extends StatefulWidget {
     this.size = PlaylistCardSize.large,
     this.onTap,
     this.onPlayTap,
+    this.coverOverride,
   });
 
   @override
@@ -62,13 +68,14 @@ class _PlaylistCardState extends State<PlaylistCard> {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: PlaylistCoverWidget(
-                        coverUrl: widget.coverUrl,
-                        playlistId: widget.playlistId,
-                        tracks: widget.tracks,
-                        isLiked: widget.isLiked,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                      child: widget.coverOverride ??
+                          PlaylistCoverWidget(
+                            coverUrl: widget.coverUrl,
+                            playlistId: widget.playlistId,
+                            tracks: widget.tracks,
+                            isLiked: widget.isLiked,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                     ),
                     // Botón Play Flotante en hover
                     Positioned(

@@ -76,9 +76,22 @@ class DeezerRadio {
       };
 }
 
-/// Respuesta de `/chart/{genre_id}`: en **una sola petición** trae las cuatro
-/// listas que necesita la pantalla de género (además de `podcasts`, que
-/// Syncora ignora por diseño — la app filtra podcasts en todos lados).
+/// Respuesta de `/chart/{genre_id}`: en **una sola petición** trae las listas
+/// que necesita la pantalla de género (además de `podcasts`, que Syncora
+/// ignora por diseño — la app filtra podcasts en todos lados).
+///
+/// ⚠️ **La sección `artists` de Deezer se descarta a propósito.** Verificado
+/// contra la API en vivo: `tracks`, `albums` y `playlists` sí cambian con el
+/// género, pero `artists` devuelve **exactamente la misma lista global** para
+/// cualquier `genre_id` — `/chart/132` (Pop), `/chart/152` (Rock) y
+/// `/chart/165` (R&B) contestan los mismos diez artistas, y
+/// `/genre/{id}/artists` tiene el mismo defecto. Por eso "Artistas de Rock"
+/// mostraba a Peso Pluma y La Arrolladora.
+///
+/// En su lugar, los artistas del género se **derivan de sus pistas**, que sí
+/// son del género: se toman los intérpretes distintos en el orden en que
+/// aparecen en el chart. Es gratis (ya tenemos las pistas) y da una lista
+/// realmente representativa.
 class DeezerGenreChart {
   final List<DeezerTrack> tracks;
   final List<DeezerAlbum> albums;
@@ -116,15 +129,46 @@ class DeezerGenreChart {
     return DeezerGenreChart(
       tracks: tracks,
       albums: parse<DeezerAlbum>('albums', DeezerAlbum.fromJson),
-      artists: parse<DeezerArtist>('artists', DeezerArtist.fromJson),
+      artists: artistsFromTracks(tracks),
       playlists: parse<DeezerPlaylist>('playlists', DeezerPlaylist.fromJson),
     );
+  }
+
+  /// Artistas distintos de una lista de pistas, en orden de aparición.
+  ///
+  /// Las pistas no traen la foto del artista, pero Deezer expone
+  /// `https://api.deezer.com/artist/{id}/image`, que redirige a la imagen real
+  /// del CDN (verificado: 302 → 200 `image/jpeg`), así que la portada sale
+  /// igual sin una petición por artista.
+  static List<DeezerArtist> artistsFromTracks(List<DeezerTrack> tracks, {int limit = 20}) {
+    final seen = <int>{};
+    final out = <DeezerArtist>[];
+    for (final track in tracks) {
+      final id = track.artistId;
+      if (id <= 0 || !seen.add(id)) continue;
+      // El primer contribuyente es el intérprete principal; `artistName` sería
+      // la lista completa ("A, B, C"), que como nombre de artista no sirve.
+      final name = track.contributorsList.isNotEmpty
+          ? track.contributorsList.first.name
+          : track.artistName;
+      if (name.isEmpty) continue;
+      out.add(DeezerArtist(
+        id: id,
+        name: name,
+        pictureUrl: 'https://api.deezer.com/artist/$id/image?size=big',
+        nbFan: 0,
+      ));
+      if (out.length >= limit) break;
+    }
+    return out;
   }
 
   Map<String, dynamic> toJson() => {
         'tracks': {'data': tracks.map((t) => t.toJson()).toList()},
         'albums': {'data': albums.map((a) => a.toJson()).toList()},
-        'artists': {'data': artists.map((a) => a.toJson()).toList()},
+        // `artists` no se serializa: se deriva de `tracks` al reconstruir
+        // (ver el aviso de la clase), así que guardarlo sería guardar lo mismo
+        // dos veces y arriesgarse a que las dos copias se desincronicen.
         'playlists': {'data': playlists.map((p) => p.toJson()).toList()},
       };
 }

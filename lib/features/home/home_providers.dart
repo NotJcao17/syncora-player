@@ -204,10 +204,23 @@ final newReleasesFromArtistsProvider = FutureProvider<List<DeezerAlbum>>((ref) a
   final artistIds = MixEngine.rankArtistIds(entries, now: now, limit: 4);
   if (artistIds.isEmpty) return const [];
 
+  await settleAfterFirstPaint();
+
   final all = <DeezerAlbum>[];
   for (final artistId in artistIds) {
     try {
-      all.addAll(await ref.read(deezerArtistAlbumsProvider(artistId).future));
+      final albums = await ref.read(deezerArtistAlbumsProvider(artistId).future);
+      // `/artist/{id}/albums` no trae el objeto `artist`, así que estos
+      // álbumes llegan como "Artista Desconocido". El nombre se rellena con
+      // la ficha del artista, que ya está cacheada.
+      String artistName = '';
+      try {
+        artistName = (await ref.read(deezerArtistProvider(artistId).future)).name;
+      } catch (_) {}
+
+      all.addAll(artistName.isEmpty
+          ? albums
+          : albums.map((a) => a.withArtist(artistId: artistId, artistName: artistName)));
     } catch (_) {
       // Un artista que falla no debe tumbar la sección entera.
     }
@@ -231,6 +244,8 @@ final relatedArtistsProvider = FutureProvider<RelatedArtistsSuggestion?>((ref) a
   final entries = await historyDao.getRecentHistory(limit: 500);
   final artistIds = MixEngine.rankArtistIds(entries, now: DateTime.now(), limit: 1);
   if (artistIds.isEmpty) return null;
+
+  await settleAfterFirstPaint();
 
   final seedId = artistIds.first;
   try {

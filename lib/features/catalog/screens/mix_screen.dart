@@ -10,6 +10,7 @@ import '../../../data/supabase/supabase_providers.dart';
 import '../../auth/local_mode_provider.dart';
 import '../../home/mixes/mix_models.dart';
 import '../../home/mixes/mix_providers.dart';
+import '../../home/widgets/mix_cover.dart';
 import '../save_collection_service.dart';
 import '../widgets/collection_scaffold.dart';
 
@@ -61,6 +62,7 @@ class _MixScreenState extends ConsumerState<MixScreen> {
       title: mix.title,
       subtitle: '${mix.subtitle} • ${mix.tracks.length} canciones',
       coverUrl: mix.coverUrl,
+      coverOverride: mix.usesGeneratedCover ? MixCover(kind: mix.kind, borderRadius: 20) : null,
       tracks: mix.tracks,
       contextId: 'mix_${mix.key}',
       actions: [

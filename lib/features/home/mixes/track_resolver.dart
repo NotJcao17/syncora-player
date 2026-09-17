@@ -19,6 +19,11 @@ import '../../player/player_models.dart';
 /// nuevo que todavía no tiene nada guardado en playlists dispararía 30
 /// peticiones en el arranque de Inicio. Con el tope, se resuelven las más
 /// repetidas (que es el orden en que llegan) y el mix sale un poco más corto.
+///
+/// Se bajó de 12 a 6 tras las pruebas en dispositivo: pulsar reproducir justo
+/// al abrir la app se sentía lento, y esta ráfaga era de lo poco que competía
+/// con el arranque del reproductor. La mayoría de las pistas se resuelven sin
+/// red de todos modos.
 class TrackResolver {
   const TrackResolver({
     required this.playlistDao,
@@ -30,7 +35,7 @@ class TrackResolver {
   final DownloadedTrackDao downloadedTrackDao;
   final DeezerApi deezerApi;
 
-  static const int maxRemoteLookups = 12;
+  static const int maxRemoteLookups = 6;
 
   /// Resuelve [trackIds] respetando su orden. Las que no se pudieron resolver
   /// simplemente no aparecen en el resultado.

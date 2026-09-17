@@ -9,6 +9,7 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/horizontal_scroller.dart';
 import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/skeleton_box.dart';
 import '../../../core/widgets/track_tile.dart';
@@ -157,23 +158,19 @@ class GenreScreen extends ConsumerWidget {
                     if (chart.artists.isNotEmpty) ...[
                       _sectionTitle(context, 'Artistas de $resolvedName', isDesktop),
                       SliverToBoxAdapter(
-                        child: SizedBox(
+                        child: HorizontalScroller(
                           height: isDesktop ? 190 : 160,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-                            itemCount: chart.artists.length,
-                            separatorBuilder: (_, _) => const SizedBox(width: 16),
-                            itemBuilder: (ctx, i) {
-                              final artist = chart.artists[i];
-                              return _ArtistCircle(
-                                name: artist.name,
-                                pictureUrl: artist.pictureUrl,
-                                size: isDesktop ? 130 : 110,
-                                onTap: () => context.push('/artist/${artist.id}'),
-                              );
-                            },
-                          ),
+                          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+                          itemCount: chart.artists.length,
+                          itemBuilder: (ctx, i) {
+                            final artist = chart.artists[i];
+                            return _ArtistCircle(
+                              name: artist.name,
+                              pictureUrl: artist.pictureUrl,
+                              size: isDesktop ? 130 : 110,
+                              onTap: () => context.push('/artist/${artist.id}'),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -263,15 +260,11 @@ class GenreScreen extends ConsumerWidget {
     required Widget Function(int index) builder,
   }) {
     return SliverToBoxAdapter(
-      child: SizedBox(
+      child: HorizontalScroller(
         height: isDesktop ? 240 : 200,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
-          itemCount: itemCount,
-          separatorBuilder: (_, _) => const SizedBox(width: 16),
-          itemBuilder: (ctx, i) => SizedBox(width: isDesktop ? 180 : 140, child: builder(i)),
-        ),
+        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+        itemCount: itemCount,
+        itemBuilder: (ctx, i) => SizedBox(width: isDesktop ? 180 : 140, child: builder(i)),
       ),
     );
   }

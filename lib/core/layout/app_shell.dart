@@ -61,6 +61,15 @@ class _AppShellState extends ConsumerState<AppShell> {
       // Inicializar downloadService y ejecutar limpieza de descargas interrumpidas
       ref.read(downloadServiceProvider);
 
+      // Sana la base local antes de sincronizar nada: si una versión anterior
+      // dejó playlists o pistas duplicadas (ver `PlaylistDao.repairDuplicates`),
+      // arreglarlas acá es lo que hace que el usuario no tenga que borrar los
+      // datos de la app a mano. Es local, barato y no depende de la red, así
+      // que corre también sin conexión y en modo local.
+      try {
+        await ref.read(playlistDaoProvider).repairDuplicates();
+      } catch (_) {}
+
       final isLocalMode = ref.read(localModeProvider);
       final isConnected = ref.read(isConnectedProvider).value ?? true;
       final user = ref.read(currentUserProvider);

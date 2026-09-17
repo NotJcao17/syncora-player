@@ -46,6 +46,27 @@ class DeezerAlbum {
     this.genreId = 0,
   });
 
+  /// Copia con el artista corregido.
+  ///
+  /// `/artist/{id}/albums` **no incluye el objeto `artist`** en sus items
+  /// (verificado contra la API en vivo), así que todo lo que sale de ahí
+  /// nacía como "Artista Desconocido" — visible en "Novedades de tus
+  /// artistas" de Inicio. Como quien pide esa discografía ya sabe de qué
+  /// artista es, el nombre se rellena acá en vez de gastar una petición por
+  /// álbum.
+  DeezerAlbum withArtist({required int artistId, required String artistName}) => DeezerAlbum(
+        id: id,
+        title: title,
+        artistName: artistName,
+        artistId: artistId,
+        coverUrl: coverUrl,
+        trackCount: trackCount,
+        releaseDate: releaseDate,
+        tracks: tracks,
+        recordType: recordType,
+        genreId: genreId,
+      );
+
   /// ¿Es un lanzamiento corto (sencillo o EP) en vez de un álbum?
   bool get isSingleOrEp => recordType == 'single' || recordType == 'ep';
 

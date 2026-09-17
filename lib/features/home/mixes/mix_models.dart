@@ -49,6 +49,14 @@ class SyncoraMix {
 
   bool get isEmpty => tracks.isEmpty;
 
+  /// ¿Lleva portada generada (color + ícono) en vez de una carátula real?
+  ///
+  /// On Repeat no es "el disco de la primera canción": es una lista tuya,
+  /// como "Tus me gusta", y usar la carátula de su primera pista hacía creer
+  /// justamente eso. Los mixes de artista y de género sí tienen una imagen que
+  /// los representa de verdad (la foto del artista, la portada del género).
+  bool get usesGeneratedCover => kind == MixKind.onRepeat;
+
   /// Nombre con el que se guarda en la biblioteca si el usuario lo guarda.
   /// Lleva fecha porque a partir de ese momento es una foto fija: sin fecha,
   /// dos guardados del mismo mix en semanas distintas serían indistinguibles.

@@ -9,6 +9,7 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/horizontal_scroller.dart';
 import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/skeleton_box.dart';
 import '../../../data/apis/deezer_catalog_providers.dart';
@@ -22,6 +23,7 @@ import '../home_providers.dart';
 import '../mixes/mix_models.dart';
 import '../mixes/mix_providers.dart';
 import '../widgets/home_sections.dart';
+import '../widgets/mix_cover.dart';
 import '../widgets/weekly_highlights_panel.dart';
 
 /// Pantalla de Inicio.
@@ -384,6 +386,7 @@ class HomeScreen extends ConsumerWidget {
             title: mix.title,
             subtitle: '${mix.tracks.length} canciones',
             coverUrl: mix.coverUrl,
+            coverOverride: mix.usesGeneratedCover ? MixCover(kind: mix.kind) : null,
             onTap: () => context.push('/mix/${Uri.encodeComponent(mix.key)}'),
           );
         },
@@ -540,23 +543,19 @@ class HomeScreen extends ConsumerWidget {
       title: 'Porque escuchaste a ${suggestion.seedArtistName}',
       isDesktop: isDesktop,
       padding: padding,
-      child: SizedBox(
+      child: HorizontalScroller(
         height: isDesktop ? 190 : 160,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.symmetric(horizontal: padding),
-          itemCount: suggestion.artists.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 16),
-          itemBuilder: (ctx, i) {
-            final artist = suggestion.artists[i];
-            return HomeArtistCircle(
-              name: artist.name,
-              pictureUrl: artist.pictureUrl,
-              size: isDesktop ? 130 : 110,
-              onTap: () => context.push('/artist/${artist.id}'),
-            );
-          },
-        ),
+        padding: EdgeInsets.symmetric(horizontal: padding),
+        itemCount: suggestion.artists.length,
+        itemBuilder: (ctx, i) {
+          final artist = suggestion.artists[i];
+          return HomeArtistCircle(
+            name: artist.name,
+            pictureUrl: artist.pictureUrl,
+            size: isDesktop ? 130 : 110,
+            onTap: () => context.push('/artist/${artist.id}'),
+          );
+        },
       ),
     );
   }
@@ -569,27 +568,24 @@ class HomeScreen extends ConsumerWidget {
       title: 'Explorar por género',
       isDesktop: isDesktop,
       padding: padding,
-      child: SizedBox(
+      child: HorizontalScroller(
         height: 96,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.symmetric(horizontal: padding),
-          itemCount: genres.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 12),
-          itemBuilder: (ctx, i) {
-            final genre = genres[i];
-            return SizedBox(
-              width: 160,
-              child: HomeGenreTile(
-                name: genre.name,
-                imageUrl: genre.pictureUrl,
-                onTap: () => context.push(
-                  '/genre/${genre.id}?name=${Uri.encodeComponent(genre.name)}',
-                ),
+        padding: EdgeInsets.symmetric(horizontal: padding),
+        separatorWidth: 12,
+        itemCount: genres.length,
+        itemBuilder: (ctx, i) {
+          final genre = genres[i];
+          return SizedBox(
+            width: 160,
+            child: HomeGenreTile(
+              name: genre.name,
+              imageUrl: genre.pictureUrl,
+              onTap: () => context.push(
+                '/genre/${genre.id}?name=${Uri.encodeComponent(genre.name)}',
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }

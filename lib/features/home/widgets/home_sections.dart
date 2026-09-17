@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/horizontal_scroller.dart';
 
 /// Acción opcional a la derecha del título de una sección ("Ver todos").
 class HomeSectionAction {
@@ -100,15 +101,11 @@ class HomeCardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return HorizontalScroller(
       height: isDesktop ? 240 : 200,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: padding),
-        itemCount: itemCount,
-        separatorBuilder: (_, _) => const SizedBox(width: 16),
-        itemBuilder: (ctx, i) => SizedBox(width: isDesktop ? 180 : 140, child: itemBuilder(i)),
-      ),
+      padding: EdgeInsets.symmetric(horizontal: padding),
+      itemCount: itemCount,
+      itemBuilder: (ctx, i) => SizedBox(width: isDesktop ? 180 : 140, child: itemBuilder(i)),
     );
   }
 }

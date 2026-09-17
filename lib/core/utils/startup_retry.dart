@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/scheduler.dart';
+
 /// Presupuesto de reloj por defecto para los reintentos de arranque.
 ///
 /// El problema real que resuelve: en el arranque en frío de Android la pila de
@@ -76,4 +78,28 @@ bool isTransientNetworkError(Object error) {
       text.contains('connection closed') ||
       text.contains('network is unreachable') ||
       text.contains('timeout');
+}
+
+/// Espera a que la app termine de pintar y respire antes de arrancar trabajo
+/// de fondo que no es urgente.
+///
+/// Motivo: Inicio dispara del orden de una docena de peticiones y varias
+/// consultas a la base en cuanto se monta. Si el usuario pulsa reproducir en
+/// ese mismo instante, la puesta en marcha del reproductor compite por el hilo
+/// principal y por la red con secciones que nadie está mirando todavía, y la
+/// reproducción se siente lenta y a tirones al empezar.
+///
+/// Esto no cambia lo que se muestra: las secciones locales de Inicio ya se
+/// pintan en el primer frame. Solo retrasa el trabajo de red derivado del
+/// historial (mixes, novedades, artistas relacionados) lo justo para que el
+/// arranque y la primera reproducción vayan primero.
+Future<void> settleAfterFirstPaint([
+  Duration extra = const Duration(milliseconds: 700),
+]) async {
+  try {
+    await SchedulerBinding.instance.endOfFrame;
+  } catch (_) {
+    // Sin binding (tests puros): no hay frame al que esperar.
+  }
+  await Future<void>.delayed(extra);
 }
