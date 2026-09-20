@@ -77,27 +77,58 @@ diseño, ya implementadas:
 
 Implementación en `lib/features/home/mixes/`.
 
-- **Nunca se persisten solos.** `mixesProvider` es un `FutureProvider` **no `autoDispose`** a
-  propósito: el mix se genera una vez por arranque de la app y vive en memoria, así que entrar y
-  salir de su pantalla muestra siempre la misma lista. Al reabrir la app se genera de nuevo.
-  Sin esa regla, Inicio iría creando decenas de playlists fantasma.
-- **Solo tocan la base de datos si el usuario pulsa Guardar**, y entonces dejan de ser un mix:
-  pasan a ser una playlist suya, con fecha en el nombre ("On Repeat · 17 sep"), congelada.
-- **Cadencias** (claves de periodo calculadas en cliente, `MixEngine.weekKey`/`dayKey` — **sin cron,
-  sin servidor**): On Repeat es semanal sobre una ventana de 30 días; los mixes de artista, de
-  género y el de descubrimiento son diarios. Dentro del periodo, la selección "al azar" es
-  determinista (`shuffleDeterministic` con semilla derivada de la clave).
+### "On Repeat" es una playlist permanente, no un mix
 
-Los cuatro mixes:
+Decisión revisada tras la segunda ronda de pruebas. Como snapshot no funcionaba: al reiniciar la
+app se generaba otro y había que volver a guardarlo, acumulando copias fechadas en la biblioteca.
+Es el mismo modelo que usa Spotify para sus playlists de sistema, y el mismo que "Tus me gusta"
+acá: **existe siempre, aparece en Biblioteca, se regenera sola en el sitio cada semana y no se
+edita a mano** (`on_repeat_service.dart`).
 
-| Mix | Fuente | Peticiones |
+Se identifica por `playlists.sourceRef = 'mix:on_repeat:<semana>'` con `isGenerated = true`. Solo
+vive en local — `remoteId` nulo, así que `SyncService` ni la ve (solo poda playlists que sí lo
+tienen), y además el match por título del sync excluye las generadas para que una playlist remota
+homónima no la adopte. Si en algún momento no hay historial suficiente, **se deja la de la semana
+pasada** en vez de vaciarla.
+
+### Los demás mixes siguen siendo efímeros
+
+`mixesProvider` es un `FutureProvider` **no `autoDispose`** a propósito: se construye una vez por
+arranque y vive en memoria, así que entrar y salir de un mix muestra siempre la misma lista. Al
+reabrir la app se generan de nuevo. Guardar uno crea una **copia congelada** con fecha en el
+nombre.
+
+Como el `sourceRef` de esa copia lleva pegada la clave del mix, y la clave lleva su periodo,
+cuando el mix se regenera el botón vuelve a ofrecer guardarlo solo: la copia que existe es del mix
+anterior.
+
+**Cadencias** (claves de periodo calculadas en cliente, `MixEngine.weekKey`/`dayKey` — **sin cron,
+sin servidor**): On Repeat semanal sobre una ventana de 30 días; artista, género, descubrimiento y
+radios, diarios. Dentro del periodo la selección "al azar" es determinista
+(`shuffleDeterministic` con semilla derivada de la clave).
+
+| Mix | Cuántos | Fuente |
 | :--- | :--- | :--- |
-| On Repeat | historial local, ≥2 escuchas en 30 días, resuelto contra `playlist_tracks` y descargas antes de tocar la red (`TrackResolver`, tope de 12 lookups remotos) | 0–12, casi siempre 0 |
-| Mix de {artista} ×2 | `/artist/{id}/radio` de sus top artistas | 2 |
-| Mix de {género} | álbum más escuchado → `genre_id` → `/chart/{genre_id}` | 2, cacheadas |
-| Descubrimiento | `/artist/{id}/related` → radio de un relacionado, quitando lo ya escuchado | 2 |
+| On Repeat | 1, permanente | historial local, ≥2 escuchas en 30 días, resuelto contra `playlist_tracks` y descargas antes de tocar la red (`TrackResolver`, tope de 6 lookups remotos) |
+| Mix de {artista} | 4 | `/artist/{id}/radio` de sus top artistas |
+| Mix de {género} | 2 | álbumes más escuchados → `genre_id` → `/chart/{genre_id}` |
+| Descubrimiento | 1 | `/artist/{id}/related` → radio de un relacionado, quitando lo ya escuchado |
+| Radios editoriales | 2 | `/genre/{id}/radios` de su género dominante |
 
----
+Un "Mix de {artista}" trae pocas canciones de ese artista (3 de 25 para Bruno Mars, medido): es lo
+que devuelve `/artist/{id}/radio`, que es una radio de artistas parecidos. **Se decidió dejarlo
+así** — intercalar sus top tracks los repetiría siempre, porque el top de un artista no cambia.
+
+### Guardar una colección: estado y descarga
+
+`playlists.sourceRef` (`deezer_playlist:1234`, `mix:<clave>`) es lo que permite que el botón de
+guardar tenga estado. Sin él no había forma de saber que la copia existía: el icono no cambiaba al
+guardar, el usuario creía que no había pasado nada, volvía a pulsarlo y terminaba con la misma
+playlist dos veces. Ahora el botón muestra "Guardada" y lleva a la copia.
+
+Descargar una colección que no está en la biblioteca **la guarda primero**, en el mismo gesto: si
+no, quedaban pistas descargadas sin ninguna colección a la que pertenecieran, y en el caso de un
+mix dejarían de corresponder a nada en cuanto se regenerara.
 
 ## 4. Caché de catálogo
 
@@ -120,23 +151,24 @@ Orden pensado para que **lo local se pinte primero** (todo lo de las cuatro prim
 de Drift: aparece en el primer frame y funciona sin red):
 
 1. Saludo, avatar, ajustes
-2. **Tu semana** — minutos + top 3 artistas + top 3 canciones (`weekly_highlights_panel.dart`).
-   Pensado como la entrada al dashboard de la Fase 8, no como algo a tirar.
-3. Accesos rápidos (Tus me gusta, Descargas, Estadísticas)
-4. **Escuchado recientemente** — primer consumidor real de `playlists.lastPlayedAt` y
+2. Accesos rápidos (Tus me gusta, Descargas, Estadísticas)
+3. **Escuchado recientemente** — primer consumidor real de `playlists.lastPlayedAt` y
    `savedAlbums.lastPlayedAt`, que se escribían desde la ronda 3 y nadie leía
-5. **Tus mixes**
-6. **Novedades de tus artistas** (respaldo: álbumes destacados del chart)
-7. **Tops del mundo** — destacados con México primero, y "Ver todos" abre un selector buscable con
+4. **Tus mixes** — On Repeat primero, después los efímeros (hasta 9)
+5. **Novedades de tus artistas** (respaldo: álbumes destacados del chart)
+6. **Tops del mundo** — destacados con México primero, y "Ver todos" abre un selector buscable con
    los 102 países (diálogo centrado en PC, hoja en móvil)
-8. **Playlists editoriales**
-9. **Porque escuchaste a {artista}**
-10. **Explorar por género**
+7. **Playlists editoriales** (50; el endpoint acepta hasta 100 y no le estábamos mandando `limit`)
+8. **Porque escuchaste a {artista}** — dos secciones, una por cada uno de sus dos artistas más
+   escuchados, sin repetir artistas entre ellas
+9. **Explorar por género**
 
 **Regla de diseño:** ninguna canción individual se presenta como si fuera una colección. Todas las
-tarjetas son playlists, álbumes, mixes, artistas o géneros. Las únicas canciones sueltas son las
-tres filas del resumen semanal, que son un dato y se ven como tal. Por eso desapareció la sección
+tarjetas son playlists, álbumes, mixes, artistas o géneros. Por eso desapareció la sección
 "Éxitos Globales", que pintaba cinco canciones sueltas: la reemplaza Top Worldwide.
+
+El panel "Tu semana" que estuvo arriba se quitó. El dashboard de estadísticas de la Fase 8 decidirá
+si vuelve y con qué diseño; los datos salen de `stats_providers.dart`, que no se tocó.
 
 Coste: ~12 peticiones en el primer arranque, 0–2 en los siguientes gracias al caché.
 

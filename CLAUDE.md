@@ -61,17 +61,22 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
-### Estado actual (última actualización: 2026-09-17)
+### Estado actual (última actualización: 2026-09-20)
 
-**Rediseño de Inicio y Explorar: implementado, pendiente de pruebas en dispositivo.** Todo el
+**Rediseño de Inicio y Explorar: implementado, dos rondas de pruebas en dispositivo pasadas.** Todo el
 detalle en `docs/fases/inicio_y_explorar.md` — **leerlo antes de tocar Inicio, Búsqueda o
 cualquier cosa del catálogo de Deezer**. Ahí está la investigación completa de qué expone la API
 pública de Deezer (verificada en vivo, incluidos los endpoints muertos: `/editorial/{id}/releases`
 devuelve vacío siempre, `/radio/top` da error), y tres decisiones cerradas que no conviene
 revertir por descuido: **las radios de Deezer no son deterministas** (dos llamadas seguidas
 devuelven listas distintas), **Syncora no "sigue" playlists remotas — guardar es copiar**, y
-**los mixes no se persisten nunca solos**: viven en memoria durante la sesión y solo tocan la base
-de datos si el usuario pulsa Guardar.
+**los mixes efímeros no se persisten nunca solos**: viven en memoria durante la sesión y solo
+tocan la base de datos si el usuario pulsa Guardar. La excepción es **"On Repeat", que SÍ es una
+playlist permanente** que la app mantiene y regenera sola cada semana, como "Tus me gusta".
+
+También ahí: la causa de los **duplicados masivos de playlists** (`SyncService` no tenía guarda de
+reentrancia y tres disparadores podían coincidir) y la trampa de Dart que colgó la primera versión
+de esa guarda (`whenComplete` con cuerpo de flecha esperándose a sí mismo).
 
 ### Estado actual (última actualización: 2026-09-12)
 
