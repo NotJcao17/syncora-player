@@ -99,13 +99,22 @@ class HomeCardRow extends StatelessWidget {
     required this.itemBuilder,
   });
 
+  /// Tamaño de tarjeta.
+  ///
+  /// En móvil subió de 140x200 a 168x232: con 140 px de ancho el título se
+  /// cortaba casi siempre y la portada quedaba pequeña de más. En escritorio se
+  /// deja igual, que ahí se veía bien.
+  static double cardWidth(bool isDesktop) => isDesktop ? 180 : 168;
+
+  static double rowHeight(bool isDesktop) => isDesktop ? 240 : 232;
+
   @override
   Widget build(BuildContext context) {
     return HorizontalScroller(
-      height: isDesktop ? 240 : 200,
+      height: rowHeight(isDesktop),
       padding: EdgeInsets.symmetric(horizontal: padding),
       itemCount: itemCount,
-      itemBuilder: (ctx, i) => SizedBox(width: isDesktop ? 180 : 140, child: itemBuilder(i)),
+      itemBuilder: (ctx, i) => SizedBox(width: cardWidth(isDesktop), child: itemBuilder(i)),
     );
   }
 }

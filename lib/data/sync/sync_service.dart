@@ -401,7 +401,55 @@ class SyncService {
   // sync reinsertaba las mismas filas. Ahora selecciona solo las pendientes
   // (`syncedAt` nulo) y marca cada una como sincronizada únicamente tras un
   // upsert remoto exitoso, entrada por entrada.
+  /// Ventana de historial que se baja de la nube.
+  ///
+  /// 90 días cubre de sobra lo que consumen las secciones derivadas (On Repeat
+  /// mira 30 días; los mixes y "Novedades de tus artistas", 60) sin arrastrar
+  /// el historial completo en cada sincronización.
+  static const Duration _historyPullWindow = Duration(days: 90);
+
   Future<void> _syncListeningHistoryInternal() async {
+    await _pushPendingHistory();
+    await _pullRemoteHistory();
+  }
+
+  /// Baja el historial de los otros dispositivos.
+  ///
+  /// Sin esto, `listening_history` local era "lo que escuché en este aparato":
+  /// On Repeat, los mixes y "Novedades de tus artistas" salían distintos en el
+  /// PC que en el móvil. Los fallos se tragan en silencio como el resto del
+  /// sync — es contenido derivado, no datos que el usuario pueda perder.
+  Future<void> _pullRemoteHistory() async {
+    final since = DateTime.now().subtract(_historyPullWindow);
+
+    final remote = await _historyRepo.fetchListeningHistory(since: since);
+    if (remote.isEmpty) return;
+
+    final companions = <ListeningHistoryCompanion>[];
+    for (final row in remote) {
+      final trackId = (row['track_id'] as num?)?.toInt();
+      final listenedAtRaw = row['listened_at'];
+      if (trackId == null || listenedAtRaw is! String) continue;
+
+      final listenedAt = DateTime.tryParse(listenedAtRaw);
+      if (listenedAt == null) continue;
+
+      companions.add(ListeningHistoryCompanion.insert(
+        trackId: trackId,
+        artistId: (row['artist_id'] as num?)?.toInt() ?? 0,
+        albumId: (row['album_id'] as num?)?.toInt() ?? 0,
+        durationListenedMs: (row['duration_listened_ms'] as num?)?.toInt() ?? 0,
+        genre: Value(row['genre'] as String?),
+        listenedAt: Value(listenedAt.toLocal()),
+        // Ya está en la nube: sin esto el siguiente push la volvería a subir.
+        syncedAt: Value(DateTime.now()),
+      ));
+    }
+
+    await _listeningHistoryDao.insertRemoteEntries(companions);
+  }
+
+  Future<void> _pushPendingHistory() async {
     final pending = await _listeningHistoryDao.getUnsyncedHistory(limit: 100);
     for (final historyEntry in pending) {
       try {

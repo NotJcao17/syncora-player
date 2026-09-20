@@ -237,7 +237,6 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
                         },
                         child: TrackTile(
                           track: track,
-                          index: i,
                           isPlaying: isPlayingTrack,
                           isDownloaded: true,
                           showAlbum: true,

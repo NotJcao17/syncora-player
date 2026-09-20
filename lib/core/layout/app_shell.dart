@@ -19,6 +19,7 @@ import '../../data/sync/sync_service.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../features/auth/local_mode_provider.dart';
 import '../../features/download/download_provider.dart';
+import '../../features/home/mixes/on_repeat_service.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
 import '../../features/player/syncora_player_controller.dart';
@@ -93,8 +94,22 @@ class _AppShellState extends ConsumerState<AppShell> {
             () => ref.read(syncServiceProvider).syncSavedAlbums(force: false),
             shouldRetry: networkStillPlausible,
           );
+          // Antes que "On Repeat": el historial ahora también se BAJA de la
+          // nube, y sin esperar a eso cada dispositivo generaría su playlist
+          // solo con lo que se escuchó ahí — que era justamente el problema.
+          await retryOnNetworkError(
+            () => ref.read(syncServiceProvider).syncListeningHistory(),
+            shouldRetry: networkStillPlausible,
+          );
         } catch (_) {}
       }
+
+      // "On Repeat" se genera en el arranque, no al abrir Inicio: es una
+      // playlist de la biblioteca, así que tiene que existir aunque el usuario
+      // entre directo a Biblioteca.
+      try {
+        await ref.read(onRepeatPlaylistProvider.future);
+      } catch (_) {}
     });
   }
 

@@ -96,6 +96,7 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     bool isPublic = false,
     String? sourceRef,
     bool isGenerated = false,
+    bool isPinned = false,
   }) async {
     return into(playlists).insert(
       PlaylistsCompanion.insert(
@@ -106,6 +107,7 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
         isPublic: Value(isPublic),
         sourceRef: Value(sourceRef),
         isGenerated: Value(isGenerated),
+        isPinned: Value(isPinned),
       ),
     );
   }

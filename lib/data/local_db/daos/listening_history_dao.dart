@@ -24,6 +24,38 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
         ),
       );
 
+  /// Inserta escuchas que vienen de la nube, saltando las que ya están.
+  ///
+  /// La clave natural es `(trackId, listenedAt)` — la misma con la que
+  /// Supabase deduplica (`20250001000007_listening_history_dedup.sql`), así
+  /// que bajar dos veces el mismo historial no crea filas nuevas.
+  ///
+  /// Llegan con `syncedAt` puesto: ya están en la nube, y sin eso el siguiente
+  /// `_syncListeningHistoryInternal` las volvería a subir.
+  ///
+  /// Devuelve cuántas filas se insertaron.
+  Future<int> insertRemoteEntries(List<ListeningHistoryCompanion> entries) async {
+    if (entries.isEmpty) return 0;
+
+    return transaction(() async {
+      var inserted = 0;
+      for (final entry in entries) {
+        final trackId = entry.trackId.value;
+        final listenedAt = entry.listenedAt.value;
+
+        final existing = await (select(listeningHistory)
+              ..where((t) => t.trackId.equals(trackId) & t.listenedAt.equals(listenedAt))
+              ..limit(1))
+            .get();
+        if (existing.isNotEmpty) continue;
+
+        await into(listeningHistory).insert(entry);
+        inserted++;
+      }
+      return inserted;
+    });
+  }
+
   /// Última escucha registrada de [trackId] a partir de [since], o `null` si
   /// no hay ninguna en esa ventana (ronda 3, C1 / hallazgo H-R3-5).
   ///

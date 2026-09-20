@@ -1810,7 +1810,12 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                               ),
                             ],
 
-                            // Sección de recomendaciones Deezer al pie de la playlist
+                            // Sección de recomendaciones Deezer al pie de la
+                            // playlist. Solo en las que el usuario edita: en
+                            // "Tus me gusta" y "On Repeat" agregar pistas a
+                            // mano no tiene sentido (la segunda se regenera
+                            // sola y se perdería en la siguiente semana).
+                            if (_isUserEditable(playlist))
                             SliverPadding(
                               padding: EdgeInsets.symmetric(
                                 horizontal: isDesktop ? 32 : 12,

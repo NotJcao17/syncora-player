@@ -8,7 +8,6 @@ import '../../../core/cache/api_cache.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/connectivity_service.dart';
-import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/horizontal_scroller.dart';
 import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/skeleton_box.dart';
@@ -135,13 +134,14 @@ class HomeScreen extends ConsumerWidget {
             // --- Todo lo de abajo es local: se pinta sin red y sin esperas ---
             _buildQuickAccess(context, horizontalPadding),
             _buildRecentlyPlayed(context, ref, isDesktop, horizontalPadding),
+            _buildRelatedArtists(context, ref, isDesktop, horizontalPadding, 0),
             _buildMixes(context, ref, isDesktop, horizontalPadding),
 
             // --- De acá para abajo, catálogo de Deezer (cacheado) ---
             _buildNewReleases(context, ref, isDesktop, horizontalPadding),
             _buildCountryTops(context, ref, isDesktop, horizontalPadding, countryTopsAsync),
+            _buildRelatedArtists(context, ref, isDesktop, horizontalPadding, 1),
             _buildEditorial(context, ref, isDesktop, horizontalPadding, editorialAsync),
-            ..._buildRelatedArtists(context, ref, isDesktop, horizontalPadding),
             _buildGenres(context, ref, isDesktop, horizontalPadding),
 
             // El aviso de "sin contenido" va al final: si las secciones
@@ -201,13 +201,6 @@ class HomeScreen extends ConsumerWidget {
             ),
             Row(
               children: [
-                Tooltip(
-                  message: 'Notificaciones',
-                  child: IconButton(
-                    icon: Icon(AppIcons.broken(SolarIcons.Bell), color: AppTheme.primary, size: 22),
-                    onPressed: () => AppToast.show(context, message: 'Notificaciones próximamente'),
-                  ),
-                ),
                 Tooltip(
                   message: 'Configuración',
                   child: IconButton(
@@ -342,6 +335,10 @@ class HomeScreen extends ConsumerWidget {
             subtitle: item.subtitle,
             coverUrl: item.coverUrl,
             playlistId: item.localPlaylistId,
+            // Sin esto, "Tus me gusta" salía con la cuadrícula de portadas
+            // genérica en vez de con su degradado y su corazón, que es como se
+            // ve en Biblioteca y en el resto de la app.
+            isLiked: item.isLiked,
             onTap: () => context.push(item.route),
           );
         },
@@ -375,7 +372,6 @@ class HomeScreen extends ConsumerWidget {
 
     return HomeSection(
       title: 'Tus mixes',
-      subtitle: 'Se renuevan solos. Guarda uno si quieres conservarlo tal cual.',
       isDesktop: isDesktop,
       padding: padding,
       child: HomeCardRow(
@@ -543,38 +539,43 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  List<Widget> _buildRelatedArtists(
+  /// Una sección "Porque escuchaste a {artista}" por índice.
+  ///
+  /// Se pintan repartidas por la pantalla en vez de una debajo de la otra: dos
+  /// filas de círculos de artistas seguidas se leen como una sola sección larga
+  /// y el título de la segunda se pierde.
+  Widget _buildRelatedArtists(
     BuildContext context,
     WidgetRef ref,
     bool isDesktop,
     double padding,
+    int index,
   ) {
     final suggestions = ref.watch(relatedArtistsProvider).value ?? const [];
-    if (suggestions.isEmpty) return const [];
+    if (index >= suggestions.length) return const SliverToBoxAdapter(child: SizedBox.shrink());
 
-    return [
-      for (final suggestion in suggestions)
-        if (suggestion.artists.isNotEmpty)
-          HomeSection(
-            title: 'Porque escuchaste a ${suggestion.seedArtistName}',
-            isDesktop: isDesktop,
-            padding: padding,
-            child: HorizontalScroller(
-              height: isDesktop ? 190 : 160,
-              padding: EdgeInsets.symmetric(horizontal: padding),
-              itemCount: suggestion.artists.length,
-              itemBuilder: (ctx, i) {
-                final artist = suggestion.artists[i];
-                return HomeArtistCircle(
-                  name: artist.name,
-                  pictureUrl: artist.pictureUrl,
-                  size: isDesktop ? 130 : 110,
-                  onTap: () => context.push('/artist/${artist.id}'),
-                );
-              },
-            ),
-          ),
-    ];
+    final suggestion = suggestions[index];
+    if (suggestion.artists.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+    return HomeSection(
+      title: 'Porque escuchaste a ${suggestion.seedArtistName}',
+      isDesktop: isDesktop,
+      padding: padding,
+      child: HorizontalScroller(
+        height: isDesktop ? 190 : 175,
+        padding: EdgeInsets.symmetric(horizontal: padding),
+        itemCount: suggestion.artists.length,
+        itemBuilder: (ctx, i) {
+          final artist = suggestion.artists[i];
+          return HomeArtistCircle(
+            name: artist.name,
+            pictureUrl: artist.pictureUrl,
+            size: isDesktop ? 130 : 120,
+            onTap: () => context.push('/artist/${artist.id}'),
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildGenres(BuildContext context, WidgetRef ref, bool isDesktop, double padding) {
@@ -826,15 +827,15 @@ class HomeCardRowSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: isDesktop ? 240 : 200,
+      height: HomeCardRow.rowHeight(isDesktop),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: padding),
         itemCount: 4,
         separatorBuilder: (_, _) => const SizedBox(width: 16),
         itemBuilder: (ctx, i) => SizedBox(
-          width: isDesktop ? 180 : 140,
-          child: const SkeletonBox(height: 180, borderRadius: 16),
+          width: HomeCardRow.cardWidth(isDesktop),
+          child: SkeletonBox(height: HomeCardRow.cardWidth(isDesktop), borderRadius: 16),
         ),
       ),
     );

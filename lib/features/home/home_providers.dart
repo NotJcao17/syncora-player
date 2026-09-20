@@ -136,6 +136,10 @@ class RecentlyPlayedItem {
   /// cuadrícula generada con sus primeras pistas, como en Biblioteca.
   final int? localPlaylistId;
 
+  /// "Tus me gusta" tiene portada propia (degradado + corazón) en vez de la
+  /// cuadrícula generada con las primeras pistas.
+  final bool isLiked;
+
   final DateTime playedAt;
 
   const RecentlyPlayedItem({
@@ -145,6 +149,7 @@ class RecentlyPlayedItem {
     required this.route,
     required this.playedAt,
     this.localPlaylistId,
+    this.isLiked = false,
   });
 }
 
@@ -172,6 +177,7 @@ final recentlyPlayedProvider = FutureProvider<List<RecentlyPlayedItem>>((ref) as
       route: playlist.isLiked ? '/playlist/liked' : '/playlist/${playlist.id}',
       playedAt: playedAt,
       localPlaylistId: playlist.id,
+      isLiked: playlist.isLiked,
     ));
   }
 

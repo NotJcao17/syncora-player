@@ -47,4 +47,32 @@ class SupabaseHistoryRepository {
       onConflict: 'user_id,track_id,listened_at',
     );
   }
+
+  /// Historial del usuario en la nube desde [since].
+  ///
+  /// **Por qué hacía falta:** hasta ahora la sincronización de historial era de
+  /// una sola dirección — cada dispositivo subía lo suyo y no bajaba nada — así
+  /// que `listening_history` local era en realidad "lo que escuché *en este
+  /// aparato*". Todo lo que se deriva de ahí (On Repeat, los mixes, "Novedades
+  /// de tus artistas", las estadísticas semanales) salía distinto en el PC que
+  /// en el móvil, cuando debería ser lo mismo.
+  Future<List<Map<String, dynamic>>> fetchListeningHistory({
+    required DateTime since,
+    int limit = 1000,
+  }) async {
+    final client = _client;
+    if (client == null) return [];
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return [];
+
+    final rows = await client
+        .from('listening_history')
+        .select()
+        .eq('user_id', userId)
+        .gte('listened_at', since.toUtc().toIso8601String())
+        .order('listened_at', ascending: false)
+        .limit(limit);
+
+    return List<Map<String, dynamic>>.from(rows as List);
+  }
 }
