@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/track_tile.dart';
+import '../../../data/apis/deezer_catalog_providers.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/models/deezer/deezer_album.dart';
 import '../../../data/models/deezer/deezer_artist.dart';
@@ -358,6 +359,17 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
               ),
             ),
 
+          // Radio del artista: escucha continua en su estilo, entre sus
+          // canciones populares y su discografía. Es la misma tirada que el
+          // "Mix de {artista}" de Inicio — `DeezerApi` cachea
+          // `/artist/{id}/radio` por artista durante la sesión.
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(isDesktop ? 32 : 20, 24, isDesktop ? 32 : 20, 0),
+            sliver: SliverToBoxAdapter(
+              child: _ArtistRadioEntry(artistId: artist.id, artistName: artist.name),
+            ),
+          ),
+
           // Discografía
           if (visibleAlbums.isNotEmpty)
             SliverPadding(
@@ -530,4 +542,79 @@ enum _DiscographyFilter {
 
   const _DiscographyFilter(this.label);
   final String label;
+}
+
+/// Acceso a la radio del artista desde su pantalla.
+///
+/// Es una tarjeta ancha y no una de las cuadradas de Inicio porque acá va sola
+/// en su sección: una tarjeta chica y solitaria en medio de la pantalla se lee
+/// como un hueco, no como una acción.
+class _ArtistRadioEntry extends ConsumerWidget {
+  final int artistId;
+  final String artistName;
+
+  const _ArtistRadioEntry({required this.artistId, required this.artistName});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final radio = ref.watch(deezerArtistRadioProvider(artistId));
+
+    // Mientras carga o si falla, no se anuncia nada: es contenido accesorio, y
+    // un error acá no debe ensuciar la pantalla del artista.
+    final tracks = radio.value ?? const [];
+    if (tracks.isEmpty) return const SizedBox.shrink();
+
+    return Material(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => context.push('/artist-radio/$artistId'),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.gradientMix,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(AppIcons.bold(SolarIcons.Radio), color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Radio de $artistName',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.primary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${tracks.length} canciones en su línea',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

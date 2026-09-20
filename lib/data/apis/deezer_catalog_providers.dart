@@ -206,3 +206,19 @@ final deezerRadioTracksProvider =
     shouldRetry: networkStillPlausible(ref),
   );
 });
+
+/// Radio de un artista (`/artist/{id}/radio`).
+///
+/// **Sin `autoDispose` a propósito**, al revés que la radio editorial: acá lo
+/// que se quiere es estabilidad dentro de la sesión, para que entrar y salir de
+/// la pantalla no cambie la lista bajo los pies del usuario. `DeezerApi` ya
+/// cachea esta llamada por artista, así que además la comparte con los
+/// "Mix de {artista}" de Inicio: son literalmente la misma tirada.
+final deezerArtistRadioProvider =
+    FutureProvider.family<List<DeezerTrack>, int>((ref, artistId) async {
+  final api = ref.watch(deezerApiProvider);
+  return retryOnNetworkError(
+    () => api.getArtistRadio(artistId),
+    shouldRetry: networkStillPlausible(ref),
+  );
+});

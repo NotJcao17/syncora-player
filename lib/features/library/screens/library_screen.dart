@@ -436,6 +436,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         coverUrl: playlist.coverUrl,
         playlistId: playlist.id,
         isLiked: playlist.isLiked,
+        isGenerated: playlist.isGenerated,
         // Ronda 3 bis: sin esto el widget clipaba por dentro con su radio por
         // defecto (16) mientras el contenedor de fuera usaba 12, y ganaba el
         // más redondeado. Por eso las portadas de Biblioteca se veían más
@@ -474,6 +475,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         coverUrl: playlist.coverUrl,
         playlistId: playlist.id,
         isLiked: playlist.isLiked,
+        isGenerated: playlist.isGenerated,
         // Ronda 3 bis: sin esto el widget clipaba por dentro con su radio por
         // defecto (16) mientras el contenedor de fuera usaba 12, y ganaba el
         // más redondeado. Por eso las portadas de Biblioteca se veían más

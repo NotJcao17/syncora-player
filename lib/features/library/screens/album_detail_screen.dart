@@ -285,7 +285,8 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                           ),
                                         ),
                                         const SizedBox(height: 14),
-                                        Row(
+                                        Wrap(
+                                          crossAxisAlignment: WrapCrossAlignment.center,
                                           children: [
                                             _HoverableArtistLink(
                                               artistName: album.artistName,
@@ -335,8 +336,15 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 10),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                  // `Wrap` y no `Row`: con artistas de nombre
+                                  // largo ("CA7RIEL & Paco Amoroso") la fila
+                                  // se desbordaba. Así el conteo baja a la
+                                  // línea siguiente en vez de cortarse, y el
+                                  // nombre del artista sigue siendo un enlace
+                                  // completo, sin puntos suspensivos.
+                                  Wrap(
+                                    alignment: WrapAlignment.center,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
                                     children: [
                                       _HoverableArtistLink(
                                         artistName: album.artistName,

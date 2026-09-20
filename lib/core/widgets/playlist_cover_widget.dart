@@ -17,6 +17,12 @@ class PlaylistCoverWidget extends ConsumerWidget {
   final int? playlistId;
   final List<dynamic>? tracks;
   final bool isLiked;
+
+  /// Playlist que mantiene la app ("On Repeat"): portada de color con su
+  /// ícono, igual que "Tus me gusta". Sin esto salía con la cuadrícula de
+  /// portadas genérica y parecía una playlist más del usuario.
+  final bool isGenerated;
+
   final double? width;
   final double? height;
   final BorderRadius? borderRadius;
@@ -52,6 +58,7 @@ class PlaylistCoverWidget extends ConsumerWidget {
     this.playlistId,
     this.tracks,
     this.isLiked = false,
+    this.isGenerated = false,
     this.width,
     this.height,
     this.borderRadius,
@@ -90,6 +97,13 @@ class PlaylistCoverWidget extends ConsumerWidget {
           gradient: AppTheme.gradientLiked,
         ),
         child: _centeredIcon(AppIcons.bold(SolarIcons.Heart), Colors.white),
+      );
+    }
+    // 1 bis. Playlist generada por la app -> gradiente con su ícono.
+    else if (isGenerated) {
+      content = Container(
+        decoration: const BoxDecoration(gradient: AppTheme.gradientMix),
+        child: _centeredIcon(AppIcons.bold(SolarIcons.Repeat), Colors.white),
       );
     }
     // 2. Si tiene portada personalizada explícita (degradado, color, archivo local o URL)

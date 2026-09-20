@@ -13,6 +13,10 @@ class PlaylistCard extends StatefulWidget {
   final int? playlistId;
   final List<dynamic>? tracks;
   final bool isLiked;
+
+  /// Playlist mantenida por la app ("On Repeat"), con portada propia.
+  final bool isGenerated;
+
   final PlaylistCardSize size;
   final VoidCallback? onTap;
   final VoidCallback? onPlayTap;
@@ -30,6 +34,7 @@ class PlaylistCard extends StatefulWidget {
     this.playlistId,
     this.tracks,
     this.isLiked = false,
+    this.isGenerated = false,
     this.size = PlaylistCardSize.large,
     this.onTap,
     this.onPlayTap,
@@ -74,6 +79,7 @@ class _PlaylistCardState extends State<PlaylistCard> {
                             playlistId: widget.playlistId,
                             tracks: widget.tracks,
                             isLiked: widget.isLiked,
+                            isGenerated: widget.isGenerated,
                             borderRadius: BorderRadius.circular(16),
                           ),
                     ),

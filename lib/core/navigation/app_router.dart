@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/auth/local_mode_provider.dart';
 import '../../features/auth/screens/auth_screen.dart';
 import '../../features/download/screens/downloads_screen.dart';
+import '../../features/catalog/screens/artist_radio_screen.dart';
 import '../../features/catalog/screens/deezer_playlist_screen.dart';
 import '../../features/catalog/screens/genre_screen.dart';
 import '../../features/catalog/screens/mix_screen.dart';
@@ -225,6 +226,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           // Género. `name` viaja como query para poder pintar la cabecera sin
           // esperar a la red; si se entra por enlace directo, se resuelve
           // contra el catálogo de géneros.
+          // Radio de un artista: la misma pieza que los "Mix de {artista}" de
+          // Inicio, accesible desde la pantalla del artista.
+          GoRoute(
+            path: '/artist-radio/:id',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: ArtistRadioScreen(artistId: id),
+              );
+            },
+          ),
           GoRoute(
             path: '/genre/:id',
             pageBuilder: (context, state) {
