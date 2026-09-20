@@ -16,7 +16,7 @@ class MockDeezerApi extends DeezerApi {
   }
 
   @override
-  Future<List<DeezerPlaylist>> getEditorialPlaylists() async {
+  Future<List<DeezerPlaylist>> getEditorialPlaylists({int limit = 50}) async {
     return const [];
   }
 

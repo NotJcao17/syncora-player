@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
@@ -12,28 +11,21 @@ import '../../auth/local_mode_provider.dart';
 import '../../player/player_models.dart';
 import '../save_collection_service.dart';
 import '../widgets/collection_scaffold.dart';
+import '../widgets/save_collection_button.dart';
 
 /// Playlist de Deezer (`/deezer-playlist/:id`): editoriales de Inicio, tops por
 /// país y playlists de la pantalla de género.
 ///
 /// Antes de esta pantalla, tocar una playlist editorial en Inicio solo mostraba
-/// un `AppToast` con su nombre — no había forma de abrirla. Era el destino
-/// muerto más visible de la app.
-class DeezerPlaylistScreen extends ConsumerStatefulWidget {
+/// un `AppToast` con su nombre — no había forma de abrirla.
+class DeezerPlaylistScreen extends ConsumerWidget {
   final String playlistId;
 
   const DeezerPlaylistScreen({super.key, required this.playlistId});
 
   @override
-  ConsumerState<DeezerPlaylistScreen> createState() => _DeezerPlaylistScreenState();
-}
-
-class _DeezerPlaylistScreenState extends ConsumerState<DeezerPlaylistScreen> {
-  bool _isSaving = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final id = int.tryParse(widget.playlistId) ?? 0;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final id = int.tryParse(playlistId) ?? 0;
     if (id <= 0) {
       return const Scaffold(
         backgroundColor: AppTheme.background,
@@ -57,6 +49,8 @@ class _DeezerPlaylistScreenState extends ConsumerState<DeezerPlaylistScreen> {
       ),
       data: (playlist) {
         final tracks = playlist.tracks.map((t) => t.toSyncoraTrack()).toList();
+        final sourceRef = 'deezer_playlist:$id';
+        const description = 'Copia de una playlist de Deezer';
 
         return CollectionScaffold(
           label: 'Playlist',
@@ -67,71 +61,69 @@ class _DeezerPlaylistScreenState extends ConsumerState<DeezerPlaylistScreen> {
           contextId: 'deezer_playlist_$id',
           onRefresh: () async => ref.invalidate(deezerPlaylistProvider(id)),
           emptyMessage: 'Deezer no devolvió canciones reproducibles para esta playlist.',
+          onBeforeDownload: () => _saveBeforeDownload(
+            context,
+            ref,
+            sourceRef: sourceRef,
+            title: playlist.title,
+            description: description,
+            tracks: tracks,
+          ),
           actions: [
-            _SaveCopyButton(
-              isSaving: _isSaving,
-              onPressed: tracks.isEmpty ? null : () => _saveCopy(playlist.title, tracks),
+            SaveCollectionButton(
+              sourceRef: sourceRef,
+              title: playlist.title,
+              description: description,
+              tracks: tracks,
             ),
           ],
         );
       },
     );
   }
-
-  Future<void> _saveCopy(String title, List<SyncoraTrack> tracks) async {
-    // Online-First (Pitfall #28): sin conexión y con cuenta, la playlist solo
-    // llegaría a Drift y el siguiente sync la podaría.
-    if (!ref.read(canEditProvider)) {
-      AppToast.show(context, message: 'Sin conexión: no se puede guardar ahora');
-      return;
-    }
-    if (_isSaving) return;
-    setState(() => _isSaving = true);
-
-    try {
-      await saveTracksAsPlaylist(
-        title: title,
-        description: 'Copia de una playlist de Deezer',
-        tracks: tracks,
-        dao: ref.read(playlistDaoProvider),
-        supabaseRepo: ref.read(supabasePlaylistRepositoryProvider),
-      );
-      if (!mounted) return;
-      AppToast.show(context, message: 'Guardada en tu biblioteca');
-    } catch (_) {
-      if (!mounted) return;
-      AppToast.show(context, message: 'No se pudo guardar la playlist');
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
-  }
 }
 
-class _SaveCopyButton extends StatelessWidget {
-  final bool isSaving;
-  final VoidCallback? onPressed;
+/// Guarda la copia antes de dejar descargar.
+///
+/// Descargar algo que no está en la biblioteca dejaba pistas descargadas sin
+/// ninguna colección a la que pertenecieran. Se hace en el mismo gesto, sin
+/// obligar al usuario a guardar primero a mano.
+Future<bool> _saveBeforeDownload(
+  BuildContext context,
+  WidgetRef ref, {
+  required String sourceRef,
+  required String title,
+  String? description,
+  required List<SyncoraTrack> tracks,
+}) async {
+  final dao = ref.read(playlistDaoProvider);
+  if (await dao.getPlaylistBySourceRef(sourceRef) != null) return true;
 
-  const _SaveCopyButton({required this.isSaving, required this.onPressed});
+  if (!ref.read(canEditProvider)) {
+    if (context.mounted) {
+      AppToast.show(context, message: 'Sin conexión: guarda la playlist cuando vuelvas a tener red');
+    }
+    return false;
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      icon: isSaving
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.secondary),
-            )
-          : Icon(
-              AppIcons.broken(SolarIcons.AddCircle),
-              color: onPressed == null ? AppTheme.muted : AppTheme.secondary,
-              size: 24,
-            ),
-      onPressed: isSaving ? null : onPressed,
-      // Se dice "copia" a propósito: Syncora no sigue playlists remotas, las
-      // copia (ver `save_collection_service.dart`), y el usuario tiene que
-      // saber que lo guardado no se va a actualizar solo.
-      tooltip: 'Guardar una copia en mi biblioteca',
+  try {
+    await ensureCollectionSaved(
+      sourceRef: sourceRef,
+      title: title,
+      description: description,
+      tracks: tracks,
+      dao: dao,
+      supabaseRepo: ref.read(supabasePlaylistRepositoryProvider),
     );
+    ref.invalidate(savedCollectionProvider(sourceRef));
+    if (context.mounted) {
+      AppToast.show(context, message: 'Guardada en tu biblioteca para poder descargarla');
+    }
+    return true;
+  } catch (_) {
+    if (context.mounted) {
+      AppToast.show(context, message: 'No se pudo guardar la playlist');
+    }
+    return false;
   }
 }

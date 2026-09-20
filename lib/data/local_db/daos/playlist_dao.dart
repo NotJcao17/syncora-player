@@ -94,6 +94,8 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     String? coverUrl,
     String? remoteId,
     bool isPublic = false,
+    String? sourceRef,
+    bool isGenerated = false,
   }) async {
     return into(playlists).insert(
       PlaylistsCompanion.insert(
@@ -102,8 +104,55 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
         coverUrl: Value(coverUrl),
         remoteId: Value(remoteId),
         isPublic: Value(isPublic),
+        sourceRef: Value(sourceRef),
+        isGenerated: Value(isGenerated),
       ),
     );
+  }
+
+  /// Playlist creada a partir de [sourceRef] exacto, o `null`.
+  ///
+  /// Es lo que permite que el botón de guardar aparezca ya en estado
+  /// "Guardada": antes no había forma de saber que la copia existía, así que
+  /// el usuario volvía a pulsarlo y la playlist se duplicaba en su biblioteca.
+  Future<Playlist?> getPlaylistBySourceRef(String sourceRef) async {
+    final rows = await (select(playlists)
+          ..where((t) => t.sourceRef.equals(sourceRef))
+          ..orderBy([(t) => OrderingTerm(expression: t.id, mode: OrderingMode.asc)])
+          ..limit(1))
+        .get();
+    return rows.isEmpty ? null : rows.first;
+  }
+
+  /// Playlist generada por la app cuyo `sourceRef` empieza por [prefix].
+  ///
+  /// Se busca por prefijo porque el `sourceRef` de "On Repeat" lleva pegado el
+  /// periodo que generó su contenido (`mix:on_repeat:2026-W38`), y así la
+  /// misma consulta sirve para encontrarla y para saber si toca regenerarla.
+  Future<Playlist?> getGeneratedPlaylist(String prefix) async {
+    final rows = await (select(playlists)
+          ..where((t) => t.isGenerated.equals(true) & t.sourceRef.like('$prefix%'))
+          ..orderBy([(t) => OrderingTerm(expression: t.id, mode: OrderingMode.asc)])
+          ..limit(1))
+        .get();
+    return rows.isEmpty ? null : rows.first;
+  }
+
+  /// Reemplaza de una sola vez todas las pistas de una playlist.
+  ///
+  /// Usado por la regeneración de "On Repeat". En una transacción y con los
+  /// `orderIndex` calculados de antemano: `addTrackToPlaylist` relee la lista
+  /// entera en cada inserción para saber el siguiente índice, lo que para 30
+  /// pistas serían 30 lecturas completas.
+  Future<void> replaceTracks(int playlistId, List<PlaylistTracksCompanion> tracks) {
+    return transaction(() async {
+      await (delete(playlistTracks)..where((t) => t.playlistId.equals(playlistId))).go();
+      for (var i = 0; i < tracks.length; i++) {
+        await into(playlistTracks).insert(
+          tracks[i].copyWith(playlistId: Value(playlistId), orderIndex: Value(i)),
+        );
+      }
+    });
   }
 
   Future<bool> updatePlaylist(Playlist playlist) =>

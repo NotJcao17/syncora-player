@@ -30,12 +30,20 @@ Future<int> saveTracksAsPlaylist({
   required List<SyncoraTrack> tracks,
   required PlaylistDao dao,
   required SupabasePlaylistRepository supabaseRepo,
+  String? sourceRef,
 }) async {
   // Sin `coverUrl` a propósito: la portada por defecto de una playlist es la
   // cuadrícula generada con las 4 primeras portadas distintas (Documento
   // Maestro §1.7), y así la copia se ve como cualquier otra playlist del
   // usuario en vez de heredar la carátula de una fuente que ya no la manda.
-  final playlistId = await dao.createPlaylist(title: title, description: description);
+  // `sourceRef` deja rastro de qué se copió, y es lo que permite que el botón
+  // vuelva a aparecer como "Guardada" en vez de dejar que el usuario copie lo
+  // mismo dos veces.
+  final playlistId = await dao.createPlaylist(
+    title: title,
+    description: description,
+    sourceRef: sourceRef,
+  );
 
   String? remotePlaylistId;
   try {
@@ -89,4 +97,31 @@ Future<int> saveTracksAsPlaylist({
   }
 
   return playlistId;
+}
+
+/// Garantiza que exista una copia local de esta colección y devuelve su id.
+///
+/// Idempotente: si ya hay una playlist con el mismo [sourceRef], no crea otra.
+/// Lo usan tanto el botón de guardar como el de descargar — una descarga
+/// siempre tiene que colgar de algo que exista en Biblioteca, si no quedan
+/// pistas descargadas sin ninguna colección a la que pertenezcan.
+Future<int> ensureCollectionSaved({
+  required String sourceRef,
+  required String title,
+  String? description,
+  required List<SyncoraTrack> tracks,
+  required PlaylistDao dao,
+  required SupabasePlaylistRepository supabaseRepo,
+}) async {
+  final existing = await dao.getPlaylistBySourceRef(sourceRef);
+  if (existing != null) return existing.id;
+
+  return saveTracksAsPlaylist(
+    title: title,
+    description: description,
+    tracks: tracks,
+    sourceRef: sourceRef,
+    dao: dao,
+    supabaseRepo: supabaseRepo,
+  );
 }

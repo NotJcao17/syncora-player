@@ -22,9 +22,9 @@ import '../../stats/stats_providers.dart';
 import '../home_providers.dart';
 import '../mixes/mix_models.dart';
 import '../mixes/mix_providers.dart';
+import '../mixes/on_repeat_service.dart';
 import '../widgets/home_sections.dart';
 import '../widgets/mix_cover.dart';
-import '../widgets/weekly_highlights_panel.dart';
 
 /// Pantalla de Inicio.
 ///
@@ -37,9 +37,7 @@ import '../widgets/weekly_highlights_panel.dart';
 ///
 /// Regla de diseño de esta pantalla: **ninguna canción individual se presenta
 /// como si fuera una colección**. Las tarjetas son siempre playlists, álbumes,
-/// mixes, artistas o géneros. Las únicas canciones sueltas que aparecen son
-/// las tres filas del resumen semanal, que son un dato estadístico y se ven
-/// como tal.
+/// mixes, artistas o géneros.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -68,7 +66,6 @@ class HomeScreen extends ConsumerWidget {
       ref.invalidate(monthlyStatsProvider);
       ref.invalidate(yearlyStatsProvider);
       ref.invalidate(allTimeStatsProvider);
-      ref.invalidate(weeklyHighlightsProvider);
     });
   }
 
@@ -88,8 +85,8 @@ class HomeScreen extends ConsumerWidget {
     ]);
 
     ref.invalidate(recentlyPlayedProvider);
-    ref.invalidate(weeklyHighlightsProvider);
     ref.invalidate(mixesProvider);
+    ref.invalidate(onRepeatPlaylistProvider);
     ref.invalidate(editorialPlaylistsProvider);
     ref.invalidate(newReleasesProvider);
     ref.invalidate(newReleasesFromArtistsProvider);
@@ -136,10 +133,6 @@ class HomeScreen extends ConsumerWidget {
             _buildHeader(context, ref, isDesktop, horizontalPadding),
 
             // --- Todo lo de abajo es local: se pinta sin red y sin esperas ---
-            SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              sliver: const SliverToBoxAdapter(child: WeeklyHighlightsPanel()),
-            ),
             _buildQuickAccess(context, horizontalPadding),
             _buildRecentlyPlayed(context, ref, isDesktop, horizontalPadding),
             _buildMixes(context, ref, isDesktop, horizontalPadding),
@@ -148,7 +141,7 @@ class HomeScreen extends ConsumerWidget {
             _buildNewReleases(context, ref, isDesktop, horizontalPadding),
             _buildCountryTops(context, ref, isDesktop, horizontalPadding, countryTopsAsync),
             _buildEditorial(context, ref, isDesktop, horizontalPadding, editorialAsync),
-            _buildRelatedArtists(context, ref, isDesktop, horizontalPadding),
+            ..._buildRelatedArtists(context, ref, isDesktop, horizontalPadding),
             _buildGenres(context, ref, isDesktop, horizontalPadding),
 
             // El aviso de "sin contenido" va al final: si las secciones
@@ -358,8 +351,12 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildMixes(BuildContext context, WidgetRef ref, bool isDesktop, double padding) {
     final async = ref.watch(mixesProvider);
+    // "On Repeat" no es un mix efímero sino una playlist permanente que la app
+    // mantiene (ver `on_repeat_service.dart`), así que encabeza la fila pero
+    // abre su playlist real en vez de una pantalla de mix.
+    final onRepeat = ref.watch(onRepeatPlaylistProvider).value;
 
-    if (async.isLoading) {
+    if (async.isLoading && onRepeat == null) {
       return HomeSection(
         title: 'Tus mixes',
         isDesktop: isDesktop,
@@ -369,7 +366,12 @@ class HomeScreen extends ConsumerWidget {
     }
 
     final mixes = async.value ?? const <SyncoraMix>[];
-    if (mixes.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    if (mixes.isEmpty && onRepeat == null) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
+    final hasOnRepeat = onRepeat != null;
+    final itemCount = mixes.length + (hasOnRepeat ? 1 : 0);
 
     return HomeSection(
       title: 'Tus mixes',
@@ -379,14 +381,22 @@ class HomeScreen extends ConsumerWidget {
       child: HomeCardRow(
         isDesktop: isDesktop,
         padding: padding,
-        itemCount: mixes.length,
+        itemCount: itemCount,
         itemBuilder: (i) {
-          final mix = mixes[i];
+          if (hasOnRepeat && i == 0) {
+            return PlaylistCard(
+              title: onRepeat.title,
+              subtitle: 'Se actualiza sola',
+              coverOverride: const MixCover(kind: MixKind.onRepeat),
+              onTap: () => context.push('/playlist/${onRepeat.id}'),
+            );
+          }
+
+          final mix = mixes[hasOnRepeat ? i - 1 : i];
           return PlaylistCard(
             title: mix.title,
             subtitle: '${mix.tracks.length} canciones',
             coverUrl: mix.coverUrl,
-            coverOverride: mix.usesGeneratedCover ? MixCover(kind: mix.kind) : null,
             onTap: () => context.push('/mix/${Uri.encodeComponent(mix.key)}'),
           );
         },
@@ -533,31 +543,38 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRelatedArtists(BuildContext context, WidgetRef ref, bool isDesktop, double padding) {
-    final suggestion = ref.watch(relatedArtistsProvider).value;
-    if (suggestion == null || suggestion.artists.isEmpty) {
-      return const SliverToBoxAdapter(child: SizedBox.shrink());
-    }
+  List<Widget> _buildRelatedArtists(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDesktop,
+    double padding,
+  ) {
+    final suggestions = ref.watch(relatedArtistsProvider).value ?? const [];
+    if (suggestions.isEmpty) return const [];
 
-    return HomeSection(
-      title: 'Porque escuchaste a ${suggestion.seedArtistName}',
-      isDesktop: isDesktop,
-      padding: padding,
-      child: HorizontalScroller(
-        height: isDesktop ? 190 : 160,
-        padding: EdgeInsets.symmetric(horizontal: padding),
-        itemCount: suggestion.artists.length,
-        itemBuilder: (ctx, i) {
-          final artist = suggestion.artists[i];
-          return HomeArtistCircle(
-            name: artist.name,
-            pictureUrl: artist.pictureUrl,
-            size: isDesktop ? 130 : 110,
-            onTap: () => context.push('/artist/${artist.id}'),
-          );
-        },
-      ),
-    );
+    return [
+      for (final suggestion in suggestions)
+        if (suggestion.artists.isNotEmpty)
+          HomeSection(
+            title: 'Porque escuchaste a ${suggestion.seedArtistName}',
+            isDesktop: isDesktop,
+            padding: padding,
+            child: HorizontalScroller(
+              height: isDesktop ? 190 : 160,
+              padding: EdgeInsets.symmetric(horizontal: padding),
+              itemCount: suggestion.artists.length,
+              itemBuilder: (ctx, i) {
+                final artist = suggestion.artists[i];
+                return HomeArtistCircle(
+                  name: artist.name,
+                  pictureUrl: artist.pictureUrl,
+                  size: isDesktop ? 130 : 110,
+                  onTap: () => context.push('/artist/${artist.id}'),
+                );
+              },
+            ),
+          ),
+    ];
   }
 
   Widget _buildGenres(BuildContext context, WidgetRef ref, bool isDesktop, double padding) {

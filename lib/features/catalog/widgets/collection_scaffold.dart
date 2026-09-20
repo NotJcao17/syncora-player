@@ -53,6 +53,11 @@ class CollectionScaffold extends ConsumerStatefulWidget {
   /// "On Repeat" usa color + ícono, como "Tus me gusta").
   final Widget? coverOverride;
 
+  /// Paso previo a descargar. Las colecciones que no están en la biblioteca lo
+  /// usan para guardarse primero: así ninguna descarga queda colgando sin una
+  /// colección a la que pertenezca.
+  final Future<bool> Function()? onBeforeDownload;
+
   const CollectionScaffold({
     super.key,
     required this.label,
@@ -65,6 +70,7 @@ class CollectionScaffold extends ConsumerStatefulWidget {
     this.onRefresh,
     this.emptyMessage = 'No hay canciones para mostrar.',
     this.coverOverride,
+    this.onBeforeDownload,
   });
 
   @override
@@ -366,7 +372,11 @@ class _CollectionScaffoldState extends ConsumerState<CollectionScaffold> {
               },
             ),
             const SizedBox(width: 12),
-            DownloadHeaderButton(title: widget.title, tracks: tracks),
+            DownloadHeaderButton(
+              title: widget.title,
+              tracks: tracks,
+              onBeforeDownload: widget.onBeforeDownload,
+            ),
             const SizedBox(width: 12),
             Consumer(
               builder: (context, ref, _) {

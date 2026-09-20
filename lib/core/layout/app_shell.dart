@@ -13,6 +13,7 @@ import '../theme/app_icons.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../data/local_db/database_provider.dart';
+import '../../data/local_db/duplicate_repair.dart';
 import '../../data/local_db/syncora_database.dart';
 import '../../data/sync/sync_service.dart';
 import '../../features/auth/auth_provider.dart';
@@ -64,11 +65,14 @@ class _AppShellState extends ConsumerState<AppShell> {
       // Sana la base local antes de sincronizar nada: si una versión anterior
       // dejó playlists o pistas duplicadas (ver `PlaylistDao.repairDuplicates`),
       // arreglarlas acá es lo que hace que el usuario no tenga que borrar los
-      // datos de la app a mano. Es local, barato y no depende de la red, así
-      // que corre también sin conexión y en modo local.
-      try {
-        await ref.read(playlistDaoProvider).repairDuplicates();
-      } catch (_) {}
+      // datos de la app a mano.
+      //
+      // **Una sola pasada, no en cada arranque.** La causa (corridas
+      // simultáneas de `syncLibrary`) ya está cerrada con la guarda de
+      // reentrancia de `SyncService`, así que esto es una limpieza de una vez
+      // para las instalaciones que quedaron sucias con las versiones
+      // anteriores, no una red de seguridad permanente.
+      await ref.read(duplicateRepairProvider).runOnce();
 
       final isLocalMode = ref.read(localModeProvider);
       final isConnected = ref.read(isConnectedProvider).value ?? true;

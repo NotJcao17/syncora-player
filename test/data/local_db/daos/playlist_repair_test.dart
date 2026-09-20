@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' show DatabaseConnection, Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:syncora_player/data/local_db/syncora_database.dart';
@@ -88,7 +88,6 @@ void main() {
     // Antes usaba `getSingleOrNull()`: esto lanzaba, `SyncService` se comía la
     // excepción y la sincronización quedaba rota en silencio para siempre.
     final found = await db.playlistDao.getPlaylistByRemoteId('dup');
-    // `isNotNull` choca con el homónimo de Drift, importado por Companion.
-    expect(found != null, isTrue);
+    expect(found, isNotNull);
   });
 }

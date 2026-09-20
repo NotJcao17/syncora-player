@@ -19,10 +19,19 @@ class DownloadHeaderButton extends ConsumerStatefulWidget {
   final String title;
   final List<SyncoraTrack> tracks;
 
+  /// Paso previo obligatorio antes de abrir las opciones de descarga.
+  ///
+  /// Lo usan las colecciones que todavía no están en la biblioteca (playlists
+  /// de Deezer, mixes): descargarlas guarda primero una copia, para que las
+  /// pistas descargadas siempre cuelguen de algo que el usuario puede
+  /// encontrar. Si devuelve `false`, la descarga no sigue.
+  final Future<bool> Function()? onBeforeDownload;
+
   const DownloadHeaderButton({
     super.key,
     required this.title,
     required this.tracks,
+    this.onBeforeDownload,
   });
 
   @override
@@ -109,7 +118,25 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
 
     return IconButton(
       icon: iconWidget,
-      onPressed: _isProcessing ? null : () => _showDownloadBottomSheet(context, buttonState, downloadedCount, totalCount),
+      onPressed: _isProcessing
+          ? null
+          : () async {
+              final before = widget.onBeforeDownload;
+              if (before != null) {
+                setState(() => _isProcessing = true);
+                bool canContinue;
+                try {
+                  canContinue = await before();
+                } catch (_) {
+                  canContinue = false;
+                } finally {
+                  if (mounted) setState(() => _isProcessing = false);
+                }
+                if (!canContinue || !mounted) return;
+              }
+              if (!context.mounted) return;
+              _showDownloadBottomSheet(context, buttonState, downloadedCount, totalCount);
+            },
       tooltip: 'Opciones de descarga',
     );
   }

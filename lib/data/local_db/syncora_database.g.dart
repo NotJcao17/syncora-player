@@ -156,6 +156,32 @@ class $PlaylistsTable extends Playlists
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sourceRefMeta = const VerificationMeta(
+    'sourceRef',
+  );
+  @override
+  late final GeneratedColumn<String> sourceRef = GeneratedColumn<String>(
+    'source_ref',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isGeneratedMeta = const VerificationMeta(
+    'isGenerated',
+  );
+  @override
+  late final GeneratedColumn<bool> isGenerated = GeneratedColumn<bool>(
+    'is_generated',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_generated" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -170,6 +196,8 @@ class $PlaylistsTable extends Playlists
     createdAt,
     updatedAt,
     lastPlayedAt,
+    sourceRef,
+    isGenerated,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -260,6 +288,21 @@ class $PlaylistsTable extends Playlists
         ),
       );
     }
+    if (data.containsKey('source_ref')) {
+      context.handle(
+        _sourceRefMeta,
+        sourceRef.isAcceptableOrUnknown(data['source_ref']!, _sourceRefMeta),
+      );
+    }
+    if (data.containsKey('is_generated')) {
+      context.handle(
+        _isGeneratedMeta,
+        isGenerated.isAcceptableOrUnknown(
+          data['is_generated']!,
+          _isGeneratedMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -317,6 +360,14 @@ class $PlaylistsTable extends Playlists
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_played_at'],
       ),
+      sourceRef: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_ref'],
+      ),
+      isGenerated: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_generated'],
+      )!,
     );
   }
 
@@ -348,6 +399,26 @@ class Playlist extends DataClass implements Insertable<Playlist> {
   /// este dispositivo, que es lo que ordena al final de la vista "escuchadas
   /// recientemente".
   final DateTime? lastPlayedAt;
+
+  /// De dónde salió esta playlist, cuando no la creó el usuario a mano.
+  ///
+  /// Formatos: `deezer_playlist:1234` para una copia de una playlist de
+  /// Deezer, y `mix:<clave del mix>` para un mix guardado o generado.
+  ///
+  /// Sirve para dos cosas: que el botón de guardar pueda mostrarse ya en
+  /// estado "Guardada" (antes no había forma de saber que la copia existía,
+  /// así que el usuario volvía a pulsarlo y la playlist se duplicaba en su
+  /// biblioteca), y para localizar el "On Repeat" generado.
+  ///
+  /// Solo local, como `lastPlayedAt`: no tiene columna en Supabase.
+  final String? sourceRef;
+
+  /// ¿La mantiene la app, en vez del usuario?
+  ///
+  /// Hoy solo "On Repeat": existe siempre, se regenera sola cada semana y no
+  /// se edita a mano, igual que "Tus me gusta". No viaja a Supabase — se
+  /// deriva del historial local de cada dispositivo.
+  final bool isGenerated;
   const Playlist({
     required this.id,
     this.remoteId,
@@ -361,6 +432,8 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     required this.createdAt,
     required this.updatedAt,
     this.lastPlayedAt,
+    this.sourceRef,
+    required this.isGenerated,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -385,6 +458,10 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     if (!nullToAbsent || lastPlayedAt != null) {
       map['last_played_at'] = Variable<DateTime>(lastPlayedAt);
     }
+    if (!nullToAbsent || sourceRef != null) {
+      map['source_ref'] = Variable<String>(sourceRef);
+    }
+    map['is_generated'] = Variable<bool>(isGenerated);
     return map;
   }
 
@@ -410,6 +487,10 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       lastPlayedAt: lastPlayedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(lastPlayedAt),
+      sourceRef: sourceRef == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceRef),
+      isGenerated: Value(isGenerated),
     );
   }
 
@@ -431,6 +512,8 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       lastPlayedAt: serializer.fromJson<DateTime?>(json['lastPlayedAt']),
+      sourceRef: serializer.fromJson<String?>(json['sourceRef']),
+      isGenerated: serializer.fromJson<bool>(json['isGenerated']),
     );
   }
   @override
@@ -449,6 +532,8 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'lastPlayedAt': serializer.toJson<DateTime?>(lastPlayedAt),
+      'sourceRef': serializer.toJson<String?>(sourceRef),
+      'isGenerated': serializer.toJson<bool>(isGenerated),
     };
   }
 
@@ -465,6 +550,8 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     DateTime? createdAt,
     DateTime? updatedAt,
     Value<DateTime?> lastPlayedAt = const Value.absent(),
+    Value<String?> sourceRef = const Value.absent(),
+    bool? isGenerated,
   }) => Playlist(
     id: id ?? this.id,
     remoteId: remoteId.present ? remoteId.value : this.remoteId,
@@ -478,6 +565,8 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     lastPlayedAt: lastPlayedAt.present ? lastPlayedAt.value : this.lastPlayedAt,
+    sourceRef: sourceRef.present ? sourceRef.value : this.sourceRef,
+    isGenerated: isGenerated ?? this.isGenerated,
   );
   Playlist copyWithCompanion(PlaylistsCompanion data) {
     return Playlist(
@@ -499,6 +588,10 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       lastPlayedAt: data.lastPlayedAt.present
           ? data.lastPlayedAt.value
           : this.lastPlayedAt,
+      sourceRef: data.sourceRef.present ? data.sourceRef.value : this.sourceRef,
+      isGenerated: data.isGenerated.present
+          ? data.isGenerated.value
+          : this.isGenerated,
     );
   }
 
@@ -516,7 +609,9 @@ class Playlist extends DataClass implements Insertable<Playlist> {
           ..write('orderIndex: $orderIndex, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('lastPlayedAt: $lastPlayedAt')
+          ..write('lastPlayedAt: $lastPlayedAt, ')
+          ..write('sourceRef: $sourceRef, ')
+          ..write('isGenerated: $isGenerated')
           ..write(')'))
         .toString();
   }
@@ -535,6 +630,8 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     createdAt,
     updatedAt,
     lastPlayedAt,
+    sourceRef,
+    isGenerated,
   );
   @override
   bool operator ==(Object other) =>
@@ -551,7 +648,9 @@ class Playlist extends DataClass implements Insertable<Playlist> {
           other.orderIndex == this.orderIndex &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.lastPlayedAt == this.lastPlayedAt);
+          other.lastPlayedAt == this.lastPlayedAt &&
+          other.sourceRef == this.sourceRef &&
+          other.isGenerated == this.isGenerated);
 }
 
 class PlaylistsCompanion extends UpdateCompanion<Playlist> {
@@ -567,6 +666,8 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime?> lastPlayedAt;
+  final Value<String?> sourceRef;
+  final Value<bool> isGenerated;
   const PlaylistsCompanion({
     this.id = const Value.absent(),
     this.remoteId = const Value.absent(),
@@ -580,6 +681,8 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.lastPlayedAt = const Value.absent(),
+    this.sourceRef = const Value.absent(),
+    this.isGenerated = const Value.absent(),
   });
   PlaylistsCompanion.insert({
     this.id = const Value.absent(),
@@ -594,6 +697,8 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.lastPlayedAt = const Value.absent(),
+    this.sourceRef = const Value.absent(),
+    this.isGenerated = const Value.absent(),
   }) : title = Value(title);
   static Insertable<Playlist> custom({
     Expression<int>? id,
@@ -608,6 +713,8 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? lastPlayedAt,
+    Expression<String>? sourceRef,
+    Expression<bool>? isGenerated,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -622,6 +729,8 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (lastPlayedAt != null) 'last_played_at': lastPlayedAt,
+      if (sourceRef != null) 'source_ref': sourceRef,
+      if (isGenerated != null) 'is_generated': isGenerated,
     });
   }
 
@@ -638,6 +747,8 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<DateTime?>? lastPlayedAt,
+    Value<String?>? sourceRef,
+    Value<bool>? isGenerated,
   }) {
     return PlaylistsCompanion(
       id: id ?? this.id,
@@ -652,6 +763,8 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       lastPlayedAt: lastPlayedAt ?? this.lastPlayedAt,
+      sourceRef: sourceRef ?? this.sourceRef,
+      isGenerated: isGenerated ?? this.isGenerated,
     );
   }
 
@@ -694,6 +807,12 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     if (lastPlayedAt.present) {
       map['last_played_at'] = Variable<DateTime>(lastPlayedAt.value);
     }
+    if (sourceRef.present) {
+      map['source_ref'] = Variable<String>(sourceRef.value);
+    }
+    if (isGenerated.present) {
+      map['is_generated'] = Variable<bool>(isGenerated.value);
+    }
     return map;
   }
 
@@ -711,7 +830,9 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
           ..write('orderIndex: $orderIndex, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('lastPlayedAt: $lastPlayedAt')
+          ..write('lastPlayedAt: $lastPlayedAt, ')
+          ..write('sourceRef: $sourceRef, ')
+          ..write('isGenerated: $isGenerated')
           ..write(')'))
         .toString();
   }
@@ -3909,6 +4030,8 @@ typedef $$PlaylistsTableCreateCompanionBuilder =
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<DateTime?> lastPlayedAt,
+      Value<String?> sourceRef,
+      Value<bool> isGenerated,
     });
 typedef $$PlaylistsTableUpdateCompanionBuilder =
     PlaylistsCompanion Function({
@@ -3924,6 +4047,8 @@ typedef $$PlaylistsTableUpdateCompanionBuilder =
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<DateTime?> lastPlayedAt,
+      Value<String?> sourceRef,
+      Value<bool> isGenerated,
     });
 
 final class $$PlaylistsTableReferences
@@ -4016,6 +4141,16 @@ class $$PlaylistsTableFilterComposer
 
   ColumnFilters<DateTime> get lastPlayedAt => $composableBuilder(
     column: $table.lastPlayedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceRef => $composableBuilder(
+    column: $table.sourceRef,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isGenerated => $composableBuilder(
+    column: $table.isGenerated,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4113,6 +4248,16 @@ class $$PlaylistsTableOrderingComposer
     column: $table.lastPlayedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get sourceRef => $composableBuilder(
+    column: $table.sourceRef,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isGenerated => $composableBuilder(
+    column: $table.isGenerated,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PlaylistsTableAnnotationComposer
@@ -4163,6 +4308,14 @@ class $$PlaylistsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastPlayedAt => $composableBuilder(
     column: $table.lastPlayedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceRef =>
+      $composableBuilder(column: $table.sourceRef, builder: (column) => column);
+
+  GeneratedColumn<bool> get isGenerated => $composableBuilder(
+    column: $table.isGenerated,
     builder: (column) => column,
   );
 
@@ -4232,6 +4385,8 @@ class $$PlaylistsTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<DateTime?> lastPlayedAt = const Value.absent(),
+                Value<String?> sourceRef = const Value.absent(),
+                Value<bool> isGenerated = const Value.absent(),
               }) => PlaylistsCompanion(
                 id: id,
                 remoteId: remoteId,
@@ -4245,6 +4400,8 @@ class $$PlaylistsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 lastPlayedAt: lastPlayedAt,
+                sourceRef: sourceRef,
+                isGenerated: isGenerated,
               ),
           createCompanionCallback:
               ({
@@ -4260,6 +4417,8 @@ class $$PlaylistsTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<DateTime?> lastPlayedAt = const Value.absent(),
+                Value<String?> sourceRef = const Value.absent(),
+                Value<bool> isGenerated = const Value.absent(),
               }) => PlaylistsCompanion.insert(
                 id: id,
                 remoteId: remoteId,
@@ -4273,6 +4432,8 @@ class $$PlaylistsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 lastPlayedAt: lastPlayedAt,
+                sourceRef: sourceRef,
+                isGenerated: isGenerated,
               ),
           withReferenceMapper: (p0) => p0
               .map(

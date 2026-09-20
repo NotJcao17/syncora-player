@@ -4,14 +4,10 @@ import '../../core/utils/connectivity_service.dart';
 import '../../core/utils/startup_retry.dart';
 import '../../data/apis/deezer_catalog_providers.dart';
 import '../../data/apis/deezer_provider.dart';
-import '../../data/local_db/daos/stats_metadata_cache_dao.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../data/models/deezer/deezer_album.dart';
 import '../../data/models/deezer/deezer_artist.dart';
 import '../../data/models/deezer/deezer_playlist.dart';
-import '../../data/models/deezer/deezer_track.dart';
-import '../stats/stats_calculator.dart';
-import '../stats/stats_providers.dart';
 import 'mixes/mix_engine.dart';
 
 /// Corte de los reintentos de arranque: estando realmente sin red no se quema
@@ -90,6 +86,10 @@ const List<String> homeFeaturedCountryTops = [
   'top colombia',
   'top brazil',
   'top chile',
+  'top peru',
+  'top france',
+  'top germany',
+  'top japan',
 ];
 
 /// Ordena las playlists "Top {país}" dejando primero las destacadas, en el
@@ -237,146 +237,35 @@ class RelatedArtistsSuggestion {
   const RelatedArtistsSuggestion({required this.seedArtistName, required this.artists});
 }
 
-final relatedArtistsProvider = FutureProvider<RelatedArtistsSuggestion?>((ref) async {
+/// Una sección "Porque escuchaste a X" por cada uno de los artistas que más
+/// escucha el usuario (los dos primeros de los últimos 60 días).
+final relatedArtistsProvider = FutureProvider<List<RelatedArtistsSuggestion>>((ref) async {
   final historyDao = ref.watch(listeningHistoryDaoProvider);
   final api = ref.watch(deezerApiProvider);
 
   final entries = await historyDao.getRecentHistory(limit: 500);
-  final artistIds = MixEngine.rankArtistIds(entries, now: DateTime.now(), limit: 1);
-  if (artistIds.isEmpty) return null;
+  final artistIds = MixEngine.rankArtistIds(entries, now: DateTime.now(), limit: 2);
+  if (artistIds.isEmpty) return const [];
 
   await settleAfterFirstPaint();
 
-  final seedId = artistIds.first;
-  try {
-    final seed = await ref.read(deezerArtistProvider(seedId).future);
-    final related = await api.getArtistRelated(seedId);
-    if (related.isEmpty || seed.name.isEmpty) return null;
-    return RelatedArtistsSuggestion(seedArtistName: seed.name, artists: related.take(12).toList());
-  } catch (_) {
-    return null;
-  }
-});
+  final suggestions = <RelatedArtistsSuggestion>[];
+  final alreadySuggested = <int>{...artistIds};
 
-// ---------------------------------------------------------------------------
-// Resumen de estadísticas de la semana
-// ---------------------------------------------------------------------------
+  for (final seedId in artistIds) {
+    try {
+      final seed = await ref.read(deezerArtistProvider(seedId).future);
+      if (seed.name.isEmpty) continue;
 
-/// Datos del panel de estadísticas de Inicio.
-///
-/// Es un **resumen**, no la pantalla de Estadísticas: minutos de la semana y
-/// los tres primeros de cada top. La Fase 8 va a reemplazar la pantalla
-/// completa por un dashboard; esta tarjeta está pensada para ser la entrada a
-/// ese dashboard, no algo que haya que tirar.
-class WeeklyHighlights {
-  final int totalMinutes;
-  final List<EnrichedArtist> topArtists;
-  final List<EnrichedTrack> topTracks;
+      final related = await api.getArtistRelated(seedId);
+      // Sin esto, las dos secciones se solapaban: artistas parecidos suelen
+      // serlo entre sí, y el usuario veía dos filas casi idénticas.
+      final fresh = related.where((a) => alreadySuggested.add(a.id)).take(12).toList();
+      if (fresh.isEmpty) continue;
 
-  const WeeklyHighlights({
-    required this.totalMinutes,
-    required this.topArtists,
-    required this.topTracks,
-  });
-
-  bool get isEmpty => totalMinutes == 0 && topArtists.isEmpty && topTracks.isEmpty;
-}
-
-/// Top 3 de artistas y canciones de la semana, ya con nombre y portada.
-///
-/// Provider propio (y no los `family` de Estadísticas) porque aquellos se
-/// indexan por una `List<StatEntry>`, que no tiene igualdad por valor: desde
-/// Inicio, que se reconstruye a menudo, cada rebuild crearía una instancia
-/// nueva del provider y volvería a resolver todo.
-final weeklyHighlightsProvider = FutureProvider<WeeklyHighlights>((ref) async {
-  final snapshot = await ref.watch(weeklyStatsProvider.future);
-  if (snapshot.isEmpty) {
-    return const WeeklyHighlights(totalMinutes: 0, topArtists: [], topTracks: []);
+      suggestions.add(RelatedArtistsSuggestion(seedArtistName: seed.name, artists: fresh));
+    } catch (_) {}
   }
 
-  final topArtistEntries = snapshot.topArtists.take(3).toList();
-  final topTrackEntries = snapshot.topTracks.take(3).toList();
-
-  final results = await Future.wait([
-    _enrichArtists(ref, topArtistEntries),
-    _enrichTracks(ref, topTrackEntries),
-  ]);
-
-  return WeeklyHighlights(
-    totalMinutes: snapshot.totalMinutes,
-    topArtists: results[0] as List<EnrichedArtist>,
-    topTracks: results[1] as List<EnrichedTrack>,
-  );
+  return suggestions;
 });
-
-Future<List<EnrichedArtist>> _enrichArtists(Ref ref, List<StatEntry> entries) async {
-  if (entries.isEmpty) return const [];
-  final cacheDao = ref.read(statsMetadataCacheDaoProvider);
-  final api = ref.read(deezerApiProvider);
-  final cached = await cacheDao.getMany(StatsEntityType.artist, entries.map((e) => e.id).toSet());
-
-  final results = await Future.wait(entries.map((entry) async {
-    final hit = cached[entry.id];
-    if (hit != null) {
-      return EnrichedArtist(
-        entry: entry,
-        artist: DeezerArtist(id: entry.id, name: hit.primaryName, pictureUrl: hit.coverUrl, nbFan: 0),
-      );
-    }
-    try {
-      final artist = await api.getArtist(entry.id);
-      await cacheDao.upsert(
-        entityType: StatsEntityType.artist,
-        entityId: entry.id,
-        primaryName: artist.name,
-        coverUrl: artist.pictureUrl,
-      );
-      return EnrichedArtist(entry: entry, artist: artist);
-    } catch (_) {
-      return null;
-    }
-  }));
-
-  return results.whereType<EnrichedArtist>().toList();
-}
-
-Future<List<EnrichedTrack>> _enrichTracks(Ref ref, List<StatEntry> entries) async {
-  if (entries.isEmpty) return const [];
-  final cacheDao = ref.read(statsMetadataCacheDaoProvider);
-  final api = ref.read(deezerApiProvider);
-  final cached = await cacheDao.getMany(StatsEntityType.track, entries.map((e) => e.id).toSet());
-
-  final results = await Future.wait(entries.map((entry) async {
-    final hit = cached[entry.id];
-    if (hit != null) {
-      return EnrichedTrack(
-        entry: entry,
-        track: DeezerTrack(
-          id: entry.id,
-          title: hit.primaryName,
-          artistName: hit.secondaryName ?? '',
-          artistId: 0,
-          albumTitle: '',
-          albumId: 0,
-          coverUrl: hit.coverUrl,
-          durationSec: 0,
-        ),
-      );
-    }
-    try {
-      final track = await api.getTrack(entry.id);
-      await cacheDao.upsert(
-        entityType: StatsEntityType.track,
-        entityId: entry.id,
-        primaryName: track.title,
-        secondaryName: track.artistName,
-        coverUrl: track.coverUrl,
-      );
-      return EnrichedTrack(entry: entry, track: track);
-    } catch (_) {
-      return null;
-    }
-  }));
-
-  return results.whereType<EnrichedTrack>().toList();
-}

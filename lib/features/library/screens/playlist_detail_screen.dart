@@ -117,6 +117,15 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     super.dispose();
   }
 
+  /// ¿El usuario puede editar esta playlist a mano?
+  ///
+  /// "Tus me gusta" y "On Repeat" las mantiene la app: no se renombran, no se
+  /// borran y no se les agregan pistas sueltas. "On Repeat" además se regenera
+  /// sola cada semana, así que cualquier edición manual se perdería en la
+  /// siguiente regeneración — esconder los botones es más honesto que dejar
+  /// que el usuario haga un trabajo que se va a tirar.
+  bool _isUserEditable(Playlist playlist) => !playlist.isLiked && !playlist.isGenerated;
+
   Color _resolveDominantColor(Playlist playlist, List<SyncoraTrack> tracks) {
     if (playlist.isLiked) {
       return AppTheme.gradientLiked.colors.first;
@@ -864,7 +873,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (!playlist.isLiked) ...[
+        if (_isUserEditable(playlist)) ...[
           ListTile(
             leading: Icon(AppIcons.broken(SolarIcons.Pen), color: editColor),
             title: Text('Editar información y portada', style: TextStyle(color: editColor, fontWeight: FontWeight.w600)),
@@ -946,7 +955,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             _showExportDialog(context, tracks);
           },
         ),
-        if (!playlist.isLiked)
+        if (_isUserEditable(playlist))
           ListTile(
             leading: Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: canEdit ? Colors.red : AppTheme.muted),
             title: Text('Eliminar playlist', style: TextStyle(color: canEdit ? Colors.red : AppTheme.muted, fontWeight: FontWeight.w600)),
@@ -1355,7 +1364,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             ),
                                             const SizedBox(width: 8),
 
-                                            if (!playlist.isLiked) ...[
+                                            if (_isUserEditable(playlist)) ...[
                                               ElevatedButton.icon(
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor: AppTheme.surface,
@@ -1394,7 +1403,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             ),
                                             const SizedBox(width: 8),
 
-                                            if (!playlist.isLiked) ...[
+                                            if (_isUserEditable(playlist)) ...[
                                               Tooltip(
                                                 message: 'Modificar con IA',
                                                 child: Container(

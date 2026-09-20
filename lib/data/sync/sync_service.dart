@@ -276,8 +276,12 @@ class SyncService {
         }
       } else {
         Playlist? match = await _playlistDao.getPlaylistByRemoteId(remoteId);
+        // `isGenerated` excluido a propósito: "On Repeat" es una playlist que
+        // mantiene la app y que nunca se sube, así que una playlist remota que
+        // se llamara igual no debe adoptarla — la convertiría en una playlist
+        // normal sincronizada y se perdería la regeneración semanal.
         match ??= localPlaylists
-            .where((p) => p.title == title && !p.isLiked)
+            .where((p) => p.title == title && !p.isLiked && !p.isGenerated)
             .firstOrNull;
 
         if (match != null) {

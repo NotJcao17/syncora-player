@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
@@ -13,30 +12,31 @@ import '../../home/mixes/mix_providers.dart';
 import '../../home/widgets/mix_cover.dart';
 import '../save_collection_service.dart';
 import '../widgets/collection_scaffold.dart';
+import '../widgets/save_collection_button.dart';
 
 /// Detalle de un mix generado por Syncora (`/mix/:key`).
 ///
 /// La lista viene de [mixByKeyProvider], que lee la tirada ya congelada de la
-/// sesión: entrar, salir y volver a entrar muestra **siempre lo mismo**. No
-/// hay "regenerar" acá a propósito — el mix cambia al cambiar su periodo (día
-/// o semana, según el tipo) o al reabrir la app, no porque el usuario vuelva
-/// a abrir la pantalla.
-class MixScreen extends ConsumerStatefulWidget {
+/// sesión: entrar, salir y volver a entrar muestra **siempre lo mismo**. El mix
+/// cambia al cambiar su periodo (día o semana, según el tipo) o al reabrir la
+/// app, no porque el usuario vuelva a abrir la pantalla.
+///
+/// Guardarlo crea una copia congelada. Como el `sourceRef` de esa copia lleva
+/// pegada la clave del mix —y la clave lleva su periodo—, cuando el mix se
+/// regenera el botón vuelve a ofrecer guardarlo: la copia que existe es del mix
+/// anterior, no de este.
+///
+/// "On Repeat" no pasa por acá: es una playlist permanente
+/// (`on_repeat_service.dart`), no un mix efímero.
+class MixScreen extends ConsumerWidget {
   final String mixKey;
 
   const MixScreen({super.key, required this.mixKey});
 
   @override
-  ConsumerState<MixScreen> createState() => _MixScreenState();
-}
-
-class _MixScreenState extends ConsumerState<MixScreen> {
-  bool _isSaving = false;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final mixesAsync = ref.watch(mixesProvider);
-    final mix = ref.watch(mixByKeyProvider(widget.mixKey));
+    final mix = ref.watch(mixByKeyProvider(mixKey));
 
     if (mixesAsync.isLoading && mix == null) {
       return const Scaffold(
@@ -57,6 +57,9 @@ class _MixScreenState extends ConsumerState<MixScreen> {
       );
     }
 
+    final sourceRef = 'mix:${mix.key}';
+    final savedTitle = mix.savedTitle(DateTime.now());
+
     return CollectionScaffold(
       label: 'Mix',
       title: mix.title,
@@ -65,47 +68,59 @@ class _MixScreenState extends ConsumerState<MixScreen> {
       coverOverride: mix.usesGeneratedCover ? MixCover(kind: mix.kind, borderRadius: 20) : null,
       tracks: mix.tracks,
       contextId: 'mix_${mix.key}',
+      onBeforeDownload: () => _saveBeforeDownload(context, ref, mix, sourceRef, savedTitle),
       actions: [
-        IconButton(
-          icon: _isSaving
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.secondary),
-                )
-              : Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.secondary, size: 24),
-          onPressed: _isSaving ? null : () => _save(mix),
-          tooltip: 'Guardar este mix como playlist',
+        SaveCollectionButton(
+          sourceRef: sourceRef,
+          // Con fecha: a partir de guardarlo es una foto fija, y sin fecha dos
+          // guardados del mismo mix en semanas distintas serían indistinguibles.
+          title: savedTitle,
+          description: mix.subtitle,
+          tracks: mix.tracks,
+          savedMessage: 'Mix guardado en tu biblioteca',
         ),
       ],
     );
   }
+}
 
-  Future<void> _save(SyncoraMix mix) async {
-    if (!ref.read(canEditProvider)) {
-      AppToast.show(context, message: 'Sin conexión: no se puede guardar ahora');
-      return;
+Future<bool> _saveBeforeDownload(
+  BuildContext context,
+  WidgetRef ref,
+  SyncoraMix mix,
+  String sourceRef,
+  String savedTitle,
+) async {
+  final dao = ref.read(playlistDaoProvider);
+  if (await dao.getPlaylistBySourceRef(sourceRef) != null) return true;
+
+  if (!ref.read(canEditProvider)) {
+    if (context.mounted) {
+      AppToast.show(context, message: 'Sin conexión: guarda el mix cuando vuelvas a tener red');
     }
-    if (_isSaving) return;
-    setState(() => _isSaving = true);
+    return false;
+  }
 
-    try {
-      // Acá y solo acá el mix toca la base de datos: a partir de este momento
-      // es una playlist normal del usuario, congelada, que ya no cambia.
-      await saveTracksAsPlaylist(
-        title: mix.savedTitle(DateTime.now()),
-        description: mix.subtitle,
-        tracks: mix.tracks,
-        dao: ref.read(playlistDaoProvider),
-        supabaseRepo: ref.read(supabasePlaylistRepositoryProvider),
-      );
-      if (!mounted) return;
-      AppToast.show(context, message: 'Mix guardado en tu biblioteca');
-    } catch (_) {
-      if (!mounted) return;
+  try {
+    await ensureCollectionSaved(
+      sourceRef: sourceRef,
+      title: savedTitle,
+      description: mix.subtitle,
+      tracks: mix.tracks,
+      dao: dao,
+      supabaseRepo: ref.read(supabasePlaylistRepositoryProvider),
+    );
+    ref.invalidate(savedCollectionProvider(sourceRef));
+    if (context.mounted) {
+      // Un mix se regenera solo: si no se congelara antes de descargarlo, las
+      // pistas descargadas dejarían de corresponder a nada en un día.
+      AppToast.show(context, message: 'Mix guardado en tu biblioteca para poder descargarlo');
+    }
+    return true;
+  } catch (_) {
+    if (context.mounted) {
       AppToast.show(context, message: 'No se pudo guardar el mix');
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
     }
+    return false;
   }
 }

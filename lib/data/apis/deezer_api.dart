@@ -435,10 +435,14 @@ class DeezerApi {
     });
   }
 
-  /// Obtiene playlists editoriales (/chart/0/playlists)
-  Future<List<DeezerPlaylist>> getEditorialPlaylists() async {
+  /// Playlists editoriales del chart general (`/chart/0/playlists`).
+  ///
+  /// ⚠️ **Sin `limit` explícito devuelve solo 10** (verificado contra la API en
+  /// vivo, que acepta hasta 100). Esa era la razón de que la sección de Inicio
+  /// se acabara tras un scroll: no se estaba mandando el parámetro.
+  Future<List<DeezerPlaylist>> getEditorialPlaylists({int limit = 50}) async {
     return _rateLimiter.run(() async {
-      final response = await _dio.get('/chart/0/playlists');
+      final response = await _dio.get('/chart/0/playlists', queryParameters: {'limit': limit});
       if (response.data == null || response.data['data'] is! List) return [];
       final list = response.data['data'] as List;
       return list.map((item) => DeezerPlaylist.fromJson(Map<String, dynamic>.from(item as Map))).toList();

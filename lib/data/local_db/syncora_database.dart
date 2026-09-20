@@ -36,6 +36,26 @@ class Playlists extends Table {
   /// este dispositivo, que es lo que ordena al final de la vista "escuchadas
   /// recientemente".
   DateTimeColumn get lastPlayedAt => dateTime().nullable()();
+
+  /// De dónde salió esta playlist, cuando no la creó el usuario a mano.
+  ///
+  /// Formatos: `deezer_playlist:1234` para una copia de una playlist de
+  /// Deezer, y `mix:<clave del mix>` para un mix guardado o generado.
+  ///
+  /// Sirve para dos cosas: que el botón de guardar pueda mostrarse ya en
+  /// estado "Guardada" (antes no había forma de saber que la copia existía,
+  /// así que el usuario volvía a pulsarlo y la playlist se duplicaba en su
+  /// biblioteca), y para localizar el "On Repeat" generado.
+  ///
+  /// Solo local, como `lastPlayedAt`: no tiene columna en Supabase.
+  TextColumn get sourceRef => text().nullable()();
+
+  /// ¿La mantiene la app, en vez del usuario?
+  ///
+  /// Hoy solo "On Repeat": existe siempre, se regenera sola cada semana y no
+  /// se edita a mano, igual que "Tus me gusta". No viaja a Supabase — se
+  /// deriva del historial local de cada dispositivo.
+  BoolColumn get isGenerated => boolean().withDefault(const Constant(false))();
 }
 
 // Pistas en playlists — desnormalizada (Documento Maestro §3)
@@ -136,7 +156,7 @@ class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration {
@@ -177,6 +197,10 @@ class SyncoraDatabase extends _$SyncoraDatabase {
         }
         if (from < 8) {
           await m.addColumn(savedAlbums, savedAlbums.lastPlayedAt);
+        }
+        if (from < 9) {
+          await m.addColumn(playlists, playlists.sourceRef);
+          await m.addColumn(playlists, playlists.isGenerated);
         }
       },
     );

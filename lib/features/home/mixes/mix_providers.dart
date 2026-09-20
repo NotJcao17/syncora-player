@@ -29,6 +29,15 @@ const int _minTracksPerMix = 8;
 /// Tope de pistas por mix.
 const int _maxTracksPerMix = 40;
 
+/// Cuántos mixes de cada tipo se generan.
+///
+/// Subidos tras las pruebas en dispositivo: con 4 mixes la fila de Inicio ni
+/// siquiera llenaba la pantalla. Ahora son hasta 9 y la sección se siente
+/// como contenido, no como un hueco.
+const int _artistMixCount = 4;
+const int _genreMixCount = 2;
+const int _genreRadioMixCount = 2;
+
 /// Los mixes de la sesión.
 ///
 /// **Deliberadamente NO es `autoDispose`.** Esa es toda la implementación de
@@ -41,12 +50,13 @@ const int _maxTracksPerMix = 40;
 /// como playlist real si el usuario pulsa "Guardar" (ver `SyncoraMix`).
 ///
 /// Cada mix se arma en su propio `try`: si Deezer falla para uno, los demás
-/// siguen apareciendo. Sin conexión, sobrevive "On Repeat", que se resuelve
-/// contra la base local.
+/// siguen apareciendo.
+///
+/// "On Repeat" **no está acá**: es una playlist permanente, no un mix efímero
+/// (ver `on_repeat_service.dart`).
 final mixesProvider = FutureProvider<List<SyncoraMix>>((ref) async {
   final historyDao = ref.watch(listeningHistoryDaoProvider);
   final api = ref.watch(deezerApiProvider);
-  final resolver = ref.watch(trackResolverProvider);
 
   final entries = await historyDao.getRecentHistory(limit: 500);
   if (entries.length < _minHistoryEntriesForMixes) return const [];
@@ -59,10 +69,10 @@ final mixesProvider = FutureProvider<List<SyncoraMix>>((ref) async {
   final daySeed = MixEngine.seedFrom(MixEngine.dayKey(now));
   final mixes = <SyncoraMix>[];
 
-  await _addOnRepeatMix(mixes, entries, resolver, now);
   await _addArtistMixes(mixes, ref, entries, api, now);
-  await _addGenreMix(mixes, ref, entries, now, daySeed);
+  await _addGenreMixes(mixes, ref, entries, now, daySeed);
   await _addDiscoveryMix(mixes, ref, entries, api, now, daySeed);
+  await _addGenreRadioMixes(mixes, ref, entries, now, daySeed);
 
   return mixes;
 });
@@ -80,28 +90,6 @@ final mixByKeyProvider = Provider.family<SyncoraMix?, String>((ref, key) {
   return null;
 });
 
-Future<void> _addOnRepeatMix(
-  List<SyncoraMix> mixes,
-  List<ListeningHistoryData> entries,
-  TrackResolver resolver,
-  DateTime now,
-) async {
-  try {
-    final ids = MixEngine.rankOnRepeatTrackIds(entries, now: now, limit: 30);
-    if (ids.length < _minTracksPerMix) return;
-    final tracks = await resolver.resolve(ids);
-    if (tracks.length < _minTracksPerMix) return;
-    mixes.add(SyncoraMix(
-      key: 'on_repeat:${MixEngine.weekKey(now)}',
-      kind: MixKind.onRepeat,
-      title: 'On Repeat',
-      subtitle: 'Lo que más repetiste este mes',
-      coverUrl: tracks.first.coverUrl,
-      tracks: tracks,
-    ));
-  } catch (_) {}
-}
-
 Future<void> _addArtistMixes(
   List<SyncoraMix> mixes,
   Ref ref,
@@ -109,7 +97,7 @@ Future<void> _addArtistMixes(
   DeezerApi api,
   DateTime now,
 ) async {
-  final artistIds = MixEngine.rankArtistIds(entries, now: now, limit: 2);
+  final artistIds = MixEngine.rankArtistIds(entries, now: now, limit: _artistMixCount);
   final dayKey = MixEngine.dayKey(now);
 
   for (final artistId in artistIds) {
@@ -140,7 +128,81 @@ Future<void> _addArtistMixes(
   }
 }
 
-Future<void> _addGenreMix(
+Future<void> _addGenreMixes(
+  List<SyncoraMix> mixes,
+  Ref ref,
+  List<ListeningHistoryData> entries,
+  DateTime now,
+  int daySeed,
+) async {
+  // El género no está en `listening_history` (queda NULL en el flujo normal de
+  // reproducción, ver 7.0.3), así que se deduce de los álbumes más
+  // escuchados: `/album/{id}` es el único endpoint barato que trae `genre_id`.
+  final genreIds = await dominantGenreIds(ref, entries, now: now, limit: _genreMixCount);
+
+  for (final genreId in genreIds) {
+    try {
+      final chart = await ref.read(deezerGenreChartProvider(genreId).future);
+      if (chart.tracks.length < _minTracksPerMix) continue;
+
+      final genreName = await _genreName(ref, genreId);
+      final shuffled = MixEngine.shuffleDeterministic(chart.tracks, daySeed + genreId);
+
+      mixes.add(SyncoraMix(
+        key: 'genre:$genreId:${MixEngine.dayKey(now)}',
+        kind: MixKind.genre,
+        title: 'Mix de $genreName',
+        subtitle: 'Lo que suena en $genreName',
+        coverUrl: shuffled.first.coverUrl,
+        tracks: shuffled.take(_maxTracksPerMix).map((t) => t.toSyncoraTrack()).toList(),
+      ));
+    } catch (_) {}
+  }
+}
+
+/// Géneros dominantes del usuario, deducidos de los álbumes que más escucha.
+///
+/// Público porque lo usan tanto los mixes de género como los mixes temáticos
+/// sacados de las radios editoriales de ese mismo género.
+Future<List<int>> dominantGenreIds(
+  Ref ref,
+  List<ListeningHistoryData> entries, {
+  required DateTime now,
+  int limit = 2,
+}) async {
+  final albumIds = MixEngine.rankAlbumIds(entries, now: now, limit: 6);
+  final genreIds = <int>[];
+
+  for (final albumId in albumIds) {
+    if (genreIds.length >= limit) break;
+    try {
+      final album = await ref.read(deezerAlbumProvider(albumId).future);
+      if (album.genreId > 0 && !genreIds.contains(album.genreId)) {
+        genreIds.add(album.genreId);
+      }
+    } catch (_) {}
+  }
+
+  return genreIds;
+}
+
+Future<String> _genreName(Ref ref, int genreId) async {
+  try {
+    final genres = await ref.read(deezerGenresProvider.future);
+    for (final genre in genres) {
+      if (genre.id == genreId) return genre.name;
+    }
+  } catch (_) {}
+  return 'tu género';
+}
+
+/// Mixes temáticos a partir de las radios editoriales del género que más
+/// escucha el usuario (`/genre/{id}/radios` devuelve 37 solo para Pop, con
+/// nombres como "80's" o "Chill").
+///
+/// Es la fuente más barata de variedad que tiene la API: la lista de radios se
+/// cachea una semana y solo se pagan las pistas de las que se muestran.
+Future<void> _addGenreRadioMixes(
   List<SyncoraMix> mixes,
   Ref ref,
   List<ListeningHistoryData> entries,
@@ -148,45 +210,30 @@ Future<void> _addGenreMix(
   int daySeed,
 ) async {
   try {
-    // El género no está en `listening_history` (queda NULL en el flujo normal
-    // de reproducción, ver 7.0.3), así que se deduce del álbum más escuchado:
-    // `/album/{id}` es el único endpoint barato que trae `genre_id`.
-    final albumIds = MixEngine.rankAlbumIds(entries, now: now, limit: 3);
-    int genreId = 0;
-    for (final albumId in albumIds) {
+    final genreIds = await dominantGenreIds(ref, entries, now: now, limit: 1);
+    if (genreIds.isEmpty) return;
+
+    final radios = await ref.read(deezerGenreRadiosProvider(genreIds.first).future);
+    if (radios.isEmpty) return;
+
+    // Rotan a diario, pero dentro del día son siempre las mismas.
+    final rotated = MixEngine.shuffleDeterministic(radios, daySeed);
+
+    for (final radio in rotated.take(_genreRadioMixCount)) {
       try {
-        final album = await ref.read(deezerAlbumProvider(albumId).future);
-        if (album.genreId > 0) {
-          genreId = album.genreId;
-          break;
-        }
+        final tracks = await ref.read(deezerRadioTracksProvider(radio.id).future);
+        if (tracks.length < _minTracksPerMix) continue;
+
+        mixes.add(SyncoraMix(
+          key: 'radio:${radio.id}:${MixEngine.dayKey(now)}',
+          kind: MixKind.genre,
+          title: radio.title,
+          subtitle: 'Selección de Deezer',
+          coverUrl: radio.pictureUrl.isNotEmpty ? radio.pictureUrl : tracks.first.coverUrl,
+          tracks: tracks.take(_maxTracksPerMix).map((t) => t.toSyncoraTrack()).toList(),
+        ));
       } catch (_) {}
     }
-    if (genreId <= 0) return;
-
-    final chart = await ref.read(deezerGenreChartProvider(genreId).future);
-    if (chart.tracks.length < _minTracksPerMix) return;
-
-    String genreName = 'tu género';
-    try {
-      final genres = await ref.read(deezerGenresProvider.future);
-      for (final genre in genres) {
-        if (genre.id == genreId) {
-          genreName = genre.name;
-          break;
-        }
-      }
-    } catch (_) {}
-
-    final shuffled = MixEngine.shuffleDeterministic(chart.tracks, daySeed);
-    mixes.add(SyncoraMix(
-      key: 'genre:$genreId:${MixEngine.dayKey(now)}',
-      kind: MixKind.genre,
-      title: 'Mix de $genreName',
-      subtitle: 'Lo que suena en $genreName',
-      coverUrl: shuffled.first.coverUrl,
-      tracks: shuffled.take(_maxTracksPerMix).map((t) => t.toSyncoraTrack()).toList(),
-    ));
   } catch (_) {}
 }
 
