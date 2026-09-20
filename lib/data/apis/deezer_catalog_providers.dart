@@ -68,7 +68,7 @@ final deezerGenreChartProvider =
 
 /// Radios editoriales de un género.
 final deezerGenreRadiosProvider =
-    FutureProvider.family<List<DeezerRadio>, int>((ref, genreId) async {
+    FutureProvider.autoDispose.family<List<DeezerRadio>, int>((ref, genreId) async {
   final api = ref.watch(deezerApiProvider);
   final cache = ref.watch(apiCacheProvider);
   return cache.fetch<List<DeezerRadio>>(
@@ -127,7 +127,13 @@ final deezerCountryTopsProvider = FutureProvider<List<DeezerPlaylist>>((ref) asy
 
 /// Ficha de artista cacheada (nombre y foto), para no repetir `/artist/{id}`
 /// en cada arranque solo para poner el título de un mix.
-final deezerArtistProvider = FutureProvider.family<DeezerArtist, int>((ref, artistId) async {
+///
+/// `autoDispose`: navegar por varios artistas iba dejando una instancia viva
+/// por cada uno durante toda la sesión. El valor está en disco, así que
+/// reconstruirlo no cuesta red — y en un teléfono, acumular sin techo es una
+/// invitación a que el sistema mate la app por memoria.
+final deezerArtistProvider =
+    FutureProvider.autoDispose.family<DeezerArtist, int>((ref, artistId) async {
   final api = ref.watch(deezerApiProvider);
   final cache = ref.watch(apiCacheProvider);
   return cache.fetch<DeezerArtist>(
@@ -146,7 +152,8 @@ final deezerArtistProvider = FutureProvider.family<DeezerArtist, int>((ref, arti
 
 /// Álbum cacheado. Se usa para deducir el género dominante del usuario a
 /// partir de lo que escuchó (`genre_id` solo viene en `/album/{id}`).
-final deezerAlbumProvider = FutureProvider.family<DeezerAlbum, int>((ref, albumId) async {
+final deezerAlbumProvider =
+    FutureProvider.autoDispose.family<DeezerAlbum, int>((ref, albumId) async {
   final api = ref.watch(deezerApiProvider);
   final cache = ref.watch(apiCacheProvider);
   return cache.fetch<DeezerAlbum>(
@@ -176,7 +183,7 @@ final deezerAlbumProvider = FutureProvider.family<DeezerAlbum, int>((ref, albumI
 /// Discografía de un artista, cacheada un día — base de "Novedades de tus
 /// artistas" (Deezer no tiene endpoint de novedades; ver `MixEngine`).
 final deezerArtistAlbumsProvider =
-    FutureProvider.family<List<DeezerAlbum>, int>((ref, artistId) async {
+    FutureProvider.autoDispose.family<List<DeezerAlbum>, int>((ref, artistId) async {
   final api = ref.watch(deezerApiProvider);
   final cache = ref.watch(apiCacheProvider);
   return cache.fetch<List<DeezerAlbum>>(

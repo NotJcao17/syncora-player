@@ -70,6 +70,31 @@ class ApiCache {
     }();
   }
 
+  /// A partir de este tamaño, el JSON se procesa en otro isolate.
+  ///
+  /// Las respuestas de catálogo crecieron bastante (los tops por país traen 100
+  /// playlists, las editoriales 50, y cada chart de género pistas, álbumes y
+  /// playlists a la vez). Decodificar todo eso en el hilo principal durante el
+  /// arranque es de lo que más lo bloquea, y el arranque es justo cuando el
+  /// usuario intenta darle a reproducir.
+  ///
+  /// Por debajo del umbral se hace en línea: levantar un isolate cuesta más que
+  /// decodificar unos pocos kilobytes.
+  static const int _offloadThresholdBytes = 32 * 1024;
+
+  static Future<Object?> _decodeJson(String raw) {
+    if (raw.length < _offloadThresholdBytes) return Future.value(jsonDecode(raw));
+    return compute(_decodeJsonSync, raw);
+  }
+
+  /// La escritura siempre se va a otro isolate: solo ocurre cuando el TTL
+  /// venció, así que es rara, y es justo la que maneja las respuestas grandes.
+  static Future<String> _encodeJson(Object value) => compute(_encodeJsonSync, value);
+
+  static Object? _decodeJsonSync(String raw) => jsonDecode(raw);
+
+  static String _encodeJsonSync(Object value) => jsonEncode(value);
+
   static String _sanitize(String key) => key.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_');
 
   static String _fileNameFor(String key) => '${_sanitize(key)}.json';
@@ -89,7 +114,7 @@ class ApiCache {
     try {
       final file = File(p.join(dir.path, _fileNameFor(key)));
       if (!await file.exists()) return null;
-      final decoded = jsonDecode(await file.readAsString());
+      final decoded = await _decodeJson(await file.readAsString());
       if (decoded is! Map) return null;
       final cachedAtMs = decoded['cached_at'] as int?;
       if (cachedAtMs == null) return null;
@@ -116,7 +141,7 @@ class ApiCache {
       // un JSON truncado que el `read` de arriba descartaba en cada arranque
       // posterior — caché permanentemente frío sin ninguna señal visible.
       final temp = File('${file.path}.tmp');
-      await temp.writeAsString(jsonEncode({
+      await temp.writeAsString(await _encodeJson({
         'cached_at': DateTime.now().millisecondsSinceEpoch,
         'payload': payload,
       }));

@@ -258,8 +258,31 @@ Reportado como "tarda más y va trabada al empezar". No se perfiló, así que no
 lo causa. Mitigación aplicada sobre la hipótesis más plausible (la ráfaga de trabajo que Inicio
 dispara al montarse compitiendo con el arranque del reproductor): los providers derivados del
 historial esperan a que termine el primer frame (`settleAfterFirstPaint`), y el tope de búsquedas
-remotas de `TrackResolver` bajó de 12 a 6. **Requiere volver a probarlo en dispositivo**; si sigue
-igual, hay que perfilar en vez de seguir adivinando.
+remotas de `TrackResolver` bajó de 12 a 6.
+
+**Evidencia posterior:** un log de Android del arranque mostró `Skipped 217 frames` — unos 3,6 s de
+hilo principal bloqueado. En la misma sesión la app se cerró sola, pero el log no contenía ninguna
+excepción de Dart ni `E/AndroidRuntime`, que es como se ve un cierre por falta de memoria del
+sistema. (El ruido de `mali_gralloc`/`Invalid base format` es del driver gráfico Mali, no de la app,
+y `unhandled element <metadata/>` es `flutter_svg` con el avatar de DiceBear — ninguno de los dos es
+un error nuestro.)
+
+Dos mitigaciones más, sobre esa evidencia:
+
+- **El JSON del caché de catálogo ya no se decodifica en el hilo principal** cuando pasa de 32 KB
+  (`ApiCache._decodeJson` → `compute`). Las respuestas crecieron mucho en esta ronda: 100 playlists
+  de tops por país, 50 editoriales, y cada chart de género con pistas, álbumes y playlists a la vez.
+  Por debajo del umbral se decodifica en línea, porque levantar un isolate cuesta más que unos pocos
+  kilobytes.
+- **Las fichas de catálogo pasaron a `autoDispose`** (`deezerArtistProvider`, `deezerAlbumProvider`,
+  `deezerArtistAlbumsProvider`, `deezerGenreRadiosProvider`). Antes, navegar por varios artistas iba
+  dejando una instancia viva por cada uno durante toda la sesión; el valor está en disco, así que
+  reconstruirlo no cuesta red. Quedan a propósito sin `autoDispose` los que necesitan estabilidad
+  dentro de la sesión: `mixesProvider` y `deezerArtistRadioProvider`.
+
+**Sigue sin confirmarse.** Si el cierre se repite, hace falta capturar el log completo hasta el
+final (buscando `E/AndroidRuntime`, `FATAL EXCEPTION` o `lowmemorykiller`) o perfilar con DevTools,
+en vez de seguir mitigando a ciegas.
 
 ## 9. Pendiente
 
