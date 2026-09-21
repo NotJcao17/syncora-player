@@ -16,6 +16,7 @@ ListeningHistoryData entry({
       albumId: albumId,
       listenedAt: at,
       durationListenedMs: 180000,
+      fromRemote: false,
     );
 
 DeezerAlbum album(String title, String releaseDate, {int artistId = 1}) => DeezerAlbum(
