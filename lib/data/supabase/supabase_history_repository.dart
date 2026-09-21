@@ -48,6 +48,42 @@ class SupabaseHistoryRepository {
     );
   }
 
+  /// Sube un lote de escuchas en **una sola petición** (H-S4).
+  ///
+  /// Antes el push hacía un `upsert` por fila: subir 200 escuchas acumuladas
+  /// tras un rato sin conexión eran 200 viajes de red, cada uno con su
+  /// handshake y su coste en el plan free. PostgREST acepta un array en el
+  /// cuerpo y aplica el mismo `onConflict`, así que el lote entero cuesta lo
+  /// que costaba una fila.
+  ///
+  /// Devuelve `true` si el lote se subió. No se traga los errores: el
+  /// llamador necesita saberlo para no marcar como sincronizado algo que no
+  /// llegó.
+  Future<bool> insertListeningHistoryBatch(List<Map<String, dynamic>> entries) async {
+    if (entries.isEmpty) return true;
+    final client = _client;
+    if (client == null) return false;
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return false;
+
+    await client.from('listening_history').upsert(
+          [
+            for (final e in entries)
+              {
+                'user_id': userId,
+                'track_id': e['track_id'],
+                'artist_id': e['artist_id'],
+                'album_id': e['album_id'],
+                'genre': e['genre'],
+                'duration_listened_ms': e['duration_listened_ms'],
+                'listened_at': (e['listened_at'] as DateTime).toUtc().toIso8601String(),
+              },
+          ],
+          onConflict: 'user_id,track_id,listened_at',
+        );
+    return true;
+  }
+
   /// Historial del usuario en la nube desde [since].
   ///
   /// **Por qué hacía falta:** hasta ahora la sincronización de historial era de

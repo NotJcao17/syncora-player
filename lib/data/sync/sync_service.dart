@@ -443,29 +443,59 @@ class SyncService {
         listenedAt: Value(listenedAt.toLocal()),
         // Ya está en la nube: sin esto el siguiente push la volvería a subir.
         syncedAt: Value(DateTime.now()),
+        // H-S3: no se grabó en este aparato, así que el dedupe de escuchas
+        // no debe reutilizarla nunca.
+        fromRemote: const Value(true),
       ));
     }
 
     await _listeningHistoryDao.insertRemoteEntries(companions);
   }
 
+  /// Cuántas escuchas viajan en cada petición (H-S4).
+  ///
+  /// 200 filas son ~20 KB de JSON: cómodo para PostgREST y para el plan free,
+  /// y reduce un backlog de 1000 escuchas de 1000 peticiones a 5.
+  static const int _historyPushChunkSize = 200;
+
   Future<void> _pushPendingHistory() async {
-    final pending = await _listeningHistoryDao.getUnsyncedHistory(limit: 100);
-    for (final historyEntry in pending) {
+    final pending = await _listeningHistoryDao.getUnsyncedHistory();
+    if (pending.isEmpty) return;
+
+    // La clave de conflicto es (user_id, track_id, listened_at). Si dos filas
+    // locales cayeran en el mismo segundo para la misma pista, Postgres
+    // rechazaría el lote entero ("cannot affect row a second time"), así que
+    // se deduplica antes de enviar quedándose con la más completa.
+    final byKey = <String, ListeningHistoryData>{};
+    for (final e in pending) {
+      final key = '${e.trackId}@${e.listenedAt.toUtc().toIso8601String()}';
+      final existing = byKey[key];
+      if (existing == null || e.durationListenedMs > existing.durationListenedMs) {
+        byKey[key] = e;
+      }
+    }
+    final unique = byKey.values.toList();
+
+    for (var i = 0; i < unique.length; i += _historyPushChunkSize) {
+      final chunk = unique.skip(i).take(_historyPushChunkSize).toList();
       try {
-        await _historyRepo.insertListeningHistory(
-          trackId: historyEntry.trackId,
-          listenedAt: historyEntry.listenedAt,
-          artistId: historyEntry.artistId,
-          albumId: historyEntry.albumId,
-          genre: historyEntry.genre,
-          durationListenedMs: historyEntry.durationListenedMs,
-        );
-        await _listeningHistoryDao.markSynced(historyEntry.id);
+        final ok = await _historyRepo.insertListeningHistoryBatch([
+          for (final e in chunk)
+            {
+              'track_id': e.trackId,
+              'artist_id': e.artistId,
+              'album_id': e.albumId,
+              'genre': e.genre,
+              'duration_listened_ms': e.durationListenedMs,
+              'listened_at': e.listenedAt,
+            },
+        ]);
+        if (!ok) break;
+        await _listeningHistoryDao.markManySynced([for (final e in chunk) e.id]);
       } catch (_) {
-        // No marcar como sincronizada: se reintentará en el próximo sync.
-        // Se detiene el resto del lote porque un fallo aquí suele ser de
-        // red/auth y afectaría igual a las entradas restantes.
+        // No marcar como sincronizadas: se reintentará en el próximo sync.
+        // Se detiene el resto porque un fallo aquí suele ser de red/auth y
+        // afectaría igual a los lotes siguientes.
         break;
       }
     }

@@ -56,8 +56,9 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
     });
   }
 
-  /// Última escucha registrada de [trackId] a partir de [since], o `null` si
-  /// no hay ninguna en esa ventana (ronda 3, C1 / hallazgo H-R3-5).
+  /// Última escucha **propia de este dispositivo** registrada de [trackId] a
+  /// partir de [since], o `null` si no hay ninguna en esa ventana (ronda 3,
+  /// C1 / hallazgo H-R3-5).
   ///
   /// Sirve para no insertar una escucha nueva cuando en realidad es la
   /// continuación de una que ya se contabilizó: retroceder a una canción que
@@ -65,12 +66,19 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
   /// medio tema, cerrar, volver y terminarlo). Los dos casos salían como dos
   /// filas distintas, y por eso aparecían canciones dos veces en el historial
   /// y las reproducciones se contaban de más en Estadísticas.
+  /// Excluye a propósito las filas bajadas de la nube (`fromRemote`, H-S3):
+  /// fusionar la escucha de este aparato con la que quedó registrada en otro
+  /// inflaba una fila, hacía desaparecer la otra escucha, y daba un resultado
+  /// distinto según el orden en que hubieran corrido los syncs.
   Future<ListeningHistoryData?> findRecentEntryForTrack(
     int trackId,
     DateTime since,
   ) =>
       (select(listeningHistory)
-            ..where((t) => t.trackId.equals(trackId) & t.listenedAt.isBiggerOrEqualValue(since))
+            ..where((t) =>
+                t.trackId.equals(trackId) &
+                t.listenedAt.isBiggerOrEqualValue(since) &
+                t.fromRemote.equals(false))
             ..orderBy([
               (t) => OrderingTerm(expression: t.listenedAt, mode: OrderingMode.desc),
               (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
@@ -96,7 +104,7 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
 
   /// Entradas aún no subidas a Supabase (`syncedAt` nulo), las más antiguas
   /// primero para respetar el orden de escucha al subirlas.
-  Future<List<ListeningHistoryData>> getUnsyncedHistory({int limit = 100}) => (select(listeningHistory)
+  Future<List<ListeningHistoryData>> getUnsyncedHistory({int limit = 1000}) => (select(listeningHistory)
         ..where((t) => t.syncedAt.isNull())
         ..orderBy([(t) => OrderingTerm(expression: t.listenedAt, mode: OrderingMode.asc)])
         ..limit(limit))
@@ -117,6 +125,16 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
   /// nunca se reintenta.
   Future<void> markSynced(int id) => (update(listeningHistory)..where((t) => t.id.equals(id)))
       .write(ListeningHistoryCompanion(syncedAt: Value(DateTime.now())));
+
+  /// Marca un lote entero como sincronizado en una sola sentencia (H-S4).
+  ///
+  /// Va de la mano con la subida por lotes: si el push manda 200 escuchas en
+  /// un solo upsert, marcarlas de una en una desharía la ganancia.
+  Future<void> markManySynced(List<int> ids) async {
+    if (ids.isEmpty) return;
+    await (update(listeningHistory)..where((t) => t.id.isIn(ids)))
+        .write(ListeningHistoryCompanion(syncedAt: Value(DateTime.now())));
+  }
 
   /// Ajusta los minutos escuchados de una entrada ya registrada.
   ///

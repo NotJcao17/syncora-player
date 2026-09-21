@@ -445,6 +445,20 @@ class MockSupabaseHistoryRepository extends SupabaseHistoryRepository {
   final List<int> insertedTrackIds = [];
   bool shouldFail = false;
 
+  /// Tamano de cada lote recibido, para comprobar que el push agrupa en vez
+  /// de mandar una peticion por escucha (H-S4).
+  final List<int> batchSizes = [];
+
+  @override
+  Future<bool> insertListeningHistoryBatch(List<Map<String, dynamic>> entries) async {
+    if (shouldFail) {
+      throw Exception('Simulated network failure');
+    }
+    batchSizes.add(entries.length);
+    insertedTrackIds.addAll(entries.map((e) => e['track_id'] as int));
+    return true;
+  }
+
   @override
   Future<void> insertListeningHistory({
     required int trackId,

@@ -108,6 +108,17 @@ class ListeningHistory extends Table {
   // `SyncService._syncListeningHistoryInternal()`, para no re-enviar (y
   // duplicar) filas ya sincronizadas en cada sync.
   DateTimeColumn get syncedAt => dateTime().nullable()();
+  // H-S3: true cuando la fila no se grabo en ESTE aparato, sino que la bajo
+  // `SyncService._pullRemoteHistory()` desde la nube.
+  //
+  // El dedupe de escuchas (`findRecentEntryForTrack`) reutiliza la fila de una
+  // escucha reciente de la misma pista en vez de crear otra. Sin esta marca
+  // tambien reutilizaba filas de OTRO dispositivo: si escuchabas un tema en el
+  // PC y lo ponias en el movil cinco minutos despues, el movil editaba la fila
+  // del PC y subia la suma de ambas. Una fila quedaba inflada, la otra escucha
+  // desaparecia, y el resultado dependia del orden en que hubieran corrido los
+  // syncs en cada aparato.
+  BoolColumn get fromRemote => boolean().withDefault(const Constant(false))();
 }
 
 // Pistas descargadas localmente (Fase 6 — Device-specific)
@@ -156,7 +167,7 @@ class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration {
@@ -201,6 +212,9 @@ class SyncoraDatabase extends _$SyncoraDatabase {
         if (from < 9) {
           await m.addColumn(playlists, playlists.sourceRef);
           await m.addColumn(playlists, playlists.isGenerated);
+        }
+        if (from < 10) {
+          await m.addColumn(listeningHistory, listeningHistory.fromRemote);
         }
       },
     );

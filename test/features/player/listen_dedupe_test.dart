@@ -23,7 +23,12 @@ void main() {
 
   tearDown(() => db.close());
 
-  Future<int> insertAt(DateTime when, {int trackId = 42, int ms = 30000}) async {
+  Future<int> insertAt(
+    DateTime when, {
+    int trackId = 42,
+    int ms = 30000,
+    bool fromRemote = false,
+  }) async {
     return db.into(db.listeningHistory).insert(
           ListeningHistoryCompanion.insert(
             trackId: trackId,
@@ -31,6 +36,7 @@ void main() {
             albumId: 1,
             durationListenedMs: ms,
             listenedAt: Value(when),
+            fromRemote: Value(fromRemote),
           ),
         );
   }
@@ -69,6 +75,33 @@ void main() {
       );
 
       expect(found, isNull);
+    });
+
+    // H-S3: el dedupe reutiliza la fila de una escucha reciente en vez de
+    // crear otra. Si esa fila la bajo el sync desde OTRO dispositivo, editarla
+    // inflaba una escucha ajena y hacia desaparecer la propia, con un
+    // resultado que dependia del orden de los syncs en cada aparato.
+    test('ignora una escucha bajada de otro dispositivo', () async {
+      await insertAt(DateTime.now().subtract(const Duration(minutes: 2)), fromRemote: true);
+
+      final found = await dao.findRecentEntryForTrack(
+        42,
+        DateTime.now().subtract(const Duration(minutes: 10)),
+      );
+
+      expect(found, isNull);
+    });
+
+    test('con una propia y una ajena en ventana, elige la propia', () async {
+      await insertAt(DateTime.now().subtract(const Duration(minutes: 1)), fromRemote: true);
+      final propia = await insertAt(DateTime.now().subtract(const Duration(minutes: 3)));
+
+      final found = await dao.findRecentEntryForTrack(
+        42,
+        DateTime.now().subtract(const Duration(minutes: 10)),
+      );
+
+      expect(found?.id, propia);
     });
 
     test('devuelve la mas reciente si hay varias', () async {

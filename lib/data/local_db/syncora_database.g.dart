@@ -2198,6 +2198,21 @@ class $ListeningHistoryTable extends ListeningHistory
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _fromRemoteMeta = const VerificationMeta(
+    'fromRemote',
+  );
+  @override
+  late final GeneratedColumn<bool> fromRemote = GeneratedColumn<bool>(
+    'from_remote',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("from_remote" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2208,6 +2223,7 @@ class $ListeningHistoryTable extends ListeningHistory
     listenedAt,
     durationListenedMs,
     syncedAt,
+    fromRemote,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2277,6 +2293,12 @@ class $ListeningHistoryTable extends ListeningHistory
         syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta),
       );
     }
+    if (data.containsKey('from_remote')) {
+      context.handle(
+        _fromRemoteMeta,
+        fromRemote.isAcceptableOrUnknown(data['from_remote']!, _fromRemoteMeta),
+      );
+    }
     return context;
   }
 
@@ -2318,6 +2340,10 @@ class $ListeningHistoryTable extends ListeningHistory
         DriftSqlType.dateTime,
         data['${effectivePrefix}synced_at'],
       ),
+      fromRemote: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}from_remote'],
+      )!,
     );
   }
 
@@ -2337,6 +2363,7 @@ class ListeningHistoryData extends DataClass
   final DateTime listenedAt;
   final int durationListenedMs;
   final DateTime? syncedAt;
+  final bool fromRemote;
   const ListeningHistoryData({
     required this.id,
     required this.trackId,
@@ -2346,6 +2373,7 @@ class ListeningHistoryData extends DataClass
     required this.listenedAt,
     required this.durationListenedMs,
     this.syncedAt,
+    required this.fromRemote,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2362,6 +2390,7 @@ class ListeningHistoryData extends DataClass
     if (!nullToAbsent || syncedAt != null) {
       map['synced_at'] = Variable<DateTime>(syncedAt);
     }
+    map['from_remote'] = Variable<bool>(fromRemote);
     return map;
   }
 
@@ -2379,6 +2408,7 @@ class ListeningHistoryData extends DataClass
       syncedAt: syncedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(syncedAt),
+      fromRemote: Value(fromRemote),
     );
   }
 
@@ -2396,6 +2426,7 @@ class ListeningHistoryData extends DataClass
       listenedAt: serializer.fromJson<DateTime>(json['listenedAt']),
       durationListenedMs: serializer.fromJson<int>(json['durationListenedMs']),
       syncedAt: serializer.fromJson<DateTime?>(json['syncedAt']),
+      fromRemote: serializer.fromJson<bool>(json['fromRemote']),
     );
   }
   @override
@@ -2410,6 +2441,7 @@ class ListeningHistoryData extends DataClass
       'listenedAt': serializer.toJson<DateTime>(listenedAt),
       'durationListenedMs': serializer.toJson<int>(durationListenedMs),
       'syncedAt': serializer.toJson<DateTime?>(syncedAt),
+      'fromRemote': serializer.toJson<bool>(fromRemote),
     };
   }
 
@@ -2422,6 +2454,7 @@ class ListeningHistoryData extends DataClass
     DateTime? listenedAt,
     int? durationListenedMs,
     Value<DateTime?> syncedAt = const Value.absent(),
+    bool? fromRemote,
   }) => ListeningHistoryData(
     id: id ?? this.id,
     trackId: trackId ?? this.trackId,
@@ -2431,6 +2464,7 @@ class ListeningHistoryData extends DataClass
     listenedAt: listenedAt ?? this.listenedAt,
     durationListenedMs: durationListenedMs ?? this.durationListenedMs,
     syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
+    fromRemote: fromRemote ?? this.fromRemote,
   );
   ListeningHistoryData copyWithCompanion(ListeningHistoryCompanion data) {
     return ListeningHistoryData(
@@ -2446,6 +2480,9 @@ class ListeningHistoryData extends DataClass
           ? data.durationListenedMs.value
           : this.durationListenedMs,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
+      fromRemote: data.fromRemote.present
+          ? data.fromRemote.value
+          : this.fromRemote,
     );
   }
 
@@ -2459,7 +2496,8 @@ class ListeningHistoryData extends DataClass
           ..write('genre: $genre, ')
           ..write('listenedAt: $listenedAt, ')
           ..write('durationListenedMs: $durationListenedMs, ')
-          ..write('syncedAt: $syncedAt')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('fromRemote: $fromRemote')
           ..write(')'))
         .toString();
   }
@@ -2474,6 +2512,7 @@ class ListeningHistoryData extends DataClass
     listenedAt,
     durationListenedMs,
     syncedAt,
+    fromRemote,
   );
   @override
   bool operator ==(Object other) =>
@@ -2486,7 +2525,8 @@ class ListeningHistoryData extends DataClass
           other.genre == this.genre &&
           other.listenedAt == this.listenedAt &&
           other.durationListenedMs == this.durationListenedMs &&
-          other.syncedAt == this.syncedAt);
+          other.syncedAt == this.syncedAt &&
+          other.fromRemote == this.fromRemote);
 }
 
 class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
@@ -2498,6 +2538,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
   final Value<DateTime> listenedAt;
   final Value<int> durationListenedMs;
   final Value<DateTime?> syncedAt;
+  final Value<bool> fromRemote;
   const ListeningHistoryCompanion({
     this.id = const Value.absent(),
     this.trackId = const Value.absent(),
@@ -2507,6 +2548,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
     this.listenedAt = const Value.absent(),
     this.durationListenedMs = const Value.absent(),
     this.syncedAt = const Value.absent(),
+    this.fromRemote = const Value.absent(),
   });
   ListeningHistoryCompanion.insert({
     this.id = const Value.absent(),
@@ -2517,6 +2559,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
     this.listenedAt = const Value.absent(),
     required int durationListenedMs,
     this.syncedAt = const Value.absent(),
+    this.fromRemote = const Value.absent(),
   }) : trackId = Value(trackId),
        artistId = Value(artistId),
        albumId = Value(albumId),
@@ -2530,6 +2573,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
     Expression<DateTime>? listenedAt,
     Expression<int>? durationListenedMs,
     Expression<DateTime>? syncedAt,
+    Expression<bool>? fromRemote,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2541,6 +2585,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
       if (durationListenedMs != null)
         'duration_listened_ms': durationListenedMs,
       if (syncedAt != null) 'synced_at': syncedAt,
+      if (fromRemote != null) 'from_remote': fromRemote,
     });
   }
 
@@ -2553,6 +2598,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
     Value<DateTime>? listenedAt,
     Value<int>? durationListenedMs,
     Value<DateTime?>? syncedAt,
+    Value<bool>? fromRemote,
   }) {
     return ListeningHistoryCompanion(
       id: id ?? this.id,
@@ -2563,6 +2609,7 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
       listenedAt: listenedAt ?? this.listenedAt,
       durationListenedMs: durationListenedMs ?? this.durationListenedMs,
       syncedAt: syncedAt ?? this.syncedAt,
+      fromRemote: fromRemote ?? this.fromRemote,
     );
   }
 
@@ -2593,6 +2640,9 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
     if (syncedAt.present) {
       map['synced_at'] = Variable<DateTime>(syncedAt.value);
     }
+    if (fromRemote.present) {
+      map['from_remote'] = Variable<bool>(fromRemote.value);
+    }
     return map;
   }
 
@@ -2606,7 +2656,8 @@ class ListeningHistoryCompanion extends UpdateCompanion<ListeningHistoryData> {
           ..write('genre: $genre, ')
           ..write('listenedAt: $listenedAt, ')
           ..write('durationListenedMs: $durationListenedMs, ')
-          ..write('syncedAt: $syncedAt')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('fromRemote: $fromRemote')
           ..write(')'))
         .toString();
   }
@@ -5237,6 +5288,7 @@ typedef $$ListeningHistoryTableCreateCompanionBuilder =
       Value<DateTime> listenedAt,
       required int durationListenedMs,
       Value<DateTime?> syncedAt,
+      Value<bool> fromRemote,
     });
 typedef $$ListeningHistoryTableUpdateCompanionBuilder =
     ListeningHistoryCompanion Function({
@@ -5248,6 +5300,7 @@ typedef $$ListeningHistoryTableUpdateCompanionBuilder =
       Value<DateTime> listenedAt,
       Value<int> durationListenedMs,
       Value<DateTime?> syncedAt,
+      Value<bool> fromRemote,
     });
 
 class $$ListeningHistoryTableFilterComposer
@@ -5296,6 +5349,11 @@ class $$ListeningHistoryTableFilterComposer
 
   ColumnFilters<DateTime> get syncedAt => $composableBuilder(
     column: $table.syncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get fromRemote => $composableBuilder(
+    column: $table.fromRemote,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -5348,6 +5406,11 @@ class $$ListeningHistoryTableOrderingComposer
     column: $table.syncedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get fromRemote => $composableBuilder(
+    column: $table.fromRemote,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ListeningHistoryTableAnnotationComposer
@@ -5386,6 +5449,11 @@ class $$ListeningHistoryTableAnnotationComposer
 
   GeneratedColumn<DateTime> get syncedAt =>
       $composableBuilder(column: $table.syncedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get fromRemote => $composableBuilder(
+    column: $table.fromRemote,
+    builder: (column) => column,
+  );
 }
 
 class $$ListeningHistoryTableTableManager
@@ -5433,6 +5501,7 @@ class $$ListeningHistoryTableTableManager
                 Value<DateTime> listenedAt = const Value.absent(),
                 Value<int> durationListenedMs = const Value.absent(),
                 Value<DateTime?> syncedAt = const Value.absent(),
+                Value<bool> fromRemote = const Value.absent(),
               }) => ListeningHistoryCompanion(
                 id: id,
                 trackId: trackId,
@@ -5442,6 +5511,7 @@ class $$ListeningHistoryTableTableManager
                 listenedAt: listenedAt,
                 durationListenedMs: durationListenedMs,
                 syncedAt: syncedAt,
+                fromRemote: fromRemote,
               ),
           createCompanionCallback:
               ({
@@ -5453,6 +5523,7 @@ class $$ListeningHistoryTableTableManager
                 Value<DateTime> listenedAt = const Value.absent(),
                 required int durationListenedMs,
                 Value<DateTime?> syncedAt = const Value.absent(),
+                Value<bool> fromRemote = const Value.absent(),
               }) => ListeningHistoryCompanion.insert(
                 id: id,
                 trackId: trackId,
@@ -5462,6 +5533,7 @@ class $$ListeningHistoryTableTableManager
                 listenedAt: listenedAt,
                 durationListenedMs: durationListenedMs,
                 syncedAt: syncedAt,
+                fromRemote: fromRemote,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
