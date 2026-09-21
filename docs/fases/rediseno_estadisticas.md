@@ -228,36 +228,64 @@ migración no falló" no probaba nada.
   fotos y canciones con sus cinco portadas, sin cifras por elemento. Las
   tarjetas de "variedad" y "momento favorito" se quitaron por aportar poco.
 
-### Exportar desde el Wrapped no funciona en escritorio (causa sin confirmar)
+### Exportar desde el Wrapped cuelga la app en Windows — SIN RESOLVER
 
-En Windows, rasterizar la tarjeta con `RenderRepaintBoundary.toImage` tumbaba
-la app de forma reproducible: la interfaz dejaba de responder al instante, el
-proceso seguia vivo (la musica no se cortaba) y **no llegaba ni una linea a la
-consola de Dart** -- firma de un fallo nativo, no de una excepcion capturable.
+Pulsar el boton de exportar en escritorio dejaba la app sin responder al
+instante: el proceso seguia vivo (la musica no se cortaba) y **no llegaba ni
+una linea a la consola de Dart**. Es la firma de un fallo en codigo nativo, no
+de una excepcion capturable.
 
-Se intento, sin exito: bajar la resolucion de salida (ancho objetivo 1080 en
-vez de `pixelRatio: 3`), esperar a `endOfFrame` antes de capturar, y quitar
-del arbol capturado todas las sombras con desenfoque. Tambien se corrigio un
-uso-despues-de-liberar real en esa ruta (se devolvia una VISTA sobre el bufer
-de la imagen mientras un `finally` la liberaba, sin esperar a que terminara la
-escritura del archivo); ese fallo era genuino y afectaba tambien a movil, pero
-no era la causa del cuelgue en Windows.
+**Lo que ya se descarto — no repetirlo:**
 
+| Hipotesis | Como se probo | Resultado |
+|---|---|---|
+| Resolucion excesiva de `toImage` | Ancho objetivo 1080 px en vez de `pixelRatio: 3` | Sigue colgando |
+| Frame en vuelo al capturar | `await WidgetsBinding.instance.endOfFrame` antes | Sigue colgando |
+| Desenfoques en el arbol capturado (Impeller) | Quitadas todas las `BoxShadow` con blur | Sigue colgando |
+| El rasterizado en si | Sustituido por copiar texto al portapapeles, que **no toca la GPU** | Cuelgue identico e instantaneo |
+| `AppToast.show` (lo unico comun a ambas rutas) | Comprobado el aviso de "me gusta" en Windows | Funciona con normalidad |
 
-**Actualizacion.** El diagnostico de `toImage` era erroneo. Se sustituyo la
-descarga de imagen por una accion que ni siquiera toca la GPU -- copiar un
-resumen de texto al portapapeles -- y el cuelgue fue **identico e instantaneo**.
-Eso descarta el rasterizado por completo.
+El cuarto punto es el importante: **no es el rasterizado**. Y el quinto cierra
+la unica pista que quedaba por el lado de Dart.
 
-Lo unico que compartian las dos rutas es `AppToast.show`. Encaja con el detalle
-de que en la version con imagen el archivo SI llegaba a escribirse antes de
-colgarse: el fallo ocurria despues, al mostrar el aviso. **Queda sin
-confirmar** porque no se pudo reproducir fuera de esa maquina.
+**Hallazgo colateral, ese si real:** `_renderCard` devolvia una VISTA sobre el
+bufer de la imagen (`asUint8List()` no copia) mientras un `finally` liberaba la
+`ui.Image`, sin esperar a que terminara la escritura del archivo — un
+uso-despues-de-liberar que afectaba tambien a movil. Corregido: se copian los
+bytes, se cierra la imagen, y solo entonces se escribe.
 
-**Decision:** en escritorio no hay accion de exportar. En movil se mantiene la
-imagen, que ahi funciona. Si se retoma, empezar por el toast en Windows, no por
-la exportacion.
+**Estado:** en escritorio no hay accion de exportar. En movil se mantiene
+compartir la imagen, que ahi funciona. Si se retoma, la unica via que queda es
+una traza nativa (`flutter run --verbose`, o un volcado del proceso colgado):
+por el lado de Dart no se ve absolutamente nada.
 
+## Diseno del Wrapped
+
+Tres tarjetas, no cinco: resumen, artistas y canciones. Las de "variedad" y
+"momento favorito" se quitaron por aportar poco — vale mas una portada grande
+con los cinco nombres que una pantalla por cifra.
+
+- **Resumen:** collage de tres portadas ladeadas, el tiempo total como titular
+  (peso 900, tracking negativo), los dos rankings de cinco como tabla
+  editorial con filete entre filas, y una banda inferior con las tres cifras.
+  Deliberadamente **no** es la plantilla de Spotify (portada + dos listas
+  numeradas), que es lo que tenia la primera version.
+- **Artistas y canciones:** el numero uno en grande y los otros cuatro en
+  fila, todos con imagen y **sin cifras por elemento** — el orden ya lo dice.
+- Sin genero en el resumen: la pastilla competia con la cifra grande. El dato
+  vive en la pantalla de Estadisticas, con sus barras y porcentajes.
+
+Dos detalles que conviene no volver a romper:
+
+- **El radio interior de `_FramedImage` descuenta el grosor del borde.** Un
+  `Container` con borde coloca al hijo por dentro de ese borde, asi que
+  recortar la imagen con el mismo radio deja las dos curvas descentradas y se
+  ve el desajuste en las esquinas.
+- **Todo escala con `_k`**, derivado del alto real de la tarjeta (~460 px en
+  un movil estrecho, ~890 en escritorio). Con tamanos fijos, o se recorta
+  abajo o deja franja vacia arriba. `wrapped_card_test.dart` pinta las tres
+  tarjetas a 260/320/420/500 px con textos larguisimos y verifica que no hay
+  desbordes.
 
 ## Limpieza de datos hecha
 

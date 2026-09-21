@@ -89,14 +89,13 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
   /// de sobra para una story y acota el pico de memoria.
   static const double _exportTargetWidth = 1080;
 
-  /// Rasteriza la tarjeta visible a PNG.
+  /// Rasteriza la tarjeta visible a PNG. Solo se usa en móvil (ver [_share]).
   ///
-  /// En Windows la app corre sobre **Impeller** (por defecto desde Flutter
-  /// 3.29), y ahí `toImage` es delicado: si se llama con un frame en vuelo el
-  /// hilo de rasterizado puede quedarse bloqueado, y como el proceso sigue
-  /// vivo (la música no se corta) parece un cuelgue sin causa. De ahí la
-  /// espera a `endOfFrame` y que las tarjetas ya no lleven sombras con
-  /// desenfoque: los blurs son justo lo que peor se lleva con esta ruta.
+  /// La espera a `endOfFrame` y la ausencia de sombras con desenfoque en las
+  /// tarjetas vienen de intentar arreglar el cuelgue de escritorio. **No lo
+  /// arreglaron** y el diagnóstico resultó equivocado, pero se mantienen: son
+  /// baratas y correctas de por sí (capturar sin un frame en vuelo es lo
+  /// razonable, y las sombras no se veían sobre el fondo oscuro).
   Future<File?> _renderCard() async {
     final boundary =
         _keyFor(_index).currentContext?.findRenderObject() as RenderRepaintBoundary?;
@@ -121,8 +120,9 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
     // `finally` se ejecuta al salir del bloque, sin esperar a que la
     // escritura del archivo termine. Es decir, se podía liberar la memoria
     // mientras todavía se estaba leyendo de ella — un uso después de liberar,
-    // que revienta en código nativo sin dejar ni una línea en la consola de
-    // Dart. Encaja con el síntoma exacto: cuelgue instantáneo, sin logs.
+    // que revienta en código nativo sin dejar rastro en la consola de Dart.
+    // (No era la causa del cuelgue de escritorio, pero sí un fallo real que
+    // afectaba igual a móvil.)
     //
     // Ahora: se copian los bytes, se cierra la imagen, y solo entonces se
     // escribe el archivo.
@@ -156,19 +156,26 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
 
   /// Compartir la tarjeta como imagen. **Solo en móvil.**
   ///
-  /// En escritorio no hay acción de exportar, y no por falta de intentos. En
-  /// Windows, pulsar ese botón dejaba la app sin responder al instante: el
-  /// proceso seguía vivo (la música no se cortaba) y no llegaba ni una línea a
-  /// la consola de Dart. Se probó con la exportación a PNG (bajando la
-  /// resolución, esperando a `endOfFrame`, quitando del árbol capturado las
-  /// sombras con desenfoque, y corrigiendo un uso-después-de-liberar real en
-  /// esa ruta) y después con una acción que ni siquiera tocaba la GPU —
-  /// copiar un resumen de texto al portapapeles—, y el cuelgue fue idéntico.
+  /// En escritorio no hay acción de exportar, y **la causa sigue sin
+  /// identificar**. En Windows, pulsar ese botón dejaba la app sin responder
+  /// al instante: el proceso seguía vivo (la música no se cortaba) y no
+  /// llegaba ni una línea a la consola de Dart.
   ///
-  /// Que las dos rutas fallen igual descarta el rasterizado: **lo único que
-  /// compartían era `AppToast.show`**. Queda sin confirmar, porque no se pudo
-  /// reproducir fuera de esa máquina. Si algún día se retoma, empezar por ahí
-  /// y no por la exportación.
+  /// Lo que ya se descartó, para no repetirlo:
+  ///
+  /// - **No es el rasterizado.** Se probó bajando la resolución de salida,
+  ///   esperando a `endOfFrame` y quitando del árbol capturado las sombras
+  ///   con desenfoque. Después se sustituyó por una acción que no toca la GPU
+  ///   —copiar texto al portapapeles— y el cuelgue fue idéntico e instantáneo.
+  /// - **No es `AppToast`**, que era lo único que compartían ambas rutas: los
+  ///   avisos funcionan con normalidad en el resto de la app en Windows.
+  ///
+  /// Sí se corrigió de paso un uso-después-de-liberar real en `_renderCard`
+  /// (ver allí), que afectaba también a móvil aunque no fuera esto.
+  ///
+  /// Queda pendiente. La siguiente pista útil sería una traza nativa
+  /// (`flutter run --verbose`, o un volcado del proceso colgado), porque por
+  /// el lado de Dart no se ve nada.
   Future<void> _share() async {
     if (_isBusy) return;
     setState(() => _isBusy = true);
@@ -513,7 +520,6 @@ class WrappedCardData {
 
   /// Franja inferior del resumen.
   final String totalTime;
-  final String topGenre;
   final List<({String label, String value})> facts;
 
   const WrappedCardData({
@@ -525,7 +531,6 @@ class WrappedCardData {
     this.artists = const [],
     this.tracks = const [],
     this.totalTime = '',
-    this.topGenre = '',
     this.facts = const [],
   });
 }
@@ -578,7 +583,6 @@ List<WrappedCardData> buildWrappedCards({
       artists: artistItems,
       tracks: trackItems,
       totalTime: formatListeningTime(s.totalMs),
-      topGenre: s.topGenres.isEmpty ? '' : s.topGenres.first.genre,
       facts: [
         (label: 'Artistas', value: '${s.distinctArtists}'),
         (label: 'Canciones', value: '${s.distinctTracks}'),
@@ -734,90 +738,50 @@ class WrappedCard extends StatelessWidget {
   /// vacía arriba; escalando, llena igual de bien en ambos.
   double _k(double height) => (height / 560).clamp(0.82, 1.4);
 
-  /// Titular: regla de acento, la cifra de tiempo, y el género en pastilla.
+  /// Titular: regla de acento y la cifra de tiempo.
+  ///
+  /// Sin género: la pastilla que lo mostraba competía con la cifra grande y
+  /// desequilibraba la línea. El dato sigue en la pantalla de Estadísticas,
+  /// con sus barras y porcentajes, que es donde se lee mejor.
   Widget _timeHeadline(double k) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 42 * k,
-                height: 3,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              SizedBox(height: 10 * k),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  data.totalTime,
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 46 * k,
-                    fontWeight: FontWeight.w900,
-                    height: 0.95,
-                    letterSpacing: -2,
-                  ),
-                ),
-              ),
-              SizedBox(height: 3 * k),
-              Text(
-                'ESCUCHADOS',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 10.5 * k,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 2.6,
-                ),
-              ),
-            ],
+        Container(
+          width: 42 * k,
+          height: 3,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(2),
           ),
         ),
-        if (data.topGenre.isNotEmpty) ...[
-          SizedBox(width: 8 * k),
-          Container(
-            constraints: BoxConstraints(maxWidth: 120 * k),
-            padding: EdgeInsets.symmetric(horizontal: 12 * k, vertical: 7 * k),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'GÉNERO',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.65),
-                    fontSize: 8 * k,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                Text(
-                  data.topGenre,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14 * k,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
+        SizedBox(height: 10 * k),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            data.totalTime,
+            maxLines: 1,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 46 * k,
+              fontWeight: FontWeight.w900,
+              height: 0.95,
+              letterSpacing: -2,
             ),
           ),
-        ],
+        ),
+        SizedBox(height: 3 * k),
+        Text(
+          'ESCUCHADOS',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.8),
+            fontSize: 10.5 * k,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 2.6,
+          ),
+        ),
       ],
     );
   }

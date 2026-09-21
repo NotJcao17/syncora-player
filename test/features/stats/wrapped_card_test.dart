@@ -37,7 +37,6 @@ void main() {
       WrappedItem(title: 'Quinta Cancion'),
     ],
     totalTime: '1234 h 56 min',
-    topGenre: 'Electronica Experimental',
     facts: const [
       (label: 'Artistas', value: '9999'),
       (label: 'Canciones', value: '9999'),
@@ -105,7 +104,7 @@ void main() {
     });
   }
 
-  testWidgets('el resumen aguanta sin genero y sin tops', (tester) async {
+  testWidgets('el resumen aguanta sin tops', (tester) async {
     await pintar(
       tester,
       WrappedCardData(
