@@ -1,4 +1,5 @@
 import 'bottom_chrome_metrics.dart';
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -19,6 +20,7 @@ import '../../data/sync/sync_service.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../features/auth/local_mode_provider.dart';
 import '../../features/download/download_provider.dart';
+import '../../features/stats/genre_backfill_service.dart';
 import '../../features/home/mixes/on_repeat_service.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
@@ -110,6 +112,19 @@ class _AppShellState extends ConsumerState<AppShell> {
       try {
         await ref.read(onRepeatPlaylistProvider.future);
       } catch (_) {}
+
+      // H-S6: rellena en segundo plano el género de las escuchas que no lo
+      // tienen (ninguna, hasta esta corrección). Va al final y sin `await`
+      // porque no bloquea nada de lo que el usuario ve: son peticiones a
+      // Deezer por álbum, cacheadas para siempre, y lo que no alcance a
+      // resolver esta vez lo resuelve el próximo arranque. Después empuja el
+      // resultado, que el relleno deja marcado como pendiente de subir.
+      unawaited(() async {
+        final filled = await ref.read(genreBackfillServiceProvider).run();
+        if (filled > 0 && !ref.read(localModeProvider)) {
+          await ref.read(syncServiceProvider).syncListeningHistory();
+        }
+      }());
     });
   }
 

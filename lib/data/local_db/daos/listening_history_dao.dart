@@ -3,7 +3,7 @@ import '../syncora_database.dart';
 
 part 'listening_history_dao.g.dart';
 
-@DriftAccessor(tables: [ListeningHistory])
+@DriftAccessor(tables: [ListeningHistory, AlbumGenreCache])
 class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$ListeningHistoryDaoMixin {
   ListeningHistoryDao(super.db);
 
@@ -177,6 +177,61 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
   /// `syncListeningHistory()` y contamina las estadísticas/Wrapped de una
   /// cuenta que no es de donde salieron esas escuchas.
   Future<int> deleteAll() => delete(listeningHistory).go();
+
+  // --------------------------------------------------------------------
+  // Género por álbum (H-S6)
+  // --------------------------------------------------------------------
+
+  /// Álbumes que aparecen en escuchas sin género, los más recientes primero.
+  ///
+  /// Es la lista de trabajo del relleno de géneros. **Incluye a propósito los
+  /// álbumes que ya están en [AlbumGenreCache]**: una escucha nueva de un
+  /// álbum conocido también necesita que le copien el género, y eso no cuesta
+  /// ninguna petición. Filtrarlos aquí (como hacía la primera versión, con un
+  /// `LEFT JOIN ... IS NULL`) dejaba esas escuchas sin género para siempre —
+  /// lo cazó el test "no vuelve a pedir un album ya resuelto".
+  Future<List<int>> albumIdsMissingGenre({int limit = 25}) async {
+    final rows = await customSelect(
+      'SELECT h.album_id AS album_id '
+      'FROM listening_history h '
+      'WHERE h.genre IS NULL AND h.album_id > 0 '
+      'GROUP BY h.album_id '
+      'ORDER BY MAX(h.listened_at) DESC '
+      'LIMIT ?',
+      variables: [Variable.withInt(limit)],
+      readsFrom: {listeningHistory},
+    ).get();
+    return rows.map((r) => r.read<int>('album_id')).toList();
+  }
+
+  /// Géneros ya resueltos para [albumIds].
+  Future<Map<int, String>> cachedGenres(Set<int> albumIds) async {
+    if (albumIds.isEmpty) return {};
+    final rows =
+        await (select(albumGenreCache)..where((t) => t.albumId.isIn(albumIds))).get();
+    return {for (final r in rows) r.albumId: r.genre};
+  }
+
+  /// Guarda el género de un álbum. Cadena vacía = "Deezer no tiene género
+  /// para este álbum", y se cachea igual para no reintentarlo en cada corrida.
+  Future<void> cacheAlbumGenre(int albumId, String genre) =>
+      into(albumGenreCache).insertOnConflictUpdate(
+        AlbumGenreCacheData(albumId: albumId, genre: genre, fetchedAt: DateTime.now()),
+      );
+
+  /// Rellena el género de las escuchas de [albumId] que aún no lo tienen.
+  ///
+  /// Las deja sin sincronizar a propósito para que el género suba también a
+  /// Supabase: es ahí donde lo lee la pantalla de Estadísticas cuando hay
+  /// cuenta, así que rellenarlo solo en local no serviría de nada.
+  Future<int> applyGenreToAlbum(int albumId, String genre) async {
+    if (genre.isEmpty) return 0;
+    return (update(listeningHistory)
+          ..where((t) => t.albumId.equals(albumId) & t.genre.isNull()))
+        .write(
+      ListeningHistoryCompanion(genre: Value(genre), syncedAt: const Value(null)),
+    );
+  }
 
   /// Obtiene los IDs de los artistas más escuchados por el usuario según su historial
   Future<List<int>> getTopArtistIds({int limit = 5}) async {

@@ -6,6 +6,7 @@ part of 'listening_history_dao.dart';
 mixin _$ListeningHistoryDaoMixin on DatabaseAccessor<SyncoraDatabase> {
   $ListeningHistoryTable get listeningHistory =>
       attachedDatabase.listeningHistory;
+  $AlbumGenreCacheTable get albumGenreCache => attachedDatabase.albumGenreCache;
   ListeningHistoryDaoManager get managers => ListeningHistoryDaoManager(this);
 }
 
@@ -16,5 +17,10 @@ class ListeningHistoryDaoManager {
       $$ListeningHistoryTableTableManager(
         _db.attachedDatabase,
         _db.listeningHistory,
+      );
+  $$AlbumGenreCacheTableTableManager get albumGenreCache =>
+      $$AlbumGenreCacheTableTableManager(
+        _db.attachedDatabase,
+        _db.albumGenreCache,
       );
 }

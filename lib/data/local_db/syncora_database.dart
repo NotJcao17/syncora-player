@@ -121,6 +121,25 @@ class ListeningHistory extends Table {
   BoolColumn get fromRemote => boolean().withDefault(const Constant(false))();
 }
 
+/// Genero de cada album, resuelto una sola vez contra `/album/{id}` (H-S6).
+///
+/// Deezer no devuelve genero en ningun endpoint de CANCION (`/search`,
+/// `/track/{id}`, `/artist/{id}/top`): solo `/album/{id}` lo trae, en
+/// `genres.data[0].name`. Pedirlo en cada escucha seria una peticion extra
+/// por cancion reproducida, asi que se resuelve por album y se cachea sin
+/// caducidad -- el genero de un album no cambia.
+///
+/// Una fila con [genre] vacio significa "ya se consulto y Deezer no tiene
+/// genero para este album": tambien se cachea, para no reintentarlo siempre.
+class AlbumGenreCache extends Table {
+  IntColumn get albumId => integer()();
+  TextColumn get genre => text()();
+  DateTimeColumn get fetchedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {albumId};
+}
+
 // Pistas descargadas localmente (Fase 6 — Device-specific)
 class DownloadedTracks extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -160,14 +179,22 @@ class StatsMetadataCache extends Table {
 }
 
 @DriftDatabase(
-  tables: [Playlists, PlaylistTracks, SavedAlbums, ListeningHistory, DownloadedTracks, StatsMetadataCache],
+  tables: [
+    Playlists,
+    PlaylistTracks,
+    SavedAlbums,
+    ListeningHistory,
+    DownloadedTracks,
+    StatsMetadataCache,
+    AlbumGenreCache,
+  ],
   daos: [PlaylistDao, SavedAlbumDao, ListeningHistoryDao, DownloadedTrackDao, StatsMetadataCacheDao],
 )
 class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration {
@@ -215,6 +242,9 @@ class SyncoraDatabase extends _$SyncoraDatabase {
         }
         if (from < 10) {
           await m.addColumn(listeningHistory, listeningHistory.fromRemote);
+        }
+        if (from < 11) {
+          await m.createTable(albumGenreCache);
         }
       },
     );

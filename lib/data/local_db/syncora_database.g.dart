@@ -4017,6 +4017,258 @@ class StatsMetadataCacheCompanion
   }
 }
 
+class $AlbumGenreCacheTable extends AlbumGenreCache
+    with TableInfo<$AlbumGenreCacheTable, AlbumGenreCacheData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AlbumGenreCacheTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _albumIdMeta = const VerificationMeta(
+    'albumId',
+  );
+  @override
+  late final GeneratedColumn<int> albumId = GeneratedColumn<int>(
+    'album_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _genreMeta = const VerificationMeta('genre');
+  @override
+  late final GeneratedColumn<String> genre = GeneratedColumn<String>(
+    'genre',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [albumId, genre, fetchedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'album_genre_cache';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AlbumGenreCacheData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('album_id')) {
+      context.handle(
+        _albumIdMeta,
+        albumId.isAcceptableOrUnknown(data['album_id']!, _albumIdMeta),
+      );
+    }
+    if (data.containsKey('genre')) {
+      context.handle(
+        _genreMeta,
+        genre.isAcceptableOrUnknown(data['genre']!, _genreMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_genreMeta);
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {albumId};
+  @override
+  AlbumGenreCacheData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AlbumGenreCacheData(
+      albumId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}album_id'],
+      )!,
+      genre: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}genre'],
+      )!,
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AlbumGenreCacheTable createAlias(String alias) {
+    return $AlbumGenreCacheTable(attachedDatabase, alias);
+  }
+}
+
+class AlbumGenreCacheData extends DataClass
+    implements Insertable<AlbumGenreCacheData> {
+  final int albumId;
+  final String genre;
+  final DateTime fetchedAt;
+  const AlbumGenreCacheData({
+    required this.albumId,
+    required this.genre,
+    required this.fetchedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['album_id'] = Variable<int>(albumId);
+    map['genre'] = Variable<String>(genre);
+    map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    return map;
+  }
+
+  AlbumGenreCacheCompanion toCompanion(bool nullToAbsent) {
+    return AlbumGenreCacheCompanion(
+      albumId: Value(albumId),
+      genre: Value(genre),
+      fetchedAt: Value(fetchedAt),
+    );
+  }
+
+  factory AlbumGenreCacheData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AlbumGenreCacheData(
+      albumId: serializer.fromJson<int>(json['albumId']),
+      genre: serializer.fromJson<String>(json['genre']),
+      fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'albumId': serializer.toJson<int>(albumId),
+      'genre': serializer.toJson<String>(genre),
+      'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
+    };
+  }
+
+  AlbumGenreCacheData copyWith({
+    int? albumId,
+    String? genre,
+    DateTime? fetchedAt,
+  }) => AlbumGenreCacheData(
+    albumId: albumId ?? this.albumId,
+    genre: genre ?? this.genre,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+  );
+  AlbumGenreCacheData copyWithCompanion(AlbumGenreCacheCompanion data) {
+    return AlbumGenreCacheData(
+      albumId: data.albumId.present ? data.albumId.value : this.albumId,
+      genre: data.genre.present ? data.genre.value : this.genre,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AlbumGenreCacheData(')
+          ..write('albumId: $albumId, ')
+          ..write('genre: $genre, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(albumId, genre, fetchedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AlbumGenreCacheData &&
+          other.albumId == this.albumId &&
+          other.genre == this.genre &&
+          other.fetchedAt == this.fetchedAt);
+}
+
+class AlbumGenreCacheCompanion extends UpdateCompanion<AlbumGenreCacheData> {
+  final Value<int> albumId;
+  final Value<String> genre;
+  final Value<DateTime> fetchedAt;
+  const AlbumGenreCacheCompanion({
+    this.albumId = const Value.absent(),
+    this.genre = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+  });
+  AlbumGenreCacheCompanion.insert({
+    this.albumId = const Value.absent(),
+    required String genre,
+    this.fetchedAt = const Value.absent(),
+  }) : genre = Value(genre);
+  static Insertable<AlbumGenreCacheData> custom({
+    Expression<int>? albumId,
+    Expression<String>? genre,
+    Expression<DateTime>? fetchedAt,
+  }) {
+    return RawValuesInsertable({
+      if (albumId != null) 'album_id': albumId,
+      if (genre != null) 'genre': genre,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+    });
+  }
+
+  AlbumGenreCacheCompanion copyWith({
+    Value<int>? albumId,
+    Value<String>? genre,
+    Value<DateTime>? fetchedAt,
+  }) {
+    return AlbumGenreCacheCompanion(
+      albumId: albumId ?? this.albumId,
+      genre: genre ?? this.genre,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (albumId.present) {
+      map['album_id'] = Variable<int>(albumId.value);
+    }
+    if (genre.present) {
+      map['genre'] = Variable<String>(genre.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AlbumGenreCacheCompanion(')
+          ..write('albumId: $albumId, ')
+          ..write('genre: $genre, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$SyncoraDatabase extends GeneratedDatabase {
   _$SyncoraDatabase(QueryExecutor e) : super(e);
   $SyncoraDatabaseManager get managers => $SyncoraDatabaseManager(this);
@@ -4031,6 +4283,9 @@ abstract class _$SyncoraDatabase extends GeneratedDatabase {
   );
   late final $StatsMetadataCacheTable statsMetadataCache =
       $StatsMetadataCacheTable(this);
+  late final $AlbumGenreCacheTable albumGenreCache = $AlbumGenreCacheTable(
+    this,
+  );
   late final PlaylistDao playlistDao = PlaylistDao(this as SyncoraDatabase);
   late final SavedAlbumDao savedAlbumDao = SavedAlbumDao(
     this as SyncoraDatabase,
@@ -4054,6 +4309,7 @@ abstract class _$SyncoraDatabase extends GeneratedDatabase {
     listeningHistory,
     downloadedTracks,
     statsMetadataCache,
+    albumGenreCache,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -6231,6 +6487,172 @@ typedef $$StatsMetadataCacheTableProcessedTableManager =
       StatsMetadataCacheData,
       PrefetchHooks Function()
     >;
+typedef $$AlbumGenreCacheTableCreateCompanionBuilder =
+    AlbumGenreCacheCompanion Function({
+      Value<int> albumId,
+      required String genre,
+      Value<DateTime> fetchedAt,
+    });
+typedef $$AlbumGenreCacheTableUpdateCompanionBuilder =
+    AlbumGenreCacheCompanion Function({
+      Value<int> albumId,
+      Value<String> genre,
+      Value<DateTime> fetchedAt,
+    });
+
+class $$AlbumGenreCacheTableFilterComposer
+    extends Composer<_$SyncoraDatabase, $AlbumGenreCacheTable> {
+  $$AlbumGenreCacheTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get albumId => $composableBuilder(
+    column: $table.albumId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get genre => $composableBuilder(
+    column: $table.genre,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AlbumGenreCacheTableOrderingComposer
+    extends Composer<_$SyncoraDatabase, $AlbumGenreCacheTable> {
+  $$AlbumGenreCacheTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get albumId => $composableBuilder(
+    column: $table.albumId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get genre => $composableBuilder(
+    column: $table.genre,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AlbumGenreCacheTableAnnotationComposer
+    extends Composer<_$SyncoraDatabase, $AlbumGenreCacheTable> {
+  $$AlbumGenreCacheTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get albumId =>
+      $composableBuilder(column: $table.albumId, builder: (column) => column);
+
+  GeneratedColumn<String> get genre =>
+      $composableBuilder(column: $table.genre, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+}
+
+class $$AlbumGenreCacheTableTableManager
+    extends
+        RootTableManager<
+          _$SyncoraDatabase,
+          $AlbumGenreCacheTable,
+          AlbumGenreCacheData,
+          $$AlbumGenreCacheTableFilterComposer,
+          $$AlbumGenreCacheTableOrderingComposer,
+          $$AlbumGenreCacheTableAnnotationComposer,
+          $$AlbumGenreCacheTableCreateCompanionBuilder,
+          $$AlbumGenreCacheTableUpdateCompanionBuilder,
+          (
+            AlbumGenreCacheData,
+            BaseReferences<
+              _$SyncoraDatabase,
+              $AlbumGenreCacheTable,
+              AlbumGenreCacheData
+            >,
+          ),
+          AlbumGenreCacheData,
+          PrefetchHooks Function()
+        > {
+  $$AlbumGenreCacheTableTableManager(
+    _$SyncoraDatabase db,
+    $AlbumGenreCacheTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AlbumGenreCacheTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AlbumGenreCacheTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AlbumGenreCacheTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> albumId = const Value.absent(),
+                Value<String> genre = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
+              }) => AlbumGenreCacheCompanion(
+                albumId: albumId,
+                genre: genre,
+                fetchedAt: fetchedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> albumId = const Value.absent(),
+                required String genre,
+                Value<DateTime> fetchedAt = const Value.absent(),
+              }) => AlbumGenreCacheCompanion.insert(
+                albumId: albumId,
+                genre: genre,
+                fetchedAt: fetchedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AlbumGenreCacheTableProcessedTableManager =
+    ProcessedTableManager<
+      _$SyncoraDatabase,
+      $AlbumGenreCacheTable,
+      AlbumGenreCacheData,
+      $$AlbumGenreCacheTableFilterComposer,
+      $$AlbumGenreCacheTableOrderingComposer,
+      $$AlbumGenreCacheTableAnnotationComposer,
+      $$AlbumGenreCacheTableCreateCompanionBuilder,
+      $$AlbumGenreCacheTableUpdateCompanionBuilder,
+      (
+        AlbumGenreCacheData,
+        BaseReferences<
+          _$SyncoraDatabase,
+          $AlbumGenreCacheTable,
+          AlbumGenreCacheData
+        >,
+      ),
+      AlbumGenreCacheData,
+      PrefetchHooks Function()
+    >;
 
 class $SyncoraDatabaseManager {
   final _$SyncoraDatabase _db;
@@ -6247,4 +6669,6 @@ class $SyncoraDatabaseManager {
       $$DownloadedTracksTableTableManager(_db, _db.downloadedTracks);
   $$StatsMetadataCacheTableTableManager get statsMetadataCache =>
       $$StatsMetadataCacheTableTableManager(_db, _db.statsMetadataCache);
+  $$AlbumGenreCacheTableTableManager get albumGenreCache =>
+      $$AlbumGenreCacheTableTableManager(_db, _db.albumGenreCache);
 }

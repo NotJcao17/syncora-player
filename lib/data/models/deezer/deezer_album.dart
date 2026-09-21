@@ -33,6 +33,16 @@ class DeezerAlbum {
   /// Inicio.
   final int genreId;
 
+  /// Nombre legible del genero (`genres.data[0].name` de `/album/{id}`),
+  /// cadena vacia si el endpoint no lo trae.
+  ///
+  /// Verificado en vivo: `/album/302127` devuelve
+  /// `"genres":{"data":[{"id":106,"name":"Electro",...}]}`. Es la unica
+  /// fuente de NOMBRE de genero que da la API publica -- [genreId] por si
+  /// solo obligaria a cruzar contra `/genre`, que no cubre todos los ids.
+  /// De aca sale la columna `genre` de `listening_history` (H-S6).
+  final String genreName;
+
   const DeezerAlbum({
     required this.id,
     required this.title,
@@ -44,6 +54,7 @@ class DeezerAlbum {
     this.tracks = const [],
     this.recordType = '',
     this.genreId = 0,
+    this.genreName = '',
   });
 
   /// Copia con el artista corregido.
@@ -65,6 +76,7 @@ class DeezerAlbum {
         tracks: tracks,
         recordType: recordType,
         genreId: genreId,
+        genreName: genreName,
       );
 
   /// ¿Es un lanzamiento corto (sencillo o EP) en vez de un álbum?
@@ -77,7 +89,16 @@ class DeezerAlbum {
 
   factory DeezerAlbum.fromJson(Map<String, dynamic> json) {
     final artistMap = json['artist'] as Map<String, dynamic>? ?? {};
-    
+
+    // `genres.data[0].name` en `/album/{id}`; ausente en los álbumes
+    // embebidos dentro de otras respuestas. `genre_name` cubre el camino de
+    // vuelta desde [toJson] (caché local).
+    final genresData = (json['genres'] as Map<String, dynamic>?)?['data'];
+    final genreNameFromJson = (genresData is List && genresData.isNotEmpty)
+        ? ((genresData.first as Map)['name'] as String? ?? '')
+        : (json['genre_name'] as String? ?? '');
+
+
     List<DeezerTrack> tracksList = [];
     if (json['tracks'] != null && json['tracks']['data'] is List) {
       final tracksData = json['tracks']['data'] as List;
@@ -108,6 +129,7 @@ class DeezerAlbum {
       tracks: tracksList,
       recordType: (json['record_type'] as String? ?? '').toLowerCase(),
       genreId: json['genre_id'] as int? ?? 0,
+      genreName: genreNameFromJson,
     );
   }
 
@@ -121,5 +143,6 @@ class DeezerAlbum {
         'release_date': releaseDate,
         'record_type': recordType,
         'genre_id': genreId,
+        'genre_name': genreName,
       };
 }
