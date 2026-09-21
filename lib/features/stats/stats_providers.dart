@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/daos/stats_metadata_cache_dao.dart';
@@ -8,79 +9,136 @@ import '../../data/models/deezer/deezer_track.dart';
 import '../../data/supabase/supabase_stats_repository.dart';
 import '../auth/local_mode_provider.dart';
 import 'stats_calculator.dart';
+import 'stats_models.dart';
 
 final supabaseStatsRepositoryProvider = Provider<SupabaseStatsRepository>((ref) {
   return SupabaseStatsRepository();
 });
 
-/// Fase de polish post-7.G (hallazgo verificado): con cuenta, Semanal/
-/// Mensual deben venir siempre de Supabase (fuente de verdad multi-
-/// dispositivo, D-24) -- Drift local solo ve las escuchas registradas en
-/// ESTE dispositivo. Solo en modo local (sin cuenta, 7.I.6) Drift es la
-/// única fuente posible.
-///
-/// Fase 7.G.3: Semanal, sobre datos crudos de `listening_history` (últimos 7
-/// días), disponible con o sin cuenta.
-///
-/// `StreamProvider` en vez de `FutureProvider` para el camino local (bug
-/// real de pruebas manuales: no se actualizaba sola al escuchar canciones
-/// nuevas) -- `watchEntriesSince` reemite cada vez que la tabla cambia. El
-/// camino con cuenta usa `Stream.fromFuture` (un solo evento) sobre el mismo
-/// tipo de provider para no bifurcar la interfaz que consume la UI
-/// (`AsyncValue<StatsSnapshot>` en ambos casos) -- se refresca invalidando
-/// el provider (botón "Actualizar" de `stats_screen.dart`), no reactivamente.
-final weeklyStatsProvider = StreamProvider<StatsSnapshot>((ref) {
-  return _statsStreamSince(ref, weekCutoff(DateTime.now()), topN: 5);
-});
+/// Periodo seleccionado en el selector de la pantalla. Todo el dashboard
+/// cuelga de aquí: cambiarlo recalcula tarjetas, gráfico, tops y hábitos.
+final selectedStatsPeriodProvider = StateProvider<StatsPeriod>((ref) => StatsPeriod.week);
 
-/// Fase 7.G.3: Mensual, sobre datos crudos (últimos 30 días) -- no confundir
-/// con `user_stats_monthly` (D-17): esa tabla guarda meses YA cerrados, acá
-/// se necesita el mes en curso.
-final monthlyStatsProvider = StreamProvider<StatsSnapshot>((ref) {
-  return _statsStreamSince(ref, monthCutoff(DateTime.now()), topN: 10);
-});
-
-Stream<StatsSnapshot> _statsStreamSince(Ref ref, DateTime cutoff, {required int topN}) {
+/// Snapshot del periodo pedido.
+///
+/// **Con cuenta, la fuente es siempre la nube** (D-24): Drift local solo ve
+/// lo escuchado en ESTE aparato, y ese era uno de los motivos por los que el
+/// PC y el móvil no coincidían. Solo en modo local (7.I.6) Drift es la única
+/// fuente posible.
+///
+/// `StreamProvider` y no `FutureProvider` porque el camino local tiene que
+/// reaccionar a las escuchas nuevas sin que nadie invalide nada (`watch` de
+/// Drift reemite al cambiar la tabla). El camino con cuenta emite un solo
+/// evento sobre el mismo tipo, para no bifurcar lo que consume la UI.
+final statsSnapshotProvider =
+    StreamProvider.family<StatsSnapshot, StatsPeriod>((ref, period) async* {
   final isLocalMode = ref.watch(localModeProvider);
+  final now = DateTime.now();
 
   if (isLocalMode) {
-    final dao = ref.watch(listeningHistoryDaoProvider);
-    return dao.watchEntriesSince(cutoff).map(
-          (entries) => StatsCalculator.fromRawEntries(
-            entries
-                .map((e) => RawListenEntry(
-                      artistId: e.artistId,
-                      trackId: e.trackId,
-                      genre: e.genre,
-                      durationListenedMs: e.durationListenedMs,
-                    ))
-                .toList(),
-            topN: topN,
-          ),
-        );
+    yield* _localSnapshots(ref, period, now);
+    return;
   }
 
   final repo = ref.watch(supabaseStatsRepositoryProvider);
-  return Stream.fromFuture(
-    repo.fetchEntriesSince(cutoff).then((entries) => StatsCalculator.fromRawEntries(entries, topN: topN)),
+
+  if (period.usesMonthlyAggregate) {
+    yield await _monthlySnapshot(repo, period, now);
+    return;
+  }
+
+  final start = period.startFrom(now)!;
+  final end = now.add(const Duration(days: 1));
+  final snapshot = await repo.fetchStats(from: start, to: end, bucket: period.bucket);
+  if (snapshot == null) {
+    yield const StatsSnapshot();
+    return;
+  }
+
+  // Periodo anterior del mismo tamaño, solo para el "+18 % vs antes". Es una
+  // segunda petición de ~1 KB: se pide el total, no los tops.
+  final days = period.days!;
+  final prevStart = start.subtract(Duration(days: days));
+  final prev = await repo.fetchStats(
+    from: prevStart,
+    to: start,
+    bucket: period.bucket,
+    topN: 1,
+  );
+
+  yield snapshot.copyWith(previousTotalMs: prev?.totalMs);
+});
+
+/// Ventanas largas: se arman con `user_stats_monthly` porque el historial
+/// crudo se poda a los 90 días. Una sola petición trae todos los meses, así
+/// que el periodo anterior sale de las mismas filas, sin pedir nada más.
+Future<StatsSnapshot> _monthlySnapshot(
+  SupabaseStatsRepository repo,
+  StatsPeriod period,
+  DateTime now,
+) async {
+  final allRows = await repo.fetchMonthlyStats();
+  if (allRows.isEmpty) return const StatsSnapshot();
+
+  final rows = StatsCalculator.filterMonths(allRows, period, now: now);
+  final snapshot = StatsCalculator.rollupMonthlyRows(rows);
+
+  final days = period.days;
+  if (days == null) return snapshot; // "Todo" no tiene periodo anterior
+
+  final start = period.startFrom(now)!;
+  final prevStart = start.subtract(Duration(days: days));
+  final prevRows = allRows.where((r) =>
+      !r.monthStart.isBefore(DateTime(prevStart.year, prevStart.month)) &&
+      r.monthStart.isBefore(DateTime(start.year, start.month)));
+  if (prevRows.isEmpty) return snapshot;
+
+  return snapshot.copyWith(
+    previousTotalMs: prevRows.fold<int>(0, (sum, r) => sum + r.totalMs),
   );
 }
 
-/// Fase 7.G.4: Anual (D-18: ventana móvil de los últimos 12 meses, no un
-/// corte de calendario), exclusiva de cuenta (7.I.6).
-final yearlyStatsProvider = FutureProvider<StatsSnapshot>((ref) async {
-  final repo = ref.watch(supabaseStatsRepositoryProvider);
-  final rows = await repo.fetchMonthlyStats(limitMonths: 12);
-  return StatsCalculator.rollupMonthlyRows(rows, topN: 10);
+/// Modo local: el mismo cálculo, sobre Drift, reactivo.
+Stream<StatsSnapshot> _localSnapshots(Ref ref, StatsPeriod period, DateTime now) {
+  final dao = ref.watch(listeningHistoryDaoProvider);
+  final start = period.startFrom(now) ?? DateTime.fromMillisecondsSinceEpoch(0);
+  final days = period.days;
+  // Para poder calcular la comparativa hace falta traer también el periodo
+  // anterior, así que se lee desde el doble de atrás y se parte en dos.
+  final readFrom = days == null ? start : start.subtract(Duration(days: days));
+
+  return dao.watchEntriesSince(readFrom).map((rows) {
+    final entries = rows
+        .map((e) => RawListenEntry(
+              artistId: e.artistId,
+              trackId: e.trackId,
+              albumId: e.albumId,
+              genre: e.genre,
+              durationListenedMs: e.durationListenedMs,
+              listenedAt: e.listenedAt,
+            ))
+        .toList();
+
+    final current = entries.where((e) => !e.listenedAt.isBefore(start)).toList();
+    final snapshot = StatsCalculator.fromRawEntries(current, bucket: period.bucket);
+
+    if (days == null) return snapshot;
+    final previous = entries.where((e) => e.listenedAt.isBefore(start));
+    if (previous.isEmpty) return snapshot;
+    return snapshot.copyWith(
+      previousTotalMs: previous.fold<int>(0, (sum, e) => sum + e.durationListenedMs),
+    );
+  });
+}
+
+/// Atajo para la tarjeta resumida de Inicio (7.G.6): siempre la semana.
+final weeklyStatsProvider = Provider<AsyncValue<StatsSnapshot>>((ref) {
+  return ref.watch(statsSnapshotProvider(StatsPeriod.week));
 });
 
-/// Fase 7.G.4/7.G.5: Desde el inicio -- bajo demanda (no autoload), toma
-/// todas las filas de `user_stats_monthly` disponibles.
-final allTimeStatsProvider = FutureProvider<StatsSnapshot>((ref) async {
-  final repo = ref.watch(supabaseStatsRepositoryProvider);
-  final rows = await repo.fetchMonthlyStats();
-  return StatsCalculator.rollupMonthlyRows(rows, topN: 10);
-});
+// ----------------------------------------------------------------------
+// Resolución de nombre/portada de los ids que salen del cálculo
+// ----------------------------------------------------------------------
 
 class EnrichedArtist {
   final StatEntry entry;
@@ -96,21 +154,18 @@ class EnrichedTrack {
   const EnrichedTrack({required this.entry, required this.track});
 }
 
-/// Fase 7.G: resuelve nombre/portada de los IDs de artista/canción que salen
-/// de [StatsCalculator], en paralelo, descartando en silencio los IDs que
-/// fallen (mismo patrón que `personalizedSectionsProvider`) -- un solo ID
-/// roto no debe tumbar toda la pantalla de Estadísticas.
+/// Resuelve nombre/portada de los ids de artista/canción, en paralelo,
+/// descartando en silencio los que fallen (mismo patrón que
+/// `personalizedSectionsProvider`): un id roto no debe tumbar la pantalla.
 ///
-/// Hallazgo verificado post-7.G (bundle de polish): antes golpeaba
-/// `DeezerApi.getArtist`/`getTrack` en vivo para cada uno de los 10-20 ids de
-/// la pantalla, cada vez que se abría o refrescaba -- causa del lag/
-/// parpadeo de ~15s reportado. Ahora consulta primero
-/// [StatsMetadataCacheDao] (Drift local, por id); solo golpea Deezer para
-/// los ids que no estén cacheados, y guarda el resultado para la próxima vez.
-/// Nombre/portada de un artista o canción no cambian con la frecuencia
-/// suficiente como para no cachearlos indefinidamente (sin TTL).
+/// Consulta primero [StatsMetadataCacheDao] (Drift local, por id) y solo
+/// golpea Deezer para lo que no esté cacheado. Antes pedía en vivo los 10-20
+/// ids cada vez que se abría o refrescaba la pantalla, que es lo que causaba
+/// el parpadeo de ~15 s. Nombre y portada no cambian lo bastante como para
+/// justificar un TTL.
 final enrichedArtistsProvider =
     FutureProvider.family<List<EnrichedArtist>, List<StatEntry>>((ref, entries) async {
+  if (entries.isEmpty) return const [];
   final deezerApi = ref.watch(deezerApiProvider);
   final cacheDao = ref.watch(statsMetadataCacheDaoProvider);
   final cached = await cacheDao.getMany(StatsEntityType.artist, entries.map((e) => e.id).toSet());
@@ -141,6 +196,7 @@ final enrichedArtistsProvider =
 
 final enrichedTracksProvider =
     FutureProvider.family<List<EnrichedTrack>, List<StatEntry>>((ref, entries) async {
+  if (entries.isEmpty) return const [];
   final deezerApi = ref.watch(deezerApiProvider);
   final cacheDao = ref.watch(statsMetadataCacheDaoProvider);
   final cached = await cacheDao.getMany(StatsEntityType.track, entries.map((e) => e.id).toSet());

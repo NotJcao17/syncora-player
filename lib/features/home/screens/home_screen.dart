@@ -61,10 +61,8 @@ class HomeScreen extends ConsumerWidget {
       if (!ref.read(localModeProvider)) {
         await ref.read(syncServiceProvider).syncListeningHistory();
       }
-      ref.invalidate(weeklyStatsProvider);
-      ref.invalidate(monthlyStatsProvider);
-      ref.invalidate(yearlyStatsProvider);
-      ref.invalidate(allTimeStatsProvider);
+      // Un solo provider familiar cubre ahora todos los periodos.
+      ref.invalidate(statsSnapshotProvider);
     });
   }
 

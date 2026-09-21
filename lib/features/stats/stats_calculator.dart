@@ -1,163 +1,220 @@
-/// Fase 7.G.3/7.G.4 -- agregación pura de estadísticas de escucha, sin
-/// dependencias de Drift/Riverpod/Supabase (mismo patrón que
-/// `computeCanEdit`/`computeAuthRedirect`): testeable con listas en memoria.
-class StatEntry {
-  final int id;
-  final int minutes;
-  final int playCount;
+import 'stats_models.dart';
 
-  const StatEntry({required this.id, required this.minutes, this.playCount = 0});
-}
+/// Agregación pura de estadísticas de escucha, sin Drift, Riverpod ni
+/// Supabase detrás (mismo patrón que `computeCanEdit`/`computeAuthRedirect`):
+/// se puede probar con listas en memoria.
+///
+/// Es el espejo en Dart del RPC `get_listening_stats`. Existen los dos porque
+/// con cuenta el cálculo se hace en Postgres (una petición de ~5 KB en vez de
+/// bajar miles de filas, H-S5) y en modo local no hay servidor al que
+/// preguntarle. Los dos tienen que dar el mismo resultado sobre los mismos
+/// datos, y hay tests que comparan ambos caminos.
 
-class GenreEntry {
-  final String genre;
-  final int minutes;
-
-  const GenreEntry({required this.genre, required this.minutes});
-}
-
-class StatsSnapshot {
-  final int totalMinutes;
-  final List<StatEntry> topArtists;
-  final List<StatEntry> topTracks;
-  final List<GenreEntry> topGenres;
-  final DateTime? mostActiveMonth;
-
-  const StatsSnapshot({
-    required this.totalMinutes,
-    required this.topArtists,
-    required this.topTracks,
-    required this.topGenres,
-    this.mostActiveMonth,
-  });
-
-  bool get isEmpty => totalMinutes == 0 && topArtists.isEmpty && topTracks.isEmpty;
-}
-
-/// Entrada cruda de `listening_history`, ya filtrada por ventana de fecha
-/// por quien llama (el DAO o el rollup mensual).
+/// Entrada cruda de `listening_history`, ya filtrada por ventana.
 class RawListenEntry {
   final int artistId;
   final int trackId;
+  final int albumId;
   final String? genre;
   final int durationListenedMs;
+  final DateTime listenedAt;
 
   const RawListenEntry({
     required this.artistId,
     required this.trackId,
     required this.durationListenedMs,
+    required this.listenedAt,
+    this.albumId = 0,
     this.genre,
   });
 }
 
-/// Fila ya traída de `user_stats_monthly` (top 50 de artistas/canciones/
-/// géneros por mes, ya parseados del JSONB).
+/// Fila de `user_stats_monthly` ya parseada.
 class MonthlyStatsRow {
   final DateTime monthStart;
-  final int totalMinutes;
+  final int totalMs;
+  final int totalPlays;
   final List<StatEntry> topArtists;
   final List<StatEntry> topTracks;
+  final List<StatEntry> topAlbums;
   final List<GenreEntry> topGenres;
+  final List<HourCell> hours;
 
   const MonthlyStatsRow({
     required this.monthStart,
-    required this.totalMinutes,
-    required this.topArtists,
-    required this.topTracks,
-    required this.topGenres,
+    required this.totalMs,
+    this.totalPlays = 0,
+    this.topArtists = const [],
+    this.topTracks = const [],
+    this.topAlbums = const [],
+    this.topGenres = const [],
+    this.hours = const [],
   });
 }
 
-DateTime weekCutoff(DateTime now) => now.subtract(const Duration(days: 7));
-
-DateTime monthCutoff(DateTime now) => now.subtract(const Duration(days: 30));
-
 abstract class StatsCalculator {
-  /// Alimenta Semanal (topN=5, sin géneros) y Mensual (topN=10, con
-  /// géneros) -- mismo método, distinta ventana/topN, según quien llame.
-  static StatsSnapshot fromRawEntries(List<RawListenEntry> entries, {int topN = 5}) {
-    final artistMs = <int, int>{};
-    final artistPlays = <int, int>{};
-    final trackMs = <int, int>{};
-    final trackPlays = <int, int>{};
-    final genreMs = <String, int>{};
+  /// Calcula un snapshot completo sobre entradas crudas (camino de modo
+  /// local, y también el que usan los tests para contrastar contra el RPC).
+  static StatsSnapshot fromRawEntries(
+    List<RawListenEntry> entries, {
+    required StatsBucket bucket,
+    int topN = 25,
+  }) {
+    final artists = <int, StatEntry>{};
+    final tracks = <int, StatEntry>{};
+    final albums = <int, StatEntry>{};
+    final genres = <String, GenreEntry>{};
+    final series = <DateTime, SeriesPoint>{};
+    final hours = <int, HourCell>{};
+    final days = <DateTime>{};
     var totalMs = 0;
 
-    for (final entry in entries) {
-      totalMs += entry.durationListenedMs;
+    for (final e in entries) {
+      final ms = e.durationListenedMs;
+      totalMs += ms;
 
-      if (entry.artistId > 0) {
-        artistMs[entry.artistId] = (artistMs[entry.artistId] ?? 0) + entry.durationListenedMs;
-        artistPlays[entry.artistId] = (artistPlays[entry.artistId] ?? 0) + 1;
+      if (e.artistId > 0) {
+        artists[e.artistId] =
+            (artists[e.artistId] ?? StatEntry(id: e.artistId, ms: 0)).merge(
+          StatEntry(id: e.artistId, ms: ms, plays: 1),
+        );
       }
-      if (entry.trackId > 0) {
-        trackMs[entry.trackId] = (trackMs[entry.trackId] ?? 0) + entry.durationListenedMs;
-        trackPlays[entry.trackId] = (trackPlays[entry.trackId] ?? 0) + 1;
+      if (e.trackId > 0) {
+        tracks[e.trackId] = (tracks[e.trackId] ?? StatEntry(id: e.trackId, ms: 0)).merge(
+          StatEntry(id: e.trackId, ms: ms, plays: 1),
+        );
       }
-      final genre = entry.genre;
-      if (genre != null && genre.isNotEmpty) {
-        genreMs[genre] = (genreMs[genre] ?? 0) + entry.durationListenedMs;
+      if (e.albumId > 0) {
+        albums[e.albumId] = (albums[e.albumId] ?? StatEntry(id: e.albumId, ms: 0)).merge(
+          StatEntry(id: e.albumId, ms: ms, plays: 1),
+        );
       }
+      final g = e.genre;
+      if (g != null && g.isNotEmpty) {
+        genres[g] = (genres[g] ?? GenreEntry(genre: g, ms: 0)).merge(
+          GenreEntry(genre: g, ms: ms, plays: 1),
+        );
+      }
+
+      final at = e.listenedAt;
+      final b = truncateTo(at, bucket);
+      final prev = series[b];
+      series[b] = SeriesPoint(
+        t: b,
+        ms: (prev?.ms ?? 0) + ms,
+        plays: (prev?.plays ?? 0) + 1,
+      );
+
+      // `DateTime.weekday` va de 1 (lunes) a 7 (domingo); Postgres
+      // `EXTRACT(dow)` usa 0 = domingo. Se normaliza al criterio de Postgres
+      // para que los dos caminos produzcan el mismo dato.
+      final dow = at.weekday % 7;
+      final key = dow * 24 + at.hour;
+      hours[key] = HourCell(dow: dow, hour: at.hour, ms: (hours[key]?.ms ?? 0) + ms);
+      days.add(DateTime(at.year, at.month, at.day));
     }
 
-    final artistMinutes = artistMs.map((k, v) => MapEntry(k, (v / 60000).ceil()));
-    final trackMinutes = trackMs.map((k, v) => MapEntry(k, (v / 60000).ceil()));
-    final genreMinutes = genreMs.map((k, v) => MapEntry(k, (v / 60000).ceil()));
-
     return StatsSnapshot(
-      totalMinutes: (totalMs / 60000).ceil(),
-      topArtists: _topStatEntries(artistMinutes, artistPlays, topN),
-      topTracks: _topStatEntries(trackMinutes, trackPlays, topN),
-      topGenres: _topGenreEntries(genreMinutes),
+      totalMs: totalMs,
+      totalPlays: entries.length,
+      distinctArtists: artists.length,
+      distinctTracks: tracks.length,
+      distinctAlbums: albums.length,
+      activeDays: days.length,
+      topArtists: _topEntries(artists.values, topN),
+      topTracks: _topEntries(tracks.values, topN),
+      topAlbums: _topEntries(albums.values, topN),
+      topGenres: _topGenres(genres.values, topN),
+      series: series.values.toList()..sort((a, b) => a.t.compareTo(b.t)),
+      hours: hours.values.toList(),
     );
   }
 
-  /// Suma (merge por id) las filas de `user_stats_monthly` para producir un
-  /// único snapshot -- sirve tanto para Anual (últimas 12 filas) como
-  /// Desde el inicio (todas). `mostActiveMonth` es la fila individual de
-  /// mayor `totalMinutes`, no una suma.
-  static StatsSnapshot rollupMonthlyRows(List<MonthlyStatsRow> rows, {int topN = 10}) {
-    final artistMinutes = <int, int>{};
-    final trackMinutes = <int, int>{};
-    final genreMinutes = <String, int>{};
-    var totalMinutes = 0;
-    MonthlyStatsRow? mostActive;
+  /// Consolida filas mensuales en un único snapshot (ventanas de 6/12 meses
+  /// y "Todo").
+  ///
+  /// Los totales salen exactos porque cada fila guarda su total real; los
+  /// tops son aproximados porque cada mes solo conserva sus 30 mejores, y por
+  /// eso el snapshot sale marcado con [StatsSnapshot.topsAreApproximate].
+  static StatsSnapshot rollupMonthlyRows(List<MonthlyStatsRow> rows, {int topN = 25}) {
+    final artists = <int, StatEntry>{};
+    final tracks = <int, StatEntry>{};
+    final albums = <int, StatEntry>{};
+    final genres = <String, GenreEntry>{};
+    final hours = <int, HourCell>{};
+    final series = <SeriesPoint>[];
+    var totalMs = 0;
+    var totalPlays = 0;
 
     for (final row in rows) {
-      totalMinutes += row.totalMinutes;
-      if (mostActive == null || row.totalMinutes > mostActive.totalMinutes) {
-        mostActive = row;
-      }
+      totalMs += row.totalMs;
+      totalPlays += row.totalPlays;
+      series.add(SeriesPoint(t: row.monthStart, ms: row.totalMs, plays: row.totalPlays));
+
       for (final a in row.topArtists) {
-        artistMinutes[a.id] = (artistMinutes[a.id] ?? 0) + a.minutes;
+        artists[a.id] = (artists[a.id] ?? StatEntry(id: a.id, ms: 0)).merge(a);
       }
       for (final t in row.topTracks) {
-        trackMinutes[t.id] = (trackMinutes[t.id] ?? 0) + t.minutes;
+        tracks[t.id] = (tracks[t.id] ?? StatEntry(id: t.id, ms: 0)).merge(t);
+      }
+      for (final al in row.topAlbums) {
+        albums[al.id] = (albums[al.id] ?? StatEntry(id: al.id, ms: 0)).merge(al);
       }
       for (final g in row.topGenres) {
-        genreMinutes[g.genre] = (genreMinutes[g.genre] ?? 0) + g.minutes;
+        genres[g.genre] = (genres[g.genre] ?? GenreEntry(genre: g.genre, ms: 0)).merge(g);
+      }
+      for (final h in row.hours) {
+        final key = h.dow * 24 + h.hour;
+        hours[key] = HourCell(dow: h.dow, hour: h.hour, ms: (hours[key]?.ms ?? 0) + h.ms);
       }
     }
 
+    series.sort((a, b) => a.t.compareTo(b.t));
+
     return StatsSnapshot(
-      totalMinutes: totalMinutes,
-      topArtists: _topStatEntries(artistMinutes, const {}, topN),
-      topTracks: _topStatEntries(trackMinutes, const {}, topN),
-      topGenres: _topGenreEntries(genreMinutes),
-      mostActiveMonth: mostActive?.monthStart,
+      totalMs: totalMs,
+      totalPlays: totalPlays,
+      distinctArtists: artists.length,
+      distinctTracks: tracks.length,
+      distinctAlbums: albums.length,
+      activeDays: 0, // no se puede derivar de un agregado mensual
+      topArtists: _topEntries(artists.values, topN),
+      topTracks: _topEntries(tracks.values, topN),
+      topAlbums: _topEntries(albums.values, topN),
+      topGenres: _topGenres(genres.values, topN),
+      series: series,
+      hours: hours.values.toList(),
+      topsAreApproximate: true,
     );
   }
 
-  static List<StatEntry> _topStatEntries(Map<int, int> minutes, Map<int, int> plays, int topN) {
-    final sorted = minutes.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    return sorted
-        .take(topN)
-        .map((e) => StatEntry(id: e.key, minutes: e.value, playCount: plays[e.key] ?? 0))
-        .toList();
+  /// Recorta [rows] a los meses que caen dentro de la ventana de [period].
+  static List<MonthlyStatsRow> filterMonths(List<MonthlyStatsRow> rows, StatsPeriod period,
+      {DateTime? now}) {
+    final start = period.startFrom(now ?? DateTime.now());
+    if (start == null) return rows;
+    final firstMonth = DateTime(start.year, start.month);
+    return rows.where((r) => !r.monthStart.isBefore(firstMonth)).toList();
   }
 
-  static List<GenreEntry> _topGenreEntries(Map<String, int> minutes) {
-    final sorted = minutes.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    return sorted.map((e) => GenreEntry(genre: e.key, minutes: e.value)).toList();
+  /// Mismo criterio que `date_trunc` de Postgres. Las semanas empiezan en
+  /// lunes, como en Postgres (no en domingo).
+  static DateTime truncateTo(DateTime at, StatsBucket bucket) => switch (bucket) {
+        StatsBucket.day => DateTime(at.year, at.month, at.day),
+        StatsBucket.week =>
+          DateTime(at.year, at.month, at.day).subtract(Duration(days: at.weekday - 1)),
+        StatsBucket.month => DateTime(at.year, at.month),
+      };
+
+  static List<StatEntry> _topEntries(Iterable<StatEntry> values, int topN) {
+    final sorted = values.toList()..sort((a, b) => b.ms.compareTo(a.ms));
+    return sorted.take(topN).toList();
+  }
+
+  static List<GenreEntry> _topGenres(Iterable<GenreEntry> values, int topN) {
+    final sorted = values.toList()..sort((a, b) => b.ms.compareTo(a.ms));
+    return sorted.take(topN).toList();
   }
 }
+
+DateTime truncateTo(DateTime at, StatsBucket bucket) => StatsCalculator.truncateTo(at, bucket);

@@ -1,28 +1,30 @@
-import 'dart:io';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/skeleton_box.dart';
 import '../../../data/sync/sync_cache_manager.dart';
 import '../../../data/sync/sync_service.dart';
 import '../../auth/local_mode_provider.dart';
-import '../stats_calculator.dart';
+import '../genre_backfill_service.dart';
+import '../stats_models.dart';
 import '../stats_providers.dart';
+import '../widgets/habits_heatmap.dart';
+import '../widgets/listening_chart.dart';
+import '../widgets/stats_cards.dart';
+import 'wrapped_screen.dart';
 
-/// Fase 7.G.5 -- pantalla de Estadísticas (`/stats`): 3 pestañas (Semanal /
-/// Mensual / Anual) + acción "Desde el inicio". En modo local (7.I.6), solo
-/// Semanal y Mensual están disponibles -- Anual y Desde el inicio dependen
-/// de `user_stats_monthly`, que solo se llena en la nube vía cron.
+/// Pantalla de Estadísticas (`/stats`), rediseñada como dashboard.
+///
+/// Sustituye a las tres pestañas fijas (Semanal / Mensual / Anual) por un
+/// **selector de periodo** del que cuelga todo lo demás: al cambiarlo se
+/// recalculan las cifras, el gráfico, los tops y el mapa de hábitos, y el
+/// gráfico reagrupa solo (por día en 7 y 30 días, por semana en 3 meses,
+/// por mes en las ventanas largas).
+///
+/// En modo local (7.I.6) los periodos largos se ocultan: dependen de
+/// `user_stats_monthly`, que solo existe en la nube.
 class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
 
@@ -30,583 +32,502 @@ class StatsScreen extends ConsumerStatefulWidget {
   ConsumerState<StatsScreen> createState() => _StatsScreenState();
 }
 
-class _StatsScreenState extends ConsumerState<StatsScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
+class _StatsScreenState extends ConsumerState<StatsScreen> {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
     _autoRefreshIfStale();
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  /// Investigación de estadísticas, problema 1: Inicio/Biblioteca ya
-  /// refrescan solos al volver tras ≥5 min (`SyncCacheManager`, clave
-  /// 'library' vía `syncLibrary(force: false)` en `initState`) -- Estadísticas
-  /// no tenía ningún disparo equivalente y dependía por completo del botón
-  /// manual "Actualizar". Mismo patrón acá, clave propia 'stats' para no
-  /// pisar el TTL de 'library'/'saved_albums'.
+  /// Inicio y Biblioteca ya se refrescan solos al volver tras ≥5 min
+  /// (`SyncCacheManager`). Estadísticas no tenía nada equivalente y dependía
+  /// del botón manual. Clave propia 'stats' para no pisar el TTL de
+  /// 'library'/'saved_albums'.
   void _autoRefreshIfStale() {
     final cacheManager = ref.read(syncCacheManagerProvider);
     if (!cacheManager.isExpired('stats')) return;
     cacheManager.markSynced('stats');
-    Future.microtask(() async {
-      if (!ref.read(localModeProvider)) {
-        await ref.read(syncServiceProvider).syncListeningHistory();
-      }
-      if (!mounted) return;
-      ref.invalidate(weeklyStatsProvider);
-      ref.invalidate(monthlyStatsProvider);
-      ref.invalidate(yearlyStatsProvider);
-      ref.invalidate(allTimeStatsProvider);
-    });
+    Future.microtask(_refresh);
+  }
+
+  Future<void> _refresh() async {
+    if (!ref.read(localModeProvider)) {
+      await ref.read(syncServiceProvider).syncListeningHistory();
+    }
+    // Aprovecha la visita para avanzar el relleno de géneros: es la pantalla
+    // donde el usuario los echa en falta.
+    await ref.read(genreBackfillServiceProvider).run();
+    if (!mounted) return;
+    ref.invalidate(statsSnapshotProvider);
   }
 
   @override
   Widget build(BuildContext context) {
     final isLocalMode = ref.watch(localModeProvider);
+    final period = ref.watch(selectedStatsPeriodProvider);
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => context.pop(),
-                    icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary, size: 22),
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          color: AppTheme.accent,
+          backgroundColor: AppTheme.surface,
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: _Header(
+                  onRefresh: _refresh,
+                  onWrapped: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => WrappedScreen(period: period)),
                   ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text('Estadísticas', style: Theme.of(context).textTheme.headlineSmall),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh, color: AppTheme.primary),
-                    tooltip: 'Actualizar estadísticas',
-                    onPressed: () async {
-                      try {
-                        if (!isLocalMode) {
-                          await ref.read(syncServiceProvider).syncListeningHistory();
-                        }
-                        ref.invalidate(weeklyStatsProvider);
-                        ref.invalidate(monthlyStatsProvider);
-                        ref.invalidate(yearlyStatsProvider);
-                        ref.invalidate(allTimeStatsProvider);
-                        if (context.mounted) {
-                          AppToast.show(context, message: 'Estadísticas actualizadas');
-                        }
-                      } catch (_) {
-                        if (context.mounted) {
-                          AppToast.show(context, message: 'No se pudieron sincronizar las estadísticas');
-                        }
-                      }
-                    },
-                  ),
-                ],
+                ),
               ),
-            ),
-            TabBar(
-              controller: _tabController,
-              labelColor: AppTheme.primary,
-              unselectedLabelColor: AppTheme.muted,
-              indicatorColor: AppTheme.accent,
-              tabs: const [
-                Tab(text: 'Semanal'),
-                Tab(text: 'Mensual'),
-                Tab(text: 'Anual'),
-              ],
-            ),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _RawStatsTab(asyncSnapshot: ref.watch(weeklyStatsProvider), showGenres: false),
-                  _RawStatsTab(asyncSnapshot: ref.watch(monthlyStatsProvider), showGenres: true),
-                  isLocalMode ? const _LocalOnlyNotice() : const _YearlyTab(),
-                ],
+              SliverToBoxAdapter(
+                child: _PeriodSelector(
+                  selected: period,
+                  isLocalMode: isLocalMode,
+                  onChanged: (p) =>
+                      ref.read(selectedStatsPeriodProvider.notifier).state = p,
+                ),
               ),
-            ),
-          ],
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(16, 8, 16, isDesktop ? 32 : 120),
+                sliver: _Dashboard(period: period, isDesktop: isDesktop),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _LocalOnlyNotice extends StatelessWidget {
-  const _LocalOnlyNotice();
+class _Header extends StatelessWidget {
+  final VoidCallback onRefresh;
+  final VoidCallback onWrapped;
+
+  const _Header({required this.onRefresh, required this.onWrapped});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(AppIcons.broken(SolarIcons.Crown), color: AppTheme.muted, size: 40),
-            const SizedBox(height: 16),
-            Text(
-              'Disponible solo con cuenta',
-              style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'Tus estadísticas',
+              style: TextStyle(
+                color: AppTheme.primary,
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Crea una cuenta para ver tus estadísticas anuales y de todo el tiempo.',
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
+          ),
+          IconButton(
+            tooltip: 'Actualizar',
+            onPressed: onRefresh,
+            icon: Icon(AppIcons.broken(SolarIcons.Refresh), color: AppTheme.secondary),
+          ),
+          FilledButton.icon(
+            onPressed: onWrapped,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.accent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-          ],
-        ),
+            icon: const Icon(Icons.auto_awesome, size: 16),
+            label: const Text('Wrapped'),
+          ),
+        ],
       ),
     );
   }
 }
 
-// `StatelessWidget` (no `ConsumerWidget`) porque Semanal/Mensual pasaron a
-// `StreamProvider` (bug real: no se actualizaban solos al escuchar
-// canciones nuevas) -- el `AsyncValue` ya viene resuelto por el `ref.watch`
-// del `build()` de `_StatsScreenState`, así que esta vista no necesita `ref`
-// propio.
-class _RawStatsTab extends StatelessWidget {
-  final AsyncValue<StatsSnapshot> asyncSnapshot;
-  final bool showGenres;
+class _PeriodSelector extends StatelessWidget {
+  final StatsPeriod selected;
+  final bool isLocalMode;
+  final ValueChanged<StatsPeriod> onChanged;
 
-  const _RawStatsTab({required this.asyncSnapshot, required this.showGenres});
+  const _PeriodSelector({
+    required this.selected,
+    required this.isLocalMode,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return asyncSnapshot.when(
-      loading: () => const _StatsLoadingSkeleton(),
-      error: (_, _) => const _StatsEmptyState(),
-      data: (snapshot) {
-        if (snapshot.isEmpty) return const _StatsEmptyState();
-        // Bug real de pruebas manuales (investigación de estadísticas,
-        // problema 2): a diferencia de Anual/Desde el inicio, que envuelven
-        // `_StatsContent` en un `ListView` propio, Semanal/Mensual llegan acá
-        // sin ningún ancestro scrolleable -- `_StatsContent` deshabilita su
-        // propio scroll (`NeverScrollableScrollPhysics`, ver comentario ahí)
-        // porque asume que un padre ya se encarga. Sin ese padre, el
-        // `TabBarView` le da una altura acotada y el contenido que exceda esa
-        // altura queda simplemente cortado, sin forma de deslizar hacia él.
-        return SingleChildScrollView(child: _StatsContent(snapshot: snapshot, showGenres: showGenres, showMostActiveMonth: false));
-      },
+    // Sin cuenta no hay agregado mensual, así que las ventanas largas se
+    // ocultan en vez de mostrarse deshabilitadas (criterio de 7.I.6).
+    final periods = StatsPeriod.values
+        .where((p) => !isLocalMode || !p.usesMonthlyAggregate)
+        .toList();
+
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: periods.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final p = periods[i];
+          final isSelected = p == selected;
+          return Center(
+            child: GestureDetector(
+              onTap: () => onChanged(p),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppTheme.accent : AppTheme.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppTheme.accent
+                        : Colors.white.withValues(alpha: 0.07),
+                  ),
+                ),
+                child: Text(
+                  p.label,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : AppTheme.secondary,
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
-class _YearlyTab extends ConsumerWidget {
-  const _YearlyTab();
+class _Dashboard extends ConsumerWidget {
+  final StatsPeriod period;
+  final bool isDesktop;
+
+  const _Dashboard({required this.period, required this.isDesktop});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncSnapshot = ref.watch(yearlyStatsProvider);
+    final async = ref.watch(statsSnapshotProvider(period));
 
-    return asyncSnapshot.when(
-      loading: () => const _StatsLoadingSkeleton(),
-      error: (_, _) => const _StatsEmptyState(),
+    return async.when(
+      loading: () => const SliverToBoxAdapter(child: _LoadingSkeleton()),
+      error: (e, _) => SliverToBoxAdapter(child: _ErrorState(onRetry: () {
+        ref.invalidate(statsSnapshotProvider(period));
+      })),
       data: (snapshot) {
-        if (snapshot.isEmpty) return const _StatsEmptyState();
-        // Padding horizontal ya lo pone `_StatsContent` (bug real de
-        // pruebas manuales: texto pegado al borde derecho) -- solo
-        // vertical acá para no duplicarlo.
-        return ListView(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          children: [
-            _StatsContent(snapshot: snapshot, showGenres: true, showMostActiveMonth: true),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  const SizedBox(height: 24),
-                  OutlinedButton.icon(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const _WrappedStoriesScreen()),
-                    ),
-                    icon: Icon(AppIcons.broken(SolarIcons.Chart), size: 18),
-                    label: const Text('Ver Wrapped'),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const _AllTimeScreen()),
-                    ),
-                    icon: Icon(AppIcons.broken(SolarIcons.Calendar), size: 18),
-                    label: const Text('Ver desde el inicio'),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        if (snapshot.isEmpty) {
+          return const SliverToBoxAdapter(child: _EmptyState());
+        }
+        return SliverToBoxAdapter(
+          child: _DashboardBody(snapshot: snapshot, period: period, isDesktop: isDesktop),
         );
       },
     );
   }
 }
 
-class _AllTimeScreen extends ConsumerWidget {
-  const _AllTimeScreen();
+class _DashboardBody extends ConsumerStatefulWidget {
+  final StatsSnapshot snapshot;
+  final StatsPeriod period;
+  final bool isDesktop;
+
+  const _DashboardBody({
+    required this.snapshot,
+    required this.period,
+    required this.isDesktop,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncSnapshot = ref.watch(allTimeStatsProvider);
+  ConsumerState<_DashboardBody> createState() => _DashboardBodyState();
+}
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: AppTheme.background,
-        title: const Text('Desde el inicio'),
+class _DashboardBodyState extends ConsumerState<_DashboardBody> {
+  /// Cuántos elementos se muestran en cada top. Empieza en 5 y crece con
+  /// "Mostrar más" — ver 25 de entrada es una pared de texto.
+  static const _initialTop = 5;
+  static const _expandedTop = 25;
+
+  bool _artistsExpanded = false;
+  bool _tracksExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.snapshot;
+    final artistEntries = s.topArtists.take(_artistsExpanded ? _expandedTop : _initialTop).toList();
+    final trackEntries = s.topTracks.take(_tracksExpanded ? _expandedTop : _initialTop).toList();
+
+    final artistsAsync = ref.watch(enrichedArtistsProvider(artistEntries));
+    final tracksAsync = ref.watch(enrichedTracksProvider(trackEntries));
+
+    final chart = StatsPanel(
+      title: 'Minutos escuchados',
+      subtitle: _chartSubtitle(widget.period),
+      child: ListeningChart(series: s.series, bucket: widget.period.bucket),
+    );
+
+    final artists = StatsPanel(
+      title: 'Tus artistas',
+      subtitle: s.topsAreApproximate ? 'Aproximado en periodos largos' : null,
+      action: s.topArtists.length > _initialTop
+          ? _MoreButton(
+              expanded: _artistsExpanded,
+              onTap: () => setState(() => _artistsExpanded = !_artistsExpanded),
+            )
+          : null,
+      child: artistsAsync.when(
+        loading: () => const _RowsSkeleton(),
+        error: (_, _) => const _PanelError(),
+        data: (list) => TopArtistsPodium(artists: list, totalMs: s.totalMs),
       ),
-      body: asyncSnapshot.when(
-        loading: () => const _StatsLoadingSkeleton(),
-        error: (_, _) => const _StatsEmptyState(),
-        data: (snapshot) {
-          if (snapshot.isEmpty) return const _StatsEmptyState();
-          return ListView(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            children: [
-              _StatsContent(snapshot: snapshot, showGenres: true, showMostActiveMonth: false),
-            ],
-          );
-        },
+    );
+
+    final tracks = StatsPanel(
+      title: 'Tus canciones',
+      subtitle: s.topsAreApproximate ? 'Aproximado en periodos largos' : null,
+      action: s.topTracks.length > _initialTop
+          ? _MoreButton(
+              expanded: _tracksExpanded,
+              onTap: () => setState(() => _tracksExpanded = !_tracksExpanded),
+            )
+          : null,
+      child: tracksAsync.when(
+        loading: () => const _RowsSkeleton(),
+        error: (_, _) => const _PanelError(),
+        data: (list) => TopTracksList(tracks: list),
+      ),
+    );
+
+    final genres = StatsPanel(
+      title: 'Tus géneros',
+      child: GenreBars(genres: s.topGenres),
+    );
+
+    final habits = StatsPanel(
+      title: 'Cuándo escuchas',
+      subtitle: 'Por día de la semana y franja horaria',
+      child: HabitsHeatmap(cells: s.hours),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _KpiGrid(snapshot: s, period: widget.period, isDesktop: widget.isDesktop),
+        const SizedBox(height: 12),
+        chart,
+        const SizedBox(height: 12),
+        // En escritorio el dashboard va a dos columnas; en móvil, una sola
+        // columna con scroll.
+        if (widget.isDesktop)
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: Column(children: [artists, const SizedBox(height: 12), genres])),
+                const SizedBox(width: 12),
+                Expanded(child: Column(children: [tracks, const SizedBox(height: 12), habits])),
+              ],
+            ),
+          )
+        else ...[
+          artists,
+          const SizedBox(height: 12),
+          tracks,
+          const SizedBox(height: 12),
+          genres,
+          const SizedBox(height: 12),
+          habits,
+        ],
+      ],
+    );
+  }
+
+  static String _chartSubtitle(StatsPeriod period) => switch (period.bucket) {
+        StatsBucket.day => 'Por día',
+        StatsBucket.week => 'Por semana',
+        StatsBucket.month => 'Por mes',
+      };
+}
+
+class _KpiGrid extends StatelessWidget {
+  final StatsSnapshot snapshot;
+  final StatsPeriod period;
+  final bool isDesktop;
+
+  const _KpiGrid({required this.snapshot, required this.period, required this.isDesktop});
+
+  @override
+  Widget build(BuildContext context) {
+    final tiles = [
+      KpiTile(
+        label: 'Tiempo escuchado',
+        value: formatListeningTime(snapshot.totalMs),
+        icon: Icons.schedule,
+        trend: snapshot.trend,
+      ),
+      KpiTile(
+        label: 'Reproducciones',
+        value: '${snapshot.totalPlays}',
+        icon: Icons.play_arrow_rounded,
+      ),
+      KpiTile(
+        label: 'Artistas',
+        value: '${snapshot.distinctArtists}',
+        icon: Icons.person_outline,
+      ),
+      KpiTile(
+        label: snapshot.activeDays > 0 ? 'Días con música' : 'Canciones',
+        value: snapshot.activeDays > 0
+            ? '${snapshot.activeDays}'
+            : '${snapshot.distinctTracks}',
+        icon: snapshot.activeDays > 0 ? Icons.calendar_today_outlined : Icons.music_note_outlined,
+      ),
+    ];
+
+    return GridView.count(
+      crossAxisCount: isDesktop ? 4 : 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: isDesktop ? 2.1 : 1.55,
+      children: tiles,
+    );
+  }
+}
+
+class _MoreButton extends StatelessWidget {
+  final bool expanded;
+  final VoidCallback onTap;
+
+  const _MoreButton({required this.expanded, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onTap,
+      style: TextButton.styleFrom(
+        foregroundColor: AppTheme.accent,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Text(expanded ? 'Ver menos' : 'Ver más', style: const TextStyle(fontSize: 12)),
+    );
+  }
+}
+
+class _LoadingSkeleton extends StatelessWidget {
+  const _LoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(children: [
+            Expanded(child: SkeletonBox(height: 92)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonBox(height: 92)),
+          ]),
+          SizedBox(height: 12),
+          SkeletonBox(height: 240),
+          SizedBox(height: 12),
+          SkeletonBox(height: 200),
+        ],
       ),
     );
   }
 }
 
-class _StatsLoadingSkeleton extends StatelessWidget {
-  const _StatsLoadingSkeleton();
+class _RowsSkeleton extends StatelessWidget {
+  const _RowsSkeleton();
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+    return const Column(
       children: [
-        const SkeletonBox(width: 160, height: 28),
-        const SizedBox(height: 24),
-        const SkeletonBox(width: double.infinity, height: 18, margin: EdgeInsets.only(bottom: 12)),
-        for (var i = 0; i < 5; i++)
-          const SkeletonBox(width: double.infinity, height: 56, margin: EdgeInsets.only(bottom: 8)),
+        SkeletonBox(height: 40),
+        SizedBox(height: 8),
+        SkeletonBox(height: 40),
+        SizedBox(height: 8),
+        SkeletonBox(height: 40),
       ],
     );
   }
 }
 
-class _StatsEmptyState extends StatelessWidget {
-  const _StatsEmptyState();
+class _PanelError extends StatelessWidget {
+  const _PanelError();
+
+  @override
+  Widget build(BuildContext context) => const Text(
+        'No se pudo cargar esta sección.',
+        style: TextStyle(color: AppTheme.muted, fontSize: 12),
+      );
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(AppIcons.broken(SolarIcons.Graph), color: AppTheme.muted, size: 40),
-            const SizedBox(height: 16),
-            Text(
-              'Todavía no hay suficiente historial',
-              style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Sigue escuchando música y tus estadísticas aparecerán acá.',
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatsContent extends ConsumerWidget {
-  final StatsSnapshot snapshot;
-  final bool showGenres;
-  final bool showMostActiveMonth;
-
-  const _StatsContent({
-    required this.snapshot,
-    required this.showGenres,
-    required this.showMostActiveMonth,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final artistsAsync = ref.watch(enrichedArtistsProvider(snapshot.topArtists));
-    final tracksAsync = ref.watch(enrichedTracksProvider(snapshot.topTracks));
-
-    // Bug real (pruebas manuales): sin padding horizontal acá Y con
-    // `ListTile(contentPadding: EdgeInsets.zero)` en cada fila de abajo, el
-    // texto de la derecha (minutos, reproducciones) quedaba pegado literal
-    // al borde de la pantalla -- las otras vistas (Anual/Desde el inicio)
-    // no lo sufrían porque las envuelve un `ListView` con 20px de padding
-    // propio; Semanal/Mensual pasan por `_RawStatsTab`, que no envuelve
-    // nada.
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-      physics: const NeverScrollableScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${snapshot.totalMinutes} min escuchados',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          if (showMostActiveMonth && snapshot.mostActiveMonth != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Mes más activo: ${_monthLabel(snapshot.mostActiveMonth!)}',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-          const SizedBox(height: 20),
-          Text('Top artistas', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          artistsAsync.when(
-            loading: () => const SkeletonBox(width: double.infinity, height: 56),
-            error: (_, _) => const SizedBox.shrink(),
-            data: (artists) => Column(
-              children: [
-                for (final e in artists)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(backgroundImage: NetworkImage(e.artist.pictureUrl)),
-                    title: Text(e.artist.name),
-                    trailing: Text('${e.entry.minutes} min', style: Theme.of(context).textTheme.bodySmall),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text('Top canciones', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          tracksAsync.when(
-            loading: () => const SkeletonBox(width: double.infinity, height: 56),
-            error: (_, _) => const SizedBox.shrink(),
-            data: (tracks) => Column(
-              children: [
-                for (final e in tracks)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: Image.network(e.track.coverUrl, width: 44, height: 44, fit: BoxFit.cover),
-                    ),
-                    title: Text(e.track.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    subtitle: Text(e.track.artistName, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    trailing: Text(
-                      '${e.entry.playCount} reproducciones',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          if (showGenres && snapshot.topGenres.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            Text('Top géneros', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final g in snapshot.topGenres.take(10))
-                  Chip(
-                    backgroundColor: AppTheme.surfaceHover,
-                    label: Text('${g.genre} · ${g.minutes} min'),
-                  ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  String _monthLabel(DateTime month) {
-    const names = [
-      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-    ];
-    return '${names[month.month - 1]} ${month.year}';
-  }
-}
-
-/// Fase 7.G.7 -- tarjetas tipo stories compartibles como imagen (D-20: solo
-/// imagen, sin URL pública).
-class _WrappedStoriesScreen extends ConsumerStatefulWidget {
-  const _WrappedStoriesScreen();
-
-  @override
-  ConsumerState<_WrappedStoriesScreen> createState() => _WrappedStoriesScreenState();
-}
-
-class _WrappedStoriesScreenState extends ConsumerState<_WrappedStoriesScreen> {
-  final PageController _pageController = PageController();
-  final List<GlobalKey> _cardKeys = List.generate(5, (_) => GlobalKey());
-  bool _isSharing = false;
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _share(int index) async {
-    if (_isSharing) return;
-    setState(() => _isSharing = true);
-    try {
-      final boundary =
-          _cardKeys[index].currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) return;
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) return;
-      final bytes = byteData.buffer.asUint8List();
-
-      final dir = await getTemporaryDirectory();
-      final file = await _writeTempPng(dir.path, bytes);
-      await Share.shareXFiles([XFile(file.path)], text: 'Mi Wrapped de Syncora Player');
-    } finally {
-      if (mounted) setState(() => _isSharing = false);
-    }
-  }
-
-  Future<File> _writeTempPng(String dirPath, Uint8List bytes) async {
-    final file = File('$dirPath/syncora_wrapped_${DateTime.now().millisecondsSinceEpoch}.png');
-    return file.writeAsBytes(bytes);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final asyncSnapshot = ref.watch(yearlyStatsProvider);
-
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: asyncSnapshot.when(
-        loading: () => const Center(child: SkeletonBox(width: 240, height: 400)),
-        error: (_, _) => const _StatsEmptyState(),
-        data: (snapshot) {
-          final artistsAsync = ref.watch(enrichedArtistsProvider(snapshot.topArtists));
-          final tracksAsync = ref.watch(enrichedTracksProvider(snapshot.topTracks));
-
-          final cards = [
-            _wrappedCard(0, 'Este año escuchaste', '${snapshot.totalMinutes} minutos'),
-            _wrappedCard(
-              1,
-              'Tus artistas top',
-              artistsAsync.value?.take(5).map((e) => e.artist.name).join('\n') ?? '',
-            ),
-            _wrappedCard(
-              2,
-              'Tus canciones top',
-              tracksAsync.value?.take(5).map((e) => e.track.title).join('\n') ?? '',
-            ),
-            _wrappedCard(
-              3,
-              'Tus géneros top',
-              snapshot.topGenres.take(5).map((g) => g.genre).join('\n'),
-            ),
-            _wrappedCard(
-              4,
-              'Tu mes más activo',
-              snapshot.mostActiveMonth != null ? _monthLabel(snapshot.mostActiveMonth!) : '—',
-            ),
-          ];
-
-          return SafeArea(
-            child: Column(
-              children: [
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: IconButton(
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary),
-                  ),
-                ),
-                Expanded(
-                  child: PageView(controller: _pageController, children: cards),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _wrappedCard(int index, String title, String body) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(vertical: 64, horizontal: 24),
       child: Column(
         children: [
-          Expanded(
-            child: RepaintBoundary(
-              key: _cardKeys[index],
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  gradient: AppTheme.gradientLiked,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      body.isEmpty ? '—' : body,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          Icon(AppIcons.broken(SolarIcons.ChartSquare), size: 48, color: AppTheme.muted),
+          const SizedBox(height: 16),
+          const Text(
+            'Todavía no hay nada que contar',
+            style: TextStyle(
+              color: AppTheme.primary,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: _isSharing ? null : () => _share(index),
-            icon: Icon(AppIcons.broken(SolarIcons.Share), size: 18),
-            label: const Text('Compartir'),
+          const SizedBox(height: 8),
+          const Text(
+            'Escucha algo de música y tus estadísticas de este periodo '
+            'aparecerán aquí.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppTheme.muted, fontSize: 13, height: 1.4),
           ),
         ],
       ),
     );
   }
+}
 
-  String _monthLabel(DateTime month) {
-    const names = [
-      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-    ];
-    return '${names[month.month - 1]} ${month.year}';
+class _ErrorState extends StatelessWidget {
+  final VoidCallback onRetry;
+
+  const _ErrorState({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 64, horizontal: 24),
+      child: Column(
+        children: [
+          const Text(
+            'No se pudieron cargar tus estadísticas',
+            style: TextStyle(color: AppTheme.primary, fontSize: 15),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(onPressed: onRetry, child: const Text('Reintentar')),
+        ],
+      ),
+    );
   }
 }
