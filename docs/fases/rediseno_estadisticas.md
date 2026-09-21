@@ -188,6 +188,43 @@ sigue instalado, si el job existe y cuándo corrió. Existe porque el scheduling
 vive en un bloque `DO` que se traga los errores a propósito, así que "la
 migración no falló" no probaba nada.
 
+## Ajustes tras las primeras pruebas en dispositivo
+
+- **Los tops de artistas y canciones salían siempre vacíos y la pantalla iba
+  lenta en móvil: el mismo bug.** Los providers de metadata usaban una `List`
+  como clave de `family`. Riverpod compara claves con `==` y en Dart una lista
+  compara por IDENTIDAD, así que el `.take(n).toList()` de cada `build` creaba
+  un provider nuevo que empezaba a cargar de cero y nunca resolvía, además de
+  acumular instancias. La clave es ahora una cadena de ids (`statsIdsKey`) y
+  los providers son `autoDispose`. **No usar listas como clave de un family.**
+
+- **Los minutos subían y al recargar bajaban**, con música sonando a la vez en
+  los dos dispositivos. El relleno de géneros marcaba como "pendiente de
+  subir" también las filas bajadas de otros aparatos; esas copias guardan la
+  duración del momento de la descarga, así que el push las devolvía y pisaba
+  el valor bueno con uno viejo. Corregido en el cliente
+  (`applyGenreToAlbum` ignora filas `fromRemote`, `insertRemoteEntries`
+  refresca la copia cuando la nube trae más) y con un **trigger en Postgres**
+  que impide que `duration_listened_ms` decrezca nunca (migración 16,
+  verificado contra la base real).
+
+- **El top de canciones se ordena por reproducciones**, no por minutos
+  (migración 17). Hubo que cambiarlo en el servidor y no solo al pintar: el
+  `LIMIT` del top se aplica allí, así que ordenar en el cliente solo
+  reordenaría una selección ya hecha con el criterio equivocado. Artistas
+  siguen por tiempo.
+
+- **La app se caía al guardar la imagen del Wrapped en escritorio.** `toImage`
+  devuelve una `ui.Image` respaldada por memoria nativa que hay que
+  `dispose()` a mano; sin eso se acumulaban decenas de MB por exportación.
+  Además el `pixelRatio: 3` fijo generaba imágenes de >25 Mpx en escritorio:
+  ahora la escala se calcula para un ancho objetivo de 1080 px.
+
+- **El Wrapped pasó de cinco tarjetas a tres.** Resumen (foto grande, top 5 de
+  artistas y de canciones, minutos, género y cifras), artistas con sus cinco
+  fotos y canciones con sus cinco portadas, sin cifras por elemento. Las
+  tarjetas de "variedad" y "momento favorito" se quitaron por aportar poco.
+
 ## Limpieza de datos hecha
 
 Se borraron las **173 filas anteriores al 2026-08-30 20:00 UTC** (el 100 %

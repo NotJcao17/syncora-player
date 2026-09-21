@@ -80,19 +80,52 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
     );
   }
 
-  /// Rasteriza la tarjeta visible a PNG.
+  /// Ancho objetivo del PNG exportado.
   ///
-  /// `pixelRatio: 3` para que no salga pixelada al subirla a una story.
+  /// El factor de escala se calcula a partir de esto en vez de fijar un
+  /// `pixelRatio: 3` a ciegas: en escritorio la tarjeta ya se dibuja grande,
+  /// y multiplicarla por tres daba imágenes de más de 25 millones de píxeles
+  /// (>100 MB en memoria antes de comprimir). 1080 px de ancho es resolución
+  /// de sobra para una story y acota el pico de memoria.
+  static const double _exportTargetWidth = 1080;
+
+  /// Rasteriza la tarjeta visible a PNG.
   Future<File?> _renderCard() async {
     final boundary =
         _keyFor(_index).currentContext?.findRenderObject() as RenderRepaintBoundary?;
     if (boundary == null) return null;
-    final image = await boundary.toImage(pixelRatio: 3.0);
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    if (byteData == null) return null;
 
-    final dir = await getTemporaryDirectory();
-    return _writeTempPng(dir.path, byteData.buffer.asUint8List());
+    final logicalWidth = boundary.size.width;
+    final ratio = logicalWidth <= 0
+        ? 2.0
+        : (_exportTargetWidth / logicalWidth).clamp(1.0, 3.0);
+
+    // `toImage` devuelve una `ui.Image` respaldada por memoria NATIVA, que el
+    // recolector de Dart no libera: hay que cerrarla a mano. No hacerlo dejaba
+    // decenas de MB colgando por cada exportación — la causa de que la app se
+    // cayera después de guardar la imagen.
+    ui.Image? image;
+    try {
+      image = await boundary.toImage(pixelRatio: ratio.toDouble());
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return null;
+
+      final dir = await getTemporaryDirectory();
+      return _writeTempPng(dir.path, byteData.buffer.asUint8List());
+    } finally {
+      image?.dispose();
+    }
+  }
+
+  /// Apaga el indicador de ocupado sin dar por hecho que el widget sigue
+  /// montado: si el usuario cerró la pantalla a mitad, `setState` lanzaría y
+  /// el icono se quedaba girando para siempre al volver a entrar.
+  void _clearBusy() {
+    if (!mounted) {
+      _isBusy = false;
+      return;
+    }
+    setState(() => _isBusy = false);
   }
 
   /// Móvil: hoja de compartir del sistema. Es donde tiene sentido.
@@ -109,7 +142,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
     } catch (_) {
       if (mounted) AppToast.show(context, message: 'No se pudo compartir la tarjeta');
     } finally {
-      if (mounted) setState(() => _isBusy = false);
+      _clearBusy();
     }
   }
 
@@ -131,6 +164,10 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
         'syncora_wrapped_${DateTime.now().millisecondsSinceEpoch}.png',
       );
       await temp.copy(dest.path);
+      // El PNG temporal ya no hace falta y puede pesar varios MB.
+      try {
+        await temp.delete();
+      } catch (_) {}
 
       if (!mounted) return;
       AppToast.show(
@@ -142,7 +179,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
     } catch (_) {
       if (mounted) AppToast.show(context, message: 'No se pudo guardar la imagen');
     } finally {
-      if (mounted) setState(() => _isBusy = false);
+      _clearBusy();
     }
   }
 
@@ -411,57 +448,67 @@ class _PeriodDropdown extends StatelessWidget {
 // Contenido de las tarjetas
 // ----------------------------------------------------------------------
 
-/// Cómo se pinta el cuerpo de una tarjeta. Tener varias plantillas es lo que
-/// evita que el Wrapped sea cinco veces el mismo rectángulo con otro texto.
+/// Un elemento de un top, ya resuelto con su imagen.
+class WrappedItem {
+  final String title;
+  final String? subtitle;
+  final String imageUrl;
+
+  const WrappedItem({required this.title, this.subtitle, this.imageUrl = ''});
+}
+
+/// Cómo se pinta el cuerpo de una tarjeta.
+///
+/// Son solo tres, y a propósito: la versión anterior tenía cinco de las que
+/// la mitad decían muy poco ("tu variedad", "tu momento favorito"). Vale más
+/// una portada grande con los cinco artistas y las cinco canciones que cinco
+/// pantallas con una cifra cada una.
 enum WrappedLayout {
-  /// Una cifra enorme (tiempo total, número de artistas).
-  bigNumber,
+  /// Resumen: foto grande, las dos listas, minutos y género.
+  summary,
 
-  /// Portada grande arriba y el top debajo, numerado.
-  spotlight,
+  /// Los cinco artistas con su foto, sin cifras.
+  artistShowcase,
 
-  /// Ranking con barras de proporción.
-  ranking,
-
-  /// Rejilla de cifras sueltas.
-  facts,
+  /// Las cinco canciones con su portada, sin cifras.
+  trackShowcase,
 }
 
 class WrappedCardData {
   final String eyebrow;
-  final String headline;
-  final String caption;
   final List<Color> colors;
   final WrappedLayout layout;
-  final String? imageUrl;
-  final bool circularImage;
 
-  /// Filas del ranking: etiqueta, valor y proporción (0..1) para la barra.
-  final List<({String label, String value, double fraction})> rows;
+  /// Imagen protagonista (foto del artista nº 1).
+  final String heroImageUrl;
 
-  /// Cifras sueltas del layout [WrappedLayout.facts].
+  final List<WrappedItem> artists;
+  final List<WrappedItem> tracks;
+
+  /// Franja inferior del resumen.
+  final String totalTime;
+  final String topGenre;
   final List<({String label, String value})> facts;
-
-  final String? footnote;
 
   const WrappedCardData({
     required this.eyebrow,
-    required this.headline,
-    required this.caption,
     required this.colors,
     required this.layout,
-    this.imageUrl,
-    this.circularImage = false,
-    this.rows = const [],
+    this.heroImageUrl = '',
+    this.artists = const [],
+    this.tracks = const [],
+    this.totalTime = '',
+    this.topGenre = '',
     this.facts = const [],
-    this.footnote,
   });
 }
 
 /// Construye las tarjetas a partir del snapshot.
 ///
-/// Función libre y pura para poder probar qué tarjetas salen según los datos
-/// disponibles (sin géneros, sin artistas, etc.) sin montar la pantalla.
+/// Función libre y pura: se puede comprobar qué tarjetas salen según los
+/// datos disponibles (sin géneros, sin artistas…) sin montar la pantalla.
+/// Las de artistas y canciones solo aparecen si hay algo que enseñar — una
+/// tarjeta vacía es peor que no tenerla.
 List<WrappedCardData> buildWrappedCards({
   required StatsSnapshot snapshot,
   required StatsPeriod period,
@@ -469,150 +516,55 @@ List<WrappedCardData> buildWrappedCards({
   required List<EnrichedTrack> tracks,
 }) {
   final s = snapshot;
-  final cards = <WrappedCardData>[];
 
-  cards.add(WrappedCardData(
-    eyebrow: 'En ${period.longLabel}',
-    headline: formatListeningTime(s.totalMs),
-    caption: 'escuchando música',
-    colors: const [Color(0xFF6366F1), Color(0xFF9333EA)],
-    layout: WrappedLayout.bigNumber,
-    footnote: '${s.totalPlays} reproducciones en total',
-  ));
-
-  if (artists.isNotEmpty) {
-    final max = artists.first.entry.ms;
-    cards.add(WrappedCardData(
-      eyebrow: 'Tu artista número uno',
-      headline: artists.first.artist.name,
-      caption: formatListeningTime(artists.first.entry.ms),
-      colors: const [Color(0xFF0EA5E9), Color(0xFF1D4ED8)],
-      layout: WrappedLayout.spotlight,
-      imageUrl: artists.first.artist.pictureUrl,
-      circularImage: true,
-      rows: [
-        for (final a in artists.skip(1).take(4))
-          (
-            label: a.artist.name,
-            value: formatListeningTime(a.entry.ms),
-            fraction: max == 0 ? 0.0 : a.entry.ms / max,
-          ),
-      ],
-    ));
-  }
-
-  if (tracks.isNotEmpty) {
-    final max = tracks.first.entry.plays > 0
-        ? tracks.first.entry.plays.toDouble()
-        : tracks.first.entry.ms.toDouble();
-    cards.add(WrappedCardData(
-      eyebrow: 'La que más repetiste',
-      headline: tracks.first.track.title,
-      caption: tracks.first.track.artistName.isNotEmpty
-          ? tracks.first.track.artistName
-          : formatListeningTime(tracks.first.entry.ms),
-      colors: const [Color(0xFFDB2777), Color(0xFF7C3AED)],
-      layout: WrappedLayout.spotlight,
-      imageUrl: tracks.first.track.coverUrl,
-      rows: [
-        for (final t in tracks.skip(1).take(4))
-          (
-            label: t.track.title,
-            value: t.entry.plays > 0
-                ? '${t.entry.plays}×'
-                : formatListeningTime(t.entry.ms),
-            fraction: max == 0
-                ? 0.0
-                : (t.entry.plays > 0 ? t.entry.plays / max : t.entry.ms / max),
-          ),
-      ],
-      footnote: tracks.first.entry.plays > 0
-          ? 'La pusiste ${tracks.first.entry.plays} veces'
-          : null,
-    ));
-  }
-
-  if (s.topGenres.isNotEmpty) {
-    final total = s.topGenres.fold<int>(0, (a, g) => a + g.ms);
-    cards.add(WrappedCardData(
-      eyebrow: 'Tu sonido',
-      headline: s.topGenres.first.genre,
-      caption: total == 0
-          ? 'tu género principal'
-          : '${(s.topGenres.first.ms / total * 100).round()} % de lo que escuchaste',
-      colors: const [Color(0xFF059669), Color(0xFF0D9488)],
-      layout: WrappedLayout.ranking,
-      rows: [
-        for (final g in s.topGenres.take(5))
-          (
-            label: g.genre,
-            value: total == 0 ? '' : '${(g.ms / total * 100).round()} %',
-            fraction: total == 0 ? 0.0 : g.ms / total,
-          ),
-      ],
-    ));
-  }
-
-  // Momento favorito, del mapa de hábitos: un dato que antes no se usaba
-  // para nada y que es de los que más gustan.
-  final peak = _peakSlot(s.hours);
-  if (peak != null) {
-    cards.add(WrappedCardData(
-      eyebrow: 'Tu momento favorito',
-      headline: peak.label,
-      caption: 'es cuando más música pones',
-      colors: const [Color(0xFF7C3AED), Color(0xFF2563EB)],
-      layout: WrappedLayout.bigNumber,
-      footnote: '${formatListeningTime(peak.ms)} solo en esa franja',
-    ));
-  }
-
-  cards.add(WrappedCardData(
-    eyebrow: 'Tu variedad',
-    headline: '${s.distinctArtists}',
-    caption: s.distinctArtists == 1 ? 'artista distinto' : 'artistas distintos',
-    colors: const [Color(0xFFEA580C), Color(0xFFDB2777)],
-    layout: WrappedLayout.facts,
-    facts: [
-      (label: 'Canciones diferentes', value: '${s.distinctTracks}'),
-      (label: 'Álbumes', value: '${s.distinctAlbums}'),
-      (label: 'Reproducciones', value: '${s.totalPlays}'),
-      if (s.activeDays > 0) (label: 'Días con música', value: '${s.activeDays}'),
-    ],
-  ));
-
-  return cards;
-}
-
-/// Franja horaria con más escucha, ya redactada ("Los viernes por la noche").
-({String label, int ms})? _peakSlot(List<HourCell> hours) {
-  if (hours.isEmpty) return null;
-
-  // Se agrupa en franjas de 3 h: una hora suelta es demasiado fino para que
-  // el dato suene a algo.
-  final buckets = <int, int>{};
-  for (final h in hours) {
-    final key = h.dow * 8 + (h.hour ~/ 3).clamp(0, 7);
-    buckets[key] = (buckets[key] ?? 0) + h.ms;
-  }
-  if (buckets.isEmpty) return null;
-
-  final best = buckets.entries.reduce((a, b) => b.value > a.value ? b : a);
-  if (best.value == 0) return null;
-
-  const dias = [
-    'domingos', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábados',
+  final artistItems = [
+    for (final a in artists.take(5))
+      WrappedItem(title: a.artist.name, imageUrl: a.artist.pictureUrl),
   ];
-  final dow = (best.key ~/ 8).clamp(0, 6);
-  final startHour = (best.key % 8) * 3;
-  final franja = switch (startHour) {
-    0 || 3 => 'de madrugada',
-    6 || 9 => 'por la mañana',
-    12 || 15 => 'por la tarde',
-    _ => 'por la noche',
-  };
+  final trackItems = [
+    for (final t in tracks.take(5))
+      WrappedItem(
+        title: t.track.title,
+        subtitle: t.track.artistName.isEmpty ? null : t.track.artistName,
+        imageUrl: t.track.coverUrl,
+      ),
+  ];
 
-  return (label: 'Los ${dias[dow]}\n$franja', ms: best.value);
+  final hero = artistItems.isNotEmpty && artistItems.first.imageUrl.isNotEmpty
+      ? artistItems.first.imageUrl
+      : (trackItems.isNotEmpty ? trackItems.first.imageUrl : '');
+
+  return [
+    WrappedCardData(
+      eyebrow: 'Tu resumen · ${period.label}',
+      colors: const [Color(0xFF6D28D9), Color(0xFF2563EB)],
+      layout: WrappedLayout.summary,
+      heroImageUrl: hero,
+      artists: artistItems,
+      tracks: trackItems,
+      totalTime: formatListeningTime(s.totalMs),
+      topGenre: s.topGenres.isEmpty ? '' : s.topGenres.first.genre,
+      facts: [
+        (label: 'Artistas', value: '${s.distinctArtists}'),
+        (label: 'Canciones', value: '${s.distinctTracks}'),
+        (label: 'Reproducciones', value: '${s.totalPlays}'),
+      ],
+    ),
+    if (artistItems.isNotEmpty)
+      WrappedCardData(
+        eyebrow: 'Tus artistas · ${period.label}',
+        colors: const [Color(0xFF0EA5E9), Color(0xFF1E3A8A)],
+        layout: WrappedLayout.artistShowcase,
+        artists: artistItems,
+      ),
+    if (trackItems.isNotEmpty)
+      WrappedCardData(
+        eyebrow: 'Tus canciones · ${period.label}',
+        colors: const [Color(0xFFDB2777), Color(0xFF6D28D9)],
+        layout: WrappedLayout.trackShowcase,
+        tracks: trackItems,
+      ),
+  ];
 }
 
 class WrappedCard extends StatelessWidget {
@@ -632,7 +584,7 @@ class WrappedCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: data.colors.last.withValues(alpha: 0.35),
+            color: data.colors.last.withValues(alpha: 0.4),
             blurRadius: 40,
             offset: const Offset(0, 12),
           ),
@@ -642,56 +594,38 @@ class WrappedCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // Dos círculos muy tenues: rompen el degradado plano y dan
-            // profundidad sin competir con el texto.
-            Positioned(
-              top: -60,
-              right: -50,
-              child: _Blob(size: 220, alpha: 0.12),
-            ),
-            Positioned(
-              bottom: -70,
-              left: -60,
-              child: _Blob(size: 200, alpha: 0.08),
-            ),
+            const Positioned(top: -70, right: -60, child: _Blob(size: 240, alpha: 0.14)),
+            const Positioned(bottom: -80, left: -70, child: _Blob(size: 220, alpha: 0.10)),
             Padding(
-              padding: const EdgeInsets.all(22),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     data.eyebrow.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.85),
-                      fontSize: 11,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: 1.5,
+                      letterSpacing: 1.6,
                     ),
                   ),
-                  Expanded(child: _body(context)),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          data.footnote ?? '',
-                          maxLines: 2,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.75),
-                            fontSize: 12,
-                            height: 1.3,
-                          ),
-                        ),
+                  const SizedBox(height: 12),
+                  Expanded(child: _body()),
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      'SYNCORA PLAYER',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.55),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.2,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Syncora',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.55),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
@@ -702,240 +636,352 @@ class WrappedCard extends StatelessWidget {
     );
   }
 
-  Widget _body(BuildContext context) => switch (data.layout) {
-        WrappedLayout.bigNumber => _bigNumber(),
-        WrappedLayout.spotlight => _spotlight(),
-        WrappedLayout.ranking => _ranking(),
-        WrappedLayout.facts => _facts(),
+  Widget _body() => switch (data.layout) {
+        WrappedLayout.summary => _summary(),
+        WrappedLayout.artistShowcase => _artistShowcase(),
+        WrappedLayout.trackShowcase => _trackShowcase(),
       };
 
-  Widget _headline({double size = 40, TextAlign align = TextAlign.left, int maxLines = 3}) =>
-      FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: align == TextAlign.center ? Alignment.center : Alignment.centerLeft,
-        child: Text(
-          data.headline,
-          maxLines: maxLines,
-          textAlign: align,
+  // --------------------------------------------------------------------
+  // Resumen
+  // --------------------------------------------------------------------
+
+  Widget _summary() {
+    return LayoutBuilder(
+      builder: (context, c) {
+        // Un tercio del alto: por debajo de eso las dos listas de cinco no
+        // entran sin recortarse.
+        final heroSide = (c.maxHeight * 0.32).clamp(80.0, c.maxWidth * 0.6);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (data.heroImageUrl.isNotEmpty)
+              Center(child: _FramedImage(url: data.heroImageUrl, side: heroSide, radius: 14)),
+            const SizedBox(height: 14),
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _miniList('Top artistas', data.artists)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _miniList('Top canciones', data.tracks)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(child: _bigStat('Minutos escuchados', data.totalTime)),
+                if (data.topGenre.isNotEmpty)
+                  Expanded(child: _bigStat('Género top', data.topGenre)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Divider(color: Colors.white.withValues(alpha: 0.22), height: 1),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                for (final f in data.facts)
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          f.value,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          f.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _miniList(String title, List<WrappedItem> items) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
           style: TextStyle(
-            color: Colors.white,
-            fontSize: size,
-            fontWeight: FontWeight.w800,
-            height: 1.05,
-            letterSpacing: -0.5,
+            color: Colors.white.withValues(alpha: 0.75),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
           ),
         ),
-      );
+        const SizedBox(height: 6),
+        for (var i = 0; i < items.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 14,
+                  child: Text(
+                    '${i + 1}',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    items[i].title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      height: 1.25,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
 
-  Widget _caption({TextAlign align = TextAlign.left}) => Text(
-        data.caption,
-        textAlign: align,
-        style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.85),
-          fontSize: 15,
-          height: 1.3,
+  Widget _bigStat(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.75),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
         ),
+        const SizedBox(height: 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            value,
+            maxLines: 1,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 25,
+              fontWeight: FontWeight.w800,
+              height: 1.1,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --------------------------------------------------------------------
+  // Artistas: el nº 1 en grande y los otros cuatro en fila
+  // --------------------------------------------------------------------
+
+  Widget _artistShowcase() => _showcase(
+        items: data.artists,
+        circular: true,
+        heroRadius: 0,
       );
 
-  Widget _bigNumber() => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+  Widget _trackShowcase() => _showcase(
+        items: data.tracks,
+        circular: false,
+        heroRadius: 12,
+      );
+
+  /// Plantilla común de las dos tarjetas de top: protagonista grande y los
+  /// otros cuatro en una fila, sin ninguna cifra — el orden ya cuenta la
+  /// historia y los minutos sueltos no aportan nada aquí.
+  Widget _showcase({
+    required List<WrappedItem> items,
+    required bool circular,
+    required double heroRadius,
+  }) {
+    final first = items.first;
+    final rest = items.skip(1).toList();
+
+    return LayoutBuilder(
+      builder: (context, c) {
+        final heroSide = (c.maxHeight * 0.36).clamp(100.0, c.maxWidth * 0.62);
+        final smallSide = ((c.maxWidth / 4) - 14).clamp(40.0, 90.0);
+
+        return Column(
           children: [
-            _headline(size: 46, align: TextAlign.center),
-            const SizedBox(height: 10),
-            _caption(align: TextAlign.center),
-          ],
-        ),
-      );
-
-  Widget _spotlight() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          if (data.imageUrl != null && data.imageUrl!.isNotEmpty)
-            Center(child: _cover()),
-          const SizedBox(height: 18),
-          _headline(size: 30, maxLines: 2),
-          const SizedBox(height: 4),
-          _caption(),
-          if (data.rows.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Divider(color: Colors.white.withValues(alpha: 0.2), height: 1),
-            const SizedBox(height: 10),
-            for (var i = 0; i < data.rows.length; i++)
+            _FramedImage(
+              url: first.imageUrl,
+              side: heroSide,
+              circular: circular,
+              radius: heroRadius,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              first.title,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 23,
+                fontWeight: FontWeight.w800,
+                height: 1.15,
+              ),
+            ),
+            if (first.subtitle != null)
               Padding(
-                padding: const EdgeInsets.only(bottom: 7),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 18,
-                      child: Text(
-                        '${i + 2}',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        data.rows[i].label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.92),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      data.rows[i].value,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                padding: const EdgeInsets.only(top: 3),
+                child: Text(
+                  first.subtitle!,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 13,
+                  ),
                 ),
               ),
+            const Spacer(),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < rest.length; i++)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 3),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _FramedImage(
+                            url: rest[i].imageUrl,
+                            side: smallSide,
+                            circular: circular,
+                            radius: 8,
+                            borderWidth: 1.5,
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            '${i + 2}',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            rest[i].title,
+                            maxLines: 2,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              height: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ],
-          const Spacer(),
-        ],
-      );
+        );
+      },
+    );
+  }
+}
 
-  Widget _cover() {
-    final radius = data.circularImage ? 999.0 : 18.0;
+/// Imagen con marco claro y sombra, cuadrada o circular.
+class _FramedImage extends StatelessWidget {
+  final String url;
+  final double side;
+  final bool circular;
+  final double radius;
+  final double borderWidth;
+
+  const _FramedImage({
+    required this.url,
+    required this.side,
+    this.circular = false,
+    this.radius = 12,
+    this.borderWidth = 3,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final r = circular ? side : radius;
+    final placeholder = Container(
+      width: side,
+      height: side,
+      color: Colors.white.withValues(alpha: 0.15),
+      child: Icon(
+        circular ? Icons.person : Icons.music_note,
+        color: Colors.white54,
+        size: side * 0.35,
+      ),
+    );
+
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 3),
+        borderRadius: BorderRadius.circular(r),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.35),
+          width: borderWidth,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.28),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(radius),
-        child: CachedNetworkImage(
-          imageUrl: data.imageUrl!,
-          width: 150,
-          height: 150,
-          fit: BoxFit.cover,
-          placeholder: (_, _) => Container(
-            width: 150,
-            height: 150,
-            color: Colors.white.withValues(alpha: 0.15),
-          ),
-          errorWidget: (_, _, _) => Container(
-            width: 150,
-            height: 150,
-            color: Colors.white.withValues(alpha: 0.15),
-            child: const Icon(Icons.music_note, color: Colors.white54, size: 40),
-          ),
-        ),
+        borderRadius: BorderRadius.circular(r),
+        child: url.isEmpty
+            ? placeholder
+            : CachedNetworkImage(
+                imageUrl: url,
+                width: side,
+                height: side,
+                fit: BoxFit.cover,
+                placeholder: (_, _) => placeholder,
+                errorWidget: (_, _, _) => placeholder,
+              ),
       ),
     );
   }
-
-  Widget _ranking() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 20),
-          _headline(size: 36, maxLines: 2),
-          const SizedBox(height: 4),
-          _caption(),
-          const SizedBox(height: 22),
-          for (final row in data.rows)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          row.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        row.value,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.75),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: row.fraction.clamp(0.02, 1.0),
-                      minHeight: 6,
-                      backgroundColor: Colors.white.withValues(alpha: 0.18),
-                      valueColor: const AlwaysStoppedAnimation(Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          const Spacer(),
-        ],
-      );
-
-  Widget _facts() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Spacer(),
-          _headline(size: 64),
-          const SizedBox(height: 2),
-          _caption(),
-          const SizedBox(height: 26),
-          for (final f in data.facts)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    f.value,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      f.label,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          const Spacer(),
-        ],
-      );
 }
 
 class _Blob extends StatelessWidget {

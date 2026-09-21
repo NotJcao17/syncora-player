@@ -109,6 +109,37 @@ void main() {
       expect(s.topTracks, isEmpty);
     });
 
+    test('el top de canciones va por reproducciones, no por minutos', () {
+      // Sintoma reportado: aparecian canciones con 3 reproducciones por
+      // debajo de otras con 1, porque una cancion larga escuchada una vez
+      // suma mas tiempo que una corta escuchada tres veces.
+      final s = StatsCalculator.fromRawEntries([
+        // Una sola escucha, muy larga.
+        e(trackId: 10, artistId: 1, albumId: 1, ms: 600000, at: DateTime.utc(2026, 9, 18, 10)),
+        // Tres escuchas cortas: menos minutos, mas reproducciones.
+        e(trackId: 20, artistId: 1, albumId: 1, ms: 60000, at: DateTime.utc(2026, 9, 18, 11)),
+        e(trackId: 20, artistId: 1, albumId: 1, ms: 60000, at: DateTime.utc(2026, 9, 18, 12)),
+        e(trackId: 20, artistId: 1, albumId: 1, ms: 60000, at: DateTime.utc(2026, 9, 18, 13)),
+      ], bucket: StatsBucket.day);
+
+      expect(s.topTracks.first.id, 20, reason: '3 reproducciones gana a 1');
+      expect(s.topTracks.first.plays, 3);
+      expect(s.topTracks[1].id, 10);
+
+      // El top de ARTISTAS se mantiene por tiempo: ahi la pregunta es "a
+      // quien escuchaste mas", no cuantas pistas suyas pusiste.
+      expect(s.topArtists.first.ms, 780000);
+    });
+
+    test('con las mismas reproducciones desempatan los minutos', () {
+      final s = StatsCalculator.fromRawEntries([
+        e(trackId: 10, artistId: 1, albumId: 1, ms: 100000, at: DateTime.utc(2026, 9, 18, 10)),
+        e(trackId: 20, artistId: 1, albumId: 1, ms: 300000, at: DateTime.utc(2026, 9, 18, 11)),
+      ], bucket: StatsBucket.day);
+
+      expect(s.topTracks.first.id, 20);
+    });
+
     test('una lista vacia da un snapshot vacio', () {
       final s = StatsCalculator.fromRawEntries([], bucket: StatsBucket.day);
       expect(s.isEmpty, isTrue);

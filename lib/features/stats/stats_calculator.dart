@@ -122,7 +122,7 @@ abstract class StatsCalculator {
       distinctAlbums: albums.length,
       activeDays: days.length,
       topArtists: _topEntries(artists.values, topN),
-      topTracks: _topEntries(tracks.values, topN),
+      topTracks: _topTracksByPlays(tracks.values, topN),
       topAlbums: _topEntries(albums.values, topN),
       topGenres: _topGenres(genres.values, topN),
       series: series.values.toList()..sort((a, b) => a.t.compareTo(b.t)),
@@ -179,7 +179,7 @@ abstract class StatsCalculator {
       distinctAlbums: albums.length,
       activeDays: 0, // no se puede derivar de un agregado mensual
       topArtists: _topEntries(artists.values, topN),
-      topTracks: _topEntries(tracks.values, topN),
+      topTracks: _topTracksByPlays(tracks.values, topN),
       topAlbums: _topEntries(albums.values, topN),
       topGenres: _topGenres(genres.values, topN),
       series: series,
@@ -208,6 +208,23 @@ abstract class StatsCalculator {
 
   static List<StatEntry> _topEntries(Iterable<StatEntry> values, int topN) {
     final sorted = values.toList()..sort((a, b) => b.ms.compareTo(a.ms));
+    return sorted.take(topN).toList();
+  }
+
+  /// El top de canciones va por REPRODUCCIONES, con los minutos de desempate.
+  ///
+  /// Ordenarlo por tiempo resultaba confuso: una canción larga escuchada una
+  /// vez suma más minutos que una corta escuchada tres, así que aparecían
+  /// canciones con 3 reproducciones por debajo de otras con 1. Para artistas
+  /// se mantiene el tiempo, que ahí sí es "a quién escuchaste más".
+  ///
+  /// Espejo de `ORDER BY plays DESC, ms DESC` en `get_listening_stats`.
+  static List<StatEntry> _topTracksByPlays(Iterable<StatEntry> values, int topN) {
+    final sorted = values.toList()
+      ..sort((a, b) {
+        final byPlays = b.plays.compareTo(a.plays);
+        return byPlays != 0 ? byPlays : b.ms.compareTo(a.ms);
+      });
     return sorted.take(topN).toList();
   }
 

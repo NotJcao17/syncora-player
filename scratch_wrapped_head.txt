@@ -1,0 +1,409 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../../../core/theme/app_icons.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/skeleton_box.dart';
+import '../stats_models.dart';
+import '../stats_providers.dart';
+
+/// Wrapped: tarjetas tipo *stories*, una por dato, exportables como imagen.
+///
+/// **El periodo es el que el usuario elija**, no el año fijo de la versión
+/// anterior: se hereda el del dashboard y se puede cambiar desde aquí mismo
+/// con el selector de la cabecera.
+///
+/// En escritorio hay flechas y teclado (←/→) porque ahí no existe el gesto de
+/// deslizar: sin eso solo se veía la primera tarjeta.
+class WrappedScreen extends ConsumerStatefulWidget {
+  final StatsPeriod period;
+
+  const WrappedScreen({super.key, required this.period});
+
+  @override
+  ConsumerState<WrappedScreen> createState() => _WrappedScreenState();
+}
+
+/// Periodo del Wrapped, separado del del dashboard para que cambiarlo aquí
+/// no reordene la pantalla que quedó detrás.
+final wrappedPeriodProvider = StateProvider<StatsPeriod?>((ref) => null);
+
+class _WrappedScreenState extends ConsumerState<WrappedScreen> {
+  final PageController _pageController = PageController();
+  final FocusNode _focusNode = FocusNode();
+  final Map<int, GlobalKey> _cardKeys = {};
+  int _index = 0;
+  int _cardCount = 1;
+  bool _isBusy = false;
+
+  GlobalKey _keyFor(int i) => _cardKeys.putIfAbsent(i, () => GlobalKey());
+
+  bool get _isDesktopPlatform =>
+      !kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+
+  @override
+  void initState() {
+    super.initState();
+    // El periodo de partida es el que el usuario tenía elegido en el
+    // dashboard.
+    Future.microtask(() {
+      if (!mounted) return;
+      ref.read(wrappedPeriodProvider.notifier).state ??= widget.period;
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _goTo(int i) {
+    final target = i.clamp(0, _cardCount - 1);
+    if (target == _index) return;
+    _pageController.animateToPage(
+      target,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  /// Rasteriza la tarjeta visible a PNG.
+  ///
+  /// `pixelRatio: 3` para que no salga pixelada al subirla a una story.
+  Future<File?> _renderCard() async {
+    final boundary =
+        _keyFor(_index).currentContext?.findRenderObject() as RenderRepaintBoundary?;
+    if (boundary == null) return null;
+    final image = await boundary.toImage(pixelRatio: 3.0);
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    if (byteData == null) return null;
+
+    final dir = await getTemporaryDirectory();
+    return _writeTempPng(dir.path, byteData.buffer.asUint8List());
+  }
+
+  /// Móvil: hoja de compartir del sistema. Es donde tiene sentido.
+  Future<void> _share() async {
+    if (_isBusy) return;
+    setState(() => _isBusy = true);
+    try {
+      final file = await _renderCard();
+      if (file == null) return;
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'Mis estadísticas en Syncora Player',
+      );
+    } catch (_) {
+      if (mounted) AppToast.show(context, message: 'No se pudo compartir la tarjeta');
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
+  }
+
+  /// Escritorio: guardar el PNG en Imágenes/Descargas.
+  ///
+  /// La hoja de compartir del sistema en Windows acaba ofreciendo Correo y
+  /// poco más, que no es lo que nadie quiere hacer con esto. Guardar el
+  /// archivo y ofrecer abrir la carpeta es el equivalente útil.
+  Future<void> _download() async {
+    if (_isBusy) return;
+    setState(() => _isBusy = true);
+    try {
+      final temp = await _renderCard();
+      if (temp == null) return;
+
+      final target = await _pickDownloadDir();
+      final dest = File(
+        '${target.path}${Platform.pathSeparator}'
+        'syncora_wrapped_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+      await temp.copy(dest.path);
+
+      if (!mounted) return;
+      AppToast.show(
+        context,
+        message: 'Imagen guardada en ${target.path}',
+        actionLabel: 'Copiar ruta',
+        onAction: () => Clipboard.setData(ClipboardData(text: dest.path)),
+      );
+    } catch (_) {
+      if (mounted) AppToast.show(context, message: 'No se pudo guardar la imagen');
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
+  }
+
+  Future<Directory> _pickDownloadDir() async {
+    try {
+      final downloads = await getDownloadsDirectory();
+      if (downloads != null) return downloads;
+    } catch (_) {
+      // getDownloadsDirectory no está disponible en todas las plataformas.
+    }
+    return getApplicationDocumentsDirectory();
+  }
+
+  Future<File> _writeTempPng(String dirPath, Uint8List bytes) async {
+    final file = File('$dirPath/syncora_wrapped_${DateTime.now().millisecondsSinceEpoch}.png');
+    return file.writeAsBytes(bytes);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final period = ref.watch(wrappedPeriodProvider) ?? widget.period;
+    final async = ref.watch(statsSnapshotProvider(period));
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF07080C),
+      body: async.when(
+        loading: () => _chrome(
+          period,
+          const Center(child: SkeletonBox(width: 260, height: 460)),
+        ),
+        error: (_, _) => _chrome(
+          period,
+          const Center(
+            child: Text('No se pudo cargar tu Wrapped',
+                style: TextStyle(color: AppTheme.secondary)),
+          ),
+        ),
+        data: (snapshot) {
+          if (snapshot.isEmpty) {
+            return _chrome(
+              period,
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Text(
+                    'Necesitas algo de historial en este periodo para generar '
+                    'tu Wrapped.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppTheme.secondary, fontSize: 15),
+                  ),
+                ),
+              ),
+            );
+          }
+          return _chrome(period, _stories(snapshot, period));
+        },
+      ),
+    );
+  }
+
+  /// Cabecera común: volver, selector de periodo y acción de exportar.
+  Widget _chrome(StatsPeriod period, Widget body) {
+    return SafeArea(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              IconButton(
+                tooltip: 'Volver',
+                onPressed: () => Navigator.of(context).maybePop(),
+                icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: Colors.white),
+              ),
+              Expanded(
+                child: _PeriodDropdown(
+                  value: period,
+                  onChanged: (p) {
+                    ref.read(wrappedPeriodProvider.notifier).state = p;
+                    setState(() => _index = 0);
+                    if (_pageController.hasClients) _pageController.jumpToPage(0);
+                  },
+                ),
+              ),
+              IconButton(
+                tooltip: _isDesktopPlatform ? 'Guardar imagen' : 'Compartir',
+                onPressed: _isBusy ? null : (_isDesktopPlatform ? _download : _share),
+                icon: _isBusy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Icon(
+                        _isDesktopPlatform ? Icons.download_rounded : Icons.ios_share,
+                        color: Colors.white,
+                      ),
+              ),
+            ],
+          ),
+          Expanded(child: body),
+        ],
+      ),
+    );
+  }
+
+  Widget _stories(StatsSnapshot s, StatsPeriod period) {
+    final artistMeta = ref.watch(artistMetaProvider(statsIdsKey(s.topArtists.take(5)))).value ?? {};
+    final trackMeta = ref.watch(trackMetaProvider(statsIdsKey(s.topTracks.take(5)))).value ?? {};
+    final artists = zipArtists(s.topArtists.take(5).toList(), artistMeta);
+    final tracks = zipTracks(s.topTracks.take(5).toList(), trackMeta);
+
+    final cards = buildWrappedCards(
+      snapshot: s,
+      period: period,
+      artists: artists,
+      tracks: tracks,
+    );
+    _cardCount = cards.length;
+
+    return Focus(
+      focusNode: _focusNode,
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event.logicalKey == LogicalKeyboardKey.arrowRight ||
+            event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          _goTo(_index + 1);
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
+            event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          _goTo(_index - 1);
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Row(
+              children: [
+                for (var i = 0; i < cards.length; i++)
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _goTo(i),
+                      child: Container(
+                        height: 3,
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        decoration: BoxDecoration(
+                          color: i <= _index
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
+                // Las flechas solo en escritorio: en móvil se desliza, y ahí
+                // ocuparían espacio de tarjeta sin aportar nada.
+                if (_isDesktopPlatform)
+                  _NavArrow(
+                    icon: Icons.chevron_left_rounded,
+                    enabled: _index > 0,
+                    onTap: () => _goTo(_index - 1),
+                  ),
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: cards.length,
+                    onPageChanged: (i) => setState(() => _index = i),
+                    itemBuilder: (context, i) => Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+                      child: Center(
+                        child: AspectRatio(
+                          aspectRatio: 9 / 16,
+                          child: RepaintBoundary(
+                            key: _keyFor(i),
+                            child: WrappedCard(data: cards[i]),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                if (_isDesktopPlatform)
+                  _NavArrow(
+                    icon: Icons.chevron_right_rounded,
+                    enabled: _index < cards.length - 1,
+                    onTap: () => _goTo(_index + 1),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavArrow extends StatelessWidget {
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _NavArrow({required this.icon, required this.enabled, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: IconButton(
+        onPressed: enabled ? onTap : null,
+        iconSize: 34,
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.white.withValues(alpha: enabled ? 0.10 : 0.03),
+          shape: const CircleBorder(),
+        ),
+        icon: Icon(
+          icon,
+          color: Colors.white.withValues(alpha: enabled ? 0.9 : 0.25),
+        ),
+      ),
+    );
+  }
+}
+
+class _PeriodDropdown extends StatelessWidget {
+  final StatsPeriod value;
+  final ValueChanged<StatsPeriod> onChanged;
+
+  const _PeriodDropdown({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<StatsPeriod>(
+          value: value,
+          isDense: true,
+          dropdownColor: AppTheme.surfaceActive,
+          borderRadius: BorderRadius.circular(12),
+          icon: const Icon(Icons.expand_more_rounded, color: Colors.white70, size: 20),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+          items: [
+            for (final p in StatsPeriod.values)
+              DropdownMenuItem(value: p, child: Text(p.label)),
+          ],
+          onChanged: (p) => p == null ? null : onChanged(p),
+        ),
+      ),
+    );
+  }
+}
+
