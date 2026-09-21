@@ -14,6 +14,7 @@ import '../../data/local_db/syncora_database.dart' show DownloadedTrack;
 import '../../data/models/deezer/deezer_track.dart';
 
 import 'audio_engine/audio_engine_state.dart';
+import 'listen_tracking.dart';
 import 'player_models.dart';
 import 'radio/radio_service.dart';
 import 'session/player_session_storage.dart';
@@ -1578,7 +1579,7 @@ bool get _isTestEnv {
   // `position` final - inicial) sumando únicamente los avances "naturales" y
   // pequeños de `engine.position` entre actualizaciones consecutivas del
   // motor mientras está reproduciendo. Un seek (adelante o atrás) produce un
-  // salto de posición mayor a `_maxNaturalPositionJump` y se ignora — así un
+  // salto de posición incompatible con el reloj y se ignora — así un
   // seek de 0:10 a 3:00 no suma como 2:50 de escucha real, y retroceder a
   // repetir un fragmento ya escuchado simplemente sigue sumando tiempo real
   // (no hay "doble conteo" que evitar ahí: lo que se evita es volver a
@@ -1586,12 +1587,59 @@ bool get _isTestEnv {
   // ya se disparó, vía `_listenRecorded`). Pausar no acumula nada porque solo
   // se suma cuando `engineState.playing` es true; reanudar continúa desde la
   // posición donde se pausó sin perder lo ya acumulado.
-  static const Duration _maxNaturalPositionJump = Duration(seconds: 3);
+  /// Holgura sobre el tiempo real transcurrido al decidir si un salto de
+  /// posición es natural (H-S1).
+  ///
+  /// El filtro original descartaba **todo** delta mayor a
+  /// [kMaxNaturalPositionJump]. Eso funciona mientras el motor emita
+  /// posición cada pocos cientos de ms, pero no es lo que pasa siempre: con
+  /// la pantalla apagada en Android el isolate se ralentiza, y `media_kit`
+  /// (Windows) y `just_audio` (Android) tienen cadencias distintas de por sí.
+  /// Un tick que llega 12 s tarde producía un delta de 12 s que se tiraba
+  /// entero — se perdían minutos reales, y de forma **distinta en cada
+  /// plataforma**, que es parte de por qué los dos dispositivos no coincidían.
+  ///
+  /// El criterio correcto no es "el delta es pequeño" sino "el delta es
+  /// compatible con el tiempo que pasó de verdad": reproduciendo, la posición
+  /// no puede avanzar más rápido que el reloj. Un seek de 0:10 a 3:00 salta
+  /// 2:50 en ~200 ms de reloj y sigue rechazándose; un tick tardío avanza
+  /// tanto como el reloj y ahora sí se cuenta.
+  /// El criterio vive en `naturalListenDelta` (`listen_tracking.dart`), como
+  /// función pura, para poder fijarlo con tests de mesa.
+
+  /// Cada cuánto se vuelca a la base el progreso de la escucha en curso
+  /// (H-S2).
+  ///
+  /// Sin esto, la duración real solo se escribía al cambiar de pista o en
+  /// `dispose()`. `dispose()` casi nunca llega a ejecutarse: el SO mata el
+  /// proceso cuando el usuario desliza la app en Android o cierra la ventana
+  /// en Windows. Medido sobre los datos reales de desarrollo, **14 de 20
+  /// sesiones terminaban con su última pista congelada en los ~30 s del
+  /// umbral**, y 197 de 290 filas históricas quedaron así. Con el volcado
+  /// periódico, lo peor que se pierde si el proceso muere son los últimos
+  /// [_listenFlushInterval] de escucha.
+  static const Duration _listenFlushInterval = Duration(seconds: 15);
+
+  /// Diferencia mínima para que un volcado periódico valga una escritura.
+  /// Evita reescribir la misma fila sin que haya cambiado nada apreciable
+  /// (por ejemplo con la reproducción pausada).
+  static const int _listenFlushMinDeltaMs = 5000;
 
   SyncoraTrack? _listenTrackedTrack;
   Duration _listenAccumulated = Duration.zero;
   bool _listenRecorded = false;
   Duration? _listenLastPosition;
+
+  /// Momento de reloj del último tick de posición, para contrastar contra él
+  /// el avance reportado por el motor (ver `naturalListenDelta`).
+  DateTime? _listenLastTickAt;
+
+  /// Volcado periódico del progreso de la escucha en curso ([_listenFlushInterval]).
+  Timer? _listenFlushTimer;
+
+  /// Último total ya escrito por un volcado, para no repetir escrituras
+  /// idénticas.
+  int _listenFlushedMs = 0;
 
   /// Id de la fila insertada al cruzar el umbral, para corregir después sus
   /// minutos con el tiempo realmente escuchado (ver `_finalizeListenEntry`).
@@ -1634,8 +1682,39 @@ bool get _isTestEnv {
     _listenAccumulated = Duration.zero;
     _listenRecorded = false;
     _listenLastPosition = null;
+    _listenLastTickAt = null;
     _listenEntryId = null;
     _listenEntryBaseMs = 0;
+    _listenFlushedMs = 0;
+  }
+
+  /// Escribe el progreso de la escucha en curso sin cerrarla (H-S2).
+  ///
+  /// A diferencia de [_finalizeListenEntry], no limpia `_listenEntryId` ni
+  /// dispara la subida a Supabase: solo deja la fila local al día para que un
+  /// cierre abrupto del proceso no se lleve por delante los minutos ya
+  /// escuchados. `updateListenedDuration` marca la fila como no sincronizada,
+  /// así que el siguiente push (al terminar la pista o al arrancar la app)
+  /// sube el valor bueno igualmente.
+  void _flushListenProgress() {
+    final entryId = _listenEntryId;
+    final dao = _listeningHistoryDao;
+    if (entryId == null || dao == null) return;
+    final total = _listenEntryBaseMs + _listenAccumulated.inMilliseconds;
+    if ((total - _listenFlushedMs).abs() < _listenFlushMinDeltaMs) return;
+    _listenFlushedMs = total;
+    unawaited(() async {
+      try {
+        await dao.updateListenedDuration(entryId, total);
+      } catch (e) {
+        _log('[Listen] Error volcando el progreso de la escucha: $e');
+      }
+    }());
+  }
+
+  void _startListenFlushTimer() {
+    _listenFlushTimer?.cancel();
+    _listenFlushTimer = Timer.periodic(_listenFlushInterval, (_) => _flushListenProgress());
   }
 
   /// Corrige los minutos de la escucha en curso con el total real acumulado.
@@ -1648,8 +1727,11 @@ bool get _isTestEnv {
     final entryId = _listenEntryId;
     final dao = _listeningHistoryDao;
     final base = _listenEntryBaseMs;
+    _listenFlushTimer?.cancel();
+    _listenFlushTimer = null;
     _listenEntryId = null;
     _listenEntryBaseMs = 0;
+    _listenFlushedMs = 0;
     if (entryId == null || dao == null) return;
     final total = base + _listenAccumulated.inMilliseconds;
     unawaited(() async {
@@ -1669,14 +1751,22 @@ bool get _isTestEnv {
     final track = _listenTrackedTrack;
     if (track == null) {
       _listenLastPosition = null;
+      _listenLastTickAt = null;
       return;
     }
+    final now = DateTime.now();
+    final lastTickAt = _listenLastTickAt;
+    _listenLastTickAt = now;
+
     final newPos = engineState.position;
-    if (_listenLastPosition != null && engineState.playing) {
-      final delta = newPos - _listenLastPosition!;
-      if (delta > Duration.zero && delta <= _maxNaturalPositionJump) {
-        _listenAccumulated += delta;
-      }
+    final lastPos = _listenLastPosition;
+    if (lastPos != null) {
+      _listenAccumulated += naturalListenDelta(
+        previousPosition: lastPos,
+        newPosition: newPos,
+        playing: engineState.playing,
+        sinceLastTick: lastTickAt == null ? null : now.difference(lastTickAt),
+      );
     }
     _listenLastPosition = newPos;
 
@@ -1743,6 +1833,8 @@ bool get _isTestEnv {
       if (previous != null && !_previousListenWasComplete(previous.durationListenedMs, track)) {
         _listenEntryId = previous.id;
         _listenEntryBaseMs = previous.durationListenedMs;
+        _listenFlushedMs = _listenEntryBaseMs + accumulated.inMilliseconds;
+        _startListenFlushTimer();
         await dao.updateListenedDuration(
           previous.id,
           _listenEntryBaseMs + accumulated.inMilliseconds,
@@ -1770,6 +1862,10 @@ bool get _isTestEnv {
         // y el camino abierto para cuando exista una fuente barata.
         genre: track.genre,
       );
+      // H-S2: a partir de aquí la fila existe, así que el progreso puede
+      // volcarse periódicamente sin esperar a que termine la pista.
+      _listenFlushedMs = accumulated.inMilliseconds;
+      _startListenFlushTimer();
       // Sin esto, la escucha quedaba solo en Drift hasta el siguiente arranque
       // o hasta que el usuario abriera Estadísticas EN ESE MISMO dispositivo:
       // por eso el PC no veía lo escuchado en el celular. Fire-and-forget y con
@@ -2620,6 +2716,8 @@ bool get _isTestEnv {
     // Cierra la escucha en curso con el tiempo real antes de irse: si no, se
     // quedaría guardada con los ~30s del umbral.
     _finalizeListenEntry();
+    _listenFlushTimer?.cancel();
+    _listenFlushTimer = null;
     _disposed = true;
     _engineSub?.cancel();
     _completionSub?.cancel();
