@@ -148,10 +148,13 @@ free, 500 MB de base). Eso obliga a partir las ventanas en dos:
 - **7 d / 30 d / 3 meses** → exactos, desde `listening_history`, vía RPC.
 - **6 m / 12 m / Todo** → desde `user_stats_monthly`.
 
-**Limitación asumida y visible en la UI:** en las ventanas largas los
-*totales* son exactos, pero los *tops* son aproximados — cada mes guarda solo
-sus 30 mejores, así que un artista que queda siempre en el puesto 35 no
-aparece. El snapshot sale con `topsAreApproximate: true` y el panel lo dice.
+**Limitación asumida:** en las ventanas largas los *totales* son exactos, pero
+los *tops* son aproximados — cada mes guarda solo sus 30 mejores, así que un
+artista que queda siempre en el puesto 35 no aparece. El snapshot lo marca con
+`topsAreApproximate: true`, pero **la UI ya no lo anuncia**: con 30 por mes la
+desviación es irrelevante en la práctica y el aviso solo sembraba dudas sobre
+unos números que son correctos. La bandera se mantiene por si alguna vista
+futura la necesita.
 
 ### Zona horaria
 
