@@ -228,7 +228,7 @@ migración no falló" no probaba nada.
   fotos y canciones con sus cinco portadas, sin cifras por elemento. Las
   tarjetas de "variedad" y "momento favorito" se quitaron por aportar poco.
 
-### Exportar la imagen del Wrapped no funciona en escritorio
+### Exportar desde el Wrapped no funciona en escritorio (causa sin confirmar)
 
 En Windows, rasterizar la tarjeta con `RenderRepaintBoundary.toImage` tumbaba
 la app de forma reproducible: la interfaz dejaba de responder al instante, el
@@ -243,10 +243,21 @@ de la imagen mientras un `finally` la liberaba, sin esperar a que terminara la
 escritura del archivo); ese fallo era genuino y afectaba tambien a movil, pero
 no era la causa del cuelgue en Windows.
 
-**Decision:** en escritorio el boton copia el resumen como texto al
-portapapeles, que no toca la GPU. En movil se mantiene la exportacion a
-imagen, que ahi funciona. Si alguna vez se retoma, la via sin `toImage` seria
-dibujar la tarjeta con un `CustomPainter` sobre un `PictureRecorder`.
+
+**Actualizacion.** El diagnostico de `toImage` era erroneo. Se sustituyo la
+descarga de imagen por una accion que ni siquiera toca la GPU -- copiar un
+resumen de texto al portapapeles -- y el cuelgue fue **identico e instantaneo**.
+Eso descarta el rasterizado por completo.
+
+Lo unico que compartian las dos rutas es `AppToast.show`. Encaja con el detalle
+de que en la version con imagen el archivo SI llegaba a escribirse antes de
+colgarse: el fallo ocurria despues, al mostrar el aviso. **Queda sin
+confirmar** porque no se pudo reproducir fuera de esa maquina.
+
+**Decision:** en escritorio no hay accion de exportar. En movil se mantiene la
+imagen, que ahi funciona. Si se retoma, empezar por el toast en Windows, no por
+la exportacion.
+
 
 ## Limpieza de datos hecha
 

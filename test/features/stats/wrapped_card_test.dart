@@ -19,12 +19,22 @@ void main() {
     colors: const [Color(0xFF6D28D9), Color(0xFF2563EB)],
     layout: WrappedLayout.summary,
     collage: urlsVacias,
-    artists: const [WrappedItem(title: 'Un Artista Con Nombre Bastante Largo')],
+    artists: const [
+      WrappedItem(title: 'Un Artista Con Nombre Bastante Largo'),
+      WrappedItem(title: 'Segundo Artista'),
+      WrappedItem(title: 'Tercero Con Nombre Largo Tambien'),
+      WrappedItem(title: 'Cuarto'),
+      WrappedItem(title: 'Quinto Artista'),
+    ],
     tracks: const [
       WrappedItem(
         title: 'Una Cancion Con Un Titulo Absurdamente Largo (Version Extendida)',
         subtitle: 'Artista',
       ),
+      WrappedItem(title: 'Segunda Cancion'),
+      WrappedItem(title: 'Tercera Cancion Con Titulo Largo'),
+      WrappedItem(title: 'Cuarta'),
+      WrappedItem(title: 'Quinta Cancion'),
     ],
     totalTime: '1234 h 56 min',
     topGenre: 'Electronica Experimental',

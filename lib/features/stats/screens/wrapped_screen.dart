@@ -47,12 +47,6 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
   int _cardCount = 1;
   bool _isBusy = false;
 
-  /// Último snapshot pintado, para que la acción de copiar (escritorio) no
-  /// tenga que volver a pedir nada.
-  StatsSnapshot? _lastSnapshot;
-  List<EnrichedArtist> _lastArtists = const [];
-  List<EnrichedTrack> _lastTracks = const [];
-
   GlobalKey _keyFor(int i) => _cardKeys.putIfAbsent(i, () => GlobalKey());
 
   bool get _isDesktopPlatform =>
@@ -160,7 +154,21 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
     setState(() => _isBusy = false);
   }
 
-  /// Móvil: hoja de compartir del sistema. Es donde tiene sentido.
+  /// Compartir la tarjeta como imagen. **Solo en móvil.**
+  ///
+  /// En escritorio no hay acción de exportar, y no por falta de intentos. En
+  /// Windows, pulsar ese botón dejaba la app sin responder al instante: el
+  /// proceso seguía vivo (la música no se cortaba) y no llegaba ni una línea a
+  /// la consola de Dart. Se probó con la exportación a PNG (bajando la
+  /// resolución, esperando a `endOfFrame`, quitando del árbol capturado las
+  /// sombras con desenfoque, y corrigiendo un uso-después-de-liberar real en
+  /// esa ruta) y después con una acción que ni siquiera tocaba la GPU —
+  /// copiar un resumen de texto al portapapeles—, y el cuelgue fue idéntico.
+  ///
+  /// Que las dos rutas fallen igual descarta el rasterizado: **lo único que
+  /// compartían era `AppToast.show`**. Queda sin confirmar, porque no se pudo
+  /// reproducir fuera de esa máquina. Si algún día se retoma, empezar por ahí
+  /// y no por la exportación.
   Future<void> _share() async {
     if (_isBusy) return;
     setState(() => _isBusy = true);
@@ -183,55 +191,6 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
     } finally {
       _clearBusy();
     }
-  }
-
-  /// Escritorio: copiar el resumen como texto.
-  ///
-  /// **Por qué no se exporta la imagen en escritorio.** Rasterizar la tarjeta
-  /// con `RenderRepaintBoundary.toImage` tumbaba la app en Windows de forma
-  /// reproducible: la interfaz se quedaba sin responder al instante, el
-  /// proceso seguía vivo (la música no se cortaba) y no llegaba ni una línea
-  /// a la consola de Dart — la firma de un fallo en código nativo, no de una
-  /// excepción que se pueda capturar. Se intentó bajar la resolución de
-  /// salida, esperar a `endOfFrame` y quitar del árbol capturado todas las
-  /// sombras con desenfoque, sin resultado.
-  ///
-  /// Copiar texto no toca la GPU, así que no puede fallar por ese camino, y
-  /// en un ordenador pegar el resumen en un chat es casi siempre lo que se
-  /// quiere hacer. En móvil, donde `toImage` sí funciona, se mantiene la
-  /// exportación a imagen.
-  Future<void> _copySummary() async {
-    final s = _lastSnapshot;
-    if (s == null) return;
-    final period = ref.read(wrappedPeriodProvider) ?? widget.period;
-
-    final buffer = StringBuffer()
-      ..writeln('Mis estadísticas en Syncora Player (${period.longLabel})')
-      ..writeln()
-      ..writeln('⏱ ${formatListeningTime(s.totalMs)} · ${s.totalPlays} reproducciones');
-    if (s.topGenres.isNotEmpty) {
-      buffer.writeln('🎧 Género top: ${s.topGenres.first.genre}');
-    }
-    if (_lastArtists.isNotEmpty) {
-      buffer
-        ..writeln()
-        ..writeln('Artistas:');
-      for (var i = 0; i < _lastArtists.length; i++) {
-        buffer.writeln('  ${i + 1}. ${_lastArtists[i].artist.name}');
-      }
-    }
-    if (_lastTracks.isNotEmpty) {
-      buffer
-        ..writeln()
-        ..writeln('Canciones:');
-      for (var i = 0; i < _lastTracks.length; i++) {
-        buffer.writeln('  ${i + 1}. ${_lastTracks[i].track.title}');
-      }
-    }
-
-    await Clipboard.setData(ClipboardData(text: buffer.toString()));
-    if (!mounted) return;
-    AppToast.show(context, message: 'Resumen copiado al portapapeles');
   }
 
   Future<File> _writeTempPng(String dirPath, Uint8List bytes) async {
@@ -303,20 +262,24 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
                   },
                 ),
               ),
-              IconButton(
-                tooltip: _isDesktopPlatform ? 'Copiar resumen' : 'Compartir',
-                onPressed: _isBusy ? null : (_isDesktopPlatform ? _copySummary : _share),
-                icon: _isBusy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : Icon(
-                        _isDesktopPlatform ? Icons.copy_rounded : Icons.ios_share,
-                        color: Colors.white,
-                      ),
-              ),
+              // Sin acción de exportar en escritorio: ver la nota de
+              // `_share`. Se reserva el mismo ancho que ocupa el botón para
+              // que el selector de periodo siga centrado en las dos
+              // plataformas.
+              if (_isDesktopPlatform)
+                const SizedBox(width: 48)
+              else
+                IconButton(
+                  tooltip: 'Compartir',
+                  onPressed: _isBusy ? null : _share,
+                  icon: _isBusy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.ios_share, color: Colors.white),
+                ),
             ],
           ),
           Expanded(child: body),
@@ -330,10 +293,6 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
     final trackMeta = ref.watch(trackMetaProvider(statsIdsKey(s.topTracks.take(5)))).value ?? {};
     final artists = zipArtists(s.topArtists.take(5).toList(), artistMeta);
     final tracks = zipTracks(s.topTracks.take(5).toList(), trackMeta);
-
-    _lastSnapshot = s;
-    _lastArtists = artists;
-    _lastTracks = tracks;
 
     final cards = buildWrappedCards(
       snapshot: s,
@@ -729,94 +688,198 @@ class WrappedCard extends StatelessWidget {
   // Resumen
   // --------------------------------------------------------------------
 
-  /// Resumen, en clave de **póster** en vez de las dos columnas de listas que
-  /// tenía antes.
+  /// Resumen, en clave de **póster** en vez de las dos columnas sueltas que
+  /// tenía la primera versión.
   ///
-  /// La versión anterior era, reconocidamente, la plantilla de Spotify:
-  /// portada arriba y dos listas numeradas debajo. Esta cambia el eje: un
-  /// collage de portadas ladeadas como fotos sobre una mesa, la cifra de
-  /// tiempo a tamaño de titular, y los tres datos que importan como fichas
-  /// con imagen. Los nombres del top completo ya tienen sus dos tarjetas
-  /// propias, así que aquí no hacen falta listas de cinco.
+  /// Lleva la misma información que antes —top 5 de artistas, top 5 de
+  /// canciones, tiempo total, género y las tres cifras— pero con otra
+  /// estructura: un collage de portadas ladeadas como fotos sobre una mesa,
+  /// el tiempo a tamaño de titular con el género en una pastilla al lado, los
+  /// dos rankings como una tabla editorial con filete entre filas, y una
+  /// banda que cierra la tarjeta.
+  ///
+  /// Todo escala con [_k] para que a 260 px de ancho no se recorte y a 500 no
+  /// queden huecos muertos.
   Widget _summary() {
     return LayoutBuilder(
       builder: (context, c) {
-        final collageSide = (c.maxHeight * 0.26).clamp(70.0, c.maxWidth * 0.50);
+        final k = _k(c.maxHeight);
+        final collageSide = (c.maxHeight * 0.19).clamp(58.0, c.maxWidth * 0.46);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             if (data.collage.isNotEmpty) Center(child: _collage(collageSide)),
-
-            // Titular: regla de acento + cifra grande.
-            Column(
+            _timeHeadline(k),
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 46,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    data.totalTime,
-                    maxLines: 1,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 54,
-                      fontWeight: FontWeight.w900,
-                      height: 0.95,
-                      letterSpacing: -2.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'ESCUCHADOS',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 3,
-                  ),
-                ),
+                Expanded(child: _rankedList('ARTISTAS', data.artists, k)),
+                SizedBox(width: 14 * k),
+                Expanded(child: _rankedList('CANCIONES', data.tracks, k)),
               ],
             ),
-
-            // Los tres datos destacados, con su imagen.
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (data.artists.isNotEmpty)
-                  _highlight(
-                    label: 'ARTISTA',
-                    value: data.artists.first.title,
-                    imageUrl: data.artists.first.imageUrl,
-                    circular: true,
-                  ),
-                if (data.tracks.isNotEmpty)
-                  _highlight(
-                    label: 'CANCIÓN',
-                    value: data.tracks.first.title,
-                    imageUrl: data.tracks.first.imageUrl,
-                  ),
-                if (data.topGenre.isNotEmpty)
-                  _highlight(label: 'GÉNERO', value: data.topGenre),
-              ],
-            ),
-
-            _factsBand(),
+            _factsBand(k),
           ],
         );
       },
+    );
+  }
+
+  /// Factor de escala tipográfica según el alto real de la tarjeta.
+  ///
+  /// La tarjeta va de ~460 px de alto en un móvil estrecho a ~890 en
+  /// escritorio. Con tamaños fijos, o se recorta abajo o deja una franja
+  /// vacía arriba; escalando, llena igual de bien en ambos.
+  double _k(double height) => (height / 560).clamp(0.82, 1.4);
+
+  /// Titular: regla de acento, la cifra de tiempo, y el género en pastilla.
+  Widget _timeHeadline(double k) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42 * k,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 10 * k),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  data.totalTime,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 46 * k,
+                    fontWeight: FontWeight.w900,
+                    height: 0.95,
+                    letterSpacing: -2,
+                  ),
+                ),
+              ),
+              SizedBox(height: 3 * k),
+              Text(
+                'ESCUCHADOS',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 10.5 * k,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2.6,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (data.topGenre.isNotEmpty) ...[
+          SizedBox(width: 8 * k),
+          Container(
+            constraints: BoxConstraints(maxWidth: 120 * k),
+            padding: EdgeInsets.symmetric(horizontal: 12 * k, vertical: 7 * k),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'GÉNERO',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.65),
+                    fontSize: 8 * k,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                Text(
+                  data.topGenre,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14 * k,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Ranking de cinco con filete entre filas: se lee como una tabla, no como
+  /// una lista con viñetas numeradas.
+  Widget _rankedList(String title, List<WrappedItem> items, double k) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.6),
+            fontSize: 9 * k,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.4,
+          ),
+        ),
+        SizedBox(height: 6 * k),
+        for (var i = 0; i < items.length; i++)
+          Container(
+            padding: EdgeInsets.symmetric(vertical: 4.5 * k),
+            decoration: BoxDecoration(
+              border: i == items.length - 1
+                  ? null
+                  : Border(
+                      bottom: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.13),
+                      ),
+                    ),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 13 * k,
+                  child: Text(
+                    '${i + 1}',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 11 * k,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    items[i].title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.5 * k,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -853,64 +916,11 @@ class WrappedCard extends StatelessWidget {
     );
   }
 
-  Widget _highlight({
-    required String label,
-    required String value,
-    String imageUrl = '',
-    bool circular = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          if (imageUrl.isNotEmpty)
-            _FramedImage(url: imageUrl, side: 34, circular: circular, radius: 7, borderWidth: 1.5)
-          else
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(7),
-              ),
-              child: const Icon(Icons.graphic_eq_rounded, size: 17, color: Colors.white70),
-            ),
-          const SizedBox(width: 10),
-          SizedBox(
-            width: 62,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
-                fontSize: 9.5,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.1,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Banda inferior con las cifras sueltas, sobre un fondo propio para que
   /// cierre la tarjeta en vez de quedar flotando.
-  Widget _factsBand() {
+  Widget _factsBand(double k) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 12 * k, vertical: 10 * k),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
@@ -921,7 +931,7 @@ class WrappedCard extends StatelessWidget {
             if (i > 0)
               Container(
                 width: 1,
-                height: 26,
+                height: 24 * k,
                 color: Colors.white.withValues(alpha: 0.2),
               ),
             Expanded(
@@ -930,9 +940,9 @@ class WrappedCard extends StatelessWidget {
                 children: [
                   Text(
                     data.facts[i].value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 19,
+                      fontSize: 17 * k,
                       fontWeight: FontWeight.w900,
                       height: 1.1,
                     ),
@@ -943,9 +953,9 @@ class WrappedCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 8.5,
+                      fontSize: 8 * k,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
+                      letterSpacing: 0.6,
                     ),
                   ),
                 ],
@@ -956,7 +966,6 @@ class WrappedCard extends StatelessWidget {
       ),
     );
   }
-
 
   // --------------------------------------------------------------------
   // Artistas: el nº 1 en grande y los otros cuatro en fila
@@ -1120,7 +1129,16 @@ class _FramedImage extends StatelessWidget {
         // Sin sombra difuminada, por el mismo motivo que en la tarjeta.
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(r),
+        // El radio interior descuenta el grosor del borde.
+        //
+        // Un `Container` con borde coloca al hijo POR DENTRO de ese borde, así
+        // que recortar la imagen con el mismo radio que el marco deja las dos
+        // curvas descentradas: el marco traza un arco de radio `r` y la imagen
+        // otro del mismo radio pero desplazado hacia dentro, y en las esquinas
+        // se ve el desajuste. Restando el grosor, ambas comparten centro.
+        borderRadius: BorderRadius.circular(
+          (r - borderWidth).clamp(0.0, double.infinity),
+        ),
         child: url.isEmpty
             ? placeholder
             : CachedNetworkImage(
