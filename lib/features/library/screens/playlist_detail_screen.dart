@@ -30,6 +30,7 @@ import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/sync/sync_service.dart';
 import '../../auth/local_mode_provider.dart';
+import '../playlist_permissions.dart';
 import '../../download/widgets/download_header_button.dart';
 import '../../player/audio_engine/audio_engine_factory.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
@@ -117,18 +118,15 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     super.dispose();
   }
 
-  /// ¿El usuario puede editar esta playlist a mano?
-  ///
-  /// "Tus me gusta" y "On Repeat" las mantiene la app: no se renombran, no se
-  /// borran y no se les agregan pistas sueltas. "On Repeat" además se regenera
-  /// sola cada semana, así que cualquier edición manual se perdería en la
-  /// siguiente regeneración — esconder los botones es más honesto que dejar
-  /// que el usuario haga un trabajo que se va a tirar.
-  bool _isUserEditable(Playlist playlist) => !playlist.isLiked && !playlist.isGenerated;
-
   Color _resolveDominantColor(Playlist playlist, List<SyncoraTrack> tracks) {
     if (playlist.isLiked) {
       return AppTheme.gradientLiked.colors.first;
+    }
+    // Igual que "Tus me gusta": la portada de una playlist generada es su
+    // color, no la carátula de su primera canción — que además cambia cada
+    // vez que se regenera.
+    if (playlist.isGenerated) {
+      return AppTheme.gradientMix.colors.first;
     }
     final coverUrl = (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty)
         ? playlist.coverUrl!
@@ -631,7 +629,11 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   void _showAddAllToOtherPlaylistDialog(BuildContext context, List<PlaylistTrack> currentTracks) async {
     final dao = ref.read(playlistDaoProvider);
     final allPlaylists = await dao.getAllPlaylists();
-    final otherPlaylists = allPlaylists.where((p) => p.id != _playlist?.id && !p.isLiked).toList();
+    // Las generadas quedan fuera como destino: se regeneran solas, así que
+    // lo copiado ahí desaparecería a la semana siguiente.
+    final otherPlaylists = allPlaylists
+        .where((p) => p.id != _playlist?.id && !p.isLiked && canAddTracksToPlaylist(p))
+        .toList();
 
     if (!context.mounted) return;
 
@@ -873,7 +875,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (_isUserEditable(playlist)) ...[
+        if (canEditPlaylistManually(playlist)) ...[
           ListTile(
             leading: Icon(AppIcons.broken(SolarIcons.Pen), color: editColor),
             title: Text('Editar información y portada', style: TextStyle(color: editColor, fontWeight: FontWeight.w600)),
@@ -936,7 +938,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               _showAddAllToOtherPlaylistDialog(context, tracks);
             },
           ),
-        if (tracks.isNotEmpty)
+        if (tracks.isNotEmpty && canEditPlaylistManually(playlist))
           ListTile(
             leading: Icon(AppIcons.broken(SolarIcons.CheckSquare), color: editColor),
             title: Text('Eliminar canciones repetidas', style: TextStyle(color: editColor, fontWeight: FontWeight.w600)),
@@ -955,7 +957,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             _showExportDialog(context, tracks);
           },
         ),
-        if (_isUserEditable(playlist))
+        if (canEditPlaylistManually(playlist))
           ListTile(
             leading: Icon(AppIcons.broken(SolarIcons.TrashBinTrash), color: canEdit ? Colors.red : AppTheme.muted),
             title: Text('Eliminar playlist', style: TextStyle(color: canEdit ? Colors.red : AppTheme.muted, fontWeight: FontWeight.w600)),
@@ -1351,6 +1353,13 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                           ],
 
                                           if (isDesktop) ...[
+                                            // `Tus me gusta` sí acepta
+                                            // canciones desde acá (es como se
+                                            // marcan), pero una playlist que
+                                            // la app regenera sola no: lo que
+                                            // se agregara desaparecería en la
+                                            // siguiente pasada.
+                                            if (canAddTracksToPlaylist(playlist)) ...[
                                             ElevatedButton.icon(
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: _showAddSongsSearch ? AppTheme.surfaceHover : AppTheme.surface,
@@ -1365,8 +1374,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                               label: Text(_showAddSongsSearch ? 'Cerrar buscador' : 'Agregar canciones', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                             ),
                                             const SizedBox(width: 8),
+                                            ],
 
-                                            if (_isUserEditable(playlist)) ...[
+                                            if (canEditPlaylistManually(playlist)) ...[
                                               ElevatedButton.icon(
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor: AppTheme.surface,
@@ -1388,6 +1398,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                               const SizedBox(width: 8),
                                             ],
                                           ] else ...[
+                                            if (canAddTracksToPlaylist(playlist)) ...[
                                             Tooltip(
                                               message: _showAddSongsSearch ? 'Cerrar buscador' : 'Agregar canciones',
                                               child: Container(
@@ -1404,8 +1415,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                               ),
                                             ),
                                             const SizedBox(width: 8),
+                                            ],
 
-                                            if (_isUserEditable(playlist)) ...[
+                                            if (canEditPlaylistManually(playlist)) ...[
                                               Tooltip(
                                                 message: 'Modificar con IA',
                                                 child: Container(
@@ -1792,19 +1804,26 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                         );
                                         playlistDao.touchLastPlayed(playlist.id);
                                       },
-                                      onRemove: () async {
-                                        final ok = await _executeRemoteMutation(() async {
-                                          if (playlist.remoteId != null) {
-                                            final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                                            await supabaseRepo.removeTrackFromPlaylist(playlist.remoteId!, playlistTrack.trackId);
-                                          }
-                                        });
-                                        if (!ok) return;
-                                        final currentPl = await playlistDao.getPlaylistById(playlist.id);
-                                        if (currentPl != null) {
-                                          await playlistDao.removeTrackEntry(playlistTrack.id);
-                                        }
-                                      },
+                                      // `null` en las playlists que mantiene la
+                                      // app: sin esto, "Quitar de la playlist"
+                                      // seguía disponible en el menú y al
+                                      // deslizar, y en "On Repeat" lo quitado
+                                      // reaparecía en la siguiente regeneración.
+                                      onRemove: !canEditPlaylistManually(playlist)
+                                          ? null
+                                          : () async {
+                                              final ok = await _executeRemoteMutation(() async {
+                                                if (playlist.remoteId != null) {
+                                                  final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+                                                  await supabaseRepo.removeTrackFromPlaylist(playlist.remoteId!, playlistTrack.trackId);
+                                                }
+                                              });
+                                              if (!ok) return;
+                                              final currentPl = await playlistDao.getPlaylistById(playlist.id);
+                                              if (currentPl != null) {
+                                                await playlistDao.removeTrackEntry(playlistTrack.id);
+                                              }
+                                            },
                                       onAddToQueue: () => controller.addToQueue(track),
                                     );
                                   },
@@ -1817,7 +1836,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             // "Tus me gusta" y "On Repeat" agregar pistas a
                             // mano no tiene sentido (la segunda se regenera
                             // sola y se perdería en la siguiente semana).
-                            if (_isUserEditable(playlist))
+                            if (canEditPlaylistManually(playlist))
                             SliverPadding(
                               padding: EdgeInsets.symmetric(
                                 horizontal: isDesktop ? 32 : 12,

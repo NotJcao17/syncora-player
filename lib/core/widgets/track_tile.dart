@@ -13,6 +13,7 @@ import '../utils/contributor_resolver.dart';
 import '../utils/share_link_builder.dart';
 import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
+import '../../features/library/playlist_permissions.dart';
 import '../../data/models/deezer/deezer_track.dart';
 import '../../data/supabase/supabase_providers.dart';
 import '../../features/auth/local_mode_provider.dart';
@@ -394,7 +395,10 @@ class TrackContextMenu {
   static Future<void> showAddToPlaylistDialog(BuildContext context, WidgetRef ref, SyncoraTrack track) async {
     FocusManager.instance.primaryFocus?.unfocus();
     final dao = ref.read(playlistDaoProvider);
-    final playlists = await dao.getAllPlaylists();
+    // Las playlists que mantiene la app ("On Repeat") no son destino válido:
+    // se regeneran solas cada semana y lo que el usuario agregara a mano se
+    // perdería en la siguiente pasada sin ningún aviso.
+    final playlists = (await dao.getAllPlaylists()).where(canAddTracksToPlaylist).toList();
 
     if (!context.mounted) return;
 
@@ -425,6 +429,7 @@ class TrackContextMenu {
                     playlistId: pl.id,
                     coverUrl: pl.coverUrl,
                     isLiked: pl.isLiked,
+                    isGenerated: pl.isGenerated,
                     width: 36,
                     height: 36,
                     // Sin esto, `PlaylistCoverWidget` cae en su propio radio

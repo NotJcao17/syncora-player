@@ -119,6 +119,34 @@ Un "Mix de {artista}" trae pocas canciones de ese artista (3 de 25 para Bruno Ma
 que devuelve `/artist/{id}/radio`, que es una radio de artistas parecidos. **Se decidió dejarlo
 así** — intercalar sus top tracks los repetiría siempre, porque el top de un artista no cambia.
 
+### "On Repeat" no se toca a mano: dónde está aplicada esa regla
+
+Las dos reglas viven en `lib/features/library/playlist_permissions.dart`, como funciones puras
+(mismo patrón que `computeCanEdit`), porque se aplican en muchos sitios repartidos y es fácil que
+uno se quede atrás — de hecho pasó: en la primera versión seguía siendo posible quitarle pistas
+desde su propia lista y agregarle canciones desde "Agregar a playlist".
+
+| Playlist | `canEditPlaylistManually` | `canAddTracksToPlaylist` |
+| :--- | :--- | :--- |
+| Normal del usuario | sí | sí |
+| Tus me gusta | no | **sí** — agregar ahí *es* marcar me gusta |
+| On Repeat (generada) | no | **no** |
+
+Sitios donde se aplica: el menú de la playlist (editar, eliminar, quitar duplicados), el botón
+"Agregar canciones" de su cabecera, "Modificar con IA", el `onRemove` de cada `TrackTile` (que
+gobierna a la vez la opción del menú y el deslizar), el diálogo "Agregar a playlist" de cualquier
+canción de la app, el selector de destino al copiar una playlist entera, y la sección de
+Recomendaciones del pie.
+
+Además, una playlist generada **no cuenta como "datos locales del usuario"** al migrar de modo
+local a cuenta: la crea la app sola, así que preguntar si quiere conservarla sería preguntar por
+algo que él nunca creó.
+
+Su portada es su color con el ícono de repetición en todos lados — cuadrícula y lista de
+Biblioteca, panel lateral de escritorio, cabecera de la playlist y el degradado de fondo de esa
+pantalla. Ese último salía de la carátula de la primera canción, que además cambia en cada
+regeneración.
+
 ### Guardar una colección: estado y descarga
 
 `playlists.sourceRef` (`deezer_playlist:1234`, `mix:<clave>`) es lo que permite que el botón de

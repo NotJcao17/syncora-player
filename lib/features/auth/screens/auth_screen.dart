@@ -311,7 +311,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final dao = ref.read(playlistDaoProvider);
     final savedAlbumDao = ref.read(savedAlbumDaoProvider);
     final playlists = await dao.getAllPlaylists();
-    if (playlists.any((p) => !p.isLiked)) return true;
+    // Las generadas no cuentan: "On Repeat" la crea la app sola a partir del
+    // historial, así que preguntarle al usuario si quiere conservarla sería
+    // preguntar por algo que él nunca creó.
+    if (playlists.any((p) => !p.isLiked && !p.isGenerated)) return true;
 
     final liked = await dao.getLikedPlaylist();
     final likedTracks = await dao.getTracksOrdered(liked.id);

@@ -535,6 +535,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                                           subtitle: pl.isLiked ? 'Playlist especial' : (pl.description ?? 'Playlist'),
                                           coverUrl: pl.coverUrl ?? '',
                                           isLiked: pl.isLiked,
+                                          isGenerated: pl.isGenerated,
                                           isSelected: isSelected,
                                           isActivelyPlaying: isActivelyPlaying,
                                           isCollapsed: _isSidebarCollapsed,
@@ -1033,6 +1034,10 @@ class _DesktopPlaylistItem extends StatefulWidget {
   final String subtitle;
   final String coverUrl;
   final bool isLiked;
+
+  /// Playlist mantenida por la app ("On Repeat"): portada de color con su
+  /// ícono, no la cuadrícula de portadas.
+  final bool isGenerated;
   final bool isSelected;
   final bool isActivelyPlaying;
   final bool isCollapsed;
@@ -1044,6 +1049,7 @@ class _DesktopPlaylistItem extends StatefulWidget {
     required this.subtitle,
     required this.coverUrl,
     this.isLiked = false,
+    this.isGenerated = false,
     required this.isSelected,
     this.isActivelyPlaying = false,
     required this.isCollapsed,
@@ -1090,6 +1096,7 @@ class _DesktopPlaylistItemState extends State<_DesktopPlaylistItem> {
                       playlistId: widget.playlistId,
                       coverUrl: widget.coverUrl,
                       isLiked: widget.isLiked,
+                      isGenerated: widget.isGenerated,
                       width: 48,
                       height: 48,
                       borderRadius: BorderRadius.circular(8),
