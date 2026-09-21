@@ -47,7 +47,23 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
               ..where((t) => t.trackId.equals(trackId) & t.listenedAt.equals(listenedAt))
               ..limit(1))
             .get();
-        if (existing.isNotEmpty) continue;
+
+        if (existing.isNotEmpty) {
+          // La fila ya está, pero puede haber crecido en la nube desde la
+          // última bajada: una escucha sigue sumando minutos mientras suena
+          // en el otro dispositivo. Saltarla sin más dejaba aquí una copia
+          // vieja para siempre. Solo se sube, nunca se baja, y solo sobre
+          // filas ajenas: la duración de una escucha propia la manda este
+          // aparato.
+          final row = existing.first;
+          final remoteMs = entry.durationListenedMs.value;
+          if (row.fromRemote && remoteMs > row.durationListenedMs) {
+            await (update(listeningHistory)..where((t) => t.id.equals(row.id))).write(
+              ListeningHistoryCompanion(durationListenedMs: Value(remoteMs)),
+            );
+          }
+          continue;
+        }
 
         await into(listeningHistory).insert(entry);
         inserted++;
@@ -224,10 +240,23 @@ class ListeningHistoryDao extends DatabaseAccessor<SyncoraDatabase> with _$Liste
   /// Las deja sin sincronizar a propósito para que el género suba también a
   /// Supabase: es ahí donde lo lee la pantalla de Estadísticas cuando hay
   /// cuenta, así que rellenarlo solo en local no serviría de nada.
+  ///
+  /// **Excluye las filas bajadas de la nube** (`fromRemote`), y esto es un
+  /// arreglo, no una optimización. Una fila `fromRemote` guarda la duración
+  /// que tenía en el momento de la descarga; si esa escucha todavía estaba
+  /// sonando en el otro dispositivo, ese valor es viejo y MÁS BAJO que el
+  /// real. Marcarla como pendiente de subir hacía que el siguiente push
+  /// pisara en la nube el valor bueno con el viejo — con los dos aparatos
+  /// sonando a la vez, los minutos subían y al recargar bajaban. El género
+  /// de esas filas lo rellena el dispositivo que las grabó, que es el que
+  /// tiene la duración correcta.
   Future<int> applyGenreToAlbum(int albumId, String genre) async {
     if (genre.isEmpty) return 0;
     return (update(listeningHistory)
-          ..where((t) => t.albumId.equals(albumId) & t.genre.isNull()))
+          ..where((t) =>
+              t.albumId.equals(albumId) &
+              t.genre.isNull() &
+              t.fromRemote.equals(false)))
         .write(
       ListeningHistoryCompanion(genre: Value(genre), syncedAt: const Value(null)),
     );

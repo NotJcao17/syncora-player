@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
@@ -78,6 +79,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             slivers: [
               SliverToBoxAdapter(
                 child: _Header(
+                  isDesktop: isDesktop,
                   onRefresh: _refresh,
                   onWrapped: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => WrappedScreen(period: period)),
@@ -105,32 +107,52 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 }
 
 class _Header extends StatelessWidget {
+  final bool isDesktop;
   final VoidCallback onRefresh;
   final VoidCallback onWrapped;
 
-  const _Header({required this.onRefresh, required this.onWrapped});
+  const _Header({
+    required this.isDesktop,
+    required this.onRefresh,
+    required this.onWrapped,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.fromLTRB(4, 12, 16, 4),
       child: Row(
         children: [
+          // Sin esto no habia forma de volver a Inicio desde Estadisticas.
+          IconButton(
+            tooltip: 'Volver',
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                context.go('/');
+              }
+            },
+            icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary),
+          ),
           const Expanded(
             child: Text(
               'Tus estadísticas',
               style: TextStyle(
                 color: AppTheme.primary,
-                fontSize: 26,
+                fontSize: 24,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          IconButton(
-            tooltip: 'Actualizar',
-            onPressed: onRefresh,
-            icon: Icon(AppIcons.broken(SolarIcons.Refresh), color: AppTheme.secondary),
-          ),
+          // En movil el gesto de tirar para refrescar ya cubre esto, asi que
+          // el boton solo aparece en escritorio, donde ese gesto no existe.
+          if (isDesktop)
+            IconButton(
+              tooltip: 'Actualizar',
+              onPressed: onRefresh,
+              icon: Icon(AppIcons.broken(SolarIcons.Refresh), color: AppTheme.secondary),
+            ),
           FilledButton.icon(
             onPressed: onWrapped,
             style: FilledButton.styleFrom(
@@ -265,8 +287,8 @@ class _DashboardBodyState extends ConsumerState<_DashboardBody> {
     final artistEntries = s.topArtists.take(_artistsExpanded ? _expandedTop : _initialTop).toList();
     final trackEntries = s.topTracks.take(_tracksExpanded ? _expandedTop : _initialTop).toList();
 
-    final artistsAsync = ref.watch(enrichedArtistsProvider(artistEntries));
-    final tracksAsync = ref.watch(enrichedTracksProvider(trackEntries));
+    final artistsAsync = ref.watch(artistMetaProvider(statsIdsKey(artistEntries)));
+    final tracksAsync = ref.watch(trackMetaProvider(statsIdsKey(trackEntries)));
 
     final chart = StatsPanel(
       title: 'Minutos escuchados',
@@ -276,7 +298,6 @@ class _DashboardBodyState extends ConsumerState<_DashboardBody> {
 
     final artists = StatsPanel(
       title: 'Tus artistas',
-      subtitle: s.topsAreApproximate ? 'Aproximado en periodos largos' : null,
       action: s.topArtists.length > _initialTop
           ? _MoreButton(
               expanded: _artistsExpanded,
@@ -286,13 +307,15 @@ class _DashboardBodyState extends ConsumerState<_DashboardBody> {
       child: artistsAsync.when(
         loading: () => const _RowsSkeleton(),
         error: (_, _) => const _PanelError(),
-        data: (list) => TopArtistsPodium(artists: list, totalMs: s.totalMs),
+        data: (meta) => TopArtistsPodium(
+          artists: zipArtists(artistEntries, meta),
+          totalMs: s.totalMs,
+        ),
       ),
     );
 
     final tracks = StatsPanel(
       title: 'Tus canciones',
-      subtitle: s.topsAreApproximate ? 'Aproximado en periodos largos' : null,
       action: s.topTracks.length > _initialTop
           ? _MoreButton(
               expanded: _tracksExpanded,
@@ -302,7 +325,7 @@ class _DashboardBodyState extends ConsumerState<_DashboardBody> {
       child: tracksAsync.when(
         loading: () => const _RowsSkeleton(),
         error: (_, _) => const _PanelError(),
-        data: (list) => TopTracksList(tracks: list),
+        data: (meta) => TopTracksList(tracks: zipTracks(trackEntries, meta)),
       ),
     );
 

@@ -30,8 +30,11 @@ final selectedStatsPeriodProvider = StateProvider<StatsPeriod>((ref) => StatsPer
 /// reaccionar a las escuchas nuevas sin que nadie invalide nada (`watch` de
 /// Drift reemite al cambiar la tabla). El camino con cuenta emite un solo
 /// evento sobre el mismo tipo, para no bifurcar lo que consume la UI.
+/// `autoDispose` para que salir de Estadísticas no deje vivos los streams de
+/// los periodos que ya no se miran (en modo local cada uno mantiene abierta
+/// una suscripción a Drift).
 final statsSnapshotProvider =
-    StreamProvider.family<StatsSnapshot, StatsPeriod>((ref, period) async* {
+    StreamProvider.autoDispose.family<StatsSnapshot, StatsPeriod>((ref, period) async* {
   final isLocalMode = ref.watch(localModeProvider);
   final now = DateTime.now();
 
@@ -154,60 +157,78 @@ class EnrichedTrack {
   const EnrichedTrack({required this.entry, required this.track});
 }
 
-/// Resuelve nombre/portada de los ids de artista/canción, en paralelo,
-/// descartando en silencio los que fallen (mismo patrón que
-/// `personalizedSectionsProvider`): un id roto no debe tumbar la pantalla.
+/// Clave estable de los providers de metadata: los ids separados por comas.
 ///
-/// Consulta primero [StatsMetadataCacheDao] (Drift local, por id) y solo
-/// golpea Deezer para lo que no esté cacheado. Antes pedía en vivo los 10-20
-/// ids cada vez que se abría o refrescaba la pantalla, que es lo que causaba
-/// el parpadeo de ~15 s. Nombre y portada no cambian lo bastante como para
-/// justificar un TTL.
-final enrichedArtistsProvider =
-    FutureProvider.family<List<EnrichedArtist>, List<StatEntry>>((ref, entries) async {
-  if (entries.isEmpty) return const [];
+/// **No usar una `List` como clave de un `family`.** Riverpod compara las
+/// claves con `==`, y en Dart una lista compara por IDENTIDAD, no por
+/// contenido. Como la pantalla construye la lista con `.take(n).toList()` en
+/// cada `build`, cada reconstrucción creaba un provider NUEVO que empezaba a
+/// cargar de cero: los tops se quedaban en "cargando" para siempre, se
+/// repetían las peticiones a Deezer y se acumulaban instancias de provider
+/// que nadie liberaba — la causa de que la lista de artistas y canciones
+/// apareciera vacía y de que la pantalla fuera lenta en móvil.
+String statsIdsKey(Iterable<StatEntry> entries) => entries.map((e) => e.id).join(',');
+
+/// Nombre/portada por id de artista, resueltos en paralelo y descartando en
+/// silencio los que fallen (mismo patrón que `personalizedSectionsProvider`):
+/// un id roto no debe tumbar la pantalla.
+///
+/// Consulta primero [StatsMetadataCacheDao] (Drift local) y solo golpea
+/// Deezer para lo que no esté cacheado. Nombre y portada no cambian lo
+/// bastante como para justificar un TTL.
+///
+/// `autoDispose` para que cambiar de periodo o plegar un top no deje viva la
+/// consulta anterior.
+final artistMetaProvider =
+    FutureProvider.autoDispose.family<Map<int, DeezerArtist>, String>((ref, idsKey) async {
+  final ids = _parseIds(idsKey);
+  if (ids.isEmpty) return const {};
+
   final deezerApi = ref.watch(deezerApiProvider);
   final cacheDao = ref.watch(statsMetadataCacheDaoProvider);
-  final cached = await cacheDao.getMany(StatsEntityType.artist, entries.map((e) => e.id).toSet());
+  final cached = await cacheDao.getMany(StatsEntityType.artist, ids.toSet());
 
-  final results = await Future.wait(entries.map((entry) async {
-    final hit = cached[entry.id];
+  final results = await Future.wait(ids.map((id) async {
+    final hit = cached[id];
     if (hit != null) {
-      return EnrichedArtist(
-        entry: entry,
-        artist: DeezerArtist(id: entry.id, name: hit.primaryName, pictureUrl: hit.coverUrl, nbFan: 0),
+      return MapEntry(
+        id,
+        DeezerArtist(id: id, name: hit.primaryName, pictureUrl: hit.coverUrl, nbFan: 0),
       );
     }
     try {
-      final artist = await deezerApi.getArtist(entry.id);
+      final artist = await deezerApi.getArtist(id);
       await cacheDao.upsert(
         entityType: StatsEntityType.artist,
-        entityId: entry.id,
+        entityId: id,
         primaryName: artist.name,
         coverUrl: artist.pictureUrl,
       );
-      return EnrichedArtist(entry: entry, artist: artist);
+      return MapEntry(id, artist);
     } catch (_) {
       return null;
     }
   }));
-  return results.whereType<EnrichedArtist>().toList();
+
+  return {for (final e in results.whereType<MapEntry<int, DeezerArtist>>()) e.key: e.value};
 });
 
-final enrichedTracksProvider =
-    FutureProvider.family<List<EnrichedTrack>, List<StatEntry>>((ref, entries) async {
-  if (entries.isEmpty) return const [];
+final trackMetaProvider =
+    FutureProvider.autoDispose.family<Map<int, DeezerTrack>, String>((ref, idsKey) async {
+  final ids = _parseIds(idsKey);
+  if (ids.isEmpty) return const {};
+
   final deezerApi = ref.watch(deezerApiProvider);
   final cacheDao = ref.watch(statsMetadataCacheDaoProvider);
-  final cached = await cacheDao.getMany(StatsEntityType.track, entries.map((e) => e.id).toSet());
+  final cached = await cacheDao.getMany(StatsEntityType.track, ids.toSet());
 
-  final results = await Future.wait(entries.map((entry) async {
-    final hit = cached[entry.id];
+  final results = await Future.wait(ids.map((id) async {
+    final hit = cached[id];
     if (hit != null) {
-      return EnrichedTrack(
-        entry: entry,
-        track: DeezerTrack(
-          id: entry.id,
+      return MapEntry(
+        id,
+        DeezerTrack(
+          id: id,
           title: hit.primaryName,
           artistName: hit.secondaryName ?? '',
           artistId: 0,
@@ -219,18 +240,35 @@ final enrichedTracksProvider =
       );
     }
     try {
-      final track = await deezerApi.getTrack(entry.id);
+      final track = await deezerApi.getTrack(id);
       await cacheDao.upsert(
         entityType: StatsEntityType.track,
-        entityId: entry.id,
+        entityId: id,
         primaryName: track.title,
         secondaryName: track.artistName,
         coverUrl: track.coverUrl,
       );
-      return EnrichedTrack(entry: entry, track: track);
+      return MapEntry(id, track);
     } catch (_) {
       return null;
     }
   }));
-  return results.whereType<EnrichedTrack>().toList();
+
+  return {for (final e in results.whereType<MapEntry<int, DeezerTrack>>()) e.key: e.value};
 });
+
+List<int> _parseIds(String key) => key.isEmpty
+    ? const []
+    : key.split(',').map(int.tryParse).whereType<int>().toList();
+
+/// Une los tops con su metadata, conservando el orden del top y dejando
+/// fuera los ids que no se pudieron resolver.
+List<EnrichedArtist> zipArtists(List<StatEntry> entries, Map<int, DeezerArtist> meta) => [
+      for (final e in entries)
+        if (meta[e.id] case final a?) EnrichedArtist(entry: e, artist: a),
+    ];
+
+List<EnrichedTrack> zipTracks(List<StatEntry> entries, Map<int, DeezerTrack> meta) => [
+      for (final e in entries)
+        if (meta[e.id] case final t?) EnrichedTrack(entry: e, track: t),
+    ];

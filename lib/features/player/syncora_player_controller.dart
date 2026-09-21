@@ -1830,6 +1830,13 @@ bool get _isTestEnv {
       // veces en el historial.
       final windowStart = DateTime.now().subtract(_dedupeWindowFor(track));
       final previous = await dao.findRecentEntryForTrack(track.deezerId, windowStart);
+
+      // Entre el disparo y esta línea hubo un `await`, y en ese hueco el
+      // usuario puede haber cambiado de pista. Si eso pasó, asignar
+      // `_listenEntryId` apuntaría la escucha EN CURSO a la fila de la pista
+      // ANTERIOR, y el tiempo de la nueva se sumaría en la vieja.
+      if (!identical(_listenTrackedTrack, track)) return;
+
       if (previous != null && !_previousListenWasComplete(previous.durationListenedMs, track)) {
         _listenEntryId = previous.id;
         _listenEntryBaseMs = previous.durationListenedMs;
@@ -1848,7 +1855,7 @@ bool get _isTestEnv {
         return;
       }
 
-      _listenEntryId = await dao.recordEntry(
+      final insertedId = await dao.recordEntry(
         trackId: track.deezerId,
         artistId: track.artistId ?? 0,
         albumId: track.albumId ?? 0,
@@ -1862,6 +1869,10 @@ bool get _isTestEnv {
         // y el camino abierto para cuando exista una fuente barata.
         genre: track.genre,
       );
+      // Mismo motivo que arriba: `recordEntry` es otro `await`.
+      if (!identical(_listenTrackedTrack, track)) return;
+
+      _listenEntryId = insertedId;
       // H-S2: a partir de aquí la fila existe, así que el progreso puede
       // volcarse periódicamente sin esperar a que termine la pista.
       _listenFlushedMs = accumulated.inMilliseconds;
