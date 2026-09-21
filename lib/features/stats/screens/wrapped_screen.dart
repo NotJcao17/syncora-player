@@ -90,10 +90,21 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
   static const double _exportTargetWidth = 1080;
 
   /// Rasteriza la tarjeta visible a PNG.
+  ///
+  /// En Windows la app corre sobre **Impeller** (por defecto desde Flutter
+  /// 3.29), y ahí `toImage` es delicado: si se llama con un frame en vuelo el
+  /// hilo de rasterizado puede quedarse bloqueado, y como el proceso sigue
+  /// vivo (la música no se corta) parece un cuelgue sin causa. De ahí la
+  /// espera a `endOfFrame` y que las tarjetas ya no lleven sombras con
+  /// desenfoque: los blurs son justo lo que peor se lleva con esta ruta.
   Future<File?> _renderCard() async {
     final boundary =
         _keyFor(_index).currentContext?.findRenderObject() as RenderRepaintBoundary?;
     if (boundary == null) return null;
+
+    // Que no haya nada pintándose cuando se pida la captura.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return null;
 
     final logicalWidth = boundary.size.width;
     final ratio = logicalWidth <= 0
@@ -101,9 +112,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
         : (_exportTargetWidth / logicalWidth).clamp(1.0, 3.0);
 
     // `toImage` devuelve una `ui.Image` respaldada por memoria NATIVA, que el
-    // recolector de Dart no libera: hay que cerrarla a mano. No hacerlo dejaba
-    // decenas de MB colgando por cada exportación — la causa de que la app se
-    // cayera después de guardar la imagen.
+    // recolector de Dart no libera: hay que cerrarla a mano.
     ui.Image? image;
     try {
       image = await boundary.toImage(pixelRatio: ratio.toDouble());
@@ -139,8 +148,15 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
         [XFile(file.path)],
         text: 'Mis estadísticas en Syncora Player',
       );
-    } catch (_) {
-      if (mounted) AppToast.show(context, message: 'No se pudo compartir la tarjeta');
+    } catch (e, st) {
+      // Tragarse la excepción dejaba al usuario con "no pasa nada" y sin
+      // ninguna pista en la consola. El detalle va al log y el mensaje corto
+      // a la pantalla.
+      debugPrint('[Wrapped] Error al compartir: $e');
+      debugPrintStack(stackTrace: st);
+      if (mounted) {
+        AppToast.show(context, message: 'No se pudo compartir la tarjeta: $e');
+      }
     } finally {
       _clearBusy();
     }
@@ -176,8 +192,12 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
         actionLabel: 'Copiar ruta',
         onAction: () => Clipboard.setData(ClipboardData(text: dest.path)),
       );
-    } catch (_) {
-      if (mounted) AppToast.show(context, message: 'No se pudo guardar la imagen');
+    } catch (e, st) {
+      debugPrint('[Wrapped] Error al guardar la imagen: $e');
+      debugPrintStack(stackTrace: st);
+      if (mounted) {
+        AppToast.show(context, message: 'No se pudo guardar la imagen: $e');
+      }
     } finally {
       _clearBusy();
     }
@@ -582,13 +602,10 @@ class WrappedCard extends StatelessWidget {
           colors: data.colors,
         ),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: data.colors.last.withValues(alpha: 0.4),
-            blurRadius: 40,
-            offset: const Offset(0, 12),
-          ),
-        ],
+        // Sin `boxShadow`: un desenfoque dentro de un `RepaintBoundary` que
+        // luego se rasteriza con `toImage` es lo que cuelga el hilo de
+        // rasterizado en Windows/Impeller. Sobre fondo casi negro la sombra
+        // tampoco se veía.
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -601,32 +618,39 @@ class WrappedCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    data.eyebrow.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.6,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(child: _body()),
-                  const SizedBox(height: 6),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      'SYNCORA PLAYER',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          data.eyebrow.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.6,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      // La marca va arriba como icono, no como texto al pie:
+                      // ocupa menos y deja el bloque de contenido centrado
+                      // sin una linea suelta en el borde inferior.
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(7),
+                        child: Image.asset(
+                          'assets/icon/icon.png',
+                          width: 28,
+                          height: 28,
+                          filterQuality: FilterQuality.medium,
+                          errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 14),
+                  Expanded(child: _body()),
                 ],
               ),
             ),
@@ -651,25 +675,25 @@ class WrappedCard extends StatelessWidget {
       builder: (context, c) {
         // Un tercio del alto: por debajo de eso las dos listas de cinco no
         // entran sin recortarse.
-        final heroSide = (c.maxHeight * 0.32).clamp(80.0, c.maxWidth * 0.6);
+        final heroSide = (c.maxHeight * 0.34).clamp(80.0, c.maxWidth * 0.64);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          // El sobrante se reparte entre los tres bloques en vez de
+          // acumularse todo entre las listas y las cifras, que es lo que
+          // dejaba una franja muerta en medio de la tarjeta.
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             if (data.heroImageUrl.isNotEmpty)
               Center(child: _FramedImage(url: data.heroImageUrl, side: heroSide, radius: 14)),
-            const SizedBox(height: 14),
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: _miniList('Top artistas', data.artists)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _miniList('Top canciones', data.tracks)),
-                ],
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _miniList('Top artistas', data.artists)),
+                const SizedBox(width: 12),
+                Expanded(child: _miniList('Top canciones', data.tracks)),
+              ],
             ),
-            const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -832,10 +856,13 @@ class WrappedCard extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, c) {
-        final heroSide = (c.maxHeight * 0.36).clamp(100.0, c.maxWidth * 0.62);
-        final smallSide = ((c.maxWidth / 4) - 14).clamp(40.0, 90.0);
+        final heroSide = (c.maxHeight * 0.40).clamp(100.0, c.maxWidth * 0.68);
+        final smallSide = ((c.maxWidth / 4) - 12).clamp(40.0, 100.0);
 
         return Column(
+          // Centrado. Antes habia un `Spacer` que empujaba la fila de cuatro
+          // hasta el borde inferior y dejaba un hueco enorme en medio.
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _FramedImage(
               url: first.imageUrl,
@@ -870,7 +897,7 @@ class WrappedCard extends StatelessWidget {
                   ),
                 ),
               ),
-            const Spacer(),
+            const SizedBox(height: 34),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -956,16 +983,10 @@ class _FramedImage extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(r),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.35),
+          color: Colors.white.withValues(alpha: 0.45),
           width: borderWidth,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        // Sin sombra difuminada, por el mismo motivo que en la tarjeta.
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(r),
