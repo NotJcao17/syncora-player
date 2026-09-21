@@ -228,6 +228,26 @@ migración no falló" no probaba nada.
   fotos y canciones con sus cinco portadas, sin cifras por elemento. Las
   tarjetas de "variedad" y "momento favorito" se quitaron por aportar poco.
 
+### Exportar la imagen del Wrapped no funciona en escritorio
+
+En Windows, rasterizar la tarjeta con `RenderRepaintBoundary.toImage` tumbaba
+la app de forma reproducible: la interfaz dejaba de responder al instante, el
+proceso seguia vivo (la musica no se cortaba) y **no llegaba ni una linea a la
+consola de Dart** -- firma de un fallo nativo, no de una excepcion capturable.
+
+Se intento, sin exito: bajar la resolucion de salida (ancho objetivo 1080 en
+vez de `pixelRatio: 3`), esperar a `endOfFrame` antes de capturar, y quitar
+del arbol capturado todas las sombras con desenfoque. Tambien se corrigio un
+uso-despues-de-liberar real en esa ruta (se devolvia una VISTA sobre el bufer
+de la imagen mientras un `finally` la liberaba, sin esperar a que terminara la
+escritura del archivo); ese fallo era genuino y afectaba tambien a movil, pero
+no era la causa del cuelgue en Windows.
+
+**Decision:** en escritorio el boton copia el resumen como texto al
+portapapeles, que no toca la GPU. En movil se mantiene la exportacion a
+imagen, que ahi funciona. Si alguna vez se retoma, la via sin `toImage` seria
+dibujar la tarjeta con un `CustomPainter` sobre un `PictureRecorder`.
+
 ## Limpieza de datos hecha
 
 Se borraron las **173 filas anteriores al 2026-08-30 20:00 UTC** (el 100 %

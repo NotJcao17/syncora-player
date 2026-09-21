@@ -47,6 +47,12 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
   int _cardCount = 1;
   bool _isBusy = false;
 
+  /// Último snapshot pintado, para que la acción de copiar (escritorio) no
+  /// tenga que volver a pedir nada.
+  StatsSnapshot? _lastSnapshot;
+  List<EnrichedArtist> _lastArtists = const [];
+  List<EnrichedTrack> _lastTracks = const [];
+
   GlobalKey _keyFor(int i) => _cardKeys.putIfAbsent(i, () => GlobalKey());
 
   bool get _isDesktopPlatform =>
@@ -113,17 +119,34 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
 
     // `toImage` devuelve una `ui.Image` respaldada por memoria NATIVA, que el
     // recolector de Dart no libera: hay que cerrarla a mano.
-    ui.Image? image;
+    //
+    // **El orden importa.** La versión anterior hacía `return
+    // _writeTempPng(..., byteData.buffer.asUint8List())` dentro de un `try`
+    // con `image.dispose()` en el `finally`. Dos problemas encadenados:
+    // `asUint8List()` devuelve una VISTA sobre el búfer, no una copia, y el
+    // `finally` se ejecuta al salir del bloque, sin esperar a que la
+    // escritura del archivo termine. Es decir, se podía liberar la memoria
+    // mientras todavía se estaba leyendo de ella — un uso después de liberar,
+    // que revienta en código nativo sin dejar ni una línea en la consola de
+    // Dart. Encaja con el síntoma exacto: cuelgue instantáneo, sin logs.
+    //
+    // Ahora: se copian los bytes, se cierra la imagen, y solo entonces se
+    // escribe el archivo.
+    final image = await boundary.toImage(pixelRatio: ratio.toDouble());
+    Uint8List bytes;
     try {
-      image = await boundary.toImage(pixelRatio: ratio.toDouble());
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) return null;
-
-      final dir = await getTemporaryDirectory();
-      return _writeTempPng(dir.path, byteData.buffer.asUint8List());
+      bytes = Uint8List.fromList(byteData.buffer.asUint8List(
+        byteData.offsetInBytes,
+        byteData.lengthInBytes,
+      ));
     } finally {
-      image?.dispose();
+      image.dispose();
     }
+
+    final dir = await getTemporaryDirectory();
+    return await _writeTempPng(dir.path, bytes);
   }
 
   /// Apaga el indicador de ocupado sin dar por hecho que el widget sigue
@@ -162,55 +185,53 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
     }
   }
 
-  /// Escritorio: guardar el PNG en Imágenes/Descargas.
+  /// Escritorio: copiar el resumen como texto.
   ///
-  /// La hoja de compartir del sistema en Windows acaba ofreciendo Correo y
-  /// poco más, que no es lo que nadie quiere hacer con esto. Guardar el
-  /// archivo y ofrecer abrir la carpeta es el equivalente útil.
-  Future<void> _download() async {
-    if (_isBusy) return;
-    setState(() => _isBusy = true);
-    try {
-      final temp = await _renderCard();
-      if (temp == null) return;
+  /// **Por qué no se exporta la imagen en escritorio.** Rasterizar la tarjeta
+  /// con `RenderRepaintBoundary.toImage` tumbaba la app en Windows de forma
+  /// reproducible: la interfaz se quedaba sin responder al instante, el
+  /// proceso seguía vivo (la música no se cortaba) y no llegaba ni una línea
+  /// a la consola de Dart — la firma de un fallo en código nativo, no de una
+  /// excepción que se pueda capturar. Se intentó bajar la resolución de
+  /// salida, esperar a `endOfFrame` y quitar del árbol capturado todas las
+  /// sombras con desenfoque, sin resultado.
+  ///
+  /// Copiar texto no toca la GPU, así que no puede fallar por ese camino, y
+  /// en un ordenador pegar el resumen en un chat es casi siempre lo que se
+  /// quiere hacer. En móvil, donde `toImage` sí funciona, se mantiene la
+  /// exportación a imagen.
+  Future<void> _copySummary() async {
+    final s = _lastSnapshot;
+    if (s == null) return;
+    final period = ref.read(wrappedPeriodProvider) ?? widget.period;
 
-      final target = await _pickDownloadDir();
-      final dest = File(
-        '${target.path}${Platform.pathSeparator}'
-        'syncora_wrapped_${DateTime.now().millisecondsSinceEpoch}.png',
-      );
-      await temp.copy(dest.path);
-      // El PNG temporal ya no hace falta y puede pesar varios MB.
-      try {
-        await temp.delete();
-      } catch (_) {}
-
-      if (!mounted) return;
-      AppToast.show(
-        context,
-        message: 'Imagen guardada en ${target.path}',
-        actionLabel: 'Copiar ruta',
-        onAction: () => Clipboard.setData(ClipboardData(text: dest.path)),
-      );
-    } catch (e, st) {
-      debugPrint('[Wrapped] Error al guardar la imagen: $e');
-      debugPrintStack(stackTrace: st);
-      if (mounted) {
-        AppToast.show(context, message: 'No se pudo guardar la imagen: $e');
+    final buffer = StringBuffer()
+      ..writeln('Mis estadísticas en Syncora Player (${period.longLabel})')
+      ..writeln()
+      ..writeln('⏱ ${formatListeningTime(s.totalMs)} · ${s.totalPlays} reproducciones');
+    if (s.topGenres.isNotEmpty) {
+      buffer.writeln('🎧 Género top: ${s.topGenres.first.genre}');
+    }
+    if (_lastArtists.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('Artistas:');
+      for (var i = 0; i < _lastArtists.length; i++) {
+        buffer.writeln('  ${i + 1}. ${_lastArtists[i].artist.name}');
       }
-    } finally {
-      _clearBusy();
     }
-  }
+    if (_lastTracks.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('Canciones:');
+      for (var i = 0; i < _lastTracks.length; i++) {
+        buffer.writeln('  ${i + 1}. ${_lastTracks[i].track.title}');
+      }
+    }
 
-  Future<Directory> _pickDownloadDir() async {
-    try {
-      final downloads = await getDownloadsDirectory();
-      if (downloads != null) return downloads;
-    } catch (_) {
-      // getDownloadsDirectory no está disponible en todas las plataformas.
-    }
-    return getApplicationDocumentsDirectory();
+    await Clipboard.setData(ClipboardData(text: buffer.toString()));
+    if (!mounted) return;
+    AppToast.show(context, message: 'Resumen copiado al portapapeles');
   }
 
   Future<File> _writeTempPng(String dirPath, Uint8List bytes) async {
@@ -283,8 +304,8 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
                 ),
               ),
               IconButton(
-                tooltip: _isDesktopPlatform ? 'Guardar imagen' : 'Compartir',
-                onPressed: _isBusy ? null : (_isDesktopPlatform ? _download : _share),
+                tooltip: _isDesktopPlatform ? 'Copiar resumen' : 'Compartir',
+                onPressed: _isBusy ? null : (_isDesktopPlatform ? _copySummary : _share),
                 icon: _isBusy
                     ? const SizedBox(
                         width: 18,
@@ -292,7 +313,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                     : Icon(
-                        _isDesktopPlatform ? Icons.download_rounded : Icons.ios_share,
+                        _isDesktopPlatform ? Icons.copy_rounded : Icons.ios_share,
                         color: Colors.white,
                       ),
               ),
@@ -309,6 +330,10 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
     final trackMeta = ref.watch(trackMetaProvider(statsIdsKey(s.topTracks.take(5)))).value ?? {};
     final artists = zipArtists(s.topArtists.take(5).toList(), artistMeta);
     final tracks = zipTracks(s.topTracks.take(5).toList(), trackMeta);
+
+    _lastSnapshot = s;
+    _lastArtists = artists;
+    _lastTracks = tracks;
 
     final cards = buildWrappedCards(
       snapshot: s,
@@ -441,23 +466,41 @@ class _PeriodDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<StatsPeriod>(
-          value: value,
-          isDense: true,
-          dropdownColor: AppTheme.surfaceActive,
-          borderRadius: BorderRadius.circular(12),
-          icon: const Icon(Icons.expand_more_rounded, color: Colors.white70, size: 20),
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+      // Caja propia con relleno y borde: el `DropdownButton` pelado se
+      // quedaba pegado al texto y las etiquetas largas se salían por el
+      // lateral.
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 132, maxWidth: 220),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<StatsPeriod>(
+            value: value,
+            // Con `isExpanded` la etiqueta usa todo el ancho de la caja y se
+            // recorta con puntos suspensivos en vez de desbordarse.
+            isExpanded: true,
+            isDense: true,
+            dropdownColor: AppTheme.surfaceActive,
+            borderRadius: BorderRadius.circular(14),
+            icon: const Icon(Icons.expand_more_rounded, color: Colors.white70, size: 20),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            items: [
+              for (final p in StatsPeriod.values)
+                DropdownMenuItem(
+                  value: p,
+                  child: Text(p.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
+            ],
+            onChanged: (p) => p == null ? null : onChanged(p),
           ),
-          items: [
-            for (final p in StatsPeriod.values)
-              DropdownMenuItem(value: p, child: Text(p.label)),
-          ],
-          onChanged: (p) => p == null ? null : onChanged(p),
         ),
       ),
     );
@@ -502,6 +545,10 @@ class WrappedCardData {
   /// Imagen protagonista (foto del artista nº 1).
   final String heroImageUrl;
 
+  /// Hasta tres imágenes para el collage del resumen: la primera va centrada
+  /// y delante, las otras dos ladeadas detrás.
+  final List<String> collage;
+
   final List<WrappedItem> artists;
   final List<WrappedItem> tracks;
 
@@ -515,6 +562,7 @@ class WrappedCardData {
     required this.colors,
     required this.layout,
     this.heroImageUrl = '',
+    this.collage = const [],
     this.artists = const [],
     this.tracks = const [],
     this.totalTime = '',
@@ -560,6 +608,14 @@ List<WrappedCardData> buildWrappedCards({
       colors: const [Color(0xFF6D28D9), Color(0xFF2563EB)],
       layout: WrappedLayout.summary,
       heroImageUrl: hero,
+      // Artista nº 1 al centro y las dos portadas más escuchadas detrás.
+      // Si falta alguna se cae con elegancia: el collage se adapta al
+      // número de imágenes que haya.
+      collage: [
+        if (hero.isNotEmpty) hero,
+        for (final t in trackItems.take(3))
+          if (t.imageUrl.isNotEmpty && t.imageUrl != hero) t.imageUrl,
+      ].take(3).toList(),
       artists: artistItems,
       tracks: trackItems,
       totalTime: formatListeningTime(s.totalMs),
@@ -637,15 +693,18 @@ class WrappedCard extends StatelessWidget {
                       // La marca va arriba como icono, no como texto al pie:
                       // ocupa menos y deja el bloque de contenido centrado
                       // sin una linea suelta en el borde inferior.
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(7),
-                        child: Image.asset(
-                          'assets/icon/icon.png',
-                          width: 28,
-                          height: 28,
-                          filterQuality: FilterQuality.medium,
-                          errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                        ),
+                      // `icon_foreground` es la clave de sol en blanco sobre
+                      // transparente (el fondo navy lo pone `icon.png`, que
+                      // aquí chocaría con el degradado). Al ser el
+                      // primer plano de un icono adaptativo trae mucho margen
+                      // de seguridad alrededor, así que se dibuja más grande
+                      // de lo que ocupa a la vista.
+                      Image.asset(
+                        'assets/icon/icon_foreground.png',
+                        width: 46,
+                        height: 46,
+                        filterQuality: FilterQuality.medium,
+                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
                       ),
                     ],
                   ),
@@ -670,162 +729,234 @@ class WrappedCard extends StatelessWidget {
   // Resumen
   // --------------------------------------------------------------------
 
+  /// Resumen, en clave de **póster** en vez de las dos columnas de listas que
+  /// tenía antes.
+  ///
+  /// La versión anterior era, reconocidamente, la plantilla de Spotify:
+  /// portada arriba y dos listas numeradas debajo. Esta cambia el eje: un
+  /// collage de portadas ladeadas como fotos sobre una mesa, la cifra de
+  /// tiempo a tamaño de titular, y los tres datos que importan como fichas
+  /// con imagen. Los nombres del top completo ya tienen sus dos tarjetas
+  /// propias, así que aquí no hacen falta listas de cinco.
   Widget _summary() {
     return LayoutBuilder(
       builder: (context, c) {
-        // Un tercio del alto: por debajo de eso las dos listas de cinco no
-        // entran sin recortarse.
-        final heroSide = (c.maxHeight * 0.34).clamp(80.0, c.maxWidth * 0.64);
+        final collageSide = (c.maxHeight * 0.26).clamp(70.0, c.maxWidth * 0.50);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          // El sobrante se reparte entre los tres bloques en vez de
-          // acumularse todo entre las listas y las cifras, que es lo que
-          // dejaba una franja muerta en medio de la tarjeta.
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            if (data.heroImageUrl.isNotEmpty)
-              Center(child: _FramedImage(url: data.heroImageUrl, side: heroSide, radius: 14)),
-            Row(
+            if (data.collage.isNotEmpty) Center(child: _collage(collageSide)),
+
+            // Titular: regla de acento + cifra grande.
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(child: _miniList('Top artistas', data.artists)),
-                const SizedBox(width: 12),
-                Expanded(child: _miniList('Top canciones', data.tracks)),
-              ],
-            ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(child: _bigStat('Minutos escuchados', data.totalTime)),
-                if (data.topGenre.isNotEmpty)
-                  Expanded(child: _bigStat('Género top', data.topGenre)),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Divider(color: Colors.white.withValues(alpha: 0.22), height: 1),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                for (final f in data.facts)
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          f.value,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        Text(
-                          f.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
+                Container(
+                  width: 46,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    data.totalTime,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 54,
+                      fontWeight: FontWeight.w900,
+                      height: 0.95,
+                      letterSpacing: -2.5,
                     ),
                   ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'ESCUCHADOS',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 3,
+                  ),
+                ),
               ],
             ),
+
+            // Los tres datos destacados, con su imagen.
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (data.artists.isNotEmpty)
+                  _highlight(
+                    label: 'ARTISTA',
+                    value: data.artists.first.title,
+                    imageUrl: data.artists.first.imageUrl,
+                    circular: true,
+                  ),
+                if (data.tracks.isNotEmpty)
+                  _highlight(
+                    label: 'CANCIÓN',
+                    value: data.tracks.first.title,
+                    imageUrl: data.tracks.first.imageUrl,
+                  ),
+                if (data.topGenre.isNotEmpty)
+                  _highlight(label: 'GÉNERO', value: data.topGenre),
+              ],
+            ),
+
+            _factsBand(),
           ],
         );
       },
     );
   }
 
-  Widget _miniList(String title, List<WrappedItem> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.75),
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 6),
-        for (var i = 0; i < items.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 14,
-                  child: Text(
-                    '${i + 1}',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.55),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    items[i].title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      height: 1.25,
-                    ),
-                  ),
-                ),
-              ],
+  /// Tres portadas superpuestas y ladeadas. Es lo que le da carácter de
+  /// póster: usa imágenes reales en vez de más texto.
+  Widget _collage(double side) {
+    final urls = data.collage;
+    final small = side * 0.74;
+
+    return SizedBox(
+      height: side * 1.14,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (urls.length > 1)
+            Transform.translate(
+              offset: Offset(-side * 0.55, side * 0.06),
+              child: Transform.rotate(
+                angle: -0.17,
+                child: _FramedImage(url: urls[1], side: small, radius: 10, borderWidth: 2),
+              ),
             ),
-          ),
-      ],
+          if (urls.length > 2)
+            Transform.translate(
+              offset: Offset(side * 0.55, side * 0.06),
+              child: Transform.rotate(
+                angle: 0.17,
+                child: _FramedImage(url: urls[2], side: small, radius: 10, borderWidth: 2),
+              ),
+            ),
+          _FramedImage(url: urls.first, side: side, radius: 14),
+        ],
+      ),
     );
   }
 
-  Widget _bigStat(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.75),
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 2),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            value,
-            maxLines: 1,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 25,
-              fontWeight: FontWeight.w800,
-              height: 1.1,
-              letterSpacing: -0.5,
+  Widget _highlight({
+    required String label,
+    required String value,
+    String imageUrl = '',
+    bool circular = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          if (imageUrl.isNotEmpty)
+            _FramedImage(url: imageUrl, side: 34, circular: circular, radius: 7, borderWidth: 1.5)
+          else
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: const Icon(Icons.graphic_eq_rounded, size: 17, color: Colors.white70),
+            ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 62,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontSize: 9.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.1,
+              ),
             ),
           ),
-        ),
-      ],
+          Expanded(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
+
+  /// Banda inferior con las cifras sueltas, sobre un fondo propio para que
+  /// cierre la tarjeta en vez de quedar flotando.
+  Widget _factsBand() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < data.facts.length; i++) ...[
+            if (i > 0)
+              Container(
+                width: 1,
+                height: 26,
+                color: Colors.white.withValues(alpha: 0.2),
+              ),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    data.facts[i].value,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w900,
+                      height: 1.1,
+                    ),
+                  ),
+                  Text(
+                    data.facts[i].label.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
 
   // --------------------------------------------------------------------
   // Artistas: el nº 1 en grande y los otros cuatro en fila
