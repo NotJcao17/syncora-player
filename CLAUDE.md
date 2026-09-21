@@ -61,6 +61,30 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-09-21)
+
+**Rediseño de Estadísticas: implementado y verificado contra Supabase real; faltan las pruebas en
+dispositivo.** Todo el detalle en `docs/fases/rediseno_estadisticas.md` — **leerlo antes de tocar
+`lib/features/stats/`, `listening_history`, el registro de escuchas del controlador del reproductor
+o el agregado mensual**. Once hallazgos documentados ahí como H-S1 a H-S11; los tres que no
+conviene volver a descubrir: **el 68 % de las escuchas quedaban congeladas en los ~30 s del umbral**
+porque la duración real solo se corregía en `dispose()`, que casi nunca corre (medido: 14 de 20
+sesiones terminaban así); **el filtro anti-seek descartaba los ticks de posición tardíos**, que son
+escucha real y llegan con cadencias distintas en Android y Windows; y **Deezer no devuelve género
+en ningún endpoint de canción**, solo en `/album/{id}` (`genres.data[0].name`), por lo que se
+resuelve por álbum con caché.
+
+Decisiones cerradas que no conviene revertir: las estadísticas con cuenta se **agregan en Postgres**
+(`get_listening_stats`, RPC) en vez de bajar filas — con 250 usuarios en plan free es la diferencia
+entre >1 GB/mes de egress y ~30 MB/mes; **todo se guarda y suma en milisegundos** y se redondea solo
+al pintar; y el historial crudo **sigue podándose a 90 días**, así que las ventanas de 6/12 meses y
+"Todo" salen de `user_stats_monthly` con **totales exactos pero tops aproximados** (30 por mes), algo
+que la UI advierte en vez de disimular.
+
+El cron de agregación ya **no es un paso manual pendiente**: `pg_cron` estaba instalado y el job
+quedó programado a diario (`aggregate-listening-stats-daily`). `stats_health()` (solo `service_role`)
+dice de un vistazo si sigue vivo.
+
 ### Estado actual (última actualización: 2026-09-20)
 
 **Rediseño de Inicio y Explorar: implementado, dos rondas de pruebas en dispositivo pasadas.** Todo el
@@ -202,10 +226,9 @@ deploy ai-assistant`), configurar el secreto `GEMINI_API_KEY`, y correr `deno te
 sobre `supabase/functions/ai-assistant/` (Deno no está disponible en el entorno del agente, esos
 tests nunca se ejecutaron, solo se escribieron) — detalle en `docs/fases/fase_7_e.md`; activar el
 Auth Hook "Before User Created" de 7.H en el dashboard y probar ambos caminos de registro contra un
-proyecto real — detalle en `docs/fases/fase_7_h.md`; habilitar `pg_cron` y programar
-`aggregate_monthly_listening_stats()` de 7.G (SQL exacto en `docs/fases/fase_7_g.md`), cuya
-sintaxis (`LEFT JOIN LATERAL` por usuario) tampoco corrió nunca contra Postgres real. También sigue
-pendiente 7.D.6 (prueba humana de crossfade en Windows y Android, ver `docs/fases/fase_7_d.md`).
+proyecto real — detalle en `docs/fases/fase_7_h.md`; ~~habilitar `pg_cron` y programar `aggregate_monthly_listening_stats()`~~ (HECHO en el rediseño de
+Estadísticas: la extensión ya estaba instalada, el job corre a diario y la función se ejecutó y
+verificó contra Postgres real). También sigue pendiente 7.D.6 (prueba humana de crossfade en Windows y Android, ver `docs/fases/fase_7_d.md`).
 
 ## Otros documentos relevantes
 
