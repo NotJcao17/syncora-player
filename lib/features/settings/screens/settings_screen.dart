@@ -445,6 +445,16 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
 
+          const SizedBox(height: 16),
+          _buildCard(
+            child: _buildActionTile(
+              icon: AppIcons.broken(SolarIcons.ShieldCheck),
+              title: 'Privacidad y aviso legal',
+              subtitle: 'Qué datos se guardan, dónde y con quién se comparten',
+              onTap: () => context.push('/legal'),
+            ),
+          ),
+
           const SizedBox(height: 40),
         ],
       ),

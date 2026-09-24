@@ -61,6 +61,15 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-09-24)
+
+**Configuración: ajustes persistentes, almacenamiento real, temporizador de apagado y aviso legal.**
+Detalle en `docs/fases/configuracion.md` — **leerlo antes de tocar Configuración, los ajustes o la
+caché de portadas**. Todos los ajustes son **del dispositivo** (`AppSettingsStore`, sobre
+`shared_preferences`, cargado antes de `runApp`); `profiles.download_wifi_only` queda sin uso a
+propósito. La carpeta `syncora/covers` son las **portadas de las descargas**, no una caché: la caché
+de imágenes real es la de `CachedNetworkImage`. El ecualizador quedó pospuesto a la Fase 8.
+
 ### Estado actual (última actualización: 2026-09-21)
 
 **Rediseño de Estadísticas: implementado y verificado contra Supabase real; faltan las pruebas en
