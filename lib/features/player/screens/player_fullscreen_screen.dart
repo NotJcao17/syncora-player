@@ -21,6 +21,7 @@ import '../player_providers.dart';
 import '../syncora_player_controller.dart';
 import '../widgets/lyrics_sheet.dart';
 import '../widgets/queue_view.dart';
+import '../widgets/sleep_timer_sheet.dart';
 
 /// Reproductor Fullscreen Inmersivo con soporte para Karaoke sincronizado y Me Gusta persistente.
 class PlayerFullscreenScreen extends ConsumerStatefulWidget {
@@ -536,6 +537,9 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
       // reproductor", es salir de él.
       onNavigateAway: () {
         if (context.mounted && Navigator.of(context).canPop()) context.pop();
+      },
+      onSleepTimer: () {
+        if (context.mounted) showSleepTimerPicker(context);
       },
     );
   }

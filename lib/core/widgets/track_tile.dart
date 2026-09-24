@@ -300,6 +300,9 @@ class TrackContextMenu {
     VoidCallback? onRemove,
     String removeLabel = 'Eliminar de la playlist',
     VoidCallback? onNavigateAway,
+    // Solo lo pasa el reproductor a pantalla completa: el temporizador de
+    // apagado no tiene sentido en el menú de una pista cualquiera de una lista.
+    VoidCallback? onSleepTimer,
   }) async {
     FocusManager.instance.primaryFocus?.unfocus();
     final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
@@ -379,6 +382,15 @@ class TrackContextMenu {
               icon: AppIcons.broken(SolarIcons.Magnifer),
               label: 'Buscar otras versiones',
               onTap: () => select('other_versions'),
+            ),
+          if (onSleepTimer != null)
+            _OptionItem(
+              icon: AppIcons.broken(SolarIcons.Moon),
+              label: 'Temporizador de apagado',
+              onTap: () {
+                Navigator.pop(context);
+                onSleepTimer();
+              },
             ),
           if (onRemove != null)
             _OptionItem(

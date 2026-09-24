@@ -16,8 +16,10 @@ import '../../../data/local_db/syncora_database.dart';
 import '../audio_engine/audio_engine_state.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
+import '../sleep_timer.dart';
 import '../syncora_player_controller.dart';
 import 'queue_view.dart';
+import 'sleep_timer_sheet.dart';
 
 /// Mini-reproductor siempre visible si hay una pista activa (Diseño pixel-perfect de image2.png / index.html mockup).
 class MiniPlayer extends ConsumerWidget {
@@ -347,6 +349,20 @@ class MiniPlayer extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    Builder(builder: (context) {
+                      final sleepActive = ref.watch(sleepTimerProvider.select((t) => t.isActive));
+                      return IconButton(
+                        icon: Icon(
+                          sleepActive ? AppIcons.bold(SolarIcons.Moon) : AppIcons.broken(SolarIcons.Moon),
+                          size: 20,
+                          color: sleepActive ? AppTheme.primary : AppTheme.secondary,
+                        ),
+                        onPressed: () => showSleepTimerPicker(context),
+                        tooltip: 'Temporizador de apagado',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      );
+                    }),
                     IconButton(
                       icon: Icon(
                         AppIcons.broken(SolarIcons.Microphone),

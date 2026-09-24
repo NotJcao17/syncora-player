@@ -18,6 +18,7 @@ import '../../auth/local_mode_provider.dart';
 
 import '../../download/download_provider.dart';
 import '../../player/player_providers.dart';
+import '../../player/widgets/sleep_timer_sheet.dart';
 import '../../profile/widgets/avatar_selector_sheet.dart';
 
 
@@ -269,13 +270,6 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const Divider(height: 24, color: AppTheme.surfaceHover),
                 _buildActionTile(
-                  icon: AppIcons.broken(SolarIcons.Tuning),
-                  title: 'Ecualizador',
-                  subtitle: 'Ajusta las frecuencias de sonido',
-                  onTap: () => _showComingSoon(context),
-                ),
-                const Divider(height: 24, color: AppTheme.surfaceHover),
-                _buildActionTile(
                   icon: AppIcons.broken(SolarIcons.History),
                   title: 'Historial de reproducción',
                   subtitle: 'Ver canciones escuchadas recientemente',
@@ -285,8 +279,11 @@ class SettingsScreen extends ConsumerWidget {
                 _buildActionTile(
                   icon: AppIcons.broken(SolarIcons.Moon),
                   title: 'Temporizador de apagado',
-                  subtitle: 'Detener música automáticamente',
-                  onTap: () => _showComingSoon(context),
+                  subtitleWidget: const SleepTimerStatusText(
+                    offLabel: 'Detener la música automáticamente',
+                    style: TextStyle(color: AppTheme.secondary, fontSize: 12),
+                  ),
+                  onTap: () => showSleepTimerPicker(context),
                 ),
               ],
             ),
@@ -658,7 +655,8 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildActionTile({
     required IconData icon,
     required String title,
-    required String subtitle,
+    String? subtitle,
+    Widget? subtitleWidget,
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -676,7 +674,7 @@ class SettingsScreen extends ConsumerWidget {
                 children: [
                   Text(title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 15)),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
+                  subtitleWidget ?? Text(subtitle ?? '', style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
                 ],
               ),
             ),
@@ -685,10 +683,6 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  void _showComingSoon(BuildContext context) {
-    AppToast.show(context, message: 'Próximamente');
   }
 }
 
