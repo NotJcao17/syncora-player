@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -5,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/cache/cover_cache_service.dart';
+import '../../../core/cache/storage_usage.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
@@ -301,35 +302,36 @@ class SettingsScreen extends ConsumerWidget {
               final wifiOnly = ref.watch(downloadWifiOnlyProvider);
               final quality = ref.watch(downloadQualityProvider);
               final downloadedTracksAsync = ref.watch(watchAllDownloadedTracksProvider);
-              final coverCache = ref.watch(coverCacheServiceProvider);
+              final usage = ref.watch(storageUsageProvider).value;
               final dao = ref.watch(downloadedTrackDaoProvider);
 
               final downloadedTracks = downloadedTracksAsync.value ?? [];
               final audioBytes = downloadedTracks.fold<int>(0, (int sum, DownloadedTrack t) => sum + t.fileSizeBytes);
-
-              final coverBytes = coverCache.currentSizeBytes;
-              final totalMB = ((audioBytes + coverBytes) / (1024 * 1024)).toStringAsFixed(1);
-              final audioMB = (audioBytes / (1024 * 1024)).toStringAsFixed(1);
-              final coverMB = (coverBytes / (1024 * 1024)).toStringAsFixed(1);
+              final downloadsBytes = audioBytes + (usage?.downloadCoverBytes ?? 0);
+              final imageBytes = usage?.imageCacheBytes ?? 0;
 
               return _buildCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSwitchTile(
-                      icon: AppIcons.broken(SolarIcons.WiFiRouter),
-                      title: 'Descargar solo con Wi-Fi',
-                      subtitle: 'Evita consumo de datos móviles',
-                      value: wifiOnly,
-                      onChanged: (val) {
-                        ref.read(downloadWifiOnlyProvider.notifier).set(val);
-                        AppToast.show(
-                          context,
-                          message: val ? 'Descargas restringidas a Wi-Fi' : 'Descargas permitidas con datos móviles',
-                        );
-                      },
-                    ),
-                    const Divider(height: 24, color: AppTheme.surfaceHover),
+                    // El guard de Wi-Fi solo existe en móvil (`DownloadService
+                    // ._checkWifiGuard`); en escritorio el toggle no haría nada.
+                    if (_isMobilePlatform) ...[
+                      _buildSwitchTile(
+                        icon: AppIcons.broken(SolarIcons.WiFiRouter),
+                        title: 'Descargar solo con Wi-Fi',
+                        subtitle: 'Evita consumo de datos móviles',
+                        value: wifiOnly,
+                        onChanged: (val) {
+                          ref.read(downloadWifiOnlyProvider.notifier).set(val);
+                          AppToast.show(
+                            context,
+                            message: val ? 'Descargas restringidas a Wi-Fi' : 'Descargas permitidas con datos móviles',
+                          );
+                        },
+                      ),
+                      const Divider(height: 24, color: AppTheme.surfaceHover),
+                    ],
                     _buildQualitySelector(
                       value: quality,
                       onChanged: (newQuality) {
@@ -345,33 +347,28 @@ class SettingsScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Almacenamiento usado', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-                        Text('$totalMB MB / Local', style: const TextStyle(color: AppTheme.secondary, fontSize: 13)),
+                        Text(
+                          usage == null ? 'Calculando...' : _formatBytes(downloadsBytes + imageBytes),
+                          style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+                        ),
                       ],
                     ),
+                    const SizedBox(height: 10),
+                    _StorageBar(downloadsBytes: downloadsBytes, imageBytes: imageBytes),
+                    const SizedBox(height: 10),
+                    _buildStorageLegend(AppTheme.primary, 'Descargas', _formatBytes(downloadsBytes)),
                     const SizedBox(height: 4),
-                    Text(
-                      '$audioMB MB audio  •  $coverMB MB portadas',
-                      style: const TextStyle(color: AppTheme.secondary, fontSize: 11),
-                    ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: (audioBytes + coverBytes) / (500 * 1024 * 1024), // Max reference 500MB
-                        backgroundColor: AppTheme.surfaceHover,
-                        color: AppTheme.primary,
-                        minHeight: 6,
-                      ),
-                    ),
+                    _buildStorageLegend(AppTheme.muted, 'Caché de imágenes', _formatBytes(imageBytes)),
                     const SizedBox(height: 16),
                     _buildActionTile(
                       icon: AppIcons.broken(SolarIcons.Server),
-                      title: 'Borrar caché de portadas',
-                      subtitle: 'Libera $coverMB MB de imágenes',
+                      title: 'Borrar caché de imágenes',
+                      subtitle: 'Libera ${_formatBytes(imageBytes)}. No afecta a tus descargas',
                       onTap: () async {
-                        await coverCache.clear();
+                        await clearImageCache();
+                        ref.invalidate(storageUsageProvider);
                         if (context.mounted) {
-                          AppToast.show(context, message: 'Caché de portadas borrada');
+                          AppToast.show(context, message: 'Caché de imágenes borrada');
                         }
                       },
                     ),
@@ -379,7 +376,7 @@ class SettingsScreen extends ConsumerWidget {
                     _buildActionTile(
                       icon: AppIcons.broken(SolarIcons.TrashBinTrash),
                       title: 'Borrar todas las descargas',
-                      subtitle: 'Libera $audioMB MB de audio (${downloadedTracks.length} canciones)',
+                      subtitle: 'Libera ${_formatBytes(downloadsBytes)} (${downloadedTracks.length} canciones)',
                       onTap: () async {
                         final confirm = await showDialog<bool>(
                           context: context,
@@ -399,6 +396,7 @@ class SettingsScreen extends ConsumerWidget {
                         );
                         if (confirm == true) {
                           await dao.deleteAll();
+                          ref.invalidate(storageUsageProvider);
                           if (context.mounted) {
                             AppToast.show(context, message: 'Todas las descargas han sido eliminadas');
                           }
@@ -453,6 +451,26 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 40),
         ],
       ),
+    );
+  }
+
+  static bool get _isMobilePlatform =>
+      defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+
+  static String _formatBytes(int bytes) {
+    final mb = bytes / (1024 * 1024);
+    if (mb >= 1024) return '${(mb / 1024).toStringAsFixed(2)} GB';
+    return '${mb.toStringAsFixed(1)} MB';
+  }
+
+  Widget _buildStorageLegend(Color color, String label, String value) {
+    return Row(
+      children: [
+        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        Expanded(child: Text(label, style: const TextStyle(color: AppTheme.secondary, fontSize: 12))),
+        Text(value, style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
+      ],
     );
   }
 
@@ -601,7 +619,7 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '${value.label} (${value.bitrateDescription}) • ${value.detail}',
+                '${value.label} (${value.bitrateDescription}) • ${value.detail}. Solo aplica a descargas nuevas',
                 style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
               ),
               const SizedBox(height: 12),
@@ -671,6 +689,38 @@ class SettingsScreen extends ConsumerWidget {
 
   void _showComingSoon(BuildContext context) {
     AppToast.show(context, message: 'Próximamente');
+  }
+}
+
+/// Barra de almacenamiento: proporción descargas / caché de imágenes sobre el
+/// total que usa la app. Sin tope de referencia: un porcentaje contra un
+/// máximo inventado no le dice nada al usuario.
+class _StorageBar extends StatelessWidget {
+  const _StorageBar({required this.downloadsBytes, required this.imageBytes});
+
+  final int downloadsBytes;
+  final int imageBytes;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = downloadsBytes + imageBytes;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: SizedBox(
+        height: 6,
+        child: total == 0
+            ? const ColoredBox(color: AppTheme.surfaceHover)
+            : Row(
+                children: [
+                  // `flex` es int; se escala a KB para no desbordar con GB.
+                  if (downloadsBytes > 0)
+                    Expanded(flex: (downloadsBytes ~/ 1024) + 1, child: const ColoredBox(color: AppTheme.primary)),
+                  if (imageBytes > 0)
+                    Expanded(flex: (imageBytes ~/ 1024) + 1, child: const ColoredBox(color: AppTheme.muted)),
+                ],
+              ),
+      ),
+    );
   }
 }
 

@@ -26,11 +26,11 @@ void main() {
 
     test('DownloadQuality properties match expectations', () {
       expect(DownloadQuality.high.label, 'Alta');
-      expect(DownloadQuality.high.bitrateDescription, '~160-256 kbps');
+      expect(DownloadQuality.high.bitrateDescription, '~128-160 kbps');
       expect(DownloadQuality.medium.label, 'Normal');
       expect(DownloadQuality.medium.bitrateDescription, '~128 kbps');
       expect(DownloadQuality.low.label, 'Baja (Ahorro)');
-      expect(DownloadQuality.low.bitrateDescription, '~64-96 kbps');
+      expect(DownloadQuality.low.bitrateDescription, '~48-70 kbps');
     });
 
     test('ExtractionRequest serializes and deserializes quality field', () {

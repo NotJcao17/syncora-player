@@ -2,8 +2,8 @@
 enum DownloadQuality {
   high(
     label: 'Alta',
-    bitrateDescription: '~160-256 kbps',
-    detail: 'Calidad original / mayor fidelidad',
+    bitrateDescription: '~128-160 kbps',
+    detail: 'La mejor que ofrece la fuente',
   ),
   medium(
     label: 'Normal',
@@ -12,7 +12,7 @@ enum DownloadQuality {
   ),
   low(
     label: 'Baja (Ahorro)',
-    bitrateDescription: '~64-96 kbps',
+    bitrateDescription: '~48-70 kbps',
     detail: 'Ahorro de datos y menor almacenamiento',
   );
 

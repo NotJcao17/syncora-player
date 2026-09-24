@@ -207,15 +207,8 @@ class CoverCacheService {
     await _saveIndex(index);
   }
 
-  int get currentSizeBytes {
-    return 0;
-  }
-
-
-  Future<void> clear() => clearAll();
-
+  /// Tamaño en disco de las portadas de las pistas descargadas.
   Future<int> getCacheSizeBytes() async {
-
     if (kIsWeb) return 0;
     final coverDir = await _getCoverDir();
     final dir = Directory(coverDir);
@@ -228,20 +221,6 @@ class CoverCacheService {
       }
     }
     return totalBytes;
-  }
-
-  Future<void> clearAll() async {
-    if (_isTestEnv || kIsWeb) return;
-
-    final coverDir = await _getCoverDir();
-    final dir = Directory(coverDir);
-    if (dir.existsSync()) {
-      for (final entity in dir.listSync()) {
-        try {
-          entity.deleteSync(recursive: true);
-        } catch (_) {}
-      }
-    }
   }
 }
 
