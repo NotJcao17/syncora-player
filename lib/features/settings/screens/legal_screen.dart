@@ -64,8 +64,8 @@ class LegalScreen extends StatelessWidget {
       'Tus datos',
       [
         'Puedes exportar cualquier playlist a CSV desde su menú.',
-        'La app todavía no tiene un botón para eliminar la cuenta. Si quieres que se borre tu cuenta con todos sus '
-            'datos, pídelo abriendo un issue en github.com/NotJcao17/syncora-player.',
+        'Puedes eliminar tu cuenta cuando quieras desde Configuración. Al hacerlo se borran de forma permanente tu '
+            'cuenta y todos los datos asociados que están en la nube.',
       ],
     ),
     (
