@@ -509,10 +509,6 @@ El diseño debe verse intencional y humano. Se evitarán estas "señales delator
 - **Descubrimiento musical vía previews de Deezer (30s).** El campo `previewUrl` ya se parsea y se
   guarda en el modelo de cada track (viene directo del JSON de Deezer), pero no se reproduce en
   ningún lado de la UI — falta el mecanismo de reproducción de preview en sí.
-- **Ecualizador** (pospuesto el 2026-09-24, ver `docs/fases/configuracion.md`). En Android es
-  viable con `AndroidEqualizer` de `just_audio`, pero el crossfade usa dos `AudioPlayer` y habría
-  que mantener dos ecualizadores sincronizados; en Windows iría por un filtro `af=lavfi` de libmpv,
-  el mismo mecanismo que rompió Skip Silence.
 - **Lanzamientos nuevos de artistas escuchados**, personalizados. Lo que existe hoy
   (`DeezerApi.getNewReleases()`) es el chart global de Deezer (`/chart/0/albums`), no una lista
   filtrada a los artistas que el usuario realmente escucha.

@@ -31,7 +31,7 @@ verde antes de su commit.
   `main.dart` antes de `runApp`: el controlador del reproductor lee radio/crossfade con `ref.read`
   en cualquier momento y nunca debe ver el valor por defecto mientras carga. La calidad se migra una
   vez desde `flutter_secure_storage` (clave `syncora_download_quality_v1`) y se borra de ahí.
-- **Ecualizador pospuesto** (candidato a Fase 8) y su botón "Próximamente" quitado. Motivo: en
+- **Ecualizador descartado** (no entra en la Fase 8) y su botón "Próximamente" quitado. Motivo: en
   Windows tendría que ir por un filtro `af=lavfi=[...]` de libmpv, el mismo mecanismo que rompió
   Skip Silence; en Android el crossfade usa dos `AudioPlayer`, así que habría que mantener dos
   `AndroidEqualizer` sincronizados. Nada de eso se puede validar con tests automáticos.

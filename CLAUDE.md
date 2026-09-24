@@ -68,7 +68,7 @@ Detalle en `docs/fases/configuracion.md` — **leerlo antes de tocar Configuraci
 caché de portadas**. Todos los ajustes son **del dispositivo** (`AppSettingsStore`, sobre
 `shared_preferences`, cargado antes de `runApp`); `profiles.download_wifi_only` queda sin uso a
 propósito. La carpeta `syncora/covers` son las **portadas de las descargas**, no una caché: la caché
-de imágenes real es la de `CachedNetworkImage`. El ecualizador quedó pospuesto a la Fase 8.
+de imágenes real es la de `CachedNetworkImage`. El ecualizador se descartó (no es candidato de la Fase 8).
 
 ### Estado actual (última actualización: 2026-09-21)
 
