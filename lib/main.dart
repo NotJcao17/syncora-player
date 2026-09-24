@@ -13,6 +13,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'app.dart';
 import 'core/cache/cover_cache_service.dart';
+import 'core/settings/app_settings_store.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/local_mode_provider.dart';
 import 'features/auth/services/auth_deep_link_errors.dart';
@@ -243,9 +244,19 @@ void main() async {
     } catch (_) {}
   }
 
+  // Ajustes de Configuración: cargados antes de `runApp` para que el
+  // reproductor nunca arranque con los valores por defecto.
+  AppSettingsStore settingsStore;
+  try {
+    settingsStore = await AppSettingsStore.load();
+  } catch (_) {
+    settingsStore = AppSettingsStore.inMemory();
+  }
+
   runApp(
     ProviderScope(
       overrides: [
+        appSettingsStoreProvider.overrideWithValue(settingsStore),
         localModeStorageProvider.overrideWithValue(localModeStorage),
         localModeProvider.overrideWith(() => LocalModeNotifier(initialLocalMode)),
       ],

@@ -76,6 +76,9 @@ dependencies:
   url_launcher: ^6.3.2
   background_downloader: ^9.5.7
   flutter_secure_storage: ^10.3.1
+  # Ya venía como transitiva (supabase_flutter); directa para los ajustes
+  # de Configuración (`core/settings/app_settings_store.dart`).
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

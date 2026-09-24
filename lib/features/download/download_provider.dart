@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
 
 import '../../core/cache/cover_cache_service.dart';
+import '../../core/settings/app_settings_store.dart';
 import '../../core/extraction/extraction_provider.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../data/local_db/syncora_database.dart';
@@ -11,7 +11,11 @@ import 'download_service.dart';
 export 'models/download_quality.dart';
 export 'services/download_quality_storage.dart';
 
-final downloadWifiOnlyProvider = StateProvider<bool>((ref) => true);
+/// Solo afecta a Android: en escritorio el guard de `DownloadService` no
+/// aplica y Configuración oculta el toggle. Persistido por dispositivo.
+final downloadWifiOnlyProvider = NotifierProvider<BoolSettingNotifier, bool>(
+  () => BoolSettingNotifier(AppSettingsStore.downloadWifiOnlyKey, true),
+);
 
 final watchDownloadedTrackProvider = StreamProvider.family<DownloadedTrack?, int>((ref, trackId) {
   final dao = ref.watch(downloadedTrackDaoProvider);

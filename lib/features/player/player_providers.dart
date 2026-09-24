@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import '../../core/extraction/extraction_provider.dart';
+import '../../core/settings/app_settings_store.dart';
 import '../../core/utils/connectivity_service.dart';
 import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
@@ -25,17 +26,29 @@ import 'radio/radio_service.dart';
 import 'syncora_player_controller.dart';
 
 /// Toggle de Configuración para radio/cola infinita (Fase 7.B, D-10):
-/// activada por defecto. Como el proyecto todavía no tiene
-/// `shared_preferences`, no persiste entre reinicios — mismo comportamiento
-/// (no una regresión) que `downloadWifiOnlyProvider`
-/// (`lib/features/download/download_provider.dart`).
-final radioEnabledProvider = StateProvider<bool>((ref) => true);
+/// activada por defecto. Persistido por dispositivo (`AppSettingsStore`).
+final radioEnabledProvider = NotifierProvider<BoolSettingNotifier, bool>(
+  () => BoolSettingNotifier(AppSettingsStore.radioEnabledKey, true),
+);
 
 /// Duración del crossfade (Fase 7.D.5, off / 2s / 4s / 6s en Configuración).
-/// `Duration.zero` == "off" (default, conservador). Mismo patrón
-/// no-persistido que `radioEnabledProvider`/`downloadWifiOnlyProvider` — el
-/// proyecto todavía no tiene `shared_preferences`.
-final crossfadeDurationProvider = StateProvider<Duration>((ref) => Duration.zero);
+/// `Duration.zero` == "off" (default, conservador). Persistido por
+/// dispositivo (`AppSettingsStore`).
+final crossfadeDurationProvider = NotifierProvider<CrossfadeDurationNotifier, Duration>(
+  CrossfadeDurationNotifier.new,
+);
+
+class CrossfadeDurationNotifier extends Notifier<Duration> {
+  @override
+  Duration build() => Duration(
+        seconds: ref.watch(appSettingsStoreProvider).getInt(AppSettingsStore.crossfadeSecondsKey) ?? 0,
+      );
+
+  void set(Duration value) {
+    state = value;
+    ref.read(appSettingsStoreProvider).setInt(AppSettingsStore.crossfadeSecondsKey, value.inSeconds);
+  }
+}
 
 AudioHandler? _globalAndroidAudioHandler;
 

@@ -4,24 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:syncora_player/core/cache/cover_cache_service.dart';
 import 'package:syncora_player/core/extraction/extraction_service.dart';
+import 'package:syncora_player/core/settings/app_settings_store.dart';
 import 'package:syncora_player/core/extraction/models/extraction_request.dart';
 import 'package:syncora_player/data/local_db/daos/downloaded_track_dao.dart';
 import 'package:syncora_player/data/local_db/syncora_database.dart';
 import 'package:syncora_player/features/download/download_provider.dart';
 import 'package:syncora_player/features/download/download_service.dart';
 import 'package:syncora_player/features/player/player_models.dart';
-
-class MockDownloadQualityStorage implements DownloadQualityStorage {
-  DownloadQuality _quality = DownloadQuality.high;
-
-  @override
-  Future<DownloadQuality> getQuality() async => _quality;
-
-  @override
-  Future<void> setQuality(DownloadQuality quality) async {
-    _quality = quality;
-  }
-}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -60,13 +49,11 @@ void main() {
     });
   });
 
-  group('DownloadQualityStorage & Notifier Tests', () {
-    test('DownloadQualityNotifier updates state and saves to storage', () async {
-      final mockStorage = MockDownloadQualityStorage();
+  group('DownloadQualityNotifier Tests', () {
+    test('updates state and persists to the settings store', () async {
+      final store = AppSettingsStore.inMemory();
       final container = ProviderContainer(
-        overrides: [
-          downloadQualityStorageProvider.overrideWithValue(mockStorage),
-        ],
+        overrides: [appSettingsStoreProvider.overrideWithValue(store)],
       );
       addTearDown(container.dispose);
 
@@ -74,11 +61,14 @@ void main() {
 
       await container.read(downloadQualityProvider.notifier).setQuality(DownloadQuality.low);
       expect(container.read(downloadQualityProvider), DownloadQuality.low);
-      expect(await mockStorage.getQuality(), DownloadQuality.low);
+      expect(store.getString(AppSettingsStore.downloadQualityKey), 'low');
 
-      await container.read(downloadQualityProvider.notifier).setQuality(DownloadQuality.medium);
-      expect(container.read(downloadQualityProvider), DownloadQuality.medium);
-      expect(await mockStorage.getQuality(), DownloadQuality.medium);
+      // Un contenedor nuevo (equivalente a reiniciar la app) lee lo guardado.
+      final restarted = ProviderContainer(
+        overrides: [appSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(restarted.dispose);
+      expect(restarted.read(downloadQualityProvider), DownloadQuality.low);
     });
   });
 
@@ -96,7 +86,6 @@ void main() {
       coverCacheService = CoverCacheService();
       container = ProviderContainer(
         overrides: [
-          downloadQualityProvider.overrideWith(() => DownloadQualityNotifier()),
         ],
       );
     });

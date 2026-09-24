@@ -45,9 +45,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   /// Ronda 3 (D1/D2): criterio de orden y forma de la lista.
   ///
-  /// No persisten entre reinicios — el proyecto todavía no tiene
-  /// `shared_preferences`, mismo caso (y no una regresión) que
-  /// `radioEnabledProvider` o `crossfadeDurationProvider`.
+  /// No persisten entre reinicios. Si hiciera falta, el lugar es
+  /// `AppSettingsStore` (`core/settings/app_settings_store.dart`).
   _LibrarySort _sort = _LibrarySort.recientesEscuchadas;
   bool _gridView = false;
 

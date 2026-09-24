@@ -4,10 +4,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Fase 7.I -- persistencia del modo local / sin cuenta (D-23, D-24).
 ///
-/// El proyecto todavía no tiene `shared_preferences` (varios providers de
-/// Configuración lo documentan explícitamente, ej. `radioEnabledProvider`
-/// en `player_providers.dart`) — en vez de agregar una dependencia nueva
-/// solo para dos strings, se reusa `flutter_secure_storage`, que ya es
+/// Cuando se escribió, el proyecto todavía no tenía `shared_preferences`
+/// (hoy sí, ver `AppSettingsStore`) — en vez de agregar una dependencia nueva
+/// solo para dos strings, se reusó `flutter_secure_storage`, que ya era
 /// dependencia del proyecto desde 7.E.8 (BYOK) y ya tiene el patrón
 /// exacto que necesita esta interfaz: [AiKeyStorage] en
 /// `data/services/ai_key_storage.dart`.

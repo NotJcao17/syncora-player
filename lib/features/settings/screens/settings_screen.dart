@@ -239,7 +239,7 @@ class SettingsScreen extends ConsumerWidget {
                       subtitle: 'Sigue añadiendo canciones parecidas cuando la cola se acorta',
                       value: radioEnabled,
                       onChanged: (val) {
-                        ref.read(radioEnabledProvider.notifier).state = val;
+                        ref.read(radioEnabledProvider.notifier).set(val);
                         AppToast.show(
                           context,
                           message: val ? 'Radio activada' : 'Radio desactivada',
@@ -255,7 +255,7 @@ class SettingsScreen extends ConsumerWidget {
                     return _buildCrossfadeSelector(
                       value: crossfadeDuration,
                       onChanged: (val) {
-                        ref.read(crossfadeDurationProvider.notifier).state = val;
+                        ref.read(crossfadeDurationProvider.notifier).set(val);
                         AppToast.show(
                           context,
                           message: val == Duration.zero
@@ -322,7 +322,7 @@ class SettingsScreen extends ConsumerWidget {
                       subtitle: 'Evita consumo de datos móviles',
                       value: wifiOnly,
                       onChanged: (val) {
-                        ref.read(downloadWifiOnlyProvider.notifier).state = val;
+                        ref.read(downloadWifiOnlyProvider.notifier).set(val);
                         AppToast.show(
                           context,
                           message: val ? 'Descargas restringidas a Wi-Fi' : 'Descargas permitidas con datos móviles',
