@@ -9,11 +9,10 @@ import '../../data/models/deezer/deezer_track.dart';
 /// Ver docs/plan_buscador_importacion_matcher.md, decisión 5 y sección
 /// "Fase D — Búsqueda profunda".
 ///
-/// Tres intentos, de más preciso a más laxo:
-///   1. Sintaxis avanzada `artist:"X" track:"Y"` — precisa pero frágil ante
-///      typos/variantes de escritura.
-///   2. Texto plano `"X Y"`.
-///   3. Solo título — último recurso, siempre se devuelve tal cual.
+/// Dos intentos, de más preciso a más laxo (el tier de sintaxis avanzada
+/// se retiró en la ronda 4, ver `cascadeSearch`):
+///   1. Texto plano `"X Y"`.
+///   2. Solo título — último recurso, siempre se devuelve tal cual.
 ///
 /// Cada llamador decide, vía [ExactTrackSearch.cascadeSearch]'s parámetro
 /// `accept`, cuándo un tier cuenta como "suficiente" para no seguir
@@ -83,14 +82,11 @@ class ExactTrackSearch {
     final qTitle = queryTitle(title);
     final pArtist = primaryArtist(artist);
 
-    if (pArtist.isNotEmpty && qTitle.isNotEmpty) {
-      try {
-        final advanced = 'artist:"${forQuery(pArtist)}" track:"${forQuery(qTitle)}"';
-        final res = await api.search(advanced, type: DeezerSearchType.track, enrich: false);
-        if (accept(res.tracks)) return res.tracks;
-      } catch (_) {}
-    }
-
+    // Ronda 4 (H-R4-13): el primer tier era la sintaxis avanzada
+    // `artist:"X" track:"Y"`. Deezer dejó de reconocer el operador `artist:`
+    // (lo trata como la palabra "artist"; verificado el 2026-09-25) y ese tier
+    // devolvía siempre 0, gastando una petición por búsqueda. Se quitó. La
+    // importación ya no usa esta cascada: ver `ImportTrackMatcher`.
     try {
       final plain = pArtist.isNotEmpty ? '$pArtist $qTitle' : qTitle;
       final res = await api.search(plain, type: DeezerSearchType.track, enrich: false);

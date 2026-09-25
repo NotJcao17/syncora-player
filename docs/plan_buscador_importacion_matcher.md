@@ -36,6 +36,11 @@ Se identificaron **tres frentes** con problemas, no dos como se pensaba al inici
 
 ### Hallazgos verificados contra la API
 
+> ⚠️ **Obsoleto desde 2026-09-25:** Deezer dejó de reconocer el operador `artist:` (lo trata como
+> texto), así que la sintaxis avanzada ya no devuelve resultados. La importación usa ahora
+> `ImportTrackMatcher` (artista obligatorio + álbum del CSV). Ver H-R4-13 en
+> `docs/fases/correcciones_r4.md`.
+
 | Hallazgo | Evidencia |
 |---|---|
 | `/search` sin `limit` devuelve solo **25** resultados; el máximo real es **100** | Confirmado; `limit=200` sigue devolviendo 100 |

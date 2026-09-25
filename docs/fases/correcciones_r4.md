@@ -37,7 +37,17 @@ limpio y la suite en verde antes de su commit.
 - **H-R4-11. Importación lenta y atada al diálogo.** Secuencial con 200 ms de pausa extra, más una
   petición de colaboradores por pista, y todo dentro de un diálogo modal: cerrar la app perdía todo.
 - **H-R4-13. La importación metía versiones y artistas equivocados.** La sintaxis avanzada de
-  Deezer (`artist:"X" track:"Y"`) **ya no devuelve resultados** (verificado en vivo el 2026-09-25),
+  Deezer (`artist:"X" track:"Y"`) **ya no devuelve resultados** (verificado en vivo el 2026-09-25).
+  **Fue un cambio del lado de Deezer, no de nuestro código:** la consulta es idéntica desde la Fase B
+  (en esta ronda solo se le añadió `enrich: false`, que no toca la búsqueda) y en agosto esa misma
+  sintaxis acertaba 10/10 y encontraba "Someone Like You" de Adele en la posición 1
+  (`plan_buscador_importacion_matcher.md`). Hoy Deezer ya no reconoce el operador `artist:`: lo trata
+  como la palabra "artist" y busca títulos que la contengan (`artist:"ABBA"` devuelve canciones de
+  Hisham Abbas; `artist:"Adele"`, "Starving Artist"). `track:` y `album:` siguen funcionando. La
+  debilidad de fondo sí era nuestra: los tiers de respaldo elegían por duración sin mirar el
+  artista, y eso solo se vio cuando el primer tier dejó de funcionar. El tier avanzado también se
+  quitó de `ExactTrackSearch` (pestaña "Exacta" de Búsqueda profunda), donde gastaba una petición
+  inútil.
   así que todo caía a la búsqueda de texto y se elegía la pista de duración más parecida **sin mirar
   el artista**: un 8-bit, un karaoke o un cover de duración casi igual ganaban al original. Además
   algunos artistas (Adele) no salen en la búsqueda de canciones de la API pública, pero sí sus
@@ -95,9 +105,10 @@ Los siete bundles están implementados, con `flutter analyze` limpio y la suite 
 - **Eliminar cuenta**: RPC `delete_my_account()` (SECURITY DEFINER, sin parámetros, solo borra
   `auth.uid()`); el `ON DELETE CASCADE` borra todo lo del usuario y libera su cupo. Después se limpia
   la biblioteca local (las descargas se conservan) y se cierra la sesión.
-- **Licencia**: CC BY 4.0 con atribución a Juan Carlos Orozco (`LICENSE`, README y la pantalla
-  "Créditos y licencia"). Nota: Creative Commons no recomienda sus licencias para software; se
-  eligió igualmente por decisión del autor. Los componentes de terceros conservan su licencia.
+- **Licencia: GPL v3**, copyright de Juan Carlos Orozco (`LICENSE` con el texto oficial, README y la
+  pantalla "Créditos y licencia"). Primero se puso CC BY 4.0; el autor cambió a GPL v3 para que nadie
+  pueda distribuir una versión cerrada. Las dependencias (MIT, Apache, BSD, LGPL; los íconos Solar y
+  el estilo de avatar en CC BY 4.0) son compatibles y conservan su licencia.
 
 ## Despliegue
 

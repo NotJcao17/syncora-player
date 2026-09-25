@@ -9,7 +9,7 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white)](https://dart.dev)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows-brightgreen)](https://flutter.dev)
-[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 > **Download**: *(coming soon)*
 
@@ -255,9 +255,11 @@ Syncora is not affiliated with YouTube, Google, or Deezer.
 
 ## 📄 License
 
-Copyright (c) 2026 **Juan Carlos Orozco**.
+Copyright (C) 2026 **Juan Carlos Orozco**.
 
-This project is licensed under the **[Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)**. You are free to share and adapt it for any purpose, even commercially, as long as you **give appropriate credit to Juan Carlos Orozco**, provide a link to the license, and indicate if changes were made. See [LICENSE](LICENSE) for the full legal code.
+Syncora Player is free software: you can redistribute it and/or modify it under the terms of the **[GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0)** as published by the Free Software Foundation. It is distributed in the hope that it will be useful, but **without any warranty**. See [LICENSE](LICENSE) for the full text.
+
+In short: anyone may use, study, share and modify Syncora, but any distributed version — modified or not — must stay under the GPL v3, keep the original copyright notice crediting Juan Carlos Orozco, and ship its source code. Closed-source forks are not allowed.
 
 Third-party components listed in [Credits](#-credits) keep their own licenses.
 

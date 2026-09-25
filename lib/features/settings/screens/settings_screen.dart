@@ -470,7 +470,7 @@ class SettingsScreen extends ConsumerWidget {
             child: _buildActionTile(
               icon: AppIcons.broken(SolarIcons.Heart),
               title: 'Créditos y licencia',
-              subtitle: 'CC BY 4.0 · lo que hace posible a Syncora',
+              subtitle: 'GPL v3 · lo que hace posible a Syncora',
               onTap: () => context.push('/credits'),
             ),
           ),

@@ -7,7 +7,9 @@ import '../../../core/theme/app_theme.dart';
 
 /// Créditos y licencia (ronda 4).
 ///
-/// Syncora se publica bajo CC BY 4.0 con atribución a su autor. Aquí se
+/// Syncora se publica bajo GPL v3 (ronda 4: primero fue CC BY 4.0, que no
+/// está pensada para software; el autor eligió GPL v3 para que nadie pueda
+/// sacar una versión cerrada). Aquí se
 /// reconoce además lo que la app usa de terceros cuya licencia pide
 /// atribución (Solar Icons y el estilo de avatar de DiceBear, ambos CC BY
 /// 4.0), el motor de extracción (youtubei.js, MIT) y los servicios de datos.
@@ -17,7 +19,7 @@ class CreditsScreen extends StatelessWidget {
   const CreditsScreen({super.key});
 
   static const _author = 'Juan Carlos Orozco';
-  static const _licenseUrl = 'https://creativecommons.org/licenses/by/4.0/deed.es';
+  static const _licenseUrl = 'https://www.gnu.org/licenses/gpl-3.0.html';
 
   static const _credits = <(String, String, String?)>[
     (
@@ -120,9 +122,10 @@ class CreditsScreen extends StatelessWidget {
               const Text('Licencia', style: sectionStyle),
               const SizedBox(height: 10),
               const Text(
-                'Syncora Player © 2026 $_author. Se distribuye bajo la licencia Creative Commons '
-                'Atribución 4.0 Internacional (CC BY 4.0): puedes compartir y adaptar la app, incluso con fines '
-                'comerciales, siempre que des crédito a $_author, enlaces la licencia e indiques si hiciste cambios.',
+                'Syncora Player © 2026 $_author. Es software libre bajo la Licencia Pública General de GNU, '
+                'versión 3 (GPL v3): puedes usarlo, estudiarlo, compartirlo y modificarlo, pero cualquier versión '
+                'que distribuyas, modificada o no, debe seguir bajo GPL v3, conservar el crédito a $_author e '
+                'incluir su código fuente. No se permiten versiones cerradas. Se ofrece sin ninguna garantía.',
                 style: bodyStyle,
               ),
               Align(
@@ -130,7 +133,7 @@ class CreditsScreen extends StatelessWidget {
                 child: TextButton(
                   onPressed: () => _open(_licenseUrl),
                   style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                  child: const Text('Leer la licencia CC BY 4.0', style: TextStyle(color: AppTheme.primary)),
+                  child: const Text('Leer la licencia GPL v3', style: TextStyle(color: AppTheme.primary)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -173,7 +176,7 @@ class CreditsScreen extends StatelessWidget {
                 onPressed: () => showLicensePage(
                   context: context,
                   applicationName: 'Syncora Player',
-                  applicationLegalese: '© 2026 $_author · CC BY 4.0',
+                  applicationLegalese: '© 2026 $_author · GPL v3',
                 ),
                 icon: Icon(AppIcons.broken(SolarIcons.FileText), size: 18),
                 label: const Text('Licencias de código abierto'),
