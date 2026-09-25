@@ -34,6 +34,8 @@ class FakeAudioEngine implements AudioEngine {
     emitState(_state.copyWith(processingState: AudioProcessingState.error));
   }
 
+  AudioEngineState get currentState => _state;
+
   @override
   Duration get position => _state.position;
 
@@ -59,6 +61,7 @@ class FakeAudioEngine implements AudioEngine {
   }
 
   String? lastUrl;
+  Duration? lastInitialPosition;
   int setUrlCallCount = 0;
 
   /// Semantica REAL de un motor que no logra cargar la fuente: emite
@@ -78,6 +81,7 @@ class FakeAudioEngine implements AudioEngine {
   @override
   Future<void> setUrl(String url, {Map<String, String>? headers, Duration? initialPosition}) async {
     lastUrl = url;
+    lastInitialPosition = initialPosition;
     setUrlCallCount++;
     final shouldThrow =
         throwOnSetUrl && (failSetUrlTimes == null || setUrlCallCount <= failSetUrlTimes!);
@@ -3001,6 +3005,95 @@ void main() {
 
       expect(controller.state.currentTrack?.id, 'b');
       expect(controller.state.engine.position, Duration.zero);
+      controller.dispose();
+    });
+  });
+
+  group('Ronda 4: reproductor', () {
+    test('H-R4-1: la posicion restaurada no se aplica a la pista siguiente', () async {
+      final storage = RoundTripSessionStorage();
+      final firstEngine = FakeAudioEngine();
+      final first = SyncoraPlayerController(
+        engine: firstEngine,
+        extractionService: TestableExtractionService(),
+        sessionStorage: storage,
+      );
+      first.init();
+      await pumpEventQueue();
+      await first.setQueue(const [
+        SyncoraTrack(id: 'a', title: 'A'),
+        SyncoraTrack(id: 'b', title: 'B'),
+      ]);
+      await pumpEventQueue();
+      firstEngine.emitState(firstEngine.currentState.copyWith(position: const Duration(seconds: 15)));
+      await pumpEventQueue();
+      await first.pause();
+      await pumpEventQueue();
+      first.dispose();
+
+      final engine = FakeAudioEngine();
+      final second = SyncoraPlayerController(
+        engine: engine,
+        extractionService: TestableExtractionService(),
+        sessionStorage: storage,
+      );
+      second.init();
+      await pumpEventQueue();
+      expect(second.state.currentTrack?.id, 'a');
+
+      await second.skipToNext();
+      await pumpEventQueue();
+
+      expect(second.state.currentTrack?.id, 'b');
+      expect(engine.lastInitialPosition, isNull, reason: 'B debe empezar desde el principio');
+      second.dispose();
+    });
+
+    test('H-R4-2: un error del motor en pausa no salta ni reproduce, y play retoma', () async {
+      final engine = FakeAudioEngine();
+      final controller = SyncoraPlayerController(
+        engine: engine,
+        extractionService: TestableExtractionService(),
+      );
+      controller.init();
+      await controller.setQueue(const [
+        SyncoraTrack(id: 'a', title: 'A'),
+        SyncoraTrack(id: 'b', title: 'B'),
+      ]);
+      await pumpEventQueue();
+      engine.emitState(engine.currentState.copyWith(position: const Duration(seconds: 40)));
+      await controller.pause();
+      await pumpEventQueue();
+      final playsBefore = engine.playCallCount;
+
+      engine.emitError();
+      await pumpEventQueue();
+
+      expect(controller.state.currentTrack?.id, 'a', reason: 'no debe saltar estando en pausa');
+      expect(engine.playCallCount, playsBefore, reason: 'no debe reproducir solo');
+
+      await controller.play();
+      await pumpEventQueue();
+      expect(controller.state.currentTrack?.id, 'a');
+      expect(engine.lastInitialPosition, const Duration(seconds: 40));
+      controller.dispose();
+    });
+
+    test('H-R4-3: el reintento de carga pide una URL nueva a la extraccion', () async {
+      final engine = FakeAudioEngine()
+        ..throwOnSetUrl = true
+        ..failSetUrlTimes = 1;
+      final extraction = TestableExtractionService();
+      final controller = SyncoraPlayerController(engine: engine, extractionService: extraction);
+      controller.init();
+      await pumpEventQueue();
+
+      await controller.setQueue(const [SyncoraTrack(id: 'a', title: 'A')]);
+      await pumpEventQueue();
+
+      expect(engine.setUrlCallCount, 2);
+      expect(extraction.extractCount, 2, reason: 'el reintento usa una extraccion fresca');
+      expect(controller.state.engine.processingState, AudioProcessingState.ready);
       controller.dispose();
     });
   });

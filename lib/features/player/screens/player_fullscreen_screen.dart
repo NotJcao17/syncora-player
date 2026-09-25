@@ -33,7 +33,6 @@ class PlayerFullscreenScreen extends ConsumerStatefulWidget {
 
 class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen> {
   Color? _dominantColor;
-  bool _isLiked = false;
   double _dragOffsetY = 0.0;
 
   /// Id de la pista dueña del color de fondo vigente. Ronda 3 (H-R3-4): la
@@ -47,34 +46,13 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
   /// corresponde al id vigente se descarta en vez de pisar el color bueno.
   String? _paletteTrackId;
 
-  /// Mismo problema y mismo patrón para el corazón: sin esto se quedaba con
-  /// el estado "me gusta" de la pista con la que se abrió la pantalla.
-  String? _likedTrackId;
-
-  /// Generación de la consulta de "me gusta". Sin esto, tocar el corazón
-  /// mientras una consulta para la MISMA pista sigue en vuelo dejaba que la
-  /// respuesta vieja pisara el valor recién escrito (la comparación por id no
-  /// distingue esos dos casos porque el id es el mismo).
-  int _likedRequest = 0;
-
   @override
   void initState() {
     super.initState();
     final track = ref.read(currentTrackProvider);
     if (track != null) {
       _extractPalette(track);
-      _checkIsLiked(track);
     }
-  }
-
-  Future<void> _checkIsLiked(SyncoraTrack track) async {
-    _likedTrackId = track.id;
-    final request = ++_likedRequest;
-    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
-    final dao = ref.read(playlistDaoProvider);
-    final liked = await dao.isTrackLiked(trackIdInt);
-    if (!mounted || _likedTrackId != track.id || _likedRequest != request) return;
-    setState(() => _isLiked = liked);
   }
 
   Future<void> _extractPalette(SyncoraTrack track) async {
@@ -105,11 +83,6 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     final result = await toggleTrackLike(ref, track);
 
     if (mounted) {
-      // Invalida cualquier consulta de "me gusta" en vuelo para esta misma
-      // pista: el valor recién escrito es más nuevo que el que devuelva ella.
-      _likedRequest++;
-      _likedTrackId = track.id;
-      setState(() => _isLiked = result.isLiked);
       if (result.remoteFailed) {
         AppToast.show(context, message: 'La playlist ya no existe en la nube');
       }
@@ -118,6 +91,61 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
         message: result.isLiked ? 'Se agregó a Tus me gusta.' : 'Se eliminó de Tus me gusta.',
       );
     }
+  }
+
+  /// Artistas navegables de [track]: los colaboradores con id real, o el
+  /// artista principal si no hay lista de colaboradores.
+  List<SyncoraArtistRef> _navigableArtists(SyncoraTrack track) {
+    final withId = track.artists.where((a) => a.id != 0).toList();
+    if (withId.isNotEmpty) return withId;
+    final mainId = track.artistId ?? 0;
+    if (mainId == 0) return const [];
+    return [SyncoraArtistRef(id: mainId, name: track.artist)];
+  }
+
+  Future<void> _openArtist(BuildContext context, SyncoraTrack track) async {
+    final artists = _navigableArtists(track);
+    if (artists.isEmpty) return;
+    var target = artists.first;
+    if (artists.length > 1) {
+      final picked = await showModalBottomSheet<SyncoraArtistRef>(
+        context: context,
+        backgroundColor: AppTheme.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Ir al artista',
+                      style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+              ),
+              for (final a in artists)
+                ListTile(
+                  leading: Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.secondary),
+                  title: Text(a.name, style: const TextStyle(color: AppTheme.primary)),
+                  onTap: () => Navigator.pop(ctx, a),
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      );
+      if (picked == null) return;
+      target = picked;
+    }
+    if (!context.mounted) return;
+    // Se cierra el reproductor antes de navegar: si no, la pantalla del
+    // artista quedaría debajo de él.
+    final router = GoRouter.of(context);
+    if (router.canPop()) router.pop();
+    router.push('/artist/${target.id}');
   }
 
   void _showLyricsSheet(BuildContext context, SyncoraTrack track) {
@@ -136,7 +164,6 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     ref.listen<SyncoraTrack?>(currentTrackProvider, (previous, next) {
       if (next == null || previous?.id == next.id) return;
       _extractPalette(next);
-      _checkIsLiked(next);
     });
 
     final currentTrack = ref.watch(currentTrackProvider);
@@ -148,6 +175,14 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
         s.engine.processingState == AudioProcessingState.buffering));
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final canEdit = ref.watch(canEditProvider);
+    // Ronda 4 (H-R4-4): "me gusta" reactivo sobre Drift. Antes se consultaba
+    // una sola vez por pista, así que un like dado desde la pantalla de
+    // bloqueo o la barra de tareas no se veía aquí hasta cambiar de canción.
+    final currentTrackIdInt =
+        currentTrack == null ? null : (int.tryParse(currentTrack.id) ?? currentTrack.id.hashCode.abs());
+    final isLiked = ref.watch(likedTrackIdsProvider.select(
+      (s) => currentTrackIdInt != null && (s.value?.contains(currentTrackIdInt) ?? false),
+    ));
 
     if (currentTrack == null) {
       return Scaffold(
@@ -321,12 +356,18 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                               ),
                                         ),
                                         const SizedBox(height: 4),
-                                        MarqueeText(
-                                          text: currentTrack.artist,
-                                          style: const TextStyle(
-                                            color: AppTheme.secondary,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
+                                        // Ronda 4: tocar el artista abre su
+                                        // pantalla (con varios, se elige).
+                                        GestureDetector(
+                                          behavior: HitTestBehavior.opaque,
+                                          onTap: () => _openArtist(context, currentTrack),
+                                          child: MarqueeText(
+                                            text: currentTrack.artist,
+                                            style: const TextStyle(
+                                              color: AppTheme.secondary,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -334,13 +375,13 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                   ),
                                   IconButton(
                                     icon: Icon(
-                                      _isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
+                                      isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
                                       // "Me gusta" escribe en Supabase: sin
                                       // conexión (y sin modo local) se apaga,
                                       // mismo patrón que el resto de la app.
                                       color: !canEdit
                                           ? AppTheme.muted
-                                          : (_isLiked ? Colors.white : AppTheme.secondary),
+                                          : (isLiked ? Colors.white : AppTheme.secondary),
                                       size: 28,
                                     ),
                                     tooltip: canEdit ? 'Me gusta' : 'Sin conexión',

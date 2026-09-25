@@ -2265,6 +2265,69 @@ bool get _isTestEnv {
     await load().timeout(_engineLoadTimeout);
   }
 
+  /// Posición de sesión restaurada que corresponde a [track], y la consume.
+  ///
+  /// Ronda 4 (H-R4-1): antes se aplicaba a cualquier pista que arrancara
+  /// primero. Al reabrir la app y pulsar "siguiente" sin haber reproducido la
+  /// pista restaurada, la nueva empezaba en el segundo donde iba la anterior.
+  /// Se consume igual aunque no coincida: la posición solo tiene sentido para
+  /// la primera pista que suena tras restaurar.
+  Duration? _takeRestoredPositionFor(SyncoraTrack track) {
+    final seconds = _restoredPositionSeconds;
+    final owner = _restoredPositionTrackId;
+    _restoredPositionSeconds = null;
+    _restoredPositionTrackId = null;
+    if (seconds == null || seconds <= 0 || owner != track.id) return null;
+    return Duration(seconds: seconds);
+  }
+
+  /// Carga una URL de streaming con **un** reintento que usa una URL nueva
+  /// (ronda 4, H-R4-3).
+  ///
+  /// El reintento de [_loadSourceWithOneRetry] volvía a cargar la misma URL.
+  /// Cuando lo que falla es la URL (caducada, o atada a la IP/red de otro
+  /// momento, típico al reabrir la app), el reintento fallaba igual y el
+  /// usuario veía "No se pudo iniciar". Sigue siendo un único reintento
+  /// (Pitfall #11), pero ahora con una extracción fresca.
+  Future<void> _loadStreamWithFreshRetry(
+    SyncoraTrack track,
+    String streamUrl,
+    Map<String, String> headers,
+    Duration? initialPos, {
+    required bool Function() isStale,
+  }) async {
+    try {
+      await _engine
+          .setUrl(streamUrl, headers: headers, initialPosition: initialPos)
+          .timeout(_engineLoadTimeout);
+      return;
+    } on TimeoutException {
+      rethrow;
+    } catch (e) {
+      if (isStale()) rethrow;
+      _log('[Play] La carga en el motor falló ($e). Reintento con una URL nueva.');
+    }
+    await _engine.stop();
+    if (isStale()) return;
+    final targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)
+        ? track.youtubeVideoId!
+        : track.id;
+    final fresh = await _extractionService.extractUrl(
+      targetId,
+      trackTitle: track.title,
+      trackArtist: track.artist,
+      durationSeconds: track.duration?.inSeconds,
+      priority: ExtractionPriority.streaming,
+    );
+    if (isStale()) return;
+    if (fresh is! ExtractionSuccess) {
+      throw StateError('No se pudo obtener una URL nueva para reintentar.');
+    }
+    await _engine
+        .setUrl(fresh.streamUrl, headers: fresh.headers, initialPosition: initialPos)
+        .timeout(_engineLoadTimeout);
+  }
+
   Future<void> _playCurrentGuarded(SyncoraTrack track, int myGeneration) async {
     _beginListenTracking(track);
 
@@ -2324,11 +2387,7 @@ bool get _isTestEnv {
       _onPlaybackStartedSuccessfully();
       _currentPlaybackIsLocal = true;
 
-      final initialPos = (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0)
-          ? Duration(seconds: _restoredPositionSeconds!)
-          : null;
-      _restoredPositionSeconds = null;
-      _restoredPositionTrackId = null;
+      final initialPos = _takeRestoredPositionFor(track);
 
       try {
         if (useCrossfade) {
@@ -2407,11 +2466,7 @@ bool get _isTestEnv {
         // actual no califica como origen local para un crossfade.
         _currentPlaybackIsLocal = false;
         try {
-          final initialPos = (_restoredPositionSeconds != null && _restoredPositionSeconds! > 0)
-              ? Duration(seconds: _restoredPositionSeconds!)
-              : null;
-          _restoredPositionSeconds = null;
-          _restoredPositionTrackId = null;
+          final initialPos = _takeRestoredPositionFor(track);
 
           // Los tres logs de este bloque son deliberados: son el dato que
           // discrimina el fallo de "la cancion se queda cargando en el primer
@@ -2420,10 +2475,14 @@ bool get _isTestEnv {
           // motor; si aparecen los dos y tampoco arranca, el motor acepto el
           // comando y no llego a bufferear. Son investigaciones opuestas.
           final loadStarted = DateTime.now();
-          await _loadSourceWithOneRetry(
-            () => _engine.setUrl(streamUrl, headers: headers, initialPosition: initialPos),
+          await _loadStreamWithFreshRetry(
+            track,
+            streamUrl,
+            headers,
+            initialPos,
             isStale: isStale,
           );
+          if (isStale()) return;
           _log('[Play] Fuente cargada por el motor en '
               '${DateTime.now().difference(loadStarted).inMilliseconds}ms.');
 
@@ -2534,6 +2593,13 @@ bool get _isTestEnv {
   void _onEngineState(AudioEngineState engineState) {
     final wasError = _state.engine.processingState == AudioProcessingState.error;
     final isNowError = engineState.processingState == AudioProcessingState.error;
+    // Ronda 4 (H-R4-2): ¿el error llega con una pista cargada y en pausa?
+    // Se mira ANTES de copiar el estado nuevo.
+    final erroredWhilePaused = isNowError &&
+        !wasError &&
+        !_state.engine.playing &&
+        _preparingPlaybackGeneration == null &&
+        _state.currentTrack != null;
 
     _trackListenProgress(engineState);
 
@@ -2556,6 +2622,29 @@ bool get _isTestEnv {
     // motor mintiera con `completed` para no trabarse. Solo reacciona en la
     // transición (no en cada re-emisión) para no disparar `skipToNext()` en
     // bucle.
+    if (erroredWhilePaused) {
+      // Ronda 4 (H-R4-2): con la reproducción en pausa, un error del motor
+      // (la URL caducó o cambió la red mientras bufferizaba) disparaba el
+      // salto automático, y el salto **reproduce**: la música arrancaba sola
+      // estando en pausa. Ahora se deja la pista lista para reintentar: el
+      // próximo play() rehace la extracción y retoma en el mismo segundo.
+      final current = _state.currentTrack!;
+      final position = _state.engine.position;
+      _log('[Play] Error del motor con la reproducción en pausa: sin auto-skip, '
+          'se reintentará al pulsar play (${position.inSeconds}s).');
+      _restoredPositionSeconds = position.inSeconds;
+      _restoredPositionTrackId = current.id;
+      _state = _state.copyWith(
+        engine: _state.engine.copyWith(
+          processingState: AudioProcessingState.idle,
+          playing: false,
+          position: position,
+        ),
+      );
+      _notify();
+      return;
+    }
+
     if (isNowError && !wasError) {
       _log('[Play] El motor de audio reportó un error de reproducción — saltando a la siguiente pista.');
       _state = _state.copyWith(
@@ -2653,6 +2742,17 @@ bool get _isTestEnv {
     // frenar un avance legítimo.
     if (_lastPauseWasUserInitiated && !_state.engine.playing) {
       _log('[Play] Fin de pista ignorado: el usuario tiene la reproducción en pausa.');
+      return;
+    }
+    // Ronda 4 (H-R4-2): misma completion espuria, pero con la pausa causada
+    // por el sistema (foco de audio) y no por el usuario. Un fin natural llega
+    // con la posición al final de la pista; uno con el motor parado a mitad
+    // de canción no es un fin real y atenderlo reproduciría la siguiente.
+    final engineDuration = _state.engine.duration;
+    if (!_state.engine.playing &&
+        engineDuration > Duration.zero &&
+        _state.engine.position < engineDuration - const Duration(seconds: 5)) {
+      _log('[Play] Fin de pista ignorado: el motor estaba parado a mitad de la pista.');
       return;
     }
 

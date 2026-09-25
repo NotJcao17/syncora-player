@@ -32,3 +32,15 @@ final statsMetadataCacheDaoProvider = Provider<StatsMetadataCacheDao>((ref) {
   return ref.watch(syncoraDatabaseProvider).statsMetadataCacheDao;
 });
 
+
+/// Ids de pista en "Tus me gusta", reactivo (ronda 4). Un solo stream para
+/// toda la app: cada widget se suscribe con `select` a su propia pista.
+final likedTrackIdsProvider = StreamProvider<Set<int>>((ref) {
+  return ref.watch(playlistDaoProvider).watchLikedTrackIds();
+});
+
+/// Ids de pista guardadas en alguna playlist del usuario o en "Tus me gusta"
+/// (ronda 4): alimenta el ícono de "ya está en tu biblioteca".
+final libraryTrackIdsProvider = StreamProvider<Set<int>>((ref) {
+  return ref.watch(playlistDaoProvider).watchLibraryTrackIds();
+});
