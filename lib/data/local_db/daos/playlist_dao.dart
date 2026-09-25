@@ -197,6 +197,30 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     ).watch().map((rows) => rows.map((r) => r.read<int>('track_id')).toSet());
   }
 
+  /// Inserta varias pistas al final de [playlistId] en una sola transacción
+  /// (ronda 4, importación en segundo plano).
+  ///
+  /// [addTrackToPlaylist] relee la playlist entera para calcular cada
+  /// `orderIndex` y dispara los streams de Drift una vez por fila: al
+  /// importar 1000 canciones eso era cuadrático y reconstruía la UI mil veces.
+  /// Aquí se lee una vez y los streams se notifican una sola vez por lote.
+  Future<void> appendTracksBatch(int playlistId, List<PlaylistTracksCompanion> rows) async {
+    if (rows.isEmpty) return;
+    await transaction(() async {
+      final maxRow = await customSelect(
+        'SELECT MAX(order_index) AS m FROM playlist_tracks WHERE playlist_id = ?',
+        variables: [Variable.withInt(playlistId)],
+        readsFrom: {playlistTracks},
+      ).getSingleOrNull();
+      var next = (maxRow?.read<int?>('m') ?? -1) + 1;
+      await batch((b) {
+        for (final row in rows) {
+          b.insert(playlistTracks, row.copyWith(playlistId: Value(playlistId), orderIndex: Value(next++)));
+        }
+      });
+    });
+  }
+
   Future<int> addTrackToPlaylist({
     required int playlistId,
     required int trackId,

@@ -247,7 +247,7 @@ class PlaylistImportExportService {
   /// solo título como último recurso (`ExactTrackSearch.cascadeSearch`,
   /// módulo compartido con D3 desde Fase D). Cada tier valida por duración
   /// (B3) antes de aceptar, salvo el último, donde no hay mejor alternativa.
-  Future<DeezerTrack?> _resolveTrack(RawImportTrack item) async {
+  Future<DeezerTrack?> resolveImportTrack(RawImportTrack item) async {
     final tracks = await ExactTrackSearch.cascadeSearch(
       _deezerApi,
       artist: item.artist,
@@ -258,33 +258,44 @@ class PlaylistImportExportService {
     return ExactTrackSearch.bestByDuration(tracks, item.durationMs, toleranceSec: 1 << 30) ?? tracks.first;
   }
 
-  /// Process raw tracks sequentially against Deezer API with rate limiting
+  /// Pistas que se resuelven a la vez contra Deezer (ronda 4, H-R4-11).
+  ///
+  /// Antes era estrictamente secuencial con 200 ms de pausa extra. La pausa
+  /// sobraba: el `RateLimiter` de `DeezerApi` ya encola todo por debajo de
+  /// 45 peticiones / 5 s (Pitfall #4 y #22 se siguen cumpliendo), así que la
+  /// concurrencia solo aprovecha ese margen en vez de desperdiciarlo.
+  static const int resolveConcurrency = 6;
+
+  /// Resuelve [rawTracks] contra Deezer en bloques concurrentes, conservando
+  /// el orden de entrada en [outMatched]/[outUnmatched].
   Stream<ImportProgress> processImport({
     required List<RawImportTrack> rawTracks,
     required List<DeezerTrack> outMatched,
     required List<RawImportTrack> outUnmatched,
   }) async* {
-    for (int i = 0; i < rawTracks.length; i++) {
-      final item = rawTracks[i];
-      yield ImportProgress(
-        current: i + 1,
-        total: rawTracks.length,
-        currentTrackName: item.toString(),
-      );
-
-      try {
-        final match = await _resolveTrack(item);
+    for (var start = 0; start < rawTracks.length; start += resolveConcurrency) {
+      final end = (start + resolveConcurrency).clamp(0, rawTracks.length);
+      final chunk = rawTracks.sublist(start, end);
+      final results = await Future.wait(chunk.map((item) async {
+        try {
+          return await resolveImportTrack(item);
+        } catch (_) {
+          return null;
+        }
+      }));
+      for (var i = 0; i < chunk.length; i++) {
+        final match = results[i];
         if (match != null) {
           outMatched.add(match);
         } else {
-          outUnmatched.add(item);
+          outUnmatched.add(chunk[i]);
         }
-      } catch (e) {
-        outUnmatched.add(item);
+        yield ImportProgress(
+          current: start + i + 1,
+          total: rawTracks.length,
+          currentTrackName: chunk[i].toString(),
+        );
       }
-
-      // Pitfall #4 & #22: 200ms pause between sequential requests
-      await Future.delayed(const Duration(milliseconds: 200));
     }
   }
 

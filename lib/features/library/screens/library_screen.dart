@@ -17,12 +17,13 @@ import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/daos/playlist_dao.dart';
 import '../../../data/local_db/syncora_database.dart';
-import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/sync/sync_service.dart';
 import '../../auth/local_mode_provider.dart';
 import '../../download/download_provider.dart';
 import '../../player/player_providers.dart';
+import '../import_export/import_jobs_banner.dart';
+import '../import_export/import_manager.dart';
 import '../import_export/playlist_import_export_service.dart';
 import '../ai_playlist/ai_create_playlist_sheet.dart';
 import '../ai_playlist/ai_modify_playlist_sheet.dart';
@@ -791,130 +792,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       return;
     }
 
-    final dao = ref.read(playlistDaoProvider);
     final playlistTitle = 'Importada: ${file.name.replaceAll(RegExp(r'\.(csv|txt)$'), '')}';
     final playlistDescription = 'Importada desde ${file.name}';
 
-    if (!context.mounted) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) {
-        final matched = <dynamic>[];
-        final unmatched = <RawImportTrack>[];
-
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            return StreamBuilder<ImportProgress>(
-              stream: service.processImport(
-                rawTracks: rawTracks,
-                outMatched: matched.cast(),
-                outUnmatched: unmatched,
-              ),
-              builder: (ctx, snapshot) {
-                final progress = snapshot.data;
-                final isDone = snapshot.connectionState == ConnectionState.done;
-
-                if (isDone) {
-                  Future.microtask(() {
-                    return service.createPlaylistWithMatchedTracks(
-                      title: playlistTitle,
-                      description: playlistDescription,
-                      matchedTracks: matched.cast<DeezerTrack>(),
-                      dao: dao,
-                      deezerApi: deezerApi,
-                      supabaseRepo: ref.read(supabasePlaylistRepositoryProvider),
-                    );
-                  });
-                }
-
-                return AlertDialog(
-                  backgroundColor: AppTheme.surface,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  title: Text(
-                    isDone ? 'Importación Completada' : 'Importando canciones...',
-                    style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
-                  ),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (!isDone) ...[
-                        LinearProgressIndicator(
-                          value: progress?.ratio ?? 0,
-                          backgroundColor: AppTheme.surfaceHover,
-                          color: AppTheme.primary,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Buscando pista ${progress?.current ?? 0} de ${progress?.total ?? rawTracks.length}...',
-                          style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          progress?.currentTrackName ?? '',
-                          style: const TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ] else ...[
-                        Icon(AppIcons.broken(SolarIcons.CheckCircle), color: Colors.green, size: 48),
-                        const SizedBox(height: 16),
-                        Text(
-                          '${matched.length} encontradas, ${unmatched.length} no encontradas',
-                          style: const TextStyle(color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        if (unmatched.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          const Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Canciones no encontradas:',
-                              style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxHeight: 200),
-                            child: SizedBox(
-                              width: double.maxFinite,
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: unmatched.length,
-                                itemBuilder: (_, i) => Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 3),
-                                  child: Text(
-                                    unmatched[i].toString(),
-                                    style: const TextStyle(color: AppTheme.primary, fontSize: 12),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ],
-                  ),
-                  actions: [
-                    if (isDone)
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
-                          foregroundColor: AppTheme.background,
-                        ),
-                        onPressed: () => Navigator.of(dialogCtx).pop(),
-                        child: const Text('Aceptar', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                  ],
-                );
-              },
-            );
-          },
+    // Ronda 4 (H-R4-11): la importación corre en segundo plano, se reanuda
+    // si la app se cierra y se puede cancelar desde su tarjeta de progreso.
+    final playlistId = await ref.read(importManagerProvider.notifier).startImport(
+          title: playlistTitle,
+          description: playlistDescription,
+          rawTracks: rawTracks,
         );
-      },
+    if (!context.mounted) return;
+    AppToast.show(
+      context,
+      message: 'Importando ${rawTracks.length} canciones en segundo plano. Puedes seguir usando la app.',
     );
+    context.push('/playlist/$playlistId');
   }
 
   @override
@@ -1201,6 +1094,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           ),
 
           const SizedBox(height: 8),
+
+          ImportJobsBanner(
+            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
+          ),
 
           Expanded(
             child: RefreshIndicator(

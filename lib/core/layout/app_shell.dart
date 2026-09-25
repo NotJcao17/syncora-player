@@ -22,6 +22,7 @@ import '../../features/auth/local_mode_provider.dart';
 import '../../features/download/download_provider.dart';
 import '../../features/stats/genre_backfill_service.dart';
 import '../../features/home/mixes/on_repeat_service.dart';
+import '../../features/library/import_export/import_manager.dart';
 import '../../features/library/library_view_settings.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
@@ -65,6 +66,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     Future.microtask(() async {
       // Inicializar downloadService y ejecutar limpieza de descargas interrumpidas
       ref.read(downloadServiceProvider);
+      // Ronda 4: reanuda las importaciones que quedaron a medias al cerrar
+      // la app (el gestor carga sus trabajos de disco al crearse).
+      ref.read(importManagerProvider);
 
       // Sana la base local antes de sincronizar nada: si una versión anterior
       // dejó playlists o pistas duplicadas (ver `PlaylistDao.repairDuplicates`),

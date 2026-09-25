@@ -40,6 +40,7 @@ import '../../player/player_providers.dart';
 import '../../player/radio/radio_service.dart';
 import '../../search/search_ranking.dart';
 import '../ai_playlist/ai_modify_playlist_sheet.dart';
+import '../import_export/import_jobs_banner.dart';
 import '../import_export/playlist_import_export_service.dart';
 import '../services/playlist_pin_service.dart';
 
@@ -1773,6 +1774,14 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                     ),
                                   ),
                                 ),
+                              // Ronda 4: progreso de la importación que
+                              // está llenando esta playlist, si la hay.
+                              SliverToBoxAdapter(
+                                child: ImportJobsBanner(
+                                  playlistId: playlist.id,
+                                  padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12),
+                                ),
+                              ),
                               if (_showTrackFilter && visiblePairs.isEmpty && sortedPairs.isNotEmpty)
                                 SliverPadding(
                                   padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12, vertical: 24),

@@ -151,7 +151,30 @@ class DownloadService {
     return count;
   }
 
-  Future<bool> downloadTrack(SyncoraTrack track) async {
+  /// Descargas en curso por `trackId` (ronda 4, H-R4-10).
+  final Map<int, Future<bool>> _inFlight = {};
+
+  /// Descarga [track], o se une a la descarga que ya esté en curso para esa
+  /// misma pista.
+  ///
+  /// Sin este cerrojo, dos lotes lanzados desde pantallas distintas (la misma
+  /// canción en dos playlists) pasaban los dos el chequeo de "ya descargada"
+  /// y escribían a la vez el mismo `{trackId}.mp4`, con riesgo de dejarlo
+  /// corrupto. El segundo llamador ahora espera y recibe el mismo resultado.
+  Future<bool> downloadTrack(SyncoraTrack track) {
+    final id = track.deezerId;
+    return _inFlight[id] ??= _downloadTrackExclusive(track);
+  }
+
+  Future<bool> _downloadTrackExclusive(SyncoraTrack track) async {
+    try {
+      return await _downloadTrackUnlocked(track);
+    } finally {
+      _inFlight.remove(track.deezerId);
+    }
+  }
+
+  Future<bool> _downloadTrackUnlocked(SyncoraTrack track) async {
     await _checkWifiGuard();
 
     final existing = await _dao.getByTrackId(track.deezerId);
