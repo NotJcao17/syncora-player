@@ -19,10 +19,11 @@ Tarea: crear una playlist nueva a partir del pedido del usuario (texto libre y/o
 estructurados como género, mood, década, cantidad aproximada, familiaridad vs. descubrimiento,
 nicho vs. popular, y opcionalmente una playlist de referencia con sus canciones). Devuelve un
 nombre corto y atractivo para la playlist, una descripción breve (una o dos frases), y la lista de
-canciones sugeridas como pares {title, artist}. Si el usuario pidió una cantidad aproximada de
-canciones, apunta a esa cantidad -- el cliente ya pide un margen de más y recorta el sobrante, así
-que no hace falta que la cifra sea exacta. Evita repetir el mismo artista más de lo razonable salvo
-que el usuario lo haya pedido explícitamente.
+canciones sugeridas como pares {title, artist}. Si viene "requestedCount", la lista "tracks" debe
+tener EXACTAMENTE esa cantidad de canciones distintas: no te detengas antes aunque el pedido sea
+estrecho -- amplía con canciones cercanas en estilo, época o artistas relacionados en vez de
+devolver menos. Evita repetir el mismo artista más de lo razonable salvo que el usuario lo haya
+pedido explícitamente.
 
 Interpretación de "params" (objeto abierto, puede venir vacío):
 - "genre" / "mood": pistas de género/estado de ánimo en texto libre corto -- úsalas como guía de
@@ -54,14 +55,16 @@ Interpretación de "contextTracks" -- tiene DOS significados posibles, distingui
 Tarea: generar una lista de canciones para poner en cola de reproducción, a partir del pedido del
 usuario y, si se te dio, el contexto de una playlist o cola actual (para hacer algo similar/una
 continuación natural). Devuelve solo la lista de canciones sugeridas como pares {title, artist}, en
-un orden razonable para escuchar en secuencia.`,
+un orden razonable para escuchar en secuencia. Si viene "requestedCount", devuelve EXACTAMENTE esa
+cantidad de canciones distintas.`,
 
   modify_playlist_add: `${COMMON_RULES}
 
 Tarea: sugerir canciones NUEVAS para agregar a una playlist existente, cuyo contenido actual se te
 da como contexto (para que las sugerencias encajen con el estilo/género de la playlist y no
 repitan lo que ya tiene). Devuelve solo la lista de canciones sugeridas como pares {title, artist}.
-No sugieras canciones que ya estén en el contexto de la playlist.`,
+No sugieras canciones que ya estén en el contexto de la playlist. Si viene "requestedCount", devuelve
+EXACTAMENTE esa cantidad de canciones nuevas y distintas.`,
 
   modify_playlist_remove: `${COMMON_RULES}
 
@@ -74,13 +77,39 @@ azar para "cumplir" con algo que no aplica a ninguna.`,
 
   lyric_search: `${COMMON_RULES}
 
-Tarea: el usuario pegó un fragmento de letra (puede tener errores de transcripción, mayúsculas
-inconsistentes, o estar incompleto). Identifica la canción o canciones más probables a las que
-pertenece ese fragmento. Devuelve hasta unas pocas coincidencias probables como pares
-{title, artist}, ordenadas de más a menos probable. Si no reconoces el fragmento con confianza
-razonable, devuelve una lista vacía en vez de adivinar al azar.`,
+Tarea: el usuario escribió un fragmento de la LETRA de una canción (no el título). Puede ser muy
+corto (tres o cuatro palabras), tener errores de transcripción u ortografía, estar sin acentos, o
+ser una frase que se canta de forma distinta a como se escribe. Identifica a qué canción o
+canciones pertenece.
+
+Cómo buscar:
+- Si tienes una herramienta de búsqueda web disponible, ÚSALA: busca el fragmento entre comillas
+  junto a palabras como "letra" o "lyrics" y confirma en qué canción aparece literalmente.
+- Prioriza canciones cuya letra contenga el fragmento de forma literal o casi literal, sobre
+  canciones que solo comparten el tema.
+- Ten en cuenta el idioma del fragmento: un fragmento en español casi siempre es de una canción en
+  español.
+- Con un fragmento corto o común (un estribillo típico), devuelve las canciones más conocidas que lo
+  contienen, de la más popular a la menos.
+- Si el fragmento coincide con el título de una canción, inclúyela también.
+
+Devuelve hasta 5 coincidencias como pares {title, artist} (título y artista oficiales, sin "feat."
+ni versiones en vivo), ordenadas de más a menos probable. Si de verdad no reconoces el fragmento,
+devuelve una lista vacía en vez de inventar.`,
 };
 
 export function systemPromptFor(action: AiAction): string {
   return PROMPTS[action];
+}
+
+/**
+ * Ronda 4: instrucción de cantidad construida en el servidor a partir del
+ * `count` ya validado (entero acotado por `clampCount`), nunca de texto del
+ * usuario. Solo con el dato dentro del bloque de usuario, el modelo tendía a
+ * devolver bastantes menos canciones de las pedidas.
+ */
+export function countDirectiveFor(action: AiAction, count: number | undefined): string {
+  if (count === undefined) return "";
+  if (action !== "create_playlist" && action !== "create_queue" && action !== "modify_playlist_add") return "";
+  return `\n\nCantidad obligatoria: la lista "tracks" debe contener exactamente ${count} canciones distintas.`;
 }

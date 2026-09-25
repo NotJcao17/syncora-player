@@ -131,6 +131,90 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
 
   int _clampInt(int value, int min, int max) => value < min ? min : (value > max ? max : value);
 
+  /// ¿La cantidad la pidió el usuario (preset o texto)? Solo entonces se
+  /// rellena lo que falte tras matchear (ver [_topUp]).
+  bool _userRequestedCount = false;
+
+  static int? _countFromPrompt(String text) {
+    final m = RegExp(
+      r'(\d{1,3})\s*(?:canciones|cancion|canción|temas|tracks|songs|rolas)',
+      caseSensitive: false,
+    ).firstMatch(text);
+    if (m == null) return null;
+    final n = int.tryParse(m.group(1)!);
+    return (n != null && n > 0) ? n : null;
+  }
+
+  /// Texto para pedir más canciones "en el mismo espíritu" al rellenar.
+  String _topUpPrompt() {
+    final parts = <String>[];
+    final prompt = _promptController.text.trim();
+    if (prompt.isNotEmpty) parts.add(prompt);
+    final genre = _genreController.text.trim();
+    final mood = _moodController.text.trim();
+    if (genre.isNotEmpty) parts.add('Género: $genre');
+    if (mood.isNotEmpty) parts.add('Mood: $mood');
+    if (parts.isEmpty) parts.add('Más canciones del mismo estilo que la playlist');
+    return parts.join('. ');
+  }
+
+  /// Rellena hasta [target] canciones con hasta dos rondas extra de IA
+  /// (ronda 4, H-R4-12).
+  ///
+  /// Aunque la IA devuelva la cantidad pedida, parte de sus sugerencias no
+  /// existen en Deezer o las recorta el tope por artista, así que la playlist
+  /// quedaba en 20 cuando se pedían 50. Cada ronda pide solo lo que falta
+  /// (con margen), sin repetir lo que ya hay.
+  Future<List<DeezerTrack>> _topUp(
+    List<DeezerTrack> current,
+    List<RawImportTrack> unmatched,
+    int target,
+  ) async {
+    var result = List<DeezerTrack>.of(current);
+    final deezerApi = ref.read(deezerApiProvider);
+    final service = PlaylistImportExportService(deezerApi);
+    for (var round = 0; round < 2 && result.length < target; round++) {
+      if (!mounted) break;
+      final missing = target - result.length;
+      setState(() {
+        _step = _Step.matching;
+        _matchTotal = target;
+        _matchCurrent = result.length;
+        _matchCurrentName = 'Completando la playlist: faltan $missing canciones';
+      });
+      Map<String, dynamic> response;
+      try {
+        response = await ref.read(aiAssistantServiceProvider).modifyPlaylistAdd(
+              prompt: _topUpPrompt(),
+              contextTracks: result.map((t) => {'title': t.title, 'artist': t.artistName}).toList(),
+              count: _clampInt((missing * 1.5).round() + 2, 1, _kHardCountCap),
+            );
+      } catch (_) {
+        break;
+      }
+      final raw = PlaylistImportExportService.parseTrackSuggestions(response['tracks']);
+      if (raw.isEmpty) break;
+      final matched = <DeezerTrack>[];
+      final roundUnmatched = <RawImportTrack>[];
+      try {
+        await for (final _ in service.processImport(
+          rawTracks: raw,
+          outMatched: matched,
+          outUnmatched: roundUnmatched,
+        )) {
+          if (!mounted) return result;
+        }
+      } catch (_) {}
+      final ids = result.map((t) => t.id).toSet();
+      final fresh = matched.where((t) => ids.add(t.id)).toList();
+      if (fresh.isEmpty) break;
+      result = _applyMaxPerArtist([...result, ...fresh], _maxPerArtist);
+      result = PlaylistImportExportService.trimToCount(result, target);
+      unmatched.addAll(roundUnmatched);
+    }
+    return result;
+  }
+
   Map<String, dynamic> _buildParams({bool isRefinement = false}) {
     final params = <String, dynamic>{};
     if (isRefinement) {
@@ -214,7 +298,12 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
     });
 
     try {
-      _requestedExactCount = _countPreset != null ? _clampInt(_countPreset!, 1, _kHardCountCap) : null;
+      // Ronda 4 (H-R4-12): una cantidad escrita en el texto ("una playlist de
+      // 100 canciones") cuenta igual que el preset. Antes solo el preset fijaba
+      // la cantidad, y lo escrito quedaba a criterio del modelo.
+      final requested = _countPreset ?? _countFromPrompt(prompt);
+      _requestedExactCount = requested != null ? _clampInt(requested, 1, _kHardCountCap) : null;
+      _userRequestedCount = _requestedExactCount != null;
       final maxPerArtistText = _maxPerArtistController.text.trim();
       final parsedMax = int.tryParse(maxPerArtistText);
       _maxPerArtist = (parsedMax != null && parsedMax > 0) ? parsedMax : null;
@@ -467,6 +556,11 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
 
     var filtered = _applyMaxPerArtist(matched, _maxPerArtist);
     filtered = PlaylistImportExportService.trimToCount(filtered, _requestedExactCount);
+    final target = _requestedExactCount;
+    if (_userRequestedCount && target != null && filtered.length < target) {
+      filtered = await _topUp(filtered, unmatched, target);
+      if (!mounted) return;
+    }
 
     setState(() {
       _allMatched = filtered;

@@ -44,6 +44,13 @@ export interface CallGeminiParams {
   apiKey: string;
   input: string;
   schema: unknown;
+  /**
+   * Ronda 4: activa la herramienta de búsqueda de Google (grounding). Solo la
+   * usa `lyric_search`, donde el modelo por sí solo no reconoce fragmentos
+   * cortos de letra. Combinarla con salida estructurada solo está soportado en
+   * algunos modelos: el llamador debe reintentar sin ella si falla.
+   */
+  useGoogleSearch?: boolean;
 }
 
 /**
@@ -55,7 +62,7 @@ export interface CallGeminiParams {
  * y si la llave era BYOK o compartida, a qué `AiErrorCode` mapearlo (ver
  * index.ts).
  */
-export async function callGemini({ apiKey, input, schema }: CallGeminiParams): Promise<unknown> {
+export async function callGemini({ apiKey, input, schema, useGoogleSearch = false }: CallGeminiParams): Promise<unknown> {
   const response = await fetch(GEMINI_GENERATE_CONTENT_URL, {
     method: "POST",
     headers: {
@@ -64,6 +71,7 @@ export async function callGemini({ apiKey, input, schema }: CallGeminiParams): P
     },
     body: JSON.stringify({
       contents: [{ parts: [{ text: input }] }],
+      ...(useGoogleSearch ? { tools: [{ google_search: {} }] } : {}),
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: schema,
@@ -90,15 +98,25 @@ export async function callGemini({ apiKey, input, schema }: CallGeminiParams): P
   const firstCandidate = Array.isArray(candidates) ? (candidates[0] as Record<string, unknown> | undefined) : undefined;
   const content = firstCandidate?.content as Record<string, unknown> | undefined;
   const parts = content?.parts;
-  const firstPart = Array.isArray(parts) ? (parts[0] as Record<string, unknown> | undefined) : undefined;
-  const outputText = firstPart?.text;
+  // Con grounding la respuesta puede venir repartida en varias partes de
+  // texto: se unen todas en vez de leer solo la primera.
+  const outputText = Array.isArray(parts)
+    ? parts
+      .map((p) => (p as Record<string, unknown> | undefined)?.text)
+      .filter((t): t is string => typeof t === "string")
+      .join("")
+    : undefined;
 
-  if (typeof outputText !== "string") {
-    throw new Error("La respuesta de Gemini no trae 'candidates[0].content.parts[0].text'");
+  if (!outputText) {
+    throw new Error("La respuesta de Gemini no trae texto en 'candidates[0].content.parts'");
   }
 
+  // Algunos modelos envuelven el JSON en un bloque de código aunque se pida
+  // JSON puro.
+  const unfenced = outputText.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+
   try {
-    return JSON.parse(outputText);
+    return JSON.parse(unfenced);
   } catch {
     throw new Error("El texto de salida de Gemini no es JSON válido");
   }

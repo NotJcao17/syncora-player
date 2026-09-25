@@ -309,4 +309,61 @@ void main() {
     expect(find.text('Initial Song'), findsOneWidget);
     await tester.pumpAndSettle(const Duration(seconds: 4));
   });
+
+  testWidgets('ronda 4: si faltan canciones para la cantidad pedida, las completa con rondas extra', (tester) async {
+    final actions = <String>[];
+    var next = 0;
+    List<Map<String, String>> batch(int n) => [
+          for (var i = 0; i < n; i++) {'title': 'Tema ${++next}', 'artist': 'Artista ${next % 7}'},
+        ];
+    final aiService = AiAssistantService(
+      keyStorage: _FakeAiKeyStorage(),
+      invoke: (functionName, {headers = const {}, body}) async {
+        final action = (body as Map)['action'] as String;
+        actions.add(action);
+        if (action == 'create_playlist') {
+          return FunctionResponse(status: 200, data: {
+            'action': action,
+            'result': {'playlistName': 'Rock', 'description': 'x', 'tracks': batch(4)},
+          });
+        }
+        return FunctionResponse(status: 200, data: {'action': action, 'result': {'tracks': batch(3)}});
+      },
+    );
+
+    await tester.pumpWidget(buildHarness(aiService: aiService, deezerApi: _TitleDeezerApi()));
+    await tester.tap(find.text('abrir'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, '10 canciones de rock');
+    await tester.tap(find.text('Crear con IA'));
+    await tester.pumpAndSettle();
+
+    expect(actions, ['create_playlist', 'modify_playlist_add', 'modify_playlist_add']);
+    expect(find.text('10 canciones seleccionadas'), findsOneWidget);
+  });
+}
+
+/// Cada "Tema N" resuelve a una pista distinta (id N), con colaboradores
+/// para que `resolveDeezerTrackContributors` no salga a la red.
+class _TitleDeezerApi extends DeezerApi {
+  @override
+  Future<DeezerSearchResult> search(String query, {DeezerSearchType type = DeezerSearchType.all, bool enrich = true}) async {
+    final m = RegExp(r'Tema (\d+)').firstMatch(query);
+    if (m == null) return const DeezerSearchResult();
+    final id = int.parse(m.group(1)!);
+    return DeezerSearchResult(tracks: [
+      DeezerTrack(
+        id: id,
+        title: 'Tema $id',
+        artistName: 'Artista',
+        artistId: id,
+        albumTitle: 'A',
+        albumId: 1,
+        coverUrl: '',
+        durationSec: 200,
+        contributorsList: const [SyncoraArtistRef(id: 1, name: 'A'), SyncoraArtistRef(id: 2, name: 'B')],
+      ),
+    ]);
+  }
 }
