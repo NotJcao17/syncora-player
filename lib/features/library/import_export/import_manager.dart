@@ -277,6 +277,13 @@ class ImportManager extends Notifier<List<ImportJob>> {
     unawaited(_store.save(job));
   }
 
+  /// Importaciones que pueden correr a la vez (ronda 4). Dos funcionan bien
+  /// en paralelo; más solo repartirían el mismo límite de peticiones de
+  /// Deezer entre todas y ninguna avanzaría más rápido.
+  static const maxActiveImports = 2;
+
+  bool get canStartImport => state.where((j) => j.isActive).length < maxActiveImports;
+
   /// Crea la playlist y empieza a llenarla. Devuelve el id local de la
   /// playlist para poder navegar a ella.
   Future<int> startImport({

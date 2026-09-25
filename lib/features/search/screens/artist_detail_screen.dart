@@ -15,6 +15,7 @@ import '../../../data/models/deezer/deezer_album.dart';
 import '../../../data/models/deezer/deezer_artist.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../player/player_providers.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 /// Pantalla de Detalle de Artista (`/artist/:id`) conectada a Deezer real.
 class ArtistDetailScreen extends ConsumerStatefulWidget {
@@ -193,6 +194,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                   fit: StackFit.expand,
                   children: [
                     CachedNetworkImage(
+                      cacheManager: AppImageCache.instance,
                       imageUrl: artist.pictureUrl,
                       memCacheWidth: 600,
                       fit: BoxFit.cover,

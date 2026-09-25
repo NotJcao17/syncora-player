@@ -27,6 +27,7 @@ import '../other_versions_search.dart';
 import '../search_history_storage.dart';
 import '../search_provider.dart';
 import '../search_ranking.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 /// Pantalla de Búsqueda conectada a Deezer real con Debounce 500ms y filtros.
 class SearchScreen extends ConsumerStatefulWidget {
@@ -688,6 +689,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           width: 56,
                           height: 56,
                           child: CachedNetworkImage(
+                            cacheManager: AppImageCache.instance,
                             imageUrl: artist.pictureUrl,
                             memCacheWidth: 180,
                             fit: BoxFit.cover,
@@ -1475,6 +1477,7 @@ class _GenreTile extends StatelessWidget {
             Container(color: color),
             if (imageUrl.isNotEmpty)
               CachedNetworkImage(
+                cacheManager: AppImageCache.instance,
                 imageUrl: imageUrl,
                 fit: BoxFit.cover,
                 fadeInDuration: const Duration(milliseconds: 200),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../stats_models.dart';
 import '../stats_providers.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 /// Contenedor común de todas las secciones del dashboard, para que el
 /// espaciado y el borde no se repitan en cada una.
@@ -222,6 +223,7 @@ class _PodiumSlot extends StatelessWidget {
                         child: const Icon(Icons.person, color: AppTheme.muted),
                       )
                     : CachedNetworkImage(
+                        cacheManager: AppImageCache.instance,
                         imageUrl: item.artist.pictureUrl,
                         fit: BoxFit.cover,
                         placeholder: (_, _) => Container(color: AppTheme.surfaceHover),
@@ -299,7 +301,7 @@ class _ArtistRow extends StatelessWidget {
               height: 30,
               child: item.artist.pictureUrl.isEmpty
                   ? Container(color: AppTheme.surfaceHover)
-                  : CachedNetworkImage(imageUrl: item.artist.pictureUrl, fit: BoxFit.cover),
+                  : CachedNetworkImage(cacheManager: AppImageCache.instance, imageUrl: item.artist.pictureUrl, fit: BoxFit.cover),
             ),
           ),
           const SizedBox(width: 10),
@@ -390,7 +392,7 @@ class _TrackRow extends StatelessWidget {
                     height: 34,
                     child: item.track.coverUrl.isEmpty
                         ? Container(color: AppTheme.surfaceHover)
-                        : CachedNetworkImage(imageUrl: item.track.coverUrl, fit: BoxFit.cover),
+                        : CachedNetworkImage(cacheManager: AppImageCache.instance, imageUrl: item.track.coverUrl, fit: BoxFit.cover),
                   ),
                 ),
                 const SizedBox(width: 10),

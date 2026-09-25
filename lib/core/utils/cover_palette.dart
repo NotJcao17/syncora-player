@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/widgets.dart';
 import 'package:palette_generator/palette_generator.dart';
+import '../cache/app_image_cache.dart';
 
 /// Paleta de colores de una portada, barata y memorizada (ronda 4).
 ///
@@ -26,7 +27,7 @@ class CoverPalette {
 
     final ImageProvider base = (url.startsWith('file://') || url.startsWith('/'))
         ? FileImage(File(url.replaceFirst('file://', '')))
-        : CachedNetworkImageProvider(url);
+        : CachedNetworkImageProvider(url, cacheManager: AppImageCache.instance);
     try {
       final palette = await PaletteGenerator.fromImageProvider(
         ResizeImage(base, width: 64, height: 64),

@@ -24,6 +24,7 @@ import '../mixes/mix_providers.dart';
 import '../mixes/on_repeat_service.dart';
 import '../widgets/home_sections.dart';
 import '../widgets/mix_cover.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 /// Pantalla de Inicio.
 ///
@@ -790,7 +791,7 @@ class _CountryTopsListState extends State<_CountryTopsList> {
                             height: 44,
                             child: playlist.pictureUrl.isEmpty
                                 ? Container(color: AppTheme.surfaceHover)
-                                : CachedNetworkImage(imageUrl: playlist.pictureUrl, fit: BoxFit.cover),
+                                : CachedNetworkImage(cacheManager: AppImageCache.instance, imageUrl: playlist.pictureUrl, fit: BoxFit.cover),
                           ),
                         ),
                         title: Text(

@@ -9,6 +9,7 @@ import '../../data/local_db/syncora_database.dart';
 import '../../features/player/player_models.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+import '../cache/app_image_cache.dart';
 
 /// Portada de Playlist dinámica con fallback, cuadrícula 2x2 autogenerada,
 /// degradados y colores predefinidos o portadas personalizadas.
@@ -137,6 +138,7 @@ class PlaylistCoverWidget extends ConsumerWidget {
         }
       } else {
         content = CachedNetworkImage(
+          cacheManager: AppImageCache.instance,
           imageUrl: cover,
           fit: fit,
           memCacheWidth: memCacheWidth ?? 400,
@@ -230,6 +232,7 @@ class PlaylistCoverWidget extends ConsumerWidget {
 
   Widget _buildGridItem(String url) {
     return CachedNetworkImage(
+      cacheManager: AppImageCache.instance,
       imageUrl: url,
       fit: BoxFit.cover,
       memCacheWidth: memCacheWidth ?? 200,

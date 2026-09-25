@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/deezer/deezer_track.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+import '../cache/app_image_cache.dart';
 
 /// Fase 7.F.2 -- pasos de UI compartidos entre los flujos de "vista previa
 /// de sugerencias de IA" (7.F.1 "Crear playlist con IA" y 7.F.2 "Crear cola
@@ -133,7 +134,7 @@ class AiMatchedTrackList extends StatelessWidget {
                 width: 44,
                 height: 44,
                 child: track.coverUrl.isNotEmpty
-                    ? CachedNetworkImage(imageUrl: track.coverUrl, fit: BoxFit.cover)
+                    ? CachedNetworkImage(cacheManager: AppImageCache.instance, imageUrl: track.coverUrl, fit: BoxFit.cover)
                     : Container(color: AppTheme.surfaceHover),
               ),
             ),

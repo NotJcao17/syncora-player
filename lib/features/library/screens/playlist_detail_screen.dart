@@ -43,6 +43,7 @@ import '../ai_playlist/ai_modify_playlist_sheet.dart';
 import '../import_export/import_jobs_banner.dart';
 import '../import_export/playlist_import_export_service.dart';
 import '../services/playlist_pin_service.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 enum PlaylistSortColumn { original, title, album, date, duration }
 enum PlaylistSortDirection { asc, desc, none }
@@ -1340,7 +1341,10 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             const SizedBox(width: 8),
                                             DownloadHeaderButton(
                                               title: playlist.title,
-                                              tracks: sortedSyncoraTracks,
+                                              // Ronda 4: se descarga en el
+                                              // orden original, no en el que
+                                              // se esté viendo.
+                                              tracks: rawSyncoraTracks,
                                             ),
                                             const SizedBox(width: 12),
                                           ],
@@ -1556,7 +1560,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                     contentPadding: EdgeInsets.zero,
                                                     leading: ClipRRect(
                                                       borderRadius: BorderRadius.circular(6),
-                                                      child: CachedNetworkImage(imageUrl: track.coverUrl, width: 40, height: 40, fit: BoxFit.cover),
+                                                      child: CachedNetworkImage(cacheManager: AppImageCache.instance, imageUrl: track.coverUrl, width: 40, height: 40, fit: BoxFit.cover),
                                                     ),
                                                     title: Text(track.title, style: const TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
                                                     subtitle: Text(track.artistName, style: const TextStyle(color: AppTheme.secondary, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -2413,6 +2417,7 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),
                         child: CachedNetworkImage(
+                          cacheManager: AppImageCache.instance,
                           imageUrl: track.coverUrl,
                           width: 44,
                           height: 44,

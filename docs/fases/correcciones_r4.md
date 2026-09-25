@@ -156,3 +156,22 @@ prueba en dispositivo. Si ese intento falla por cualquier motivo, la función re
   aleatorio) sin ganancia real: la lista ya se construye de forma perezosa. Las sugerencias de IA
   viven en la cola automática, que se guarda con la sesión, así que sobreviven a reiniciar la app;
   regenerar la cola o cambiar el aleatorio sí las descarta.
+
+## Tercera tanda
+
+- **H-R4-17 (corrección real).** La primera versión de `navigateSafely` no arreglaba nada: detectaba
+  el reproductor con `currentConfiguration.uri`, pero tras `push('/player')` GoRouter sigue
+  reportando la `uri` de la pantalla base (`/`). Nunca cerraba el reproductor y el shell se apilaba
+  encima igual. Ahora se mira la última ruta de la pila (`matches.last.matchedLocation`), se espera
+  a que el `pop` se procese y después se hace el `push`. Reproducido y cubierto en
+  `test/core/navigation/safe_navigation_test.dart` (desde el reproductor y desde una hoja encima).
+- **H-R4-18. Las portadas se volvían a descargar en cada arranque.** `DefaultCacheManager` guarda
+  como máximo 200 imágenes: una playlist de 600 ya la desbordaba. `AppImageCache` (2500 imágenes,
+  60 días) se usa en todos los `CachedNetworkImage`; "Borrar caché de imágenes" vacía las dos. La
+  animación de entrada de las miniaturas bajó de 500 ms a 120 ms (se reproducía también al leer de
+  disco).
+- Importaciones simultáneas: máximo 2 activas (las pausadas cuentan); una tercera muestra un aviso.
+- Las descargas de una playlist siguen el orden original, no el orden visible.
+- El reparador de portadas corre **en la app**, no en el servidor: al arrancar, si pasaron 7 días
+  desde la última pasada (la fecha se guarda en los ajustes del dispositivo).
+

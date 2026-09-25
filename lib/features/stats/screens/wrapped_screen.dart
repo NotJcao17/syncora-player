@@ -17,6 +17,7 @@ import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/skeleton_box.dart';
 import '../stats_models.dart';
 import '../stats_providers.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 /// Wrapped: tarjetas tipo *stories*, una por dato, exportables como imagen.
 ///
@@ -1106,6 +1107,7 @@ class _FramedImage extends StatelessWidget {
         child: url.isEmpty
             ? placeholder
             : CachedNetworkImage(
+                cacheManager: AppImageCache.instance,
                 imageUrl: url,
                 width: side,
                 height: side,

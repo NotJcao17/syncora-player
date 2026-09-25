@@ -16,6 +16,7 @@ import '../../../data/services/ai_assistant_service.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../import_export/import_track_matcher.dart';
 import '../import_export/playlist_import_export_service.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 /// Fase 7.F.3 -- "Modificar playlist con IA". Entrada desde el menú de 3
 /// puntos de cada playlist en Biblioteca (`_showPlaylistOptionsMenu` en
@@ -578,7 +579,7 @@ class _AiModifyPlaylistFlowState extends ConsumerState<_AiModifyPlaylistFlow> {
                     width: 44,
                     height: 44,
                     child: track.coverUrl.isNotEmpty
-                        ? CachedNetworkImage(imageUrl: track.coverUrl, fit: BoxFit.cover)
+                        ? CachedNetworkImage(cacheManager: AppImageCache.instance, imageUrl: track.coverUrl, fit: BoxFit.cover)
                         : Container(color: AppTheme.surfaceHover),
                   ),
                 ),

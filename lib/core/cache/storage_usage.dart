@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import 'app_image_cache.dart';
 import 'cover_cache_service.dart';
 
 /// Espacio en disco que Configuración muestra, además del audio descargado
@@ -40,13 +41,18 @@ Future<int> _directorySizeBytes(Directory dir) async {
   return total;
 }
 
-Future<Directory?> _imageCacheDir() async {
-  if (kIsWeb) return null;
+/// Carpetas de la caché de imágenes: la propia ([AppImageCache], ronda 4) y
+/// la por defecto, que todavía guarda lo descargado antes del cambio.
+Future<List<Directory>> _imageCacheDirs() async {
+  if (kIsWeb) return const [];
   try {
     final base = await getTemporaryDirectory();
-    return Directory(p.join(base.path, DefaultCacheManager.key));
+    return [
+      Directory(p.join(base.path, AppImageCache.key)),
+      Directory(p.join(base.path, DefaultCacheManager.key)),
+    ];
   } catch (_) {
-    return null;
+    return const [];
   }
 }
 
@@ -56,10 +62,9 @@ final storageUsageProvider = FutureProvider.autoDispose<StorageUsage>((ref) asyn
   try {
     coverBytes = await ref.read(coverCacheServiceProvider).getCacheSizeBytes();
   } catch (_) {}
-  final dir = await _imageCacheDir();
-  if (dir != null) {
+  for (final dir in await _imageCacheDirs()) {
     try {
-      imageBytes = await _directorySizeBytes(dir);
+      imageBytes += await _directorySizeBytes(dir);
     } catch (_) {}
   }
   return StorageUsage(downloadCoverBytes: coverBytes, imageCacheBytes: imageBytes);
@@ -69,13 +74,16 @@ final storageUsageProvider = FutureProvider.autoDispose<StorageUsage>((ref) asyn
 /// portadas de las descargas.
 Future<void> clearImageCache() async {
   try {
+    await AppImageCache.instance.emptyCache();
+  } catch (_) {}
+  try {
     await DefaultCacheManager().emptyCache();
   } catch (_) {}
   // `emptyCache` solo borra lo que su índice conoce; lo que quede en la
   // carpeta es huérfano. En Windows un archivo en uso puede no borrarse:
   // se ignora, sale en la próxima limpieza.
-  final dir = await _imageCacheDir();
-  if (dir != null && await dir.exists()) {
+  for (final dir in await _imageCacheDirs()) {
+    if (!await dir.exists()) continue;
     await for (final entity in dir.list(followLinks: false)) {
       try {
         await entity.delete(recursive: true);

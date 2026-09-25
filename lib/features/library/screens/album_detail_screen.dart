@@ -24,6 +24,7 @@ import '../../player/audio_engine/audio_engine_state.dart';
 import '../../player/radio/radio_service.dart';
 
 import '../../player/player_providers.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 /// Pantalla de Detalle de Álbum (`/album/:id`) conectada a Deezer real.
 class AlbumDetailScreen extends ConsumerStatefulWidget {
@@ -252,6 +253,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(16),
                                       child: CachedNetworkImage(
+                                        cacheManager: AppImageCache.instance,
                                         imageUrl: album.coverUrl,
                                         fit: BoxFit.cover,
                                       ),
@@ -315,6 +317,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(20),
                                         child: CachedNetworkImage(
+                                          cacheManager: AppImageCache.instance,
                                           imageUrl: album.coverUrl,
                                           fit: BoxFit.cover,
                                         ),

@@ -980,7 +980,7 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Describe el ajuste (esto sí gasta una petición de IA)',
+            'Describe el ajuste',
             style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),

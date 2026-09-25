@@ -17,6 +17,7 @@ import '../../../data/apis/deezer_catalog_providers.dart';
 import '../../../data/models/deezer/deezer_genre.dart';
 import '../../player/player_providers.dart';
 import '../../player/radio/radio_service.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 /// Pantalla de un género (`/genre/:id`).
 ///
@@ -285,7 +286,7 @@ class _GenreHeader extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           if (imageUrl.isNotEmpty)
-            CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover)
+            CachedNetworkImage(cacheManager: AppImageCache.instance, imageUrl: imageUrl, fit: BoxFit.cover)
           else
             Container(color: AppTheme.surfaceHover),
           // El degradado no es decorativo: las imágenes de género de Deezer son
@@ -388,7 +389,7 @@ class _ArtistCircle extends StatelessWidget {
                 height: size,
                 child: pictureUrl.isEmpty
                     ? Container(color: AppTheme.surfaceHover)
-                    : CachedNetworkImage(imageUrl: pictureUrl, fit: BoxFit.cover),
+                    : CachedNetworkImage(cacheManager: AppImageCache.instance, imageUrl: pictureUrl, fit: BoxFit.cover),
               ),
             ),
             const SizedBox(height: 8),

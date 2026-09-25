@@ -286,6 +286,8 @@ class _QueueViewState extends ConsumerState<QueueView> {
           ),
           const SizedBox(height: 4),
           TrackTile(
+                  // Ronda 4: en la cola el check de "en tu biblioteca" es ruido.
+                  showLibraryBadge: false,
             track: track,
             isPlaying: true,
             showDuration: false,
@@ -652,6 +654,8 @@ class _QueueViewState extends ConsumerState<QueueView> {
                     Expanded(
                       child: IgnorePointer(
                         child: TrackTile(
+                  // Ronda 4: en la cola el check de "en tu biblioteca" es ruido.
+                  showLibraryBadge: false,
                           track: track,
                           showDuration: false,
                           onAddToQueue: () => controller.addToQueue(track),
@@ -731,6 +735,8 @@ class _QueueViewState extends ConsumerState<QueueView> {
                   child: Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary, size: 22),
                 ),
                 child: TrackTile(
+                  // Ronda 4: en la cola el check de "en tu biblioteca" es ruido.
+                  showLibraryBadge: false,
                   track: track,
                   showDuration: false,
                   onTap: () {

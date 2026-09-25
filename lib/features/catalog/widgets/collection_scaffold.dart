@@ -16,6 +16,7 @@ import '../../player/player_models.dart';
 import '../../player/player_providers.dart';
 import '../../player/radio/radio_service.dart';
 import '../../player/syncora_player_controller.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 /// Cabecera + lista de pistas comunes a las colecciones que **no** viven en la
 /// biblioteca del usuario: playlists de Deezer, tops por país y mixes.
@@ -259,7 +260,7 @@ class _CollectionScaffoldState extends ConsumerState<CollectionScaffold> {
           child: widget.coverOverride ??
               (widget.coverUrl.isEmpty
                   ? Icon(AppIcons.broken(SolarIcons.MusicLibrary), color: AppTheme.secondary, size: size * 0.3)
-                  : CachedNetworkImage(imageUrl: widget.coverUrl, fit: BoxFit.cover)),
+                  : CachedNetworkImage(cacheManager: AppImageCache.instance, imageUrl: widget.coverUrl, fit: BoxFit.cover)),
         ),
       );
 

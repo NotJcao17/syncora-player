@@ -29,6 +29,7 @@ import '../ai_playlist/ai_create_playlist_sheet.dart';
 import '../ai_playlist/ai_modify_playlist_sheet.dart';
 import '../library_view_settings.dart';
 import '../services/playlist_pin_service.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 /// Pantalla de Biblioteca conectada a Drift local, Supabase y servicio de Import/Export.
 class LibraryScreen extends ConsumerStatefulWidget {
@@ -67,6 +68,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final isConnected = ref.read(isConnectedProvider).value ?? true;
     if (!isConnected) {
       AppToast.show(context, message: 'Sin conexión. Se requiere internet para importar canciones.');
+      return;
+    }
+    if (!ref.read(importManagerProvider.notifier).canStartImport) {
+      AppToast.show(
+        context,
+        message: 'Ya hay ${ImportManager.maxActiveImports} importaciones en curso. Espera a que termine alguna.',
+      );
       return;
     }
 
@@ -470,6 +478,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 
   Widget _buildAlbumCover(SavedAlbum album) => CachedNetworkImage(
+        cacheManager: AppImageCache.instance,
         imageUrl: album.coverUrl,
         memCacheWidth: 400,
         fit: BoxFit.cover,

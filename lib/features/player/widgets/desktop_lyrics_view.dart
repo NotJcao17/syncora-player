@@ -8,6 +8,7 @@ import '../../../data/apis/lrclib_api.dart';
 import '../../../data/apis/lrclib_provider.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 /// Vista de letras para pantalla de escritorio (Spotify Desktop Lyrics style).
 class DesktopLyricsView extends ConsumerStatefulWidget {
@@ -122,6 +123,7 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
                     height: 48,
                     child: widget.track.coverUrl.isNotEmpty
                         ? CachedNetworkImage(
+                            cacheManager: AppImageCache.instance,
                             imageUrl: widget.track.coverUrl,
                             fit: BoxFit.cover,
                             memCacheWidth: 100,

@@ -176,4 +176,16 @@ void main() {
     final tracks = await db.playlistDao.getTracksOrdered(playlistId);
     expect(tracks.map((t) => t.trackId).toList(), [11, 12, 13, 14, 15]);
   });
+
+  test('no deja empezar más de dos importaciones a la vez', () async {
+    final sub = container.listen(importManagerProvider, (_, _) {});
+    addTearDown(sub.close);
+    repo.failUploads = true; // se quedan en pausa: siguen contando como activas
+    final manager = container.read(importManagerProvider.notifier);
+    expect(manager.canStartImport, isTrue);
+    await manager.startImport(title: 'A', rawTracks: _raw(3));
+    expect(manager.canStartImport, isTrue);
+    await manager.startImport(title: 'B', rawTracks: _raw(3));
+    expect(manager.canStartImport, isFalse);
+  });
 }

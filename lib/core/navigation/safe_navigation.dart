@@ -28,12 +28,39 @@ Future<void> navigateSafely(BuildContext context, String location) async {
   nearest.popUntil(isPage);
   if (!identical(nearest, root)) root.popUntil(isPage);
 
-  if (router.routerDelegate.currentConfiguration.uri.path == '/player' && router.canPop()) {
+  if (_isOnFullscreenPlayer(router) && router.canPop()) {
     router.pop();
+    await _routeReported(router);
+  } else {
+    await WidgetsBinding.instance.endOfFrame;
   }
-
-  await WidgetsBinding.instance.endOfFrame;
   router.push(location);
+}
+
+/// ¿Está el reproductor a pantalla completa arriba de la pila?
+///
+/// Se mira la ÚLTIMA ruta de la pila, no `currentConfiguration.uri`: tras un
+/// `push('/player')`, la `uri` sigue siendo la de la pantalla base ('/'), y
+/// por eso la primera versión de este helper nunca cerraba el reproductor y
+/// seguía apilando el shell encima de él (verificado con el test).
+bool _isOnFullscreenPlayer(GoRouter router) {
+  final matches = router.routerDelegate.currentConfiguration.matches;
+  return matches.isNotEmpty && matches.last.matchedLocation == '/player';
+}
+
+/// Espera a que GoRouter haya procesado el cierre del reproductor.
+///
+/// `push` se calcula sobre la información de ruta que el `Router` reporta, y
+/// ese reporte llega en un callback posterior al frame en que se procesó el
+/// `pop`. Esperar un solo frame no bastaba: el `push` todavía veía `/player`
+/// encima, construía una segunda página del shell sobre él y la app caía con
+/// `'!keyReservation.contains(key)'` (reproducido en
+/// `test/core/navigation/safe_navigation_test.dart`).
+Future<void> _routeReported(GoRouter router) async {
+  for (var i = 0; i < 10; i++) {
+    await WidgetsBinding.instance.endOfFrame;
+    if (!_isOnFullscreenPlayer(router)) return;
+  }
 }
 
 /// Artistas navegables de [track]: los colaboradores con id real o, si no

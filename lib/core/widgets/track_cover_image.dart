@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../cache/cover_cache_service.dart';
 import '../utils/deezer_image.dart';
+import '../cache/app_image_cache.dart';
 
 /// Portada de una pista que prefiere el archivo descargado en disco antes que
 /// la URL de Deezer.
@@ -141,6 +142,12 @@ class _TrackCoverImageState extends State<TrackCoverImage> {
         : widget.coverUrl;
 
     return CachedNetworkImage(
+      cacheManager: AppImageCache.instance,
+      // Ronda 4: la animación por defecto (500 ms) se reproducía también al
+      // leer de la caché en disco, y en cada arranque parecía que las
+      // portadas "volvían a cargar". Con una más corta ya no se nota.
+      fadeInDuration: const Duration(milliseconds: 120),
+      fadeOutDuration: const Duration(milliseconds: 80),
       key: ValueKey('$url#$_attempt'),
       imageUrl: url,
       width: widget.width,

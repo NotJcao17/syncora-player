@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/horizontal_scroller.dart';
+import '../../../core/cache/app_image_cache.dart';
 
 /// Acción opcional a la derecha del título de una sección ("Ver todos").
 class HomeSectionAction {
@@ -150,7 +151,7 @@ class HomeArtistCircle extends StatelessWidget {
                 height: size,
                 child: pictureUrl.isEmpty
                     ? Container(color: AppTheme.surfaceHover)
-                    : CachedNetworkImage(imageUrl: pictureUrl, fit: BoxFit.cover),
+                    : CachedNetworkImage(cacheManager: AppImageCache.instance, imageUrl: pictureUrl, fit: BoxFit.cover),
               ),
             ),
             const SizedBox(height: 8),
@@ -197,6 +198,7 @@ class HomeGenreTile extends StatelessWidget {
             Container(color: AppTheme.surfaceHover),
             if (imageUrl.isNotEmpty)
               CachedNetworkImage(
+                cacheManager: AppImageCache.instance,
                 imageUrl: imageUrl,
                 fit: BoxFit.cover,
                 errorWidget: (_, _, _) => const SizedBox.shrink(),
