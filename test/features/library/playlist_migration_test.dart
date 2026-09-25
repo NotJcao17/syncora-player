@@ -28,6 +28,7 @@ class _FakePlaylistRepo extends SupabasePlaylistRepository {
     String? description,
     bool isPublic = false,
     bool isLiked = false,
+    bool isPinned = false,
   }) async {
     final id = 'remote_${_nextRemoteId++}';
     final created = {'id': id, 'title': title, 'description': description, 'is_public': isPublic, 'is_liked': isLiked};

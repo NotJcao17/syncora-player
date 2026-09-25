@@ -194,7 +194,7 @@ class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration {
@@ -207,7 +207,6 @@ class SyncoraDatabase extends _$SyncoraDatabase {
             title: 'Tus me gusta',
             description: const Value('Pistas que te han gustado'),
             isLiked: const Value(true),
-            isPinned: const Value(true),
             orderIndex: const Value(-1),
           ),
         );
@@ -245,6 +244,15 @@ class SyncoraDatabase extends _$SyncoraDatabase {
         }
         if (from < 11) {
           await m.createTable(albumGenreCache);
+        }
+        if (from < 12) {
+          // Ronda 4 (H-R4-8): "Tus me gusta" y "On Repeat" nacían fijadas, y
+          // como la biblioteca pone las fijadas primero quedaban siempre
+          // arriba, ignorando el orden elegido. Ahora fijar es una decisión
+          // del usuario, así que se desfijan una única vez.
+          await customStatement(
+            'UPDATE playlists SET is_pinned = 0 WHERE is_liked = 1 OR is_generated = 1',
+          );
         }
       },
     );

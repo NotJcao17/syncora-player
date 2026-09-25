@@ -45,6 +45,7 @@ class SupabasePlaylistRepository {
     String? description,
     bool isPublic = false,
     bool isLiked = false,
+    bool isPinned = false,
   }) async {
     final client = _client;
     if (client == null) return {};
@@ -57,6 +58,7 @@ class SupabasePlaylistRepository {
       'description': description,
       'is_public': isPublic,
       'is_liked': isLiked,
+      if (isPinned) 'is_pinned': true,
     }).select().single();
 
     return response;

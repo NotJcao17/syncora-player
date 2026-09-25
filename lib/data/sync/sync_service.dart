@@ -264,15 +264,18 @@ class SyncService {
       final String? coverUrl = remote['cover_url'] as String?;
       final bool isLiked = remote['is_liked'] as bool? ?? false;
       final bool isPublic = remote['is_public'] as bool? ?? false;
+      // Ronda 4: fijar viaja a Supabase, así que la nube manda igual que con
+      // el resto de campos. Antes el sync nunca lo leía.
+      final bool isPinned = remote['is_pinned'] as bool? ?? false;
 
       int localPlaylistId;
 
       if (isLiked) {
         final likedPlaylist = await _playlistDao.getLikedPlaylist();
         localPlaylistId = likedPlaylist.id;
-        if (likedPlaylist.remoteId != remoteId) {
+        if (likedPlaylist.remoteId != remoteId || likedPlaylist.isPinned != isPinned) {
           await _playlistDao.updatePlaylist(
-              likedPlaylist.copyWith(remoteId: Value(remoteId)));
+              likedPlaylist.copyWith(remoteId: Value(remoteId), isPinned: isPinned));
         }
       } else {
         Playlist? match = await _playlistDao.getPlaylistByRemoteId(remoteId);
@@ -293,6 +296,7 @@ class SyncService {
               description: Value(description),
               coverUrl: Value(coverUrl),
               isPublic: isPublic,
+              isPinned: isPinned,
             ),
           );
         } else {
@@ -302,6 +306,7 @@ class SyncService {
             coverUrl: coverUrl,
             remoteId: remoteId,
             isPublic: isPublic,
+            isPinned: isPinned,
           );
         }
       }

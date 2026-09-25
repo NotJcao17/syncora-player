@@ -26,6 +26,8 @@ import '../../player/player_providers.dart';
 import '../import_export/playlist_import_export_service.dart';
 import '../ai_playlist/ai_create_playlist_sheet.dart';
 import '../ai_playlist/ai_modify_playlist_sheet.dart';
+import '../library_view_settings.dart';
+import '../services/playlist_pin_service.dart';
 
 /// Pantalla de Biblioteca conectada a Drift local, Supabase y servicio de Import/Export.
 class LibraryScreen extends ConsumerStatefulWidget {
@@ -42,44 +44,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   bool _showLocalSearch = false;
   final TextEditingController _localSearchController = TextEditingController();
   String _localSearchQuery = '';
-
-  /// Ronda 3 (D1/D2): criterio de orden y forma de la lista.
-  ///
-  /// No persisten entre reinicios. Si hiciera falta, el lugar es
-  /// `AppSettingsStore` (`core/settings/app_settings_store.dart`).
-  _LibrarySort _sort = _LibrarySort.recientesEscuchadas;
-  bool _gridView = false;
-
-  /// Orden de playlists. Las fijadas van SIEMPRE primero, sea cual sea el
-  /// criterio: fijar es una decisión explícita del usuario y no debe poder
-  /// perderse por cambiar de orden. Dentro de cada bloque manda [_sort].
-  List<Playlist> _sortPlaylists(List<Playlist> input) {
-    final list = List<Playlist>.from(input);
-    int byPinned(Playlist a, Playlist b) {
-      if (a.isPinned == b.isPinned) return 0;
-      return a.isPinned ? -1 : 1;
-    }
-
-    list.sort((a, b) {
-      final pinned = byPinned(a, b);
-      if (pinned != 0) return pinned;
-      switch (_sort) {
-        case _LibrarySort.recientesEscuchadas:
-          final aAt = a.lastPlayedAt;
-          final bAt = b.lastPlayedAt;
-          // Nunca reproducidas al final, y entre ellas por fecha de creación.
-          if (aAt == null && bAt == null) return b.createdAt.compareTo(a.createdAt);
-          if (aAt == null) return 1;
-          if (bAt == null) return -1;
-          return bAt.compareTo(aAt);
-        case _LibrarySort.recientesAgregadas:
-          return b.createdAt.compareTo(a.createdAt);
-        case _LibrarySort.alfabetico:
-          return a.title.toLowerCase().compareTo(b.title.toLowerCase());
-      }
-    });
-    return list;
-  }
 
   @override
   void initState() {
@@ -270,9 +234,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   /// Título de una fila/tarjeta de biblioteca, con el indicador de "sonando
   /// ahora" (D3) delante cuando corresponde.
-  Widget _libraryTitle(String title, bool isActive, {double fontSize = 16}) {
+  Widget _libraryTitle(String title, bool isActive, {double fontSize = 16, bool isPinned = false}) {
     return Row(
       children: [
+        if (isPinned) ...[
+          Icon(AppIcons.bold(SolarIcons.Pin), color: AppTheme.secondary, size: fontSize - 3),
+          const SizedBox(width: 4),
+        ],
         if (isActive) ...[
           Icon(AppIcons.bold(SolarIcons.SoundwaveSquare),
               color: AppTheme.accent, size: fontSize - 2),
@@ -303,6 +271,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     required VoidCallback onTap,
     VoidCallback? onMenu,
     Widget? trailing,
+    bool isPinned = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -322,7 +291,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _libraryTitle(title, isActive),
+                    _libraryTitle(title, isActive, isPinned: isPinned),
                     const SizedBox(height: 4),
                     subtitle,
                   ],
@@ -344,6 +313,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     required bool isActive,
     required VoidCallback onTap,
     VoidCallback? onMenu,
+    bool isPinned = false,
   }) {
     return _withContextMenu(
       onTap: onTap,
@@ -358,7 +328,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          _libraryTitle(title, isActive, fontSize: 13),
+          _libraryTitle(title, isActive, fontSize: 13, isPinned: isPinned),
           const SizedBox(height: 2),
           subtitle,
         ],
@@ -386,20 +356,20 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   /// Orden de álbumes guardados, con los mismos tres criterios que las
   /// playlists. Los álbumes no se pueden fijar, así que aquí no hay bloque
   /// de anclados.
-  List<SavedAlbum> _sortAlbums(List<SavedAlbum> input) {
+  List<SavedAlbum> _sortAlbums(List<SavedAlbum> input, LibrarySort sort) {
     final list = List<SavedAlbum>.from(input);
     list.sort((a, b) {
-      switch (_sort) {
-        case _LibrarySort.recientesEscuchadas:
+      switch (sort) {
+        case LibrarySort.recientesEscuchadas:
           final aAt = a.lastPlayedAt;
           final bAt = b.lastPlayedAt;
           if (aAt == null && bAt == null) return b.addedAt.compareTo(a.addedAt);
           if (aAt == null) return 1;
           if (bAt == null) return -1;
           return bAt.compareTo(aAt);
-        case _LibrarySort.recientesAgregadas:
+        case LibrarySort.recientesAgregadas:
           return b.addedAt.compareTo(a.addedAt);
-        case _LibrarySort.alfabetico:
+        case LibrarySort.alfabetico:
           return a.title.toLowerCase().compareTo(b.title.toLowerCase());
       }
     });
@@ -445,9 +415,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       title: playlist.title,
       isActive: activePlaylistId == playlist.id,
       onTap: () => context.push('/playlist/${playlist.id}'),
-      onMenu: playlist.isLiked
-          ? null
-          : () => _showPlaylistOptionsMenu(context, playlist, canEdit, isLocalMode),
+      onMenu: () => _showPlaylistOptionsMenu(context, playlist, canEdit, isLocalMode),
+      isPinned: playlist.isPinned,
       subtitle: StreamBuilder<List<PlaylistTrack>>(
         stream: playlistDao.watchTracksOrdered(playlist.id),
         builder: (ctx, snap) {
@@ -484,9 +453,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       title: playlist.title,
       isActive: activePlaylistId == playlist.id,
       onTap: () => context.push('/playlist/${playlist.id}'),
-      onMenu: playlist.isLiked
-          ? null
-          : () => _showPlaylistOptionsMenu(context, playlist, canEdit, isLocalMode),
+      onMenu: () => _showPlaylistOptionsMenu(context, playlist, canEdit, isLocalMode),
+      isPinned: playlist.isPinned,
       trailing: trailing,
       subtitle: StreamBuilder<List<PlaylistTrack>>(
         stream: playlistDao.watchTracksOrdered(playlist.id),
@@ -528,10 +496,38 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         subtitle: _subtitleText(album.artistName),
       );
 
+  Widget _buildPinTile(BuildContext ctx, Playlist playlist, bool canEdit) {
+    final color = canEdit ? AppTheme.primary : AppTheme.muted;
+    return ListTile(
+      leading: Icon(
+        playlist.isPinned ? AppIcons.bold(SolarIcons.Pin) : AppIcons.broken(SolarIcons.Pin),
+        color: color,
+      ),
+      title: Text(playlist.isPinned ? 'Desfijar' : 'Fijar arriba', style: TextStyle(color: color)),
+      enabled: canEdit,
+      onTap: () async {
+        Navigator.pop(ctx);
+        final ok = await togglePlaylistPin(ref, playlist);
+        if (!mounted) return;
+        AppToast.show(
+          context,
+          message: !ok
+              ? 'No se pudo guardar el cambio. Revisa tu conexión.'
+              : (playlist.isPinned ? 'Playlist desfijada' : 'Playlist fijada arriba'),
+        );
+      },
+    );
+  }
+
   Widget _buildPlaylistOptionsContent(BuildContext ctx, Playlist playlist, bool canEdit, bool isLocalMode) {
+    // "Tus me gusta" no se edita ni se borra: su menú solo permite fijarla.
+    if (playlist.isLiked) {
+      return Column(mainAxisSize: MainAxisSize.min, children: [_buildPinTile(ctx, playlist, canEdit)]);
+    }
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        _buildPinTile(ctx, playlist, canEdit),
         ListTile(
           leading: Icon(AppIcons.broken(SolarIcons.PenNewSquare), color: canEdit ? AppTheme.primary : AppTheme.muted),
           title: Text('Editar nombre', style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted)),
@@ -929,6 +925,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final isConnected = ref.watch(isConnectedProvider).value ?? true;
     final isLocalMode = ref.watch(localModeProvider);
     final canEdit = ref.watch(canEditProvider);
+    final sort = ref.watch(librarySortProvider);
+    final gridView = ref.watch(libraryGridViewProvider);
 
     // Ronda 3 (D3): id de la playlist que está sonando, si el contexto activo
     // del reproductor es una. Sale de `activeContextId`, que ya se guarda con
@@ -1149,20 +1147,20 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: PopupMenuButton<_LibrarySort>(
-                      initialValue: _sort,
+                    child: PopupMenuButton<LibrarySort>(
+                      initialValue: sort,
                       color: AppTheme.surface,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      onSelected: (v) => setState(() => _sort = v),
-                      itemBuilder: (ctx) => _LibrarySort.values
-                          .map((v) => PopupMenuItem<_LibrarySort>(
+                      onSelected: (v) => ref.read(librarySortProvider.notifier).set(v),
+                      itemBuilder: (ctx) => LibrarySort.values
+                          .map((v) => PopupMenuItem<LibrarySort>(
                                 value: v,
                                 child: Text(
                                   v.label,
                                   style: TextStyle(
-                                    color: v == _sort ? AppTheme.primary : AppTheme.secondary,
+                                    color: v == sort ? AppTheme.primary : AppTheme.secondary,
                                     fontSize: 13,
-                                    fontWeight: v == _sort ? FontWeight.w700 : FontWeight.w500,
+                                    fontWeight: v == sort ? FontWeight.w700 : FontWeight.w500,
                                   ),
                                 ),
                               ))
@@ -1174,7 +1172,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                               color: AppTheme.secondary, size: 16),
                           const SizedBox(width: 6),
                           Text(
-                            _sort.label,
+                            sort.label,
                             style: const TextStyle(
                               color: AppTheme.secondary,
                               fontSize: 12,
@@ -1187,10 +1185,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   ),
                 ),
                 IconButton(
-                  tooltip: _gridView ? 'Ver como lista' : 'Ver como cuadrícula',
-                  onPressed: () => setState(() => _gridView = !_gridView),
+                  tooltip: gridView ? 'Ver como lista' : 'Ver como cuadrícula',
+                  onPressed: () => ref.read(libraryGridViewProvider.notifier).set(!gridView),
                   icon: Icon(
-                    _gridView
+                    gridView
                         ? AppIcons.broken(SolarIcons.List)
                         : AppIcons.broken(SolarIcons.WidgetN4),
                     color: AppTheme.secondary,
@@ -1220,7 +1218,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           if (_localSearchQuery.isEmpty) return true;
                           return a.title.toLowerCase().contains(_localSearchQuery) ||
                               a.artistName.toLowerCase().contains(_localSearchQuery);
-                        }).toList());
+                        }).toList(), sort);
 
                         if (albums.isEmpty) {
                           return SingleChildScrollView(
@@ -1236,7 +1234,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           );
                         }
 
-                        if (_gridView) {
+                        if (gridView) {
                           return GridView.builder(
                             physics: const AlwaysScrollableScrollPhysics(),
                             padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
@@ -1366,14 +1364,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                       );
                                     }
 
-                                    final ordered = _sortPlaylists(filteredPlaylists);
+                                    final ordered = sortPlaylists(filteredPlaylists, sort);
                                     final descargada = Icon(
                                       AppIcons.bold(SolarIcons.DownloadMinimalistic),
                                       color: AppTheme.secondary,
                                       size: 18,
                                     );
 
-                                    if (_gridView) {
+                                    if (gridView) {
                                       return GridView.builder(
                                         physics: const AlwaysScrollableScrollPhysics(),
                                         padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
@@ -1413,11 +1411,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           stream: playlistDao.watchAllPlaylists(),
                           builder: (ctx, snapshot) {
                             final allPlaylists = snapshot.data ?? [];
-                            final playlists = _sortPlaylists(allPlaylists.where((p) {
+                            final playlists = sortPlaylists(allPlaylists.where((p) {
                               if (_localSearchQuery.isEmpty) return true;
                               return p.title.toLowerCase().contains(_localSearchQuery) ||
                                   (p.description != null && p.description!.toLowerCase().contains(_localSearchQuery));
-                            }).toList());
+                            }).toList(), sort);
 
                             if (playlists.isEmpty) {
                               return SingleChildScrollView(
@@ -1433,7 +1431,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                               );
                             }
 
-                            if (_gridView) {
+                            if (gridView) {
                               return GridView.builder(
                                 physics: const AlwaysScrollableScrollPhysics(),
                                 padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20),
@@ -1469,14 +1467,4 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       ),
     );
   }
-}
-
-/// Criterios de orden de la biblioteca (ronda 3, D1).
-enum _LibrarySort {
-  recientesEscuchadas('Escuchadas recientemente'),
-  recientesAgregadas('Agregadas recientemente'),
-  alfabetico('Alfabético');
-
-  const _LibrarySort(this.label);
-  final String label;
 }

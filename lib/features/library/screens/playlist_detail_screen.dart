@@ -21,6 +21,7 @@ import '../../../core/utils/share_link_builder.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_cover_widget.dart';
+import '../../../core/widgets/playlist_picker_dialog.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/apis/deezer_provider.dart';
@@ -40,6 +41,7 @@ import '../../player/radio/radio_service.dart';
 import '../../search/search_ranking.dart';
 import '../ai_playlist/ai_modify_playlist_sheet.dart';
 import '../import_export/playlist_import_export_service.dart';
+import '../services/playlist_pin_service.dart';
 
 enum PlaylistSortColumn { original, title, album, date, duration }
 enum PlaylistSortDirection { asc, desc, none }
@@ -642,98 +644,80 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       return;
     }
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Agregar todas a otra playlist', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-        content: SizedBox(
-          width: 320,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: otherPlaylists.length,
-            itemBuilder: (c, i) {
-              final target = otherPlaylists[i];
-              return ListTile(
-                leading: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.primary),
-                title: Text(target.title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-                subtitle: Text(target.description ?? 'Playlist', style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
-                onTap: () async {
-                  final targetTracks = await dao.getTracksOrdered(target.id);
-                  final targetIds = targetTracks.map((t) => t.trackId).toSet();
-                  final targetTitles = targetTracks.map((t) => '${t.title.toLowerCase()}_${t.artistName.toLowerCase()}').toSet();
-
-                  final tracksToAdd = currentTracks.where((t) {
-                    final isDupId = targetIds.contains(t.trackId);
-                    final isDupTitle = targetTitles.contains('${t.title.toLowerCase()}_${t.artistName.toLowerCase()}');
-                    return !isDupId && !isDupTitle;
-                  }).toList();
-
-                  final skipped = currentTracks.length - tracksToAdd.length;
-
-                  if (tracksToAdd.isEmpty) {
-                    if (ctx.mounted) Navigator.pop(ctx);
-                    if (context.mounted) {
-                      AppToast.show(context, message: 'Todas las canciones ya estaban en "${target.title}".');
-                    }
-                    return;
-                  }
-
-                  final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                  if (target.remoteId != null) {
-                    try {
-                      await supabaseRepo.addTracksToPlaylist(
-                        target.remoteId!,
-                        tracksToAdd
-                            .map((t) => {
-                                  'track_id': t.trackId,
-                                  'artist_id': t.artistId,
-                                  'album_id': t.albumId,
-                                  'title': t.title,
-                                  'artist_name': t.artistName,
-                                  'album_name': t.albumName,
-                                  'cover_url': t.coverUrl,
-                                  'duration_ms': t.durationMs,
-                                  if (t.genre != null) 'genre': t.genre,
-                                  if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
-                                })
-                            .toList(),
-                      );
-                    } catch (_) {}
-                  }
-
-                  for (final t in tracksToAdd) {
-                    await dao.addTrackToPlaylist(
-                      playlistId: target.id,
-                      trackId: t.trackId,
-                      artistId: t.artistId,
-                      albumId: t.albumId,
-                      title: t.title,
-                      artistName: t.artistName,
-                      albumName: t.albumName,
-                      coverUrl: t.coverUrl,
-                      durationMs: t.durationMs,
-                      contributorsJson: t.contributorsJson,
-                    );
-                  }
-
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (context.mounted) {
-                    AppToast.show(
-                      context,
-                      message: skipped > 0
-                          ? 'Se agregaron ${tracksToAdd.length} canciones a "${target.title}" ($skipped duplicadas omitidas).'
-                          : 'Se agregaron ${tracksToAdd.length} canciones a "${target.title}".',
-                    );
-                  }
-                },
-              );
-            },
-          ),
-        ),
-      ),
+    // Ronda 4: el mismo selector compacto que "Agregar a playlist" de una
+    // sola canción (miniatura, sin descripción).
+    final target = await showPlaylistPickerDialog(
+      context,
+      title: 'Agregar todas a otra playlist',
+      playlists: otherPlaylists,
     );
+    if (target == null) return;
+
+    final targetTracks = await dao.getTracksOrdered(target.id);
+    final targetIds = targetTracks.map((t) => t.trackId).toSet();
+    final targetTitles = targetTracks.map((t) => '${t.title.toLowerCase()}_${t.artistName.toLowerCase()}').toSet();
+
+    final tracksToAdd = currentTracks.where((t) {
+      final isDupId = targetIds.contains(t.trackId);
+      final isDupTitle = targetTitles.contains('${t.title.toLowerCase()}_${t.artistName.toLowerCase()}');
+      return !isDupId && !isDupTitle;
+    }).toList();
+
+    final skipped = currentTracks.length - tracksToAdd.length;
+
+    if (tracksToAdd.isEmpty) {
+      if (context.mounted) {
+        AppToast.show(context, message: 'Todas las canciones ya estaban en "${target.title}".');
+      }
+      return;
+    }
+
+    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+    if (target.remoteId != null) {
+      try {
+        await supabaseRepo.addTracksToPlaylist(
+          target.remoteId!,
+          tracksToAdd
+              .map((t) => {
+                    'track_id': t.trackId,
+                    'artist_id': t.artistId,
+                    'album_id': t.albumId,
+                    'title': t.title,
+                    'artist_name': t.artistName,
+                    'album_name': t.albumName,
+                    'cover_url': t.coverUrl,
+                    'duration_ms': t.durationMs,
+                    if (t.genre != null) 'genre': t.genre,
+                    if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
+                  })
+              .toList(),
+        );
+      } catch (_) {}
+    }
+
+    for (final t in tracksToAdd) {
+      await dao.addTrackToPlaylist(
+        playlistId: target.id,
+        trackId: t.trackId,
+        artistId: t.artistId,
+        albumId: t.albumId,
+        title: t.title,
+        artistName: t.artistName,
+        albumName: t.albumName,
+        coverUrl: t.coverUrl,
+        durationMs: t.durationMs,
+        contributorsJson: t.contributorsJson,
+      );
+    }
+
+    if (context.mounted) {
+      AppToast.show(
+        context,
+        message: skipped > 0
+            ? 'Se agregaron ${tracksToAdd.length} canciones a "${target.title}" ($skipped duplicadas omitidas).'
+            : 'Se agregaron ${tracksToAdd.length} canciones a "${target.title}".',
+      );
+    }
   }
 
   void _deduplicatePlaylistTracks(Playlist playlist, List<PlaylistTrack> tracks) async {
@@ -875,6 +859,30 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Ronda 4: fijar arriba en Biblioteca y en la barra lateral.
+        ListTile(
+          leading: Icon(
+            playlist.isPinned ? AppIcons.bold(SolarIcons.Pin) : AppIcons.broken(SolarIcons.Pin),
+            color: editColor,
+          ),
+          title: Text(
+            playlist.isPinned ? 'Desfijar' : 'Fijar arriba',
+            style: TextStyle(color: editColor, fontWeight: FontWeight.w600),
+          ),
+          enabled: canEdit,
+          subtitle: canEdit ? null : const Text('Sin conexión', style: TextStyle(color: AppTheme.muted, fontSize: 12)),
+          onTap: () async {
+            Navigator.pop(ctx);
+            final ok = await togglePlaylistPin(ref, playlist);
+            if (!mounted) return;
+            AppToast.show(
+              context,
+              message: !ok
+                  ? 'No se pudo guardar el cambio. Revisa tu conexión.'
+                  : (playlist.isPinned ? 'Playlist desfijada' : 'Playlist fijada arriba'),
+            );
+          },
+        ),
         if (canEditPlaylistManually(playlist)) ...[
           ListTile(
             leading: Icon(AppIcons.broken(SolarIcons.Pen), color: editColor),

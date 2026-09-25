@@ -513,6 +513,7 @@ class PlaylistImportExportService {
             description: playlist.description,
             isPublic: playlist.isPublic,
             isLiked: false,
+            isPinned: playlist.isPinned,
           ))['id']
               ?.toString();
         }

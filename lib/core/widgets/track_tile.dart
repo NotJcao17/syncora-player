@@ -25,7 +25,7 @@ import '../../features/search/search_ranking.dart';
 import 'app_bottom_sheet.dart';
 import 'app_toast.dart';
 import 'error_state.dart';
-import 'playlist_cover_widget.dart';
+import 'playlist_picker_dialog.dart';
 import '../../features/library/services/like_track_service.dart';
 import 'track_cover_image.dart';
 
@@ -419,184 +419,141 @@ class TrackContextMenu {
       return;
     }
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Agregar a playlist', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 400),
-          child: SizedBox(
-            width: 300,
-            child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: playlists.length,
-            itemBuilder: (c, i) {
-              final pl = playlists[i];
-              return ListTile(
-                leading: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: PlaylistCoverWidget(
-                    playlistId: pl.id,
-                    coverUrl: pl.coverUrl,
-                    isLiked: pl.isLiked,
-                    isGenerated: pl.isGenerated,
-                    width: 36,
-                    height: 36,
-                    // Sin esto, `PlaylistCoverWidget` cae en su propio radio
-                    // por defecto (16, pensado para portadas grandes) que en
-                    // un thumbnail de 36px domina sobre el `ClipRRect(6)` de
-                    // afuera y termina viéndose circular.
-                    borderRadius: BorderRadius.circular(6),
-                    memCacheWidth: 80,
-                    memCacheHeight: 80,
-                  ),
-                ),
-                title: Text(pl.title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-                onTap: () async {
-                  final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
-                  final existingTracks = await dao.getTracksOrdered(pl.id);
-                  final isDuplicate = existingTracks.any((t) =>
-                      t.trackId == trackIdInt ||
-                      (t.title.trim().toLowerCase() == track.title.trim().toLowerCase() &&
-                          t.artistName.trim().toLowerCase() == track.artist.trim().toLowerCase()));
+    // Ronda 4: selector compartido con "Agregar todas a otra playlist".
+    final pl = await showPlaylistPickerDialog(context, title: 'Agregar a playlist', playlists: playlists);
+    if (pl == null || !context.mounted) return;
 
-                  if (isDuplicate) {
-                    if (!context.mounted) return;
-                    final addAnyway = await showDialog<bool>(
-                      context: context,
-                      builder: (confirmCtx) => AlertDialog(
-                        backgroundColor: AppTheme.surface,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        title: const Text('Canción ya agregada', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-                        content: Text('Esta canción ya está en "${pl.title}". ¿Deseas agregarla de todos modos?', style: const TextStyle(color: AppTheme.secondary)),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(confirmCtx, false),
-                            child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondary)),
-                          ),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primary,
-                              foregroundColor: AppTheme.background,
-                            ),
-                            onPressed: () => Navigator.pop(confirmCtx, true),
-                            child: const Text('Agregar de todos modos', style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                    );
+    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
+    final existingTracks = await dao.getTracksOrdered(pl.id);
+    final isDuplicate = existingTracks.any((t) =>
+        t.trackId == trackIdInt ||
+        (t.title.trim().toLowerCase() == track.title.trim().toLowerCase() &&
+            t.artistName.trim().toLowerCase() == track.artist.trim().toLowerCase()));
 
-                    if (addAnyway != true) {
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      return;
-                    }
-                  }
-
-                  var remoteId = pl.remoteId;
-                  final wasLocalOnly = remoteId == null;
-                  final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                  if (remoteId == null) {
-                    try {
-                      final created = pl.isLiked
-                          ? await supabaseRepo.getOrCreateLikedPlaylist()
-                          : await supabaseRepo.createPlaylist(
-                              title: pl.title,
-                              description: pl.description,
-                              isPublic: pl.isPublic,
-                              isLiked: pl.isLiked,
-                            );
-                      remoteId = created['id']?.toString();
-                    } catch (_) {}
-                  }
-
-                  var existingTracksUploadOk = true;
-                  if (wasLocalOnly && remoteId != null) {
-                    try {
-                      final currentTracks = await dao.getTracksOrdered(pl.id);
-                      if (currentTracks.isNotEmpty) {
-                        await supabaseRepo.addTracksToPlaylist(
-                          remoteId,
-                          currentTracks
-                              .map((t) => {
-                                    'track_id': t.trackId,
-                                    'artist_id': t.artistId,
-                                    'album_id': t.albumId,
-                                    'title': t.title,
-                                    'artist_name': t.artistName,
-                                    'album_name': t.albumName,
-                                    'cover_url': t.coverUrl,
-                                    'duration_ms': t.durationMs,
-                                    if (t.genre != null) 'genre': t.genre,
-                                    if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
-                                  })
-                              .toList(),
-                        );
-                      }
-                    } catch (_) {
-                      existingTracksUploadOk = false;
-                    }
-                  }
-
-                  final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), track);
-
-                  if (remoteId != null) {
-                    try {
-                      await supabaseRepo.addTrackToPlaylist(remoteId, {
-                        'track_id': trackIdInt,
-                        'artist_id': track.artistId ?? 0,
-                        'album_id': track.albumId ?? 0,
-                        'title': track.title,
-                        'artist_name': track.artist,
-                        'album_name': track.album ?? '',
-                        'cover_url': track.coverUrl,
-                        'duration_ms': (track.duration ?? Duration.zero).inMilliseconds,
-                        'genre': track.genre,
-                        if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
-                      });
-                    } catch (_) {
-                      if (context.mounted) {
-                        AppToast.show(context, message: 'La playlist ya no existe en la nube');
-                      }
-                      if (!pl.isLiked) {
-                        await dao.deletePlaylist(pl.id);
-                      }
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      return;
-                    }
-
-                    if (wasLocalOnly && existingTracksUploadOk) {
-                      try {
-                        await dao.updatePlaylist(pl.copyWith(remoteId: Value(remoteId)));
-                      } catch (_) {}
-                    }
-                  }
-
-                  await dao.addTrackToPlaylist(
-                    playlistId: pl.id,
-                    trackId: trackIdInt,
-                    artistId: track.artistId ?? 0,
-                    albumId: track.albumId ?? 0,
-                    title: track.title,
-                    artistName: track.artist,
-                    albumName: track.album ?? '',
-                    coverUrl: track.coverUrl,
-                    durationMs: (track.duration ?? Duration.zero).inMilliseconds,
-                    contributorsJson: SyncoraArtistRef.encodeList(contributors),
-                  );
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (context.mounted) {
-                    AppToast.show(context, message: 'Agregada a "${pl.title}"');
-                  }
-                },
-              );
-            },
+    if (isDuplicate) {
+      if (!context.mounted) return;
+      final addAnyway = await showDialog<bool>(
+        context: context,
+        builder: (confirmCtx) => AlertDialog(
+          backgroundColor: AppTheme.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Canción ya agregada', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+          content: Text('Esta canción ya está en "${pl.title}". ¿Deseas agregarla de todos modos?', style: const TextStyle(color: AppTheme.secondary)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(confirmCtx, false),
+              child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondary)),
             ),
-          ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: AppTheme.background,
+              ),
+              onPressed: () => Navigator.pop(confirmCtx, true),
+              child: const Text('Agregar de todos modos', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
         ),
-      ),
+      );
+
+      if (addAnyway != true) {
+        return;
+      }
+    }
+
+    var remoteId = pl.remoteId;
+    final wasLocalOnly = remoteId == null;
+    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+    if (remoteId == null) {
+      try {
+        final created = pl.isLiked
+            ? await supabaseRepo.getOrCreateLikedPlaylist()
+            : await supabaseRepo.createPlaylist(
+                title: pl.title,
+                description: pl.description,
+                isPublic: pl.isPublic,
+                isLiked: pl.isLiked,
+              );
+        remoteId = created['id']?.toString();
+      } catch (_) {}
+    }
+
+    var existingTracksUploadOk = true;
+    if (wasLocalOnly && remoteId != null) {
+      try {
+        final currentTracks = await dao.getTracksOrdered(pl.id);
+        if (currentTracks.isNotEmpty) {
+          await supabaseRepo.addTracksToPlaylist(
+            remoteId,
+            currentTracks
+                .map((t) => {
+                      'track_id': t.trackId,
+                      'artist_id': t.artistId,
+                      'album_id': t.albumId,
+                      'title': t.title,
+                      'artist_name': t.artistName,
+                      'album_name': t.albumName,
+                      'cover_url': t.coverUrl,
+                      'duration_ms': t.durationMs,
+                      if (t.genre != null) 'genre': t.genre,
+                      if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
+                    })
+                .toList(),
+          );
+        }
+      } catch (_) {
+        existingTracksUploadOk = false;
+      }
+    }
+
+    final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), track);
+
+    if (remoteId != null) {
+      try {
+        await supabaseRepo.addTrackToPlaylist(remoteId, {
+          'track_id': trackIdInt,
+          'artist_id': track.artistId ?? 0,
+          'album_id': track.albumId ?? 0,
+          'title': track.title,
+          'artist_name': track.artist,
+          'album_name': track.album ?? '',
+          'cover_url': track.coverUrl,
+          'duration_ms': (track.duration ?? Duration.zero).inMilliseconds,
+          'genre': track.genre,
+          if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
+        });
+      } catch (_) {
+        if (context.mounted) {
+          AppToast.show(context, message: 'La playlist ya no existe en la nube');
+        }
+        if (!pl.isLiked) {
+          await dao.deletePlaylist(pl.id);
+        }
+        return;
+      }
+
+      if (wasLocalOnly && existingTracksUploadOk) {
+        try {
+          await dao.updatePlaylist(pl.copyWith(remoteId: Value(remoteId)));
+        } catch (_) {}
+      }
+    }
+
+    await dao.addTrackToPlaylist(
+      playlistId: pl.id,
+      trackId: trackIdInt,
+      artistId: track.artistId ?? 0,
+      albumId: track.albumId ?? 0,
+      title: track.title,
+      artistName: track.artist,
+      albumName: track.album ?? '',
+      coverUrl: track.coverUrl,
+      durationMs: (track.duration ?? Duration.zero).inMilliseconds,
+      contributorsJson: SyncoraArtistRef.encodeList(contributors),
     );
+    if (context.mounted) {
+      AppToast.show(context, message: 'Agregada a "${pl.title}"');
+    }
   }
 
   static void showOtherVersionsModal(BuildContext context, SyncoraTrack track) {

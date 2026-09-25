@@ -61,9 +61,8 @@ final onRepeatPlaylistProvider = FutureProvider<Playlist?>((ref) async {
         description: 'Lo que más repetiste este mes. Se actualiza sola cada semana.',
         sourceRef: periodRef,
         isGenerated: true,
-        // Fijada como "Tus me gusta": es una playlist del sistema, y si
-        // quedara mezclada con las del usuario habría que ir a buscarla.
-        isPinned: true,
+        // Ronda 4: ya no nace fijada. Se ordena como cualquier otra playlist
+        // y el usuario la fija si quiere tenerla arriba.
       );
 
   await dao.replaceTracks(playlistId, tracks.map(_toCompanion).toList());

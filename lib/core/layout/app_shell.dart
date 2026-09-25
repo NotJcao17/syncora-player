@@ -22,6 +22,7 @@ import '../../features/auth/local_mode_provider.dart';
 import '../../features/download/download_provider.dart';
 import '../../features/stats/genre_backfill_service.dart';
 import '../../features/home/mixes/on_repeat_service.dart';
+import '../../features/library/library_view_settings.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
 import '../../features/player/syncora_player_controller.dart';
@@ -509,7 +510,14 @@ class _AppShellState extends ConsumerState<AppShell> {
                                 return StreamBuilder<List<Playlist>>(
                                   stream: playlistDao.watchAllPlaylists(),
                                   builder: (ctx, snapshot) {
-                                    final playlists = snapshot.data ?? [];
+                                    // Ronda 4: mismo orden que Biblioteca
+                                    // (fijadas primero, luego el criterio
+                                    // elegido allí), en vez del orden crudo
+                                    // de la tabla.
+                                    final playlists = sortPlaylists(
+                                      snapshot.data ?? const <Playlist>[],
+                                      ref.watch(librarySortProvider),
+                                    );
                                     if (playlists.isEmpty) {
                                       return const Center(
                                         child: Text(
@@ -532,7 +540,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                                         return _DesktopPlaylistItem(
                                           playlistId: pl.id,
                                           title: pl.title,
-                                          subtitle: pl.isLiked ? 'Playlist especial' : (pl.description ?? 'Playlist'),
+                                          // Ronda 4: sin la descripción, que
+                                          // en la barra lateral era ruido.
+                                          subtitle: pl.isPinned ? 'Fijada' : 'Playlist',
                                           coverUrl: pl.coverUrl ?? '',
                                           isLiked: pl.isLiked,
                                           isGenerated: pl.isGenerated,

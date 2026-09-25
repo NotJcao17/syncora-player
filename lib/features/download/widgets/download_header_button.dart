@@ -79,20 +79,47 @@ class _DownloadHeaderButtonState extends ConsumerState<DownloadHeaderButton> {
         );
         break;
       case DownloadButtonState.partial:
-        iconWidget = Badge(
-          label: Text(
-            '$downloadedCount/$totalCount',
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          backgroundColor: const Color(0xFFF59E0B),
-          child: Icon(
-            AppIcons.broken(SolarIcons.CloudDownload),
-            color: AppTheme.primary,
-            size: 22,
+        // Ronda 4: el `Badge` de Material crece hacia la derecha desde la
+        // esquina, así que "35/39" ya se metía debajo del botón de al lado y
+        // "900/1000" no cabía. Ahora la etiqueta va centrada sobre el ícono,
+        // dentro del área del propio botón, y a partir de 100 canciones se
+        // muestra como porcentaje para no pasar de 4 caracteres.
+        final label = totalCount >= 100
+            ? '${(downloadedCount * 100 / totalCount).floor()}%'
+            : '$downloadedCount/$totalCount';
+        iconWidget = SizedBox(
+          width: 34,
+          height: 30,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                AppIcons.broken(SolarIcons.CloudDownload),
+                color: AppTheme.primary,
+                size: 22,
+              ),
+              Positioned(
+                bottom: -4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      height: 1.1,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         );
         break;

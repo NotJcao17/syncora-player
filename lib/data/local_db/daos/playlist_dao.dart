@@ -81,7 +81,6 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
         title: 'Tus me gusta',
         description: const Value('Pistas que te han gustado'),
         isLiked: const Value(true),
-        isPinned: const Value(true),
         orderIndex: const Value(-1),
       ),
     );
@@ -175,6 +174,28 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
             ..where((t) => t.playlistId.equals(playlistId))
             ..orderBy([(t) => OrderingTerm(expression: t.orderIndex, mode: OrderingMode.asc)]))
           .watch();
+
+  /// Ids de pista que están en "Tus me gusta" (ronda 4). Reactivo: cualquier
+  /// camino que dé "me gusta" (pantalla de bloqueo, barra de tareas, menú)
+  /// se refleja en todas las pantallas que lo observan.
+  Stream<Set<int>> watchLikedTrackIds() {
+    return customSelect(
+      'SELECT pt.track_id AS track_id FROM playlist_tracks pt '
+      'JOIN playlists p ON p.id = pt.playlist_id WHERE p.is_liked = 1',
+      readsFrom: {playlistTracks, playlists},
+    ).watch().map((rows) => rows.map((r) => r.read<int>('track_id')).toSet());
+  }
+
+  /// Ids de pista presentes en al menos una playlist del usuario, incluida
+  /// "Tus me gusta" (ronda 4). Excluye las que mantiene la app ("On Repeat"):
+  /// estar ahí no significa que el usuario la haya guardado.
+  Stream<Set<int>> watchLibraryTrackIds() {
+    return customSelect(
+      'SELECT DISTINCT pt.track_id AS track_id FROM playlist_tracks pt '
+      'JOIN playlists p ON p.id = pt.playlist_id WHERE p.is_generated = 0',
+      readsFrom: {playlistTracks, playlists},
+    ).watch().map((rows) => rows.map((r) => r.read<int>('track_id')).toSet());
+  }
 
   Future<int> addTrackToPlaylist({
     required int playlistId,
