@@ -407,6 +407,14 @@ class ExtractionIsolate {
 
         final normPrimaryArtist = YtSearchMatcher.norm(primaryArtist);
 
+        // Búsquedas que YouTube llegó a contestar (aunque fuera con cero
+        // resultados). `null` en `_trySearchWithClient` es timeout o error:
+        // si ninguna contestó, no sabemos si la canción existe, y devolver
+        // `notFound` la saltaría y la marcaría "no disponible" el resto de la
+        // sesión por un problema de red (visto al arrancar la app en Android,
+        // con DNS todavía sin resolver).
+        var answeredSearches = 0;
+
         for (final attempt in attempts) {
           final query = attempt.$1;
           final client = attempt.$2;
@@ -420,6 +428,7 @@ class ExtractionIsolate {
             jsRuntime: jsRuntime,
             sendLog: sendLog,
           );
+          if (candidates != null) answeredSearches++;
           if (candidates == null || candidates.isEmpty) {
             sendLog('[IsolateJS] Búsqueda sin candidatos en $sourceLabel.');
             continue;
@@ -527,6 +536,18 @@ class ExtractionIsolate {
             return result;
           }
           sendLog('[IsolateJS] Candidato ${candidate.videoId} no disponible, probando el siguiente...');
+        }
+
+        if (topCandidates.isEmpty && answeredSearches == 0) {
+          sendLog(
+            '[IsolateJS] Ninguna búsqueda obtuvo respuesta para "$rawArtist - $rawTitle" '
+            '(${attempts.length} intentos). Se trata como error de red, no como "no encontrada".',
+          );
+          return ExtractionFailure(
+            requestId: request.requestId,
+            error: ExtractionError.networkError,
+            message: 'No se pudo conectar con YouTube. Revisa tu conexión.',
+          );
         }
 
         if (topCandidates.isEmpty) {

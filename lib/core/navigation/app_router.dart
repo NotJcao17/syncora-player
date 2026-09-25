@@ -36,6 +36,10 @@ class GoRouterRefreshStream extends ChangeNotifier {
     notifyListeners();
     _subscription = stream.asBroadcastStream().listen(
           (dynamic _) => notifyListeners(),
+          // Supabase emite por este stream los fallos de renovación del token
+          // (ej. sin DNS al arrancar). Al router no le importan: sin este
+          // `onError` quedaban como "Unhandled Exception" en cada reintento.
+          onError: (Object _) {},
         );
   }
 
