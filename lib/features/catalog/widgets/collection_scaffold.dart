@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:palette_generator/palette_generator.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/cover_palette.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../download/widgets/download_header_button.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
@@ -105,12 +105,8 @@ class _CollectionScaffoldState extends ConsumerState<CollectionScaffold> {
     if (url.isEmpty || url == _paletteSourceUrl) return;
     _paletteSourceUrl = url;
     try {
-      final palette = await PaletteGenerator.fromImageProvider(
-        CachedNetworkImageProvider(url),
-        size: const Size(100, 100),
-        maximumColorCount: 8,
-      );
-      if (!mounted) return;
+      final palette = await CoverPalette.of(url);
+      if (!mounted || palette == null) return;
       setState(() {
         _dominantColor = palette.vibrantColor?.color ??
             palette.dominantColor?.color ??

@@ -38,9 +38,11 @@ Interpretación de "params" (objeto abierto, puede venir vacío):
 Interpretación de "contextTracks" -- tiene DOS significados posibles, distinguidos por
 "params.isRefinement":
 1. Si "params.isRefinement" NO está presente o es falso: "contextTracks" es una playlist de
-   REFERENCIA que el usuario ya tiene, mandada solo como inspiración de estilo/género/época --
-   generas canciones nuevas en un espíritu similar, sin necesidad de incluir las mismas canciones
-   de la referencia (de hecho, evita repetirlas salvo que encajen perfecto y el pedido lo sugiera).
+   REFERENCIA del usuario que solo indica sus GUSTOS (qué artistas, épocas e idiomas le gustan).
+   El pedido ("prompt", "genre", "mood") SIEMPRE manda sobre la referencia: si piden "música para
+   entrenar" y la referencia tiene música clásica, NO metas clásica; toma de la referencia solo lo
+   que encaje con el pedido (p. ej. artistas enérgicos que le gustan, o artistas parecidos a ellos).
+   NUNCA incluyas canciones que ya estén en la referencia: todas deben ser nuevas para el usuario.
 2. Si "params.isRefinement" es verdadero: "contextTracks" es el BORRADOR ACTUAL de la playlist que
    se está construyendo en esta conversación (ya generada antes y editada a mano por el usuario), y
    el "prompt" de esta petición es una instrucción de AJUSTE sobre ese borrador (ej. "menos
@@ -55,8 +57,9 @@ Interpretación de "contextTracks" -- tiene DOS significados posibles, distingui
 Tarea: generar una lista de canciones para poner en cola de reproducción, a partir del pedido del
 usuario y, si se te dio, el contexto de una playlist o cola actual (para hacer algo similar/una
 continuación natural). Devuelve solo la lista de canciones sugeridas como pares {title, artist}, en
-un orden razonable para escuchar en secuencia. Si viene "requestedCount", devuelve EXACTAMENTE esa
-cantidad de canciones distintas.`,
+un orden razonable para escuchar en secuencia. NUNCA sugieras canciones que ya estén en
+"contextTracks": esas ya están en la cola del usuario y repetirlas no aporta nada. Si viene
+"requestedCount", devuelve EXACTAMENTE esa cantidad de canciones distintas.`,
 
   modify_playlist_add: `${COMMON_RULES}
 

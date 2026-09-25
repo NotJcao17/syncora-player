@@ -175,6 +175,39 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
             ..orderBy([(t) => OrderingTerm(expression: t.orderIndex, mode: OrderingMode.asc)]))
           .watch();
 
+  /// Una fila por portada distinta de la biblioteca, con una pista de
+  /// ejemplo (ronda 4, reparador de portadas).
+  Future<List<({int trackId, String title, String artistName, String coverUrl})>> distinctCovers() async {
+    final rows = await customSelect(
+      'SELECT MIN(track_id) AS track_id, title, artist_name, cover_url FROM playlist_tracks GROUP BY cover_url',
+      readsFrom: {playlistTracks},
+    ).get();
+    return [
+      for (final r in rows)
+        (
+          trackId: r.read<int>('track_id'),
+          title: r.read<String>('title'),
+          artistName: r.read<String>('artist_name'),
+          coverUrl: r.read<String>('cover_url'),
+        ),
+    ];
+  }
+
+  /// Sustituye la portada [oldUrl] en todas las filas que la usan.
+  Future<void> replaceCoverUrl(String oldUrl, String newUrl) async {
+    await (update(playlistTracks)..where((t) => t.coverUrl.equals(oldUrl)))
+        .write(PlaylistTracksCompanion(coverUrl: Value(newUrl)));
+  }
+
+  /// Playlists (ids locales) que ya contienen [trackId] (ronda 4).
+  Future<Set<int>> playlistIdsContaining(int trackId) async {
+    final rows = await (selectOnly(playlistTracks, distinct: true)
+          ..addColumns([playlistTracks.playlistId])
+          ..where(playlistTracks.trackId.equals(trackId)))
+        .get();
+    return rows.map((r) => r.read(playlistTracks.playlistId)!).toSet();
+  }
+
   /// Ids de pista que están en "Tus me gusta" (ronda 4). Reactivo: cualquier
   /// camino que dé "me gusta" (pantalla de bloqueo, barra de tareas, menú)
   /// se refleja en todas las pantallas que lo observan.

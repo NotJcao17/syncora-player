@@ -1,13 +1,13 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../../../core/theme/app_icons.dart';
-import 'package:palette_generator/palette_generator.dart';
 
 import '../../../core/layout/bottom_chrome_metrics.dart';
+import '../../../core/navigation/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/cover_palette.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/marquee_text.dart';
 import '../../../core/widgets/track_tile.dart' show TrackContextMenu;
@@ -63,14 +63,9 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     }
 
     try {
-      final palette = await PaletteGenerator.fromImageProvider(
-        // Reusa la copia ya cacheada en disco en vez de descargar la portada
-        // una segunda vez solo para sacarle el color.
-        CachedNetworkImageProvider(track.coverUrl),
-        maximumColorCount: 8,
-      );
+      final palette = await CoverPalette.of(track.coverUrl);
       if (!mounted || _paletteTrackId != track.id) return;
-      setState(() => _dominantColor = palette.dominantColor?.color);
+      setState(() => _dominantColor = palette?.dominantColor?.color);
     } catch (_) {
       if (!mounted || _paletteTrackId != track.id) return;
       setState(() => _dominantColor = null);
@@ -93,60 +88,9 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     }
   }
 
-  /// Artistas navegables de [track]: los colaboradores con id real, o el
-  /// artista principal si no hay lista de colaboradores.
-  List<SyncoraArtistRef> _navigableArtists(SyncoraTrack track) {
-    final withId = track.artists.where((a) => a.id != 0).toList();
-    if (withId.isNotEmpty) return withId;
-    final mainId = track.artistId ?? 0;
-    if (mainId == 0) return const [];
-    return [SyncoraArtistRef(id: mainId, name: track.artist)];
-  }
-
-  Future<void> _openArtist(BuildContext context, SyncoraTrack track) async {
-    final artists = _navigableArtists(track);
-    if (artists.isEmpty) return;
-    var target = artists.first;
-    if (artists.length > 1) {
-      final picked = await showModalBottomSheet<SyncoraArtistRef>(
-        context: context,
-        backgroundColor: AppTheme.surface,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (ctx) => SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Ir al artista',
-                      style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
-                ),
-              ),
-              for (final a in artists)
-                ListTile(
-                  leading: Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.secondary),
-                  title: Text(a.name, style: const TextStyle(color: AppTheme.primary)),
-                  onTap: () => Navigator.pop(ctx, a),
-                ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      );
-      if (picked == null) return;
-      target = picked;
-    }
-    if (!context.mounted) return;
-    // Se cierra el reproductor antes de navegar: si no, la pantalla del
-    // artista quedaría debajo de él.
-    final router = GoRouter.of(context);
-    if (router.canPop()) router.pop();
-    router.push('/artist/${target.id}');
-  }
+  /// Ronda 4: mismo helper que el menú de 3 puntos (elige entre varios
+  /// artistas y cierra el reproductor antes de navegar).
+  Future<void> _openArtist(BuildContext context, SyncoraTrack track) => goToTrackArtist(context, track);
 
   void _showLyricsSheet(BuildContext context, SyncoraTrack track) {
     showModalBottomSheet(
@@ -574,15 +518,6 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
       track,
       onAddToQueue: () =>
           ref.read(syncoraPlayerControllerProvider.notifier).addToQueue(track),
-      // Ronda 3 bis: ir al artista/álbum desde aquí dejaba el reproductor a
-      // pantalla completa debajo en la pila, y como esas pantallas viven
-      // dentro del shell, el shell acababa apilado dos veces. Cerrarlo antes
-      // deja una pila coherente, y además es lo que espera el usuario:
-      // navegar a la ficha del artista no es "abrir algo encima del
-      // reproductor", es salir de él.
-      onNavigateAway: () {
-        if (context.mounted && Navigator.of(context).canPop()) context.pop();
-      },
       onSleepTimer: () {
         if (context.mounted) showSleepTimerPicker(context);
       },

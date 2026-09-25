@@ -117,3 +117,42 @@ Hecho por el agente el 2026-09-25: migración `20250001000018_delete_my_account.
 `supabase functions deploy ai-assistant --use-api` (verificado: arranca y responde `unauthorized` sin
 sesión). El camino con búsqueda de Google no se pudo ejecutar sin un JWT de usuario: queda para la
 prueba en dispositivo. Si ese intento falla por cualquier motivo, la función repite sin búsqueda.
+
+## Segunda tanda (tras la primera prueba en dispositivo)
+
+- **H-R4-14. 1-2 canciones "no encontradas" siempre, fueran 10 o 600.** Los colaboradores separados
+  por coma ("Rihanna, Calvin Harris"; así los manda la IA y algunos exportadores) no coincidían con
+  ningún artista: solo se partía por ";". Ahora se parte por `; , & feat. x y with and` y se conserva
+  el nombre completo para dúos ("Jesse & Joy").
+- **H-R4-15. Una canción de la mitad "colada" al principio de la importación.** El sync de la
+  playlist (se dispara al abrirla, justo después de empezar a importar) insertaba por su cuenta las
+  pistas que la importación acababa de subir, y ambas escrituras se pisaban. `SyncLocks` hace que el
+  sync se salte una playlist mientras se importa. Además las filas remotas se guardaban todas con
+  `order_index = 0` (orden arbitrario en otro dispositivo); ahora llevan su posición real.
+- **Deezer, sintaxis avanzada:** confirmado externamente. SoulSync #1295 (abierto el 2026-09-23)
+  reporta lo mismo: `artist:"X" track:"Y"` devuelve 0 sin error. La forma mixta
+  `X track:"Y"` sí funciona y además devuelve artistas ocultos de la búsqueda normal (Adele), así que
+  sustituye al tier roto en `ExactTrackSearch` y se usa como segunda consulta en
+  `ImportTrackMatcher`. La pestaña "Exacta" de Búsqueda profunda pide también el matcher y ordena:
+  su mejor coincidencia, luego el mismo artista, luego el resto.
+- **H-R4-16. Portadas caídas.** Deezer da de baja versiones (`readable: false`) y su portada redirige
+  a una imagen vacía (`…/cover/d41d8cd98f00b204e9800998ecf8427e/…`). `CoverRepairService` revisa una
+  vez por semana cada portada distinta de la biblioteca con un `HEAD` al CDN y sustituye las caídas
+  por la de la misma canción (vía `ImportTrackMatcher`), en local y en Supabase.
+- **H-R4-17. Crash "keyReservation" al ir al artista desde la cola.** `context.push` de una ruta del
+  shell con la hoja de cola y el reproductor a pantalla completa (ruta raíz) encima dejaba la página
+  del shell dos veces en el `Navigator`. `navigateSafely` cierra lo de encima antes de navegar; "Ir
+  al artista" deja elegir si hay varios.
+- **IA:** intercalado fijo 2:1 desde el principio de la cola (decisión del usuario; el adaptativo
+  de H-8 diluía 25 sugerencias en 600 pistas). "Mejorar cola" descarta lo que ya está en la cola o
+  en la playlist y hace una ronda de relleno. "Modificar playlist → agregar" descarta lo que la
+  playlist ya tiene. "Basado en una playlist" ya no copia canciones de la referencia y el pedido
+  manda sobre ella. Guardar una playlist de IA resuelve colaboradores en paralelo e inserta en lote.
+- **Rendimiento:** la paleta de color se calcula sobre la portada a 64x64 desde la caché y se
+  memoriza (antes, portada completa en el hilo de la UI al abrir cada playlist/álbum/reproductor);
+  el teclado solo desplaza la hoja de arriba.
+- **Cola completa vs. por bloques:** se mantiene la cola automática completa (600 pistas en
+  aleatorio). Paginarla de 50 en 50 tocaría las invariantes de la cola dual (D-1, regenerar,
+  aleatorio) sin ganancia real: la lista ya se construye de forma perezosa. Las sugerencias de IA
+  viven en la cola automática, que se guarda con la sesión, así que sobreviven a reiniciar la app;
+  regenerar la cola o cambiar el aleatorio sí las descarta.

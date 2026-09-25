@@ -59,7 +59,17 @@ class ImportTrackMatcher {
     }
 
     final trackResults = await _safeSearch('$primary ${cleanQueryTitle(title)}', DeezerSearchType.track);
-    final fromSearch = _best(trackResults, raw);
+    var fromSearch = _best(trackResults, raw);
+    // Sintaxis mixta `Artista track:"Título"`: la que sigue funcionando tras
+    // el cambio de Deezer (el reporte de SoulSync #1295 la propone) y, a
+    // diferencia del texto plano, sí devuelve artistas que Deezer esconde de
+    // la búsqueda normal (Adele). Solo se gasta si la primera no bastó.
+    if (fromSearch == null || !fromSearch.exactTitle) {
+      final quoted = cleanQueryTitle(title).replaceAll('"', '');
+      final mixed = await _safeSearch('$primary track:"$quoted"', DeezerSearchType.track);
+      final alt = _best(mixed, raw);
+      if (alt != null && (fromSearch == null || alt.score > fromSearch.score)) fromSearch = alt;
+    }
     if (fromSearch != null && fromSearch.albumMatches && fromSearch.exactTitle) return fromSearch.track;
 
     final album = raw.album?.trim() ?? '';
@@ -321,13 +331,30 @@ class ImportTrackMatcher {
     return n;
   }
 
-  /// Artistas de la fila. Spotify los separa con ";".
+  /// Separadores de colaboradores: ";" (Spotify/Exportify), "," (otros
+  /// exportadores y la IA), "&", "feat.", "x", "y", "with".
+  static final _artistSplit = RegExp(
+    r'\s*(?:;|,|&|\bfeat\.?|\bft\.?|\bfeaturing\b|\bwith\b|\sx\s|\sy\s|\sand\s)\s*',
+    caseSensitive: false,
+  );
+
+  /// Artistas de la fila: el nombre completo y cada colaborador por separado.
+  ///
+  /// Ronda 4: antes solo se partía por ";", así que "Rihanna, Calvin Harris"
+  /// (formato de la IA y de algunos exportadores) no coincidía con nadie y la
+  /// fila quedaba "no encontrada" — el 1-2 fallos constantes por importación.
+  /// El nombre completo se conserva para dúos con separador en el nombre
+  /// ("Jesse & Joy", "Wisin y Yandel", "Tyler, The Creator").
   static Set<String> artistKeys(String artist) {
-    final parts = artist.split(';').map((a) => a.trim()).where((a) => a.isNotEmpty);
-    return {for (final p in parts) normalizeName(p)}..remove('');
+    final keys = <String>{normalizeName(artist)};
+    for (final part in artist.split(_artistSplit)) {
+      if (part.trim().isNotEmpty) keys.add(normalizeName(part));
+    }
+    return keys..remove('');
   }
 
-  static String primaryArtistName(String artist) => artist.split(';').first.trim();
+  /// Artista principal para la consulta: el primero antes de ";" o ",".
+  static String primaryArtistName(String artist) => artist.split(RegExp(r'[;,]')).first.trim();
 
   /// Título apto para la consulta: sin "feat." (Deezer indexa sin él).
   static String cleanQueryTitle(String title) =>

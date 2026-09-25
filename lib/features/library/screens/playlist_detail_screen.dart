@@ -8,13 +8,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:palette_generator/palette_generator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/cover_palette.dart';
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/utils/contributor_resolver.dart';
 import '../../../core/utils/share_link_builder.dart';
@@ -163,21 +163,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     _extractedCoverUrl = coverUrl;
 
     try {
-      PaletteGenerator palette;
-      if (coverUrl.startsWith('file://') || coverUrl.startsWith('/')) {
-        final file = File(coverUrl.replaceFirst('file://', ''));
-        if (!await file.exists()) return;
-        palette = await PaletteGenerator.fromImageProvider(
-          FileImage(file),
-          maximumColorCount: 8,
-        );
-      } else {
-        palette = await PaletteGenerator.fromImageProvider(
-          NetworkImage(coverUrl),
-          maximumColorCount: 8,
-        );
-      }
-      final color = palette.darkVibrantColor?.color ?? palette.dominantColor?.color;
+      final palette = await CoverPalette.of(coverUrl);
+      final color = palette?.darkVibrantColor?.color ?? palette?.dominantColor?.color;
       if (mounted && color != null && _dominantColor != color) {
         setState(() {
           _dominantColor = color;

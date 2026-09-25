@@ -339,35 +339,14 @@ class PlaylistImportExportService {
       remotePlaylistId = created['id']?.toString();
     } catch (_) {}
 
-    final remoteTracksPayload = <Map<String, dynamic>>[];
-    for (final track in matchedTracks) {
-      final contributors = await resolveDeezerTrackContributors(deezerApi, track);
-      await dao.addTrackToPlaylist(
-        playlistId: playlistId,
-        trackId: track.id,
-        artistId: track.artistId,
-        albumId: track.albumId,
-        title: track.title,
-        artistName: track.artistName,
-        albumName: track.albumTitle,
-        coverUrl: track.coverUrl,
-        durationMs: track.durationSec * 1000,
-        contributorsJson: SyncoraArtistRef.encodeList(contributors),
-      );
-      if (remotePlaylistId != null) {
-        remoteTracksPayload.add({
-          'track_id': track.id,
-          'artist_id': track.artistId,
-          'album_id': track.albumId,
-          'title': track.title,
-          'artist_name': track.artistName,
-          'album_name': track.albumTitle,
-          'cover_url': track.coverUrl,
-          'duration_ms': track.durationSec * 1000,
-          if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
-        });
-      }
-    }
+    // Ronda 4: colaboradores en paralelo (el `RateLimiter` de Deezer ya
+    // acota el ritmo) y una sola inserción en lote, en vez de una petición y
+    // una escritura por pista en serie. Guardar 100 canciones de la IA pasa
+    // de ~1 min a unos segundos.
+    final contributors = await _resolveContributorsAll(deezerApi, matchedTracks);
+    await dao.appendTracksBatch(playlistId, _companions(playlistId, matchedTracks, contributors));
+    final remoteTracksPayload =
+        remotePlaylistId == null ? const <Map<String, dynamic>>[] : _remotePayload(matchedTracks, contributors, 0);
 
     if (remotePlaylistId != null && remoteTracksPayload.isNotEmpty) {
       try {
@@ -385,6 +364,63 @@ class PlaylistImportExportService {
     return playlistId;
   }
 
+  static Future<List<List<SyncoraArtistRef>>> _resolveContributorsAll(
+    DeezerApi deezerApi,
+    List<DeezerTrack> tracks,
+  ) {
+    return Future.wait(tracks.map((t) async {
+      try {
+        return await resolveDeezerTrackContributors(deezerApi, t);
+      } catch (_) {
+        return t.contributorsList;
+      }
+    }));
+  }
+
+  static List<PlaylistTracksCompanion> _companions(
+    int playlistId,
+    List<DeezerTrack> tracks,
+    List<List<SyncoraArtistRef>> contributors,
+  ) {
+    return [
+      for (var i = 0; i < tracks.length; i++)
+        PlaylistTracksCompanion.insert(
+          playlistId: playlistId,
+          trackId: tracks[i].id,
+          artistId: tracks[i].artistId,
+          albumId: tracks[i].albumId,
+          title: tracks[i].title,
+          artistName: tracks[i].artistName,
+          albumName: tracks[i].albumTitle,
+          coverUrl: tracks[i].coverUrl,
+          durationMs: tracks[i].durationSec * 1000,
+          contributorsJson: Value(SyncoraArtistRef.encodeList(contributors[i])),
+        ),
+    ];
+  }
+
+  static List<Map<String, dynamic>> _remotePayload(
+    List<DeezerTrack> tracks,
+    List<List<SyncoraArtistRef>> contributors,
+    int orderOffset,
+  ) {
+    return [
+      for (var i = 0; i < tracks.length; i++)
+        {
+          'track_id': tracks[i].id,
+          'artist_id': tracks[i].artistId,
+          'album_id': tracks[i].albumId,
+          'title': tracks[i].title,
+          'artist_name': tracks[i].artistName,
+          'album_name': tracks[i].albumTitle,
+          'cover_url': tracks[i].coverUrl,
+          'duration_ms': tracks[i].durationSec * 1000,
+          if (contributors[i].isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors[i]),
+          'order_index': orderOffset + i,
+        },
+    ];
+  }
+
   /// Fase 7.F.3, modo "agregar" -- mismo bucle de inserción por pista que
   /// [createPlaylistWithMatchedTracks] (pasos 3-4, D-8), pero sobre una
   /// playlist que **ya existe**: no la crea, no toca su `remoteId` actual.
@@ -398,39 +434,17 @@ class PlaylistImportExportService {
     required DeezerApi deezerApi,
     required SupabasePlaylistRepository supabaseRepo,
   }) async {
-    final remoteTracksPayload = <Map<String, dynamic>>[];
-    for (final track in matchedTracks) {
-      final contributors = await resolveDeezerTrackContributors(deezerApi, track);
-      await dao.addTrackToPlaylist(
-        playlistId: playlistId,
-        trackId: track.id,
-        artistId: track.artistId,
-        albumId: track.albumId,
-        title: track.title,
-        artistName: track.artistName,
-        albumName: track.albumTitle,
-        coverUrl: track.coverUrl,
-        durationMs: track.durationSec * 1000,
-        contributorsJson: SyncoraArtistRef.encodeList(contributors),
-      );
-      if (remotePlaylistId != null) {
-        remoteTracksPayload.add({
-          'track_id': track.id,
-          'artist_id': track.artistId,
-          'album_id': track.albumId,
-          'title': track.title,
-          'artist_name': track.artistName,
-          'album_name': track.albumTitle,
-          'cover_url': track.coverUrl,
-          'duration_ms': track.durationSec * 1000,
-          if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
-        });
-      }
-    }
+    if (matchedTracks.isEmpty) return;
+    final existingCount = (await dao.getTracksOrdered(playlistId)).length;
+    final contributors = await _resolveContributorsAll(deezerApi, matchedTracks);
+    await dao.appendTracksBatch(playlistId, _companions(playlistId, matchedTracks, contributors));
 
-    if (remotePlaylistId != null && remoteTracksPayload.isNotEmpty) {
+    if (remotePlaylistId != null) {
       try {
-        await supabaseRepo.addTracksToPlaylist(remotePlaylistId, remoteTracksPayload);
+        await supabaseRepo.addTracksToPlaylist(
+          remotePlaylistId,
+          _remotePayload(matchedTracks, contributors, existingCount),
+        );
       } catch (_) {
         // Igual que createPlaylistWithMatchedTracks: si la subida remota
         // falla, lo local ya quedó insertado -- se queda desincronizado

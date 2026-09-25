@@ -149,7 +149,26 @@ class _SwipeActionTileState extends State<SwipeActionTile> with SingleTickerProv
           },
           child: Stack(
             children: [
-              if (background != null) Positioned.fill(child: background),
+              // Solo se ve la franja que la fila ya dejó al descubierto: las
+              // filas son transparentes, y con el fondo completo detrás su
+              // texto se encimaba con el de la fila (ronda 4). Así la etiqueta
+              // aparece poco a poco conforme se desliza.
+              if (background != null)
+                Positioned(
+                  top: 0,
+                  bottom: 0,
+                  left: _dx > 0 ? 0 : null,
+                  right: _dx < 0 ? 0 : null,
+                  width: _dx.abs(),
+                  child: ClipRect(
+                    child: OverflowBox(
+                      alignment: _dx > 0 ? Alignment.centerLeft : Alignment.centerRight,
+                      minWidth: _width,
+                      maxWidth: _width,
+                      child: background,
+                    ),
+                  ),
+                ),
               Transform.translate(offset: Offset(_dx, 0), child: widget.child),
             ],
           ),

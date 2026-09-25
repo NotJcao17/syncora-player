@@ -291,7 +291,9 @@ void main() {
             {'title': 'Song A', 'artist': 'Artist A'},
           ],
         },
-        onInvoke: (b) => sentBody = b,
+        // La primera petición es la que define el modo; si falta cantidad
+        // hay una ronda de relleno (ronda 4) que sí lleva contexto.
+        onInvoke: (b) => sentBody ??= b,
       ),
       deezerApi: _FakeDeezerApi(fakeTrack),
     ));

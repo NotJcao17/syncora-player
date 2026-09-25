@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:palette_generator/palette_generator.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/cover_palette.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/track_tile.dart';
@@ -93,11 +93,8 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
   void _extractPalette(String coverUrl) async {
     if (coverUrl.isEmpty) return;
     try {
-      final palette = await PaletteGenerator.fromImageProvider(
-        NetworkImage(coverUrl),
-        maximumColorCount: 8,
-      );
-      final color = palette.darkVibrantColor?.color ?? palette.dominantColor?.color;
+      final palette = await CoverPalette.of(coverUrl);
+      final color = palette?.darkVibrantColor?.color ?? palette?.dominantColor?.color;
       if (mounted && color != null) {
         setState(() {
           _dominantColor = color;

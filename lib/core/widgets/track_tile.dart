@@ -3,7 +3,6 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../theme/app_icons.dart';
@@ -22,6 +21,7 @@ import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
 import '../../features/search/other_versions_search.dart';
 import '../../features/search/search_ranking.dart';
+import '../navigation/safe_navigation.dart';
 import 'app_bottom_sheet.dart';
 import 'app_toast.dart';
 import 'error_state.dart';
@@ -192,24 +192,18 @@ class TrackContextMenu {
     String value, {
     VoidCallback? onAddToQueue,
     VoidCallback? onRemove,
-    VoidCallback? onNavigateAway,
   }) async {
     final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
 
+    // Ronda 4: `navigateSafely` cierra lo que haya encima (la cola, el
+    // reproductor a pantalla completa) antes de navegar; hacer
+    // `context.push` con eso abierto tumbaba la app. Con varios artistas se
+    // deja elegir.
     if (value == 'artist') {
-      if ((track.artistId ?? 0) != 0) {
-        // [onNavigateAway] deja que la pantalla que abrió el menú se cierre
-        // antes de navegar (lo usa el reproductor a pantalla completa, que
-        // vive fuera del shell).
-        onNavigateAway?.call();
-        if (!context.mounted) return;
-        context.push('/artist/${track.artistId}');
-      }
+      await goToTrackArtist(context, track);
     } else if (value == 'album') {
       if (track.albumId != null && track.albumId != 0) {
-        onNavigateAway?.call();
-        if (!context.mounted) return;
-        context.push('/album/${track.albumId}');
+        await navigateSafely(context, '/album/${track.albumId}');
       }
     } else if (value == 'download') {
       final downloaded = await ref.read(downloadedTrackDaoProvider).getByTrackId(trackIdInt);
@@ -300,7 +294,6 @@ class TrackContextMenu {
     VoidCallback? onAddToQueue,
     VoidCallback? onRemove,
     String removeLabel = 'Eliminar de la playlist',
-    VoidCallback? onNavigateAway,
     // Solo lo pasa el reproductor a pantalla completa: el temporizador de
     // apagado no tiene sentido en el menú de una pista cualquiera de una lista.
     VoidCallback? onSleepTimer,
@@ -322,7 +315,6 @@ class TrackContextMenu {
         value,
         onAddToQueue: onAddToQueue,
         onRemove: onRemove,
-        onNavigateAway: onNavigateAway,
       );
     }
 
@@ -421,10 +413,17 @@ class TrackContextMenu {
     }
 
     // Ronda 4: selector compartido con "Agregar todas a otra playlist".
-    final pl = await showPlaylistPickerDialog(context, title: 'Agregar a playlist', playlists: playlists);
+    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
+    final containing = await dao.playlistIdsContaining(trackIdInt);
+    if (!context.mounted) return;
+    final pl = await showPlaylistPickerDialog(
+      context,
+      title: 'Agregar a playlist',
+      playlists: playlists,
+      containingIds: containing,
+    );
     if (pl == null || !context.mounted) return;
 
-    final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
     final existingTracks = await dao.getTracksOrdered(pl.id);
     final isDuplicate = existingTracks.any((t) =>
         t.trackId == trackIdInt ||
@@ -1004,7 +1003,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                         overflow: TextOverflow.ellipsis,
                         onTap: () {
                           if (widget.track.albumId != null && widget.track.albumId != 0) {
-                            context.push('/album/${widget.track.albumId}');
+                            navigateSafely(context, '/album/${widget.track.albumId}');
                           }
                         },
                       ),
@@ -1222,7 +1221,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
               text: artist.name,
               style: style,
               isClickable: isClickable,
-              onTap: isClickable ? () => context.push('/artist/${artist.id}') : null,
+              onTap: isClickable ? () => navigateSafely(context, '/artist/${artist.id}') : null,
             ),
           ),
         );
@@ -1259,7 +1258,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                       text: widget.track.artist,
                       style: style,
                       isClickable: true,
-                      onTap: () => context.push('/artist/${widget.track.artistId}'),
+                      onTap: () => navigateSafely(context, '/artist/${widget.track.artistId}'),
                     ),
                   ),
                 ],

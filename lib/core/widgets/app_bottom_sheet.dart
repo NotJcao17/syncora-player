@@ -76,8 +76,7 @@ class AppBottomSheet extends StatefulWidget {
       backgroundColor: Colors.transparent,
       // Ronda 4: la hoja sube con el teclado. Sin esto, un campo de texto
       // dentro de la hoja quedaba tapado.
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+      builder: (ctx) => _KeyboardInset(
         child: AppBottomSheet(
           title: title,
           maxHeightFactor: maxHeightFactor,
@@ -203,5 +202,24 @@ class _AppBottomSheetState extends State<AppBottomSheet> {
         ),
       ),
     );
+  }
+}
+
+/// Sube la hoja con el teclado, pero **solo si es la hoja de arriba**.
+///
+/// Ronda 4: con el padding en todas las hojas, abrir el teclado en "Mejorar
+/// cola con IA" (una hoja encima de la de la cola) también encogía la cola de
+/// debajo en cada frame de la animación, y con ella se recalculaban todas sus
+/// filas: el teclado iba a tirones. La de debajo ni se ve, no necesita moverse.
+class _KeyboardInset extends StatelessWidget {
+  const _KeyboardInset({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final isTop = ModalRoute.of(context)?.isCurrent ?? true;
+    final bottom = isTop ? MediaQuery.viewInsetsOf(context).bottom : 0.0;
+    return Padding(padding: EdgeInsets.only(bottom: bottom), child: child);
   }
 }

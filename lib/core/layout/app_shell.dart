@@ -31,6 +31,7 @@ import '../../features/player/widgets/desktop_lyrics_view.dart';
 import '../../features/player/widgets/mini_player.dart';
 import '../../features/player/widgets/queue_view.dart';
 import '../theme/app_theme.dart';
+import '../cache/cover_repair_service.dart';
 import '../utils/connectivity_service.dart';
 import '../utils/startup_retry.dart';
 import '../widgets/app_toast.dart';
@@ -117,6 +118,12 @@ class _AppShellState extends ConsumerState<AppShell> {
       try {
         await ref.read(onRepeatPlaylistProvider.future);
       } catch (_) {}
+
+      // Ronda 4: portadas que Deezer dio de baja (una vez por semana, en
+      // segundo plano, después del sync para no competir con él).
+      if (ref.read(isConnectedProvider).value ?? true) {
+        unawaited(ref.read(coverRepairServiceProvider).runIfDue());
+      }
 
       // H-S6: rellena en segundo plano el género de las escuchas que no lo
       // tienen (ninguna, hasta esta corrección). Va al final y sin `await`

@@ -1223,10 +1223,13 @@ void main() {
       expect(controller.state.manualQueue.map((t) => t.id).toList(), ['b']);
     });
 
-    test('interleaveIntoAutoQueue reparte las sugerencias con paso adaptativo (D-9), sin tocar la manual',
+    test('interleaveIntoAutoQueue mete una sugerencia cada 2 pistas de la cola (ronda 4), sin tocar la manual',
         () async {
       final sixTracks = List.generate(6, (i) => SyncoraTrack(id: 'a$i', title: 'A$i'));
       await controller.setQueue(sixTracks, autoplay: false); // current=a0, autoQueue=[a1..a5] (5 pistas)
+      // Con 5 pistas y 2 sugerencias, el paso fijo 2 da el mismo resultado
+      // que daba el adaptativo; la diferencia se ve con colas largas (test
+      // de abajo).
       controller.addToQueue(const SyncoraTrack(id: 'manual1', title: 'Manual'));
 
       controller.interleaveIntoAutoQueue([
@@ -1287,6 +1290,28 @@ void main() {
           reason: 'D-1: intercalar con IA no debe promover una pista manual a "sonando ahora"');
 
       restoredController.dispose();
+    });
+
+    test('ronda 4: con una cola larga, las sugerencias van al principio, no repartidas en toda la cola', () async {
+      final many = List.generate(101, (i) => SyncoraTrack(id: 'a$i', title: 'A$i'));
+      await controller.setQueue(many, autoplay: false); // autoQueue = a1..a100
+      controller.interleaveIntoAutoQueue([
+        const SyncoraTrack(id: 'ai1', title: 'AI 1'),
+        const SyncoraTrack(id: 'ai2', title: 'AI 2'),
+        const SyncoraTrack(id: 'ai3', title: 'AI 3'),
+      ]);
+      expect(controller.state.autoQueue.take(9).map((t) => t.id).toList(),
+          ['a1', 'a2', 'ai1', 'a3', 'a4', 'ai2', 'a5', 'a6', 'ai3']);
+      expect(controller.state.autoQueue.length, 103);
+    });
+
+    test('ronda 4: más sugerencias que la mitad de la cola, las sobrantes van al final', () async {
+      final three = List.generate(3, (i) => SyncoraTrack(id: 'a$i', title: 'A$i'));
+      await controller.setQueue(three, autoplay: false); // autoQueue = a1, a2
+      controller.interleaveIntoAutoQueue([
+        for (var i = 1; i <= 3; i++) SyncoraTrack(id: 'ai$i', title: 'AI $i'),
+      ]);
+      expect(controller.state.autoQueue.map((t) => t.id).toList(), ['a1', 'a2', 'ai1', 'ai2', 'ai3']);
     });
 
     test('interleaveIntoAutoQueue con autoQueue vacía anexa todas las sugerencias al final', () async {

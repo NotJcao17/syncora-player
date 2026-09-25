@@ -14,6 +14,7 @@ import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/services/ai_assistant_service.dart';
 import '../../../data/supabase/supabase_providers.dart';
+import '../import_export/import_track_matcher.dart';
 import '../import_export/playlist_import_export_service.dart';
 
 /// Fase 7.F.3 -- "Modificar playlist con IA". Entrada desde el menú de 3
@@ -64,6 +65,13 @@ class _AiModifyPlaylistFlowState extends ConsumerState<_AiModifyPlaylistFlow> {
   _Mode _mode = _Mode.add;
   _Step _step = _Step.form;
   int _count = _kDefaultCount;
+
+  /// Lo que la playlist ya tiene (ronda 4), para no volver a agregarlo.
+  Set<int> _existingIds = {};
+  Set<String> _existingKeys = {};
+
+  static String _songKey(String title, String artist) =>
+      '${ImportTrackMatcher.baseTitle(title)}|${ImportTrackMatcher.normalizeName(artist.split(RegExp(r'[;,]')).first)}';
   String? _formError;
   bool _isSubmitting = false;
 
@@ -186,6 +194,8 @@ class _AiModifyPlaylistFlowState extends ConsumerState<_AiModifyPlaylistFlow> {
     final contextTracks = tracks
         .map((t) => {'id': t.trackId.toString(), 'title': t.title, 'artist': t.artistName})
         .toList();
+    _existingIds = tracks.map((t) => t.trackId).toSet();
+    _existingKeys = tracks.map((t) => _songKey(t.title, t.artistName)).toSet();
     // Si el usuario escribió una cantidad explícita en el texto ("agrega 5
     // más"), esa es la cantidad real que pidió -- el dropdown "Cantidad de
     // canciones" es solo un valor de conveniencia que puede seguir en su
@@ -258,12 +268,23 @@ class _AiModifyPlaylistFlowState extends ConsumerState<_AiModifyPlaylistFlow> {
     }
 
     if (!mounted) return;
-    final trimmed = PlaylistImportExportService.trimToCount(matched, targetCount);
+    // Ronda 4: "agregar" podía traer canciones que la playlist ya tenía (la
+    // IA no siempre respeta el "no repitas") o repetidas entre sí, y se
+    // agregaban duplicadas. Se filtran por id y por título+artista.
+    final ids = {..._existingIds};
+    final keys = {..._existingKeys};
+    final fresh = <DeezerTrack>[];
+    for (final t in matched) {
+      final key = _songKey(t.title, t.artistName);
+      if (!ids.add(t.id) || !keys.add(key)) continue;
+      fresh.add(t);
+    }
+    final trimmed = PlaylistImportExportService.trimToCount(fresh, targetCount);
 
     setState(() {
       _addMatched = trimmed;
       _addExcludedTrackIds.clear();
-      _addUnmatched = unmatched;
+      _addUnmatched = trimmed.length >= targetCount ? const [] : unmatched;
       _step = _Step.preview;
     });
 

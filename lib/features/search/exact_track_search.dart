@@ -9,10 +9,11 @@ import '../../data/models/deezer/deezer_track.dart';
 /// Ver docs/plan_buscador_importacion_matcher.md, decisión 5 y sección
 /// "Fase D — Búsqueda profunda".
 ///
-/// Dos intentos, de más preciso a más laxo (el tier de sintaxis avanzada
-/// se retiró en la ronda 4, ver `cascadeSearch`):
-///   1. Texto plano `"X Y"`.
-///   2. Solo título — último recurso, siempre se devuelve tal cual.
+/// Tres intentos, de más preciso a más laxo:
+///   1. Sintaxis mixta `X track:"Y"` (ronda 4: la de `artist:"X"` dejó de
+///      funcionar en Deezer, ver `cascadeSearch`).
+///   2. Texto plano `"X Y"`.
+///   3. Solo título — último recurso, siempre se devuelve tal cual.
 ///
 /// Cada llamador decide, vía [ExactTrackSearch.cascadeSearch]'s parámetro
 /// `accept`, cuándo un tier cuenta como "suficiente" para no seguir
@@ -82,11 +83,19 @@ class ExactTrackSearch {
     final qTitle = queryTitle(title);
     final pArtist = primaryArtist(artist);
 
-    // Ronda 4 (H-R4-13): el primer tier era la sintaxis avanzada
-    // `artist:"X" track:"Y"`. Deezer dejó de reconocer el operador `artist:`
-    // (lo trata como la palabra "artist"; verificado el 2026-09-25) y ese tier
-    // devolvía siempre 0, gastando una petición por búsqueda. Se quitó. La
-    // importación ya no usa esta cascada: ver `ImportTrackMatcher`.
+    // Ronda 4 (H-R4-13): el primer tier era `artist:"X" track:"Y"`. Deezer
+    // dejó de aceptar esa combinación (~2026-09-23; también reportado en
+    // SoulSync #1295) y devolvía siempre 0. La forma mixta `X track:"Y"`
+    // sigue funcionando y encuentra incluso artistas ocultos de la búsqueda
+    // normal (Adele), así que ocupa su lugar.
+    if (pArtist.isNotEmpty && qTitle.isNotEmpty) {
+      try {
+        final mixed = '${forQuery(pArtist)} track:"${forQuery(qTitle)}"';
+        final res = await api.search(mixed, type: DeezerSearchType.track, enrich: false);
+        if (accept(res.tracks)) return res.tracks;
+      } catch (_) {}
+    }
+
     try {
       final plain = pArtist.isNotEmpty ? '$pArtist $qTitle' : qTitle;
       final res = await api.search(plain, type: DeezerSearchType.track, enrich: false);

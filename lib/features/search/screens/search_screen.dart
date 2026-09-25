@@ -17,6 +17,8 @@ import '../../../data/models/deezer/deezer_album.dart';
 import '../../../data/models/deezer/deezer_artist.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../auth/local_mode_provider.dart';
+import '../../library/import_export/import_track_matcher.dart';
+import '../../library/import_export/playlist_import_export_service.dart' show RawImportTrack;
 import '../../player/player_providers.dart';
 import '../ai_lyric_search/ai_lyric_search_sheet.dart';
 import '../collaboration_search.dart';
@@ -1001,16 +1003,35 @@ class _ExactSearchTabState extends ConsumerState<_ExactSearchTab> {
 
     final deezerApi = ref.read(deezerApiProvider);
     try {
-      final tracks = await ExactTrackSearch.cascadeSearch(
-        deezerApi,
-        artist: artist,
-        title: title,
-        accept: (list) => list.isNotEmpty,
-      );
+      // Ronda 4 (H-R4-13): la cascada ya no tiene el tier de sintaxis
+      // avanzada (Deezer dejó de reconocer `artist:`), así que solo con ella
+      // un artista que Deezer esconde de la búsqueda de canciones (Adele) no
+      // aparecía nunca. En paralelo se pide el mismo matcher de la
+      // importación, que lo encuentra por su discografía o su top.
+      final results = await Future.wait<Object?>([
+        ExactTrackSearch.cascadeSearch(
+          deezerApi,
+          artist: artist,
+          title: title,
+          accept: (list) => list.isNotEmpty,
+        ),
+        ImportTrackMatcher(deezerApi).match(RawImportTrack(title: title, artist: artist)),
+      ]);
+      final tracks = results[0]! as List<DeezerTrack>;
+      final best = results[1] as DeezerTrack?;
+      final keys = ImportTrackMatcher.artistKeys(artist);
+      bool sameArtist(DeezerTrack t) => keys.contains(ImportTrackMatcher.normalizeName(t.artistName));
+      final ranked = SearchRanking.rankTracks(tracks, '$artist $title').where((t) => t.id != best?.id);
       if (!mounted) return;
       setState(() {
         _isSearching = false;
-        _results = SearchRanking.rankTracks(tracks, '$artist $title');
+        // Primero la coincidencia del matcher, luego las del mismo artista y
+        // al final el resto (covers, karaokes).
+        _results = [
+          ?best,
+          ...ranked.where(sameArtist),
+          ...ranked.where((t) => !sameArtist(t)),
+        ];
       });
     } catch (_) {
       if (!mounted) return;

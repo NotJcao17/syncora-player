@@ -135,6 +135,12 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
   /// rellena lo que falte tras matchear (ver [_topUp]).
   bool _userRequestedCount = false;
 
+  /// Canciones de la playlist de referencia (ronda 4). "Basado en una
+  /// playlist mía" pedía canciones nuevas en un espíritu similar, pero la IA
+  /// copiaba canciones de la referencia aunque no encajaran con el pedido
+  /// (clásica en una playlist "para entrenar"). Aquí se descartan siempre.
+  Set<int> _referenceTrackIds = {};
+
   static int? _countFromPrompt(String text) {
     final m = RegExp(
       r'(\d{1,3})\s*(?:canciones|cancion|canción|temas|tracks|songs|rolas)',
@@ -205,12 +211,11 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
           if (!mounted) return result;
         }
       } catch (_) {}
-      final ids = result.map((t) => t.id).toSet();
+      final ids = {...result.map((t) => t.id), ..._referenceTrackIds};
       final fresh = matched.where((t) => ids.add(t.id)).toList();
       if (fresh.isEmpty) break;
       result = _applyMaxPerArtist([...result, ...fresh], _maxPerArtist);
       result = PlaylistImportExportService.trimToCount(result, target);
-      unmatched.addAll(roundUnmatched);
     }
     return result;
   }
@@ -314,9 +319,11 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
       }
 
       List<Map<String, dynamic>>? contextTracks;
+      _referenceTrackIds = {};
       if (_selectedReferencePlaylistId != null) {
         try {
           contextTracks = await _loadReferenceTracks(_selectedReferencePlaylistId!);
+          _referenceTrackIds = {for (final t in contextTracks) int.tryParse(t['id'].toString()) ?? -1};
         } catch (_) {
           contextTracks = null;
         }
@@ -554,7 +561,11 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
 
     if (!mounted) return;
 
-    var filtered = _applyMaxPerArtist(matched, _maxPerArtist);
+    final seenIds = <int>{};
+    var filtered = _applyMaxPerArtist(
+      matched.where((t) => !_referenceTrackIds.contains(t.id) && seenIds.add(t.id)).toList(),
+      _maxPerArtist,
+    );
     filtered = PlaylistImportExportService.trimToCount(filtered, _requestedExactCount);
     final target = _requestedExactCount;
     if (_userRequestedCount && target != null && filtered.length < target) {
@@ -565,7 +576,11 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
     setState(() {
       _allMatched = filtered;
       _excludedTrackIds.clear();
-      _unmatched = unmatched;
+      // Ronda 4: si se llegó a la cantidad pedida, las sugerencias que no se
+      // encontraron no faltan en ningún lado (el margen de 30 % y el relleno
+      // existen justo para eso), y listarlas solo asustaba: "no encontré 57"
+      // en una playlist que sí tenía sus 100.
+      _unmatched = (target != null && filtered.length >= target) ? const [] : unmatched;
       _step = _Step.preview;
     });
 

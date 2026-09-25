@@ -14,6 +14,7 @@ import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/supabase/supabase_providers.dart';
+import '../../../data/sync/sync_locks.dart';
 import '../../auth/local_mode_provider.dart';
 import '../../player/player_models.dart';
 import 'playlist_import_export_service.dart';
@@ -355,6 +356,8 @@ class ImportManager extends Notifier<List<ImportJob>> {
 
   Future<void> _run(String id) async {
     if (!_running.add(id)) return;
+    final lockedRemoteId = _job(id)?.remotePlaylistId;
+    if (lockedRemoteId != null) SyncLocks.lock(lockedRemoteId);
     // Uno por ejecución: el matcher memoriza álbumes y tracklists, y una
     // playlist suele tener varias canciones del mismo álbum.
     final service = PlaylistImportExportService(ref.read(deezerApiProvider));
@@ -419,6 +422,7 @@ class ImportManager extends Notifier<List<ImportJob>> {
       }
     } finally {
       _running.remove(id);
+      if (lockedRemoteId != null) SyncLocks.unlock(lockedRemoteId);
     }
   }
 
@@ -458,6 +462,9 @@ class ImportManager extends Notifier<List<ImportJob>> {
             'cover_url': fresh[i].coverUrl,
             'duration_ms': fresh[i].durationSec * 1000,
             if (contributors[i].isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors[i]),
+            // Sin esto todas las filas remotas quedaban con `order_index = 0`
+            // y otro dispositivo recibía la playlist en un orden arbitrario.
+            'order_index': job.nextIndex + i,
           },
       ];
       final repo = ref.read(supabasePlaylistRepositoryProvider);

@@ -2,6 +2,7 @@
 
 import 'dart:io';
 import 'package:drift/drift.dart';
+import 'sync_locks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -113,6 +114,7 @@ class SyncService {
     if (!force && !_cacheManager.isExpired(cacheKey)) {
       return;
     }
+    if (SyncLocks.isLocked(playlistRemoteId)) return;
 
     try {
       final remotePlaylists = await _playlistRepo.fetchUserPlaylists();
@@ -258,6 +260,8 @@ class SyncService {
     for (final remote in remotePlaylists) {
       final String remoteId = remote['id'].toString();
       remoteIdsSet.add(remoteId);
+      // Importación en curso sobre esta playlist: ver `SyncLocks`.
+      if (SyncLocks.isLocked(remoteId)) continue;
 
       final String title = remote['title'] as String? ?? 'Untitled';
       final String? description = remote['description'] as String?;

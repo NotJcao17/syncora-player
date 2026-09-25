@@ -10,6 +10,7 @@ import '../../../core/widgets/app_toast.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/services/ai_assistant_service.dart';
+import '../../library/import_export/import_track_matcher.dart';
 import '../../library/import_export/playlist_import_export_service.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
@@ -192,10 +193,50 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
       return;
     }
 
-    await _matchAndSettle(rawTracks);
+    await _matchAndSettle(rawTracks, prompt: prompt, contextTracks: contextTracks);
   }
 
-  Future<void> _matchAndSettle(List<RawImportTrack> rawTracks) async {
+  /// Clave "título|artista" normalizada: la misma canción puede venir con
+  /// otro id de Deezer (sencillo vs. álbum).
+  static String _songKey(String title, String artist) =>
+      '${ImportTrackMatcher.baseTitle(title)}|${ImportTrackMatcher.normalizeName(artist.split(RegExp(r'[;,]')).first)}';
+
+  /// Lo que ya está en la cola o en la playlist que suena (ronda 4): la IA
+  /// no debe sugerirlo otra vez.
+  (Set<String>, Set<String>) _alreadyQueued() {
+    final state = ref.read(syncoraPlayerControllerProvider.notifier).state;
+    final ids = <String>{};
+    final keys = <String>{};
+    void add(SyncoraTrack t) {
+      ids.add(t.id);
+      keys.add(_songKey(t.title, t.artist));
+    }
+
+    final current = state.currentTrack;
+    if (current != null) add(current);
+    state.manualQueue.forEach(add);
+    state.autoQueue.forEach(add);
+    state.originalContextTracks.forEach(add);
+    return (ids, keys);
+  }
+
+  List<DeezerTrack> _withoutRepeats(List<DeezerTrack> tracks, Set<String> ids, Set<String> keys) {
+    final out = <DeezerTrack>[];
+    for (final t in tracks) {
+      final key = _songKey(t.title, t.artistName);
+      if (ids.contains(t.id.toString()) || keys.contains(key)) continue;
+      ids.add(t.id.toString());
+      keys.add(key);
+      out.add(t);
+    }
+    return out;
+  }
+
+  Future<void> _matchAndSettle(
+    List<RawImportTrack> rawTracks, {
+    String? prompt,
+    List<Map<String, dynamic>>? contextTracks,
+  }) async {
     if (!mounted) return;
     final deezerApi = ref.read(deezerApiProvider);
     final service = PlaylistImportExportService(deezerApi);
@@ -227,7 +268,42 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
 
     if (!mounted) return;
 
-    final trimmed = PlaylistImportExportService.trimToCount(matched, _count);
+    // Ronda 4: fuera lo que ya está en la cola/playlist y las repetidas, y
+    // una ronda de relleno si con eso quedaron menos de las pedidas.
+    final (ids, keys) = _alreadyQueued();
+    var fresh = _withoutRepeats(matched, ids, keys);
+    if (fresh.length < _count) {
+      final missing = _count - fresh.length;
+      setState(() => _matchCurrentName = 'Completando: faltan $missing canciones');
+      try {
+        final extra = await ref.read(aiAssistantServiceProvider).createQueue(
+              prompt: prompt,
+              // Lo ya sugerido viaja como contexto: el prompt del servidor
+              // pide no repetir nada del contexto.
+              contextTracks: [
+                ...?contextTracks,
+                for (final t in fresh) {'title': t.title, 'artist': t.artistName},
+              ],
+              interleave: _interleave,
+              count: _clampInt((missing * 1.6).round() + 2, 1, _kHardCountCap),
+            );
+        final extraRaw = PlaylistImportExportService.parseTrackSuggestions(extra['tracks']);
+        final extraMatched = <DeezerTrack>[];
+        await for (final _ in service.processImport(
+          rawTracks: extraRaw,
+          outMatched: extraMatched,
+          outUnmatched: unmatched,
+        )) {
+          if (!mounted) return;
+        }
+        fresh = [...fresh, ..._withoutRepeats(extraMatched, ids, keys)];
+      } catch (_) {
+        // Sin relleno: se muestra lo que hay.
+      }
+      if (!mounted) return;
+    }
+
+    final trimmed = PlaylistImportExportService.trimToCount(fresh, _count);
 
     setState(() {
       _allMatched = trimmed;

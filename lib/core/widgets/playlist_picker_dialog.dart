@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/local_db/syncora_database.dart';
+import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import 'playlist_cover_widget.dart';
 
@@ -9,11 +10,15 @@ import 'playlist_cover_widget.dart';
 /// "Agregar todas a otra playlist" (ronda 4: el segundo tenía su propio
 /// diálogo con ícono genérico y descripción).
 ///
+/// [containingIds] marca con el check de "ya está aquí" las playlists que
+/// ya contienen la canción (ronda 4), el mismo ícono que en las listas.
+///
 /// Devuelve la playlist elegida o `null` si se cerró sin elegir.
 Future<Playlist?> showPlaylistPickerDialog(
   BuildContext context, {
   required String title,
   required List<Playlist> playlists,
+  Set<int> containingIds = const {},
 }) {
   return showDialog<Playlist>(
     context: context,
@@ -55,6 +60,12 @@ Future<Playlist?> showPlaylistPickerDialog(
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                trailing: containingIds.contains(pl.id)
+                    ? Tooltip(
+                        message: 'Ya está en esta playlist',
+                        child: Icon(AppIcons.bold(SolarIcons.CheckCircle), color: AppTheme.accent, size: 18),
+                      )
+                    : null,
                 onTap: () => Navigator.pop(ctx, pl),
               );
             },

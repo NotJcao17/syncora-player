@@ -921,8 +921,9 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// [tracks] (ya resueltas contra Deezer) DENTRO de la cola automática
   /// existente -- nunca toca `manualQueue` (D-1).
   ///
-  /// El paso de intercalado es ADAPTATIVO (`autoQueue.length ~/
-  /// tracks.length`, mínimo 1), no un "cada 3" fijo: con un paso fijo, en el
+  /// Ronda 4: el paso vuelve a ser FIJO, 2 pistas de la cola por cada
+  /// sugerencia (ver el comentario en el cuerpo). Historia: antes era
+  /// adaptativo (`autoQueue.length ~/ tracks.length`), no un "cada 3" fijo: con un paso fijo, en el
   /// caso de uso principal (atajo "Mejorar esta cola" -> 25 sugerencias
   /// contra una `autoQueue` típica bastante más corta) casi todo el sobrante
   /// terminaba pegado en un solo bloque al final, sin ninguna sensación de
@@ -938,7 +939,12 @@ class SyncoraPlayerController extends ChangeNotifier {
     if (current.isEmpty) {
       result.addAll(tracks);
     } else {
-      final stride = (current.length ~/ tracks.length).clamp(1, current.length);
+      // Ronda 4 (decisión del usuario): 2 pistas de la cola por cada
+      // sugerencia, desde el principio. El paso adaptativo (H-8) repartía las
+      // sugerencias a lo largo de TODA la cola: con 600 pistas en cola y 25
+      // sugerencias salía una cada 24 canciones y la mejora no se notaba. Lo
+      // que no cabe (más sugerencias que la mitad de la cola) va al final.
+      const stride = 2;
       var suggestionIndex = 0;
       for (var i = 0; i < current.length; i++) {
         result.add(current[i]);

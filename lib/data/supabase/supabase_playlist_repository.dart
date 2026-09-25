@@ -188,6 +188,14 @@ class SupabasePlaylistRepository {
     await client.from('playlist_tracks').insert(payload);
   }
 
+  /// Sustituye una portada caída en todas las filas del usuario (ronda 4).
+  /// RLS limita el `UPDATE` a las filas propias.
+  Future<void> replaceCoverUrl(String oldUrl, String newUrl) async {
+    final client = _client;
+    if (client == null) return;
+    await client.from('playlist_tracks').update({'cover_url': newUrl}).eq('cover_url', oldUrl);
+  }
+
   Future<void> removeTrackFromPlaylist(String playlistId, int trackId) async {
     final client = _client;
     if (client == null) return;

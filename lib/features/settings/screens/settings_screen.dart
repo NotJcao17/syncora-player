@@ -213,16 +213,6 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          // Ronda 4: eliminar la cuenta (lo promete el aviso legal).
-          _buildCard(
-            child: _buildActionTile(
-              icon: AppIcons.broken(SolarIcons.UserCross),
-              title: 'Eliminar cuenta',
-              subtitle: 'Borra tu cuenta y todos tus datos en la nube de forma permanente',
-              onTap: () => showDeleteAccountFlow(context, ref),
-            ),
-          ),
           ],
 
           const SizedBox(height: 24),
@@ -456,7 +446,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           _buildCard(
             child: _buildActionTile(
               icon: AppIcons.broken(SolarIcons.ShieldCheck),
@@ -474,6 +464,21 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => context.push('/credits'),
             ),
           ),
+
+          // Ronda 4: al final y en rojo, lejos de las acciones de todos los
+          // días (lo promete el aviso legal).
+          if (!isLocalMode) ...[
+            const SizedBox(height: 32),
+            _buildCard(
+              child: _buildActionTile(
+                icon: AppIcons.broken(SolarIcons.UserCross),
+                title: 'Eliminar cuenta',
+                subtitle: 'Borra tu cuenta y todos tus datos en la nube de forma permanente',
+                color: Colors.redAccent,
+                onTap: () => showDeleteAccountFlow(context, ref),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 40),
         ],
@@ -688,6 +693,7 @@ class SettingsScreen extends ConsumerWidget {
     String? subtitle,
     Widget? subtitleWidget,
     required VoidCallback onTap,
+    Color color = AppTheme.primary,
   }) {
     return InkWell(
       onTap: onTap,
@@ -696,13 +702,13 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            Icon(icon, color: AppTheme.primary, size: 22),
+            Icon(icon, color: color, size: 22),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 15)),
+                  Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 15)),
                   const SizedBox(height: 2),
                   subtitleWidget ?? Text(subtitle ?? '', style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
                 ],
