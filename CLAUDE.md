@@ -69,8 +69,9 @@ fijar playlists o el manejo de errores del motor en el controlador**. Lo que no 
 importación vive en `ImportManager` (segundo plano, reanudable, cada bloque sube a la nube antes de
 insertarse en local); deslizar a la derecha usa `SwipeActionTile` (solo desde el borde izquierdo,
 nunca por velocidad) y no `Dismissible`; un error del motor en pausa **no** salta de pista; la
-posición de sesión restaurada solo se aplica a su propia pista. Pendiente humano: aplicar la
-migración `...000018_delete_my_account.sql` y redesplegar `ai-assistant`.
+posición de sesión restaurada solo se aplica a su propia pista; y la importación resuelve con
+`ImportTrackMatcher` (mismo artista obligatorio, álbum del CSV), porque la sintaxis avanzada
+`artist:"X" track:"Y"` de Deezer ya no devuelve nada. Migración 18 y `ai-assistant` ya desplegadas.
 
 ### Estado actual (última actualización: 2026-09-24)
 

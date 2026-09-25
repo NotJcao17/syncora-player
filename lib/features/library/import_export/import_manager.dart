@@ -355,6 +355,9 @@ class ImportManager extends Notifier<List<ImportJob>> {
 
   Future<void> _run(String id) async {
     if (!_running.add(id)) return;
+    // Uno por ejecución: el matcher memoriza álbumes y tracklists, y una
+    // playlist suele tener varias canciones del mismo álbum.
+    final service = PlaylistImportExportService(ref.read(deezerApiProvider));
     try {
       while (true) {
         if (!ref.mounted) return;
@@ -380,7 +383,6 @@ class ImportManager extends Notifier<List<ImportJob>> {
 
         final end = (job.nextIndex + chunkSize).clamp(0, job.total);
         final chunk = job.rawTracks.sublist(job.nextIndex, end);
-        final service = PlaylistImportExportService(ref.read(deezerApiProvider));
         final matched = <DeezerTrack>[];
         final unmatched = <RawImportTrack>[];
         await for (final _ in service.processImport(

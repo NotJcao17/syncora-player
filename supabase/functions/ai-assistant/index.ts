@@ -26,7 +26,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { isAiAction } from "./actions.ts";
 import { CORS_HEADERS, errorResponse, jsonResponse } from "./errors.ts";
-import { callGemini, GeminiHttpError } from "./gemini.ts";
+import { callGemini } from "./gemini.ts";
 import { countDirectiveFor, systemPromptFor } from "./prompts.ts";
 import { checkRateLimit, recordRequest, type RateLimitDb } from "./rate_limit.ts";
 import { buildUserDataBlock, mapGeminiError, sanitizeIdsToRemove } from "./response_helpers.ts";
@@ -158,14 +158,15 @@ async function handleRequest(req: Request): Promise<Response> {
   try {
     if (action === "lyric_search") {
       // Ronda 4: la búsqueda por letra usa la búsqueda de Google para
-      // confirmar el fragmento. Si el modelo no admite herramienta + salida
-      // estructurada (400) o la respuesta no se pudo leer, se repite sin ella:
-      // la función nunca queda peor que antes.
+      // confirmar el fragmento. Ante CUALQUIER fallo de ese intento (el
+      // modelo no admite herramienta + salida estructurada, se agotó la cuota
+      // gratuita de búsquedas, la respuesta no se pudo leer) se repite sin
+      // ella: la función nunca queda peor que antes. Si la llave en sí está
+      // agotada, el segundo intento falla igual y se informa como siempre.
       try {
         output = await callGemini({ apiKey, input, schema, useGoogleSearch: true });
         if (!validateAiOutput(action, output)) throw new Error("salida sin el formato esperado");
-      } catch (error) {
-        if (error instanceof GeminiHttpError && error.status !== 400) throw error;
+      } catch (_) {
         output = await callGemini({ apiKey, input, schema });
       }
     } else {

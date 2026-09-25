@@ -14,7 +14,7 @@ import '../../../data/supabase/supabase_album_repository.dart';
 import '../../../data/supabase/supabase_history_repository.dart';
 import '../../../data/supabase/supabase_playlist_repository.dart';
 import '../../player/player_models.dart';
-import '../../search/exact_track_search.dart';
+import 'import_track_matcher.dart';
 
 class RawImportTrack {
   final String title;
@@ -242,21 +242,13 @@ class PlaylistImportExportService {
     return results;
   }
 
-  /// B2: cadena de fallback (decisión 5 del plan) — sintaxis avanzada precisa
-  /// pero frágil ante typos/variantes de escritura, luego texto plano, luego
-  /// solo título como último recurso (`ExactTrackSearch.cascadeSearch`,
-  /// módulo compartido con D3 desde Fase D). Cada tier valida por duración
-  /// (B3) antes de aceptar, salvo el último, donde no hay mejor alternativa.
-  Future<DeezerTrack?> resolveImportTrack(RawImportTrack item) async {
-    final tracks = await ExactTrackSearch.cascadeSearch(
-      _deezerApi,
-      artist: item.artist,
-      title: item.title,
-      accept: (list) => ExactTrackSearch.bestByDuration(list, item.durationMs, toleranceSec: 20) != null,
-    );
-    if (tracks.isEmpty) return null;
-    return ExactTrackSearch.bestByDuration(tracks, item.durationMs, toleranceSec: 1 << 30) ?? tracks.first;
-  }
+  /// Resuelve una fila contra Deezer. Ronda 4 (H-R4-13): delega en
+  /// [ImportTrackMatcher], que exige el mismo artista y usa el álbum; la
+  /// cascada anterior (`ExactTrackSearch`) elegía por duración sin mirar el
+  /// artista. Un solo matcher por servicio para reusar sus cachés de álbum.
+  late final ImportTrackMatcher _matcher = ImportTrackMatcher(_deezerApi);
+
+  Future<DeezerTrack?> resolveImportTrack(RawImportTrack item) => _matcher.match(item);
 
   /// Pistas que se resuelven a la vez contra Deezer (ronda 4, H-R4-11).
   ///

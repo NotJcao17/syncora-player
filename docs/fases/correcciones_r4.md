@@ -36,6 +36,16 @@ limpio y la suite en verde antes de su commit.
 - **H-R4-10. Descargas concurrentes del mismo archivo.** Sin cerrojo por `trackId`.
 - **H-R4-11. Importación lenta y atada al diálogo.** Secuencial con 200 ms de pausa extra, más una
   petición de colaboradores por pista, y todo dentro de un diálogo modal: cerrar la app perdía todo.
+- **H-R4-13. La importación metía versiones y artistas equivocados.** La sintaxis avanzada de
+  Deezer (`artist:"X" track:"Y"`) **ya no devuelve resultados** (verificado en vivo el 2026-09-25),
+  así que todo caía a la búsqueda de texto y se elegía la pista de duración más parecida **sin mirar
+  el artista**: un 8-bit, un karaoke o un cover de duración casi igual ganaban al original. Además
+  algunos artistas (Adele) no salen en la búsqueda de canciones de la API pública, pero sí sus
+  álbumes y su discografía. `ImportTrackMatcher` exige el mismo artista, descarta karaokes/covers/
+  tributos, penaliza versiones que el archivo no pedía, usa el álbum del CSV (búsqueda de álbumes y,
+  si no, la discografía del artista) y prefiere dejar la fila como "no encontrada" antes que meter
+  otro artista. Probado en vivo con 36 canciones reales (las de la playlist del reporte y
+  `docs/test.csv`): 36 correctas, todas con el álbum original.
 - **H-R4-12. IA genera menos canciones de las pedidas.** El prompt decía que "no hace falta que la
   cifra sea exacta" y la cantidad solo viajaba como dato del usuario.
 
@@ -89,10 +99,10 @@ Los siete bundles están implementados, con `flutter analyze` limpio y la suite 
   "Créditos y licencia"). Nota: Creative Commons no recomienda sus licencias para software; se
   eligió igualmente por decisión del autor. Los componentes de terceros conservan su licencia.
 
-## Pasos manuales para el desarrollador
+## Despliegue
 
-- Aplicar la migración `20250001000018_delete_my_account.sql` (`supabase db push`). Sin ella,
-  "Eliminar cuenta" muestra un error y no borra nada.
-- Desplegar la Edge Function (`supabase functions deploy ai-assistant`): cambian el prompt de
-  cantidad y la búsqueda por letra. Deno no está disponible en el entorno del agente, así que esos
-  cambios no se ejecutaron (solo se escribieron, igual que en 7.E).
+Hecho por el agente el 2026-09-25: migración `20250001000018_delete_my_account.sql` aplicada
+(verificado: sin sesión la RPC responde `permission denied`) y `ai-assistant` desplegada con
+`supabase functions deploy ai-assistant --use-api` (verificado: arranca y responde `unauthorized` sin
+sesión). El camino con búsqueda de Google no se pudo ejecutar sin un JWT de usuario: queda para la
+prueba en dispositivo. Si ese intento falla por cualquier motivo, la función repite sin búsqueda.

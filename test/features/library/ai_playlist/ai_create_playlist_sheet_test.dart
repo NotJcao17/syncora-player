@@ -314,7 +314,7 @@ void main() {
     final actions = <String>[];
     var next = 0;
     List<Map<String, String>> batch(int n) => [
-          for (var i = 0; i < n; i++) {'title': 'Tema ${++next}', 'artist': 'Artista ${next % 7}'},
+          for (var i = 0; i < n; i++) {'title': 'Tema ${++next}', 'artist': 'Artista'},
         ];
     final aiService = AiAssistantService(
       keyStorage: _FakeAiKeyStorage(),
