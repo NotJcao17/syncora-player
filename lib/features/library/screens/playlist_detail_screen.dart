@@ -60,6 +60,9 @@ class PlaylistDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
+  List<PlaylistTrack>? _memoTracks;
+  List<_TrackPair> _memoPairs = const [];
+
   Playlist? _playlist;
   bool _isLoadingHeader = true;
   bool _showAddSongsSearch = false;
@@ -1008,7 +1011,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   }
 
   void _showPlaylistOptionsMenu(BuildContext context, Playlist playlist, List<PlaylistTrack> tracks) {
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     if (isDesktop) {
       showDialog(
         context: context,
@@ -1023,7 +1026,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               maxWidth: 380,
               // La lista de opciones creció (pública/copiar enlace) y en pantallas bajas
               // puede exceder el alto del Dialog; la hacemos desplazable en vez de desbordar.
-              maxHeight: MediaQuery.of(ctx).size.height * 0.8,
+              maxHeight: MediaQuery.sizeOf(ctx).height * 0.8,
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1045,7 +1048,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
         builder: (ctx) => SafeArea(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
+            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.85),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: SingleChildScrollView(
@@ -1063,7 +1066,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final currentTrack = ref.watch(currentTrackProvider);
     final isPlaying = ref.watch(isPlayingProvider);
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     final playlistDao = ref.watch(playlistDaoProvider);
     final playlistStream = widget.playlistId == 'liked'
         ? playlistDao.watchLikedPlaylist()
@@ -1111,7 +1114,14 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             stream: playlistDao.watchTracksOrdered(playlist.id),
             builder: (ctx, snapshot) {
               final tracks = snapshot.data ?? [];
-              final rawPairs = tracks.map((t) {
+              // Ronda 4 (H-R4-7): memorizado por identidad de la lista que
+              // emite Drift. Esta pantalla se reconstruye con cada cambio de
+              // play/pausa/buffering, y rehacer el mapeo (con un `jsonDecode`
+              // de colaboradores por fila) en una playlist de 1000 canciones
+              // costaba frames en cada una de esas transiciones.
+              final rawPairs = identical(tracks, _memoTracks)
+                  ? _memoPairs
+                  : (_memoPairs = tracks.map((t) {
                 var parsedArtists = SyncoraArtistRef.decodeList(t.contributorsJson);
                 if (parsedArtists.isEmpty && t.artistName.contains(', ')) {
                   final names = t.artistName.split(', ');
@@ -1135,7 +1145,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                   artUri: t.coverUrl.isNotEmpty ? Uri.tryParse(t.coverUrl) : null,
                 );
                 return _TrackPair(playlistTrack: t, syncoraTrack: syncora);
-              }).toList();
+              }).toList());
+              _memoTracks = tracks;
 
               final sortedPairs = _sortTrackPairs(rawPairs);
               final sortedSyncoraTracks = sortedPairs.map((p) => p.syncoraTrack).toList();
@@ -1189,7 +1200,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                           slivers: [
                             SliverPadding(
                               padding: EdgeInsets.only(
-                                top: MediaQuery.of(context).padding.top + 56,
+                                top: MediaQuery.paddingOf(context).top + 56,
                                 left: isDesktop ? 32 : 12,
                                 right: isDesktop ? 32 : 12,
                               ),
@@ -1797,6 +1808,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                       index: isDesktop ? i : null,
                                       isPlaying: isPlayingTrack,
                                       showAlbum: true,
+                                      showLibraryBadge: false,
                                       onTap: () {
                                         // El índice tiene que ser el de la
                                         // lista completa: con el filtro activo,
@@ -1868,7 +1880,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     ),
 
                     Positioned(
-                      top: MediaQuery.of(context).padding.top + 8,
+                      top: MediaQuery.paddingOf(context).top + 8,
                       left: 16,
                       right: 16,
                       child: Row(

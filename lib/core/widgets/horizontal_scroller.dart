@@ -106,7 +106,7 @@ class _HorizontalScrollerState extends State<HorizontalScroller> {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
 
     final list = ScrollConfiguration(
       behavior: const _DragAnywhereScrollBehavior(),

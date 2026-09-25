@@ -220,7 +220,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     required VoidCallback onTap,
     required VoidCallback? onMenu,
   }) {
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     return GestureDetector(
       onSecondaryTap: isDesktop ? onMenu : null,
       child: InkWell(
@@ -643,7 +643,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 
   void _showPlaylistOptionsMenu(BuildContext context, Playlist playlist, bool canEdit, bool isLocalMode) {
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     if (isDesktop) {
       showDialog(
         context: context,
@@ -919,7 +919,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     final playlistDao = ref.watch(playlistDaoProvider);
     final savedAlbumDao = ref.watch(savedAlbumDaoProvider);
     final isConnected = ref.watch(isConnectedProvider).value ?? true;
@@ -1224,7 +1224,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           return SingleChildScrollView(
                             physics: const AlwaysScrollableScrollPhysics(),
                             child: Container(
-                              height: MediaQuery.of(context).size.height * 0.5,
+                              height: MediaQuery.sizeOf(context).height * 0.5,
                               alignment: Alignment.center,
                               child: Text(
                                 _localSearchQuery.isNotEmpty ? 'No se encontraron álbumes que coincidan' : 'No tienes álbumes guardados',
@@ -1265,7 +1265,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                               return SingleChildScrollView(
                                 physics: const AlwaysScrollableScrollPhysics(),
                                 child: Container(
-                                  height: MediaQuery.of(context).size.height * 0.5,
+                                  height: MediaQuery.sizeOf(context).height * 0.5,
                                   alignment: Alignment.center,
                                   padding: const EdgeInsets.all(24),
                                   child: Column(
@@ -1329,7 +1329,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                       return SingleChildScrollView(
                                         physics: const AlwaysScrollableScrollPhysics(),
                                         child: Container(
-                                          height: MediaQuery.of(context).size.height * 0.5,
+                                          height: MediaQuery.sizeOf(context).height * 0.5,
                                           alignment: Alignment.center,
                                           padding: const EdgeInsets.all(24),
                                           child: Column(
@@ -1421,7 +1421,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                               return SingleChildScrollView(
                                 physics: const AlwaysScrollableScrollPhysics(),
                                 child: Container(
-                                  height: MediaQuery.of(context).size.height * 0.5,
+                                  height: MediaQuery.sizeOf(context).height * 0.5,
                                   alignment: Alignment.center,
                                   child: Text(
                                     _localSearchQuery.isNotEmpty ? 'No se encontraron playlists que coincidan' : 'No tienes playlists',

@@ -36,7 +36,7 @@ class MiniPlayer extends ConsumerWidget {
     final isShuffle = ref.watch(playerStateProvider.select((s) => s.isShuffle));
     final repeatMode = ref.watch(playerStateProvider.select((s) => s.repeatMode));
 
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     final isVisible = currentTrack != null;
 
     if (!isVisible) return const SizedBox.shrink();
@@ -383,7 +383,7 @@ class MiniPlayer extends ConsumerWidget {
                         color: ref.watch(isQueueOpenProvider) ? AppTheme.primary : AppTheme.secondary,
                       ),
                       onPressed: () {
-                        final isDesktop = MediaQuery.of(context).size.width >= 768;
+                        final isDesktop = MediaQuery.sizeOf(context).width >= 768;
                         if (isDesktop) {
                           ref.read(isQueueOpenProvider.notifier).state = !ref.read(isQueueOpenProvider);
                         } else {

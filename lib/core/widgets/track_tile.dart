@@ -26,6 +26,7 @@ import 'app_bottom_sheet.dart';
 import 'app_toast.dart';
 import 'error_state.dart';
 import 'playlist_picker_dialog.dart';
+import 'swipe_action_tile.dart';
 import '../../features/library/services/like_track_service.dart';
 import 'track_cover_image.dart';
 
@@ -61,7 +62,7 @@ class TrackContextMenu {
     // viva el árbol de overlays de la app, así que es seguro usarlo aquí.
     // ignore: use_build_context_synchronously
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
-    final overlaySize = overlay?.size ?? MediaQuery.of(context).size;
+    final overlaySize = overlay?.size ?? MediaQuery.sizeOf(context);
 
     final selected = await showMenu<String>(
       context: context,
@@ -568,7 +569,7 @@ class TrackContextMenu {
       excludeTrackId: track.deezerId,
     );
 
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     if (isDesktop) {
       showDialog(
         context: context,
@@ -594,13 +595,13 @@ class TrackContextMenu {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SizedBox(
-        height: MediaQuery.of(ctx).size.height * 0.7,
+        height: MediaQuery.sizeOf(ctx).height * 0.7,
         child: Padding(
           padding: EdgeInsets.only(
             left: 20,
             right: 20,
             top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            bottom: MediaQuery.viewInsetsOf(ctx).bottom + 16,
           ),
           child: content,
         ),
@@ -648,6 +649,10 @@ class TrackTile extends ConsumerStatefulWidget {
   /// pista ya está ahí.
   final bool enableSwipeToQueue;
 
+  /// ¿Mostrar el ícono de "ya está en tu biblioteca" (ronda 4)? `false` en
+  /// la vista de una playlist propia, donde todas las filas lo estarían.
+  final bool showLibraryBadge;
+
   const TrackTile({
     super.key,
     required this.track,
@@ -664,6 +669,7 @@ class TrackTile extends ConsumerStatefulWidget {
     this.removeLabel = 'Eliminar de la playlist',
     this.enableLongPressMenu = true,
     this.enableSwipeToQueue = true,
+    this.showLibraryBadge = true,
   });
 
   @override
@@ -681,9 +687,14 @@ class _TrackTileState extends ConsumerState<TrackTile> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final isDesktop = screenWidth >= 768;
     final isMobile = screenWidth < 768;
+
+    // Ronda 4: sin numeración en móvil en ninguna lista (ya se hacía en la
+    // vista de playlist). Sin índice, `TrackTile` pinta la portada con su
+    // overlay de reproducción, que en pantalla estrecha aporta más.
+    final index = isDesktop ? widget.index : null;
 
     final isAudioPlaying = ref.watch(isPlayingProvider);
     final isActiveTrack = widget.isPlaying;
@@ -798,7 +809,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       }
     }
 
-    if (widget.index == null && (isActiveTrack || (isDesktop && _isHovered))) {
+    if (index == null && (isActiveTrack || (isDesktop && _isHovered))) {
       coverWidget = Stack(
         children: [
           coverWidget,
@@ -838,7 +849,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       );
     }
 
-    final effectiveCoverWidget = (isDesktop && widget.index == null)
+    final effectiveCoverWidget = (isDesktop && index == null)
         ? GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: triggerPlay,
@@ -885,7 +896,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                 child: Row(
                   children: [
                     // Número / Play / Pause
-                    if (widget.index != null) ...[
+                    if (index != null) ...[
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: triggerPlay,
@@ -913,7 +924,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                                               size: 18,
                                             )
                                           : Text(
-                                              '${widget.index! + 1}',
+                                              '${index + 1}',
                                               style: const TextStyle(
                                                 color: activeColor,
                                                 fontSize: 14,
@@ -928,7 +939,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                                               size: 18,
                                             )
                                           : Text(
-                                              '${widget.index! + 1}',
+                                              '${index + 1}',
                                               style: TextStyle(
                                                 color: AppTheme.secondary.withValues(alpha: 0.7),
                                                 fontSize: 14,
@@ -1030,30 +1041,16 @@ class _TrackTileState extends ConsumerState<TrackTile> {
   );
 
 
-    // Swipe a la cola en móvil (umbral 40-50% con retorno suave y haptic feedback)
+    // Swipe a la cola en móvil. Ronda 4 (H-R4-6): con un reconocedor propio
+    // que solo acepta un deslizar que empieza en el borde izquierdo y es
+    // claramente horizontal; ver `SwipeActionTile`.
     if (isMobile && widget.enableSwipeToQueue && widget.onAddToQueue != null) {
-      return Dismissible(
-        key: Key('track_dismiss_${widget.track.id}_${widget.index}'),
-        direction: DismissDirection.startToEnd,
-        // Ronda 3 bis: umbral subido de 0.4 a 0.6. Con el scroll de las listas
-        // ya aligerado sigue siendo fácil que el dedo derive en diagonal, y
-        // encolar una canción sin querer mientras se hace scroll es molesto y
-        // silencioso. Exigir un deslizamiento claramente deliberado no hace
-        // más difícil el gesto a quien lo quiere hacer.
-        dismissThresholds: const {
-          DismissDirection.startToEnd: 0.6,
+      return SwipeActionTile(
+        onSwipeRight: () {
+          widget.onAddToQueue?.call();
+          AppToast.show(context, message: '"${widget.track.title}" agregada a la cola');
         },
-        movementDuration: const Duration(milliseconds: 200),
-        confirmDismiss: (direction) async {
-          HapticFeedback.mediumImpact();
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            widget.onAddToQueue?.call();
-            AppToast.show(context, message: '"${widget.track.title}" agregada a la cola');
-          });
-          return false; // Retornar false para no eliminar la canción de la lista
-        },
-        background: Container(
+        rightBackground: Container(
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.only(left: 20),
           decoration: BoxDecoration(
@@ -1124,6 +1121,29 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       );
     }
 
+    // Ronda 4: la canción ya está en alguna playlist tuya o en "Tus me gusta".
+    if (widget.showLibraryBadge) {
+      final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
+      final inLibrary = ref.watch(
+        libraryTrackIdsProvider.select((s) => s.value?.contains(trackIdInt) ?? false),
+      );
+      if (inLibrary) {
+        statusIcons.add(
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: Tooltip(
+              message: 'En tu biblioteca',
+              child: Icon(
+                AppIcons.bold(SolarIcons.CheckCircle),
+                color: AppTheme.accent,
+                size: 13,
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
     if (widget.track.isAiGenerated) {
       statusIcons.add(
         Padding(
@@ -1140,7 +1160,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       );
     }
 
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
 
     if (!isDesktop) {
       return Row(
@@ -1277,7 +1297,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       );
     }
 
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     final trackIdInt = int.tryParse(widget.track.id) ?? widget.track.id.hashCode.abs();
 
     return FutureBuilder<bool>(

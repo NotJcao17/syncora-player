@@ -133,7 +133,7 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
         _step = _Step.form;
         _formError = _basedOnCurrent
             ? 'La cola actual está vacía. Escribe una descripción para crear una cola nueva.'
-            : 'Escribe una descripción o elige "Basada en la cola actual".';
+            : 'Escribe una descripción o elige "Basada en la actual".';
       });
       return;
     }
@@ -329,7 +329,7 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
             const SizedBox(width: 8),
             Expanded(
               child: _choiceChip(
-                  'Basada en la cola actual', _basedOnCurrent, () => setState(() => _basedOnCurrent = true)),
+                  'Basada en la actual', _basedOnCurrent, () => setState(() => _basedOnCurrent = true)),
             ),
           ],
         ),
@@ -394,20 +394,35 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
     );
   }
 
+  /// Ronda 4: segmento de ancho completo en vez de `ChoiceChip`. El chip
+  /// no reparte el ancho que le da el `Expanded` ni parte la etiqueta, así
+  /// que en móvil "Basada en la cola actual" se cortaba.
   Widget _choiceChip(String label, bool selected, VoidCallback onTap) {
-    return ChoiceChip(
-      label: Text(label, textAlign: TextAlign.center),
-      selected: selected,
-      onSelected: (_) => onTap(),
-      selectedColor: AppTheme.primary,
-      backgroundColor: AppTheme.surfaceHover,
-      labelStyle: TextStyle(
-        color: selected ? AppTheme.background : AppTheme.primary,
-        fontWeight: FontWeight.w700,
-        fontSize: 12,
-      ),
-      showCheckmark: false,
+    return Material(
+      color: selected ? AppTheme.primary : AppTheme.surfaceHover,
       shape: StadiumBorder(side: BorderSide(color: selected ? AppTheme.primary : AppTheme.surfaceHover)),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: selected ? AppTheme.background : AppTheme.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 

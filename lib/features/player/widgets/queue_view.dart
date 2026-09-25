@@ -8,6 +8,7 @@ import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/swipe_action_tile.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
@@ -160,12 +161,29 @@ class _QueueViewState extends ConsumerState<QueueView> {
   /// misma pista aparece más de una vez en la sección (duplicado agregado a
   /// propósito por el usuario), se distingue con un índice de ocurrencia
   /// estable (cuántas veces apareció ese id antes de esta posición).
+  ///
+  /// Ronda 4 (H-R4-5): la ocurrencia se cuenta por **instancia** de la pista,
+  /// no por id. Con `id + ocurrencia`, al quitar la primera copia de una
+  /// pista repetida la segunda heredaba la key de la fila recién descartada,
+  /// y Flutter reventaba con "A dismissed Dismissible widget is still part of
+  /// the tree". Las colas se copian con `List.from`, que conserva las
+  /// instancias, así que la identidad es estable entre reconstrucciones.
   List<ValueKey<String>> _stableKeysFor(QueueOrigin origin, List<SyncoraTrack> tracks) {
-    final counts = <String, int>{};
+    final counts = <int, int>{};
     return tracks.map((t) {
-      final occurrence = counts.update(t.id, (v) => v + 1, ifAbsent: () => 0);
-      return ValueKey('${origin.name}_${t.id}_$occurrence');
+      final identity = identityHashCode(t);
+      final occurrence = counts.update(identity, (v) => v + 1, ifAbsent: () => 0);
+      return ValueKey('${origin.name}_${t.id}_${identity}_$occurrence');
     }).toList();
+  }
+
+  /// Índice ACTUAL de la fila [key] en la cola [origin], o -1. El índice que
+  /// se capturó al construir la fila puede apuntar a otra pista si la cola
+  /// avanzó mientras el usuario deslizaba.
+  int _currentIndexOf(QueueOrigin origin, ValueKey<String> key) {
+    final state = ref.read(syncoraPlayerControllerProvider.notifier).state;
+    final tracks = origin == QueueOrigin.manual ? state.manualQueue : state.autoQueue;
+    return _stableKeysFor(origin, tracks).indexOf(key);
   }
 
   @override
@@ -681,35 +699,36 @@ class _QueueViewState extends ConsumerState<QueueView> {
         final row = Row(
           children: [
             Expanded(
-              child: Dismissible(
-                key: ValueKey('${itemKey.value}_dismiss'),
-                // Ronda 3 bis (segunda pasada): **solo hacia la izquierda**.
-                //
-                // El deslizar a la derecha ("reproducir a continuación") se
-                // retiró: en una pantalla que es puro scroll vertical,
-                // resultaba tan fácil dispararlo sin querer que bajar hasta el
-                // final de la cola y volver encolaba tres canciones solas. El
-                // `Dismissible` de Flutter además **se lleva por delante el
-                // umbral cuando detecta un "fling"** (velocidad > 700 px/s en
-                // el eje), así que subir `dismissThresholds` no cierra ese
-                // camino: un flick rápido y algo diagonal lo confirma igual.
-                //
-                // Quitarlo cuesta poco: dentro de la cola esa acción es un
-                // atajo, y sigue disponible en el menú de 3 puntos de cada
-                // fila. Eliminar, en cambio, es lo que el Documento Maestro
-                // pide explícitamente para este gesto (§2.1.5).
-                direction: DismissDirection.endToStart,
-                dismissThresholds: const {
-                  DismissDirection.endToStart: 0.6,
+              // Ronda 4: `SwipeActionTile` en vez de `Dismissible` (H-R4-5).
+              // Izquierda quita; derecha (solo desde el borde izquierdo y solo
+              // en la cola automática) la pasa a "A continuación".
+              child: SwipeActionTile(
+                onSwipeLeft: () {
+                  final idx = _currentIndexOf(origin, itemKey);
+                  if (idx >= 0) controller.removeFromQueue(origin, idx);
                 },
-                onDismissed: (_) {
-                  controller.removeFromQueue(origin, i);
-                },
-                background: Container(
+                onSwipeRight: origin == QueueOrigin.auto
+                    ? () {
+                        // Se MUEVE a la cola manual (no se duplica): si se
+                        // quedara también en la automática sonaría dos veces.
+                        final idx = _currentIndexOf(origin, itemKey);
+                        if (idx < 0) return;
+                        controller.removeFromQueue(origin, idx);
+                        controller.addToQueue(track);
+                        AppToast.show(context, message: '"${track.title}" movida a "A continuación"');
+                      }
+                    : null,
+                leftBackground: Container(
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 16),
                   color: Colors.red.withValues(alpha: 0.2),
                   child: const Icon(Icons.delete, color: Colors.red),
+                ),
+                rightBackground: Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 16),
+                  color: AppTheme.accent.withValues(alpha: 0.3),
+                  child: Icon(AppIcons.broken(SolarIcons.PlaylistMinimalisticN2), color: AppTheme.primary, size: 22),
                 ),
                 child: TrackTile(
                   track: track,

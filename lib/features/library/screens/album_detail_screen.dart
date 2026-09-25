@@ -163,7 +163,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final currentTrack = ref.watch(currentTrackProvider);
     final isPlaying = ref.watch(isPlayingProvider);
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     // Fase 7.I.8: control de sincronización manual, oculto en modo local
     // (guardar/quitar álbumes ya funciona 100% local sin este botón).
     final isLocalMode = ref.watch(localModeProvider);
@@ -231,7 +231,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                   slivers: [
                     SliverPadding(
                       padding: EdgeInsets.only(
-                        top: MediaQuery.of(context).padding.top + 56,
+                        top: MediaQuery.paddingOf(context).top + 56,
                         left: isDesktop ? 32 : 12,
                         right: isDesktop ? 32 : 12,
                       ),
@@ -533,7 +533,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
           ),
 
             Positioned(
-              top: MediaQuery.of(context).padding.top + 8,
+              top: MediaQuery.paddingOf(context).top + 8,
               left: 16,
               right: 16,
               child: Row(

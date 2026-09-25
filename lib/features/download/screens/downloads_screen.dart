@@ -32,7 +32,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     final downloadedTracksAsync = ref.watch(watchAllDownloadedTracksProvider);
     final dao = ref.read(downloadedTrackDaoProvider);
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);

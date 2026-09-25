@@ -204,6 +204,10 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     final dominantGradientColor = _dominantColor?.withValues(alpha: 0.35) ?? AppTheme.surfaceHover.withValues(alpha: 0.3);
 
     return Scaffold(
+      // Ronda 4 (H-R4-7): esta pantalla no tiene campos de texto. Sin esto,
+      // abrir el teclado en una hoja encima (p. ej. "Mejorar cola con IA")
+      // reconstruía todo el reproductor en cada frame de la animación.
+      resizeToAvoidBottomInset: false,
       // El reproductor a pantalla completa tapa el shell: los avisos van
       // pegados al borde inferior, no flotando sobre un mini reproductor que
       // aquí no se ve.

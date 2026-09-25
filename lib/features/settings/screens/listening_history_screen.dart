@@ -118,7 +118,7 @@ class ListeningHistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(resolvedListeningHistoryProvider);
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
 
     return Scaffold(
       backgroundColor: AppTheme.background,

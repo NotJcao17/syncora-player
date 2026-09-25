@@ -35,7 +35,7 @@ class AppBottomSheet extends StatefulWidget {
     double maxHeightFactor = 0.85,
     bool enableDrag = true,
   }) {
-    final isDesktop = MediaQuery.of(context).size.width >= 720;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 720;
     if (isDesktop) {
       return showDialog<T>(
         context: context,
@@ -74,10 +74,15 @@ class AppBottomSheet extends StatefulWidget {
       isScrollControlled: true,
       enableDrag: enableDrag,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => AppBottomSheet(
-        title: title,
-        maxHeightFactor: maxHeightFactor,
-        child: child,
+      // Ronda 4: la hoja sube con el teclado. Sin esto, un campo de texto
+      // dentro de la hoja quedaba tapado.
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+        child: AppBottomSheet(
+          title: title,
+          maxHeightFactor: maxHeightFactor,
+          child: child,
+        ),
       ),
     );
   }
@@ -85,7 +90,7 @@ class AppBottomSheet extends StatefulWidget {
   static void pop(BuildContext context) {
     if (!context.mounted) return;
     try {
-      final isDesktop = MediaQuery.of(context).size.width >= 720;
+      final isDesktop = MediaQuery.sizeOf(context).width >= 720;
       if (isDesktop) {
         Navigator.of(context, rootNavigator: true).pop();
       } else {
@@ -130,8 +135,9 @@ class _AppBottomSheetState extends State<AppBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final maxHeight = mediaQuery.size.height * widget.maxHeightFactor;
+    // Ronda 4 (H-R4-7): `sizeOf` y no `of`. Con `of`, la hoja entera se
+    // reconstruía en cada frame de la animación del teclado.
+    final maxHeight = MediaQuery.sizeOf(context).height * widget.maxHeightFactor;
 
     final header = GestureDetector(
       behavior: HitTestBehavior.opaque,

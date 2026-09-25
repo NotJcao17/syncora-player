@@ -66,7 +66,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   Widget build(BuildContext context) {
     final isLocalMode = ref.watch(localModeProvider);
     final period = ref.watch(selectedStatsPeriodProvider);
-    final isDesktop = MediaQuery.of(context).size.width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
       backgroundColor: AppTheme.background,

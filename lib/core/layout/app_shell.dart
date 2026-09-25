@@ -241,7 +241,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery.sizeOf(context);
     final isDesktop = size.width >= 768;
     // Detectar celular en landscape: ancho >= 768 pero dimensión corta < 600
     final isMobileLandscape = isDesktop && size.shortestSide < 600;
@@ -319,7 +319,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget _buildMobileLayout(BuildContext context, int selectedIndex) {
     final currentTrack = ref.watch(currentTrackProvider);
     final hasTrack = currentTrack != null;
-    final paddingBottom = MediaQuery.of(context).padding.bottom;
+    final paddingBottom = MediaQuery.paddingOf(context).bottom;
     return Stack(
 
       children: [

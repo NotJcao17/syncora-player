@@ -144,7 +144,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   Widget build(BuildContext context) {
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final currentTrack = ref.watch(currentTrackProvider);
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
 
     if (_isLoading) {
       return const Scaffold(
@@ -174,29 +174,22 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: RefreshIndicator(
+      body: Stack(
+        children: [
+          RefreshIndicator(
         onRefresh: _loadArtistData,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             // Header con foto del artista
-            SliverAppBar(
-              backgroundColor: AppTheme.surface,
-              expandedHeight: isDesktop ? 340 : 280,
-              pinned: true,
-              leading: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: CircleAvatar(
-                  backgroundColor: AppTheme.surfaceHover,
-                  child: IconButton(
-                    icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary, size: 20),
-                    onPressed: () => context.pop(),
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-              flexibleSpace: FlexibleSpaceBar(
-                background: Stack(
+            // Ronda 4: cabecera que se desplaza con el contenido, sin barra
+            // fija. El `SliverAppBar` fijado dejaba una barra gris arriba al
+            // hacer scroll; el botón de volver ahora flota encima, igual que
+            // en las playlists.
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: (isDesktop ? 340 : 280) + MediaQuery.paddingOf(context).top,
+                child: Stack(
                   fit: StackFit.expand,
                   children: [
                     CachedNetworkImage(
@@ -472,7 +465,26 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
         ],
       ),
     ),
-  );
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 8,
+            left: 16,
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withValues(alpha: 0.35),
+              ),
+              child: IconButton(
+                icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary, size: 20),
+                onPressed: () => context.pop(),
+                padding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

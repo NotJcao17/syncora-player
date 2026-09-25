@@ -121,7 +121,7 @@ class _CollectionScaffoldState extends ConsumerState<CollectionScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final currentTrack = ref.watch(currentTrackProvider);
     final isPlaying = ref.watch(isPlayingProvider);
@@ -142,7 +142,7 @@ class _CollectionScaffoldState extends ConsumerState<CollectionScaffold> {
       slivers: [
         SliverPadding(
           padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 56,
+            top: MediaQuery.paddingOf(context).top + 56,
             left: isDesktop ? 32 : 12,
             right: isDesktop ? 32 : 12,
           ),
@@ -227,7 +227,7 @@ class _CollectionScaffoldState extends ConsumerState<CollectionScaffold> {
                   : RefreshIndicator(onRefresh: widget.onRefresh!, child: scroll),
             ),
             Positioned(
-              top: MediaQuery.of(context).padding.top + 8,
+              top: MediaQuery.paddingOf(context).top + 8,
               left: 16,
               child: Container(
                 width: 38,

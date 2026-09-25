@@ -114,7 +114,7 @@ class HomeScreen extends ConsumerWidget {
       ref.invalidate(mixesProvider);
     });
 
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     final horizontalPadding = isDesktop ? 32.0 : 20.0;
 
     final editorialAsync = ref.watch(editorialPlaylistsProvider);
@@ -692,7 +692,7 @@ class _ProfileAvatar extends ConsumerWidget {
 /// del proyecto. Con más de 100 países, lleva buscador: recorrer la lista a
 /// mano sería peor que no tener la función.
 Future<void> showCountryTopsPicker(BuildContext context, List<DeezerPlaylist> playlists) {
-  final isDesktop = MediaQuery.of(context).size.width >= 768;
+  final isDesktop = MediaQuery.sizeOf(context).width >= 768;
 
   if (isDesktop) {
     return showDialog(
@@ -718,7 +718,7 @@ Future<void> showCountryTopsPicker(BuildContext context, List<DeezerPlaylist> pl
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
     builder: (ctx) => SizedBox(
-      height: MediaQuery.of(ctx).size.height * 0.75,
+      height: MediaQuery.sizeOf(ctx).height * 0.75,
       child: _CountryTopsList(playlists: playlists),
     ),
   );

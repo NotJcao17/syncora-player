@@ -100,7 +100,7 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
     final currentPosition = ref.watch(playerStateProvider.select((s) => s.engine.position));
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.75,
+      height: MediaQuery.sizeOf(context).height * 0.75,
       decoration: const BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),

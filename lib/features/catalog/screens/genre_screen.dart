@@ -43,7 +43,7 @@ class GenreScreen extends ConsumerWidget {
       );
     }
 
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     final chartAsync = ref.watch(deezerGenreChartProvider(id));
     final radiosAsync = ref.watch(deezerGenreRadiosProvider(id));
 

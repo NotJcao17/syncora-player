@@ -72,7 +72,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   // desde abajo, eso solo tiene sentido como gesto táctil en móvil.
   void _openDeepSearchModal(BuildContext context) {
     FocusManager.instance.primaryFocus?.unfocus();
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
 
     if (isDesktop) {
       showDialog(
@@ -151,7 +151,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget build(BuildContext context) {
     final searchState = ref.watch(searchProvider);
     final searchNotifier = ref.read(searchProvider.notifier);
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     // 7.I: la búsqueda por letra necesita el JWT del usuario -- se oculta
     // sin cuenta (D-24), no solo se deshabilita.
     final isLocalMode = ref.watch(localModeProvider);
@@ -804,7 +804,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildSkeletonResults() {
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     return ListView.separated(
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12, vertical: 8),
       itemCount: 6,

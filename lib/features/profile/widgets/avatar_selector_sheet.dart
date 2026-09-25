@@ -61,7 +61,7 @@ class AvatarSelectorSheet extends ConsumerStatefulWidget {
     String? currentSeed,
     Future<void> Function(String seed)? onAvatarSelected,
   }) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final isDesktop = (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) || screenWidth >= 768;
 
     if (isDesktop) {
@@ -174,7 +174,7 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.8,
+        maxHeight: MediaQuery.sizeOf(context).height * 0.8,
       ),
       decoration: BoxDecoration(
         color: AppTheme.surface,

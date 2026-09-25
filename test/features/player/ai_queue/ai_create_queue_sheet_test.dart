@@ -274,7 +274,7 @@ void main() {
     await tester.tap(find.text('Crear cola con IA').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Escribe una descripción o elige "Basada en la cola actual".'), findsOneWidget);
+    expect(find.text('Escribe una descripción o elige "Basada en la actual".'), findsOneWidget);
   });
 
   testWidgets('camino feliz "cola nueva" + "cola manual": genera, matchea, y agrega al final de la manual (D-2)',

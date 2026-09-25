@@ -46,7 +46,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     final currentUser = ref.watch(currentUserProvider);
     final profileAsync = ref.watch(profileProvider);
     // Fase 7.I.9: sección de cuenta reemplazada por el bloque de "Modo
