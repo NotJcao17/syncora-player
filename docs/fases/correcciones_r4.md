@@ -54,8 +54,45 @@ limpio y la suite en verde antes de su commit.
 6. **IA:** cantidad exacta (prompt + ronda de relleno en el cliente) y búsqueda por letra.
 7. **Cuenta y legal:** eliminar cuenta (RPC nueva) y créditos + licencia CC BY 4.0.
 
+## Estado
+
+Los siete bundles están implementados, con `flutter analyze` limpio y la suite completa en verde
+(635 tests al cerrar). Faltan las pruebas en dispositivo.
+
+## Decisiones de esta ronda
+
+- **Fijar viaja a Supabase** (`playlists.is_pinned`, columna que ya existía) y el sync la lee. "Tus
+  me gusta" y "On Repeat" se desfijan una vez (migración Drift v12) y se ordenan como cualquier
+  otra. Orden y vista de Biblioteca son ajustes del dispositivo (`library.sort`,
+  `library.grid_view`); la barra lateral usa el mismo orden.
+- **Deslizar a la derecha solo empieza en el 30 % izquierdo de la pantalla** y exige un gesto
+  claramente horizontal; nunca cuenta la velocidad. En la cola, deslizar a la derecha **mueve** una
+  pista de la cola automática a "A continuación" (no la duplica).
+- **Un error del motor en pausa ya no salta de pista**: deja la pista lista para reintentar en el
+  mismo segundo al pulsar play.
+- **Importar**: la playlist se crea al empezar y se llena por bloques de 10. Cada bloque sube a la
+  nube antes de insertarse en local (la nube nunca tiene menos que el dispositivo). Si la nube
+  rechaza un bloque, la importación se pausa; si se pierde la conexión, se pausa y se reanuda sola
+  al volver. El trabajo se guarda en `syncora/imports/` y se reanuda al abrir la app. En Android, si
+  el sistema congela la app en segundo plano, la importación se detiene hasta que vuelva a primer
+  plano, y sigue donde iba.
+- **IA, cantidad**: el servidor añade una instrucción de cantidad construida con el `count` ya
+  validado (nunca texto del usuario), y el cliente hace hasta dos rondas de relleno
+  (`modify_playlist_add`) cuando, tras matchear con Deezer, faltan canciones. Una cantidad escrita en
+  el texto ("50 canciones") cuenta igual que el preset.
+- **IA, letra**: `lyric_search` activa la búsqueda de Google (grounding). Si el modelo no admite
+  herramienta + salida estructurada (HTTP 400) o la respuesta no se puede leer, repite sin ella.
+- **Eliminar cuenta**: RPC `delete_my_account()` (SECURITY DEFINER, sin parámetros, solo borra
+  `auth.uid()`); el `ON DELETE CASCADE` borra todo lo del usuario y libera su cupo. Después se limpia
+  la biblioteca local (las descargas se conservan) y se cierra la sesión.
+- **Licencia**: CC BY 4.0 con atribución a Juan Carlos Orozco (`LICENSE`, README y la pantalla
+  "Créditos y licencia"). Nota: Creative Commons no recomienda sus licencias para software; se
+  eligió igualmente por decisión del autor. Los componentes de terceros conservan su licencia.
+
 ## Pasos manuales para el desarrollador
 
-- Aplicar la migración nueva de eliminar cuenta (`supabase db push`).
+- Aplicar la migración `20250001000018_delete_my_account.sql` (`supabase db push`). Sin ella,
+  "Eliminar cuenta" muestra un error y no borra nada.
 - Desplegar la Edge Function (`supabase functions deploy ai-assistant`): cambian el prompt de
-  cantidad y la búsqueda por letra.
+  cantidad y la búsqueda por letra. Deno no está disponible en el entorno del agente, así que esos
+  cambios no se ejecutaron (solo se escribieron, igual que en 7.E).

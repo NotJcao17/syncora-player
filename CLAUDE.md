@@ -61,6 +61,17 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-09-25)
+
+**Cuarta ronda de correcciones: implementada, faltan las pruebas en dispositivo.** Detalle en
+`docs/fases/correcciones_r4.md` — **leerlo antes de tocar la importación, los gestos de deslizar,
+fijar playlists o el manejo de errores del motor en el controlador**. Lo que no conviene revertir: la
+importación vive en `ImportManager` (segundo plano, reanudable, cada bloque sube a la nube antes de
+insertarse en local); deslizar a la derecha usa `SwipeActionTile` (solo desde el borde izquierdo,
+nunca por velocidad) y no `Dismissible`; un error del motor en pausa **no** salta de pista; la
+posición de sesión restaurada solo se aplica a su propia pista. Pendiente humano: aplicar la
+migración `...000018_delete_my_account.sql` y redesplegar `ai-assistant`.
+
 ### Estado actual (última actualización: 2026-09-24)
 
 **Configuración: ajustes persistentes, almacenamiento real, temporizador de apagado y aviso legal.**

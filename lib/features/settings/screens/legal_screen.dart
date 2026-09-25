@@ -11,7 +11,7 @@ import '../../../core/theme/app_theme.dart';
 class LegalScreen extends StatelessWidget {
   const LegalScreen({super.key});
 
-  static const _lastUpdated = '24 de septiembre de 2026';
+  static const _lastUpdated = '25 de septiembre de 2026';
 
   static const _sections = <(String, List<String>)>[
     (
@@ -56,7 +56,9 @@ class LegalScreen extends StatelessWidget {
         'Google: inicio de sesión, si eliges entrar con Google.',
         'Gemini (Google): solo si usas una función de IA. Se envía lo que escribes y, según la función, las '
             'canciones de la playlist o de la cola sobre las que trabaja. La petición pasa por el servidor de '
-            'Syncora, que no guarda su contenido: solo cuenta cuántas peticiones haces, para el límite de uso.',
+            'Syncora, que no guarda su contenido: solo cuenta cuántas peticiones haces, para el límite de uso. '
+            'En la búsqueda por letra, Gemini puede buscar el fragmento que escribiste en la Búsqueda de Google '
+            'para identificar la canción.',
         'Cada servicio tiene sus propias condiciones y políticas de privacidad.',
       ],
     ),

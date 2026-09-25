@@ -20,6 +20,7 @@ import '../../download/download_provider.dart';
 import '../../player/player_providers.dart';
 import '../../player/widgets/sleep_timer_sheet.dart';
 import '../../profile/widgets/avatar_selector_sheet.dart';
+import '../widgets/delete_account_flow.dart';
 
 
 /// Pantalla de Configuración (SettingsScreen)
@@ -210,6 +211,16 @@ class SettingsScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Ronda 4: eliminar la cuenta (lo promete el aviso legal).
+          _buildCard(
+            child: _buildActionTile(
+              icon: AppIcons.broken(SolarIcons.UserCross),
+              title: 'Eliminar cuenta',
+              subtitle: 'Borra tu cuenta y todos tus datos en la nube de forma permanente',
+              onTap: () => showDeleteAccountFlow(context, ref),
             ),
           ),
           ],
@@ -452,6 +463,15 @@ class SettingsScreen extends ConsumerWidget {
               title: 'Privacidad y aviso legal',
               subtitle: 'Qué datos se guardan, dónde y con quién se comparten',
               onTap: () => context.push('/legal'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildCard(
+            child: _buildActionTile(
+              icon: AppIcons.broken(SolarIcons.Heart),
+              title: 'Créditos y licencia',
+              subtitle: 'CC BY 4.0 · lo que hace posible a Syncora',
+              onTap: () => context.push('/credits'),
             ),
           ),
 

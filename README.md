@@ -9,7 +9,7 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white)](https://dart.dev)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows-brightgreen)](https://flutter.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 > **Download**: *(coming soon)*
 
@@ -233,11 +233,33 @@ flutter test test/core/extraction/multi_song_extraction_test.dart --timeout 4m
 
 ---
 
+## 🙏 Credits
+
+Syncora Player stands on the work of others. Thank you:
+
+| Project | What it does in Syncora | License |
+| :--- | :--- | :--- |
+| [youtubei.js](https://github.com/LuanRT/YouTube.js) by LuanRT and contributors | Audio extraction engine (bundled in `assets/js/youtubei.bundle.js`) | MIT |
+| Solar Icons by 480 Design, via [flutty_solar_icons](https://pub.dev/packages/flutty_solar_icons) | App icons | CC BY 4.0 (icons) · MIT (package) |
+| [DiceBear](https://www.dicebear.com) · [Adventurer Neutral](https://www.dicebear.com/styles/adventurer-neutral/) by Lisa Wischofsky | User avatars | CC BY 4.0 (style) · MIT (DiceBear) |
+| [Deezer API](https://developers.deezer.com) | Catalog metadata and cover art | Deezer API terms |
+| [LRCLib](https://lrclib.net) | Synced lyrics | Open community database |
+| [Google Gemini](https://ai.google.dev) | AI features | Google API terms |
+| [Supabase](https://supabase.com) | Accounts and cloud sync | Apache 2.0 (platform) |
+| [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) by Tokotype | Typography | SIL OFL 1.1 |
+| Flutter, Dart and the open-source packages in `pubspec.yaml` (just_audio, media_kit/libmpv, Drift/SQLite, flutter_js/QuickJS, Riverpod, …) | Everything else | See each package; listed in-app under *Settings → Credits → Open source licenses* |
+
+Syncora is not affiliated with YouTube, Google, or Deezer.
+
+---
+
 ## 📄 License
 
-Copyright (c) 2026 **Juan Carlos Orozco Nieto**.
+Copyright (c) 2026 **Juan Carlos Orozco**.
 
-This project is licensed under the **MIT License**. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, subject to the condition that the above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+This project is licensed under the **[Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)**. You are free to share and adapt it for any purpose, even commercially, as long as you **give appropriate credit to Juan Carlos Orozco**, provide a link to the license, and indicate if changes were made. See [LICENSE](LICENSE) for the full legal code.
+
+Third-party components listed in [Credits](#-credits) keep their own licenses.
 
 ---
 

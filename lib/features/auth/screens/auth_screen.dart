@@ -16,6 +16,7 @@ import '../../../data/sync/sync_service.dart';
 import '../../library/import_export/playlist_import_export_service.dart';
 import '../local_mode_provider.dart';
 import '../services/account_limit_error.dart';
+import '../services/local_library_wipe.dart';
 import '../services/auth_deep_link_errors.dart';
 import '../services/desktop_auth_service.dart';
 import '../services/new_account_heuristic.dart';
@@ -405,23 +406,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       });
     }
     try {
-      final playlists = await dao.getAllPlaylists();
-      for (final playlist in playlists) {
-        final tracks = await dao.getTracksOrdered(playlist.id);
-        for (final track in tracks) {
-          await dao.removeTrackEntry(track.id);
-        }
-        if (!playlist.isLiked) {
-          await dao.deletePlaylist(playlist.id);
-        }
-      }
-
-      final albums = await savedAlbumDao.getAllSavedAlbums();
-      for (final album in albums) {
-        await savedAlbumDao.removeSavedAlbum(album.albumId);
-      }
-
-      await historyDao.deleteAll();
+      await wipeLocalLibrary(dao: dao, savedAlbumDao: savedAlbumDao, historyDao: historyDao);
     } catch (_) {
       // Best-effort -- el usuario ya confirmó que quiere descartar; lo que
       // no se pudo borrar queda local-only, un estado ya soportado (H-5).

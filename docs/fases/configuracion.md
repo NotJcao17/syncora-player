@@ -45,7 +45,7 @@ verde antes de su commit.
   hace hoy. Si cambia qué se guarda o a qué servicio se habla, el texto tiene que cambiar con ello.
   **Excepción deliberada:** el texto ya dice que la cuenta se puede eliminar desde Configuración,
   aunque ese botón todavía no existe. Se implementa en la fase siguiente (decisión del usuario); hasta
-  entonces, esa frase del aviso no es cierta.
+  entonces, esa frase del aviso no es cierta. **Resuelto en la ronda 4** (`correcciones_r4.md`).
 
 ## Pruebas manuales pendientes (Android y Windows)
 
