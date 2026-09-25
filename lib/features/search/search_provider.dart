@@ -104,13 +104,23 @@ class SearchNotifier extends Notifier<SearchState> {
   Future<void> _performSearch(String query, DeezerSearchType type) async {
     try {
       final deezerApi = ref.read(deezerApiProvider);
-      final res = await deezerApi.search(query, type: type);
-      if (state.query.trim() != query) return;
+      // Ronda 4 (H-R4-9): se pinta en cuanto llegan los resultados, y los
+      // colaboradores de los primeros (una ida y vuelta más a Deezer) se
+      // completan después. Antes el usuario esperaba las dos.
+      final res = await deezerApi.search(query, type: type, enrich: false);
+      if (state.query.trim() != query || state.searchType != type) return;
       state = state.copyWith(
         isLoading: false,
         result: res,
         clearError: true,
       );
+      try {
+        final enriched = await deezerApi.enrichSearchResult(res, query, type: type);
+        if (state.query.trim() != query || state.searchType != type) return;
+        state = state.copyWith(result: enriched);
+      } catch (_) {
+        // Sin colaboradores: los resultados ya están en pantalla.
+      }
     } catch (e) {
       if (state.query.trim() != query) return;
       state = state.copyWith(

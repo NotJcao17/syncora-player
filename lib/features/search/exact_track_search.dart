@@ -86,19 +86,19 @@ class ExactTrackSearch {
     if (pArtist.isNotEmpty && qTitle.isNotEmpty) {
       try {
         final advanced = 'artist:"${forQuery(pArtist)}" track:"${forQuery(qTitle)}"';
-        final res = await api.search(advanced, type: DeezerSearchType.track);
+        final res = await api.search(advanced, type: DeezerSearchType.track, enrich: false);
         if (accept(res.tracks)) return res.tracks;
       } catch (_) {}
     }
 
     try {
       final plain = pArtist.isNotEmpty ? '$pArtist $qTitle' : qTitle;
-      final res = await api.search(plain, type: DeezerSearchType.track);
+      final res = await api.search(plain, type: DeezerSearchType.track, enrich: false);
       if (accept(res.tracks)) return res.tracks;
     } catch (_) {}
 
     try {
-      final res = await api.search(qTitle, type: DeezerSearchType.track);
+      final res = await api.search(qTitle, type: DeezerSearchType.track, enrich: false);
       return res.tracks;
     } catch (_) {
       return const [];

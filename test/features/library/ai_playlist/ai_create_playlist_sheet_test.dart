@@ -41,7 +41,7 @@ class _FakeDeezerApi extends DeezerApi {
   _FakeDeezerApi(this.track);
 
   @override
-  Future<DeezerSearchResult> search(String query, {DeezerSearchType type = DeezerSearchType.all}) async {
+  Future<DeezerSearchResult> search(String query, {DeezerSearchType type = DeezerSearchType.all, bool enrich = true}) async {
     return DeezerSearchResult(tracks: [track]);
   }
 }

@@ -92,13 +92,26 @@ class DeezerApi {
             )),
         _rateLimiter = rateLimiter ?? RateLimiter();
 
-  Future<DeezerSearchResult> search(String query, {DeezerSearchType type = DeezerSearchType.all}) async {
+  /// [enrich] `false` omite el paso A5 (`/track/{id}` de los primeros
+  /// resultados para mostrar colaboradores) — ronda 4, H-R4-9. El buscador
+  /// pinta primero sin él y lo completa después con [enrichSearchResult]; la
+  /// importación y la búsqueda exacta solo necesitan el mejor candidato, y
+  /// ahí esas hasta 8 peticiones extra por consulta eran puro coste.
+  Future<DeezerSearchResult> search(
+    String query, {
+    DeezerSearchType type = DeezerSearchType.all,
+    bool enrich = true,
+  }) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return const DeezerSearchResult();
 
     final cacheKey = '${type.name}:$trimmed';
     final cached = _searchCache.get(cacheKey);
     if (cached != null) return cached;
+    if (!enrich) {
+      final raw = _searchCache.get('$cacheKey#raw');
+      if (raw != null) return raw;
+    }
 
     return _rateLimiter.run(() async {
       try {
@@ -202,6 +215,12 @@ class DeezerApi {
           }
         }
 
+        if (!enrich) {
+          final raw = DeezerSearchResult(tracks: tracks, artists: artists, albums: albums);
+          _searchCache.put('$cacheKey#raw', raw);
+          return raw;
+        }
+
         // A5: enriquecer con /track/{id} solo los títulos que aparecen más de una
         // vez entre los primeros resultados (mismo título base + artista) — es
         // justo ahí donde el usuario no puede distinguir una colaboración de una
@@ -246,6 +265,23 @@ class DeezerApi {
   /// sin request) porque esos nombres no traen `artistId` real de Deezer —
   /// saldrían como texto no clickeable en la UI, inconsistente con el resto
   /// de artistas. Se prefiere pagar la petición y tener siempre un ID real.
+  /// Segunda fase de [search] con `enrich: false` (ronda 4): aplica A5 sobre
+  /// un resultado ya pintado y lo deja en caché como resultado completo. Solo
+  /// reemplaza pistas en su sitio (mismo orden), así que la lista no salta.
+  Future<DeezerSearchResult> enrichSearchResult(
+    DeezerSearchResult raw,
+    String query, {
+    DeezerSearchType type = DeezerSearchType.all,
+  }) async {
+    final cacheKey = '${type.name}:${query.trim()}';
+    final cached = _searchCache.get(cacheKey);
+    if (cached != null) return cached;
+    final tracks = await _enrichAmbiguousTitles(raw.tracks);
+    final result = DeezerSearchResult(tracks: tracks, artists: raw.artists, albums: raw.albums);
+    _searchCache.put(cacheKey, result);
+    return result;
+  }
+
   static const int _ambiguousScanLimit = 20;
   static const int _alwaysEnrichTop = 5;
   static const int _ambiguousMaxRequests = 8;

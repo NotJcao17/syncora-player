@@ -11,7 +11,7 @@ import 'package:syncora_player/data/models/deezer/deezer_track.dart';
 
 class MockDeezerApi extends DeezerApi {
   @override
-  Future<DeezerSearchResult> search(String query, {DeezerSearchType type = DeezerSearchType.all}) async {
+  Future<DeezerSearchResult> search(String query, {DeezerSearchType type = DeezerSearchType.all, bool enrich = true}) async {
     return const DeezerSearchResult();
   }
 

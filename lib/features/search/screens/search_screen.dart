@@ -194,7 +194,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               : 'Mostrando todos los resultados',
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
-                            onTap: () => searchNotifier.setPopularOnly(!searchState.popularOnly),
+                            onTap: () {
+                              // Ronda 4: sin aviso nadie sabía qué hacía
+                              // este botón (el tooltip no existe en táctil).
+                              final next = !searchState.popularOnly;
+                              searchNotifier.setPopularOnly(next);
+                              AppToast.show(
+                                context,
+                                message: next
+                                    ? 'Mostrando solo resultados populares'
+                                    : 'Mostrando todos los resultados, incluidos los menos conocidos',
+                              );
+                            },
                             child: Container(
                               width: 40,
                               height: 40,
