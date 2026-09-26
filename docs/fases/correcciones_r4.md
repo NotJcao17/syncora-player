@@ -175,3 +175,28 @@ prueba en dispositivo. Si ese intento falla por cualquier motivo, la función re
 - El reparador de portadas corre **en la app**, no en el servidor: al arrancar, si pasaron 7 días
   desde la última pasada (la fecha se guarda en los ajustes del dispositivo).
 
+## Cierre de la ronda (2026-09-25)
+
+Pruebas en dispositivo pasadas por el usuario, salvo lo que queda abajo. Todo commiteado y
+pusheado a `master`.
+
+### Pendientes para la siguiente fase
+
+1. **Tirones al abrir y al hacer scroll en playlists grandes (~600 canciones).** Mejoró (caché de
+   portadas de 2500 y paleta a 64x64), pero los primeros segundos tras abrirla todavía va trabada, y
+   dos veces el toque para detener el scroll disparó un "play". El log muestra
+   `Choreographer: Skipped 33 frames`, trabajo en el hilo de la UI. Sospechosos a medir con DevTools
+   (perfil en `--profile`, no en debug) antes de tocar nada:
+   - el mapeo `PlaylistTrack -> SyncoraTrack` con un `jsonDecode` de colaboradores por fila (ya se
+     memoriza, pero la primera vez corre entero en el hilo de la UI);
+   - la decodificación de las miniaturas que entran de golpe al abrir;
+   - los `StreamBuilder` de Drift de las cabeceras (contadores, portada en cuadrícula) que se
+     re-emiten mientras la playlist carga.
+   Para el "play" accidental: que el toque sobre una fila no dispare reproducción si llegó mientras
+   la lista todavía se movía (Flutter ya lo hace con el scroll en curso; revisar el `InkWell` de
+   `TrackTile` y el `SwipeActionTile`).
+2. **Teclado trabado en "Mejorar cola con IA".** El usuario va a rediseñar esa función en la
+   siguiente fase; no se tocó más.
+3. **"No se pudo iniciar" al reabrir:** no se volvió a reproducir tras H-R4-3. Si reaparece, pedir
+   las líneas `[Play]` de la consola.
+

@@ -63,7 +63,9 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 
 ### Estado actual (última actualización: 2026-09-25)
 
-**Cuarta ronda de correcciones: implementada, faltan las pruebas en dispositivo.** Detalle en
+**Cuarta ronda de correcciones: cerrada, pruebas en dispositivo pasadas.** Pendientes que
+quedaron (tirones en playlists grandes, teclado en "Mejorar cola con IA") al final de
+`docs/fases/correcciones_r4.md`. Detalle en
 `docs/fases/correcciones_r4.md` — **leerlo antes de tocar la importación, los gestos de deslizar,
 fijar playlists o el manejo de errores del motor en el controlador**. Lo que no conviene revertir: la
 importación vive en `ImportManager` (segundo plano, reanudable, cada bloque sube a la nube antes de
