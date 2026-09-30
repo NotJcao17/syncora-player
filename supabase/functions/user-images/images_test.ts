@@ -55,13 +55,17 @@ Deno.test("las claves cuelgan del prefijo del usuario", () => {
   assertEquals(avatar.startsWith(userPrefix(USER)), true);
 });
 
-Deno.test("keyFromUrl es la inversa de publicUrlFor y rechaza URLs ajenas", () => {
+Deno.test("keyFromUrl es la inversa de publicUrlFor, con cualquier dominio", () => {
   const key = `u/${USER}/a/def.jpg`;
-  assertEquals(keyFromUrl(BASE, publicUrlFor(`${BASE}/`, key)), key);
-  assertEquals(keyFromUrl(BASE, `${BASE}/${key}?v=2`), key);
-  assertEquals(keyFromUrl(BASE, "https://e-cdns-images.dzcdn.net/images/cover.jpg"), null);
-  assertEquals(keyFromUrl(BASE, "gradient:3"), null);
-  assertEquals(keyFromUrl(BASE, null), null);
+  assertEquals(keyFromUrl(publicUrlFor(`${BASE}/`, key)), key);
+  assertEquals(keyFromUrl(`${BASE}/${key}?v=2`), key);
+  // Cambiar de r2.dev a un dominio propio no deja huérfanas las URLs viejas.
+  assertEquals(keyFromUrl(`https://img.ejemplo.com/${key}`), key);
+  // Una portada de Deezer no apunta a nada del usuario.
+  assertEquals(keyFromUrl("https://e-cdns-images.dzcdn.net/images/cover.jpg")?.startsWith(userPrefix(USER)), false);
+  assertEquals(keyFromUrl("gradient:3"), null);
+  assertEquals(keyFromUrl("C:\\docs\\a.jpg"), null);
+  assertEquals(keyFromUrl(null), null);
 });
 
 Deno.test("parseListObjectsXml lee claves, fechas y paginación", () => {

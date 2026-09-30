@@ -206,10 +206,10 @@ async function collectGarbage(
 
   const referenced = new Set<string>();
   for (const row of covers.data ?? []) {
-    const key = keyFromUrl(r2.publicBaseUrl, row.cover_url as string | null);
+    const key = keyFromUrl(row.cover_url as string | null);
     if (key) referenced.add(key);
   }
-  const avatarKey = keyFromUrl(r2.publicBaseUrl, profile.data?.avatar_url as string | null | undefined);
+  const avatarKey = keyFromUrl(profile.data?.avatar_url as string | null | undefined);
   if (avatarKey) referenced.add(avatarKey);
 
   const toDelete = selectKeysToDelete(objects, referenced, Date.now());

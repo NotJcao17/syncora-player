@@ -164,6 +164,7 @@ Para que el reproductor no se rompa si YouTube cambia sus firmas, se usará un e
 | Correo SMTP por defecto | **2 mensajes/hora** | Supabase (best-effort, no apto para producción) |
 | Gemini 3.1 Flash-Lite (free tier, llave compartida) | 15 RPM / **1,000 RPD** / 250k TPM, sin tope de tokens/día publicado | Google AI |
 | API Deezer | 50 req / 5 seg **por IP** | Deezer (la IP es la del usuario, no la nuestra — no es un límite global del proyecto) |
+| Cloudflare R2 (portadas propias y fotos de perfil) | 10 GB, 1M escrituras y 10M lecturas/mes, **egress gratis** | Cloudflare (ver `docs/fases/portadas_y_fotos.md`) |
 
 ### 4.2 Cuánto pesa realmente un usuario — metodología
 
@@ -379,6 +380,7 @@ El **Agente (IA)** será el responsable de generar los archivos de migración SQ
 | `SUPABASE_ANON_KEY` | `.env` de la app (bundled en APK/EXE) | Flutter cliente — pública, protegida por RLS |
 | `SUPABASE_SERVICE_ROLE_KEY` | Variable local del SO del desarrollador o `.env.local` (jamás en Git, jamás en la app) | Solo Supabase CLI para migraciones |
 | `GEMINI_API_KEY` | Secreto de Supabase Edge Functions (jamás sale del servidor) | Edge Functions en el servidor |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL` | Secretos de Supabase Edge Functions | Solo la función `user-images` |
 
 > **Por qué la ANON_KEY es segura en el APK:** Supabase la llama "anon/public" porque está diseñada para vivir en clientes. La seguridad no depende de ocultarla, sino del RLS: aunque alguien la extraiga con ingeniería inversa, no puede leer ni modificar datos de otros usuarios.
 
@@ -444,6 +446,10 @@ Para asegurar una apariencia Premium y evitar que la app luzca genérica, el Age
 *   **Mockups:** El desarrollo visual se basará estrictamente en los mockups alojados en la carpeta `/mockups` generados por Google Stitch.
 *   **Paquete de Íconos:** Se utiliza **`flutty_solar_icons`** (Solar Icons con variante *broken* de 1.5px por defecto y variante *bold* para elementos seleccionados/activos). Ofrece una estética moderna, limpia y consistente evitando la apariencia genérica de Material Icons.
 *   **Avatares de Usuarios:** Para evitar pedir fotos personales y darle un toque lúdico, se usarán avatares generados proceduralmente (ej. estilo Kahoot o "Beanheads"). Se utilizará la API de **DiceBear** (o su paquete nativo Flutter) pasando el UUID único del usuario como "seed". Esto asegura que cada usuario tenga un avatar divertido, único y consistente asignado automáticamente sin gastar almacenamiento de base de datos en imágenes.
+    *   *Actualización (2026-09-29):* DiceBear sigue siendo el avatar por defecto, pero el usuario
+        puede subir una **foto propia** (y portadas propias para sus playlists). En modo local se
+        guardan en el dispositivo; con cuenta, en Cloudflare R2 vía la Edge Function `user-images`.
+        Detalle en `docs/fases/portadas_y_fotos.md`.
 
 ### Tipografía y Color
 *   **Tipografía:** **Plus Jakarta Sans** (Moderna, limpia, muy legible; da un toque premium/tech perfecto para una app de música).

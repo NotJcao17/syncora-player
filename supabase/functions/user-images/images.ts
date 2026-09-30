@@ -68,12 +68,24 @@ export function publicUrlFor(publicBaseUrl: string, key: string): string {
   return `${publicBaseUrl.replace(/\/+$/, "")}/${key}`;
 }
 
-/** Inversa de [publicUrlFor]; `null` si la URL no es de este bucket. */
-export function keyFromUrl(publicBaseUrl: string, url: string | null | undefined): string | null {
+/**
+ * Clave de objeto que referencia una URL: su ruta, sin mirar el dominio. Así
+ * cambiar `R2_PUBLIC_BASE_URL` (por ejemplo, del subdominio r2.dev a un
+ * dominio propio) no hace que la limpieza tome por huérfanas las imágenes
+ * guardadas con el dominio anterior. Solo importa para claves bajo el prefijo
+ * del propio usuario, así que una URL ajena no puede proteger nada que no sea
+ * suyo. `null` si no es una URL http(s).
+ */
+export function keyFromUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  const base = `${publicBaseUrl.replace(/\/+$/, "")}/`;
-  if (!url.startsWith(base)) return null;
-  const key = url.slice(base.length).split(/[?#]/)[0];
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+  const key = decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
   return key.length > 0 ? key : null;
 }
 

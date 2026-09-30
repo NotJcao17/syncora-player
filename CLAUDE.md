@@ -61,6 +61,18 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-09-29)
+
+**Portadas propias de playlists y foto de perfil: implementadas; faltan configurar R2 y las pruebas
+en dispositivo.** Detalle y guía de Cloudflare R2 en `docs/fases/portadas_y_fotos.md` — **leerlo
+antes de tocar portadas, avatares o la función `user-images`**. Sin cuenta la imagen se queda en
+`Documents/syncora/custom_images/`; con cuenta se sube a R2 solo por la Edge Function `user-images`
+(las llaves nunca llegan a la app), que **no escribe en la BD**: el cliente guarda la URL con su JWT.
+Lo que no conviene revertir: nombre de objeto nuevo en cada subida (cachés), limpieza por
+recolección de lo que ya no referencia ninguna fila del usuario con 10 min de gracia (no borrado
+puntual), y el avatar sale siempre de `avatarInfoProvider`/`UserAvatar`. Pendiente humano: crear el
+bucket y los secretos, `supabase db push` (migración 19) y `supabase functions deploy user-images`.
+
 ### Estado actual (última actualización: 2026-09-25)
 
 **Cuarta ronda de correcciones: cerrada, pruebas en dispositivo pasadas.** Pendientes que
