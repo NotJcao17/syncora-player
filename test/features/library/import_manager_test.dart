@@ -47,6 +47,7 @@ class _FakeRepo extends SupabasePlaylistRepository {
   Future<Map<String, dynamic>> createPlaylist({
     required String title,
     String? description,
+    String? coverUrl,
     bool isPublic = false,
     bool isLiked = false,
     bool isPinned = false,

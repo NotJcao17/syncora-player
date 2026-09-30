@@ -42,7 +42,9 @@ import '../../search/search_ranking.dart';
 import '../ai_playlist/ai_modify_playlist_sheet.dart';
 import '../import_export/import_jobs_banner.dart';
 import '../import_export/playlist_import_export_service.dart';
+import '../services/playlist_cover_service.dart';
 import '../services/playlist_pin_service.dart';
+import '../widgets/edit_playlist_dialog.dart';
 import '../../../core/cache/app_image_cache.dart';
 
 enum PlaylistSortColumn { original, title, album, date, duration }
@@ -437,189 +439,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     return sorted;
   }
 
-  void _showEditPlaylistDialog(BuildContext context, Playlist playlist) {
-    final titleController = TextEditingController(text: playlist.title);
-    final descController = TextEditingController(text: playlist.description ?? '');
-    String? selectedCoverUrl = playlist.coverUrl;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (dialogCtx, setDialogState) {
-          return AlertDialog(
-            backgroundColor: AppTheme.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('Editar playlist', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-            content: SizedBox(
-              width: 440,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: titleController,
-                      style: const TextStyle(color: AppTheme.primary),
-                      decoration: InputDecoration(
-                        labelText: 'Nombre de la playlist',
-                        labelStyle: const TextStyle(color: AppTheme.secondary),
-                        filled: true,
-                        fillColor: AppTheme.background,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: descController,
-                      maxLines: 2,
-                      style: const TextStyle(color: AppTheme.primary),
-                      decoration: InputDecoration(
-                        labelText: 'Descripción (opcional)',
-                        labelStyle: const TextStyle(color: AppTheme.secondary),
-                        filled: true,
-                        fillColor: AppTheme.background,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text('Personalizar portada', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(height: 8),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppTheme.surfaceHover,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(AppIcons.broken(SolarIcons.Gallery), color: AppTheme.primary, size: 20),
-                      ),
-                      title: const Text('Cuadrícula 2x2 automática', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w600)),
-                      subtitle: const Text('Muestra las carátulas de las canciones', style: TextStyle(color: AppTheme.secondary, fontSize: 11)),
-                      trailing: (selectedCoverUrl == null || selectedCoverUrl!.isEmpty)
-                          ? Icon(AppIcons.bold(SolarIcons.CheckCircle), color: AppTheme.primary, size: 20)
-                          : null,
-                      onTap: () {
-                        setDialogState(() {
-                          selectedCoverUrl = null;
-                        });
-                      },
-                    ),
-                    const Divider(color: AppTheme.surfaceHover, height: 16),
-                    const Text('Degradados predefinidos', style: TextStyle(color: AppTheme.secondary, fontSize: 12)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: List.generate(PlaylistCoverWidget.presetGradients.length, (idx) {
-                        final tag = 'gradient:$idx';
-                        final isSelected = selectedCoverUrl == tag;
-                        return GestureDetector(
-                          onTap: () {
-                            setDialogState(() {
-                              selectedCoverUrl = tag;
-                            });
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              gradient: PlaylistCoverWidget.presetGradients[idx],
-                              borderRadius: BorderRadius.circular(8),
-                              border: isSelected ? Border.all(color: Colors.white, width: 2.5) : null,
-                            ),
-                            child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
-                          ),
-                        );
-                      }),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text('Colores sólidos', style: TextStyle(color: AppTheme.secondary, fontSize: 12)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: List.generate(PlaylistCoverWidget.presetColors.length, (idx) {
-                        final color = PlaylistCoverWidget.presetColors[idx];
-                        final hex = '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
-                        final tag = 'color:$hex';
-                        final isSelected = selectedCoverUrl == tag;
-                        return GestureDetector(
-                          onTap: () {
-                            setDialogState(() {
-                              selectedCoverUrl = tag;
-                            });
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: color,
-                              borderRadius: BorderRadius.circular(8),
-                              border: isSelected ? Border.all(color: Colors.white, width: 2.5) : null,
-                            ),
-                            child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondary)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: AppTheme.background,
-                ),
-                onPressed: () async {
-                  final newTitle = titleController.text.trim();
-                  if (newTitle.isEmpty) return;
-                  final newDesc = descController.text.trim();
-
-                  final dao = ref.read(playlistDaoProvider);
-                  await dao.updatePlaylist(playlist.copyWith(
-                    title: newTitle,
-                    description: Value(newDesc.isEmpty ? null : newDesc),
-                    coverUrl: Value(selectedCoverUrl),
-                  ));
-
-                  if (playlist.remoteId != null) {
-                    try {
-                      final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-                      await supabaseRepo.updatePlaylist(
-                        playlist.remoteId!,
-                        title: newTitle,
-                        description: newDesc.isEmpty ? null : newDesc,
-                        clearDescription: newDesc.isEmpty,
-                        coverUrl: selectedCoverUrl,
-                        // Volver a portada automática es un NULL explícito, no
-                        // un "no lo toques".
-                        clearCoverUrl: selectedCoverUrl == null,
-                      );
-                    } catch (_) {}
-                  }
-
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (context.mounted) {
-                    AppToast.show(context, message: 'Playlist actualizada');
-                  }
-                },
-                child: const Text('Guardar cambios', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
   void _showAddAllToOtherPlaylistDialog(BuildContext context, List<PlaylistTrack> currentTracks) async {
     final dao = ref.read(playlistDaoProvider);
     final allPlaylists = await dao.getAllPlaylists();
@@ -883,7 +702,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             subtitle: canEdit ? null : const Text('Sin conexión', style: TextStyle(color: AppTheme.muted, fontSize: 12)),
             onTap: () {
               Navigator.pop(ctx);
-              _showEditPlaylistDialog(context, playlist);
+              showEditPlaylistDialog(context, playlist);
             },
           ),
           ListTile(
@@ -990,6 +809,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                 });
                 if (!playlist.isLiked) {
                   await ref.read(playlistDaoProvider).deletePlaylist(playlist.id);
+                  if (mounted) releaseCoverImage(ref, playlist);
                 }
                 if (mounted && context.canPop()) context.pop();
               }

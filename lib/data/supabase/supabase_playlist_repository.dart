@@ -43,6 +43,7 @@ class SupabasePlaylistRepository {
   Future<Map<String, dynamic>> createPlaylist({
     required String title,
     String? description,
+    String? coverUrl,
     bool isPublic = false,
     bool isLiked = false,
     bool isPinned = false,
@@ -56,6 +57,7 @@ class SupabasePlaylistRepository {
       'user_id': userId,
       'title': title,
       'description': description,
+      'cover_url': ?coverUrl,
       'is_public': isPublic,
       'is_liked': isLiked,
       if (isPinned) 'is_pinned': true,

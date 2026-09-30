@@ -28,6 +28,7 @@ import '../import_export/playlist_import_export_service.dart';
 import '../ai_playlist/ai_create_playlist_sheet.dart';
 import '../ai_playlist/ai_modify_playlist_sheet.dart';
 import '../library_view_settings.dart';
+import '../services/playlist_cover_service.dart';
 import '../services/playlist_pin_service.dart';
 import '../../../core/cache/app_image_cache.dart';
 
@@ -644,6 +645,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             final dao = ref.read(playlistDaoProvider);
             await dao.deletePlaylist(playlist.id);
             if (mounted) {
+              releaseCoverImage(ref, playlist);
               AppToast.show(context, message: 'Playlist eliminada');
             }
           },

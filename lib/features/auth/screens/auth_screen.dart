@@ -6,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/images/custom_image_service.dart';
 import '../../../core/navigation/app_router.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/local_image_path.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/supabase/supabase_providers.dart';
@@ -218,9 +220,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     setState(() => _isMigrating = true);
     try {
       final service = PlaylistImportExportService(ref.read(deezerApiProvider));
+      final images = ref.read(customImageServiceProvider);
       await service.migrateLocalPlaylistsToAccount(
         dao: ref.read(playlistDaoProvider),
         supabaseRepo: ref.read(supabasePlaylistRepositoryProvider),
+        // El archivo local ya es el JPEG procesado: se sube tal cual.
+        uploadCover: (path, remoteId) async {
+          final bytes = await File(localImageFilePath(path)).readAsBytes();
+          final url = await images.upload(bytes, CustomImageKind.playlistCover, playlistRemoteId: remoteId);
+          await images.deleteLocal(path);
+          return url;
+        },
       );
       await service.migrateLocalSavedAlbumsToAccount(
         savedAlbumDao: ref.read(savedAlbumDaoProvider),

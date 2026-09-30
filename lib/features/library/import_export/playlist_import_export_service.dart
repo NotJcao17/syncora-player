@@ -3,6 +3,7 @@ import 'package:csv/csv.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/local_image_path.dart';
 import '../../../core/utils/contributor_resolver.dart';
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/local_db/daos/listening_history_dao.dart';
@@ -486,9 +487,15 @@ class PlaylistImportExportService {
   /// `remoteId` y este método ya no lo vuelve a tocar. Cada playlist se
   /// procesa en su propio `try/catch` para que el fallo de una no aborte
   /// las demás.
+  ///
+  /// La portada viaja con la playlist cuando esta se crea en la nube: un
+  /// degradado o un color tal cual, y una imagen propia (archivo local) a
+  /// través de [uploadCover], que la sube y devuelve su URL. Si la subida
+  /// falla, la playlist se migra igual con la cuadrícula automática.
   Future<void> migrateLocalPlaylistsToAccount({
     required PlaylistDao dao,
     required SupabasePlaylistRepository supabaseRepo,
+    Future<String?> Function(String localPath, String remoteId)? uploadCover,
   }) async {
     final localPlaylists = await dao.getAllPlaylists();
     final pending = localPlaylists.where((p) => p.remoteId == null).toList();
@@ -509,6 +516,9 @@ class PlaylistImportExportService {
     for (final playlist in pending) {
       try {
         String? remoteId;
+        final localCover = playlist.coverUrl;
+        final hasLocalImage = localCover != null && isLocalImagePath(localCover);
+        var createdNow = false;
         if (playlist.isLiked) {
           // Hallazgo de la revisión independiente: `createPlaylist(isLiked:
           // true)` a ciegas puede crear una SEGUNDA "Tus me gusta" si la
@@ -525,14 +535,20 @@ class PlaylistImportExportService {
               .where((p) => p['is_liked'] != true && p['title'] == playlist.title)
               .firstOrNull;
           remoteId = existing?['id']?.toString();
-          remoteId ??= (await supabaseRepo.createPlaylist(
-            title: playlist.title,
-            description: playlist.description,
-            isPublic: playlist.isPublic,
-            isLiked: false,
-            isPinned: playlist.isPinned,
-          ))['id']
-              ?.toString();
+          if (remoteId == null) {
+            remoteId = (await supabaseRepo.createPlaylist(
+              title: playlist.title,
+              description: playlist.description,
+              // Una ruta de este dispositivo no le sirve a ningún otro: la
+              // imagen se sube aparte, más abajo.
+              coverUrl: hasLocalImage ? null : localCover,
+              isPublic: playlist.isPublic,
+              isLiked: false,
+              isPinned: playlist.isPinned,
+            ))['id']
+                ?.toString();
+            createdNow = true;
+          }
         }
         if (remoteId == null || remoteId.isEmpty) continue;
 
@@ -554,7 +570,20 @@ class PlaylistImportExportService {
           await supabaseRepo.addTracksToPlaylist(remoteId, payload);
         }
 
-        await dao.updatePlaylist(playlist.copyWith(remoteId: Value(remoteId)));
+        var migrated = playlist.copyWith(remoteId: Value(remoteId));
+        if (createdNow && hasLocalImage && uploadCover != null) {
+          try {
+            final url = await uploadCover(localCover, remoteId);
+            if (url != null) {
+              await supabaseRepo.updatePlaylist(remoteId, coverUrl: url);
+              migrated = migrated.copyWith(coverUrl: Value(url));
+            }
+          } catch (_) {
+            // Se queda con la imagen local; el siguiente sync la cambia por
+            // la cuadrícula automática, que es lo que tiene en la nube.
+          }
+        }
+        await dao.updatePlaylist(migrated);
       } catch (_) {
         // Esta playlist se reintenta en la próxima llamada -- las que ya
         // llevan `remoteId` de un intento previo no se tocan (idempotente).

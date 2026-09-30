@@ -26,15 +26,39 @@ class _FakePlaylistRepo extends SupabasePlaylistRepository {
   Future<Map<String, dynamic>> createPlaylist({
     required String title,
     String? description,
+    String? coverUrl,
     bool isPublic = false,
     bool isLiked = false,
     bool isPinned = false,
   }) async {
     final id = 'remote_${_nextRemoteId++}';
-    final created = {'id': id, 'title': title, 'description': description, 'is_public': isPublic, 'is_liked': isLiked};
+    final created = <String, dynamic>{
+      'id': id,
+      'title': title,
+      'description': description,
+      'cover_url': coverUrl,
+      'is_public': isPublic,
+      'is_liked': isLiked,
+    };
     createdPlaylists.add(created);
     if (isLiked) likedPlaylist = created;
     return created;
+  }
+
+  @override
+  Future<void> updatePlaylist(
+    String id, {
+    String? title,
+    String? description,
+    String? coverUrl,
+    bool clearCoverUrl = false,
+    bool clearDescription = false,
+    bool? isPublic,
+    bool? isPinned,
+    int? orderIndex,
+  }) async {
+    final row = createdPlaylists.firstWhere((p) => p['id'] == id);
+    if (coverUrl != null) row['cover_url'] = coverUrl;
   }
 
   @override
@@ -198,6 +222,64 @@ void main() {
         expect(matchingTitle.length, 1);
       },
     );
+  });
+
+  group('migrateLocalPlaylistsToAccount: portadas', () {
+    late SyncoraDatabase db;
+    late _FakePlaylistRepo fakeRepo;
+    late PlaylistImportExportService service;
+
+    setUp(() {
+      db = SyncoraDatabase(NativeDatabase.memory());
+      fakeRepo = _FakePlaylistRepo();
+      service = PlaylistImportExportService(DeezerApi());
+    });
+
+    tearDown(() async {
+      await db.close();
+    });
+
+    test('un degradado viaja tal cual y una imagen local se sube aparte', () async {
+      final gradientId = await db.playlistDao.createPlaylist(title: 'Degradado', coverUrl: 'gradient:2');
+      final imageId =
+          await db.playlistDao.createPlaylist(title: 'Con foto', coverUrl: r'C:\docs\syncora\custom_images\a.jpg');
+      final uploads = <String>[];
+
+      await service.migrateLocalPlaylistsToAccount(
+        dao: db.playlistDao,
+        supabaseRepo: fakeRepo,
+        uploadCover: (path, remoteId) async {
+          uploads.add(path);
+          return 'https://pub-abc.r2.dev/u/x/p/$remoteId/1.jpg';
+        },
+      );
+
+      final gradient = await db.playlistDao.getPlaylistById(gradientId);
+      final image = await db.playlistDao.getPlaylistById(imageId);
+      final remoteGradient = fakeRepo.createdPlaylists.firstWhere((p) => p['title'] == 'Degradado');
+      final remoteImage = fakeRepo.createdPlaylists.firstWhere((p) => p['title'] == 'Con foto');
+
+      expect(remoteGradient['cover_url'], 'gradient:2');
+      expect(gradient!.coverUrl, 'gradient:2');
+      expect(uploads, [r'C:\docs\syncora\custom_images\a.jpg']);
+      // La ruta local nunca llega a la nube; la URL subida sí, en ambos lados.
+      expect(remoteImage['cover_url'], 'https://pub-abc.r2.dev/u/x/p/${image!.remoteId}/1.jpg');
+      expect(image.coverUrl, remoteImage['cover_url']);
+    });
+
+    test('si la subida falla, la playlist se migra igual sin portada en la nube', () async {
+      final id = await db.playlistDao.createPlaylist(title: 'Con foto', coverUrl: '/data/custom_images/a.jpg');
+
+      await service.migrateLocalPlaylistsToAccount(
+        dao: db.playlistDao,
+        supabaseRepo: fakeRepo,
+        uploadCover: (path, remoteId) async => throw Exception('sin red'),
+      );
+
+      final migrated = await db.playlistDao.getPlaylistById(id);
+      expect(migrated!.remoteId, isNotNull);
+      expect(fakeRepo.createdPlaylists.firstWhere((p) => p['title'] == 'Con foto')['cover_url'], isNull);
+    });
   });
 
   group('PlaylistImportExportService.migrateLocalSavedAlbumsToAccount (Fase 7.I.10)', () {
