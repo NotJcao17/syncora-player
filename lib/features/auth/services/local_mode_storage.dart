@@ -26,11 +26,17 @@ abstract class LocalModeStorage {
   /// `AvatarSelectorSheet.onAvatarSelected`, pero persistiendo acá en vez
   /// de en la tabla `profiles`.
   Future<void> setAvatarSeed(String seed);
+
+  /// Foto de perfil propia en modo local: ruta del JPEG en
+  /// `custom_images/`. `null` = sin foto, se usa la semilla.
+  Future<String?> getAvatarImagePath();
+  Future<void> setAvatarImagePath(String? path);
 }
 
 class SecureLocalModeStorage implements LocalModeStorage {
   static const _localModeKey = 'local_mode_enabled';
   static const _avatarSeedKey = 'local_mode_avatar_seed';
+  static const _avatarImageKey = 'local_mode_avatar_image';
 
   final FlutterSecureStorage _storage;
 
@@ -57,6 +63,13 @@ class SecureLocalModeStorage implements LocalModeStorage {
 
   @override
   Future<void> setAvatarSeed(String seed) => _storage.write(key: _avatarSeedKey, value: seed);
+
+  @override
+  Future<String?> getAvatarImagePath() => _storage.read(key: _avatarImageKey);
+
+  @override
+  Future<void> setAvatarImagePath(String? path) =>
+      path == null ? _storage.delete(key: _avatarImageKey) : _storage.write(key: _avatarImageKey, value: path);
 
   // UUID sin agregar el paquete `uuid` como dependencia directa (solo
   // llega transitivamente hoy, vía otro paquete) -- 16 bytes aleatorios en

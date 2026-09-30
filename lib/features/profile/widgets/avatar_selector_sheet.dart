@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -5,12 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/images/custom_image_service.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../auth/auth_provider.dart';
 import '../../auth/local_mode_provider.dart';
+import 'user_avatar.dart';
 
 /// Modal bottom sheet / diálogo centrado para la selección de avatar basado en Dicebear seeds.
 class AvatarSelectorSheet extends ConsumerStatefulWidget {
@@ -127,12 +130,19 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
       _isSaving = true;
     });
 
+    // Elegir una semilla quita la foto propia: si no, la elección no se vería.
+    final hadPhoto = ref.read(avatarInfoProvider).hasImage;
     try {
       if (!_isTestEnvironment() && userId.isNotEmpty) {
         await Supabase.instance.client
             .from('profiles')
-            .update({'avatar_seed': seed}).eq('id', userId);
+            // `avatar_url` solo si hace falta: sin la migración 19 aplicada,
+            // mandarlo rompería también el cambio de semilla.
+            .update({'avatar_seed': seed, if (hadPhoto) 'avatar_url': null}).eq('id', userId);
         ref.invalidate(profileProvider);
+        if (hadPhoto) unawaited(ref.read(customImageServiceProvider).collectGarbage());
+      } else if (userId.isEmpty && hadPhoto) {
+        await _setLocalPhoto(null);
       }
       await widget.onAvatarSelected?.call(seed);
     } catch (e) {
@@ -151,8 +161,120 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
     }
   }
 
+  /// Modo local: guarda (o quita, con `null`) la ruta de la foto y borra el
+  /// archivo anterior.
+  Future<void> _setLocalPhoto(String? path) async {
+    final storage = ref.read(localModeStorageProvider);
+    final previous = await storage.getAvatarImagePath();
+    await storage.setAvatarImagePath(path);
+    if (previous != null && previous != path) {
+      await ref.read(customImageServiceProvider).deleteLocal(previous);
+    }
+    ref.invalidate(localAvatarImageProvider);
+  }
+
+  Future<void> _uploadPhoto(String userId) async {
+    if (_isSaving) return;
+    if (userId.isNotEmpty && !ref.read(canEditProvider)) {
+      AppToast.show(context, message: 'Necesitas conexión a internet para cambiar tu foto.');
+      return;
+    }
+    final service = ref.read(customImageServiceProvider);
+    setState(() => _isSaving = true);
+    try {
+      final raw = await service.pickImage();
+      if (raw == null) return;
+      final jpeg = await service.prepare(raw, CustomImageKind.avatar);
+      if (userId.isEmpty) {
+        await _setLocalPhoto(await service.saveLocal(jpeg));
+      } else {
+        final url = await service.upload(jpeg, CustomImageKind.avatar);
+        await Supabase.instance.client.from('profiles').update({'avatar_url': url}).eq('id', userId);
+        ref.invalidate(profileProvider);
+        // La foto anterior sigue referenciada hasta este punto; ahora ya se
+        // puede recoger.
+        unawaited(service.collectGarbage());
+      }
+      if (mounted) AppToast.show(context, message: 'Foto de perfil actualizada');
+    } on CustomImageException catch (e) {
+      if (mounted) AppToast.show(context, message: e.message);
+    } catch (e) {
+      if (mounted) {
+        AppToast.show(context, message: 'No se pudo cambiar la foto: ${ErrorStateWidget.formatErrorMessage(e)}');
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _removePhoto(String userId) async {
+    if (_isSaving) return;
+    if (userId.isNotEmpty && !ref.read(canEditProvider)) {
+      AppToast.show(context, message: 'Necesitas conexión a internet para quitar tu foto.');
+      return;
+    }
+    setState(() => _isSaving = true);
+    try {
+      if (userId.isEmpty) {
+        await _setLocalPhoto(null);
+      } else {
+        await Supabase.instance.client.from('profiles').update({'avatar_url': null}).eq('id', userId);
+        ref.invalidate(profileProvider);
+        unawaited(ref.read(customImageServiceProvider).collectGarbage());
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToast.show(context, message: 'No se pudo quitar la foto: ${ErrorStateWidget.formatErrorMessage(e)}');
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Widget _buildPhotoRow(String userId, bool hasPhoto) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        children: [
+          if (hasPhoto) ...[
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppTheme.surfaceActive, width: 3),
+                boxShadow: AppTheme.glowShadow,
+              ),
+              child: const UserAvatar(size: 44),
+            ),
+            const SizedBox(width: 12),
+          ],
+          OutlinedButton.icon(
+            onPressed: _isSaving ? null : () => _uploadPhoto(userId),
+            icon: Icon(AppIcons.broken(SolarIcons.GalleryAdd), size: 18, color: AppTheme.primary),
+            label: Text(
+              hasPhoto ? 'Cambiar foto' : 'Subir foto',
+              style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppTheme.surfaceHover),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+          ),
+          if (hasPhoto) ...[
+            const SizedBox(width: 4),
+            TextButton(
+              onPressed: _isSaving ? null : () => _removePhoto(userId),
+              child: const Text('Quitar', style: TextStyle(color: AppTheme.secondary)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hasPhoto = ref.watch(avatarInfoProvider).hasImage;
     final user = ref.watch(currentUserProvider);
     String userId = user?.id ?? '';
     if (userId.isEmpty && !_isTestEnvironment()) {
@@ -244,7 +366,9 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          _buildPhotoRow(userId, hasPhoto),
+          const SizedBox(height: 8),
 
           // Grid de 24 semillas de avatares
           Flexible(
@@ -260,7 +384,7 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
               itemCount: effectiveSeeds.length,
               itemBuilder: (context, index) {
                 final seed = effectiveSeeds[index];
-                final isSelected = seed == _selectedSeed;
+                final isSelected = !hasPhoto && seed == _selectedSeed;
                 final avatarUrl =
                     'https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=$seed';
 

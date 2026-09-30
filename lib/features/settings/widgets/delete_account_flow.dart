@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/images/custom_image_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/app_toast.dart';
@@ -45,6 +46,13 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
   final historyDao = ref.read(listeningHistoryDaoProvider);
   final router = GoRouter.of(context);
   final rootNavigator = Navigator.of(context, rootNavigator: true);
+  final images = ref.read(customImageServiceProvider);
+
+  // Las imágenes de R2 van primero: una vez borrado el usuario ya nadie
+  // podría pedirlas. Si R2 falla, la cuenta se elimina igual.
+  try {
+    await images.deleteAllRemote();
+  } catch (_) {}
 
   try {
     await Supabase.instance.client.rpc('delete_my_account');
@@ -65,6 +73,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
 
   try {
     await wipeLocalLibrary(dao: dao, savedAlbumDao: savedAlbumDao, historyDao: historyDao);
+    await images.deleteAllLocal();
   } catch (_) {
     // La cuenta ya no existe: lo local que no se pudo borrar queda sin
     // `remoteId` útil, un estado ya soportado.

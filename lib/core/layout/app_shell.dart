@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../navigation/app_router.dart';
 import '../theme/app_icons.dart';
@@ -19,6 +18,7 @@ import '../../data/local_db/syncora_database.dart';
 import '../../data/sync/sync_service.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../features/auth/local_mode_provider.dart';
+import '../../features/profile/widgets/user_avatar.dart';
 import '../../features/download/download_provider.dart';
 import '../../features/stats/genre_backfill_service.dart';
 import '../../features/home/mixes/on_repeat_service.dart';
@@ -678,13 +678,6 @@ class _CustomTitleBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final isLocalMode = ref.watch(localModeProvider);
-    final profileAsync = ref.watch(profileProvider);
-    // 7.I.4: en modo local no hay `profiles.avatar_seed` -- se usa la
-    // semilla local generada por `LocalModeStorage.getOrCreateAvatarSeed()`.
-    final localSeedAsync = isLocalMode ? ref.watch(localAvatarSeedProvider) : null;
-    final seed = isLocalMode
-        ? (localSeedAsync?.value ?? 'default-seed')
-        : (profileAsync.value?['avatar_seed'] ?? user?.id ?? 'default-seed');
 
     return Container(
       height: 42,
@@ -763,21 +756,9 @@ class _CustomTitleBar extends ConsumerWidget {
                     ),
                   ),
               ],
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    color: AppTheme.surfaceActive,
-                    child: SvgPicture.network(
-                      'https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=$seed',
-                      fit: BoxFit.cover,
-                      placeholderBuilder: (_) => Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.muted, size: 16),
-                    ),
-                  ),
-                ),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: UserAvatar(size: 28),
               ),
             ),
           // Fila propia con altura fija == altura de la barra (42) y

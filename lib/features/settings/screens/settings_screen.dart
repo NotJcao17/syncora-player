@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -15,6 +14,7 @@ import '../../../data/local_db/syncora_database.dart';
 import '../../../data/services/ai_key_storage.dart';
 import '../../auth/auth_provider.dart';
 import '../../auth/local_mode_provider.dart';
+import '../../profile/widgets/user_avatar.dart';
 
 import '../../download/download_provider.dart';
 import '../../player/player_providers.dart';
@@ -49,17 +49,11 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     final currentUser = ref.watch(currentUserProvider);
-    final profileAsync = ref.watch(profileProvider);
     // Fase 7.I.9: sección de cuenta reemplazada por el bloque de "Modo
     // local" cuando aplica (D-24 -- el modo local es un estado de sesión,
     // no de red, así que se decide con este flag, no con `isConnected`).
     final isLocalMode = ref.watch(localModeProvider);
-    final localSeedAsync = isLocalMode ? ref.watch(localAvatarSeedProvider) : null;
-
-    final String seed = isLocalMode
-        ? (localSeedAsync?.value ?? 'default-seed')
-        : (profileAsync.value?['avatar_seed'] ?? currentUser?.id ?? 'default-seed');
-    final String avatarUrl = 'https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=$seed';
+    final seed = ref.watch(avatarInfoProvider).seed;
     final String userEmail = currentUser?.email ?? 'usuario@syncora.com';
 
     return Scaffold(
@@ -96,7 +90,6 @@ class SettingsScreen extends ConsumerWidget {
             _buildSectionHeader('MODO LOCAL'),
             const SizedBox(height: 8),
             _LocalModeSection(
-              avatarUrl: avatarUrl,
               onEditAvatar: () => _openAvatarSelector(context, ref, isLocalMode: true, currentSeed: seed),
             ),
           ] else ...[
@@ -110,22 +103,7 @@ class SettingsScreen extends ConsumerWidget {
                   onTap: () => _openAvatarSelector(context, ref, isLocalMode: false, currentSeed: seed),
                   child: Stack(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(32),
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          color: AppTheme.surfaceActive,
-                          child: SvgPicture.network(
-                            avatarUrl,
-                            fit: BoxFit.cover,
-                            placeholderBuilder: (_) => Container(
-                              color: AppTheme.surfaceHover,
-                              child: Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.muted, size: 32),
-                            ),
-                          ),
-                        ),
-                      ),
+                      const UserAvatar(size: 64),
                       Positioned(
                         right: 0,
                         bottom: 0,
@@ -762,10 +740,9 @@ class _StorageBar extends StatelessWidget {
 /// real ya existe en cada playlist, `playlist_detail_screen.dart`, esto
 /// solo le da visibilidad para quien está en modo local).
 class _LocalModeSection extends StatelessWidget {
-  final String avatarUrl;
   final VoidCallback onEditAvatar;
 
-  const _LocalModeSection({required this.avatarUrl, required this.onEditAvatar});
+  const _LocalModeSection({required this.onEditAvatar});
 
   @override
   Widget build(BuildContext context) {
@@ -783,22 +760,7 @@ class _LocalModeSection extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: onEditAvatar,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(32),
-                  child: Container(
-                    width: 64,
-                    height: 64,
-                    color: AppTheme.surfaceActive,
-                    child: SvgPicture.network(
-                      avatarUrl,
-                      fit: BoxFit.cover,
-                      placeholderBuilder: (_) => Container(
-                        color: AppTheme.surfaceHover,
-                        child: Icon(AppIcons.broken(SolarIcons.User), color: AppTheme.muted, size: 32),
-                      ),
-                    ),
-                  ),
-                ),
+                child: const UserAvatar(size: 64),
               ),
               const SizedBox(width: 16),
               const Expanded(

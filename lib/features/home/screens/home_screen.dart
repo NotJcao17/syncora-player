@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/cache/api_cache.dart';
@@ -15,8 +14,8 @@ import '../../../data/apis/deezer_catalog_providers.dart';
 import '../../../data/models/deezer/deezer_playlist.dart';
 import '../../../data/sync/sync_cache_manager.dart';
 import '../../../data/sync/sync_service.dart';
-import '../../auth/auth_provider.dart';
 import '../../auth/local_mode_provider.dart';
+import '../../profile/widgets/user_avatar.dart';
 import '../../stats/stats_providers.dart';
 import '../home_providers.dart';
 import '../mixes/mix_models.dart';
@@ -656,33 +655,9 @@ class _ProfileAvatar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profileAsync = ref.watch(profileProvider);
-    final user = ref.watch(currentUserProvider);
-    final isLocalMode = ref.watch(localModeProvider);
-    // 7.I.4: seed local en vez de `profiles.avatar_seed` (que no existe sin
-    // cuenta) cuando aplica.
-    final localSeedAsync = isLocalMode ? ref.watch(localAvatarSeedProvider) : null;
-    final seed = isLocalMode
-        ? (localSeedAsync?.value ?? 'default')
-        : (profileAsync.value?['avatar_seed'] as String? ?? user?.id ?? 'default');
-
     return GestureDetector(
       onTap: () => context.push('/settings'),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.all(Radius.circular(999)),
-        child: Container(
-          width: 32,
-          height: 32,
-          color: AppTheme.surfaceActive,
-          child: SvgPicture.network(
-            'https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=$seed',
-            width: 32,
-            height: 32,
-            fit: BoxFit.cover,
-            placeholderBuilder: (_) => const Icon(Icons.person, size: 20, color: AppTheme.secondary),
-          ),
-        ),
-      ),
+      child: const UserAvatar(size: 32),
     );
   }
 }

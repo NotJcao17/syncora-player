@@ -16,6 +16,7 @@ import '../../../data/local_db/database_provider.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/sync/sync_service.dart';
 import '../../library/import_export/playlist_import_export_service.dart';
+import '../auth_provider.dart';
 import '../local_mode_provider.dart';
 import '../services/account_limit_error.dart';
 import '../services/local_library_wipe.dart';
@@ -240,6 +241,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         listeningHistoryDao: ref.read(listeningHistoryDaoProvider),
         supabaseHistoryRepo: ref.read(supabaseHistoryRepositoryProvider),
       );
+      await _migrateLocalAvatarPhoto(images);
     } catch (_) {
       // Best-effort -- lo que no se subió queda local, sin `remoteId`, y
       // se retoma solo en el próximo arranque (ver `main.dart`).
@@ -247,6 +249,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       await ref.read(localModeProvider.notifier).disable();
       if (mounted) setState(() => _isMigrating = false);
     }
+  }
+
+  /// La foto de perfil del modo local pasa a la cuenta nueva. Si falla, la
+  /// cuenta se queda con su avatar de DiceBear; no se reintenta.
+  Future<void> _migrateLocalAvatarPhoto(CustomImageService images) async {
+    final storage = ref.read(localModeStorageProvider);
+    final path = await storage.getAvatarImagePath();
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (path == null || userId == null) return;
+    try {
+      final bytes = await File(localImageFilePath(path)).readAsBytes();
+      final url = await images.upload(bytes, CustomImageKind.avatar);
+      await Supabase.instance.client.from('profiles').update({'avatar_url': url}).eq('id', userId);
+      ref.invalidate(profileProvider);
+    } catch (_) {
+      return;
+    }
+    await storage.setAvatarImagePath(null);
+    await images.deleteLocal(path);
   }
 
   /// Nunca se había definido qué hacer con los datos del modo local al
@@ -409,6 +430,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final dao = ref.read(playlistDaoProvider);
     final savedAlbumDao = ref.read(savedAlbumDaoProvider);
     final historyDao = ref.read(listeningHistoryDaoProvider);
+    final images = ref.read(customImageServiceProvider);
+    final localStorage = ref.read(localModeStorageProvider);
     if (mounted) {
       setState(() {
         _isMigrating = true;
@@ -417,6 +440,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     }
     try {
       await wipeLocalLibrary(dao: dao, savedAlbumDao: savedAlbumDao, historyDao: historyDao);
+      // Portadas propias y foto de perfil del modo local.
+      await images.deleteAllLocal();
+      await localStorage.setAvatarImagePath(null);
     } catch (_) {
       // Best-effort -- el usuario ya confirmó que quiere descartar; lo que
       // no se pudo borrar queda local-only, un estado ya soportado (H-5).

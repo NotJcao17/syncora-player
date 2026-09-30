@@ -49,6 +49,12 @@ final localAvatarSeedProvider = FutureProvider<String>((ref) {
   return ref.watch(localModeStorageProvider).getOrCreateAvatarSeed();
 });
 
+/// Foto de perfil propia en modo local (`null` si no hay). Se invalida al
+/// cambiarla, igual que [localAvatarSeedProvider].
+final localAvatarImageProvider = FutureProvider<String?>((ref) {
+  return ref.watch(localModeStorageProvider).getAvatarImagePath();
+});
+
 /// D-24 -- el refactor central de 7.I (H-5): `canEdit = isLocalMode ||
 /// isConnected`, en vez de solo `isConnected`. Extraída como función pura
 /// (mismo motivo que `computeAuthRedirect` en `app_router.dart`, 7.I.12):

@@ -26,6 +26,14 @@ class FakeLocalModeStorage implements LocalModeStorage {
 
   @override
   Future<void> setAvatarSeed(String seed) async => _seed = seed;
+
+  String? _avatarImage;
+
+  @override
+  Future<String?> getAvatarImagePath() async => _avatarImage;
+
+  @override
+  Future<void> setAvatarImagePath(String? path) async => _avatarImage = path;
 }
 
 void main() {
