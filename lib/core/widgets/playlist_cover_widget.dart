@@ -10,6 +10,7 @@ import '../../features/player/player_models.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../cache/app_image_cache.dart';
+import '../utils/local_image_path.dart';
 
 /// Portada de Playlist dinámica con fallback, cuadrícula 2x2 autogenerada,
 /// degradados y colores predefinidos o portadas personalizadas.
@@ -124,9 +125,8 @@ class PlaylistCoverWidget extends ConsumerWidget {
         // como portada, eso ES la portada — la nota musical encima la
         // convertía en un marcador de posición, que es justo lo contrario.
         content = Container(color: Color(intVal));
-      } else if (!kIsWeb && (cover.startsWith('/') || cover.contains(':\\') || cover.startsWith('file:'))) {
-        final filePath = cover.startsWith('file://') ? cover.replaceFirst('file://', '') : cover;
-        final file = File(filePath);
+      } else if (!kIsWeb && isLocalImagePath(cover)) {
+        final file = File(localImageFilePath(cover));
         if (file.existsSync()) {
           content = Image.file(
             file,

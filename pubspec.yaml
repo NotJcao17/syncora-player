@@ -58,6 +58,9 @@ dependencies:
   # Transitiva de cached_network_image; directa para medir y vaciar su caché
   # desde Configuración (`core/cache/storage_usage.dart`).
   flutter_cache_manager: ^3.4.1
+  # Transitiva (vía flutter_launcher_icons); directa para recortar y
+  # re-codificar las portadas y fotos de perfil que sube el usuario. Dart puro.
+  image: ^4.5.0
   google_fonts: ^8.2.0
   flutter_dotenv: ^6.0.1
   flutter_animate: ^4.5.2
