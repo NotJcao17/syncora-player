@@ -67,6 +67,16 @@ class _LruCache<K, V> {
   }
 }
 
+/// El recurso ya no existe en el catálogo de Deezer (lo retiró el sello o la
+/// distribuidora). Pasa de vez en cuando con lanzamientos independientes.
+class DeezerNotFoundException implements Exception {
+  final String path;
+  const DeezerNotFoundException(this.path);
+
+  @override
+  String toString() => 'DeezerNotFoundException($path)';
+}
+
 class DeezerApi {
   final Dio _dio;
   final RateLimiter _rateLimiter;
@@ -338,10 +348,15 @@ class DeezerApi {
     });
   }
 
+  /// Lanza [DeezerNotFoundException] si Deezer retiró el álbum: responde 200
+  /// con `{"error": {"code": 800, ...}}` en vez de un 404, y parsearlo como
+  /// álbum daba "Álbum Sin Título" sin canciones ni portada.
   Future<DeezerAlbum> getAlbum(int id) async {
     return _rateLimiter.run(() async {
       final response = await _dio.get('/album/$id');
-      return DeezerAlbum.fromJson(Map<String, dynamic>.from(response.data as Map));
+      final data = Map<String, dynamic>.from(response.data as Map);
+      if (data['error'] != null) throw DeezerNotFoundException('/album/$id');
+      return DeezerAlbum.fromJson(data);
     });
   }
 

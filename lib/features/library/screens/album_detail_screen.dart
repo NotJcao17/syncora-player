@@ -13,6 +13,7 @@ import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_provider.dart';
+import '../../../data/apis/deezer_api.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/models/deezer/deezer_album.dart';
@@ -80,6 +81,13 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
           _isLoading = false;
         });
         _extractPalette(album.coverUrl);
+      }
+    } on DeezerNotFoundException {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Este álbum ya no está disponible en Deezer.';
+        });
       }
     } catch (e) {
       if (mounted) {

@@ -72,6 +72,10 @@ class GenreBackfillService {
           // Deezer no tiene género", y sin eso se reintentaría para siempre.
           await _dao.cacheAlbumGenre(albumId, album.genreName);
           filled += await _dao.applyGenreToAlbum(albumId, album.genreName);
+        } on DeezerNotFoundException {
+          // Retirado de Deezer: nunca va a tener género. Se cachea vacío para
+          // no volver a preguntar en cada corrida.
+          await _dao.cacheAlbumGenre(albumId, '');
         } catch (_) {
           // Álbum inexistente o fallo de red: no se cachea, se reintenta en
           // la próxima corrida.

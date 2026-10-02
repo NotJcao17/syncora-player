@@ -7,7 +7,7 @@
 // cuentas (migración 9), estos valores garantizan quedar dentro aunque cada
 // usuario los agote a propósito con un cliente modificado:
 //   almacenamiento: 250 x MAX_BYTES_PER_USER (30 MB)            = 7,5 GB
-//   escrituras:     250 x 40/día x 30 días x 2 (LIST + PUT)     = 600 000
+//   escrituras:     250 x 55/día x 30 días x 2 (LIST + PUT)     = 825 000
 // Si se sube el tope de cuentas, hay que bajar MAX_BYTES_PER_USER en proporción.
 
 /** Tope de una imagen. La app envía 640 px en JPEG 85: ~60-150 KB, nunca más de ~300 KB. */

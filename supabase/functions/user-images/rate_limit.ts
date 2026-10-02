@@ -1,14 +1,23 @@
-// Rate limit de subidas por usuario. Mismo diseño que el de `ai-assistant`
+// Rate limit de operaciones por usuario. Mismo diseño que el de `ai-assistant`
 // (registro de eventos con ventana deslizante; ver migraciones 8 y 19): sin
-// permiso de DELETE, nadie puede resetear su propio cupo. El tope diario es el
-// que acota las operaciones de escritura de R2 (ver el presupuesto en images.ts).
+// permiso de DELETE, nadie puede resetear su propio cupo.
+//
+// Es un tope diario y no por hora porque lo único que protege es el
+// presupuesto mensual de escrituras de R2 (ver images.ts). Un tope por hora
+// solo estorbaba a quien configura muchas playlists de una sentada.
 
-export const IMAGE_REQUESTS_PER_HOUR = 15;
-export const IMAGE_REQUESTS_PER_DAY = 40;
+/** Subidas + limpiezas al día. Cada una cuesta como mucho 2 escrituras (LIST + PUT). */
+export const IMAGE_REQUESTS_PER_DAY = 50;
+
+/**
+ * Margen extra solo para `delete_all` (eliminar la cuenta): que haber agotado
+ * el cupo del día no deje las imágenes en el bucket, pero sin que llamarlo en
+ * bucle sea gratis (cada llamada es un LIST).
+ */
+export const DELETE_ALL_EXTRA_PER_DAY = 5;
 
 const TABLE = "image_upload_requests";
-const HOUR_MS = 60 * 60 * 1000;
-const DAY_MS = 24 * HOUR_MS;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Duck-typed para que los tests puedan pasar un doble sin red.
 export interface RateLimitDb {
@@ -23,19 +32,15 @@ export interface RateLimitDb {
 }
 
 /** Falla abierto: un problema de la tabla no debe bloquear a todo el mundo. */
-export async function isWithinLimit(db: RateLimitDb, userId: string): Promise<boolean> {
-  const [hour, day] = await Promise.all([countSince(db, userId, HOUR_MS), countSince(db, userId, DAY_MS)]);
-  return hour < IMAGE_REQUESTS_PER_HOUR && day < IMAGE_REQUESTS_PER_DAY;
-}
-
-async function countSince(db: RateLimitDb, userId: string, windowMs: number): Promise<number> {
-  const since = new Date(Date.now() - windowMs).toISOString();
+export async function isWithinLimit(db: RateLimitDb, userId: string, extra = 0): Promise<boolean> {
+  const since = new Date(Date.now() - DAY_MS).toISOString();
   const { count, error } = await db
     .from(TABLE)
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
     .gt("requested_at", since);
-  return error ? 0 : (count ?? 0);
+  if (error) return true;
+  return (count ?? 0) < IMAGE_REQUESTS_PER_DAY + extra;
 }
 
 export async function recordRequest(db: RateLimitDb, userId: string): Promise<void> {

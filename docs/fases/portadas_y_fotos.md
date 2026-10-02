@@ -36,11 +36,13 @@ como foto de perfil. En modo local todo se queda en el dispositivo; con cuenta, 
   borrado falla, la siguiente pasada lo recoge.
 - **Límites que garantizan no salir del plan gratuito** (R2 exige tarjeta y no tiene tope de gasto
   propio), calculados para el peor caso: 250 cuentas agotándolos a propósito con un cliente
-  modificado. Por usuario: **30 MB y 300 imágenes guardadas** a la vez, y **15 operaciones por hora
-  y 40 por día** (subidas + limpiezas; misma tabla de eventos que la IA). Resultado: como mucho
-  250 × 30 MB = **7,5 GB** de los 10 GB, y 250 × 40 × 30 × 2 = **600 000** escrituras de 1 millón
-  (cada subida es un LIST + un PUT; borrar es gratis en R2). Si se sube el tope de cuentas, hay que
-  bajar `MAX_BYTES_PER_USER` en proporción (`images.ts`). Lo único no acotado del todo son las
+  modificado. Por usuario: **30 MB y 300 imágenes guardadas** a la vez, y **50 operaciones al día**
+  (subidas + limpiezas; misma tabla de eventos que la IA), más 5 de margen solo para `delete_all`
+  para que eliminar la cuenta no falle por haber agotado el cupo. Sin tope por hora: no protegía
+  nada del presupuesto y bloqueaba a quien configura muchas playlists de una vez. Resultado: como
+  mucho 250 × 30 MB = **7,5 GB** de los 10 GB, y 250 × 55 × 30 × 2 = **825 000** escrituras de
+  1 millón (cada subida es un LIST + un PUT; borrar es gratis en R2). Si se sube el tope de cuentas,
+  hay que bajar `MAX_BYTES_PER_USER` y el cupo diario en proporción. Lo único no acotado del todo son las
   lecturas públicas (10 M/mes gratis): alguien que conozca una URL podría pedirla en bucle; el
   subdominio `r2.dev` tiene límite de velocidad, y con dominio propio la caché de Cloudflare las
   absorbe.
