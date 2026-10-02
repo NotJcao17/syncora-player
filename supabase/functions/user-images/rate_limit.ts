@@ -2,22 +2,24 @@
 // (registro de eventos con ventana deslizante; ver migraciones 8 y 19): sin
 // permiso de DELETE, nadie puede resetear su propio cupo.
 //
-// Es un tope diario y no por hora porque lo único que protege es el
-// presupuesto mensual de escrituras de R2 (ver images.ts). Un tope por hora
-// solo estorbaba a quien configura muchas playlists de una sentada.
+// El cupo es mensual porque lo que protege es el presupuesto mensual de
+// escrituras de R2 (ver images.ts), y porque el uso real se concentra en pocos
+// días (al configurar la biblioteca): un tope diario u horario solo estorbaba.
+// La ventana es de 31 días deslizantes: así ningún periodo de facturación de
+// Cloudflare (que no coincide con el mes natural) puede acumular más del cupo.
 
-/** Subidas + limpiezas al día. Cada una cuesta como mucho 2 escrituras (LIST + PUT). */
-export const IMAGE_REQUESTS_PER_DAY = 50;
+/** Subidas + limpiezas en 31 días. Cada una cuesta como mucho 2 escrituras (LIST + PUT). */
+export const IMAGE_REQUESTS_PER_WINDOW = 500;
 
 /**
  * Margen extra solo para `delete_all` (eliminar la cuenta): que haber agotado
- * el cupo del día no deje las imágenes en el bucket, pero sin que llamarlo en
- * bucle sea gratis (cada llamada es un LIST).
+ * el cupo no deje las imágenes en el bucket, pero sin que llamarlo en bucle
+ * sea gratis (cada llamada es un LIST).
  */
-export const DELETE_ALL_EXTRA_PER_DAY = 5;
+export const DELETE_ALL_EXTRA = 10;
 
 const TABLE = "image_upload_requests";
-const DAY_MS = 24 * 60 * 60 * 1000;
+const WINDOW_MS = 31 * 24 * 60 * 60 * 1000;
 
 // Duck-typed para que los tests puedan pasar un doble sin red.
 export interface RateLimitDb {
@@ -33,14 +35,14 @@ export interface RateLimitDb {
 
 /** Falla abierto: un problema de la tabla no debe bloquear a todo el mundo. */
 export async function isWithinLimit(db: RateLimitDb, userId: string, extra = 0): Promise<boolean> {
-  const since = new Date(Date.now() - DAY_MS).toISOString();
+  const since = new Date(Date.now() - WINDOW_MS).toISOString();
   const { count, error } = await db
     .from(TABLE)
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
     .gt("requested_at", since);
   if (error) return true;
-  return (count ?? 0) < IMAGE_REQUESTS_PER_DAY + extra;
+  return (count ?? 0) < IMAGE_REQUESTS_PER_WINDOW + extra;
 }
 
 export async function recordRequest(db: RateLimitDb, userId: string): Promise<void> {

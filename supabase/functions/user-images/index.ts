@@ -32,7 +32,7 @@ import {
   userPrefix,
 } from "./images.ts";
 import { createR2Store, type ObjectStore, type R2Config, readR2Config, StorageError } from "./r2.ts";
-import { DELETE_ALL_EXTRA_PER_DAY, isWithinLimit, type RateLimitDb, recordRequest } from "./rate_limit.ts";
+import { DELETE_ALL_EXTRA, isWithinLimit, type RateLimitDb, recordRequest } from "./rate_limit.ts";
 
 type ErrorCode =
   | "invalid_request"
@@ -120,10 +120,10 @@ async function handle(req: Request): Promise<Response> {
 
   if (action === "delete_all") {
     // Margen propio sobre el cupo diario: eliminar la cuenta no debe fallar
-    // por haber cambiado muchas portadas ese día, pero tampoco puede quedar
+    // por haber agotado el cupo del mes, pero tampoco puede quedar
     // sin tope (cada llamada es un LIST, que R2 cobra).
-    if (!(await isWithinLimit(rateDb, user.id, DELETE_ALL_EXTRA_PER_DAY))) {
-      return fail("rate_limited_user", "Demasiadas peticiones hoy. Intenta de nuevo mañana.");
+    if (!(await isWithinLimit(rateDb, user.id, DELETE_ALL_EXTRA))) {
+      return fail("rate_limited_user", "Demasiadas peticiones este mes. Intenta de nuevo más adelante.");
     }
     await recordRequest(rateDb, user.id);
     const objects = await store.list(userPrefix(user.id));
@@ -132,7 +132,7 @@ async function handle(req: Request): Promise<Response> {
   }
 
   if (!(await isWithinLimit(rateDb, user.id))) {
-    return fail("rate_limited_user", "Llegaste al límite de cambios de imagen de hoy. Intenta de nuevo mañana.");
+    return fail("rate_limited_user", "Llegaste al límite de cambios de imagen de este mes (500).");
   }
 
   if (action === "gc") {

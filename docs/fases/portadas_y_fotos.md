@@ -36,13 +36,16 @@ como foto de perfil. En modo local todo se queda en el dispositivo; con cuenta, 
   borrado falla, la siguiente pasada lo recoge.
 - **Límites que garantizan no salir del plan gratuito** (R2 exige tarjeta y no tiene tope de gasto
   propio), calculados para el peor caso: 250 cuentas agotándolos a propósito con un cliente
-  modificado. Por usuario: **30 MB y 300 imágenes guardadas** a la vez, y **50 operaciones al día**
-  (subidas + limpiezas; misma tabla de eventos que la IA), más 5 de margen solo para `delete_all`
-  para que eliminar la cuenta no falle por haber agotado el cupo. Sin tope por hora: no protegía
-  nada del presupuesto y bloqueaba a quien configura muchas playlists de una vez. Resultado: como
-  mucho 250 × 30 MB = **7,5 GB** de los 10 GB, y 250 × 55 × 30 × 2 = **825 000** escrituras de
-  1 millón (cada subida es un LIST + un PUT; borrar es gratis en R2). Si se sube el tope de cuentas,
-  hay que bajar `MAX_BYTES_PER_USER` y el cupo diario en proporción. Cambiar una imagen por otra
+  modificado. Por usuario: **30 MB y 300 imágenes guardadas** a la vez, y **500 operaciones cada
+  31 días** (subidas + limpiezas; misma tabla de eventos que la IA), más 10 de margen solo para
+  `delete_all` para que eliminar la cuenta no falle por haber agotado el cupo. El cupo es mensual y
+  no diario ni por hora (decisión del usuario): lo que protege es un presupuesto mensual, y el uso
+  real se concentra en pocos días, al configurar la biblioteca. La ventana es de 31 días deslizantes
+  porque el periodo de facturación de Cloudflare no coincide con el mes natural. Resultado: como
+  mucho 250 × 30 MB = **7,5 GB** de los 10 GB, y 250 × 510 × 2 = **255 000** escrituras de 1 millón
+  (cada subida es un LIST + un PUT; borrar es gratis en R2). También acota las invocaciones de la
+  Edge Function (500 000/mes compartidas con la IA): 250 × 510 = 127 500 en el peor caso. Si se sube
+  el tope de cuentas, hay que bajar `MAX_BYTES_PER_USER` y el cupo en proporción. Cambiar una imagen por otra
   gasta **una** operación: la anterior la recoge la siguiente subida, sin pedir una limpieza aparte.
 - **Las lecturas pasan por un Worker de Cloudflare** (`cloudflare/image-worker/`), no por `r2.dev`,
   que se deja desactivado. `r2.dev` no admite límites propios y una URL pedida en bucle gastaría
@@ -150,3 +153,25 @@ tiene 1 GB y 5 GB/mes de egress). Con portadas de ~100 KB, 10 GB son unas 100 00
    almacenamiento de imágenes no está configurado", falta algún secreto; si dice "No se pudo guardar
    la imagen", las llaves no tienen permiso sobre el bucket (revisa el paso 4). Los logs están en
    Supabase → *Edge Functions → user-images → Logs*.
+
+## Estado de cierre (2026-10-01)
+
+Fase cerrada. R2, el Worker (`syncora-images.*.workers.dev`, con `r2.dev` desactivado), la
+migración 19 y la función `user-images` están desplegados y probados por el usuario: las portadas
+con cuenta suben, se sincronizan y se sirven por el Worker. Ajustes hechos durante las pruebas:
+
+- Cupo de operaciones: de 30/hora a 15/hora + 40/día, a 50/día y finalmente a **500 cada 31 días**.
+- `delete_all` no tenía ningún límite (cada llamada es un LIST): ahora tiene su margen propio.
+- Cambiar una imagen por otra ya no pide una limpieza aparte: gasta una operación, no dos.
+- Álbum retirado por Deezer: `/album/{id}` responde 200 con `{"error": {"code": 800}}`, y se
+  mostraba como "Álbum Sin Título" con el error técnico de la portada. `DeezerApi.getAlbum` lanza
+  ahora `DeezerNotFoundException` y la pantalla dice que el álbum ya no está disponible; el relleno
+  de géneros cachea esos álbumes como sin género para no volver a preguntar.
+
+Observaciones abiertas, sin causa encontrada en el código:
+
+- En PC, tras cambiar en el móvil una portada de imagen a degradado, al recargar Biblioteca se vio
+  unos segundos la cuadrícula automática antes del degradado. El sync escribe la portada en un solo
+  paso; puede ser un efecto de ese cambio puntual. Revisar solo si se repite con playlists nuevas.
+- Un "Syncora Player no responde" al abrir la build de desarrollo que queda en el teléfono tras
+  `flutter run`, que no se repitió. Probable lentitud de la build debug; confirmar con `--release`.
