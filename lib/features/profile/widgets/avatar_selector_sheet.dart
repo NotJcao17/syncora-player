@@ -190,10 +190,9 @@ class _AvatarSelectorSheetState extends ConsumerState<AvatarSelectorSheet> {
       } else {
         final url = await service.upload(jpeg, CustomImageKind.avatar);
         await Supabase.instance.client.from('profiles').update({'avatar_url': url}).eq('id', userId);
+        // La foto anterior la recoge la siguiente subida o limpieza: pedirlo
+        // aquí gastaría otra operación del cupo diario.
         ref.invalidate(profileProvider);
-        // La foto anterior sigue referenciada hasta este punto; ahora ya se
-        // puede recoger.
-        unawaited(service.collectGarbage());
       }
       if (mounted) AppToast.show(context, message: 'Foto de perfil actualizada');
     } on CustomImageException catch (e) {

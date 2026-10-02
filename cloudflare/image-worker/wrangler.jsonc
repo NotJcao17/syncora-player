@@ -1,0 +1,14 @@
+// Worker que sirve las imágenes de R2 (ver src/index.ts y
+// docs/fases/portadas_y_fotos.md). Desplegar desde esta carpeta con
+// `npx wrangler deploy`.
+{
+  "name": "syncora-images",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  // URL pública: https://syncora-images.<tu-subdominio>.workers.dev
+  "workers_dev": true,
+  "preview_urls": false,
+  "r2_buckets": [
+    { "binding": "BUCKET", "bucket_name": "syncora-images" }
+  ]
+}

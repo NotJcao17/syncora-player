@@ -67,7 +67,7 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 en dispositivo.** Detalle y guía de Cloudflare R2 en `docs/fases/portadas_y_fotos.md` — **leerlo
 antes de tocar portadas, avatares o la función `user-images`**. Sin cuenta la imagen se queda en
 `Documents/syncora/custom_images/`; con cuenta se sube a R2 solo por la Edge Function `user-images`
-(las llaves nunca llegan a la app), que **no escribe en la BD**: el cliente guarda la URL con su JWT.
+(las llaves nunca llegan a la app), que **no escribe en la BD**: el cliente guarda la URL con su JWT. Las lecturas pasan por el Worker `cloudflare/image-worker/` (r2.dev desactivado) para acotarlas al plan gratis.
 Lo que no conviene revertir: nombre de objeto nuevo en cada subida (cachés), limpieza por
 recolección de lo que ya no referencia ninguna fila del usuario con 10 min de gracia (no borrado
 puntual), y el avatar sale siempre de `avatarInfoProvider`/`UserAvatar`. Pendiente humano: crear el

@@ -22,7 +22,10 @@ void releaseCoverImage(WidgetRef ref, Playlist playlist, {String? replacedBy}) {
   final service = ref.read(customImageServiceProvider);
   if (isLocalImagePath(old!)) {
     unawaited(service.deleteLocal(old));
-  } else if (playlist.remoteId != null) {
+  } else if (playlist.remoteId != null && !isImageCover(replacedBy)) {
+    // Si la reemplaza otra imagen subida, no hace falta: la propia subida
+    // siguiente recoge la anterior, y así cambiar una portada gasta una sola
+    // operación del cupo diario en vez de dos.
     unawaited(service.collectGarbage());
   }
 }

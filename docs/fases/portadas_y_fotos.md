@@ -42,10 +42,17 @@ como foto de perfil. En modo local todo se queda en el dispositivo; con cuenta, 
   nada del presupuesto y bloqueaba a quien configura muchas playlists de una vez. Resultado: como
   mucho 250 × 30 MB = **7,5 GB** de los 10 GB, y 250 × 55 × 30 × 2 = **825 000** escrituras de
   1 millón (cada subida es un LIST + un PUT; borrar es gratis en R2). Si se sube el tope de cuentas,
-  hay que bajar `MAX_BYTES_PER_USER` y el cupo diario en proporción. Lo único no acotado del todo son las
-  lecturas públicas (10 M/mes gratis): alguien que conozca una URL podría pedirla en bucle; el
-  subdominio `r2.dev` tiene límite de velocidad, y con dominio propio la caché de Cloudflare las
-  absorbe.
+  hay que bajar `MAX_BYTES_PER_USER` y el cupo diario en proporción. Cambiar una imagen por otra
+  gasta **una** operación: la anterior la recoge la siguiente subida, sin pedir una limpieza aparte.
+- **Las lecturas pasan por un Worker de Cloudflare** (`cloudflare/image-worker/`), no por `r2.dev`,
+  que se deja desactivado. `r2.dev` no admite límites propios y una URL pedida en bucle gastaría
+  lecturas (10 M/mes gratis) sin tope. El plan gratuito de Workers corta en 100 000 peticiones al
+  día **sin cobrar el exceso**, y cada petición lee R2 como mucho una vez: peor caso ~3 M de lecturas
+  al mes. El Worker rechaza sin tocar el bucket cualquier ruta que no tenga el formato exacto de
+  nuestras claves. Costo de esta garantía: bajo un ataque, las imágenes nuevas dejan de cargar hasta
+  las 00:00 UTC (las ya vistas siguen en la caché de la app). El tope es de toda la cuenta de
+  Cloudflare: otros Workers que se creen lo comparten. Alternativa evaluada: dominio propio con
+  caché y regla de límite por IP (no da tope duro y cuesta el dominio).
 - **Eliminar la cuenta borra antes todas sus imágenes** de R2 (best-effort: si R2 falla, la cuenta
   se borra igual).
 - **Editar la portada con cuenta requiere internet** (regla Online-First de siempre); en modo local
@@ -110,15 +117,13 @@ tiene 1 GB y 5 GB/mes de egress). Con portadas de ~100 KB, 10 GB son unas 100 00
    Billing → Notifications* crear un aviso de uso para enterarte si algo se dispara.
 2. **Crear el bucket.** *R2 → Create bucket* → nombre `syncora-images`, ubicación automática,
    clase *Standard*. No hace falta configurar CORS: la app es nativa, no un navegador.
-3. **Hacer públicas las lecturas.** Bucket → pestaña *Settings* → sección **Public Development URL**
-   → *Enable* → escribir `allow` para confirmar → *Allow*. Aparece una URL como
-   `https://pub-xxxxxxxx.r2.dev`: ese es `R2_PUBLIC_BASE_URL` (sin `/` al final). Solo permite *leer*
-   un objeto si conoces su nombre exacto; no se puede listar el bucket. Cloudflare limita la
-   velocidad del subdominio `r2.dev` y no lo recomienda para mucho tráfico; si algún día tienes un
-   dominio propio en Cloudflare, en la misma pantalla puedes conectar uno (*Custom Domains*) y
-   solo cambias el secreto `R2_PUBLIC_BASE_URL`. Las imágenes ya subidas conservan su URL de
-   `r2.dev`, así que ese subdominio tiene que seguir activado; la limpieza reconoce los objetos por
-   su ruta, no por el dominio, así que no borra nada por el cambio.
+3. **Publicar las lecturas con el Worker** (no con `r2.dev`, ver "Decisiones"). Desde
+   `cloudflare/image-worker/`: `npx wrangler login` (abre el navegador para autorizar) y
+   `npx wrangler deploy`. La primera vez puede pedir elegir un subdominio `workers.dev` para la
+   cuenta. Al terminar imprime la URL, `https://syncora-images.<subdominio>.workers.dev`: ese es
+   `R2_PUBLIC_BASE_URL` (sin `/` al final). En el bucket, *Settings → Public Development URL* debe
+   quedar **desactivado**. Si algún día hay dominio propio, se le puede asignar al Worker y solo
+   cambia el secreto: la limpieza reconoce los objetos por su ruta, no por el dominio.
 4. **Crear las llaves de API.** Menú izquierdo *R2 Object Storage* (la lista de buckets, no el
    bucket) → panel *Account Details* a la derecha → junto a *API Tokens*, botón **Manage** →
    **Create Account API token** → nombre `syncora-user-images`, permiso **Object Read & Write**,
@@ -130,7 +135,7 @@ tiene 1 GB y 5 GB/mes de egress). Con portadas de ~100 KB, 10 GB son unas 100 00
 5. **Guardar los secretos en Supabase** (desde la raíz del repo; nunca en `.env` ni en Git):
 
    ```bash
-   supabase secrets set R2_ACCOUNT_ID=... R2_ACCESS_KEY_ID=... R2_SECRET_ACCESS_KEY=... R2_BUCKET=syncora-images R2_PUBLIC_BASE_URL=https://pub-xxxxxxxx.r2.dev
+   supabase secrets set R2_ACCOUNT_ID=... R2_ACCESS_KEY_ID=... R2_SECRET_ACCESS_KEY=... R2_BUCKET=syncora-images R2_PUBLIC_BASE_URL=https://syncora-images.<subdominio>.workers.dev
    ```
 
 6. **Aplicar la migración y desplegar la función:**
