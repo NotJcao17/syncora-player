@@ -22,12 +22,13 @@ import {
   isImageAction,
   isJpeg,
   keyFromUrl,
+  fitsUserQuota,
   MAX_IMAGE_BYTES,
-  MAX_OBJECTS_PER_USER,
   ParamsError,
   parseUploadParams,
   publicUrlFor,
   selectKeysToDelete,
+  type StoredObject,
   userPrefix,
 } from "./images.ts";
 import { createR2Store, type ObjectStore, type R2Config, readR2Config, StorageError } from "./r2.ts";
@@ -175,7 +176,7 @@ async function upload(
   if (!isJpeg(bytes)) return fail("unsupported_format", "Formato de imagen no admitido");
 
   const { remaining } = await collectGarbage(store, supabase, userId, r2);
-  if (remaining >= MAX_OBJECTS_PER_USER) {
+  if (!fitsUserQuota(remaining, bytes.length)) {
     return fail("quota_exceeded", "Llegaste al máximo de imágenes guardadas en tu cuenta.");
   }
 
@@ -194,15 +195,15 @@ async function collectGarbage(
   supabase: SupabaseClient,
   userId: string,
   r2: R2Config,
-): Promise<{ deleted: number; remaining: number }> {
+): Promise<{ deleted: number; remaining: StoredObject[] }> {
   const objects = await store.list(userPrefix(userId));
-  if (objects.length === 0) return { deleted: 0, remaining: 0 };
+  if (objects.length === 0) return { deleted: 0, remaining: [] };
 
   const [covers, profile] = await Promise.all([
     supabase.from("playlists").select("cover_url").eq("user_id", userId).not("cover_url", "is", null),
     supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle(),
   ]);
-  if (covers.error || profile.error) return { deleted: 0, remaining: objects.length };
+  if (covers.error || profile.error) return { deleted: 0, remaining: objects };
 
   const referenced = new Set<string>();
   for (const row of covers.data ?? []) {
@@ -213,14 +214,14 @@ async function collectGarbage(
   if (avatarKey) referenced.add(avatarKey);
 
   const toDelete = selectKeysToDelete(objects, referenced, Date.now());
-  let deleted = 0;
+  const gone = new Set<string>();
   for (const key of toDelete) {
     try {
       await store.delete(key);
-      deleted++;
+      gone.add(key);
     } catch {
       // Lo recoge la siguiente pasada.
     }
   }
-  return { deleted, remaining: objects.length - deleted };
+  return { deleted: gone.size, remaining: objects.filter((o) => !gone.has(o.key)) };
 }

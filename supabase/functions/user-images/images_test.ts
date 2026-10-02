@@ -2,7 +2,10 @@ import { assertEquals, assertThrows } from "https://deno.land/std@0.224.0/assert
 
 import {
   buildObjectKey,
+  fitsUserQuota,
   GC_GRACE_MS,
+  MAX_BYTES_PER_USER,
+  MAX_OBJECTS_PER_USER,
   isImageAction,
   isJpeg,
   keyFromUrl,
@@ -72,13 +75,15 @@ Deno.test("parseListObjectsXml lee claves, fechas y paginación", () => {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <ListBucketResult>
   <IsTruncated>true</IsTruncated>
-  <Contents><Key>u/x/a/1.jpg</Key><LastModified>2026-09-29T10:00:00.000Z</LastModified><Size>10</Size></Contents>
+  <Contents><Key>u/x/a/1.jpg</Key><LastModified>2026-09-29T10:00:00.000Z</LastModified><Size>98304</Size></Contents>
   <Contents><Key>u/x/p/y/2.jpg</Key><LastModified>2026-09-29T11:00:00.000Z</LastModified></Contents>
   <NextContinuationToken>tok&amp;en</NextContinuationToken>
 </ListBucketResult>`;
   const page = parseListObjectsXml(xml);
   assertEquals(page.objects.map((o) => o.key), ["u/x/a/1.jpg", "u/x/p/y/2.jpg"]);
   assertEquals(page.objects[0].lastModified, Date.parse("2026-09-29T10:00:00.000Z"));
+  assertEquals(page.objects[0].size, 98304);
+  assertEquals(page.objects[1].size, 0);
   assertEquals(page.nextToken, "tok&en");
 
   const last = parseListObjectsXml("<ListBucketResult><IsTruncated>false</IsTruncated></ListBucketResult>");
@@ -89,11 +94,19 @@ Deno.test("selectKeysToDelete respeta lo referenciado y el periodo de gracia", (
   const now = Date.parse("2026-09-29T12:00:00Z");
   const old = now - GC_GRACE_MS - 1;
   const objects = [
-    { key: "u/x/p/a/actual.jpg", lastModified: old },
-    { key: "u/x/p/a/vieja.jpg", lastModified: old },
-    { key: "u/x/p/borrada/1.jpg", lastModified: old },
-    { key: "u/x/a/recien.jpg", lastModified: now - 1000 },
+    { key: "u/x/p/a/actual.jpg", lastModified: old, size: 1 },
+    { key: "u/x/p/a/vieja.jpg", lastModified: old, size: 1 },
+    { key: "u/x/p/borrada/1.jpg", lastModified: old, size: 1 },
+    { key: "u/x/a/recien.jpg", lastModified: now - 1000, size: 1 },
   ];
   const referenced = new Set(["u/x/p/a/actual.jpg"]);
   assertEquals(selectKeysToDelete(objects, referenced, now), ["u/x/p/a/vieja.jpg", "u/x/p/borrada/1.jpg"]);
+});
+
+Deno.test("fitsUserQuota limita por cantidad y por bytes", () => {
+  const obj = (size: number) => ({ key: "k", lastModified: 0, size });
+  assertEquals(fitsUserQuota([], 150_000), true);
+  assertEquals(fitsUserQuota([obj(MAX_BYTES_PER_USER - 150_000)], 150_000), true);
+  assertEquals(fitsUserQuota([obj(MAX_BYTES_PER_USER - 150_000)], 150_001), false);
+  assertEquals(fitsUserQuota(Array.from({ length: MAX_OBJECTS_PER_USER }, () => obj(1)), 1), false);
 });

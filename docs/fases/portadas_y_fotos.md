@@ -26,7 +26,7 @@ como foto de perfil. En modo local todo se queda en el dispositivo; con cuenta, 
   funciones de IA.
 - **El cliente siempre re-codifica**: recorte cuadrado centrado, 640 px (portada) o 320 px (avatar),
   JPEG calidad 85, sin EXIF (se descartan GPS, modelo de cámara, etc.). Una portada queda en ~60-150 KB.
-  La función solo acepta JPEG de hasta 1,5 MB.
+  La función solo acepta JPEG de hasta 512 KB (la app nunca pasa de ~300 KB).
 - **Nombre de objeto único por subida** (`u/{uid}/p/{playlistId}/{aleatorio}.jpg`,
   `u/{uid}/a/{aleatorio}.jpg`): así ninguna caché de imágenes muestra la portada anterior.
 - **Limpieza por recolección, no por borrado puntual.** En cada subida (y tras quitar una portada o
@@ -34,8 +34,16 @@ como foto de perfil. En modo local todo se queda en el dispositivo; con cuenta, 
   ninguna fila suya (`playlists.cover_url`, `profiles.avatar_url`). Los objetos de menos de 10 min
   se respetan: cubre la carrera entre subir y guardar la URL, y dos dispositivos a la vez. Si un
   borrado falla, la siguiente pasada lo recoge.
-- **Límites contra abuso** (R2 exige tarjeta registrada aunque se use gratis): 30 subidas/hora por
-  usuario (misma tabla de eventos que la IA) y 300 imágenes como máximo por usuario.
+- **Límites que garantizan no salir del plan gratuito** (R2 exige tarjeta y no tiene tope de gasto
+  propio), calculados para el peor caso: 250 cuentas agotándolos a propósito con un cliente
+  modificado. Por usuario: **30 MB y 300 imágenes guardadas** a la vez, y **15 operaciones por hora
+  y 40 por día** (subidas + limpiezas; misma tabla de eventos que la IA). Resultado: como mucho
+  250 × 30 MB = **7,5 GB** de los 10 GB, y 250 × 40 × 30 × 2 = **600 000** escrituras de 1 millón
+  (cada subida es un LIST + un PUT; borrar es gratis en R2). Si se sube el tope de cuentas, hay que
+  bajar `MAX_BYTES_PER_USER` en proporción (`images.ts`). Lo único no acotado del todo son las
+  lecturas públicas (10 M/mes gratis): alguien que conozca una URL podría pedirla en bucle; el
+  subdominio `r2.dev` tiene límite de velocidad, y con dominio propio la caché de Cloudflare las
+  absorbe.
 - **Eliminar la cuenta borra antes todas sus imágenes** de R2 (best-effort: si R2 falla, la cuenta
   se borra igual).
 - **Editar la portada con cuenta requiere internet** (regla Online-First de siempre); en modo local
@@ -100,18 +108,23 @@ tiene 1 GB y 5 GB/mes de egress). Con portadas de ~100 KB, 10 GB son unas 100 00
    Billing → Notifications* crear un aviso de uso para enterarte si algo se dispara.
 2. **Crear el bucket.** *R2 → Create bucket* → nombre `syncora-images`, ubicación automática,
    clase *Standard*. No hace falta configurar CORS: la app es nativa, no un navegador.
-3. **Hacer públicas las lecturas.** Bucket → *Settings → Public access → R2.dev subdomain → Allow*.
-   Te da una URL como `https://pub-xxxxxxxx.r2.dev`: ese es `R2_PUBLIC_BASE_URL`. Solo permite *leer*
+3. **Hacer públicas las lecturas.** Bucket → pestaña *Settings* → sección **Public Development URL**
+   → *Enable* → escribir `allow` para confirmar → *Allow*. Aparece una URL como
+   `https://pub-xxxxxxxx.r2.dev`: ese es `R2_PUBLIC_BASE_URL` (sin `/` al final). Solo permite *leer*
    un objeto si conoces su nombre exacto; no se puede listar el bucket. Cloudflare limita la
    velocidad del subdominio `r2.dev` y no lo recomienda para mucho tráfico; si algún día tienes un
    dominio propio en Cloudflare, en la misma pantalla puedes conectar uno (*Custom Domains*) y
    solo cambias el secreto `R2_PUBLIC_BASE_URL`. Las imágenes ya subidas conservan su URL de
    `r2.dev`, así que ese subdominio tiene que seguir activado; la limpieza reconoce los objetos por
    su ruta, no por el dominio, así que no borra nada por el cambio.
-4. **Crear las llaves de API.** *R2 → Manage R2 API Tokens → Create API token* → permiso
-   **Object Read & Write**, aplicado **solo a `syncora-images`**, sin caducidad. Al crearlo muestra
-   una sola vez el **Access Key ID** y el **Secret Access Key**; cópialos. El **Account ID** aparece
-   en la portada de R2 (y dentro del endpoint `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`).
+4. **Crear las llaves de API.** Menú izquierdo *R2 Object Storage* (la lista de buckets, no el
+   bucket) → panel *Account Details* a la derecha → junto a *API Tokens*, botón **Manage** →
+   **Create Account API token** → nombre `syncora-user-images`, permiso **Object Read & Write**,
+   *Specify bucket(s)*: **Apply to specific buckets only** → `syncora-images`, *TTL*: **Forever**, sin
+   filtro de IP → *Create Account API Token*. La pantalla siguiente muestra **una sola vez** el
+   *Access Key ID* y el *Secret Access Key* (el "Token value" no hace falta). El **Account ID** es la
+   parte entre `https://` y `.r2.cloudflarestorage.com` de la *S3 API* que se ve en *Settings →
+   General* del bucket.
 5. **Guardar los secretos en Supabase** (desde la raíz del repo; nunca en `.env` ni en Git):
 
    ```bash

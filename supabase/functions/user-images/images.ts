@@ -2,11 +2,29 @@
 // Sin red ni Supabase: todo lo que se puede equivocar en silencio (qué se
 // borra, qué se acepta) vive aquí para poder testearlo con `deno test`.
 
-/** Tope de bytes de una imagen ya procesada por el cliente (640 px, JPEG 85 ≈ 60-150 KB). */
-export const MAX_IMAGE_BYTES = 1_500_000;
+// Presupuesto (docs/fases/portadas_y_fotos.md, "Límites"): el plan gratuito
+// de R2 da 10 GB y 1M de operaciones de escritura al mes. Con el tope de 250
+// cuentas (migración 9), estos valores garantizan quedar dentro aunque cada
+// usuario los agote a propósito con un cliente modificado:
+//   almacenamiento: 250 x MAX_BYTES_PER_USER (30 MB)            = 7,5 GB
+//   escrituras:     250 x 40/día x 30 días x 2 (LIST + PUT)     = 600 000
+// Si se sube el tope de cuentas, hay que bajar MAX_BYTES_PER_USER en proporción.
 
-/** Imágenes que un usuario puede tener guardadas a la vez, tras la limpieza. */
+/** Tope de una imagen. La app envía 640 px en JPEG 85: ~60-150 KB, nunca más de ~300 KB. */
+export const MAX_IMAGE_BYTES = 512_000;
+
+/** Imágenes que un usuario puede tener guardadas a la vez. */
 export const MAX_OBJECTS_PER_USER = 300;
+
+/** Bytes que un usuario puede tener guardados a la vez (todas sus portadas y su foto). */
+export const MAX_BYTES_PER_USER = 30_000_000;
+
+/** ¿Cabe una imagen de [incomingBytes] junto a lo que el usuario ya tiene guardado? */
+export function fitsUserQuota(objects: StoredObject[], incomingBytes: number): boolean {
+  if (objects.length >= MAX_OBJECTS_PER_USER) return false;
+  const used = objects.reduce((sum, o) => sum + o.size, 0);
+  return used + incomingBytes <= MAX_BYTES_PER_USER;
+}
 
 /**
  * Antigüedad mínima para que la limpieza borre un objeto que nadie
@@ -92,6 +110,7 @@ export function keyFromUrl(url: string | null | undefined): string | null {
 export interface StoredObject {
   key: string;
   lastModified: number;
+  size: number;
 }
 
 export interface ListPage {
@@ -108,8 +127,9 @@ export function parseListObjectsXml(xml: string): ListPage {
     if (!key) continue;
     const modified = /<LastModified>([\s\S]*?)<\/LastModified>/.exec(body)?.[1];
     const parsed = modified ? Date.parse(modified) : NaN;
+    const size = Number(/<Size>(\d+)<\/Size>/.exec(body)?.[1] ?? "0");
     // Sin fecha legible se trata como recién subido: nunca se borra por error.
-    objects.push({ key: decodeXml(key), lastModified: Number.isNaN(parsed) ? Date.now() : parsed });
+    objects.push({ key: decodeXml(key), lastModified: Number.isNaN(parsed) ? Date.now() : parsed, size });
   }
   const truncated = /<IsTruncated>true<\/IsTruncated>/.test(xml);
   const token = /<NextContinuationToken>([\s\S]*?)<\/NextContinuationToken>/.exec(xml)?.[1];
