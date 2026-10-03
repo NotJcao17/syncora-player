@@ -6,9 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
 class CoverCacheService {
-  static const int maxEntries = 200;
-  static const int maxSizeBytes = 50 * 1024 * 1024; // 50 MB
-
   bool get _isTestEnv => Platform.environment.containsKey('FLUTTER_TEST');
 
   /// Ruta del directorio de portadas, memorizada tras la primera resolución.
@@ -111,7 +108,11 @@ class CoverCacheService {
       final response = await request.close();
       if (response.statusCode == 200) {
         final bytes = await consolidateHttpClientResponseBytes(response);
-        file.writeAsBytesSync(bytes);
+        // Ronda 5: una respuesta cortada o que no es una imagen dejaba un
+        // archivo que nunca se podía mostrar (y como existía en disco, la
+        // fila ni siquiera intentaba la red).
+        if (!looksLikeImage(bytes)) return '';
+        file.writeAsBytesSync(bytes, flush: true);
 
         final index = await _loadIndex();
         index[coverUrl] = {
@@ -120,54 +121,24 @@ class CoverCacheService {
           'lastAccess': DateTime.now().millisecondsSinceEpoch,
           'sizeBytes': bytes.length,
         };
+        // Ronda 5 (H-R5-4): antes aquí corría un LRU de 200 entradas que
+        // BORRABA portadas de canciones descargadas a partir de la 201. Esta
+        // carpeta no es una caché: cada archivo acompaña a una descarga.
         await _saveIndex(index);
-        await _evictLruIfNeeded();
         return localPath;
       }
     } catch (_) {}
     return '';
   }
 
-  Future<void> _evictLruIfNeeded() async {
-    final index = await _loadIndex();
-    if (index.length <= maxEntries) {
-      int totalSize = 0;
-      for (final v in index.values) {
-        totalSize += (v['sizeBytes'] as num? ?? 0).toInt();
-      }
-      if (totalSize <= maxSizeBytes) return;
-    }
-
-    final sortedEntries = index.entries.toList()
-      ..sort((a, b) {
-        final aTime = (a.value['lastAccess'] as num? ?? 0).toInt();
-        final bTime = (b.value['lastAccess'] as num? ?? 0).toInt();
-        return aTime.compareTo(bTime);
-      });
-
-    while (index.length > maxEntries || _calculateTotalSize(index) > maxSizeBytes) {
-      if (sortedEntries.isEmpty) break;
-      final oldest = sortedEntries.removeAt(0);
-      final path = oldest.value['localPath'] as String?;
-      if (path != null) {
-        final f = File(path);
-        if (f.existsSync()) {
-          try {
-            f.deleteSync();
-          } catch (_) {}
-        }
-      }
-      index.remove(oldest.key);
-    }
-    await _saveIndex(index);
-  }
-
-  int _calculateTotalSize(Map<String, dynamic> index) {
-    int total = 0;
-    for (final v in index.values) {
-      total += (v['sizeBytes'] as num? ?? 0).toInt();
-    }
-    return total;
+  /// JPEG, PNG o WebP de un tamaño mínimo razonable.
+  @visibleForTesting
+  static bool looksLikeImage(List<int> bytes) {
+    if (bytes.length < 256) return false;
+    final isJpeg = bytes[0] == 0xFF && bytes[1] == 0xD8;
+    final isPng = bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47;
+    final isWebp = bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46;
+    return isJpeg || isPng || isWebp;
   }
 
   Future<void> pruneOrphanCovers({Set<int>? activeTrackIds}) async {

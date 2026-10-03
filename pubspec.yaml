@@ -53,6 +53,7 @@ dependencies:
   path_provider: ^2.1.6
   path: ^1.9.1
   dio: ^5.11.0
+  http: ^1.6.0
   supabase_flutter: ^2.16.0
   cached_network_image: ^3.4.1
   # Transitiva de cached_network_image; directa para medir y vaciar su caché

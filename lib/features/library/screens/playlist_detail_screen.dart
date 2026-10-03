@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math' as math;
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +20,7 @@ import '../../../core/utils/share_link_builder.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_cover_widget.dart';
+import '../../../core/widgets/track_cover_image.dart';
 import '../../../core/widgets/playlist_picker_dialog.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_api.dart';
@@ -47,7 +47,6 @@ import '../services/folder_service.dart';
 import '../services/playlist_pin_service.dart';
 import '../widgets/edit_playlist_dialog.dart';
 import '../widgets/folder_widgets.dart';
-import '../../../core/cache/app_image_cache.dart';
 
 enum PlaylistSortColumn { original, title, album, date, duration }
 enum PlaylistSortDirection { asc, desc, none }
@@ -1395,7 +1394,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                     contentPadding: EdgeInsets.zero,
                                                     leading: ClipRRect(
                                                       borderRadius: BorderRadius.circular(6),
-                                                      child: CachedNetworkImage(cacheManager: AppImageCache.instance, imageUrl: track.coverUrl, width: 40, height: 40, fit: BoxFit.cover),
+                                                      child: TrackCoverImage(coverUrl: track.coverUrl, trackId: track.id, width: 40, height: 40, memCacheWidth: 120),
                                                     ),
                                                     title: Text(track.title, style: const TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
                                                     subtitle: Text(track.artistName, style: const TextStyle(color: AppTheme.secondary, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -2251,14 +2250,18 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),
-                        child: CachedNetworkImage(
-                          cacheManager: AppImageCache.instance,
-                          imageUrl: track.coverUrl,
+                        // Ronda 5: con los reintentos de `TrackCoverImage`.
+                        // Con `CachedNetworkImage` a secas, una portada que
+                        // fallaba una vez se quedaba vacía (H-R5-5).
+                        child: TrackCoverImage(
+                          coverUrl: track.coverUrl,
+                          trackId: int.tryParse(track.id),
                           width: 44,
                           height: 44,
-                          fit: BoxFit.cover,
-                          placeholder: (c, u) => Container(color: AppTheme.surfaceActive),
-                          errorWidget: (c, u, e) => Container(
+                          memCacheWidth: 132,
+                          placeholder: Container(
+                            width: 44,
+                            height: 44,
                             color: AppTheme.surfaceActive,
                             child: Icon(AppIcons.broken(SolarIcons.MusicNote), color: AppTheme.muted, size: 20),
                           ),

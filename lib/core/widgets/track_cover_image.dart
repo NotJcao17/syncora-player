@@ -102,10 +102,16 @@ class _TrackCoverImageState extends State<TrackCoverImage> {
   int _attempt = 0;
   bool _retryScheduled = false;
 
-  static const int _maxRetries = 2;
+  /// Ronda 5 (H-R5-4): el archivo local existe pero no se pudo decodificar
+  /// (descarga cortada, archivo dañado). Antes eso dejaba el hueco para
+  /// siempre; ahora se cae a la portada de la red.
+  bool _localFailed = false;
+
+  static const int _maxRetries = 3;
   static const List<Duration> _retryDelays = [
     Duration(seconds: 2),
     Duration(seconds: 6),
+    Duration(seconds: 15),
   ];
 
   @override
@@ -115,7 +121,15 @@ class _TrackCoverImageState extends State<TrackCoverImage> {
     if (oldWidget.coverUrl != widget.coverUrl || oldWidget.trackId != widget.trackId) {
       _attempt = 0;
       _retryScheduled = false;
+      _localFailed = false;
     }
+  }
+
+  void _onLocalFailed() {
+    if (_localFailed || widget.coverUrl.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _localFailed = true);
+    });
   }
 
   void _scheduleRetry() {
@@ -140,7 +154,7 @@ class _TrackCoverImageState extends State<TrackCoverImage> {
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
         );
 
-    final local = CoverCacheService.localCoverFileSync(widget.trackId);
+    final local = _localFailed ? null : CoverCacheService.localCoverFileSync(widget.trackId);
 
     Widget localImage(File file) => Image.file(
           file,
@@ -152,7 +166,10 @@ class _TrackCoverImageState extends State<TrackCoverImage> {
           // `Image.file` usa por defecto un filtrado mas basto que el de
           // `CachedNetworkImage`.
           filterQuality: FilterQuality.medium,
-          errorBuilder: (_, _, _) => fallback,
+          errorBuilder: (_, _, _) {
+            _onLocalFailed();
+            return fallback;
+          },
         );
 
     // Miniaturas: el archivo local basta y evita ir a la red.
@@ -180,7 +197,10 @@ class _TrackCoverImageState extends State<TrackCoverImage> {
       memCacheHeight: widget.memCacheHeight,
       filterQuality: FilterQuality.medium,
       placeholder: (_, _) => local != null ? localImage(local) : fallback,
-      errorWidget: (_, _, _) {
+      errorWidget: (_, _, error) {
+        // Ronda 5: deja rastro para poder diagnosticar fallos que solo se
+        // ven en el teléfono (ver `AppImageCache`).
+        debugPrint('[Covers] Falló $url (intento ${_attempt + 1}): $error');
         // Se agenda fuera del build: llamar a setState desde aquí dispararía
         // un rebuild en mitad del propio build.
         _scheduleRetry();
