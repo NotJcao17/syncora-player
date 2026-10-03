@@ -107,6 +107,13 @@ class _EngineStatusSectionState extends ConsumerState<EngineStatusSection> {
                 style: const TextStyle(color: Colors.redAccent, fontSize: 12),
               ),
             ],
+            if (status.activatedAt != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Actualizado por OTA ${_relative(status.activatedAt!)} (${_date(status.activatedAt!)}).',
+                style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
+              ),
+            ],
             const SizedBox(height: 12),
             Text(
               !status.otaConfigured
@@ -159,6 +166,12 @@ class _EngineStatusSectionState extends ConsumerState<EngineStatusSection> {
         );
       },
     );
+  }
+
+  static String _date(DateTime t) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    final l = t.toLocal();
+    return '${two(l.day)}/${two(l.month)}/${l.year} ${two(l.hour)}:${two(l.minute)}';
   }
 
   static String _relative(DateTime t) {

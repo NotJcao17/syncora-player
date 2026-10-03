@@ -170,6 +170,8 @@ void main() {
 
     final store = await EngineStore.open(directory: dir);
     expect(store.state.activeBuild, 202610020000, reason: 'probado: se usará en los siguientes arranques');
+    expect(store.state.activatedAt, now);
+    expect(m.status.value.activatedAt, now);
     expect(store.state.proven, contains(202610020000));
   });
 

@@ -37,6 +37,9 @@ class EngineStatus {
   final bool otaConfigured;
   final DateTime? lastCheckAt;
 
+  /// Cuándo se activó por OTA el motor en uso (`null` si es el de fábrica).
+  final DateTime? activatedAt;
+
   /// Motor descargado más nuevo que el activo, guardado "por si falla".
   final int? standbyBuild;
 
@@ -50,6 +53,7 @@ class EngineStatus {
     this.loadError,
     this.otaConfigured = false,
     this.lastCheckAt,
+    this.activatedAt,
     this.standbyBuild,
     this.adoptOnNextLaunch,
   });
@@ -156,7 +160,7 @@ class EngineManager {
     final embedded = await _embeddedBundle();
     final store = await _storeOrNull();
     if (store == null) return embedded;
-    final (build, next) = EnginePolicy.selectForLaunch(store.state, embedded.build);
+    final (build, next) = EnginePolicy.selectForLaunch(store.state, embedded.build, now: _clock());
     if (!identical(next, store.state)) await store.update(next);
     if (build == null) return embedded;
     return await store.loadDownloaded(build) ?? embedded;
@@ -287,6 +291,7 @@ class EngineManager {
         if (store != null) {
           await store.update(store.state.copyWith(
             activeBuild: bundle.source == EngineSource.downloaded ? build : null,
+            activatedAt: _clock(),
           ));
           if (bundle.source == EngineSource.downloaded) await store.markProven(build);
         }
@@ -459,6 +464,7 @@ class EngineManager {
       loadError: _loadError,
       otaConfigured: _otaConfigured,
       lastCheckAt: state?.lastCheckAt,
+      activatedAt: _current?.source == EngineSource.downloaded ? state?.activatedAt : null,
       standbyBuild: standby,
       adoptOnNextLaunch: state?.adoptOnNextLaunch,
     );

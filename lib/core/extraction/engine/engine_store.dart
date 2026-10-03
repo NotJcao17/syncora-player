@@ -34,6 +34,9 @@ class EngineStoreState {
   final DateTime? lastCheckAt;
   final DateTime? lastSuccessfulCheckAt;
 
+  /// Cuándo se activó el motor descargado en uso (para Configuración).
+  final DateTime? activatedAt;
+
   const EngineStoreState({
     this.installed = const {},
     this.activeBuild,
@@ -42,6 +45,7 @@ class EngineStoreState {
     this.adoptOnNextLaunch,
     this.lastCheckAt,
     this.lastSuccessfulCheckAt,
+    this.activatedAt,
   });
 
   static const _keep = Object();
@@ -54,6 +58,7 @@ class EngineStoreState {
     Object? adoptOnNextLaunch = _keep,
     DateTime? lastCheckAt,
     DateTime? lastSuccessfulCheckAt,
+    DateTime? activatedAt,
   }) =>
       EngineStoreState(
         installed: installed ?? this.installed,
@@ -64,6 +69,7 @@ class EngineStoreState {
             identical(adoptOnNextLaunch, _keep) ? this.adoptOnNextLaunch : adoptOnNextLaunch as int?,
         lastCheckAt: lastCheckAt ?? this.lastCheckAt,
         lastSuccessfulCheckAt: lastSuccessfulCheckAt ?? this.lastSuccessfulCheckAt,
+        activatedAt: activatedAt ?? this.activatedAt,
       );
 
   Map<String, dynamic> toJson() => {
@@ -74,6 +80,7 @@ class EngineStoreState {
         'adoptOnNextLaunch': adoptOnNextLaunch,
         'lastCheckAt': lastCheckAt?.toIso8601String(),
         'lastSuccessfulCheckAt': lastSuccessfulCheckAt?.toIso8601String(),
+        'activatedAt': activatedAt?.toIso8601String(),
       };
 
   factory EngineStoreState.fromJson(Map<String, dynamic> json) {
@@ -92,6 +99,7 @@ class EngineStoreState {
       adoptOnNextLaunch: (json['adoptOnNextLaunch'] as num?)?.toInt(),
       lastCheckAt: date(json['lastCheckAt']),
       lastSuccessfulCheckAt: date(json['lastSuccessfulCheckAt']),
+      activatedAt: date(json['activatedAt']),
     );
   }
 
@@ -121,13 +129,15 @@ class EnginePolicy {
   ///
   /// Un motor de fábrica igual o más nuevo que el descargado gana siempre:
   /// así una actualización de la app nunca queda tapada por un OTA viejo.
-  static (int?, EngineStoreState) selectForLaunch(EngineStoreState s, int embeddedBuild) {
+  static (int?, EngineStoreState) selectForLaunch(EngineStoreState s, int embeddedBuild, {DateTime? now}) {
     var state = s;
     final adopt = state.adoptOnNextLaunch;
     if (adopt != null) {
+      final usable = state.isUsable(adopt);
       state = state.copyWith(
         adoptOnNextLaunch: null,
-        activeBuild: state.isUsable(adopt) ? adopt : state.activeBuild,
+        activeBuild: usable ? adopt : state.activeBuild,
+        activatedAt: usable ? (now ?? DateTime.now()) : null,
       );
     }
     final active = state.activeBuild;

@@ -71,7 +71,8 @@ en `engine/` y se genera con `npm run build`, nunca como strings de Dart; **un m
 no se cambia solo** (lo descargado se activa solo si el activo falla, salvo "aplicar a todos"); el
 activo persistido solo cambia con una extracción real exitosa; el de fábrica gana si es igual o más
 nuevo; y la prueba en vivo desde GitHub sale "inconclusa" casi siempre (YouTube bloquea IPs de
-datacenter). Pendientes manuales: subir `ENGINE_SIGNING_KEY` a GitHub y aplicar la migración 20.
+datacenter). Secreto `ENGINE_SIGNING_KEY` ya cargado y primer motor publicado. Pendiente manual:
+aplicar la migración 20 (`supabase db push`).
 
 ### Estado actual (última actualización: 2026-10-01)
 

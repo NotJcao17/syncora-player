@@ -134,10 +134,10 @@ el principal se reanuda. Las URLs de preview caducan: se pide la fresca y se rei
 
 ## 6. Pasos manuales pendientes (para el desarrollador humano)
 
-1. **Subir la llave de firma a GitHub** (una vez):
-   `gh secret set ENGINE_SIGNING_KEY < engine/signing_key.pem`, y guardar una copia de
-   `engine/signing_key.pem` en un gestor de contraseñas. Después, Actions → "Publicar motor" →
-   Run workflow (o esperar a la siguiente corrida programada).
+1. ~~Subir la llave de firma a GitHub y lanzar la primera publicación~~ — **hecho el 2026-10-03**:
+   secreto `ENGINE_SIGNING_KEY` cargado y motor `202610030222` publicado en `engine-channel`
+   (firma y SHA-256 verificados descargándolo desde la URL que usa la app). Falta solo guardar una
+   copia de `engine/signing_key.pem` en un gestor de contraseñas.
 2. **Aplicar la migración 20** (`supabase db push`). Sin ella la app funciona, pero con cuenta no
    se pueden crear carpetas (el sync simplemente no las toca).
 3. Pruebas en dispositivo de la Fase 8 (`docs/matriz_de_pruebas.md`).
