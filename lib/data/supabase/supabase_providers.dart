@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'supabase_album_repository.dart';
+import 'supabase_folder_repository.dart';
 import 'supabase_history_repository.dart';
 import 'supabase_playlist_repository.dart';
 
@@ -9,6 +10,10 @@ final supabasePlaylistRepositoryProvider = Provider<SupabasePlaylistRepository>(
 
 final supabaseAlbumRepositoryProvider = Provider<SupabaseAlbumRepository>((ref) {
   return SupabaseAlbumRepository();
+});
+
+final supabaseFolderRepositoryProvider = Provider<SupabaseFolderRepository>((ref) {
+  return SupabaseFolderRepository();
 });
 
 final supabaseHistoryRepositoryProvider = Provider<SupabaseHistoryRepository>((ref) {

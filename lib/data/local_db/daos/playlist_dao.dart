@@ -96,9 +96,11 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     String? sourceRef,
     bool isGenerated = false,
     bool isPinned = false,
+    int? folderId,
   }) async {
     return into(playlists).insert(
       PlaylistsCompanion.insert(
+        folderId: Value(folderId),
         title: title,
         description: Value(description),
         coverUrl: Value(coverUrl),

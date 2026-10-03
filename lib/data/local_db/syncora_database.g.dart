@@ -182,6 +182,17 @@ class $PlaylistsTable extends Playlists
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _folderIdMeta = const VerificationMeta(
+    'folderId',
+  );
+  @override
+  late final GeneratedColumn<int> folderId = GeneratedColumn<int>(
+    'folder_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -198,6 +209,7 @@ class $PlaylistsTable extends Playlists
     lastPlayedAt,
     sourceRef,
     isGenerated,
+    folderId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -303,6 +315,12 @@ class $PlaylistsTable extends Playlists
         ),
       );
     }
+    if (data.containsKey('folder_id')) {
+      context.handle(
+        _folderIdMeta,
+        folderId.isAcceptableOrUnknown(data['folder_id']!, _folderIdMeta),
+      );
+    }
     return context;
   }
 
@@ -368,6 +386,10 @@ class $PlaylistsTable extends Playlists
         DriftSqlType.bool,
         data['${effectivePrefix}is_generated'],
       )!,
+      folderId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}folder_id'],
+      ),
     );
   }
 
@@ -419,6 +441,14 @@ class Playlist extends DataClass implements Insertable<Playlist> {
   /// se edita a mano, igual que "Tus me gusta". No viaja a Supabase — se
   /// deriva del historial local de cada dispositivo.
   final bool isGenerated;
+
+  /// Carpeta que la contiene (Fase 8.E), o `null` si está en la raíz.
+  ///
+  /// Sin `references` a propósito: esta base no activa `PRAGMA foreign_keys`,
+  /// así que un `ON DELETE SET NULL` de SQLite nunca se dispararía. Lo hace a
+  /// mano `FolderDao.deleteFolder`. "Tus me gusta" y "On Repeat" nunca llevan
+  /// carpeta.
+  final int? folderId;
   const Playlist({
     required this.id,
     this.remoteId,
@@ -434,6 +464,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     this.lastPlayedAt,
     this.sourceRef,
     required this.isGenerated,
+    this.folderId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -462,6 +493,9 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       map['source_ref'] = Variable<String>(sourceRef);
     }
     map['is_generated'] = Variable<bool>(isGenerated);
+    if (!nullToAbsent || folderId != null) {
+      map['folder_id'] = Variable<int>(folderId);
+    }
     return map;
   }
 
@@ -491,6 +525,9 @@ class Playlist extends DataClass implements Insertable<Playlist> {
           ? const Value.absent()
           : Value(sourceRef),
       isGenerated: Value(isGenerated),
+      folderId: folderId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(folderId),
     );
   }
 
@@ -514,6 +551,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       lastPlayedAt: serializer.fromJson<DateTime?>(json['lastPlayedAt']),
       sourceRef: serializer.fromJson<String?>(json['sourceRef']),
       isGenerated: serializer.fromJson<bool>(json['isGenerated']),
+      folderId: serializer.fromJson<int?>(json['folderId']),
     );
   }
   @override
@@ -534,6 +572,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       'lastPlayedAt': serializer.toJson<DateTime?>(lastPlayedAt),
       'sourceRef': serializer.toJson<String?>(sourceRef),
       'isGenerated': serializer.toJson<bool>(isGenerated),
+      'folderId': serializer.toJson<int?>(folderId),
     };
   }
 
@@ -552,6 +591,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     Value<DateTime?> lastPlayedAt = const Value.absent(),
     Value<String?> sourceRef = const Value.absent(),
     bool? isGenerated,
+    Value<int?> folderId = const Value.absent(),
   }) => Playlist(
     id: id ?? this.id,
     remoteId: remoteId.present ? remoteId.value : this.remoteId,
@@ -567,6 +607,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     lastPlayedAt: lastPlayedAt.present ? lastPlayedAt.value : this.lastPlayedAt,
     sourceRef: sourceRef.present ? sourceRef.value : this.sourceRef,
     isGenerated: isGenerated ?? this.isGenerated,
+    folderId: folderId.present ? folderId.value : this.folderId,
   );
   Playlist copyWithCompanion(PlaylistsCompanion data) {
     return Playlist(
@@ -592,6 +633,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       isGenerated: data.isGenerated.present
           ? data.isGenerated.value
           : this.isGenerated,
+      folderId: data.folderId.present ? data.folderId.value : this.folderId,
     );
   }
 
@@ -611,7 +653,8 @@ class Playlist extends DataClass implements Insertable<Playlist> {
           ..write('updatedAt: $updatedAt, ')
           ..write('lastPlayedAt: $lastPlayedAt, ')
           ..write('sourceRef: $sourceRef, ')
-          ..write('isGenerated: $isGenerated')
+          ..write('isGenerated: $isGenerated, ')
+          ..write('folderId: $folderId')
           ..write(')'))
         .toString();
   }
@@ -632,6 +675,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     lastPlayedAt,
     sourceRef,
     isGenerated,
+    folderId,
   );
   @override
   bool operator ==(Object other) =>
@@ -650,7 +694,8 @@ class Playlist extends DataClass implements Insertable<Playlist> {
           other.updatedAt == this.updatedAt &&
           other.lastPlayedAt == this.lastPlayedAt &&
           other.sourceRef == this.sourceRef &&
-          other.isGenerated == this.isGenerated);
+          other.isGenerated == this.isGenerated &&
+          other.folderId == this.folderId);
 }
 
 class PlaylistsCompanion extends UpdateCompanion<Playlist> {
@@ -668,6 +713,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
   final Value<DateTime?> lastPlayedAt;
   final Value<String?> sourceRef;
   final Value<bool> isGenerated;
+  final Value<int?> folderId;
   const PlaylistsCompanion({
     this.id = const Value.absent(),
     this.remoteId = const Value.absent(),
@@ -683,6 +729,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     this.lastPlayedAt = const Value.absent(),
     this.sourceRef = const Value.absent(),
     this.isGenerated = const Value.absent(),
+    this.folderId = const Value.absent(),
   });
   PlaylistsCompanion.insert({
     this.id = const Value.absent(),
@@ -699,6 +746,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     this.lastPlayedAt = const Value.absent(),
     this.sourceRef = const Value.absent(),
     this.isGenerated = const Value.absent(),
+    this.folderId = const Value.absent(),
   }) : title = Value(title);
   static Insertable<Playlist> custom({
     Expression<int>? id,
@@ -715,6 +763,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     Expression<DateTime>? lastPlayedAt,
     Expression<String>? sourceRef,
     Expression<bool>? isGenerated,
+    Expression<int>? folderId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -731,6 +780,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
       if (lastPlayedAt != null) 'last_played_at': lastPlayedAt,
       if (sourceRef != null) 'source_ref': sourceRef,
       if (isGenerated != null) 'is_generated': isGenerated,
+      if (folderId != null) 'folder_id': folderId,
     });
   }
 
@@ -749,6 +799,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     Value<DateTime?>? lastPlayedAt,
     Value<String?>? sourceRef,
     Value<bool>? isGenerated,
+    Value<int?>? folderId,
   }) {
     return PlaylistsCompanion(
       id: id ?? this.id,
@@ -765,6 +816,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
       lastPlayedAt: lastPlayedAt ?? this.lastPlayedAt,
       sourceRef: sourceRef ?? this.sourceRef,
       isGenerated: isGenerated ?? this.isGenerated,
+      folderId: folderId ?? this.folderId,
     );
   }
 
@@ -813,6 +865,9 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     if (isGenerated.present) {
       map['is_generated'] = Variable<bool>(isGenerated.value);
     }
+    if (folderId.present) {
+      map['folder_id'] = Variable<int>(folderId.value);
+    }
     return map;
   }
 
@@ -832,7 +887,8 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
           ..write('updatedAt: $updatedAt, ')
           ..write('lastPlayedAt: $lastPlayedAt, ')
           ..write('sourceRef: $sourceRef, ')
-          ..write('isGenerated: $isGenerated')
+          ..write('isGenerated: $isGenerated, ')
+          ..write('folderId: $folderId')
           ..write(')'))
         .toString();
   }
@@ -4269,6 +4325,354 @@ class AlbumGenreCacheCompanion extends UpdateCompanion<AlbumGenreCacheData> {
   }
 }
 
+class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FoldersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _remoteIdMeta = const VerificationMeta(
+    'remoteId',
+  );
+  @override
+  late final GeneratedColumn<String> remoteId = GeneratedColumn<String>(
+    'remote_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _orderIndexMeta = const VerificationMeta(
+    'orderIndex',
+  );
+  @override
+  late final GeneratedColumn<int> orderIndex = GeneratedColumn<int>(
+    'order_index',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    remoteId,
+    name,
+    orderIndex,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'folders';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Folder> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('remote_id')) {
+      context.handle(
+        _remoteIdMeta,
+        remoteId.isAcceptableOrUnknown(data['remote_id']!, _remoteIdMeta),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('order_index')) {
+      context.handle(
+        _orderIndexMeta,
+        orderIndex.isAcceptableOrUnknown(data['order_index']!, _orderIndexMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Folder map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Folder(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      remoteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_id'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      orderIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}order_index'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $FoldersTable createAlias(String alias) {
+    return $FoldersTable(attachedDatabase, alias);
+  }
+}
+
+class Folder extends DataClass implements Insertable<Folder> {
+  final int id;
+  final String? remoteId;
+  final String name;
+  final int orderIndex;
+  final DateTime createdAt;
+  const Folder({
+    required this.id,
+    this.remoteId,
+    required this.name,
+    required this.orderIndex,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || remoteId != null) {
+      map['remote_id'] = Variable<String>(remoteId);
+    }
+    map['name'] = Variable<String>(name);
+    map['order_index'] = Variable<int>(orderIndex);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  FoldersCompanion toCompanion(bool nullToAbsent) {
+    return FoldersCompanion(
+      id: Value(id),
+      remoteId: remoteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remoteId),
+      name: Value(name),
+      orderIndex: Value(orderIndex),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Folder.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Folder(
+      id: serializer.fromJson<int>(json['id']),
+      remoteId: serializer.fromJson<String?>(json['remoteId']),
+      name: serializer.fromJson<String>(json['name']),
+      orderIndex: serializer.fromJson<int>(json['orderIndex']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'remoteId': serializer.toJson<String?>(remoteId),
+      'name': serializer.toJson<String>(name),
+      'orderIndex': serializer.toJson<int>(orderIndex),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Folder copyWith({
+    int? id,
+    Value<String?> remoteId = const Value.absent(),
+    String? name,
+    int? orderIndex,
+    DateTime? createdAt,
+  }) => Folder(
+    id: id ?? this.id,
+    remoteId: remoteId.present ? remoteId.value : this.remoteId,
+    name: name ?? this.name,
+    orderIndex: orderIndex ?? this.orderIndex,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Folder copyWithCompanion(FoldersCompanion data) {
+    return Folder(
+      id: data.id.present ? data.id.value : this.id,
+      remoteId: data.remoteId.present ? data.remoteId.value : this.remoteId,
+      name: data.name.present ? data.name.value : this.name,
+      orderIndex: data.orderIndex.present
+          ? data.orderIndex.value
+          : this.orderIndex,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Folder(')
+          ..write('id: $id, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('name: $name, ')
+          ..write('orderIndex: $orderIndex, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, remoteId, name, orderIndex, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Folder &&
+          other.id == this.id &&
+          other.remoteId == this.remoteId &&
+          other.name == this.name &&
+          other.orderIndex == this.orderIndex &&
+          other.createdAt == this.createdAt);
+}
+
+class FoldersCompanion extends UpdateCompanion<Folder> {
+  final Value<int> id;
+  final Value<String?> remoteId;
+  final Value<String> name;
+  final Value<int> orderIndex;
+  final Value<DateTime> createdAt;
+  const FoldersCompanion({
+    this.id = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.orderIndex = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  FoldersCompanion.insert({
+    this.id = const Value.absent(),
+    this.remoteId = const Value.absent(),
+    required String name,
+    this.orderIndex = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<Folder> custom({
+    Expression<int>? id,
+    Expression<String>? remoteId,
+    Expression<String>? name,
+    Expression<int>? orderIndex,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (remoteId != null) 'remote_id': remoteId,
+      if (name != null) 'name': name,
+      if (orderIndex != null) 'order_index': orderIndex,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  FoldersCompanion copyWith({
+    Value<int>? id,
+    Value<String?>? remoteId,
+    Value<String>? name,
+    Value<int>? orderIndex,
+    Value<DateTime>? createdAt,
+  }) {
+    return FoldersCompanion(
+      id: id ?? this.id,
+      remoteId: remoteId ?? this.remoteId,
+      name: name ?? this.name,
+      orderIndex: orderIndex ?? this.orderIndex,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (remoteId.present) {
+      map['remote_id'] = Variable<String>(remoteId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (orderIndex.present) {
+      map['order_index'] = Variable<int>(orderIndex.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FoldersCompanion(')
+          ..write('id: $id, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('name: $name, ')
+          ..write('orderIndex: $orderIndex, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$SyncoraDatabase extends GeneratedDatabase {
   _$SyncoraDatabase(QueryExecutor e) : super(e);
   $SyncoraDatabaseManager get managers => $SyncoraDatabaseManager(this);
@@ -4286,6 +4690,7 @@ abstract class _$SyncoraDatabase extends GeneratedDatabase {
   late final $AlbumGenreCacheTable albumGenreCache = $AlbumGenreCacheTable(
     this,
   );
+  late final $FoldersTable folders = $FoldersTable(this);
   late final PlaylistDao playlistDao = PlaylistDao(this as SyncoraDatabase);
   late final SavedAlbumDao savedAlbumDao = SavedAlbumDao(
     this as SyncoraDatabase,
@@ -4298,6 +4703,7 @@ abstract class _$SyncoraDatabase extends GeneratedDatabase {
   );
   late final StatsMetadataCacheDao statsMetadataCacheDao =
       StatsMetadataCacheDao(this as SyncoraDatabase);
+  late final FolderDao folderDao = FolderDao(this as SyncoraDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4310,6 +4716,7 @@ abstract class _$SyncoraDatabase extends GeneratedDatabase {
     downloadedTracks,
     statsMetadataCache,
     albumGenreCache,
+    folders,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -4339,6 +4746,7 @@ typedef $$PlaylistsTableCreateCompanionBuilder =
       Value<DateTime?> lastPlayedAt,
       Value<String?> sourceRef,
       Value<bool> isGenerated,
+      Value<int?> folderId,
     });
 typedef $$PlaylistsTableUpdateCompanionBuilder =
     PlaylistsCompanion Function({
@@ -4356,6 +4764,7 @@ typedef $$PlaylistsTableUpdateCompanionBuilder =
       Value<DateTime?> lastPlayedAt,
       Value<String?> sourceRef,
       Value<bool> isGenerated,
+      Value<int?> folderId,
     });
 
 final class $$PlaylistsTableReferences
@@ -4458,6 +4867,11 @@ class $$PlaylistsTableFilterComposer
 
   ColumnFilters<bool> get isGenerated => $composableBuilder(
     column: $table.isGenerated,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get folderId => $composableBuilder(
+    column: $table.folderId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4565,6 +4979,11 @@ class $$PlaylistsTableOrderingComposer
     column: $table.isGenerated,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get folderId => $composableBuilder(
+    column: $table.folderId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PlaylistsTableAnnotationComposer
@@ -4625,6 +5044,9 @@ class $$PlaylistsTableAnnotationComposer
     column: $table.isGenerated,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get folderId =>
+      $composableBuilder(column: $table.folderId, builder: (column) => column);
 
   Expression<T> playlistTracksRefs<T extends Object>(
     Expression<T> Function($$PlaylistTracksTableAnnotationComposer a) f,
@@ -4694,6 +5116,7 @@ class $$PlaylistsTableTableManager
                 Value<DateTime?> lastPlayedAt = const Value.absent(),
                 Value<String?> sourceRef = const Value.absent(),
                 Value<bool> isGenerated = const Value.absent(),
+                Value<int?> folderId = const Value.absent(),
               }) => PlaylistsCompanion(
                 id: id,
                 remoteId: remoteId,
@@ -4709,6 +5132,7 @@ class $$PlaylistsTableTableManager
                 lastPlayedAt: lastPlayedAt,
                 sourceRef: sourceRef,
                 isGenerated: isGenerated,
+                folderId: folderId,
               ),
           createCompanionCallback:
               ({
@@ -4726,6 +5150,7 @@ class $$PlaylistsTableTableManager
                 Value<DateTime?> lastPlayedAt = const Value.absent(),
                 Value<String?> sourceRef = const Value.absent(),
                 Value<bool> isGenerated = const Value.absent(),
+                Value<int?> folderId = const Value.absent(),
               }) => PlaylistsCompanion.insert(
                 id: id,
                 remoteId: remoteId,
@@ -4741,6 +5166,7 @@ class $$PlaylistsTableTableManager
                 lastPlayedAt: lastPlayedAt,
                 sourceRef: sourceRef,
                 isGenerated: isGenerated,
+                folderId: folderId,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -6653,6 +7079,196 @@ typedef $$AlbumGenreCacheTableProcessedTableManager =
       AlbumGenreCacheData,
       PrefetchHooks Function()
     >;
+typedef $$FoldersTableCreateCompanionBuilder =
+    FoldersCompanion Function({
+      Value<int> id,
+      Value<String?> remoteId,
+      required String name,
+      Value<int> orderIndex,
+      Value<DateTime> createdAt,
+    });
+typedef $$FoldersTableUpdateCompanionBuilder =
+    FoldersCompanion Function({
+      Value<int> id,
+      Value<String?> remoteId,
+      Value<String> name,
+      Value<int> orderIndex,
+      Value<DateTime> createdAt,
+    });
+
+class $$FoldersTableFilterComposer
+    extends Composer<_$SyncoraDatabase, $FoldersTable> {
+  $$FoldersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get orderIndex => $composableBuilder(
+    column: $table.orderIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FoldersTableOrderingComposer
+    extends Composer<_$SyncoraDatabase, $FoldersTable> {
+  $$FoldersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get remoteId => $composableBuilder(
+    column: $table.remoteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get orderIndex => $composableBuilder(
+    column: $table.orderIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FoldersTableAnnotationComposer
+    extends Composer<_$SyncoraDatabase, $FoldersTable> {
+  $$FoldersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get remoteId =>
+      $composableBuilder(column: $table.remoteId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get orderIndex => $composableBuilder(
+    column: $table.orderIndex,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$FoldersTableTableManager
+    extends
+        RootTableManager<
+          _$SyncoraDatabase,
+          $FoldersTable,
+          Folder,
+          $$FoldersTableFilterComposer,
+          $$FoldersTableOrderingComposer,
+          $$FoldersTableAnnotationComposer,
+          $$FoldersTableCreateCompanionBuilder,
+          $$FoldersTableUpdateCompanionBuilder,
+          (Folder, BaseReferences<_$SyncoraDatabase, $FoldersTable, Folder>),
+          Folder,
+          PrefetchHooks Function()
+        > {
+  $$FoldersTableTableManager(_$SyncoraDatabase db, $FoldersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FoldersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FoldersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FoldersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String?> remoteId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<int> orderIndex = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => FoldersCompanion(
+                id: id,
+                remoteId: remoteId,
+                name: name,
+                orderIndex: orderIndex,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String?> remoteId = const Value.absent(),
+                required String name,
+                Value<int> orderIndex = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => FoldersCompanion.insert(
+                id: id,
+                remoteId: remoteId,
+                name: name,
+                orderIndex: orderIndex,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FoldersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$SyncoraDatabase,
+      $FoldersTable,
+      Folder,
+      $$FoldersTableFilterComposer,
+      $$FoldersTableOrderingComposer,
+      $$FoldersTableAnnotationComposer,
+      $$FoldersTableCreateCompanionBuilder,
+      $$FoldersTableUpdateCompanionBuilder,
+      (Folder, BaseReferences<_$SyncoraDatabase, $FoldersTable, Folder>),
+      Folder,
+      PrefetchHooks Function()
+    >;
 
 class $SyncoraDatabaseManager {
   final _$SyncoraDatabase _db;
@@ -6671,4 +7287,6 @@ class $SyncoraDatabaseManager {
       $$StatsMetadataCacheTableTableManager(_db, _db.statsMetadataCache);
   $$AlbumGenreCacheTableTableManager get albumGenreCache =>
       $$AlbumGenreCacheTableTableManager(_db, _db.albumGenreCache);
+  $$FoldersTableTableManager get folders =>
+      $$FoldersTableTableManager(_db, _db.folders);
 }

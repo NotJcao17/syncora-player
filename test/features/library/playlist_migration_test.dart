@@ -56,6 +56,8 @@ class _FakePlaylistRepo extends SupabasePlaylistRepository {
     bool? isPublic,
     bool? isPinned,
     int? orderIndex,
+    String? folderId,
+    bool clearFolder = false,
   }) async {
     final row = createdPlaylists.firstWhere((p) => p['id'] == id);
     if (coverUrl != null) row['cover_url'] = coverUrl;

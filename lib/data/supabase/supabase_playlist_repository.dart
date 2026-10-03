@@ -120,6 +120,10 @@ class SupabasePlaylistRepository {
     bool? isPublic,
     bool? isPinned,
     int? orderIndex,
+    // Fase 8.E: carpeta remota. `clearFolder` la saca a la raíz (un `null`
+    // en `folderId` significa "no tocar", Pitfall #29).
+    String? folderId,
+    bool clearFolder = false,
   }) async {
     final client = _client;
     if (client == null) return;
@@ -141,6 +145,11 @@ class SupabasePlaylistRepository {
     if (isPublic != null) updates['is_public'] = isPublic;
     if (isPinned != null) updates['is_pinned'] = isPinned;
     if (orderIndex != null) updates['order_index'] = orderIndex;
+    if (clearFolder) {
+      updates['folder_id'] = null;
+    } else if (folderId != null) {
+      updates['folder_id'] = folderId;
+    }
 
     await client.from('playlists').update(updates).eq('id', id);
   }

@@ -16,6 +16,7 @@ import '../../../data/local_db/database_provider.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../../data/sync/sync_service.dart';
 import '../../library/import_export/playlist_import_export_service.dart';
+import '../../library/services/folder_service.dart';
 import '../auth_provider.dart';
 import '../local_mode_provider.dart';
 import '../services/account_limit_error.dart';
@@ -233,6 +234,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           return url;
         },
       );
+      // Fase 8.E: después de las playlists, porque necesita sus ids remotos.
+      await ref.read(folderServiceProvider).migrateLocalFoldersToAccount();
       await service.migrateLocalSavedAlbumsToAccount(
         savedAlbumDao: ref.read(savedAlbumDaoProvider),
         supabaseAlbumRepo: ref.read(supabaseAlbumRepositoryProvider),

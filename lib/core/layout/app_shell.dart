@@ -23,7 +23,10 @@ import '../../features/download/download_provider.dart';
 import '../../features/stats/genre_backfill_service.dart';
 import '../../features/home/mixes/on_repeat_service.dart';
 import '../../features/library/import_export/import_manager.dart';
+import '../../features/library/library_folders.dart';
 import '../../features/library/library_view_settings.dart';
+import '../../features/library/services/folder_service.dart';
+import '../../features/library/widgets/folder_widgets.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
 import '../../features/player/syncora_player_controller.dart';
@@ -57,6 +60,9 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   bool _isSidebarCollapsed = false;
   double _sidebarWidth = 256.0;
+
+  /// Carpetas desplegadas en la barra lateral (Fase 8.E). Solo de la sesión.
+  final Set<int> _expandedSidebarFolders = {};
 
   @override
   void initState() {
@@ -535,6 +541,14 @@ class _AppShellState extends ConsumerState<AppShell> {
                             child: Consumer(
                               builder: (ctx, ref, _) {
                                 final playlistDao = ref.watch(playlistDaoProvider);
+                                // Los `watch` van aquí y no dentro del builder
+                                // del StreamBuilder: ahí corren fuera del build
+                                // del Consumer, y con un provider que emite
+                                // solo (las carpetas, Fase 8.E) Riverpod lee
+                                // una suscripción ya cerrada.
+                                final sort = ref.watch(librarySortProvider);
+                                final activeContextId = ref.watch(playerStateProvider.select((s) => s.activeContextId));
+                                final folders = ref.watch(foldersProvider).value ?? const <Folder>[];
                                 return StreamBuilder<List<Playlist>>(
                                   stream: playlistDao.watchAllPlaylists(),
                                   builder: (ctx, snapshot) {
@@ -544,7 +558,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                                     // de la tabla.
                                     final playlists = sortPlaylists(
                                       snapshot.data ?? const <Playlist>[],
-                                      ref.watch(librarySortProvider),
+                                      sort,
                                     );
                                     if (playlists.isEmpty) {
                                       return const Center(
@@ -555,17 +569,57 @@ class _AppShellState extends ConsumerState<AppShell> {
                                       );
                                     }
 
-                                    final activeContextId = ref.watch(playerStateProvider.select((s) => s.activeContextId));
+                                    // Fase 8.E: con la barra expandida, las
+                                    // carpetas se despliegan en su sitio; con
+                                    // la barra colapsada (solo portadas) la
+                                    // lista sigue plana, como antes.
+                                    final rows = <({Playlist? playlist, FolderEntry? folder, bool nested})>[];
+                                    if (_isSidebarCollapsed) {
+                                      for (final p in playlists) {
+                                        rows.add((playlist: p, folder: null, nested: false));
+                                      }
+                                    } else {
+                                      for (final e in buildLibraryEntries(playlists, folders)) {
+                                        switch (e) {
+                                          case PlaylistEntry(:final playlist):
+                                            rows.add((playlist: playlist, folder: null, nested: false));
+                                          case FolderEntry():
+                                            rows.add((playlist: null, folder: e, nested: false));
+                                            if (_expandedSidebarFolders.contains(e.folder.id)) {
+                                              for (final p in e.playlists) {
+                                                rows.add((playlist: p, folder: null, nested: true));
+                                              }
+                                            }
+                                        }
+                                      }
+                                    }
 
                                     return ListView.builder(
-                                      itemCount: playlists.length,
+                                      itemCount: rows.length,
                                       itemBuilder: (ctx, i) {
-                                        final pl = playlists[i];
+                                        final row = rows[i];
+                                        final folderEntry = row.folder;
+                                        if (folderEntry != null) {
+                                          final folderId = folderEntry.folder.id;
+                                          return _DesktopFolderItem(
+                                            name: folderEntry.folder.name,
+                                            subtitle: folderSubtitle(folderEntry.playlists.length),
+                                            expanded: _expandedSidebarFolders.contains(folderId),
+                                            isActivelyPlaying: folderEntry.playlists
+                                                .any((p) => activeContextId == 'playlist_${p.id}'),
+                                            onTap: () => setState(() {
+                                              if (!_expandedSidebarFolders.remove(folderId)) {
+                                                _expandedSidebarFolders.add(folderId);
+                                              }
+                                            }),
+                                          );
+                                        }
+                                        final pl = row.playlist!;
                                         final isSelected = widget.location.endsWith('/playlist/${pl.id}') ||
                                             (pl.isLiked && widget.location.endsWith('/playlist/liked'));
                                         final isActivelyPlaying = activeContextId == 'playlist_${pl.id}';
 
-                                        return _DesktopPlaylistItem(
+                                        final item = _DesktopPlaylistItem(
                                           playlistId: pl.id,
                                           title: pl.title,
                                           // Ronda 4: sin la descripción, que
@@ -582,6 +636,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                                             context.push('/playlist/${pl.isLiked ? 'liked' : pl.id}');
                                           },
                                         );
+                                        return row.nested
+                                            ? Padding(padding: const EdgeInsets.only(left: 14), child: item)
+                                            : item;
                                       },
                                     );
                                   },
@@ -1047,6 +1104,92 @@ class _DesktopSidebarItem extends StatelessWidget {
 }
 
 /// Item de playlist con miniatura estilo Spotify.
+/// Carpeta en la barra lateral de escritorio (Fase 8.E): se despliega en su
+/// sitio al pulsarla, sin navegar a ninguna pantalla.
+class _DesktopFolderItem extends StatefulWidget {
+  final String name;
+  final String subtitle;
+  final bool expanded;
+  final bool isActivelyPlaying;
+  final VoidCallback onTap;
+
+  const _DesktopFolderItem({
+    required this.name,
+    required this.subtitle,
+    required this.expanded,
+    required this.isActivelyPlaying,
+    required this.onTap,
+  });
+
+  @override
+  State<_DesktopFolderItem> createState() => _DesktopFolderItemState();
+}
+
+class _DesktopFolderItemState extends State<_DesktopFolderItem> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: _isHovered ? AppTheme.surfaceHover.withValues(alpha: 0.5) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+          child: Row(
+            children: [
+              const SizedBox(width: 48, height: 48, child: FolderCover(borderRadius: BorderRadius.all(Radius.circular(8)))),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      widget.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                      style: const TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                      style: const TextStyle(color: AppTheme.secondary, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              if (widget.isActivelyPlaying && !widget.expanded)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Icon(AppIcons.broken(SolarIcons.VolumeLoud), color: Colors.white, size: 18),
+                ),
+              Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: AnimatedRotation(
+                  turns: widget.expanded ? 0.25 : 0,
+                  duration: const Duration(milliseconds: 150),
+                  child: Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 18),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DesktopPlaylistItem extends StatefulWidget {
   final int? playlistId;
   final String title;

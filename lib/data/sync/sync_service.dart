@@ -6,12 +6,14 @@ import 'sync_locks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../local_db/daos/folder_dao.dart';
 import '../local_db/daos/listening_history_dao.dart';
 import '../local_db/daos/playlist_dao.dart';
 import '../local_db/daos/saved_album_dao.dart';
 import '../local_db/database_provider.dart';
 import '../local_db/syncora_database.dart';
 import '../supabase/supabase_album_repository.dart';
+import '../supabase/supabase_folder_repository.dart';
 import '../supabase/supabase_history_repository.dart';
 import '../supabase/supabase_playlist_repository.dart';
 import '../supabase/supabase_providers.dart';
@@ -25,6 +27,10 @@ class SyncService {
   final SavedAlbumDao _savedAlbumDao;
   final ListeningHistoryDao _listeningHistoryDao;
   final SyncCacheManager _cacheManager;
+  // Fase 8.E. Opcionales para no romper los tests existentes que arman el
+  // servicio con repos simulados; sin ellos, el sync no toca carpetas.
+  final FolderDao? _folderDao;
+  final SupabaseFolderRepository? _folderRepo;
 
   SyncService({
     required SupabasePlaylistRepository playlistRepo,
@@ -34,7 +40,11 @@ class SyncService {
     required SavedAlbumDao savedAlbumDao,
     required ListeningHistoryDao listeningHistoryDao,
     required SyncCacheManager cacheManager,
-  })  : _playlistRepo = playlistRepo,
+    FolderDao? folderDao,
+    SupabaseFolderRepository? folderRepo,
+  })  : _folderDao = folderDao,
+        _folderRepo = folderRepo,
+        _playlistRepo = playlistRepo,
         _albumRepo = albumRepo,
         _historyRepo = historyRepo,
         _playlistDao = playlistDao,
@@ -237,7 +247,47 @@ class SyncService {
     return out;
   }
 
+  /// Fase 8.E: baja las carpetas antes que las playlists y devuelve
+  /// id remoto -> id local. `null` = no se pudieron leer (sin red, o la
+  /// migración 20 todavía no está aplicada): entonces el sync de playlists no
+  /// toca la carpeta de ninguna, en vez de sacarlas todas a la raíz.
+  Future<Map<String, int>?> _syncFolders() async {
+    final dao = _folderDao;
+    final repo = _folderRepo;
+    if (dao == null || repo == null) return null;
+    try {
+      final remote = await repo.fetchUserFolders();
+      final map = <String, int>{};
+      for (final row in remote) {
+        final remoteId = row['id'].toString();
+        final name = row['name'] as String? ?? 'Carpeta';
+        final local = await dao.getFolderByRemoteId(remoteId);
+        if (local == null) {
+          map[remoteId] = await dao.createFolder(name: name, remoteId: remoteId);
+        } else {
+          if (local.name != name) await dao.renameFolder(local.id, name);
+          map[remoteId] = local.id;
+        }
+      }
+      // Las que ya no existen en la nube se borran (sus playlists quedan en la
+      // raíz). Las que no tienen id remoto son de una migración desde modo
+      // local que no terminó: se conservan para el siguiente intento.
+      for (final local in await dao.getAllFolders()) {
+        final remoteId = local.remoteId;
+        if (remoteId != null && !map.containsKey(remoteId)) await dao.deleteFolder(local.id);
+      }
+      return map;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _syncPlaylistsAndTracks() async {
+    final folderIdsByRemote = await _syncFolders();
+    final pendingFolderIds = {
+      for (final f in await _folderDao?.getAllFolders() ?? const <Folder>[])
+        if (f.remoteId == null) f.id,
+    };
     final remotePlaylists = await _playlistRepo.fetchUserPlaylists();
 
     // Liked Playlist Deduplication
@@ -271,6 +321,7 @@ class SyncService {
       // Ronda 4: fijar viaja a Supabase, así que la nube manda igual que con
       // el resto de campos. Antes el sync nunca lo leía.
       final bool isPinned = remote['is_pinned'] as bool? ?? false;
+      final String? remoteFolderId = remote['folder_id'] as String?;
 
       int localPlaylistId;
 
@@ -291,6 +342,15 @@ class SyncService {
             .where((p) => p.title == title && !p.isLiked && !p.isGenerated)
             .firstOrNull;
 
+        // Carpeta: la nube manda, salvo que no se hayan podido leer las
+        // carpetas o que la local esté pendiente de subir (migración).
+        Value<int?> folderId = const Value.absent();
+        if (folderIdsByRemote != null) {
+          final mapped = remoteFolderId == null ? null : folderIdsByRemote[remoteFolderId];
+          final keepPendingLocal = mapped == null && pendingFolderIds.contains(match?.folderId);
+          if (!keepPendingLocal) folderId = Value(mapped);
+        }
+
         if (match != null) {
           localPlaylistId = match.id;
           await _playlistDao.updatePlaylist(
@@ -301,6 +361,7 @@ class SyncService {
               coverUrl: Value(coverUrl),
               isPublic: isPublic,
               isPinned: isPinned,
+              folderId: folderId,
             ),
           );
         } else {
@@ -311,6 +372,7 @@ class SyncService {
             remoteId: remoteId,
             isPublic: isPublic,
             isPinned: isPinned,
+            folderId: folderId.present ? folderId.value : null,
           );
         }
       }
@@ -520,5 +582,7 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     savedAlbumDao: ref.watch(savedAlbumDaoProvider),
     listeningHistoryDao: ref.watch(listeningHistoryDaoProvider),
     cacheManager: ref.watch(syncCacheManagerProvider),
+    folderDao: ref.watch(folderDaoProvider),
+    folderRepo: ref.watch(supabaseFolderRepositoryProvider),
   );
 });

@@ -9,6 +9,7 @@ import 'daos/playlist_dao.dart';
 import 'daos/saved_album_dao.dart';
 import 'daos/listening_history_dao.dart';
 import 'daos/downloaded_track_dao.dart';
+import 'daos/folder_dao.dart';
 import 'daos/stats_metadata_cache_dao.dart';
 
 part 'syncora_database.g.dart';
@@ -56,6 +57,24 @@ class Playlists extends Table {
   /// se edita a mano, igual que "Tus me gusta". No viaja a Supabase — se
   /// deriva del historial local de cada dispositivo.
   BoolColumn get isGenerated => boolean().withDefault(const Constant(false))();
+
+  /// Carpeta que la contiene (Fase 8.E), o `null` si está en la raíz.
+  ///
+  /// Sin `references` a propósito: esta base no activa `PRAGMA foreign_keys`,
+  /// así que un `ON DELETE SET NULL` de SQLite nunca se dispararía. Lo hace a
+  /// mano `FolderDao.deleteFolder`. "Tus me gusta" y "On Repeat" nunca llevan
+  /// carpeta.
+  IntColumn get folderId => integer().nullable()();
+}
+
+/// Carpetas de playlists (Fase 8.E). Un solo nivel: contienen playlists,
+/// nunca otras carpetas.
+class Folders extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get remoteId => text().nullable()();
+  TextColumn get name => text()();
+  IntColumn get orderIndex => integer().withDefault(const Constant(0))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
 // Pistas en playlists — desnormalizada (Documento Maestro §3)
@@ -187,14 +206,15 @@ class StatsMetadataCache extends Table {
     DownloadedTracks,
     StatsMetadataCache,
     AlbumGenreCache,
+    Folders,
   ],
-  daos: [PlaylistDao, SavedAlbumDao, ListeningHistoryDao, DownloadedTrackDao, StatsMetadataCacheDao],
+  daos: [PlaylistDao, SavedAlbumDao, ListeningHistoryDao, DownloadedTrackDao, StatsMetadataCacheDao, FolderDao],
 )
 class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration {
@@ -253,6 +273,11 @@ class SyncoraDatabase extends _$SyncoraDatabase {
           await customStatement(
             'UPDATE playlists SET is_pinned = 0 WHERE is_liked = 1 OR is_generated = 1',
           );
+        }
+        if (from < 13) {
+          // Fase 8.E: carpetas de playlists.
+          await m.createTable(folders);
+          await m.addColumn(playlists, playlists.folderId);
         }
       },
     );

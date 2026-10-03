@@ -30,6 +30,9 @@ import '../ai_playlist/ai_modify_playlist_sheet.dart';
 import '../library_view_settings.dart';
 import '../services/playlist_cover_service.dart';
 import '../services/playlist_pin_service.dart';
+import '../services/folder_service.dart';
+import '../library_folders.dart';
+import '../widgets/folder_widgets.dart';
 import '../../../core/cache/app_image_cache.dart';
 
 /// Pantalla de Biblioteca conectada a Drift local, Supabase y servicio de Import/Export.
@@ -45,6 +48,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   final List<String> _filters = const ['Playlists', 'Álbumes', 'Descargados'];
 
   bool _showLocalSearch = false;
+
+  /// Carpeta abierta dentro de la pestaña Playlists (Fase 8.E), o `null` en
+  /// la raíz. Vive aquí y no en una ruta propia: es solo un filtro de la
+  /// misma lista, y el botón atrás del sistema la cierra (ver `PopScope`).
+  int? _openFolderId;
   final TextEditingController _localSearchController = TextEditingController();
   String _localSearchQuery = '';
 
@@ -539,6 +547,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildPinTile(ctx, playlist, canEdit),
+        if (FolderService.canBeFoldered(playlist))
+          ListTile(
+            leading: Icon(AppIcons.broken(SolarIcons.Folder), color: canEdit ? AppTheme.primary : AppTheme.muted),
+            title: Text(
+              playlist.folderId == null ? 'Mover a carpeta' : 'Cambiar de carpeta',
+              style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted),
+            ),
+            enabled: canEdit,
+            onTap: () {
+              Navigator.pop(ctx);
+              showMoveToFolderPicker(context, ref, playlist);
+            },
+          ),
         ListTile(
           leading: Icon(AppIcons.broken(SolarIcons.PenNewSquare), color: canEdit ? AppTheme.primary : AppTheme.muted),
           title: Text('Editar nombre', style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted)),
@@ -831,6 +852,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final canEdit = ref.watch(canEditProvider);
     final sort = ref.watch(librarySortProvider);
     final gridView = ref.watch(libraryGridViewProvider);
+    // Fase 8.E. Se observa aquí y no dentro del builder del StreamBuilder de
+    // playlists: ahí correría fuera de este build.
+    final foldersAsync = ref.watch(foldersProvider);
 
     // Ronda 3 (D3): id de la playlist que está sonando, si el contexto activo
     // del reproductor es una. Sale de `activeContextId`, que ya se guarda con
@@ -839,7 +863,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final activePlaylistId = _playlistIdFromContext(activeContextId);
     final activeAlbumId = _albumIdFromContext(activeContextId);
 
-    return SafeArea(
+    final content = SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -946,6 +970,27 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                     },
                             ),
                           ),
+                        Tooltip(
+                          message: canEdit ? 'Nueva carpeta' : 'Sin conexión',
+                          child: IconButton(
+                            icon: Icon(
+                              AppIcons.broken(SolarIcons.AddFolder),
+                              color: canEdit ? AppTheme.primary : AppTheme.muted,
+                              size: 21,
+                            ),
+                            onPressed: canEdit
+                                ? () async {
+                                    final id = await createFolderInteractive(context, ref);
+                                    if (id != null && mounted) {
+                                      setState(() {
+                                        _selectedFilter = 'Playlists';
+                                        _openFolderId = id;
+                                      });
+                                    }
+                                  }
+                                : () => AppToast.show(context, message: 'Sin conexión. No se pueden crear carpetas offline.'),
+                          ),
+                        ),
                         Tooltip(
                           message: canEdit ? 'Crear playlist' : 'Sin conexión',
                           child: IconButton(
@@ -1319,8 +1364,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           stream: playlistDao.watchAllPlaylists(),
                           builder: (ctx, snapshot) {
                             final allPlaylists = snapshot.data ?? [];
+                            // Fase 8.E: sin búsqueda, la raíz se arma con
+                            // carpetas; buscando, la lista es plana (también
+                            // encuentra lo que está dentro de carpetas).
+                            if (_localSearchQuery.isEmpty) {
+                              return _buildPlaylistsWithFolders(
+                                sortPlaylists(allPlaylists, sort),
+                                foldersAsync,
+                                playlistDao,
+                                canEdit,
+                                isLocalMode,
+                                activePlaylistId,
+                                gridView,
+                                isDesktop,
+                              );
+                            }
                             final playlists = sortPlaylists(allPlaylists.where((p) {
-                              if (_localSearchQuery.isEmpty) return true;
                               return p.title.toLowerCase().contains(_localSearchQuery) ||
                                   (p.description != null && p.description!.toLowerCase().contains(_localSearchQuery));
                             }).toList(), sort);
@@ -1373,6 +1432,217 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           ),
         ],
       ),
+    );
+
+    return PopScope(
+      // Fase 8.E: con una carpeta abierta, "atrás" vuelve a la raíz de la
+      // biblioteca en vez de salir de la pantalla.
+      canPop: _openFolderId == null || _selectedFilter != 'Playlists',
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _openFolderId != null) setState(() => _openFolderId = null);
+      },
+      child: content,
+    );
+  }
+
+  /// Raíz de la pestaña Playlists con carpetas, o el contenido de la carpeta
+  /// abierta (Fase 8.E).
+  Widget _buildPlaylistsWithFolders(
+    List<Playlist> sorted,
+    AsyncValue<List<Folder>> foldersAsync,
+    PlaylistDao playlistDao,
+    bool canEdit,
+    bool isLocalMode,
+    int? activePlaylistId,
+    bool gridView,
+    bool isDesktop,
+  ) {
+    final folders = foldersAsync.value ?? const <Folder>[];
+    final entries = buildLibraryEntries(sorted, folders);
+    final padding = EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20);
+
+    final openId = _openFolderId;
+    if (openId != null) {
+      final open = entries.whereType<FolderEntry>().where((e) => e.folder.id == openId).firstOrNull;
+      if (open == null) {
+        // La carpeta se borró (aquí o en otro dispositivo): volver a la raíz.
+        if (foldersAsync.hasValue) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _openFolderId == openId) setState(() => _openFolderId = null);
+          });
+        }
+        return const SizedBox.shrink();
+      }
+      return _buildOpenFolder(open, playlistDao, canEdit, isLocalMode, activePlaylistId, gridView, isDesktop);
+    }
+
+    if (entries.isEmpty) {
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Container(
+          height: MediaQuery.sizeOf(context).height * 0.5,
+          alignment: Alignment.center,
+          child: const Text('No tienes playlists', style: TextStyle(color: AppTheme.secondary)),
+        ),
+      );
+    }
+
+    Widget folderItem(FolderEntry e, {required bool grid}) {
+      final isActive = e.playlists.any((p) => p.id == activePlaylistId);
+      void open() => setState(() => _openFolderId = e.folder.id);
+      void menu() => showFolderOptions(context, ref, e.folder, canEdit: canEdit);
+      final subtitle = _subtitleText(folderSubtitle(e.playlists.length));
+      return grid
+          ? _libraryGridCell(
+              cover: const FolderCover(),
+              title: e.folder.name,
+              isActive: isActive,
+              onTap: open,
+              onMenu: menu,
+              subtitle: subtitle,
+            )
+          : _libraryRow(
+              cover: const FolderCover(),
+              title: e.folder.name,
+              isActive: isActive,
+              onTap: open,
+              onMenu: menu,
+              subtitle: subtitle,
+            );
+    }
+
+    Widget entryItem(LibraryEntry e, {required bool grid}) => switch (e) {
+          FolderEntry() => folderItem(e, grid: grid),
+          PlaylistEntry(:final playlist) => grid
+              ? _buildPlaylistGridCell(playlist, playlistDao, canEdit, isLocalMode, activePlaylistId)
+              : _buildPlaylistRow(playlist, playlistDao, canEdit, isLocalMode, activePlaylistId),
+        };
+
+    if (gridView) {
+      return GridView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: padding,
+        gridDelegate: _libraryGridDelegate(isDesktop),
+        itemCount: entries.length,
+        itemBuilder: (ctx, i) => entryItem(entries[i], grid: true),
+      );
+    }
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: padding,
+      itemCount: entries.length,
+      itemBuilder: (ctx, i) => entryItem(entries[i], grid: false),
+    );
+  }
+
+  Widget _buildOpenFolder(
+    FolderEntry open,
+    PlaylistDao playlistDao,
+    bool canEdit,
+    bool isLocalMode,
+    int? activePlaylistId,
+    bool gridView,
+    bool isDesktop,
+  ) {
+    final padding = EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 20);
+    final playlists = open.playlists;
+    final header = Padding(
+      padding: EdgeInsets.fromLTRB(isDesktop ? 24 : 12, 0, isDesktop ? 24 : 12, 12),
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: 'Volver a la biblioteca',
+            icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary),
+            onPressed: () => setState(() => _openFolderId = null),
+          ),
+          const SizedBox(width: 4),
+          const SizedBox(width: 44, height: 44, child: FolderCover()),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  open.folder.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.primary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                _subtitleText(folderSubtitle(playlists.length)),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Opciones de la carpeta',
+            icon: Icon(AppIcons.broken(SolarIcons.MenuDots), color: AppTheme.primary),
+            onPressed: () => showFolderOptions(
+              context,
+              ref,
+              open.folder,
+              canEdit: canEdit,
+              onDeleted: () => setState(() => _openFolderId = null),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final Widget body;
+    if (playlists.isEmpty) {
+      body = SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Container(
+          height: MediaQuery.sizeOf(context).height * 0.4,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(AppIcons.broken(SolarIcons.FolderOpen), size: 52, color: AppTheme.secondary),
+              const SizedBox(height: 14),
+              const Text(
+                'Esta carpeta está vacía',
+                style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 17),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                isDesktop
+                    ? 'Haz clic derecho en una playlist y elige "Mover a carpeta".'
+                    : 'Mantén pulsada una playlist y elige "Mover a carpeta".',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else if (gridView) {
+      body = GridView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: padding,
+        gridDelegate: _libraryGridDelegate(isDesktop),
+        itemCount: playlists.length,
+        itemBuilder: (ctx, i) =>
+            _buildPlaylistGridCell(playlists[i], playlistDao, canEdit, isLocalMode, activePlaylistId),
+      );
+    } else {
+      body = ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: padding,
+        itemCount: playlists.length,
+        itemBuilder: (ctx, i) =>
+            _buildPlaylistRow(playlists[i], playlistDao, canEdit, isLocalMode, activePlaylistId),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [header, Expanded(child: body)],
     );
   }
 }

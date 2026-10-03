@@ -43,8 +43,10 @@ import '../ai_playlist/ai_modify_playlist_sheet.dart';
 import '../import_export/import_jobs_banner.dart';
 import '../import_export/playlist_import_export_service.dart';
 import '../services/playlist_cover_service.dart';
+import '../services/folder_service.dart';
 import '../services/playlist_pin_service.dart';
 import '../widgets/edit_playlist_dialog.dart';
+import '../widgets/folder_widgets.dart';
 import '../../../core/cache/app_image_cache.dart';
 
 enum PlaylistSortColumn { original, title, album, date, duration }
@@ -694,6 +696,21 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             );
           },
         ),
+        // Fase 8.E: carpetas (no para "Tus me gusta" ni "On Repeat").
+        if (FolderService.canBeFoldered(playlist))
+          ListTile(
+            leading: Icon(AppIcons.broken(SolarIcons.Folder), color: editColor),
+            title: Text(
+              playlist.folderId == null ? 'Mover a carpeta' : 'Cambiar de carpeta',
+              style: TextStyle(color: editColor, fontWeight: FontWeight.w600),
+            ),
+            enabled: canEdit,
+            subtitle: canEdit ? null : const Text('Sin conexión', style: TextStyle(color: AppTheme.muted, fontSize: 12)),
+            onTap: () {
+              Navigator.pop(ctx);
+              showMoveToFolderPicker(context, ref, playlist);
+            },
+          ),
         if (canEditPlaylistManually(playlist)) ...[
           ListTile(
             leading: Icon(AppIcons.broken(SolarIcons.Pen), color: editColor),
