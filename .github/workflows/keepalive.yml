@@ -1,0 +1,49 @@
+# Keep-alive (Fase 8). Dos riesgos de los planes gratis, ninguno con commits:
+#
+#  - GitHub desactiva los workflows programados de un repo público tras 60
+#    días sin actividad. Si youtubei.js no saca versión en ese tiempo, el bot
+#    no commitea y "Publicar motor" dejaría de revisar npm. Aquí se vuelven a
+#    habilitar por la API (incluido este mismo workflow), lo que reinicia el
+#    contador, sin ensuciar el historial con commits vacíos.
+#  - Supabase pausa un proyecto gratis tras 7 días sin actividad. Una lectura
+#    mínima con la llave pública `anon` a `app_config` (lectura pública, sin
+#    datos de usuarios) cuenta como actividad.
+
+name: Keep-alive
+
+on:
+  schedule:
+    - cron: '23 6 */3 * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Reactivar workflows programados
+        run: |
+          for wf in publish-engine.yml engine-canary.yml keepalive.yml; do
+            gh api -X PUT "repos/$GITHUB_REPOSITORY/actions/workflows/$wf/enable" \
+              && echo "$wf habilitado" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Actividad en Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Faltan los secretos SUPABASE_URL / SUPABASE_ANON_KEY."
+            exit 1
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            "$SUPABASE_URL/rest/v1/app_config?select=max_accounts&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "Supabase respondió HTTP $code" >> "$GITHUB_STEP_SUMMARY"
+          [ "$code" = "200" ]
