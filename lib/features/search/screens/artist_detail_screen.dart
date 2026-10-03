@@ -361,7 +361,11 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
           SliverPadding(
             padding: EdgeInsets.fromLTRB(isDesktop ? 32 : 20, 24, isDesktop ? 32 : 20, 0),
             sliver: SliverToBoxAdapter(
-              child: _ArtistRadioEntry(artistId: artist.id, artistName: artist.name),
+              child: _ArtistCollectionsEntry(
+                artistId: artist.id,
+                artistName: artist.name,
+                pictureUrl: artist.pictureUrl,
+              ),
             ),
           ),
 
@@ -558,64 +562,146 @@ enum _DiscographyFilter {
   final String label;
 }
 
-/// Acceso a la radio del artista desde su pantalla.
+/// Accesos a "Esto es {artista}" y a su radio desde su pantalla (ronda 5).
 ///
-/// Es una tarjeta ancha y no una de las cuadradas de Inicio porque acá va sola
-/// en su sección: una tarjeta chica y solitaria en medio de la pantalla se lee
-/// como un hueco, no como una acción.
-class _ArtistRadioEntry extends ConsumerWidget {
+/// Tarjetas anchas con la foto del artista y una insignia que dice qué es
+/// cada una. Antes la radio iba con un cuadro de degradado azul que no se
+/// parecía a nada más de la pantalla.
+class _ArtistCollectionsEntry extends ConsumerWidget {
   final int artistId;
   final String artistName;
+  final String pictureUrl;
 
-  const _ArtistRadioEntry({required this.artistId, required this.artistName});
+  const _ArtistCollectionsEntry({required this.artistId, required this.artistName, required this.pictureUrl});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final radio = ref.watch(deezerArtistRadioProvider(artistId));
-
     // Mientras carga o si falla, no se anuncia nada: es contenido accesorio, y
     // un error acá no debe ensuciar la pantalla del artista.
-    final tracks = radio.value ?? const [];
-    if (tracks.isEmpty) return const SizedBox.shrink();
+    final radio = ref.watch(deezerArtistRadioProvider(artistId)).value ?? const [];
+    final essentials = ref.watch(deezerArtistEssentialsProvider(artistId)).value ?? const [];
+    if (radio.isEmpty && essentials.isEmpty) return const SizedBox.shrink();
 
+    final entries = [
+      if (essentials.isNotEmpty)
+        _ArtistCollectionCard(
+          pictureUrl: pictureUrl,
+          badge: SolarIcons.MusicNotes,
+          title: 'Esto es $artistName',
+          subtitle: '${essentials.length} canciones, de la más escuchada a la menos',
+          onTap: () => context.push('/artist-essentials/$artistId'),
+        ),
+      if (radio.isNotEmpty)
+        _ArtistCollectionCard(
+          pictureUrl: pictureUrl,
+          badge: SolarIcons.Radio,
+          title: 'Radio de $artistName',
+          subtitle: '${radio.length} canciones en su línea',
+          onTap: () => context.push('/artist-radio/$artistId'),
+        ),
+    ];
+
+    final isWide = MediaQuery.sizeOf(context).width >= 768;
+    if (isWide && entries.length == 2) {
+      return Row(
+        children: [
+          Expanded(child: entries[0]),
+          const SizedBox(width: 12),
+          Expanded(child: entries[1]),
+        ],
+      );
+    }
+    return Column(
+      children: [
+        for (var i = 0; i < entries.length; i++) ...[
+          if (i > 0) const SizedBox(height: 10),
+          entries[i],
+        ],
+      ],
+    );
+  }
+}
+
+class _ArtistCollectionCard extends StatelessWidget {
+  final String pictureUrl;
+  final SolarIconData badge;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ArtistCollectionCard({
+    required this.pictureUrl,
+    required this.badge,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Material(
       color: AppTheme.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => context.push('/artist-radio/$artistId'),
+        onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  gradient: AppTheme.gradientMix,
-                  borderRadius: BorderRadius.circular(12),
+              SizedBox(
+                width: 56,
+                height: 56,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: pictureUrl.isEmpty
+                          ? Container(color: AppTheme.surfaceActive)
+                          : CachedNetworkImage(
+                              cacheManager: AppImageCache.instance,
+                              imageUrl: pictureUrl,
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                              memCacheWidth: 168,
+                              placeholder: (_, _) => Container(color: AppTheme.surfaceActive),
+                              errorWidget: (_, _, _) => Container(color: AppTheme.surfaceActive),
+                            ),
+                    ),
+                    Positioned(
+                      right: -4,
+                      bottom: -4,
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.surface, width: 2),
+                        ),
+                        child: Icon(AppIcons.bold(badge), color: AppTheme.background, size: 12),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Icon(AppIcons.bold(SolarIcons.Radio), color: Colors.white, size: 24),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Radio de $artistName',
+                      title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppTheme.primary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
+                      style: const TextStyle(color: AppTheme.primary, fontSize: 15, fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${tracks.length} canciones en su línea',
+                      subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: AppTheme.secondary, fontSize: 12),

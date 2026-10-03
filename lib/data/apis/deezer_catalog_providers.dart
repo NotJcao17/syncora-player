@@ -221,6 +221,18 @@ final deezerRadioTracksProvider =
 /// la pantalla no cambie la lista bajo los pies del usuario. `DeezerApi` ya
 /// cachea esta llamada por artista, así que además la comparte con los
 /// "Mix de {artista}" de Inicio: son literalmente la misma tirada.
+/// "Esto es {artista}" (ronda 5): hasta 100 canciones solo de ese artista,
+/// de la más escuchada a la menos. Sin `autoDispose`: es caro de armar (una
+/// petición por lanzamiento) y no cambia en una sesión.
+final deezerArtistEssentialsProvider =
+    FutureProvider.family<List<DeezerTrack>, int>((ref, artistId) async {
+  final api = ref.watch(deezerApiProvider);
+  return retryOnNetworkError(
+    () => api.getArtistEssentials(artistId),
+    shouldRetry: networkStillPlausible(ref),
+  );
+});
+
 final deezerArtistRadioProvider =
     FutureProvider.family<List<DeezerTrack>, int>((ref, artistId) async {
   final api = ref.watch(deezerApiProvider);

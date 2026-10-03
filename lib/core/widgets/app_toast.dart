@@ -172,11 +172,13 @@ class _ToastWidget extends StatelessWidget {
             minWidth: 180,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          // Ronda 5: superficie de la app (azul pizarra) en vez del gris
+          // neutro de antes, que no casaba con ningún otro color.
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
+            color: AppTheme.surfaceActive,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: const Color(0xFF2A2A2A),
+              color: AppTheme.borderSubtle,
               width: 1,
             ),
             boxShadow: const [
@@ -215,7 +217,7 @@ class _ToastWidget extends StatelessWidget {
                   child: Text(
                     actionLabel!,
                     style: const TextStyle(
-                      color: Color(0xFF22C55E),
+                      color: AppTheme.accentSoft,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                       decoration: TextDecoration.none,

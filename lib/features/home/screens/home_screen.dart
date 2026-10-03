@@ -22,6 +22,7 @@ import '../mixes/mix_models.dart';
 import '../mixes/mix_providers.dart';
 import '../mixes/on_repeat_service.dart';
 import '../widgets/home_sections.dart';
+import '../widgets/moments_section.dart';
 import '../widgets/mix_cover.dart';
 import '../../../core/cache/app_image_cache.dart';
 
@@ -79,7 +80,9 @@ class HomeScreen extends ConsumerWidget {
       cache.removeWithPrefix('chart_albums'),
       cache.removeWithPrefix('country_tops'),
       cache.removeWithPrefix('artist_albums_'),
+      cache.removeWithPrefix('moment_playlists_'),
     ]);
+    ref.invalidate(momentPlaylistsProvider);
 
     ref.invalidate(recentlyPlayedProvider);
     ref.invalidate(mixesProvider);
@@ -140,6 +143,8 @@ class HomeScreen extends ConsumerWidget {
             _buildCountryTops(context, ref, isDesktop, horizontalPadding, countryTopsAsync),
             _buildRelatedArtists(context, ref, isDesktop, horizontalPadding, 1),
             _buildEditorial(context, ref, isDesktop, horizontalPadding, editorialAsync),
+            // Ronda 5: más playlists de Deezer, por ocasión.
+            HomeMomentsSection(isDesktop: isDesktop, padding: horizontalPadding),
             _buildGenres(context, ref, isDesktop, horizontalPadding),
 
             // El aviso de "sin contenido" va al final: si las secciones

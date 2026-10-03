@@ -15,6 +15,12 @@ class AppTheme {
   static const Color secondary = Color(0xFFA0ABBA);
   static const Color muted = Color(0xFF7F8C9D);
   static const Color accent = Color(0xFF6366F1);
+
+  /// Borde sutil de superficies flotantes (toasts, globos de ayuda).
+  static const Color borderSubtle = Color(0xFF3A465A);
+
+  /// Texto de acción sobre superficies oscuras (p. ej. "Deshacer" en un toast).
+  static const Color accentSoft = Color(0xFFA5B4FC);
   static const Color error = Color(0xFFB4ABFF); // #ffb4ab (mockup "error")
 
   // Colores de géneros para "Explorar todo" (search.html mockup)
@@ -188,6 +194,25 @@ class AppTheme {
         ),
         actionTextColor: AppTheme.primary,
       ),
+      // Ronda 5: los globos de ayuda al pasar el ratón (Windows) usaban el
+      // gris rectangular de Material, que no pegaba con nada de la app.
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: surfaceActive,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: borderSubtle),
+          boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 12, offset: Offset(0, 4))],
+        ),
+        textStyle: const TextStyle(color: primary, fontSize: 12, fontWeight: FontWeight.w600),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        margin: const EdgeInsets.symmetric(horizontal: 12),
+        verticalOffset: 18,
+        waitDuration: const Duration(milliseconds: 450),
+        exitDuration: const Duration(milliseconds: 80),
+      ),
+      // Y el resaltado al pasar el ratón, más sutil y del tono de la app.
+      hoverColor: Colors.white.withValues(alpha: 0.06),
+      highlightColor: Colors.white.withValues(alpha: 0.05),
     );
   }
 }

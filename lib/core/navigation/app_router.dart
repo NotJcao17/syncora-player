@@ -245,6 +245,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               );
             },
           ),
+          // Ronda 5: "Esto es {artista}".
+          GoRoute(
+            path: '/artist-essentials/:id',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: ArtistRadioScreen(artistId: id, essentials: true),
+              );
+            },
+          ),
           // Fase 8.F: feed de previews de 30 s.
           GoRoute(
             path: '/discover',

@@ -240,6 +240,8 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
                           isPlaying: isPlayingTrack,
                           isDownloaded: true,
                           showAlbum: true,
+                          // Ronda 5: aquí "quitar" borra el archivo descargado.
+                          removeLabel: 'Eliminar descarga',
                           onTap: () {
                             controller.setQueue(syncoraTracks, startIndex: i, activeContextId: 'downloads');
                           },

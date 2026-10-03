@@ -28,10 +28,15 @@ import '../widgets/save_collection_button.dart';
 ///
 /// Guardarla crea una copia congelada, como cualquier otra colección que no
 /// vive en la biblioteca.
+///
+/// Ronda 5: la misma pantalla sirve para "Esto es {artista}"
+/// ([essentials] = `true`, ruta `/artist-essentials/:id`): sus canciones más
+/// escuchadas, solo de él (`DeezerApi.getArtistEssentials`).
 class ArtistRadioScreen extends ConsumerWidget {
   final String artistId;
+  final bool essentials;
 
-  const ArtistRadioScreen({super.key, required this.artistId});
+  const ArtistRadioScreen({super.key, required this.artistId, this.essentials = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,9 +48,11 @@ class ArtistRadioScreen extends ConsumerWidget {
       );
     }
 
-    final radioAsync = ref.watch(deezerArtistRadioProvider(id));
+    final provider = essentials ? deezerArtistEssentialsProvider(id) : deezerArtistRadioProvider(id);
+    final radioAsync = ref.watch(provider);
     final artist = ref.watch(deezerArtistProvider(id)).value;
     final artistName = artist?.name ?? 'este artista';
+    final kindLabel = essentials ? 'Esto es' : 'Radio';
 
     return radioAsync.when(
       loading: () => const Scaffold(
@@ -55,28 +62,35 @@ class ArtistRadioScreen extends ConsumerWidget {
       error: (e, _) => Scaffold(
         backgroundColor: AppTheme.background,
         body: ErrorStateWidget(
-          message: 'No pudimos cargar la radio de $artistName',
-          onRetry: () => ref.invalidate(deezerArtistRadioProvider(id)),
+          message: essentials
+              ? 'No pudimos cargar las canciones de $artistName'
+              : 'No pudimos cargar la radio de $artistName',
+          onRetry: () => ref.invalidate(provider),
         ),
       ),
       data: (radio) {
         final tracks = radio.map((t) => t.toSyncoraTrack()).toList();
-        final title = 'Radio de $artistName';
-        final description = 'Canciones en la línea de $artistName';
+        final title = essentials ? 'Esto es $artistName' : 'Radio de $artistName';
+        final description = essentials
+            ? 'Lo esencial de $artistName: sus canciones más escuchadas'
+            : 'Canciones en la línea de $artistName';
 
         // Con el día pegado: la radio cambia a diario, y sin eso una copia
         // guardada hace un mes bloquearía el botón para siempre.
-        final sourceRef = 'artist_radio:$id:${MixEngine.dayKey(DateTime.now())}';
+        final sourceRef =
+            '${essentials ? 'artist_essentials' : 'artist_radio'}:$id:${MixEngine.dayKey(DateTime.now())}';
         final savedTitle = '$title · ${_shortDate(DateTime.now())}';
 
         return CollectionScaffold(
-          label: 'Radio',
+          label: kindLabel,
           title: title,
           subtitle: '${tracks.length} canciones',
           coverUrl: artist?.pictureUrl ?? (tracks.isNotEmpty ? tracks.first.coverUrl : ''),
           tracks: tracks,
-          contextId: 'artist_radio_$id',
-          emptyMessage: 'Deezer no devolvió canciones para esta radio.',
+          contextId: essentials ? 'artist_essentials_$id' : 'artist_radio_$id',
+          emptyMessage: essentials
+              ? 'Deezer no devolvió canciones de este artista.'
+              : 'Deezer no devolvió canciones para esta radio.',
           onBeforeDownload: () => _saveBeforeDownload(
             context,
             ref,
@@ -91,7 +105,7 @@ class ArtistRadioScreen extends ConsumerWidget {
               title: savedTitle,
               description: description,
               tracks: tracks,
-              savedMessage: 'Radio guardada en tu biblioteca',
+              savedMessage: essentials ? 'Playlist guardada en tu biblioteca' : 'Radio guardada en tu biblioteca',
             ),
           ],
         );

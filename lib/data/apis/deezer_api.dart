@@ -175,6 +175,13 @@ class DeezerApi {
           String endpoint = '/search/track';
           if (type == DeezerSearchType.artist) endpoint = '/search/artist';
           if (type == DeezerSearchType.album) endpoint = '/search/album';
+          if (type == DeezerSearchType.playlist) {
+            final playlists = await searchPlaylists(trimmed);
+            final result = DeezerSearchResult(playlists: playlists);
+            _searchCache.put(cacheKey, result);
+            _searchCache.put('$cacheKey#raw', result);
+            return result;
+          }
 
           final response = await _dio.get(endpoint, queryParameters: {'q': trimmed, 'limit': 100});
           if (response.data != null && response.data is Map && response.data['data'] is List) {
@@ -292,6 +299,26 @@ class DeezerApi {
     return result;
   }
 
+  /// Playlists ya hechas de Deezer (`/search/playlist`, ronda 5): para
+  /// encontrar, por ejemplo, una playlist para una fiesta. Las de los
+  /// editores de Deezer van primero y las vacías o diminutas se descartan.
+  Future<List<DeezerPlaylist>> searchPlaylists(String query, {int limit = 50}) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return const [];
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/search/playlist', queryParameters: {'q': trimmed, 'limit': limit});
+      final data = response.data;
+      if (data == null || data is! Map || data['data'] is! List) return const <DeezerPlaylist>[];
+      final list = [
+        for (final item in data['data'] as List)
+          if (item is Map) DeezerPlaylist.fromJson(Map<String, dynamic>.from(item)),
+      ].where((p) => p.nbTracks >= 5).toList();
+      bool isEditorial(DeezerPlaylist p) => p.userName.toLowerCase().contains('deezer');
+      // Estable: dentro de cada grupo se respeta el orden de relevancia de Deezer.
+      return [...list.where(isEditorial), ...list.where((p) => !isEditorial(p))];
+    });
+  }
+
   static const int _ambiguousScanLimit = 20;
   static const int _alwaysEnrichTop = 5;
   static const int _ambiguousMaxRequests = 8;
@@ -386,18 +413,110 @@ class DeezerApi {
     final cached = _topTracksCache.get(cacheKey);
     if (cached != null) return cached;
 
-    return _rateLimiter.run(() async {
+    final top = await _rateLimiter.run(() async {
       final response = await _dio.get('/artist/$id/top', queryParameters: {'limit': limit});
-      if (response.data == null || response.data['data'] is! List) return [];
+      if (response.data == null || response.data['data'] is! List) return <DeezerTrack>[];
       final list = response.data['data'] as List;
       final tracks = list
           .where((item) => (item['duration'] as int? ?? 0) > 60 && item['type'] != 'podcast')
           .map((item) => DeezerTrack.fromJson(Map<String, dynamic>.from(item as Map)))
           .toList();
       tracks.sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
-      _topTracksCache.put(cacheKey, tracks);
       return tracks;
     });
+    // Ronda 5 (H-R5-6): `/artist/{id}/top` llegó a devolver `{"data":[]}`
+    // para todos los artistas (2026-10-03). Sin respaldo, "Populares" quedaba
+    // vacío; se arma con el `rank` de las canciones de su discografía.
+    final tracks = top.isNotEmpty ? top : (await getArtistEssentials(id, limit: limit));
+    _topTracksCache.put(cacheKey, tracks);
+    return tracks;
+  }
+
+  final Map<String, List<DeezerTrack>> _essentialsCache = {};
+
+  /// "Esto es {artista}" (ronda 5): sus canciones más escuchadas, solo de él,
+  /// hasta [limit].
+  ///
+  /// Se arma con su discografía y no con `/artist/{id}/top`, que tiene dos
+  /// problemas: llegó a devolver vacío para todos los artistas (H-R5-6) y
+  /// mezcla canciones donde solo colabora. Se toman sus lanzamientos con más
+  /// seguidores (sin recopilaciones), las canciones donde él es el artista
+  /// principal, una versión por título (la más escuchada) y se ordenan por
+  /// `rank`. Si `/top` responde, sus canciones propias van primero: es el
+  /// orden de popularidad real de Deezer.
+  Future<List<DeezerTrack>> getArtistEssentials(int id, {int limit = 100}) async {
+    final cacheKey = '$id:$limit';
+    final cached = _essentialsCache[cacheKey];
+    if (cached != null) return cached;
+
+    final albumsJson = await _rateLimiter.run(() async {
+      final response = await _dio.get('/artist/$id/albums', queryParameters: {'limit': 150});
+      final data = response.data;
+      if (data == null || data['data'] is! List) return const <Map<String, dynamic>>[];
+      return [for (final a in data['data'] as List) Map<String, dynamic>.from(a as Map)];
+    });
+    final releases = albumsJson.where((a) => a['record_type'] != 'compile').toList()
+      ..sort((a, b) => ((b['fans'] as num?) ?? 0).compareTo((a['fans'] as num?) ?? 0));
+    final picked = releases.take(14).toList();
+
+    final byTitle = <String, DeezerTrack>{};
+    void consider(DeezerTrack t) {
+      if (t.artistId != id || t.durationSec <= 60) return;
+      final key = t.title
+          .toLowerCase()
+          .replaceAll(RegExp(r'\s*[\(\[][^\)\]]*[\)\]]'), '')
+          .replaceAll(RegExp(r'\s+-\s+.*$'), '')
+          .trim();
+      final existing = byTitle[key];
+      if (existing == null || (t.rank ?? 0) > (existing.rank ?? 0)) byTitle[key] = t;
+    }
+
+    for (var i = 0; i < picked.length; i += 4) {
+      final chunk = picked.skip(i).take(4);
+      final results = await Future.wait(chunk.map((album) => _rateLimiter.run(() async {
+            try {
+              final response = await _dio.get('/album/${album['id']}/tracks', queryParameters: {'limit': 100});
+              final data = response.data;
+              if (data == null || data['data'] is! List) return const <DeezerTrack>[];
+              return [
+                for (final raw in data['data'] as List)
+                  if ((raw as Map)['readable'] != false)
+                    DeezerTrack.fromJson({
+                      ...Map<String, dynamic>.from(raw),
+                      // `/album/{id}/tracks` no trae el álbum en cada pista.
+                      'album': {
+                        'id': album['id'],
+                        'title': album['title'],
+                        'cover_medium': album['cover_medium'],
+                      },
+                    }),
+              ];
+            } catch (_) {
+              return const <DeezerTrack>[];
+            }
+          })));
+      for (final list in results) {
+        list.forEach(consider);
+      }
+    }
+
+    final fromAlbums = byTitle.values.toList()..sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
+    var result = fromAlbums;
+    try {
+      final top = await getArtistTopTracksExpanded(id, limit: 100);
+      final own = top.where((t) => t.artistId == id).toList();
+      if (own.isNotEmpty) {
+        final seen = own.map((t) => t.id).toSet();
+        final seenTitles = own.map((t) => t.title.toLowerCase()).toSet();
+        result = [
+          ...own,
+          ...fromAlbums.where((t) => !seen.contains(t.id) && !seenTitles.contains(t.title.toLowerCase())),
+        ];
+      }
+    } catch (_) {}
+    result = result.take(limit).toList();
+    if (result.isNotEmpty) _essentialsCache[cacheKey] = result;
+    return result;
   }
 
   /// D1 (Fase D, búsqueda de colaboraciones): top tracks del artista pidiendo

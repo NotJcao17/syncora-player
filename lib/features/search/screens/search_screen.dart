@@ -14,6 +14,7 @@ import '../../../data/apis/deezer_api.dart';
 import '../../../data/apis/deezer_catalog_providers.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/models/deezer/deezer_album.dart';
+import '../../../data/models/deezer/deezer_playlist.dart';
 import '../../../data/models/deezer/deezer_artist.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../auth/local_mode_provider.dart';
@@ -45,6 +46,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     {'name': 'Canciones', 'type': DeezerSearchType.track},
     {'name': 'Artistas', 'type': DeezerSearchType.artist},
     {'name': 'Álbumes', 'type': DeezerSearchType.album},
+    // Ronda 5: playlists ya hechas de Deezer. No entra en "Todo": ahí se busca
+    // una canción o un artista, no una colección de otra persona.
+    {'name': 'Playlists', 'type': DeezerSearchType.playlist},
   ];
 
   /// Paleta de respaldo para las tarjetas de género.
@@ -447,13 +451,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Ronda 5: en móvil el botón largo se comía el título
+                // ("Búsquedas rec..."). El título manda y el botón es corto.
                 Expanded(
                   child: Text(
                     'Búsquedas recientes',
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    overflow: TextOverflow.fade,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w900,
+                          fontSize: isDesktop ? null : 19,
                           color: AppTheme.primary,
                         ),
                   ),
@@ -463,11 +471,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   onPressed: () {
                     ref.read(searchHistoryProvider.notifier).clearAll();
                   },
-                  child: const Text(
-                    'Borrar todo el historial',
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  child: Text(
+                    isDesktop ? 'Borrar todo el historial' : 'Borrar todo',
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AppTheme.secondary, fontSize: 13),
+                    style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
                   ),
                 ),
               ],
@@ -631,7 +642,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final displayedTracks =
         state.popularOnly ? result.tracks.where(SearchRanking.isPopularTrack).toList() : result.tracks;
 
-    final hasContent = displayedArtists.isNotEmpty || displayedTracks.isNotEmpty || result.albums.isNotEmpty;
+    final hasContent = displayedArtists.isNotEmpty ||
+        displayedTracks.isNotEmpty ||
+        result.albums.isNotEmpty ||
+        result.playlists.isNotEmpty;
     if (!hasContent) {
       return Center(
         child: Column(
@@ -675,6 +689,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           // Álbumes
           if (result.albums.isNotEmpty) ...[
             _buildAlbumsSection(result.albums, isDesktop),
+            const SizedBox(height: 24),
+          ],
+
+          if (result.playlists.isNotEmpty) ...[
+            _buildPlaylistsSection(result.playlists, isDesktop),
             const SizedBox(height: 24),
           ],
 
@@ -856,6 +875,37 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Resultados del filtro "Playlists" (ronda 5): cuadrícula, porque es lo
+  /// único que hay en pantalla.
+  Widget _buildPlaylistsSection(List<DeezerPlaylist> playlists, bool isDesktop) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(top: 4),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: isDesktop ? 200 : 180,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 14,
+        childAspectRatio: 0.72,
+      ),
+      itemCount: playlists.length,
+      itemBuilder: (ctx, i) {
+        final playlist = playlists[i];
+        return PlaylistCard(
+          title: playlist.title,
+          subtitle: '${playlist.nbTracks} canciones • ${playlist.userName}',
+          coverUrl: playlist.pictureUrl,
+          onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+            final q = _searchController.text.trim();
+            if (q.isNotEmpty) ref.read(searchHistoryProvider.notifier).addQuery(q);
+            context.push('/deezer-playlist/${playlist.id}');
+          },
+        );
+      },
     );
   }
 
