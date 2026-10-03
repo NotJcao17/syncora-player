@@ -10,10 +10,16 @@ import 'package:flutter/services.dart';
 /// - **Encolar sin querer al hacer scroll.** El `Dismissible` reclama el
 ///   gesto horizontal con el mismo umbral (18 px) que el scroll vertical, así
 ///   que un scroll algo diagonal podía ganarlo; y confirma con un "fling"
-///   aunque no se llegue al umbral de distancia. Aquí el deslizar a la derecha
-///   **solo puede empezar en el borde izquierdo** de la pantalla, exige el
-///   doble de recorrido y que sea claramente más horizontal que vertical, y
-///   solo cuenta la distancia (nunca la velocidad).
+///   aunque no se llegue al umbral de distancia. Aquí deslizar a la derecha
+///   exige 2,5 veces el umbral de toque, que sea claramente más horizontal que
+///   vertical, nunca empieza con la lista en movimiento (ese toque es para
+///   frenarla) y solo cuenta la distancia (nunca la velocidad).
+///
+/// Ronda 5: patrón de Spotify. Se puede empezar en cualquier punto de la
+/// fila (antes solo en el 30 % izquierdo), el recorrido llega como mucho a la
+/// mitad del ancho con resistencia pasado el umbral, al cruzar el umbral
+/// vibra y el fondo lo indica, y al soltar la acción se ejecuta y la fila
+/// vuelve a su sitio.
 /// - **"A dismissed Dismissible widget is still part of the tree".** El
 ///   `Dismissible` se queda en estado "descartado" y revienta si la fila
 ///   sigue en el árbol al siguiente frame (p. ej. si la cola cambió durante
@@ -27,8 +33,8 @@ class SwipeActionTile extends StatefulWidget {
     this.onSwipeLeft,
     this.rightBackground,
     this.leftBackground,
-    this.threshold = 0.35,
-    this.rightEdgeFraction = 0.3,
+    this.threshold = 0.3,
+    this.rightEdgeFraction = 1.0,
   });
 
   final Widget child;
@@ -51,8 +57,12 @@ class SwipeActionTile extends StatefulWidget {
   final double threshold;
 
   /// Fracción del ancho de la pantalla, desde el borde izquierdo, en la que
-  /// tiene que apoyarse el dedo para que cuente un deslizar a la derecha.
+  /// tiene que apoyarse el dedo para que cuente un deslizar a la derecha
+  /// (1.0 = toda la fila).
   final double rightEdgeFraction;
+
+  /// Recorrido máximo a la derecha, en fracción del ancho (ronda 5).
+  static const double maxRightTravel = 0.5;
 
   @override
   State<SwipeActionTile> createState() => _SwipeActionTileState();
@@ -88,22 +98,48 @@ class _SwipeActionTileState extends State<SwipeActionTile> with SingleTickerProv
     await _anim.forward(from: 0);
   }
 
+  /// Recorrido real del dedo hacia la derecha; [_dx] es lo que se pinta (con
+  /// resistencia pasado el umbral).
+  double _rawRight = 0;
+  bool _armed = false;
+
+  double _rightVisual(double raw) {
+    final limit = _width * widget.threshold;
+    final max = _width * SwipeActionTile.maxRightTravel;
+    if (raw <= limit) return raw;
+    // Pasado el umbral la fila sigue, pero a la mitad de velocidad y sin
+    // pasar de la mitad del ancho.
+    return (limit + (raw - limit) * 0.5).clamp(0.0, max);
+  }
+
   void _onUpdate(DragUpdateDetails d) {
     if (_anim.isAnimating) _anim.stop();
+    if (_dx >= 0 && (d.delta.dx > 0 || _rawRight > 0) && widget.onSwipeRight != null) {
+      _rawRight = (_rawRight + d.delta.dx).clamp(0.0, _width);
+      final armed = _rawRight >= _width * widget.threshold;
+      if (armed != _armed) {
+        _armed = armed;
+        HapticFeedback.selectionClick();
+      }
+      final next = _rightVisual(_rawRight);
+      if (next != _dx) setState(() => _dx = next);
+      return;
+    }
     var next = _dx + d.delta.dx;
-    final maxRight = widget.onSwipeRight != null ? _width * 0.6 : 0.0;
     final maxLeft = widget.onSwipeLeft != null ? -_width : 0.0;
-    next = next.clamp(maxLeft, maxRight);
+    next = next.clamp(maxLeft, 0.0);
     if (next != _dx) setState(() => _dx = next);
   }
 
   Future<void> _onEnd(DragEndDetails _) async {
-    final limit = _width * widget.threshold;
-    if (_dx >= limit && widget.onSwipeRight != null) {
+    final wasArmed = _armed;
+    _armed = false;
+    _rawRight = 0;
+    if (wasArmed && _dx > 0 && widget.onSwipeRight != null) {
       HapticFeedback.mediumImpact();
       widget.onSwipeRight!();
       await _animateTo(0);
-    } else if (_dx <= -limit && widget.onSwipeLeft != null) {
+    } else if (_dx <= -_width * 0.35 && widget.onSwipeLeft != null) {
       HapticFeedback.mediumImpact();
       await _animateTo(-_width);
       if (!mounted) return;
@@ -116,7 +152,14 @@ class _SwipeActionTileState extends State<SwipeActionTile> with SingleTickerProv
   }
 
   void _onCancel() {
+    _armed = false;
+    _rawRight = 0;
     if (_dx != 0) _animateTo(0);
+  }
+
+  bool _listIsScrolling() {
+    final position = Scrollable.maybeOf(context)?.position;
+    return position != null && position.isScrollingNotifier.value;
   }
 
   @override
@@ -141,6 +184,7 @@ class _SwipeActionTileState extends State<SwipeActionTile> with SingleTickerProv
                   ..allowRight = widget.onSwipeRight != null
                   ..allowLeft = widget.onSwipeLeft != null
                   ..rightStartMaxX = screenWidth * widget.rightEdgeFraction
+                  ..isListScrolling = _listIsScrolling
                   ..onUpdate = _onUpdate
                   ..onEnd = _onEnd
                   ..onCancel = _onCancel;
@@ -165,7 +209,13 @@ class _SwipeActionTileState extends State<SwipeActionTile> with SingleTickerProv
                       alignment: _dx > 0 ? Alignment.centerLeft : Alignment.centerRight,
                       minWidth: _width,
                       maxWidth: _width,
-                      child: background,
+                      child: AnimatedOpacity(
+                        // Ronda 5: el fondo se aviva al cruzar el umbral, así
+                        // se sabe que al soltar se hará la acción.
+                        opacity: _dx > 0 && !_armed ? 0.55 : 1.0,
+                        duration: const Duration(milliseconds: 120),
+                        child: background,
+                      ),
                     ),
                   ),
                 ),
@@ -183,8 +233,9 @@ class _SwipeActionTileState extends State<SwipeActionTile> with SingleTickerProv
 ///
 /// El scroll vertical acepta al pasar el umbral de toque en el eje Y. Este
 /// reconocedor, en cambio, exige:
+/// - nunca empezar con la lista en movimiento ([isListScrolling]);
 /// - hacia la derecha: empezar a menos de [rightStartMaxX] del borde
-///   izquierdo de la pantalla, recorrer el doble del umbral y que el
+///   izquierdo de la pantalla, recorrer 2,5 veces el umbral y que el
 ///   desplazamiento horizontal sea 2,5 veces el vertical;
 /// - hacia la izquierda: el umbral normal y 1,5 veces más horizontal que
 ///   vertical.
@@ -195,8 +246,16 @@ class EdgeAwareHorizontalDragRecognizer extends HorizontalDragGestureRecognizer 
   bool allowRight = false;
   bool allowLeft = false;
   double rightStartMaxX = double.infinity;
+  bool Function()? isListScrolling;
 
   Offset _down = Offset.zero;
+
+  @override
+  bool isPointerAllowed(PointerEvent event) {
+    // El toque que frena una lista en movimiento no es un deslizar.
+    if (isListScrolling?.call() ?? false) return false;
+    return super.isPointerAllowed(event);
+  }
   Offset _last = Offset.zero;
 
   @override
@@ -220,7 +279,7 @@ class EdgeAwareHorizontalDragRecognizer extends HorizontalDragGestureRecognizer 
     final slop = computeHitSlop(pointerDeviceKind, gestureSettings);
     if (dx > 0) {
       if (!allowRight || _down.dx > rightStartMaxX) return false;
-      return dx > slop * 2 && dx > dy * 2.5;
+      return dx > slop * 2.5 && dx > dy * 2.5;
     }
     if (!allowLeft) return false;
     return -dx > slop && -dx > dy * 1.5;

@@ -38,9 +38,38 @@ void main() {
     expect(right, 1);
   });
 
-  testWidgets('deslizar a la derecha desde el centro no hace nada', (tester) async {
+  testWidgets('ronda 5: deslizar a la derecha desde el centro de la fila también encola', (tester) async {
     await pump(tester);
     await tester.dragFrom(const Offset(200, 30), const Offset(180, 0));
+    await tester.pumpAndSettle();
+    expect(right, 1);
+  });
+
+  testWidgets('ronda 5: sin cruzar el 30 % no encola, y la fila nunca pasa de la mitad', (tester) async {
+    await pump(tester);
+    await tester.dragFrom(const Offset(100, 30), const Offset(100, 0)); // 25 % del ancho
+    await tester.pumpAndSettle();
+    expect(right, 0);
+
+    final gesture = await tester.startGesture(const Offset(20, 90));
+    for (var i = 0; i < 20; i++) {
+      await gesture.moveBy(const Offset(20, 0));
+      await tester.pump();
+    }
+    final dx = tester.widget<Transform>(
+      find.descendant(of: find.byKey(const ValueKey(1)), matching: find.byType(Transform)).first,
+    ).transform.getTranslation().x;
+    expect(dx, lessThanOrEqualTo(200.0), reason: 'recorrido máximo: la mitad del ancho (400 px)');
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(right, 1);
+  });
+
+  testWidgets('ronda 5: el toque que frena la lista en movimiento no empieza un deslizar', (tester) async {
+    await pump(tester);
+    await tester.fling(find.byType(ListView), const Offset(0, -300), 3000);
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.dragFrom(const Offset(200, 300), const Offset(200, 0));
     await tester.pumpAndSettle();
     expect(right, 0);
   });
