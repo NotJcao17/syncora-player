@@ -852,6 +852,16 @@ class ExtractionIsolate {
   static ExtractionError _classifyExtractionError(String errorText) {
     final e = errorText.toLowerCase();
 
+    // Fase 8: YouTube bloqueó la IP ("Sign in to confirm you're not a bot").
+    // Va ANTES que los lógicos porque llega envuelto en "Streaming data not
+    // available": no es la canción, así que saltar vaciaría la cola entera
+    // (Pitfall #14). Pausa como un 403. Ojo: "confirm your age" (restricción
+    // de edad) sí es de la canción y sigue siendo notFound.
+    const ipBlockMarkers = ['not a bot', 'unusual traffic'];
+    for (final marker in ipBlockMarkers) {
+      if (e.contains(marker)) return ExtractionError.rateLimited;
+    }
+
     // Errores lógicos: la canción existe pero no hay streaming utilizable,
     // o el video no existe / es privado. Reintentar no sirve de nada.
     const notFoundMarkers = [

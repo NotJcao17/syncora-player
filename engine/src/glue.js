@@ -57,8 +57,16 @@ globalThis.extractVideo = function(videoId, client, jsRequestId, quality) {
       var streamingData = playerData.streamingData;
 
       if (!streamingData || (!streamingData.adaptiveFormats && !streamingData.formats)) {
-        console.log('[JS WARN] streamingData no disponible en respuesta de /player.');
-        throw new Error('Streaming data not available');
+        // Fase 8: conservar el motivo que da YouTube (playabilityStatus). Sin
+        // él no se distingue un vídeo privado o con restricción de edad de un
+        // bloqueo de la IP ("Sign in to confirm you're not a bot"), y la app
+        // trata cada caso distinto (saltar vs. pausar).
+        var playability = playerData.playabilityStatus || {};
+        var why = playability.status
+          ? ' (' + playability.status + (playability.reason ? ': ' + playability.reason : '') + ')'
+          : '';
+        console.log('[JS WARN] streamingData no disponible en respuesta de /player' + why + '.');
+        throw new Error('Streaming data not available' + why);
       }
 
       var formats = (streamingData.adaptiveFormats || []).concat(streamingData.formats || []);

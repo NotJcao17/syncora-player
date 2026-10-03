@@ -26,7 +26,7 @@ const verbose = args.includes('--verbose');
 const enginePath = resolve(args.find((a) => !a.startsWith('--')) ?? resolve(root, '../assets/js/syncora_engine.js'));
 
 const QUERIES = ['Coldplay Yellow', 'Daft Punk Get Lucky', 'Bad Bunny Titi Me Pregunto'];
-const BLOCK_MARKERS = ['sign in to confirm', 'login_required', 'not a bot', 'unusual traffic', 'captcha'];
+const BLOCK_MARKERS = ['login_required', 'not a bot', 'unusual traffic', 'captcha'];
 
 const isBlocked = (text) => BLOCK_MARKERS.some((m) => String(text).toLowerCase().includes(m));
 
