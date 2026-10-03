@@ -5,6 +5,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../../../core/theme/app_icons.dart';
 
 import '../../../core/layout/bottom_chrome_metrics.dart';
+import '../../../core/layout/keyboard_inset_freeze.dart';
 import '../../../core/navigation/safe_navigation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/cover_palette.dart';
@@ -157,7 +158,9 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
 
     final dominantGradientColor = _dominantColor?.withValues(alpha: 0.35) ?? AppTheme.surfaceHover.withValues(alpha: 0.3);
 
-    return Scaffold(
+    // Ronda 5 (H-R5-7): el `SafeArea` + `LayoutBuilder` de abajo también
+    // seguían al teclado de una hoja encima; congelado, no se mueve nada.
+    return KeyboardInsetFreeze(child: Scaffold(
       // Ronda 4 (H-R4-7): esta pantalla no tiene campos de texto. Sin esto,
       // abrir el teclado en una hoja encima (p. ej. "Mejorar cola con IA")
       // reconstruía todo el reproductor en cada frame de la animación.
@@ -505,7 +508,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
         ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildCoverPlaceholder() {

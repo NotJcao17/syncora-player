@@ -77,6 +77,10 @@ class SyncoraTrack {
   final String? genre;
   final bool isAiGenerated;
 
+  /// Ronda 5: la puso "Mejorar cola" (recomendación de la radio de Deezer
+  /// intercalada en la cola automática), no el usuario ni la IA.
+  final bool isSuggested;
+
   const SyncoraTrack({
     required this.id,
     required this.title,
@@ -92,6 +96,7 @@ class SyncoraTrack {
     this.isSpokenWord = false,
     this.genre,
     this.isAiGenerated = false,
+    this.isSuggested = false,
   }) : _artist = artist; // ignore: prefer_initializing_formals
 
   factory SyncoraTrack.fromVideoId({
@@ -124,6 +129,7 @@ class SyncoraTrack {
         'isSpokenWord': isSpokenWord,
         'genre': genre,
         'isAiGenerated': isAiGenerated,
+        'isSuggested': isSuggested,
       };
 
   factory SyncoraTrack.fromJson(Map<String, dynamic> json) {
@@ -146,6 +152,7 @@ class SyncoraTrack {
       isSpokenWord: json['isSpokenWord'] as bool? ?? false,
       genre: json['genre'] as String?,
       isAiGenerated: json['isAiGenerated'] as bool? ?? false,
+      isSuggested: json['isSuggested'] as bool? ?? false,
     );
   }
 
@@ -165,6 +172,7 @@ class SyncoraTrack {
     bool? isSpokenWord,
     String? genre,
     bool? isAiGenerated,
+    bool? isSuggested,
   }) {
     return SyncoraTrack(
       id: id ?? this.id,
@@ -181,6 +189,7 @@ class SyncoraTrack {
       isSpokenWord: isSpokenWord ?? this.isSpokenWord,
       genre: genre ?? this.genre,
       isAiGenerated: isAiGenerated ?? this.isAiGenerated,
+      isSuggested: isSuggested ?? this.isSuggested,
     );
   }
 }

@@ -189,7 +189,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
             // en las playlists.
             SliverToBoxAdapter(
               child: SizedBox(
-                height: (isDesktop ? 340 : 280) + MediaQuery.paddingOf(context).top,
+                height: (isDesktop ? 340 : 280) + MediaQuery.viewPaddingOf(context).top,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -468,7 +468,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
       ),
     ),
           Positioned(
-            top: MediaQuery.paddingOf(context).top + 8,
+            top: MediaQuery.viewPaddingOf(context).top + 8,
             left: 16,
             child: Container(
               width: 38,

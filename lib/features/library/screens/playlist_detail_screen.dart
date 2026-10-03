@@ -1024,7 +1024,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                           slivers: [
                             SliverPadding(
                               padding: EdgeInsets.only(
-                                top: MediaQuery.paddingOf(context).top + 56,
+                                top: MediaQuery.viewPaddingOf(context).top + 56,
                                 left: isDesktop ? 32 : 12,
                                 right: isDesktop ? 32 : 12,
                               ),
@@ -1715,7 +1715,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     ),
 
                     Positioned(
-                      top: MediaQuery.paddingOf(context).top + 8,
+                      top: MediaQuery.viewPaddingOf(context).top + 8,
                       left: 16,
                       right: 16,
                       child: Row(

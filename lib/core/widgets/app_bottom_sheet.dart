@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../layout/bottom_chrome_metrics.dart';
+import '../layout/keyboard_inset_freeze.dart';
 import '../theme/app_theme.dart';
 
 /// Modal Bottom Sheet personalizado con fondo sólido #1E2633 y handle bar.
@@ -219,7 +220,11 @@ class _KeyboardInset extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTop = ModalRoute.of(context)?.isCurrent ?? true;
-    final bottom = isTop ? MediaQuery.viewInsetsOf(context).bottom : 0.0;
-    return Padding(padding: EdgeInsets.only(bottom: bottom), child: child);
+    if (!isTop) {
+      // Ronda 5 (H-R5-7): además de no moverse, la hoja de debajo deja de
+      // ver el teclado (cada asa de la cola leía `MediaQuery`).
+      return KeyboardInsetFreeze(child: child);
+    }
+    return Padding(padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom), child: child);
   }
 }

@@ -15,8 +15,13 @@ import '../../library/import_export/playlist_import_export_service.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
 
-/// Fase 7.F.2 -- "Crear cola con IA" / "Mejorar cola con IA".
-void showAiCreateQueueSheet(BuildContext context, WidgetRef ref, {bool autoImprove = false}) {
+/// "Crear cola con IA" (Fase 7.F.2, simplificada en la ronda 5).
+///
+/// Ronda 5: "Mejorar cola" pasó a ser una acción rápida sin IA (radio de
+/// Deezer, ver `improveQueueWithRecommendations`). Esta hoja queda solo para
+/// pedir una cola por texto, y el resultado entra en la **cola manual**: es
+/// algo que el usuario pidió explícitamente, como "Agregar a la cola".
+void showAiCreateQueueSheet(BuildContext context, WidgetRef ref) {
   final isConnected = ref.read(isConnectedProvider).value ?? true;
   if (!isConnected) {
     AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
@@ -24,21 +29,28 @@ void showAiCreateQueueSheet(BuildContext context, WidgetRef ref, {bool autoImpro
   }
   AppBottomSheet.show(
     context: context,
-    title: autoImprove ? 'Mejorar cola con IA' : 'Crear cola con IA',
+    title: 'Crear cola con IA',
     maxHeightFactor: 0.9,
-    child: _AiCreateQueueFlow(autoImprove: autoImprove),
+    child: const _AiCreateQueueFlow(),
   );
 }
 
 enum _Step { form, callingAi, matching, preview, applying }
 
-const List<int> _kCountOptions = [10, 25, 50, 100];
+const List<int> _kCountOptions = [10, 25, 50];
+
+/// Ideas de un toque para no arrancar con el campo vacío.
+const List<String> _kPromptIdeas = [
+  'Algo más movido',
+  'Para concentrarme',
+  'Clásicos que todos conocen',
+  'Para relajarme',
+];
 const int _kDefaultCount = 25;
 const int _kHardCountCap = 100; // D-5 / validate_request.ts MAX_REQUESTED_COUNT.create_queue
 
 class _AiCreateQueueFlow extends ConsumerStatefulWidget {
-  final bool autoImprove;
-  const _AiCreateQueueFlow({required this.autoImprove});
+  const _AiCreateQueueFlow();
 
   @override
   ConsumerState<_AiCreateQueueFlow> createState() => _AiCreateQueueFlowState();
@@ -49,7 +61,6 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
 
   late _Step _step;
   late bool _basedOnCurrent;
-  late bool _interleave;
   late int _count;
   String? _formError;
 
@@ -67,8 +78,8 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
   void initState() {
     super.initState();
     _count = _kDefaultCount;
-    _interleave = true;
-    _basedOnCurrent = widget.autoImprove;
+    // Con algo sonando, "más movido" o "parecido" tienen de qué partir.
+    _basedOnCurrent = ref.read(currentTrackProvider) != null;
     _step = _Step.form;
   }
 
@@ -129,12 +140,10 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
     final prompt = _promptController.text.trim();
     final contextTracks = _basedOnCurrent ? _buildQueueContext() : const <Map<String, dynamic>>[];
 
-    if (prompt.isEmpty && contextTracks.isEmpty) {
+    if (prompt.isEmpty) {
       setState(() {
         _step = _Step.form;
-        _formError = _basedOnCurrent
-            ? 'La cola actual está vacía. Escribe una descripción para crear una cola nueva.'
-            : 'Escribe una descripción o elige "Basada en la actual".';
+        _formError = 'Escribe qué quieres escuchar o elige una de las ideas.';
       });
       return;
     }
@@ -169,7 +178,7 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
       result = await service.createQueue(
         prompt: prompt,
         contextTracks: contextTracks,
-        interleave: _interleave,
+        interleave: false,
         count: count,
       );
     } on AiAssistantException catch (e) {
@@ -284,7 +293,7 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
                 ...?contextTracks,
                 for (final t in fresh) {'title': t.title, 'artist': t.artistName},
               ],
-              interleave: _interleave,
+              interleave: false,
               count: _clampInt((missing * 1.6).round() + 2, 1, _kHardCountCap),
             );
         final extraRaw = PlaylistImportExportService.parseTrackSuggestions(extra['tracks']);
@@ -326,21 +335,11 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
     setState(() => _step = _Step.applying);
 
     final syncoraTracks = included.map((t) => t.toSyncoraTrack(isAiGenerated: true)).toList();
-    final controller = ref.read(syncoraPlayerControllerProvider.notifier);
-    if (_interleave) {
-      controller.interleaveIntoAutoQueue(syncoraTracks);
-    } else {
-      controller.addAllToQueue(syncoraTracks);
-    }
+    ref.read(syncoraPlayerControllerProvider.notifier).addAllToQueue(syncoraTracks);
 
     if (!mounted) return;
     AppBottomSheet.pop(context);
-    AppToast.show(
-      context,
-      message: _interleave
-          ? '${syncoraTracks.length} canciones intercaladas en la cola con IA'
-          : '${syncoraTracks.length} canciones agregadas a la cola con IA',
-    );
+    AppToast.show(context, message: '${syncoraTracks.length} canciones agregadas a la cola');
   }
 
   void _toggleTrack(DeezerTrack track) {
@@ -376,57 +375,72 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
       children: [
         const Text(
-          'Describe qué quieres escuchar (opcional si usas la cola actual)',
+          '¿Qué quieres escuchar?',
           style: TextStyle(color: AppTheme.secondary, fontSize: 13, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: _promptController,
           maxLines: 3,
+          minLines: 2,
           maxLength: 600,
+          textCapitalization: TextCapitalization.sentences,
           style: const TextStyle(color: AppTheme.primary),
           decoration: InputDecoration(
-            hintText: 'Ej: continúa con algo más movido, sin bajar el ánimo',
+            hintText: 'Ej: rock de los 2000 para manejar',
             hintStyle: const TextStyle(color: AppTheme.muted, fontSize: 13),
             filled: true,
             fillColor: AppTheme.surfaceHover,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            counterStyle: const TextStyle(color: AppTheme.muted, fontSize: 11),
+            counterText: '',
           ),
         ),
-        const SizedBox(height: 20),
-        const Text('Origen', style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final idea in _kPromptIdeas)
+              ActionChip(
+                label: Text(idea, style: const TextStyle(color: AppTheme.primary, fontSize: 12)),
+                backgroundColor: AppTheme.surfaceHover,
+                side: BorderSide.none,
+                shape: const StadiumBorder(),
+                onPressed: () {
+                  _promptController.text = idea;
+                  _promptController.selection = TextSelection.collapsed(offset: idea.length);
+                  if (_formError != null) setState(() => _formError = null);
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SwitchListTile.adaptive(
+          value: _basedOnCurrent,
+          onChanged: (v) => setState(() => _basedOnCurrent = v),
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          activeTrackColor: AppTheme.accent,
+          title: const Text(
+            'Tener en cuenta lo que estoy escuchando',
+            style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+        ),
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(
-              child: _choiceChip('Cola nueva', !_basedOnCurrent, () => setState(() => _basedOnCurrent = false)),
+            const Expanded(
+              child: Text(
+                'Canciones',
+                style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600),
+              ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _choiceChip(
-                  'Basada en la actual', _basedOnCurrent, () => setState(() => _basedOnCurrent = true)),
-            ),
+            for (final c in _kCountOptions) ...[
+              const SizedBox(width: 6),
+              SizedBox(width: 56, child: _choiceChip('$c', _count == c, () => setState(() => _count = c))),
+            ],
           ],
         ),
-        const SizedBox(height: 16),
-        const Text('Cómo agregarla', style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _choiceChip('Intercalar', _interleave, () => setState(() => _interleave = true)),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _choiceChip('Cola manual', !_interleave, () => setState(() => _interleave = false)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        const Text('Cantidad de canciones', style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        _buildCountDropdown(),
         if (_formError != null) ...[
           const SizedBox(height: 12),
           Text(_formError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
@@ -452,10 +466,7 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
               child: ElevatedButton.icon(
                 onPressed: _isSubmitting ? null : _submit,
                 icon: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), size: 18),
-                label: Text(
-                  widget.autoImprove ? 'Mejorar cola con IA' : 'Crear cola con IA',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
+                label: const Text('Crear cola', style: TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   foregroundColor: AppTheme.background,
@@ -470,9 +481,6 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
     );
   }
 
-  /// Ronda 4: segmento de ancho completo en vez de `ChoiceChip`. El chip
-  /// no reparte el ancho que le da el `Expanded` ni parte la etiqueta, así
-  /// que en móvil "Basada en la cola actual" se cortaba.
   Widget _choiceChip(String label, bool selected, VoidCallback onTap) {
     return Material(
       color: selected ? AppTheme.primary : AppTheme.surfaceHover,
@@ -481,43 +489,18 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
         customBorder: const StadiumBorder(),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           child: Center(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                maxLines: 1,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: selected ? AppTheme.background : AppTheme.primary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
+            child: Text(
+              label,
+              maxLines: 1,
+              style: TextStyle(
+                color: selected ? AppTheme.background : AppTheme.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCountDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: AppTheme.surfaceHover, borderRadius: BorderRadius.circular(12)),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          isExpanded: true,
-          value: _count,
-          dropdownColor: AppTheme.surface,
-          style: const TextStyle(color: AppTheme.primary, fontSize: 13),
-          items: _kCountOptions
-              .map((c) => DropdownMenuItem<int>(value: c, child: Text('$c canciones')))
-              .toList(),
-          onChanged: (val) {
-            if (val != null) setState(() => _count = val);
-          },
         ),
       ),
     );
@@ -584,9 +567,9 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.background),
                         )
-                      : Text(
-                          _interleave ? 'Intercalar en la cola' : 'Agregar a la cola',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                      : const Text(
+                          'Agregar a la cola',
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                 ),
               ),

@@ -387,6 +387,68 @@ class _QueueViewState extends ConsumerState<QueueView> {
   /// Ronda 3 (B4). Rehace la cola automática desde el contexto activo
   /// descartando el bloque de radio vigente. No toca la cola manual (D-2) ni
   /// la pista que suena — ver `SyncoraPlayerController.regenerateAutoQueue`.
+  bool _improving = false;
+
+  Future<void> _improveQueue() async {
+    if (_improving) return;
+    final isConnected = ref.read(isConnectedProvider).value ?? true;
+    if (!isConnected) {
+      AppToast.show(context, message: 'Sin conexión. "Mejorar cola" usa recomendaciones de internet.');
+      return;
+    }
+    setState(() => _improving = true);
+    final added = await ref.read(syncoraPlayerControllerProvider.notifier).improveQueueWithRecommendations();
+    if (!mounted) return;
+    setState(() => _improving = false);
+    AppToast.show(
+      context,
+      message: added > 0
+          ? '$added recomendaciones intercaladas en la cola'
+          : 'No se encontraron recomendaciones nuevas para esta cola',
+    );
+  }
+
+  /// Píldora de la barra de la cola (mismo estilo que "Regenerar cola").
+  Widget _toolbarPill({
+    required SolarIconData icon,
+    required String label,
+    required bool enabled,
+    required VoidCallback onPressed,
+    bool accent = false,
+    bool busy = false,
+  }) {
+    return TextButton.icon(
+      onPressed: enabled ? onPressed : null,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        backgroundColor: AppTheme.surfaceHover,
+        disabledBackgroundColor: AppTheme.surfaceHover,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      icon: busy
+          ? const SizedBox(
+              width: 13,
+              height: 13,
+              child: CircularProgressIndicator(strokeWidth: 1.8, color: AppTheme.secondary),
+            )
+          : Icon(
+              AppIcons.broken(icon),
+              size: 15,
+              color: !enabled ? AppTheme.muted : (accent ? AppTheme.accent : AppTheme.secondary),
+            ),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: enabled ? AppTheme.primary : AppTheme.muted,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
   void _regenerateQueue() {
     final controller = ref.read(syncoraPlayerControllerProvider.notifier);
     final shuffle = controller.state.isShuffle;
@@ -424,34 +486,24 @@ class _QueueViewState extends ConsumerState<QueueView> {
             alignment: WrapAlignment.start,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              // Ronda 5: "Mejorar cola" es rápida y sin IA (radio de Deezer
+              // intercalada); "Crear con IA" pide una cola nueva por texto y
+              // la deja en la cola manual.
+              _toolbarPill(
+                icon: SolarIcons.MagicStick,
+                label: _improving ? 'Mejorando...' : 'Mejorar cola',
+                enabled: isConnected && !_improving,
+                busy: _improving,
+                accent: true,
+                onPressed: _improveQueue,
+              ),
               if (!isLocalMode)
-                TextButton.icon(
-                  onPressed: isConnected
-                      ? () => showAiCreateQueueSheet(context, ref, autoImprove: true)
-                      : () => AppToast.show(
-                            context,
-                            message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.',
-                          ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    backgroundColor: AppTheme.surfaceHover,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    visualDensity: VisualDensity.compact,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  icon: Icon(
-                    AppIcons.broken(SolarIcons.StarsMinimalistic),
-                    size: 15,
-                    color: isConnected ? AppTheme.accent : AppTheme.muted,
-                  ),
-                  label: Text(
-                    'Mejorar cola con IA',
-                    style: TextStyle(
-                      color: isConnected ? AppTheme.primary : AppTheme.muted,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                _toolbarPill(
+                  icon: SolarIcons.StarsMinimalistic,
+                  label: 'Crear con IA',
+                  enabled: isConnected,
+                  accent: true,
+                  onPressed: () => showAiCreateQueueSheet(context, ref),
                 ),
               if (hasContext)
                 TextButton.icon(

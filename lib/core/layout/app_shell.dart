@@ -35,6 +35,7 @@ import '../../features/player/widgets/mini_player.dart';
 import '../../features/player/widgets/queue_view.dart';
 import '../theme/app_theme.dart';
 import '../cache/cover_repair_service.dart';
+import 'keyboard_inset_freeze.dart';
 import '../utils/connectivity_service.dart';
 import '../utils/startup_retry.dart';
 import '../widgets/app_toast.dart';
@@ -345,7 +346,8 @@ class _AppShellState extends ConsumerState<AppShell> {
           }
         }
       },
-      child: childWidget,
+      // H-R5-7: con una hoja encima, el shell no sigue al teclado.
+      child: KeyboardInsetFreeze(child: childWidget),
     );
   }
 
@@ -353,7 +355,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget _buildMobileLayout(BuildContext context, int selectedIndex) {
     final currentTrack = ref.watch(currentTrackProvider);
     final hasTrack = currentTrack != null;
-    final paddingBottom = MediaQuery.paddingOf(context).bottom;
+    final paddingBottom = MediaQuery.viewPaddingOf(context).bottom;
     return Stack(
 
       children: [

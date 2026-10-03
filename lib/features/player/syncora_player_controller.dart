@@ -1011,7 +1011,7 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// sugerencias a lo largo de TODA la cola automática existente; solo
   /// queda un bloque residual al final cuando hay estructuralmente más
   /// sugerencias que huecos posibles (`autoQueue` muy corta).
-  void interleaveIntoAutoQueue(List<SyncoraTrack> tracks) {
+  void interleaveIntoAutoQueue(List<SyncoraTrack> tracks, {int stride = 2}) {
     if (tracks.isEmpty) return;
     final current = _state.autoQueue;
     final result = <SyncoraTrack>[];
@@ -1023,7 +1023,6 @@ class SyncoraPlayerController extends ChangeNotifier {
       // sugerencias a lo largo de TODA la cola: con 600 pistas en cola y 25
       // sugerencias salía una cada 24 canciones y la mejora no se notaba. Lo
       // que no cabe (más sugerencias que la mitad de la cola) va al final.
-      const stride = 2;
       var suggestionIndex = 0;
       for (var i = 0; i < current.length; i++) {
         result.add(current[i]);
@@ -1052,6 +1051,55 @@ class SyncoraPlayerController extends ChangeNotifier {
     }
     _notify();
     _saveSession();
+  }
+
+  /// Ronda 5: "Mejorar cola" rápida, sin IA (estilo Smart Shuffle).
+  ///
+  /// Pide a la radio de Deezer (el mismo [RadioService] de la cola infinita,
+  /// semillas ponderadas por los artistas del contexto) canciones que no estén
+  /// ya en la cola, el contexto ni el historial, y las intercala en la cola
+  /// automática: una recomendación cada [stride] canciones. Nunca toca la
+  /// cola manual (D-1). Devuelve cuántas se agregaron.
+  Future<int> improveQueueWithRecommendations({int stride = 3}) async {
+    final service = _radioService;
+    if (service == null) return 0;
+    final current = _state.currentTrack;
+    final contextTracks = _state.originalContextTracks.isNotEmpty
+        ? _state.originalContextTracks
+        : [?current, ..._state.manualQueue, ..._state.autoQueue];
+    if (contextTracks.isEmpty) return 0;
+
+    final excludeIds = <String>{
+      ..._state.manualQueue.map((t) => t.id),
+      ..._state.autoQueue.map((t) => t.id),
+      ..._state.originalContextTracks.map((t) => t.id),
+      ..._state.history.map((h) => h.track.id),
+      ..._recentRadioSuggestions,
+      ?current?.id,
+    };
+    // Suficientes para cubrir la parte de la cola que de verdad se va a
+    // escuchar pronto: entre 10 y 50 (uno o dos lotes de radio).
+    final wanted = (_state.autoQueue.length ~/ stride).clamp(10, 50);
+    final requestGeneration = _contextGeneration;
+
+    final picked = <SyncoraTrack>[];
+    for (var round = 0; round < 2 && picked.length < wanted; round++) {
+      final batch = await service.generateBatch(
+        contextTracks: contextTracks,
+        excludeIds: {...excludeIds, ...picked.map((t) => t.id)},
+      );
+      if (_disposed || requestGeneration != _contextGeneration) return 0;
+      if (batch.isEmpty) break;
+      picked.addAll(batch.take(wanted - picked.length));
+    }
+    if (picked.isEmpty) return 0;
+
+    _rememberRadioSuggestions(picked.map((t) => t.id));
+    interleaveIntoAutoQueue(
+      [for (final t in picked) t.copyWith(isSuggested: true)],
+      stride: stride,
+    );
+    return picked.length;
   }
 
   /// Reordena elementos SOLO dentro de la cola [origin] — no se permite

@@ -1153,6 +1153,22 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       }
     }
 
+    if (widget.track.isSuggested) {
+      statusIcons.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: Tooltip(
+            message: 'Recomendada por "Mejorar cola"',
+            child: Icon(
+              AppIcons.broken(SolarIcons.MagicStick),
+              color: AppTheme.secondary.withValues(alpha: 0.85),
+              size: 13,
+            ),
+          ),
+        ),
+      );
+    }
+
     if (widget.track.isAiGenerated) {
       statusIcons.add(
         Padding(

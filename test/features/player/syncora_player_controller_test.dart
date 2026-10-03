@@ -626,6 +626,48 @@ void main() {
     });
   });
 
+  // Ronda 5: "Mejorar cola" rápida, sin IA.
+  group('SyncoraPlayerController — Mejorar cola con recomendaciones (ronda 5)', () {
+    test('intercala una recomendación cada 3 pistas, marcadas y sin tocar la cola manual', () async {
+      final radio = FakeRadioService(nextBatch: [
+        for (var i = 0; i < 3; i++) SyncoraTrack(id: 'rec$i', title: 'Rec $i', artist: 'R'),
+      ]);
+      final controller = SyncoraPlayerController(
+        engine: FakeAudioEngine(),
+        extractionService: TestableExtractionService(),
+        radioService: radio,
+        radioEnabledGetter: () => false, // sin cola infinita de por medio
+      );
+      controller.init();
+      addTearDown(controller.dispose);
+
+      final tracks = [for (var i = 0; i < 10; i++) SyncoraTrack(id: 't$i', title: 'T$i', artistId: 1)];
+      await controller.setQueue(tracks, autoplay: false);
+      controller.addToQueue(const SyncoraTrack(id: 'manual', title: 'Manual'));
+
+      final added = await controller.improveQueueWithRecommendations();
+
+      expect(added, 3);
+      final auto = controller.state.autoQueue;
+      expect(auto.map((t) => t.id).take(8).toList(), ['t1', 't2', 't3', 'rec0', 't4', 't5', 't6', 'rec1']);
+      expect(auto.where((t) => t.isSuggested).length, 3);
+      expect(controller.state.manualQueue.map((t) => t.id), ['manual']);
+      expect(radio.lastExcludeIds, containsAll(['t0', 't5', 'manual']),
+          reason: 'no recomienda lo que ya está en la cola, el contexto o suena ahora');
+    });
+
+    test('sin radio disponible no hace nada', () async {
+      final controller = SyncoraPlayerController(
+        engine: FakeAudioEngine(),
+        extractionService: TestableExtractionService(),
+      );
+      controller.init();
+      addTearDown(controller.dispose);
+      await controller.setQueue(const [SyncoraTrack(id: 'a', title: 'A')], autoplay: false);
+      expect(await controller.improveQueueWithRecommendations(), 0);
+    });
+  });
+
   // Fase 7.0.2 / 7.0.5: registro de historial de escucha (umbral D-16).
   group('SyncoraPlayerController — registro de historial de escucha (7.0.2)', () {
     late FakeAudioEngine engine;

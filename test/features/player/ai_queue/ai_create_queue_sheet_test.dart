@@ -239,7 +239,7 @@ void main() {
     expect(find.text('Crear cola con IA'), findsOneWidget);
   });
 
-  testWidgets('con la cola no vacía, el toolbar muestra el atajo "Mejorar cola con IA"',
+  testWidgets('con la cola no vacía, el toolbar ofrece "Mejorar cola" (sin IA) y "Crear con IA" (ronda 5)',
       (tester) async {
     growViewport(tester);
     final controller = buildController();
@@ -250,12 +250,12 @@ void main() {
     await tester.pumpWidget(buildHarness(controller));
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('Crear cola con IA'), findsNothing);
-    expect(find.text('Mejorar cola con IA'), findsOneWidget);
+    expect(find.text('Mejorar cola'), findsOneWidget);
+    expect(find.text('Crear con IA'), findsOneWidget);
+    expect(find.text('Mejorar cola con IA'), findsNothing);
   });
 
-  testWidgets('cola nueva sin prompt exige texto o "basada en cola actual" (validación local, sin llamar a la IA)',
-      (tester) async {
+  testWidgets('sin texto no llama a la IA y pide escribir algo (validación local)', (tester) async {
     growViewport(tester);
     final controller = buildController();
     await tester.pumpWidget(buildHarness(controller));
@@ -263,21 +263,28 @@ void main() {
 
     await tester.tap(find.text('Crear cola con IA')); // botón de acción del empty state
     await tester.pumpAndSettle();
-
-    // El título de la hoja y el botón de submit comparten el mismo texto
-    // ("Crear cola con IA") -- el botón de submit es un `ElevatedButton.icon`,
-    // cuyo tipo en runtime es una subclase privada de `ElevatedButton`
-    // (`find.byType`/`widgetWithText` hacen match exacto de tipo, no por
-    // subtipo, así que `widgetWithText(ElevatedButton, ...)` nunca lo
-    // encuentra) -- se ubica por texto y se toma el último de los dos
-    // matches (el título siempre precede al botón en el árbol).
-    await tester.tap(find.text('Crear cola con IA').last);
+    await tester.tap(find.text('Crear cola'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Escribe una descripción o elige "Basada en la actual".'), findsOneWidget);
+    expect(find.text('Escribe qué quieres escuchar o elige una de las ideas.'), findsOneWidget);
   });
 
-  testWidgets('camino feliz "cola nueva" + "cola manual": genera, matchea, y agrega al final de la manual (D-2)',
+  testWidgets('una idea de un toque llena el campo de texto', (tester) async {
+    growViewport(tester);
+    final controller = buildController();
+    await tester.pumpWidget(buildHarness(controller));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Crear cola con IA'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Para concentrarme'));
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    expect(field.controller?.text, 'Para concentrarme');
+  });
+
+  testWidgets('camino feliz sin nada sonando: genera, matchea y agrega a la cola (sin contexto)',
       (tester) async {
     growViewport(tester);
     final controller = buildController();
@@ -303,35 +310,24 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField).first, 'algo movido para entrenar');
-    await tester.tap(find.text('Cola manual'));
+    await tester.tap(find.text('Crear cola'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Crear cola con IA').last);
-    await tester.pumpAndSettle();
-
-    // Llegó a la vista previa con la pista matcheada, y mandó el modo
-    // correcto a la Edge Function (D-1: sin contexto en modo "cola nueva").
     expect(find.text('Agregar a la cola'), findsOneWidget);
     expect(find.text('Song A'), findsOneWidget);
     expect(sentBody?['interleave'], false);
     expect(sentBody?['contextTracks'], isNull);
 
     await tester.tap(find.text('Agregar a la cola'));
-    // `AppToast` de éxito con auto-dismiss a los 3s (mismo patrón que
-    // 7.F.1) -- un pumpAndSettle con duración corta puede asentarse antes de
-    // que ese timer dispare y dejarlo pendiente al cerrar el test.
     await tester.pumpAndSettle(const Duration(seconds: 4));
 
-    // No había nada sonando (nunca se llamó `setQueue` en este test): la
-    // única pista agregada se promueve de inmediato a `currentTrack`, igual
-    // que `addToQueue` (P0.3) -- por eso no queda en `manualQueue`, que es
-    // el comportamiento correcto y ya cubierto a nivel de controlador en
-    // `syncora_player_controller_test.dart`.
+    // No había nada sonando: la única pista agregada se promueve de inmediato
+    // a `currentTrack`, igual que `addToQueue` (P0.3).
     expect(controller.state.currentTrack?.id, '1');
     expect(controller.state.manualQueue, isEmpty);
   });
 
-  testWidgets('atajo "Mejorar cola con IA": abre opciones interactivas, genera e intercala pistas marcadas como IA',
+  testWidgets('con algo sonando: manda el contexto y deja el resultado en la cola manual (ronda 5)',
       (tester) async {
     growViewport(tester);
     final controller = buildController();
@@ -352,34 +348,28 @@ void main() {
             {'title': 'Song A', 'artist': 'Artist A'},
           ],
         },
-        onInvoke: (b) => sentBody = b,
+        onInvoke: (b) => sentBody ??= b,
       ),
       deezerApi: _FakeDeezerApi(fakeTrack),
     ));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Mejorar cola con IA'));
+    await tester.tap(find.text('Crear con IA'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'más movido');
+    await tester.tap(find.text('Crear cola'));
     await tester.pumpAndSettle();
 
-    // Muestra formulario interactivo con origen en cola actual
-    expect(find.text('Origen'), findsOneWidget);
-    expect(find.text('Mejorar cola con IA').last, findsOneWidget);
-
-    await tester.tap(find.text('Mejorar cola con IA').last);
-    await tester.pumpAndSettle();
-
-    expect(sentBody?['interleave'], true);
-    expect(sentBody?['count'], isNotNull);
+    expect(sentBody?['interleave'], false);
     final contextTracks = sentBody?['contextTracks'] as List?;
-    expect(contextTracks, isNotNull);
+    expect(contextTracks, isNotNull, reason: 'con algo sonando, el interruptor de contexto empieza activado');
     expect(contextTracks!.isNotEmpty, isTrue);
 
-    expect(find.text('Intercalar en la cola'), findsOneWidget);
-    await tester.tap(find.text('Intercalar en la cola'));
+    await tester.tap(find.text('Agregar a la cola'));
     await tester.pumpAndSettle(const Duration(seconds: 4));
 
-    expect(controller.state.autoQueue.any((t) => t.id == '1' && t.isAiGenerated), isTrue,
-        reason: 'la pista sugerida por la IA debe haber quedado en la automática con isAiGenerated = true');
-    expect(controller.state.manualQueue, isEmpty, reason: 'intercalar nunca toca la cola manual');
+    expect(controller.state.manualQueue.any((t) => t.id == '1' && t.isAiGenerated), isTrue,
+        reason: 'lo pedido a la IA entra en la cola manual, como "Agregar a la cola"');
+    expect(controller.state.autoQueue.any((t) => t.isAiGenerated), isFalse);
   });
 }
