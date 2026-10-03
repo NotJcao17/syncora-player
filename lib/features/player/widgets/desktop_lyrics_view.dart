@@ -8,6 +8,7 @@ import '../../../data/apis/lrclib_api.dart';
 import '../../../data/apis/lrclib_provider.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
+import 'synced_lyrics_list.dart';
 import '../../../core/cache/app_image_cache.dart';
 
 /// Vista de letras para pantalla de escritorio (Spotify Desktop Lyrics style).
@@ -24,8 +25,6 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
   LRCLibResult? _lyricsResult;
   bool _isLoading = true;
   final ScrollController _scrollController = ScrollController();
-  final Map<int, GlobalKey> _lineKeys = {};
-  int _lastHighlightedIndex = -1;
 
   @override
   void initState() {
@@ -40,8 +39,6 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
       setState(() {
         _isLoading = true;
         _lyricsResult = null;
-        _lineKeys.clear();
-        _lastHighlightedIndex = -1;
       });
       _fetchLyrics();
     }
@@ -71,33 +68,8 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
     }
   }
 
-  void _scrollToCurrentLine(int activeIndex) {
-    if (activeIndex != _lastHighlightedIndex && _scrollController.hasClients) {
-      _lastHighlightedIndex = activeIndex;
-      final key = _lineKeys[activeIndex];
-      if (key?.currentContext != null) {
-        Scrollable.ensureVisible(
-          key!.currentContext!,
-          alignment: 0.5,
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeOutCubic,
-        );
-      } else {
-        final viewportHeight = _scrollController.position.viewportDimension;
-        final targetOffset = (activeIndex * 64.0) - (viewportHeight * 0.5);
-        _scrollController.animateTo(
-          targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeOutCubic,
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final currentPosition = ref.watch(playerStateProvider.select((s) => s.engine.position));
-
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -208,7 +180,7 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
                         ),
                       )
                     : _lyricsResult!.hasSynced
-                        ? _buildSyncedKaraokeDesktop(currentPosition)
+                        ? _buildSyncedKaraokeDesktop()
                         : _buildPlainLyricsDesktop(),
           ),
         ],
@@ -216,60 +188,16 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
     );
   }
 
-  Widget _buildSyncedKaraokeDesktop(Duration currentPosition) {
-    final lines = _lyricsResult!.lines;
-
-    int activeIndex = -1;
-    for (int i = 0; i < lines.length; i++) {
-      if (currentPosition >= lines[i].timestamp) {
-        activeIndex = i;
-      } else {
-        break;
-      }
-    }
-
-    if (activeIndex >= 0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToCurrentLine(activeIndex);
-      });
-    }
-
-    // El Scrollbar se ata a un ListView de ancho completo para que el thumb
-    // quede pegado al borde derecho real de la ventana; el contenido sigue
-    // centrado con maxWidth 760 pero por-item, no restringiendo el
-    // viewport scrolleable (eso era lo que dejaba el scrollbar "flotando"
-    // lejos del borde en pantallas anchas).
-    return Scrollbar(
-      controller: _scrollController,
-      thumbVisibility: true,
-      child: ListView.builder(
-        controller: _scrollController,
-        padding: const EdgeInsets.symmetric(vertical: 160),
-        itemCount: lines.length,
-        itemBuilder: (context, index) {
-          final line = lines[index];
-          final isActive = index == activeIndex;
-          final isPast = index < activeIndex;
-
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: _DesktopLyricsLineTile(
-                  key: _lineKeys.putIfAbsent(index, () => GlobalKey()),
-                  line: line,
-                  isActive: isActive,
-                  isPast: isPast,
-                  onTap: () {
-                    ref.read(syncoraPlayerControllerProvider.notifier).seek(line.timestamp);
-                  },
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+  Widget _buildSyncedKaraokeDesktop() {
+    return SyncedLyricsList(
+      lines: _lyricsResult!.lines,
+      fontSize: 24,
+      activeScale: 1.18,
+      lineSpacing: 12,
+      maxWidth: 760,
+      showScrollbar: true,
+      glow: true,
+      listPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 160),
     );
   }
 
@@ -295,68 +223,6 @@ class _DesktopLyricsViewState extends ConsumerState<DesktopLyricsView> {
                   height: 2.0,
                 ),
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DesktopLyricsLineTile extends StatefulWidget {
-  final LrcLine line;
-  final bool isActive;
-  final bool isPast;
-  final VoidCallback onTap;
-
-  const _DesktopLyricsLineTile({
-    super.key,
-    required this.line,
-    required this.isActive,
-    required this.isPast,
-    required this.onTap,
-  });
-
-  @override
-  State<_DesktopLyricsLineTile> createState() => _DesktopLyricsLineTileState();
-}
-
-class _DesktopLyricsLineTileState extends State<_DesktopLyricsLineTile> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    Color textColor;
-    if (widget.isActive) {
-      textColor = Colors.white;
-    } else if (_isHovered) {
-      textColor = Colors.white.withValues(alpha: 0.9);
-    } else if (widget.isPast) {
-      textColor = AppTheme.secondary.withValues(alpha: 0.5);
-    } else {
-      textColor = AppTheme.secondary.withValues(alpha: 0.8);
-    }
-
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
-            style: TextStyle(
-              fontSize: widget.isActive ? 28 : 22,
-              fontWeight: widget.isActive ? FontWeight.w900 : FontWeight.w700,
-              color: textColor,
-              height: 1.4,
-              shadows: widget.isActive ? AppTheme.textGlow : null,
-            ),
-            child: Text(
-              widget.line.text.isEmpty ? '♪' : widget.line.text,
             ),
           ),
         ),

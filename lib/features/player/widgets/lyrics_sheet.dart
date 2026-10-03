@@ -6,7 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../data/apis/lrclib_api.dart';
 import '../../../data/apis/lrclib_provider.dart';
 import '../player_models.dart';
-import '../player_providers.dart';
+import 'synced_lyrics_list.dart';
 
 class LyricsSheet extends ConsumerStatefulWidget {
   final SyncoraTrack track;
@@ -20,9 +20,6 @@ class LyricsSheet extends ConsumerStatefulWidget {
 class _LyricsSheetState extends ConsumerState<LyricsSheet> {
   LRCLibResult? _lyricsResult;
   bool _isLoading = true;
-  final ScrollController _scrollController = ScrollController();
-  final Map<int, GlobalKey> _lineKeys = {};
-  int _lastHighlightedIndex = -1;
 
   @override
   void initState() {
@@ -37,17 +34,9 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
       setState(() {
         _isLoading = true;
         _lyricsResult = null;
-        _lineKeys.clear();
-        _lastHighlightedIndex = -1;
       });
       _fetchLyrics();
     }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
   }
 
   Future<void> _fetchLyrics() async {
@@ -68,37 +57,8 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
     }
   }
 
-  // Mismo enfoque que DesktopLyricsView: Scrollable.ensureVisible con alignment 0.5
-  // centra la línea usando su alto real (en vez de estimar con un alto fijo por línea,
-  // que en móvil dejaba la línea resaltada pegada arriba porque el estimado no
-  // coincidía con el alto real, sobre todo con líneas que ocupan más de un renglón).
-  void _scrollToCurrentLine(int activeIndex) {
-    if (activeIndex != _lastHighlightedIndex && _scrollController.hasClients) {
-      _lastHighlightedIndex = activeIndex;
-      final key = _lineKeys[activeIndex];
-      if (key?.currentContext != null) {
-        Scrollable.ensureVisible(
-          key!.currentContext!,
-          alignment: 0.5,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-        );
-      } else {
-        final viewportHeight = _scrollController.position.viewportDimension;
-        final targetOffset = (activeIndex * 48.0) - (viewportHeight * 0.5);
-        _scrollController.animateTo(
-          targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final currentPosition = ref.watch(playerStateProvider.select((s) => s.engine.position));
-
     return Container(
       height: MediaQuery.sizeOf(context).height * 0.75,
       decoration: const BoxDecoration(
@@ -177,7 +137,7 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
                         ),
                       )
                     : _lyricsResult!.hasSynced
-                        ? _buildSyncedKaraokeView(currentPosition)
+                        ? _buildSyncedKaraokeView()
                         : _buildPlainLyricsView(),
           ),
         ],
@@ -185,55 +145,13 @@ class _LyricsSheetState extends ConsumerState<LyricsSheet> {
     );
   }
 
-  Widget _buildSyncedKaraokeView(Duration currentPosition) {
-    final lines = _lyricsResult!.lines;
-
-    int activeIndex = -1;
-    for (int i = 0; i < lines.length; i++) {
-      if (currentPosition >= lines[i].timestamp) {
-        activeIndex = i;
-      } else {
-        break;
-      }
-    }
-
-    if (activeIndex >= 0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToCurrentLine(activeIndex);
-      });
-    }
-
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      itemCount: lines.length,
-      itemBuilder: (context, index) {
-        final line = lines[index];
-        final isActive = index == activeIndex;
-        final isPast = index < activeIndex;
-
-        return InkWell(
-          key: _lineKeys.putIfAbsent(index, () => GlobalKey()),
-          onTap: () {
-            ref.read(syncoraPlayerControllerProvider.notifier).seek(line.timestamp);
-          },
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-            child: AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              style: TextStyle(
-                fontSize: isActive ? 22 : 16,
-                fontWeight: isActive ? FontWeight.w900 : FontWeight.w500,
-                color: isActive
-                    ? AppTheme.primary
-                    : (isPast ? AppTheme.secondary.withValues(alpha: 0.6) : AppTheme.secondary),
-              ),
-              child: Text(line.text.isEmpty ? '♪' : line.text),
-            ),
-          ),
-        );
-      },
+  Widget _buildSyncedKaraokeView() {
+    return SyncedLyricsList(
+      lines: _lyricsResult!.lines,
+      fontSize: 18,
+      activeScale: 1.2,
+      lineSpacing: 9,
+      listPadding: const EdgeInsets.fromLTRB(20, 32, 20, 96),
     );
   }
 
