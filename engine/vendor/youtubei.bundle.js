@@ -1,4 +1,3 @@
-"use strict";
 var YouTubeJS = (() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -37,7 +36,7 @@ var YouTubeJS = (() => {
     }
   });
 
-  // dist/src/platform/web.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/platform/web.js
   var web_exports = {};
   __export(web_exports, {
     Actions: () => Actions,
@@ -88,7 +87,7 @@ var YouTubeJS = (() => {
     default: () => web_default
   });
 
-  // dist/src/utils/Utils.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/Utils.js
   var Utils_exports = {};
   __export(Utils_exports, {
     ChannelError: () => ChannelError,
@@ -118,7 +117,7 @@ var YouTubeJS = (() => {
     u8ToBase64: () => u8ToBase64
   });
 
-  // dist/src/parser/helpers.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/helpers.js
   var helpers_exports = {};
   __export(helpers_exports, {
     Maybe: () => Maybe,
@@ -128,7 +127,7 @@ var YouTubeJS = (() => {
     observe: () => observe
   });
 
-  // dist/src/utils/Log.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/Log.js
   var Log_exports = {};
   __export(Log_exports, {
     Level: () => Level,
@@ -179,7 +178,7 @@ var YouTubeJS = (() => {
   }
   __name(setLevel, "setLevel");
 
-  // dist/src/parser/helpers.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/helpers.js
   var isObserved = /* @__PURE__ */ Symbol("ObservedArray.isObserved");
   var _YTNode = class _YTNode {
     constructor() {
@@ -546,7 +545,7 @@ var YouTubeJS = (() => {
   __name(_Memo, "Memo");
   var Memo = _Memo;
 
-  // dist/src/parser/misc.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/misc.js
   var misc_exports = {};
   __export(misc_exports, {
     AccessibilityContext: () => AccessibilityContext,
@@ -557,6 +556,8 @@ var YouTubeJS = (() => {
     CommentsContinuation: () => CommentsContinuation,
     EmojiRun: () => EmojiRun,
     Format: () => Format,
+    PlaylistCollaborationFormSchema: () => PlaylistCollaborationFormSchema,
+    PlaylistCollaborationViewModelPlaylistCollaboratorData: () => PlaylistCollaborationViewModelPlaylistCollaboratorData,
     RendererContext: () => RendererContext,
     SubscriptionButton: () => SubscriptionButton,
     Text: () => Text2,
@@ -565,7 +566,7 @@ var YouTubeJS = (() => {
     VideoDetails: () => VideoDetails
   });
 
-  // dist/src/parser/classes/misc/AccessibilityContext.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/AccessibilityContext.js
   var _AccessibilityContext = class _AccessibilityContext {
     constructor(data) {
       __publicField(this, "label");
@@ -575,7 +576,7 @@ var YouTubeJS = (() => {
   __name(_AccessibilityContext, "AccessibilityContext");
   var AccessibilityContext = _AccessibilityContext;
 
-  // dist/src/parser/classes/misc/AccessibilityData.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/AccessibilityData.js
   var _AccessibilityData = class _AccessibilityData {
     constructor(data) {
       __publicField(this, "accessibility_identifier");
@@ -597,7 +598,7 @@ var YouTubeJS = (() => {
   __name(_AccessibilityData, "AccessibilityData");
   var AccessibilityData = _AccessibilityData;
 
-  // dist/src/parser/parser.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/parser.js
   var parser_exports = {};
   __export(parser_exports, {
     addRuntimeParser: () => addRuntimeParser,
@@ -622,7 +623,7 @@ var YouTubeJS = (() => {
     shouldIgnore: () => shouldIgnore
   });
 
-  // dist/src/parser/nodes.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/nodes.js
   var nodes_exports = {};
   __export(nodes_exports, {
     AboutChannel: () => AboutChannel,
@@ -726,6 +727,7 @@ var YouTubeJS = (() => {
     CompactVideo: () => CompactVideo,
     CompositeVideoPrimaryInfo: () => CompositeVideoPrimaryInfo,
     ConfirmDialog: () => ConfirmDialog,
+    ContentListItemView: () => ContentListItemView,
     ContentMetadataView: () => ContentMetadataView,
     ContentPreviewImageView: () => ContentPreviewImageView,
     ContinuationCommand: () => ContinuationCommand,
@@ -871,6 +873,8 @@ var YouTubeJS = (() => {
     LiveChatTickerPaidStickerItem: () => LiveChatTickerPaidStickerItem,
     LiveChatTickerSponsorItem: () => LiveChatTickerSponsorItem,
     LiveChatViewerEngagementMessage: () => LiveChatViewerEngagementMessage,
+    LiveStreamOfflineSlate: () => LiveStreamOfflineSlate,
+    LiveStreamability: () => LiveStreamability,
     LockupMetadataView: () => LockupMetadataView,
     LockupView: () => LockupView,
     MacroMarkersInfoItem: () => MacroMarkersInfoItem,
@@ -972,6 +976,7 @@ var YouTubeJS = (() => {
     PlayerStoryboardSpec: () => PlayerStoryboardSpec,
     Playlist: () => Playlist,
     PlaylistAddToOption: () => PlaylistAddToOption,
+    PlaylistCollaborationView: () => PlaylistCollaborationView,
     PlaylistCustomThumbnail: () => PlaylistCustomThumbnail,
     PlaylistEditEndpoint: () => PlaylistEditEndpoint,
     PlaylistHeader: () => PlaylistHeader,
@@ -1161,6 +1166,7 @@ var YouTubeJS = (() => {
     VideoDescriptionInfocardsSection: () => VideoDescriptionInfocardsSection,
     VideoDescriptionMusicSection: () => VideoDescriptionMusicSection,
     VideoDescriptionTranscriptSection: () => VideoDescriptionTranscriptSection,
+    VideoDescriptionYouchatSectionView: () => VideoDescriptionYouchatSectionView,
     VideoInfoCardContent: () => VideoInfoCardContent,
     VideoMetadataCarouselView: () => VideoMetadataCarouselView,
     VideoOwner: () => VideoOwner,
@@ -1168,6 +1174,7 @@ var YouTubeJS = (() => {
     VideoSecondaryInfo: () => VideoSecondaryInfo,
     VideoSummaryContentView: () => VideoSummaryContentView,
     VideoSummaryParagraphView: () => VideoSummaryParagraphView,
+    VideoTitleHeaderView: () => VideoTitleHeaderView,
     VideoViewCount: () => VideoViewCount,
     ViewCountFactoid: () => ViewCountFactoid,
     VoiceReplyContainerView: () => VoiceReplyContainerView,
@@ -1182,7 +1189,7 @@ var YouTubeJS = (() => {
     YpcTrailer: () => YpcTrailer
   });
 
-  // dist/src/utils/Cache.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/Cache.js
   var _cache;
   var _UniversalCache = class _UniversalCache {
     constructor(persistent, persistent_directory) {
@@ -1206,7 +1213,7 @@ var YouTubeJS = (() => {
   __name(_UniversalCache, "UniversalCache");
   var UniversalCache = _UniversalCache;
 
-  // dist/src/utils/Constants.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/Constants.js
   var Constants_exports = {};
   __export(Constants_exports, {
     CLIENTS: () => CLIENTS,
@@ -1284,6 +1291,15 @@ var YouTubeJS = (() => {
       DEVICE_MODEL: "Quest 3",
       USER_AGENT: "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip"
     },
+    VISIONOS: {
+      NAME: "VISIONOS",
+      VERSION: "1.02",
+      DEVICE_MAKE: "Apple",
+      DEVICE_MODEL: "RealityDevice17,1",
+      OS_NAME: "visionOS",
+      OS_VERSION: "26.5.23O471",
+      USER_AGENT: "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
     YTSTUDIO_ANDROID: {
       NAME: "ANDROID_CREATOR",
       VERSION: "22.43.101"
@@ -1330,6 +1346,7 @@ var YouTubeJS = (() => {
     ANDROID_CREATOR: "14",
     ANDROID_MUSIC: "21",
     ANDROID_VR: "28",
+    VISIONOS: "101",
     TVHTML5: "7",
     TVHTML5_SIMPLY: "74",
     TVHTML5_SIMPLY_EMBEDDED_PLAYER: "85",
@@ -1347,55 +1364,79 @@ var YouTubeJS = (() => {
     "accept-encoding": "gzip, deflate",
     "content-type": "application/json"
   };
-  var SUPPORTED_CLIENTS = ["IOS", "WEB", "MWEB", "YTKIDS", "YTMUSIC", "ANDROID", "ANDROID_VR", "YTSTUDIO_ANDROID", "YTMUSIC_ANDROID", "TV", "TV_SIMPLY", "TV_EMBEDDED", "WEB_EMBEDDED", "WEB_CREATOR"];
+  var SUPPORTED_CLIENTS = ["IOS", "WEB", "MWEB", "YTKIDS", "YTMUSIC", "ANDROID", "ANDROID_VR", "VISIONOS", "YTSTUDIO_ANDROID", "YTMUSIC_ANDROID", "TV", "TV_SIMPLY", "TV_EMBEDDED", "WEB_EMBEDDED", "WEB_CREATOR"];
 
-  // dist/src/utils/EventEmitterLike.js
-  var _legacy_listeners;
-  var _EventEmitterLike = class _EventEmitterLike extends EventTarget {
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/EventEmitterLike.js
+  var _EventEmitterLike = class _EventEmitterLike {
     constructor() {
-      super();
-      __privateAdd(this, _legacy_listeners, /* @__PURE__ */ new Map());
+      __publicField(this, "listeners", /* @__PURE__ */ new Map());
+      __publicField(this, "onceWrappers", /* @__PURE__ */ new Map());
     }
     emit(type, ...args) {
-      const event = new Platform.shim.CustomEvent(type, { detail: args });
-      this.dispatchEvent(event);
+      const listeners = this.listeners.get(type);
+      if (!listeners || listeners.size === 0)
+        return;
+      for (const listener of [...listeners])
+        listener(...args);
     }
     on(type, listener) {
-      const wrapper = /* @__PURE__ */ __name((ev) => {
-        if (ev instanceof Platform.shim.CustomEvent) {
-          listener(...ev.detail);
-        } else {
-          listener(ev);
-        }
-      }, "wrapper");
-      __privateGet(this, _legacy_listeners).set(listener, wrapper);
-      this.addEventListener(type, wrapper);
+      let listeners = this.listeners.get(type);
+      if (!listeners) {
+        listeners = /* @__PURE__ */ new Set();
+        this.listeners.set(type, listeners);
+      }
+      listeners.add(listener);
     }
     once(type, listener) {
-      const wrapper = /* @__PURE__ */ __name((ev) => {
-        if (ev instanceof Platform.shim.CustomEvent) {
-          listener(...ev.detail);
-        } else {
-          listener(ev);
-        }
+      const wrapper = /* @__PURE__ */ __name((...args) => {
         this.off(type, listener);
+        listener(...args);
       }, "wrapper");
-      __privateGet(this, _legacy_listeners).set(listener, wrapper);
-      this.addEventListener(type, wrapper);
+      let wrappersByType = this.onceWrappers.get(listener);
+      if (!wrappersByType) {
+        wrappersByType = /* @__PURE__ */ new Map();
+        this.onceWrappers.set(listener, wrappersByType);
+      }
+      wrappersByType.set(type, wrapper);
+      this.on(type, wrapper);
     }
     off(type, listener) {
-      const wrapper = __privateGet(this, _legacy_listeners).get(listener);
-      if (wrapper) {
-        this.removeEventListener(type, wrapper);
-        __privateGet(this, _legacy_listeners).delete(listener);
+      const listeners = this.listeners.get(type);
+      if (!listeners)
+        return;
+      let target = listener;
+      const wrappersByType = this.onceWrappers.get(listener);
+      if (wrappersByType) {
+        const onceWrapper = wrappersByType.get(type);
+        if (onceWrapper) {
+          target = onceWrapper;
+          wrappersByType.delete(type);
+          if (wrappersByType.size === 0)
+            this.onceWrappers.delete(listener);
+        }
+      }
+      listeners.delete(target);
+      if (listeners.size === 0)
+        this.listeners.delete(type);
+    }
+    removeAllListeners(type) {
+      if (!type) {
+        this.listeners.clear();
+        this.onceWrappers.clear();
+        return;
+      }
+      this.listeners.delete(type);
+      for (const [listener, wrappersByType] of this.onceWrappers.entries()) {
+        wrappersByType.delete(type);
+        if (wrappersByType.size === 0)
+          this.onceWrappers.delete(listener);
       }
     }
   };
-  _legacy_listeners = new WeakMap();
   __name(_EventEmitterLike, "EventEmitterLike");
   var EventEmitterLike = _EventEmitterLike;
 
-  // dist/src/utils/FormatUtils.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/FormatUtils.js
   var FormatUtils_exports = {};
   __export(FormatUtils_exports, {
     chooseFormat: () => chooseFormat,
@@ -1403,7 +1444,7 @@ var YouTubeJS = (() => {
     toDash: () => toDash
   });
 
-  // dist/src/utils/DashUtils.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/DashUtils.js
   var XML_CHARACTER_MAP = {
     "&": "&amp;",
     '"': "&quot;",
@@ -1466,7 +1507,7 @@ var YouTubeJS = (() => {
   }
   __name(Fragment, "Fragment");
 
-  // dist/src/parser/classes/PlayerStoryboardSpec.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerStoryboardSpec.js
   var _PlayerStoryboardSpec = class _PlayerStoryboardSpec extends YTNode {
     constructor(data) {
       super();
@@ -1495,10 +1536,10 @@ var YouTubeJS = (() => {
   __publicField(_PlayerStoryboardSpec, "type", "PlayerStoryboardSpec");
   var PlayerStoryboardSpec = _PlayerStoryboardSpec;
 
-  // dist/package.json
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/package.json
   var package_default = {
     name: "youtubei.js",
-    version: "17.2.0",
+    version: "18.1.0",
     description: "A JavaScript client for YouTube's private API, known as InnerTube.",
     type: "module",
     types: "./dist/src/platform/lib.d.ts",
@@ -1514,9 +1555,6 @@ var YouTubeJS = (() => {
           "./dist/src/platform/lib.d.ts"
         ],
         "web.bundle": [
-          "./dist/src/platform/lib.d.ts"
-        ],
-        "web.bundle.min": [
           "./dist/src/platform/lib.d.ts"
         ],
         "cf-worker": [
@@ -1602,25 +1640,25 @@ var YouTubeJS = (() => {
     dependencies: {
       "@bufbuild/protobuf": "^2.0.0",
       fflate: "^0.8.2",
-      meriyah: "^6.1.4"
+      meriyah: "^7.3.1"
     },
     devDependencies: {
       "@eslint/js": "^9.37.0",
       "@types/estree": "^1.0.6",
-      "@types/node": "^25.0.3",
+      "@types/node": "^26.6.2",
       "@typescript-eslint/eslint-plugin": "^8.46.0",
       "@typescript-eslint/parser": "^8.46.0",
-      "cpy-cli": "^6.0.0",
+      "cpy-cli": "^7.0.0",
       esbuild: "^0.28.0",
       eslint: "^10.8.0",
       globals: "^17.0.0",
-      replace: "^1.2.2",
+      replace: "^0.2.2",
       rimraf: "^6.0.1",
       "ts-patch": "^3.0.2",
       "ts-proto": "^2.2.0",
       typedoc: "^0.28.14",
       "typedoc-plugin-markdown": "^4.9.0",
-      typescript: "^5.9.3",
+      typescript: "^6.0.3",
       "typescript-eslint": "^8.46.0",
       vitest: "^4.1.10"
     },
@@ -1641,7 +1679,7 @@ var YouTubeJS = (() => {
     ]
   };
 
-  // dist/src/utils/StreamingInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/StreamingInfo.js
   var TAG_ = "StreamingInfo";
   function getFormatGroupings(formats, is_post_live_dvr) {
     var _a2, _b2, _c;
@@ -1779,9 +1817,9 @@ var YouTubeJS = (() => {
       if (!actions) {
         throw new InnertubeError("Unable to get segment count for this Post Live DVR video without an Actions instance", { format });
       }
-      const target_duration_dec = format.target_duration_dec;
-      if (typeof target_duration_dec !== "number") {
-        throw new InnertubeError("Format is missing target_duration_dec", { format });
+      const target_duration_sec = format.target_duration_sec;
+      if (typeof target_duration_sec !== "number") {
+        throw new InnertubeError("Format is missing target_duration_sec", { format });
       }
       const info3 = {
         is_oft: false,
@@ -1794,7 +1832,7 @@ var YouTubeJS = (() => {
             media_url: `${transformed_url}&sq=$Number$`,
             timeline: [
               {
-                duration: target_duration_dec * 1e3,
+                duration: target_duration_sec * 1e3,
                 repeat_count: shared_post_live_dvr_info.item.segment_count
               }
             ]
@@ -2155,9 +2193,9 @@ format:`, anonymisedFormat);
       if (storyboards.is(PlayerStoryboardSpec)) {
         duration = formats[0].approx_duration_ms / 1e3;
       } else {
-        const target_duration_dec = formats[0].target_duration_dec;
+        const target_duration_dec = formats[0].target_duration_sec;
         if (target_duration_dec === void 0)
-          throw new InnertubeError("Format is missing target_duration_dec", { format: formats[0] });
+          throw new InnertubeError("Format is missing target_duration_sec", { format: formats[0] });
         duration = target_duration_dec;
       }
       image_sets = getImageSets(duration, actions, storyboards, url_transformer);
@@ -2180,7 +2218,7 @@ format:`, anonymisedFormat);
   }
   __name(getStreamingInfo, "getStreamingInfo");
 
-  // dist/src/utils/DashManifest.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/DashManifest.js
   async function OTFPostLiveDvrSegmentInfo({ info: info2 }) {
     if (!info2.is_oft && !info2.is_post_live_dvr)
       return null;
@@ -2286,7 +2324,7 @@ format:`, anonymisedFormat);
   }
   __name(toDash, "toDash");
 
-  // dist/src/utils/FormatUtils.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/FormatUtils.js
   async function download(options, actions, playability_status, streaming_data, player, cpn) {
     if ((playability_status == null ? void 0 : playability_status.status) === "UNPLAYABLE")
       throw new InnertubeError("Video is unplayable", { error_type: "UNPLAYABLE" });
@@ -2437,7 +2475,7 @@ format:`, anonymisedFormat);
   }
   __name(chooseFormat, "chooseFormat");
 
-  // dist/src/utils/HTTPClient.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/HTTPClient.js
   var _session, _cookie, _fetch, _HTTPClient_instances, processJsonPayload_fn, setupCommonHeaders_fn, adjustContext_fn;
   var _HTTPClient = class _HTTPClient {
     constructor(session, cookie, fetch) {
@@ -2484,6 +2522,8 @@ format:`, anonymisedFormat);
           request_headers.set("User-Agent", CLIENTS.IOS.USER_AGENT);
         } else if (adjustedClientName === CLIENTS.ANDROID_VR.NAME) {
           request_headers.set("User-Agent", CLIENTS.ANDROID_VR.USER_AGENT);
+        } else if (adjustedClientName === CLIENTS.VISIONOS.NAME) {
+          request_headers.set("User-Agent", CLIENTS.VISIONOS.USER_AGENT);
         }
       } else if (content_type === "application/x-protobuf") {
         if (Platform.shim.server) {
@@ -2622,6 +2662,18 @@ format:`, anonymisedFormat);
         ctx.client.clientFormFactor = "SMALL_FORM_FACTOR";
         ctx.client.clientName = CLIENTS.ANDROID_VR.NAME;
         break;
+      case "VISIONOS":
+        ctx.client.deviceMake = CLIENTS.VISIONOS.DEVICE_MAKE;
+        ctx.client.deviceModel = CLIENTS.VISIONOS.DEVICE_MODEL;
+        ctx.client.clientVersion = CLIENTS.VISIONOS.VERSION;
+        ctx.client.clientName = CLIENTS.VISIONOS.NAME;
+        ctx.client.platform = "MOBILE";
+        ctx.client.osName = CLIENTS.VISIONOS.OS_NAME;
+        ctx.client.osVersion = CLIENTS.VISIONOS.OS_VERSION;
+        ctx.client.userAgent = CLIENTS.VISIONOS.USER_AGENT;
+        delete ctx.client.browserName;
+        delete ctx.client.browserVersion;
+        break;
       case "YTMUSIC_ANDROID":
         ctx.client.clientVersion = CLIENTS.YTMUSIC_ANDROID.VERSION;
         ctx.client.clientFormFactor = "SMALL_FORM_FACTOR";
@@ -2698,7 +2750,7 @@ format:`, anonymisedFormat);
   __name(_HTTPClient, "HTTPClient");
   var HTTPClient = _HTTPClient;
 
-  // dist/src/utils/BinarySerializer.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/BinarySerializer.js
   var BinarySerializer_exports = {};
   __export(BinarySerializer_exports, {
     MAGIC_HEADER: () => MAGIC_HEADER,
@@ -2707,7 +2759,7 @@ format:`, anonymisedFormat);
     serialize: () => serialize
   });
 
-  // node_modules/fflate/esm/browser.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/fflate/esm/browser.js
   var u8 = Uint8Array;
   var u16 = Uint16Array;
   var i32 = Int32Array;
@@ -2903,6 +2955,7 @@ format:`, anonymisedFormat);
     "stream finished",
     "no stream handler",
     ,
+    // determined by compression function
     "no callback",
     "invalid UTF-8 data",
     "extra field too long",
@@ -3458,7 +3511,7 @@ format:`, anonymisedFormat);
   } catch (e) {
   }
 
-  // dist/src/utils/BinarySerializer.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/BinarySerializer.js
   var MAGIC_HEADER = 5849684;
   var VERSION = 2;
   function serialize(data) {
@@ -3483,9 +3536,9 @@ format:`, anonymisedFormat);
     if (magic !== MAGIC_HEADER) {
       throw new Error("Invalid binary format: magic header mismatch");
     }
-    const version = view.getUint32(4, true);
-    if (version !== VERSION) {
-      throw new Error(`Unsupported binary format version: ${version}`);
+    const version2 = view.getUint32(4, true);
+    if (version2 !== VERSION) {
+      throw new Error(`Unsupported binary format version: ${version2}`);
     }
     const length = view.getUint32(8, true);
     if (12 + length > buffer.byteLength) {
@@ -3498,7 +3551,7 @@ format:`, anonymisedFormat);
   }
   __name(deserialize, "deserialize");
 
-  // dist/src/utils/ProtoUtils.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/ProtoUtils.js
   var ProtoUtils_exports = {};
   __export(ProtoUtils_exports, {
     decodeVisitorData: () => decodeVisitorData,
@@ -3507,64 +3560,47 @@ format:`, anonymisedFormat);
     encodeVisitorData: () => encodeVisitorData
   });
 
-  // node_modules/@bufbuild/protobuf/dist/esm/wire/varint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/@bufbuild/protobuf/dist/esm/wire/varint.js
   function varint64read() {
-    let lowBits = 0;
-    let highBits = 0;
+    const buf = this.buf;
+    let pos = this.pos;
+    let lo = 0;
+    let hi = 0;
     for (let shift = 0; shift < 28; shift += 7) {
-      let b = this.buf[this.pos++];
-      lowBits |= (b & 127) << shift;
+      const b = buf[pos++];
+      lo |= (b & 127) << shift;
       if ((b & 128) == 0) {
+        this.pos = pos;
         this.assertBounds();
-        return [lowBits, highBits];
+        this.varint64Lo = lo;
+        this.varint64Hi = hi;
+        return;
       }
     }
-    let middleByte = this.buf[this.pos++];
-    lowBits |= (middleByte & 15) << 28;
-    highBits = (middleByte & 112) >> 4;
+    const middleByte = buf[pos++];
+    lo |= (middleByte & 15) << 28;
+    hi = (middleByte & 112) >> 4;
     if ((middleByte & 128) == 0) {
+      this.pos = pos;
       this.assertBounds();
-      return [lowBits, highBits];
+      this.varint64Lo = lo;
+      this.varint64Hi = hi;
+      return;
     }
     for (let shift = 3; shift <= 31; shift += 7) {
-      let b = this.buf[this.pos++];
-      highBits |= (b & 127) << shift;
+      const b = buf[pos++];
+      hi |= (b & 127) << shift;
       if ((b & 128) == 0) {
+        this.pos = pos;
         this.assertBounds();
-        return [lowBits, highBits];
+        this.varint64Lo = lo;
+        this.varint64Hi = hi;
+        return;
       }
     }
     throw new Error("invalid varint");
   }
   __name(varint64read, "varint64read");
-  function varint64write(lo, hi, bytes) {
-    for (let i2 = 0; i2 < 28; i2 = i2 + 7) {
-      const shift = lo >>> i2;
-      const hasNext = !(shift >>> 7 == 0 && hi == 0);
-      const byte = (hasNext ? shift | 128 : shift) & 255;
-      bytes.push(byte);
-      if (!hasNext) {
-        return;
-      }
-    }
-    const splitBits = lo >>> 28 & 15 | (hi & 7) << 4;
-    const hasMoreBits = !(hi >> 3 == 0);
-    bytes.push((hasMoreBits ? splitBits | 128 : splitBits) & 255);
-    if (!hasMoreBits) {
-      return;
-    }
-    for (let i2 = 3; i2 < 31; i2 = i2 + 7) {
-      const shift = hi >>> i2;
-      const hasNext = !(shift >>> 7 == 0);
-      const byte = (hasNext ? shift | 128 : shift) & 255;
-      bytes.push(byte);
-      if (!hasNext) {
-        return;
-      }
-    }
-    bytes.push(hi >>> 31 & 1);
-  }
-  __name(varint64write, "varint64write");
   var TWO_PWR_32_DBL = 4294967296;
   function int64FromString(dec) {
     const minus = dec[0] === "-";
@@ -3646,44 +3682,28 @@ format:`, anonymisedFormat);
     const partial = String(digit1e7);
     return "0000000".slice(partial.length) + partial;
   }, "decimalFrom1e7WithLeadingZeros");
-  function varint32write(value, bytes) {
-    if (value >= 0) {
-      while (value > 127) {
-        bytes.push(value & 127 | 128);
-        value = value >>> 7;
-      }
-      bytes.push(value);
-    } else {
-      for (let i2 = 0; i2 < 9; i2++) {
-        bytes.push(value & 127 | 128);
-        value = value >> 7;
-      }
-      bytes.push(1);
-    }
-  }
-  __name(varint32write, "varint32write");
   function varint32read() {
     let b = this.buf[this.pos++];
-    let result = b & 127;
-    if ((b & 128) == 0) {
+    if ((b & 128) === 0) {
       this.assertBounds();
-      return result;
+      return b;
     }
+    let result = b & 127;
     b = this.buf[this.pos++];
     result |= (b & 127) << 7;
-    if ((b & 128) == 0) {
+    if ((b & 128) === 0) {
       this.assertBounds();
       return result;
     }
     b = this.buf[this.pos++];
     result |= (b & 127) << 14;
-    if ((b & 128) == 0) {
+    if ((b & 128) === 0) {
       this.assertBounds();
       return result;
     }
     b = this.buf[this.pos++];
     result |= (b & 127) << 21;
-    if ((b & 128) == 0) {
+    if ((b & 128) === 0) {
       this.assertBounds();
       return result;
     }
@@ -3691,18 +3711,18 @@ format:`, anonymisedFormat);
     result |= (b & 15) << 28;
     for (let readBytes = 5; (b & 128) !== 0 && readBytes < 10; readBytes++)
       b = this.buf[this.pos++];
-    if ((b & 128) != 0)
+    if ((b & 128) !== 0)
       throw new Error("invalid varint");
     this.assertBounds();
     return result >>> 0;
   }
   __name(varint32read, "varint32read");
 
-  // node_modules/@bufbuild/protobuf/dist/esm/proto-int64.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/@bufbuild/protobuf/dist/esm/proto-int64.js
   var protoInt64 = /* @__PURE__ */ makeInt64Support();
   function makeInt64Support() {
     const dv = new DataView(new ArrayBuffer(8));
-    const ok = typeof BigInt === "function" && typeof dv.getBigInt64 === "function" && typeof dv.getBigUint64 === "function" && typeof dv.setBigInt64 === "function" && typeof dv.setBigUint64 === "function" && (!!globalThis.Deno || typeof process != "object" || typeof process.env != "object" || process.env.BUF_BIGINT_DISABLE !== "1");
+    const ok = typeof BigInt === "function" && typeof dv.getBigInt64 === "function" && typeof dv.getBigUint64 === "function" && typeof dv.setBigInt64 === "function" && typeof dv.setBigUint64 === "function" && (!!globalThis.Deno || !!globalThis.Bun || typeof process != "object" || typeof process.env != "object" || process.env.BUF_BIGINT_DISABLE !== "1");
     if (ok) {
       const MIN = BigInt("-9223372036854775808");
       const MAX = BigInt("9223372036854775807");
@@ -3804,25 +3824,36 @@ format:`, anonymisedFormat);
   }
   __name(assertUInt64String, "assertUInt64String");
 
-  // node_modules/@bufbuild/protobuf/dist/esm/wire/text-encoding.js
-  var symbol = /* @__PURE__ */ Symbol.for("@bufbuild/protobuf/text-encoding");
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/@bufbuild/protobuf/dist/esm/wire/text-encoding.js
+  var te;
+  function configureTextEncoding(textEncoding) {
+    var _a2;
+    te = Object.assign(Object.assign({}, textEncoding), { encodeUtf8Into: (_a2 = textEncoding.encodeUtf8Into) !== null && _a2 !== void 0 ? _a2 : emulateEncodeInto(textEncoding.encodeUtf8.bind(textEncoding)) });
+  }
+  __name(configureTextEncoding, "configureTextEncoding");
   function getTextEncoding() {
-    if (globalThis[symbol] == void 0) {
-      const te = new globalThis.TextEncoder();
-      const td2 = new globalThis.TextDecoder();
-      let tdStrict;
-      globalThis[symbol] = {
+    if (!te) {
+      const globals = globalThis;
+      if (!globals.TextEncoder || !globals.TextDecoder) {
+        throw new Error("encoding API missing: install TextEncoder and TextDecoder on globalThis");
+      }
+      const textEncoder = new globals.TextEncoder();
+      const textDecoder = new globals.TextDecoder();
+      let textDecoderStrict;
+      const config = {
         encodeUtf8(text) {
-          return te.encode(text);
+          return textEncoder.encode(text);
         },
         decodeUtf8(bytes, strict) {
           if (strict) {
-            if (tdStrict === void 0) {
-              tdStrict = new globalThis.TextDecoder("utf-8", { fatal: true });
+            if (!textDecoderStrict) {
+              textDecoderStrict = new globals.TextDecoder("utf-8", {
+                fatal: true
+              });
             }
-            return tdStrict.decode(bytes);
+            return textDecoderStrict.decode(bytes);
           }
-          return td2.decode(bytes);
+          return textDecoder.decode(bytes);
         },
         checkUtf8(text) {
           try {
@@ -3833,12 +3864,30 @@ format:`, anonymisedFormat);
           }
         }
       };
+      if (textEncoder.encodeInto) {
+        config.encodeUtf8Into = textEncoder.encodeInto.bind(textEncoder);
+      }
+      const nativeStringIsWellFormed = String.prototype.isWellFormed;
+      if (nativeStringIsWellFormed) {
+        config.checkUtf8 = (text) => {
+          return nativeStringIsWellFormed.call(text);
+        };
+      }
+      configureTextEncoding(config);
     }
-    return globalThis[symbol];
+    return te;
   }
   __name(getTextEncoding, "getTextEncoding");
+  function emulateEncodeInto(encodeUtf8) {
+    return (text, dest) => {
+      const bytes = encodeUtf8(text);
+      dest.set(bytes);
+      return { written: bytes.byteLength };
+    };
+  }
+  __name(emulateEncodeInto, "emulateEncodeInto");
 
-  // node_modules/@bufbuild/protobuf/dist/esm/wire/binary-encoding.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/@bufbuild/protobuf/dist/esm/wire/binary-encoding.js
   var WireType;
   (function(WireType2) {
     WireType2[WireType2["Varint"] = 0] = "Varint";
@@ -3848,37 +3897,50 @@ format:`, anonymisedFormat);
     WireType2[WireType2["EndGroup"] = 4] = "EndGroup";
     WireType2[WireType2["Bit32"] = 5] = "Bit32";
   })(WireType || (WireType = {}));
-  var FLOAT32_MAX = 34028234663852886e22;
-  var FLOAT32_MIN = -34028234663852886e22;
   var UINT32_MAX = 4294967295;
   var INT32_MAX = 2147483647;
   var INT32_MIN = -2147483648;
   var _BinaryWriter = class _BinaryWriter {
-    constructor(encodeUtf8 = getTextEncoding().encodeUtf8) {
-      this.encodeUtf8 = encodeUtf8;
-      this.stack = [];
-      this.chunks = [];
-      this.buf = [];
+    constructor(encodeUtf8) {
+      this.stackPos = [];
+      this.encodeUtf8Into = encodeUtf8 ? emulateEncodeInto(encodeUtf8) : getTextEncoding().encodeUtf8Into;
+      this.buffer = EMPTY_BUFFER;
+      this.viewCache = EMPTY_VIEW;
+      this.pos = 0;
+    }
+    ensureCapacity(size) {
+      const required = this.pos + size;
+      if (required > this.buffer.length) {
+        let newLen = this.buffer.length || INITIAL_SIZE;
+        while (newLen < required)
+          newLen *= 2;
+        const newBuf = new Uint8Array(newLen);
+        if (this.pos > 0)
+          newBuf.set(this.buffer);
+        this.buffer = newBuf;
+      }
+    }
+    /**
+     * The DataView over `buffer`, rebuilt only if the buffer has grown since it
+     * was last used.
+     */
+    view() {
+      const bytes = this.buffer;
+      const view = this.viewCache;
+      if (view.byteLength === bytes.byteLength)
+        return view;
+      const newView = new DataView(bytes.buffer);
+      this.viewCache = newView;
+      return newView;
     }
     /**
      * Return all bytes written and reset this writer.
      */
     finish() {
-      if (this.buf.length) {
-        this.chunks.push(new Uint8Array(this.buf));
-        this.buf = [];
-      }
-      let len = 0;
-      for (let i2 = 0; i2 < this.chunks.length; i2++)
-        len += this.chunks[i2].length;
-      let bytes = new Uint8Array(len);
-      let offset = 0;
-      for (let i2 = 0; i2 < this.chunks.length; i2++) {
-        bytes.set(this.chunks[i2], offset);
-        offset += this.chunks[i2].length;
-      }
-      this.chunks = [];
-      return bytes;
+      const result = this.buffer.slice(0, this.pos);
+      this.pos = 0;
+      this.stackPos = [];
+      return result;
     }
     /**
      * Start a new fork for length-delimited data like a message
@@ -3887,9 +3949,9 @@ format:`, anonymisedFormat);
      * Must be joined later with `join()`.
      */
     fork() {
-      this.stack.push({ chunks: this.chunks, buf: this.buf });
-      this.chunks = [];
-      this.buf = [];
+      this.stackPos.push(this.pos);
+      this.ensureCapacity(DEFAULT_LEN_PREFIX_SIZE);
+      this.buffer[this.pos++] = 0;
       return this;
     }
     /**
@@ -3897,14 +3959,19 @@ format:`, anonymisedFormat);
      * return to the previous state.
      */
     join() {
-      let chunk = this.finish();
-      let prev = this.stack.pop();
-      if (!prev)
+      const forkPos = this.stackPos.pop();
+      if (forkPos === void 0)
         throw new Error("invalid state, fork stack empty");
-      this.chunks = prev.chunks;
-      this.buf = prev.buf;
-      this.uint32(chunk.byteLength);
-      return this.raw(chunk);
+      const len = this.pos - forkPos - DEFAULT_LEN_PREFIX_SIZE;
+      const lenPrefixSize = varint32Size(len);
+      if (lenPrefixSize > DEFAULT_LEN_PREFIX_SIZE) {
+        this.ensureCapacity(lenPrefixSize - DEFAULT_LEN_PREFIX_SIZE);
+        this.buffer.copyWithin(forkPos + lenPrefixSize, forkPos + DEFAULT_LEN_PREFIX_SIZE, this.pos);
+      }
+      this.pos = forkPos;
+      this.uint32(len);
+      this.pos += len;
+      return this;
     }
     /**
      * Writes a tag (field number and wire type).
@@ -3920,11 +3987,9 @@ format:`, anonymisedFormat);
      * Write a chunk of raw bytes.
      */
     raw(chunk) {
-      if (this.buf.length) {
-        this.chunks.push(new Uint8Array(this.buf));
-        this.buf = [];
-      }
-      this.chunks.push(chunk);
+      this.ensureCapacity(chunk.length);
+      this.buffer.set(chunk, this.pos);
+      this.pos += chunk.length;
       return this;
     }
     /**
@@ -3932,11 +3997,16 @@ format:`, anonymisedFormat);
      */
     uint32(value) {
       assertUInt32(value);
-      while (value > 127) {
-        this.buf.push(value & 127 | 128);
-        value = value >>> 7;
+      this.ensureCapacity(5);
+      if (value < 128) {
+        this.buffer[this.pos++] = value;
+        return this;
       }
-      this.buf.push(value);
+      while (value > 127) {
+        this.buffer[this.pos++] = value & 127 | 128;
+        value >>>= 7;
+      }
+      this.buffer[this.pos++] = value;
       return this;
     }
     /**
@@ -3944,14 +4014,23 @@ format:`, anonymisedFormat);
      */
     int32(value) {
       assertInt32(value);
-      varint32write(value, this.buf);
+      if (value >= 0) {
+        return this.uint32(value);
+      }
+      this.ensureCapacity(10);
+      for (let i2 = 0; i2 < 9; i2++) {
+        this.buffer[this.pos++] = value & 127 | 128;
+        value >>= 7;
+      }
+      this.buffer[this.pos++] = 1;
       return this;
     }
     /**
      * Write a `bool` value, a varint.
      */
     bool(value) {
-      this.buf.push(value ? 1 : 0);
+      this.ensureCapacity(1);
+      this.buffer[this.pos++] = value ? 1 : 0;
       return this;
     }
     /**
@@ -3965,102 +4044,196 @@ format:`, anonymisedFormat);
      * Write a `string` value, length-delimited data converted to UTF-8 text.
      */
     string(value) {
-      let chunk = this.encodeUtf8(value);
-      this.uint32(chunk.byteLength);
-      return this.raw(chunk);
+      if (typeof value !== "string") {
+        value = String(value);
+      }
+      const len = value.length;
+      if (len <= ASCII_MAX_LENGTH) {
+        this.ensureCapacity(len + 1);
+        const ascii = this.buffer;
+        let pos = this.pos;
+        ascii[pos++] = len;
+        let i2 = 0;
+        for (; i2 < len; i2++) {
+          const code = value.charCodeAt(i2);
+          if (code > 127)
+            break;
+          ascii[pos++] = code;
+        }
+        if (i2 == len) {
+          this.pos = pos;
+          return this;
+        }
+      }
+      this.ensureCapacity(len * 3 + 5);
+      const lenPrefixSizeGuess = varint32Size(len);
+      const buf = this.buffer;
+      const start = this.pos;
+      const { written } = this.encodeUtf8Into(value, buf.subarray(start + lenPrefixSizeGuess));
+      const lenPrefixSize = varint32Size(written);
+      if (lenPrefixSize != lenPrefixSizeGuess) {
+        buf.copyWithin(start + lenPrefixSize, start + lenPrefixSizeGuess, start + lenPrefixSizeGuess + written);
+      }
+      this.uint32(written);
+      this.pos += written;
+      return this;
     }
     /**
      * Write a `float` value, 32-bit floating point number.
      */
     float(value) {
       assertFloat32(value);
-      let chunk = new Uint8Array(4);
-      new DataView(chunk.buffer).setFloat32(0, value, true);
-      return this.raw(chunk);
+      this.ensureCapacity(4);
+      this.view().setFloat32(this.pos, value, true);
+      this.pos += 4;
+      return this;
     }
     /**
      * Write a `double` value, a 64-bit floating point number.
      */
     double(value) {
-      let chunk = new Uint8Array(8);
-      new DataView(chunk.buffer).setFloat64(0, value, true);
-      return this.raw(chunk);
+      this.ensureCapacity(8);
+      this.view().setFloat64(this.pos, value, true);
+      this.pos += 8;
+      return this;
     }
     /**
      * Write a `fixed32` value, an unsigned, fixed-length 32-bit integer.
      */
     fixed32(value) {
       assertUInt32(value);
-      let chunk = new Uint8Array(4);
-      new DataView(chunk.buffer).setUint32(0, value, true);
-      return this.raw(chunk);
+      this.ensureCapacity(4);
+      this.view().setUint32(this.pos, value, true);
+      this.pos += 4;
+      return this;
     }
     /**
      * Write a `sfixed32` value, a signed, fixed-length 32-bit integer.
      */
     sfixed32(value) {
       assertInt32(value);
-      let chunk = new Uint8Array(4);
-      new DataView(chunk.buffer).setInt32(0, value, true);
-      return this.raw(chunk);
+      this.ensureCapacity(4);
+      this.view().setInt32(this.pos, value, true);
+      this.pos += 4;
+      return this;
     }
     /**
      * Write a `sint32` value, a signed, zigzag-encoded 32-bit varint.
      */
     sint32(value) {
       assertInt32(value);
-      value = (value << 1 ^ value >> 31) >>> 0;
-      varint32write(value, this.buf);
-      return this;
+      return this.uint32((value << 1 ^ value >> 31) >>> 0);
     }
     /**
      * Write a `sfixed64` value, a signed, fixed-length 64-bit integer.
      */
     sfixed64(value) {
-      let chunk = new Uint8Array(8), view = new DataView(chunk.buffer), tc = protoInt64.enc(value);
-      view.setInt32(0, tc.lo, true);
-      view.setInt32(4, tc.hi, true);
-      return this.raw(chunk);
+      const tc = protoInt64.enc(value);
+      this.ensureCapacity(8);
+      const view = this.view();
+      view.setInt32(this.pos, tc.lo, true);
+      view.setInt32(this.pos + 4, tc.hi, true);
+      this.pos += 8;
+      return this;
     }
     /**
      * Write a `fixed64` value, an unsigned, fixed-length 64 bit integer.
      */
     fixed64(value) {
-      let chunk = new Uint8Array(8), view = new DataView(chunk.buffer), tc = protoInt64.uEnc(value);
-      view.setInt32(0, tc.lo, true);
-      view.setInt32(4, tc.hi, true);
-      return this.raw(chunk);
+      const tc = protoInt64.uEnc(value);
+      this.ensureCapacity(8);
+      const view = this.view();
+      view.setInt32(this.pos, tc.lo, true);
+      view.setInt32(this.pos + 4, tc.hi, true);
+      this.pos += 8;
+      return this;
     }
     /**
      * Write a `int64` value, a signed 64-bit varint.
      */
     int64(value) {
-      let tc = protoInt64.enc(value);
-      varint64write(tc.lo, tc.hi, this.buf);
-      return this;
+      const tc = protoInt64.enc(value);
+      return this.writeVarint64(tc.lo, tc.hi);
     }
     /**
      * Write a `sint64` value, a signed, zig-zag-encoded 64-bit varint.
      */
     sint64(value) {
       const tc = protoInt64.enc(value), sign = tc.hi >> 31, lo = tc.lo << 1 ^ sign, hi = (tc.hi << 1 | tc.lo >>> 31) ^ sign;
-      varint64write(lo, hi, this.buf);
-      return this;
+      return this.writeVarint64(lo, hi);
     }
     /**
      * Write a `uint64` value, an unsigned 64-bit varint.
      */
     uint64(value) {
       const tc = protoInt64.uEnc(value);
-      varint64write(tc.lo, tc.hi, this.buf);
+      return this.writeVarint64(tc.lo, tc.hi);
+    }
+    /**
+     * Write a 64-bit varint directly into the buffer. Accepts the value as
+     * split low/high 32-bit words.
+     *
+     * Ported from varint64write() to avoid the intermediate number[] buffer.
+     * See https://github.com/protocolbuffers/protobuf/blob/8a71927d74a4ce34efe2d8769fda198f52d20d12/js/experimental/runtime/kernel/writer.js#L344
+     */
+    writeVarint64(lo, hi) {
+      this.ensureCapacity(10);
+      const buf = this.buffer;
+      let pos = this.pos;
+      for (let i2 = 0; i2 < 28; i2 = i2 + 7) {
+        const shift = lo >>> i2;
+        const hasNext = !(shift >>> 7 == 0 && hi == 0);
+        buf[pos++] = (hasNext ? shift | 128 : shift) & 255;
+        if (!hasNext) {
+          this.pos = pos;
+          return this;
+        }
+      }
+      const splitBits = lo >>> 28 & 15 | (hi & 7) << 4;
+      const hasMoreBits = !(hi >> 3 == 0);
+      buf[pos++] = (hasMoreBits ? splitBits | 128 : splitBits) & 255;
+      if (!hasMoreBits) {
+        this.pos = pos;
+        return this;
+      }
+      for (let i2 = 3; i2 < 31; i2 = i2 + 7) {
+        const shift = hi >>> i2;
+        const hasNext = !(shift >>> 7 == 0);
+        buf[pos++] = (hasNext ? shift | 128 : shift) & 255;
+        if (!hasNext) {
+          this.pos = pos;
+          return this;
+        }
+      }
+      buf[pos++] = hi >>> 31 & 1;
+      this.pos = pos;
       return this;
     }
   };
   __name(_BinaryWriter, "BinaryWriter");
   var BinaryWriter = _BinaryWriter;
+  var INITIAL_SIZE = 128;
+  var DEFAULT_LEN_PREFIX_SIZE = 1;
+  var EMPTY_BUFFER = new Uint8Array(0);
+  var EMPTY_VIEW = new DataView(EMPTY_BUFFER.buffer);
+  var ASCII_MAX_LENGTH = 32;
+  function varint32Size(value) {
+    if (value < 128)
+      return 1;
+    if (value < 16384)
+      return 2;
+    if (value < 2097152)
+      return 3;
+    if (value < 268435456)
+      return 4;
+    return 5;
+  }
+  __name(varint32Size, "varint32Size");
   var _BinaryReader = class _BinaryReader {
     constructor(buf, decodeUtf8 = getTextEncoding().decodeUtf8) {
       this.decodeUtf8 = decodeUtf8;
+      this.varint64Lo = 0;
+      this.varint64Hi = 0;
       this.varint64 = varint64read;
       this.uint32 = varint32read;
       this.buf = buf;
@@ -4090,9 +4263,11 @@ format:`, anonymisedFormat);
      * Skip one element and return the skipped data.
      *
      * When skipping StartGroup, provide the tags field number to check for
-     * matching field number in the EndGroup tag.
+     * matching field number in the EndGroup tag. Recursion into nested groups
+     * is guarded by the `recursionLimit` argument: When the limit is reached,
+     * this method throws.
      */
-    skip(wireType, fieldNo) {
+    skip(wireType, fieldNo, recursionLimit = 100) {
       let start = this.pos;
       switch (wireType) {
         case WireType.Varint:
@@ -4110,6 +4285,9 @@ format:`, anonymisedFormat);
           this.pos += len;
           break;
         case WireType.StartGroup:
+          if (recursionLimit <= 0) {
+            throw new Error("maximum recursion depth reached");
+          }
           for (; ; ) {
             const [fn, wt] = this.tag();
             if (wt === WireType.EndGroup) {
@@ -4118,7 +4296,7 @@ format:`, anonymisedFormat);
               }
               break;
             }
-            this.skip(wt, fn);
+            this.skip(wt, fn, recursionLimit - 1);
           }
           break;
         default:
@@ -4151,19 +4329,23 @@ format:`, anonymisedFormat);
      * Read a `int64` field, a signed 64-bit varint.
      */
     int64() {
-      return protoInt64.dec(...this.varint64());
+      this.varint64();
+      return protoInt64.dec(this.varint64Lo, this.varint64Hi);
     }
     /**
      * Read a `uint64` field, an unsigned 64-bit varint.
      */
     uint64() {
-      return protoInt64.uDec(...this.varint64());
+      this.varint64();
+      return protoInt64.uDec(this.varint64Lo, this.varint64Hi);
     }
     /**
      * Read a `sint64` field, a signed, zig-zag-encoded 64-bit varint.
      */
     sint64() {
-      let [lo, hi] = this.varint64();
+      this.varint64();
+      let lo = this.varint64Lo;
+      let hi = this.varint64Hi;
       let s = -(lo & 1);
       lo = (lo >>> 1 | (hi & 1) << 31) ^ s;
       hi = hi >>> 1 ^ s;
@@ -4173,8 +4355,13 @@ format:`, anonymisedFormat);
      * Read a `bool` field, a variant.
      */
     bool() {
-      let [lo, hi] = this.varint64();
-      return lo !== 0 || hi !== 0;
+      const b = this.buf[this.pos];
+      if (b < 128) {
+        this.pos++;
+        return b !== 0;
+      }
+      this.varint64();
+      return this.varint64Lo !== 0 || this.varint64Hi !== 0;
     }
     /**
      * Read a `fixed32` field, an unsigned, fixed-length 32-bit integer.
@@ -4226,7 +4413,20 @@ format:`, anonymisedFormat);
      * `strict` is true, throw on invalid UTF-8 instead of substituting U+FFFD.
      */
     string(strict) {
-      return this.decodeUtf8(this.bytes(), strict);
+      const bytes = this.bytes();
+      const len = bytes.length;
+      if (len <= ASCII_MAX_LENGTH) {
+        const codes = new Array(len);
+        for (let i2 = 0; i2 < len; i2++) {
+          const byte = bytes[i2];
+          if (byte > 127) {
+            return this.decodeUtf8(bytes, strict);
+          }
+          codes[i2] = byte;
+        }
+        return String.fromCharCode.apply(String, codes);
+      }
+      return this.decodeUtf8(bytes, strict);
     }
   };
   __name(_BinaryReader, "BinaryReader");
@@ -4261,12 +4461,13 @@ format:`, anonymisedFormat);
     } else if (typeof arg != "number") {
       throw new Error("invalid float32: " + typeof arg);
     }
-    if (Number.isFinite(arg) && (arg > FLOAT32_MAX || arg < FLOAT32_MIN))
+    if (!Number.isFinite(Math.fround(arg)) && Number.isFinite(arg)) {
       throw new Error("invalid float32: " + arg);
+    }
   }
   __name(assertFloat32, "assertFloat32");
 
-  // dist/protos/generated/misc/params.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/misc/params.js
   var SearchFilter_Prioritize = {
     RELEVANCE: 0,
     0: "RELEVANCE",
@@ -6103,7 +6304,7 @@ format:`, anonymisedFormat);
     }
   };
 
-  // dist/src/utils/ProtoUtils.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/ProtoUtils.js
   function encodeVisitorData(id, timestamp) {
     const writer = VisitorData.encode({ id, timestamp });
     return encodeURIComponent(u8ToBase64(writer.finish()).replace(/\+/g, "-").replace(/\//g, "_"));
@@ -6146,7 +6347,7 @@ format:`, anonymisedFormat);
   }
   __name(encodeNextParams, "encodeNextParams");
 
-  // dist/src/utils/javascript/helpers.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/javascript/helpers.js
   var helpers_exports2 = {};
   __export(helpers_exports2, {
     WALK_STOP: () => WALK_STOP,
@@ -6456,7 +6657,7 @@ format:`, anonymisedFormat);
   }
   __name(parseFunctionArguments, "parseFunctionArguments");
 
-  // dist/src/utils/javascript/matchers.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/javascript/matchers.js
   var matchers_exports = {};
   __export(matchers_exports, {
     nsigMatcher: () => nsigMatcher,
@@ -6522,12 +6723,16 @@ format:`, anonymisedFormat);
   }
   __name(timestampMatcher, "timestampMatcher");
 
-  // node_modules/meriyah/dist/meriyah.mjs
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/meriyah/dist/meriyah.mjs
+  var version$1 = "7.3.3";
+  var packageJson = {
+    version: version$1
+  };
   var unicodeLookup = ((compressed, lookup) => {
     const result = new Uint32Array(69632);
     let index = 0;
     let subIndex = 0;
-    while (index < 2571) {
+    while (index < 2597) {
       const inst = compressed[index++];
       if (inst < 0) {
         subIndex -= inst;
@@ -6543,74 +6748,9 @@ format:`, anonymisedFormat);
       }
     }
     return result;
-  })([-1, 2, 26, 2, 27, 2, 5, -1, 0, 77595648, 3, 44, 2, 3, 0, 14, 2, 63, 2, 64, 3, 0, 3, 0, 3168796671, 0, 4294956992, 2, 1, 2, 0, 2, 41, 3, 0, 4, 0, 4294966523, 3, 0, 4, 2, 16, 2, 65, 2, 0, 0, 4294836735, 0, 3221225471, 0, 4294901942, 2, 66, 0, 134152192, 3, 0, 2, 0, 4294951935, 3, 0, 2, 0, 2683305983, 0, 2684354047, 2, 18, 2, 0, 0, 4294961151, 3, 0, 2, 2, 19, 2, 0, 0, 608174079, 2, 0, 2, 60, 2, 7, 2, 6, 0, 4286611199, 3, 0, 2, 2, 1, 3, 0, 3, 0, 4294901711, 2, 40, 0, 4089839103, 0, 2961209759, 0, 1342439375, 0, 4294543342, 0, 3547201023, 0, 1577204103, 0, 4194240, 0, 4294688750, 2, 2, 0, 80831, 0, 4261478351, 0, 4294549486, 2, 2, 0, 2967484831, 0, 196559, 0, 3594373100, 0, 3288319768, 0, 8469959, 0, 65472, 2, 3, 0, 4093640191, 0, 660618719, 0, 65487, 0, 4294828015, 0, 4092591615, 0, 1616920031, 0, 982991, 2, 3, 2, 0, 0, 2163244511, 0, 4227923919, 0, 4236247022, 2, 71, 0, 4284449919, 0, 851904, 2, 4, 2, 12, 0, 67076095, -1, 2, 72, 0, 1073741743, 0, 4093607775, -1, 0, 50331649, 0, 3265266687, 2, 33, 0, 4294844415, 0, 4278190047, 2, 20, 2, 137, -1, 3, 0, 2, 2, 23, 2, 0, 2, 10, 2, 0, 2, 15, 2, 22, 3, 0, 10, 2, 74, 2, 0, 2, 75, 2, 76, 2, 77, 2, 0, 2, 78, 2, 0, 2, 11, 0, 261632, 2, 25, 3, 0, 2, 2, 13, 2, 4, 3, 0, 18, 2, 79, 2, 5, 3, 0, 2, 2, 80, 0, 2151677951, 2, 29, 2, 9, 0, 909311, 3, 0, 2, 0, 814743551, 2, 49, 0, 67090432, 3, 0, 2, 2, 42, 2, 0, 2, 6, 2, 0, 2, 30, 2, 8, 0, 268374015, 2, 110, 2, 51, 2, 0, 2, 81, 0, 134153215, -1, 2, 7, 2, 0, 2, 8, 0, 2684354559, 0, 67044351, 0, 3221160064, 2, 17, -1, 3, 0, 2, 2, 53, 0, 1046528, 3, 0, 3, 2, 9, 2, 0, 2, 54, 0, 4294960127, 2, 10, 2, 6, 2, 11, 0, 4294377472, 2, 12, 3, 0, 16, 2, 13, 2, 0, 2, 82, 2, 10, 2, 0, 2, 83, 2, 84, 2, 85, 0, 12288, 2, 55, 0, 1048577, 2, 86, 2, 14, -1, 2, 14, 0, 131042, 2, 87, 2, 88, 2, 89, 2, 0, 2, 34, -83, 3, 0, 7, 0, 1046559, 2, 0, 2, 15, 2, 0, 0, 2147516671, 2, 21, 3, 90, 2, 2, 0, -16, 2, 91, 0, 524222462, 2, 4, 2, 0, 0, 4269801471, 2, 4, 3, 0, 2, 2, 28, 2, 16, 3, 0, 2, 2, 17, 2, 0, -1, 2, 18, -16, 3, 0, 206, -2, 3, 0, 692, 2, 73, -1, 2, 18, 2, 10, 3, 0, 8, 2, 93, 2, 133, 2, 0, 0, 3220242431, 3, 0, 3, 2, 19, 2, 94, 2, 95, 3, 0, 2, 2, 96, 2, 0, 2, 97, 2, 46, 2, 0, 0, 4351, 2, 0, 2, 9, 3, 0, 2, 0, 67043391, 0, 3909091327, 2, 0, 2, 24, 2, 9, 2, 20, 3, 0, 2, 0, 67076097, 2, 8, 2, 0, 2, 21, 0, 67059711, 0, 4236247039, 3, 0, 2, 0, 939524103, 0, 8191999, 2, 101, 2, 102, 2, 22, 2, 23, 3, 0, 3, 0, 67057663, 3, 0, 349, 2, 103, 2, 104, 2, 7, -264, 3, 0, 11, 2, 24, 3, 0, 2, 2, 32, -1, 0, 3774349439, 2, 105, 2, 106, 3, 0, 2, 2, 19, 2, 107, 3, 0, 10, 2, 10, 2, 18, 2, 0, 2, 47, 2, 0, 2, 31, 2, 108, 2, 25, 0, 1638399, 0, 57344, 2, 109, 3, 0, 3, 2, 20, 2, 26, 2, 27, 2, 5, 2, 28, 2, 0, 2, 8, 2, 111, -1, 2, 112, 2, 113, 2, 114, -1, 3, 0, 3, 2, 12, -2, 2, 0, 2, 29, -3, 0, 536870912, -4, 2, 20, 2, 0, 2, 36, 0, 1, 2, 0, 2, 67, 2, 6, 2, 12, 2, 10, 2, 0, 2, 115, -1, 3, 0, 4, 2, 10, 2, 23, 2, 116, 2, 7, 2, 0, 2, 117, 2, 0, 2, 118, 2, 119, 2, 120, 2, 0, 2, 9, 3, 0, 9, 2, 21, 2, 30, 2, 31, 2, 121, 2, 122, -2, 2, 123, 2, 124, 2, 30, 2, 21, 2, 8, -2, 2, 125, 2, 30, 2, 32, -2, 2, 0, 2, 39, -2, 0, 4277137519, 0, 2269118463, -1, 3, 20, 2, -1, 2, 33, 2, 38, 2, 0, 3, 30, 2, 2, 35, 2, 19, -3, 3, 0, 2, 2, 34, -1, 2, 0, 2, 35, 2, 0, 2, 35, 2, 0, 2, 48, 2, 0, 0, 4294950463, 2, 37, -7, 2, 0, 0, 203775, 2, 57, 0, 4026531840, 2, 20, 2, 43, 2, 36, 2, 18, 2, 37, 2, 18, 2, 126, 2, 21, 3, 0, 2, 2, 38, 0, 2151677888, 2, 0, 2, 12, 0, 4294901764, 2, 144, 2, 0, 2, 58, 2, 56, 0, 5242879, 3, 0, 2, 0, 402644511, -1, 2, 128, 2, 39, 0, 3, -1, 2, 129, 2, 130, 2, 0, 0, 67045375, 2, 40, 0, 4226678271, 0, 3766565279, 0, 2039759, 2, 132, 2, 41, 0, 1046437, 0, 6, 3, 0, 2, 0, 3288270847, 0, 3, 3, 0, 2, 0, 67043519, -5, 2, 0, 0, 4282384383, 0, 1056964609, -1, 3, 0, 2, 0, 67043345, -1, 2, 0, 2, 42, 2, 23, 2, 50, 2, 11, 2, 61, 2, 38, -5, 2, 0, 2, 12, -3, 3, 0, 2, 0, 2147484671, 2, 134, 0, 4190109695, 2, 52, -2, 2, 135, 0, 4244635647, 0, 27, 2, 0, 2, 8, 2, 43, 2, 0, 2, 68, 2, 18, 2, 0, 2, 42, -6, 2, 0, 2, 45, 2, 59, 2, 44, 2, 45, 2, 46, 2, 47, 0, 8388351, -2, 2, 136, 0, 3028287487, 2, 48, 2, 138, 0, 33259519, 2, 49, -9, 2, 21, 0, 4294836223, 0, 3355443199, 0, 134152199, -2, 2, 69, -2, 3, 0, 28, 2, 32, -3, 3, 0, 3, 2, 17, 3, 0, 6, 2, 50, -81, 2, 18, 3, 0, 2, 2, 36, 3, 0, 33, 2, 25, 2, 30, 3, 0, 124, 2, 12, 3, 0, 18, 2, 38, -213, 2, 0, 2, 32, -54, 3, 0, 17, 2, 42, 2, 8, 2, 23, 2, 0, 2, 8, 2, 23, 2, 51, 2, 0, 2, 21, 2, 52, 2, 139, 2, 25, -13, 2, 0, 2, 53, -6, 3, 0, 2, -4, 3, 0, 2, 0, 4294936575, 2, 0, 0, 4294934783, -2, 0, 196635, 3, 0, 191, 2, 54, 3, 0, 38, 2, 30, 2, 55, 2, 34, -278, 2, 140, 3, 0, 9, 2, 141, 2, 142, 2, 56, 3, 0, 11, 2, 7, -72, 3, 0, 3, 2, 143, 0, 1677656575, -130, 2, 26, -16, 2, 0, 2, 24, 2, 38, -16, 0, 4161266656, 0, 4071, 0, 15360, -4, 2, 57, -13, 3, 0, 2, 2, 58, 2, 0, 2, 145, 2, 146, 2, 62, 2, 0, 2, 147, 2, 148, 2, 149, 3, 0, 10, 2, 150, 2, 151, 2, 22, 3, 58, 2, 3, 152, 2, 3, 59, 2, 0, 4294954999, 2, 0, -16, 2, 0, 2, 92, 2, 0, 0, 2105343, 0, 4160749584, 0, 65534, -34, 2, 8, 2, 154, -6, 0, 4194303871, 0, 4294903771, 2, 0, 2, 60, 2, 100, -3, 2, 0, 0, 1073684479, 0, 17407, -9, 2, 18, 2, 17, 2, 0, 2, 32, -14, 2, 18, 2, 32, -6, 2, 18, 2, 12, -15, 2, 155, 3, 0, 6, 0, 8323103, -1, 3, 0, 2, 2, 61, -37, 2, 62, 2, 156, 2, 157, 2, 158, 2, 159, 2, 160, -105, 2, 26, -32, 3, 0, 1335, -1, 3, 0, 129, 2, 32, 3, 0, 6, 2, 10, 3, 0, 180, 2, 161, 3, 0, 233, 2, 162, 3, 0, 18, 2, 10, -77, 3, 0, 16, 2, 10, -47, 3, 0, 154, 2, 6, 3, 0, 130, 2, 25, -22250, 3, 0, 7, 2, 25, -6130, 3, 5, 2, -1, 0, 69207040, 3, 44, 2, 3, 0, 14, 2, 63, 2, 64, -3, 0, 3168731136, 0, 4294956864, 2, 1, 2, 0, 2, 41, 3, 0, 4, 0, 4294966275, 3, 0, 4, 2, 16, 2, 65, 2, 0, 2, 34, -1, 2, 18, 2, 66, -1, 2, 0, 0, 2047, 0, 4294885376, 3, 0, 2, 0, 3145727, 0, 2617294944, 0, 4294770688, 2, 25, 2, 67, 3, 0, 2, 0, 131135, 2, 98, 0, 70256639, 0, 71303167, 0, 272, 2, 42, 2, 6, 0, 32511, 2, 0, 2, 49, -1, 2, 99, 2, 68, 0, 4278255616, 0, 4294836227, 0, 4294549473, 0, 600178175, 0, 2952806400, 0, 268632067, 0, 4294543328, 0, 57540095, 0, 1577058304, 0, 1835008, 0, 4294688736, 2, 70, 2, 69, 0, 33554435, 2, 131, 2, 70, 0, 2952790016, 0, 131075, 0, 3594373096, 0, 67094296, 2, 69, -1, 0, 4294828e3, 0, 603979263, 0, 654311424, 0, 3, 0, 4294828001, 0, 602930687, 0, 1610612736, 0, 393219, 0, 4294828016, 0, 671088639, 0, 2154840064, 0, 4227858435, 0, 4236247008, 2, 71, 2, 38, -1, 2, 4, 0, 917503, 2, 38, -1, 2, 72, 0, 537788335, 0, 4026531935, -1, 0, 1, -1, 2, 33, 2, 73, 0, 7936, -3, 2, 0, 0, 2147485695, 0, 1010761728, 0, 4292984930, 0, 16387, 2, 0, 2, 15, 2, 22, 3, 0, 10, 2, 74, 2, 0, 2, 75, 2, 76, 2, 77, 2, 0, 2, 78, 2, 0, 2, 12, -1, 2, 25, 3, 0, 2, 2, 13, 2, 4, 3, 0, 18, 2, 79, 2, 5, 3, 0, 2, 2, 80, 0, 2147745791, 3, 19, 2, 0, 122879, 2, 0, 2, 9, 0, 276824064, -2, 3, 0, 2, 2, 42, 2, 0, 0, 4294903295, 2, 0, 2, 30, 2, 8, -1, 2, 18, 2, 51, 2, 0, 2, 81, 2, 49, -1, 2, 21, 2, 0, 2, 29, -2, 0, 128, -2, 2, 28, 2, 9, 0, 8160, -1, 2, 127, 0, 4227907585, 2, 0, 2, 37, 2, 0, 2, 50, 0, 4227915776, 2, 10, 2, 6, 2, 11, -1, 0, 74440192, 3, 0, 6, -2, 3, 0, 8, 2, 13, 2, 0, 2, 82, 2, 10, 2, 0, 2, 83, 2, 84, 2, 85, -3, 2, 86, 2, 14, -3, 2, 87, 2, 88, 2, 89, 2, 0, 2, 34, -83, 3, 0, 7, 0, 817183, 2, 0, 2, 15, 2, 0, 0, 33023, 2, 21, 3, 90, 2, -17, 2, 91, 0, 524157950, 2, 4, 2, 0, 2, 92, 2, 4, 2, 0, 2, 22, 2, 28, 2, 16, 3, 0, 2, 2, 17, 2, 0, -1, 2, 18, -16, 3, 0, 206, -2, 3, 0, 692, 2, 73, -1, 2, 18, 2, 10, 3, 0, 8, 2, 93, 0, 3072, 2, 0, 0, 2147516415, 2, 10, 3, 0, 2, 2, 25, 2, 94, 2, 95, 3, 0, 2, 2, 96, 2, 0, 2, 97, 2, 46, 0, 4294965179, 0, 7, 2, 0, 2, 9, 2, 95, 2, 9, -1, 0, 1761345536, 2, 98, 0, 4294901823, 2, 38, 2, 20, 2, 99, 2, 35, 2, 100, 0, 2080440287, 2, 0, 2, 34, 2, 153, 0, 3296722943, 2, 0, 0, 1046675455, 0, 939524101, 0, 1837055, 2, 101, 2, 102, 2, 22, 2, 23, 3, 0, 3, 0, 7, 3, 0, 349, 2, 103, 2, 104, 2, 7, -264, 3, 0, 11, 2, 24, 3, 0, 2, 2, 32, -1, 0, 2700607615, 2, 105, 2, 106, 3, 0, 2, 2, 19, 2, 107, 3, 0, 10, 2, 10, 2, 18, 2, 0, 2, 47, 2, 0, 2, 31, 2, 108, -3, 2, 109, 3, 0, 3, 2, 20, -1, 3, 5, 2, 2, 110, 2, 0, 2, 8, 2, 111, -1, 2, 112, 2, 113, 2, 114, -1, 3, 0, 3, 2, 12, -2, 2, 0, 2, 29, -8, 2, 20, 2, 0, 2, 36, -1, 2, 0, 2, 67, 2, 6, 2, 30, 2, 10, 2, 0, 2, 115, -1, 3, 0, 4, 2, 10, 2, 18, 2, 116, 2, 7, 2, 0, 2, 117, 2, 0, 2, 118, 2, 119, 2, 120, 2, 0, 2, 9, 3, 0, 9, 2, 21, 2, 30, 2, 31, 2, 121, 2, 122, -2, 2, 123, 2, 124, 2, 30, 2, 21, 2, 8, -2, 2, 125, 2, 30, 2, 32, -2, 2, 0, 2, 39, -2, 0, 4277075969, 2, 30, -1, 3, 20, 2, -1, 2, 33, 2, 126, 2, 0, 3, 30, 2, 2, 35, 2, 19, -3, 3, 0, 2, 2, 34, -1, 2, 0, 2, 35, 2, 0, 2, 35, 2, 0, 2, 50, 2, 98, 0, 4294934591, 2, 37, -7, 2, 0, 0, 197631, 2, 57, -1, 2, 20, 2, 43, 2, 37, 2, 18, 0, 3, 2, 18, 2, 126, 2, 21, 2, 127, 2, 54, -1, 0, 2490368, 2, 127, 2, 25, 2, 18, 2, 34, 2, 127, 2, 38, 0, 4294901904, 0, 4718591, 2, 127, 2, 35, 0, 335544350, -1, 2, 128, 0, 2147487743, 0, 1, -1, 2, 129, 2, 130, 2, 8, -1, 2, 131, 2, 70, 0, 3758161920, 0, 3, 2, 132, 0, 12582911, 0, 655360, -1, 2, 0, 2, 29, 0, 2147485568, 0, 3, 2, 0, 2, 25, 0, 176, -5, 2, 0, 2, 17, 0, 251658240, -1, 2, 0, 2, 25, 0, 16, -1, 2, 0, 0, 16779263, -2, 2, 12, -1, 2, 38, -5, 2, 0, 2, 133, -3, 3, 0, 2, 2, 55, 2, 134, 0, 2147549183, 0, 2, -2, 2, 135, 2, 36, 0, 10, 0, 4294965249, 0, 67633151, 0, 4026597376, 2, 0, 0, 536871935, 2, 18, 2, 0, 2, 42, -6, 2, 0, 0, 1, 2, 59, 2, 17, 0, 1, 2, 46, 2, 25, -3, 2, 136, 2, 36, 2, 137, 2, 138, 0, 16778239, -10, 2, 35, 0, 4294836212, 2, 9, -3, 2, 69, -2, 3, 0, 28, 2, 32, -3, 3, 0, 3, 2, 17, 3, 0, 6, 2, 50, -81, 2, 18, 3, 0, 2, 2, 36, 3, 0, 33, 2, 25, 0, 126, 3, 0, 124, 2, 12, 3, 0, 18, 2, 38, -213, 2, 10, -55, 3, 0, 17, 2, 42, 2, 8, 2, 18, 2, 0, 2, 8, 2, 18, 2, 60, 2, 0, 2, 25, 2, 50, 2, 139, 2, 25, -13, 2, 0, 2, 73, -6, 3, 0, 2, -4, 3, 0, 2, 0, 67583, -1, 2, 107, -2, 0, 11, 3, 0, 191, 2, 54, 3, 0, 38, 2, 30, 2, 55, 2, 34, -278, 2, 140, 3, 0, 9, 2, 141, 2, 142, 2, 56, 3, 0, 11, 2, 7, -72, 3, 0, 3, 2, 143, 2, 144, -187, 3, 0, 2, 2, 58, 2, 0, 2, 145, 2, 146, 2, 62, 2, 0, 2, 147, 2, 148, 2, 149, 3, 0, 10, 2, 150, 2, 151, 2, 22, 3, 58, 2, 3, 152, 2, 3, 59, 2, 2, 153, -57, 2, 8, 2, 154, -7, 2, 18, 2, 0, 2, 60, -4, 2, 0, 0, 1065361407, 0, 16384, -9, 2, 18, 2, 60, 2, 0, 2, 133, -14, 2, 18, 2, 133, -6, 2, 18, 0, 81919, -15, 2, 155, 3, 0, 6, 2, 126, -1, 3, 0, 2, 0, 2063, -37, 2, 62, 2, 156, 2, 157, 2, 158, 2, 159, 2, 160, -138, 3, 0, 1335, -1, 3, 0, 129, 2, 32, 3, 0, 6, 2, 10, 3, 0, 180, 2, 161, 3, 0, 233, 2, 162, 3, 0, 18, 2, 10, -77, 3, 0, 16, 2, 10, -47, 3, 0, 154, 2, 6, 3, 0, 130, 2, 25, -28386], [4294967295, 4294967291, 4092460543, 4294828031, 4294967294, 134217726, 4294903807, 268435455, 2147483647, 1048575, 1073741823, 3892314111, 134217727, 1061158911, 536805376, 4294910143, 4294901759, 32767, 4294901760, 262143, 536870911, 8388607, 4160749567, 4294902783, 4294918143, 65535, 67043328, 2281701374, 4294967264, 2097151, 4194303, 255, 67108863, 4294967039, 511, 524287, 131071, 63, 127, 3238002687, 4294549487, 4290772991, 33554431, 4294901888, 4286578687, 67043329, 4294705152, 4294770687, 67043583, 1023, 15, 2047999, 67043343, 67051519, 16777215, 2147483648, 4294902e3, 28, 4292870143, 4294966783, 16383, 67047423, 4294967279, 262083, 20511, 41943039, 493567, 4294959104, 603979775, 65536, 602799615, 805044223, 4294965206, 8191, 1031749119, 4294917631, 2134769663, 4286578493, 4282253311, 4294942719, 33540095, 4294905855, 2868854591, 1608515583, 265232348, 534519807, 2147614720, 1060109444, 4093640016, 17376, 2139062143, 224, 4169138175, 4294909951, 4286578688, 4294967292, 4294965759, 535511039, 4294966272, 4294967280, 32768, 8289918, 4294934399, 4294901775, 4294965375, 1602223615, 4294967259, 4294443008, 268369920, 4292804608, 4294967232, 486341884, 4294963199, 3087007615, 1073692671, 4128527, 4279238655, 4294902015, 4160684047, 4290246655, 469499899, 4294967231, 134086655, 4294966591, 2445279231, 3670015, 31, 4294967288, 4294705151, 3221208447, 4294902271, 4294549472, 4294921215, 4095, 4285526655, 4294966527, 4294966143, 64, 4294966719, 3774873592, 1877934080, 262151, 2555904, 536807423, 67043839, 3758096383, 3959414372, 3755993023, 2080374783, 4294835295, 4294967103, 4160749565, 4294934527, 4087, 2016, 2147446655, 184024726, 2862017156, 1593309078, 268434431, 268434414, 4294901763, 4294901761]);
+  })([-1, 2, 26, 2, 27, 2, 5, -1, 0, 77595648, 3, 44, 2, 3, 0, 14, 2, 61, 2, 62, 3, 0, 3, 0, 3168796671, 0, 4294956992, 2, 1, 2, 0, 2, 41, 3, 0, 4, 0, 4294966523, 3, 0, 4, 2, 16, 2, 63, 2, 0, 0, 4294836735, 0, 3221225471, 0, 4294901942, 2, 64, 0, 134152192, 3, 0, 2, 0, 4294951935, 3, 0, 2, 0, 2683305983, 0, 2684354047, 2, 17, 2, 0, 0, 4294961151, 3, 0, 2, 2, 19, 2, 0, 0, 608174079, 2, 0, 2, 58, 2, 7, 2, 6, 0, 4286643967, 3, 0, 2, 2, 1, 3, 0, 3, 0, 4294901711, 2, 40, 0, 4089839103, 0, 2961209759, 0, 1342439375, 0, 4294543342, 0, 3547201023, 0, 1577204103, 0, 4194240, 0, 4294688750, 2, 2, 0, 80831, 0, 4261478351, 0, 4294549486, 2, 2, 0, 2967484831, 0, 196559, 0, 3594373100, 0, 3288319768, 0, 8469959, 0, 65472, 2, 3, 0, 4093640191, 0, 929054175, 0, 65487, 0, 4294828015, 0, 4092591615, 0, 1885355487, 0, 982991, 2, 3, 2, 0, 0, 2163244511, 0, 4227923919, 0, 4236247022, 2, 69, 0, 4284449919, 0, 851904, 2, 4, 2, 12, 0, 67076095, -1, 2, 70, 0, 1073741743, 0, 4093607775, -1, 0, 50331649, 0, 3265266687, 2, 33, 0, 4294844415, 0, 4278190047, 2, 20, 2, 137, -1, 3, 0, 2, 2, 23, 2, 0, 2, 9, 2, 0, 2, 15, 2, 22, 3, 0, 10, 2, 72, 2, 0, 2, 73, 2, 74, 2, 75, 2, 0, 2, 76, 2, 0, 2, 11, 0, 261632, 2, 25, 3, 0, 2, 2, 13, 2, 4, 3, 0, 18, 2, 77, 2, 5, 3, 0, 2, 2, 78, 0, 2151677951, 2, 29, 2, 10, 0, 909311, 3, 0, 2, 0, 814743551, 2, 48, 0, 67090432, 3, 0, 2, 2, 42, 2, 0, 2, 6, 2, 0, 2, 30, 2, 8, 0, 268374015, 2, 108, 2, 51, 2, 0, 2, 79, 0, 134153215, -1, 2, 7, 2, 0, 2, 8, 0, 2684354559, 0, 67044351, 0, 3221160064, 2, 9, 2, 18, 3, 0, 2, 2, 53, 0, 1046528, 3, 0, 3, 2, 10, 2, 0, 2, 127, 0, 4294960127, 2, 9, 2, 6, 2, 11, 0, 4294377472, 2, 12, 3, 0, 16, 2, 13, 2, 0, 2, 80, 2, 9, 2, 0, 2, 81, 2, 82, 2, 83, 0, 12288, 2, 54, 0, 1048577, 2, 84, 2, 14, -1, 2, 14, 0, 131042, 2, 85, 2, 86, 2, 87, 2, 0, 2, 34, -83, 3, 0, 7, 0, 1046559, 2, 0, 2, 15, 2, 0, 0, 2147516671, 2, 21, 3, 88, 2, 2, 0, -16, 2, 89, 0, 524222462, 2, 4, 2, 0, 0, 4269801471, 2, 4, 3, 0, 2, 2, 28, 2, 16, 3, 0, 2, 2, 49, 2, 0, -1, 2, 17, -16, 3, 0, 206, -2, 3, 0, 692, 2, 71, -1, 2, 17, 2, 9, 3, 0, 8, 2, 91, 2, 18, 2, 0, 0, 3220242431, 3, 0, 3, 2, 19, 2, 92, 2, 93, 3, 0, 2, 2, 94, 2, 0, 2, 20, 2, 95, 2, 0, 0, 4351, 2, 0, 2, 10, 3, 0, 2, 0, 67043391, 0, 3909091327, 2, 0, 2, 24, 2, 10, 2, 20, 3, 0, 2, 0, 67076097, 2, 8, 2, 0, 2, 21, 0, 67059711, 0, 4236247039, 3, 0, 2, 0, 939524103, 0, 8191999, 2, 99, 2, 100, 2, 22, 2, 23, 3, 0, 3, 0, 67057663, 3, 0, 349, 2, 101, 2, 102, 2, 7, -264, 3, 0, 11, 2, 24, 3, 0, 2, 2, 32, -1, 0, 3774349439, 2, 103, 2, 104, 3, 0, 2, 2, 19, 2, 105, 3, 0, 10, 2, 9, 2, 17, 2, 0, 2, 46, 2, 0, 2, 31, 2, 106, 2, 25, 0, 1638399, 0, 57344, 2, 107, 3, 0, 3, 2, 20, 2, 26, 2, 27, 2, 5, 2, 28, 2, 0, 2, 8, 2, 109, -1, 2, 110, 2, 111, 2, 112, -1, 3, 0, 3, 2, 12, -2, 2, 0, 2, 29, -3, 0, 536870912, -4, 2, 20, 2, 0, 2, 36, 0, 1, 2, 0, 2, 65, 2, 6, 2, 12, 2, 9, 2, 0, 2, 113, -1, 3, 0, 4, 2, 9, 2, 23, 2, 114, 2, 7, 2, 0, 2, 115, 2, 0, 2, 116, 2, 117, 2, 118, 2, 0, 2, 10, 3, 0, 9, 2, 21, 2, 30, 2, 31, 2, 119, 2, 120, -2, 2, 121, 2, 122, 2, 30, 2, 21, 2, 8, -2, 2, 123, 2, 30, 3, 32, 2, -1, 2, 0, 2, 39, -2, 0, 4277137519, 0, 2269118463, -1, 3, 20, 2, -1, 2, 33, 2, 38, 2, 0, 3, 30, 2, 2, 35, 2, 19, -3, 3, 0, 2, 2, 34, -1, 2, 0, 2, 35, 2, 0, 2, 35, 2, 0, 2, 47, 2, 0, 0, 4294950463, 2, 37, -7, 2, 0, 0, 203775, 2, 125, 0, 4227858432, 2, 20, 2, 43, 2, 36, 2, 17, 2, 37, 2, 17, 2, 124, 2, 21, 3, 0, 2, 2, 38, 0, 2151677888, 2, 0, 2, 12, 0, 4294901764, 2, 145, 2, 0, 2, 56, 2, 55, 0, 5242879, 3, 0, 2, 0, 402644511, -1, 2, 128, 2, 39, 0, 3, -1, 2, 129, 2, 130, 2, 0, 0, 67045375, 2, 40, 0, 4226678271, 0, 3766565279, 0, 2039759, 2, 132, 2, 41, 0, 1046437, 0, 6, 3, 0, 2, 0, 3288270847, 0, 3, 3, 0, 2, 0, 67043519, -5, 2, 0, 0, 4282384383, 0, 1056964609, -1, 3, 0, 2, 0, 67043345, -1, 2, 0, 2, 42, 2, 23, 2, 50, 2, 11, 2, 59, 2, 38, -5, 2, 0, 2, 12, -3, 3, 0, 2, 0, 2147484671, 2, 133, 0, 4190109695, 2, 52, -2, 2, 134, 0, 4244635647, 0, 27, 2, 0, 2, 8, 2, 43, 2, 0, 2, 66, 2, 17, 2, 0, 2, 42, -3, 2, 31, -2, 2, 0, 2, 45, 2, 57, 2, 44, 2, 45, 2, 135, 2, 46, 0, 8388351, -2, 2, 136, 0, 3028287487, 2, 47, 2, 138, 0, 33259519, 2, 23, 2, 7, 2, 48, -7, 2, 21, 0, 4294836223, 0, 3355443199, 0, 134152199, -2, 2, 67, -2, 3, 0, 28, 2, 32, -3, 3, 0, 3, 2, 49, 3, 0, 6, 2, 50, -81, 2, 17, 3, 0, 2, 2, 36, 3, 0, 33, 2, 25, 2, 30, 3, 0, 124, 2, 12, 3, 0, 18, 2, 38, -213, 2, 0, 2, 32, -54, 3, 0, 17, 2, 42, 2, 8, 2, 23, 2, 0, 2, 8, 2, 23, 2, 51, 2, 0, 2, 21, 2, 52, 2, 139, 2, 25, -13, 2, 0, 2, 53, -6, 3, 0, 2, -1, 2, 140, 2, 10, -1, 3, 0, 2, 0, 4294936575, 2, 0, 0, 4294934783, -2, 0, 8323099, 3, 0, 230, 2, 30, 2, 54, 2, 8, -3, 3, 0, 3, 2, 35, -271, 2, 141, 3, 0, 9, 2, 142, 2, 143, 2, 55, 3, 0, 11, 2, 7, -72, 3, 0, 3, 2, 144, 0, 1677656575, -130, 2, 26, -16, 2, 0, 2, 24, 2, 38, -16, 0, 4161266656, 0, 4071, 0, 15360, -4, 0, 28, -13, 3, 0, 2, 2, 56, 2, 0, 2, 146, 2, 147, 2, 60, 2, 0, 2, 148, 2, 149, 2, 150, 3, 0, 10, 2, 151, 2, 152, 2, 22, 3, 56, 2, 3, 153, 2, 3, 57, 2, 0, 4294954999, 2, 0, -16, 2, 0, 2, 90, 2, 0, 0, 2105343, 0, 4160749584, 0, 65534, -34, 2, 8, 2, 155, -6, 0, 4194303871, 0, 4294903771, 2, 0, 2, 58, 2, 98, -3, 2, 0, 0, 1073684479, 0, 17407, -9, 2, 17, 2, 49, 2, 0, 2, 32, -14, 2, 17, 2, 32, -6, 2, 17, 2, 12, -6, 2, 8, 0, 3225419775, -7, 2, 156, 3, 0, 6, 0, 8323103, -1, 3, 0, 2, 2, 59, -37, 2, 60, 2, 157, 2, 158, 2, 159, 2, 160, 2, 161, -105, 2, 26, -32, 3, 0, 1335, -1, 3, 0, 136, 2, 9, 3, 0, 180, 2, 24, 3, 0, 233, 2, 162, 3, 0, 18, 2, 9, -77, 3, 0, 16, 2, 9, -47, 3, 0, 154, 2, 6, 3, 0, 264, 2, 32, -22116, 3, 0, 7, 2, 25, -6130, 3, 5, 2, -1, 0, 69207040, 3, 44, 2, 3, 0, 14, 2, 61, 2, 62, -3, 0, 3168731136, 0, 4294956864, 2, 1, 2, 0, 2, 41, 3, 0, 4, 0, 4294966275, 3, 0, 4, 2, 16, 2, 63, 2, 0, 2, 34, -1, 2, 17, 2, 64, -1, 2, 0, 0, 2047, 0, 4294885376, 3, 0, 2, 0, 3145727, 0, 2617294944, 0, 4294770688, 2, 25, 2, 65, 3, 0, 2, 0, 131135, 2, 96, 0, 70256639, 0, 71303167, 0, 272, 2, 42, 2, 6, 0, 65279, 2, 0, 2, 48, -1, 2, 97, 2, 66, 0, 4278255616, 0, 4294836227, 0, 4294549473, 0, 600178175, 0, 2952806400, 0, 268632067, 0, 4294543328, 0, 57540095, 0, 1577058304, 0, 1835008, 0, 4294688736, 2, 68, 2, 67, 0, 33554435, 2, 131, 2, 68, 0, 2952790016, 0, 131075, 0, 3594373096, 0, 67094296, 2, 67, -1, 0, 4294828e3, 0, 603979263, 0, 922746880, 0, 3, 0, 4294828001, 0, 602930687, 0, 1879048192, 0, 393219, 0, 4294828016, 0, 671088639, 0, 2154840064, 0, 4227858435, 0, 4236247008, 2, 69, 2, 38, -1, 2, 4, 0, 917503, 2, 38, -1, 2, 70, 0, 537788335, 0, 4026531935, -1, 0, 1, -1, 2, 33, 2, 71, 0, 7936, -3, 2, 0, 0, 2147485695, 0, 1010761728, 0, 4292984930, 0, 16387, 2, 0, 2, 15, 2, 22, 3, 0, 10, 2, 72, 2, 0, 2, 73, 2, 74, 2, 75, 2, 0, 2, 76, 2, 0, 2, 12, -1, 2, 25, 3, 0, 2, 2, 13, 2, 4, 3, 0, 18, 2, 77, 2, 5, 3, 0, 2, 2, 78, 0, 2147745791, 3, 19, 2, 0, 122879, 2, 0, 2, 10, 0, 276824064, -2, 3, 0, 2, 2, 42, 2, 0, 0, 4294903295, 2, 0, 2, 30, 2, 8, -1, 2, 17, 2, 51, 2, 0, 2, 79, 2, 48, -1, 2, 21, 2, 0, 2, 29, -2, 0, 128, -2, 2, 28, 2, 10, 0, 8160, -1, 2, 126, 0, 4227907585, 2, 0, 2, 37, 2, 0, 2, 50, 0, 4227915776, 2, 9, 2, 6, 2, 11, -1, 0, 74440192, 3, 0, 6, -2, 3, 0, 8, 2, 13, 2, 0, 2, 80, 2, 9, 2, 0, 2, 81, 2, 82, 2, 83, -3, 2, 84, 2, 14, -3, 2, 85, 2, 86, 2, 87, 2, 0, 2, 34, -83, 3, 0, 7, 0, 817183, 2, 0, 2, 15, 2, 0, 0, 33023, 2, 21, 3, 88, 2, -17, 2, 89, 0, 524157950, 2, 4, 2, 0, 2, 90, 2, 4, 2, 0, 2, 22, 2, 28, 2, 16, 3, 0, 2, 2, 49, 2, 0, -1, 2, 17, -16, 3, 0, 206, -2, 3, 0, 692, 2, 71, -1, 2, 17, 2, 9, 3, 0, 8, 2, 91, 0, 3072, 2, 0, 0, 2147516415, 2, 9, 3, 0, 2, 2, 25, 2, 92, 2, 93, 3, 0, 2, 2, 94, 2, 0, 2, 20, 2, 95, 0, 4294965179, 0, 7, 2, 0, 2, 10, 2, 93, 2, 10, -1, 0, 1761345536, 2, 96, 0, 4294901823, 2, 38, 2, 20, 2, 97, 2, 35, 2, 98, 0, 2080440287, 2, 0, 2, 34, 2, 154, 0, 3296722943, 2, 0, 0, 1046675455, 0, 939524101, 0, 1837055, 2, 99, 2, 100, 2, 22, 2, 23, 3, 0, 3, 0, 7, 3, 0, 349, 2, 101, 2, 102, 2, 7, -264, 3, 0, 11, 2, 24, 3, 0, 2, 2, 32, -1, 0, 2700607615, 2, 103, 2, 104, 3, 0, 2, 2, 19, 2, 105, 3, 0, 10, 2, 9, 2, 17, 2, 0, 2, 46, 2, 0, 2, 31, 2, 106, -3, 2, 107, 3, 0, 3, 2, 20, -1, 3, 5, 2, 2, 108, 2, 0, 2, 8, 2, 109, -1, 2, 110, 2, 111, 2, 112, -1, 3, 0, 3, 2, 12, -2, 2, 0, 2, 29, -8, 2, 20, 2, 0, 2, 36, -1, 2, 0, 2, 65, 2, 6, 2, 30, 2, 9, 2, 0, 2, 113, -1, 3, 0, 4, 2, 9, 2, 17, 2, 114, 2, 7, 2, 0, 2, 115, 2, 0, 2, 116, 2, 117, 2, 118, 2, 0, 2, 10, 3, 0, 9, 2, 21, 2, 30, 2, 31, 2, 119, 2, 120, -2, 2, 121, 2, 122, 2, 30, 2, 21, 2, 8, -2, 2, 123, 2, 30, 3, 32, 2, -1, 2, 0, 2, 39, -2, 0, 4277075969, 2, 30, -1, 3, 20, 2, -1, 2, 33, 2, 124, 2, 0, 3, 30, 2, 2, 35, 2, 19, -3, 3, 0, 2, 2, 34, -1, 2, 0, 2, 35, 2, 0, 2, 35, 2, 0, 2, 50, 2, 96, 0, 4294934591, 2, 37, -7, 2, 0, 0, 197631, 2, 125, -1, 2, 20, 2, 43, 2, 37, 2, 17, 0, 3, 2, 17, 2, 124, 2, 21, 2, 126, 2, 127, -1, 0, 2490368, 2, 126, 2, 25, 2, 17, 2, 34, 2, 126, 2, 38, 0, 4294901904, 0, 4718591, 2, 126, 2, 35, 0, 335544350, -1, 2, 128, 0, 2147487743, 0, 1, -1, 2, 129, 2, 130, 2, 8, -1, 2, 131, 2, 68, 0, 3758161920, 0, 3, 2, 132, 0, 12582911, 0, 655360, -1, 2, 0, 2, 29, 0, 2147485568, 0, 3, 2, 0, 2, 25, 0, 176, -5, 2, 0, 2, 49, 0, 251658240, -1, 2, 0, 2, 25, 0, 16, -1, 2, 0, 0, 16779263, -2, 2, 12, -1, 2, 38, -5, 2, 0, 2, 18, -3, 3, 0, 2, 2, 54, 2, 133, 0, 2147549183, 0, 2, -2, 2, 134, 2, 36, 0, 10, 0, 4294965249, 0, 67633151, 0, 4026597376, 2, 0, 0, 536871935, 2, 17, 2, 0, 2, 42, -6, 2, 0, 0, 1, 2, 57, 2, 49, 0, 1, 2, 135, 2, 25, -3, 2, 136, 2, 36, 2, 137, 2, 138, 0, 16778239, 2, 17, 2, 7, -8, 2, 35, 0, 4294836212, 2, 10, -3, 2, 67, -2, 3, 0, 28, 2, 32, -3, 3, 0, 3, 2, 49, 3, 0, 6, 2, 50, -81, 2, 17, 3, 0, 2, 2, 36, 3, 0, 33, 2, 25, 0, 126, 3, 0, 124, 2, 12, 3, 0, 18, 2, 38, -213, 2, 9, -55, 3, 0, 17, 2, 42, 2, 8, 2, 17, 2, 0, 2, 8, 2, 17, 2, 58, 2, 0, 2, 25, 2, 50, 2, 139, 2, 25, -13, 2, 0, 2, 71, -6, 3, 0, 2, -1, 2, 140, 2, 10, -1, 3, 0, 2, 0, 67583, -1, 2, 105, -2, 0, 8126475, 3, 0, 230, 2, 30, 2, 54, 2, 8, -3, 3, 0, 3, 2, 35, -271, 2, 141, 3, 0, 9, 2, 142, 2, 143, 2, 55, 3, 0, 11, 2, 7, -72, 3, 0, 3, 2, 144, 2, 145, -187, 3, 0, 2, 2, 56, 2, 0, 2, 146, 2, 147, 2, 60, 2, 0, 2, 148, 2, 149, 2, 150, 3, 0, 10, 2, 151, 2, 152, 2, 22, 3, 56, 2, 3, 153, 2, 3, 57, 2, 2, 154, -57, 2, 8, 2, 155, -7, 2, 17, 2, 0, 2, 58, -4, 2, 0, 0, 1065361407, 0, 16384, -9, 2, 17, 2, 58, 2, 0, 2, 18, -14, 2, 17, 2, 18, -6, 2, 17, 0, 81919, -6, 2, 8, 0, 3223273399, -7, 2, 156, 3, 0, 6, 2, 124, -1, 3, 0, 2, 0, 2063, -37, 2, 60, 2, 157, 2, 158, 2, 159, 2, 160, 2, 161, -138, 3, 0, 1335, -1, 3, 0, 136, 2, 9, 3, 0, 180, 2, 24, 3, 0, 233, 2, 162, 3, 0, 18, 2, 9, -77, 3, 0, 16, 2, 9, -47, 3, 0, 154, 2, 6, 3, 0, 264, 2, 32, -28252], [4294967295, 4294967291, 4092460543, 4294828031, 4294967294, 134217726, 4294903807, 268435455, 2147483647, 1073741823, 1048575, 3892314111, 134217727, 1061158911, 536805376, 4294910143, 4294901759, 4294901760, 4095, 262143, 536870911, 8388607, 4160749567, 4294902783, 4294918143, 65535, 67043328, 2281701374, 4294967264, 2097151, 4194303, 255, 67108863, 4294967039, 511, 524287, 131071, 63, 127, 3238002687, 4294549487, 4290772991, 33554431, 4294901888, 4286578687, 67043329, 4294770687, 67043583, 1023, 32767, 15, 2047999, 67043343, 67051519, 2147483648, 4294902e3, 4292870143, 4294966783, 16383, 67047423, 4294967279, 262083, 20511, 41943039, 493567, 4294959104, 603979775, 65536, 602799615, 805044223, 4294965206, 8191, 1031749119, 4294917631, 2134769663, 4286578493, 4282253311, 4294942719, 33540095, 4294905855, 2868854591, 1608515583, 265232348, 534519807, 2147614720, 1060109444, 4093640016, 17376, 2139062143, 224, 4169138175, 4294909951, 4286578688, 4294967292, 4294965759, 4294836224, 4294966272, 4294967280, 32768, 8289918, 4294934399, 4294901775, 4294965375, 1602223615, 4294967259, 4294443008, 268369920, 4292804608, 4294967232, 486341884, 4294963199, 3087007615, 1073692671, 4128527, 4279238655, 4294902015, 4160684047, 4290246655, 469499899, 4294967231, 134086655, 4294966591, 2445279231, 3670015, 31, 252, 4294967288, 16777215, 4294705151, 3221208447, 4294902271, 4294549472, 4294921215, 4285526655, 4294966527, 4294705152, 4294966143, 64, 4294966719, 3774873592, 4194303999, 1877934080, 262151, 2555904, 536807423, 67043839, 3758096383, 3959414372, 3755993023, 2080374783, 4294835295, 4294967103, 4160749565, 4294934527, 4087, 2016, 2147446655, 184024726, 2862017156, 1593309078, 268434431, 268434414, 4294901761]);
   var isIDContinue = /* @__PURE__ */ __name((code) => (unicodeLookup[(code >>> 5) + 0] >>> code & 31 & 1) !== 0, "isIDContinue");
   var isIDStart = /* @__PURE__ */ __name((code) => (unicodeLookup[(code >>> 5) + 34816] >>> code & 31 & 1) !== 0, "isIDStart");
-  function advanceChar(parser) {
-    parser.column++;
-    return parser.currentChar = parser.source.charCodeAt(++parser.index);
-  }
-  __name(advanceChar, "advanceChar");
-  function consumePossibleSurrogatePair(parser) {
-    const hi = parser.currentChar;
-    if ((hi & 64512) !== 55296)
-      return 0;
-    const lo = parser.source.charCodeAt(parser.index + 1);
-    if ((lo & 64512) !== 56320)
-      return 0;
-    return 65536 + ((hi & 1023) << 10) + (lo & 1023);
-  }
-  __name(consumePossibleSurrogatePair, "consumePossibleSurrogatePair");
-  function consumeLineFeed(parser, state) {
-    parser.currentChar = parser.source.charCodeAt(++parser.index);
-    parser.flags |= 1;
-    if ((state & 4) === 0) {
-      parser.column = 0;
-      parser.line++;
-    }
-  }
-  __name(consumeLineFeed, "consumeLineFeed");
-  function scanNewLine(parser) {
-    parser.flags |= 1;
-    parser.currentChar = parser.source.charCodeAt(++parser.index);
-    parser.column = 0;
-    parser.line++;
-  }
-  __name(scanNewLine, "scanNewLine");
-  function isExoticECMAScriptWhitespace(ch) {
-    return ch === 160 || ch === 65279 || ch === 133 || ch === 5760 || ch >= 8192 && ch <= 8203 || ch === 8239 || ch === 8287 || ch === 12288 || ch === 8201 || ch === 65519;
-  }
-  __name(isExoticECMAScriptWhitespace, "isExoticECMAScriptWhitespace");
-  function toHex(code) {
-    return code < 65 ? code - 48 : code - 65 + 10 & 15;
-  }
-  __name(toHex, "toHex");
-  function convertTokenType(t) {
-    switch (t) {
-      case 134283266:
-        return "NumericLiteral";
-      case 134283267:
-        return "StringLiteral";
-      case 86021:
-      case 86022:
-        return "BooleanLiteral";
-      case 86023:
-        return "NullLiteral";
-      case 65540:
-        return "RegularExpression";
-      case 67174408:
-      case 67174409:
-      case 131:
-        return "TemplateLiteral";
-      default:
-        if ((t & 143360) === 143360)
-          return "Identifier";
-        if ((t & 4096) === 4096)
-          return "Keyword";
-        return "Punctuator";
-    }
-  }
-  __name(convertTokenType, "convertTokenType");
   var CharTypes = [
     0,
     0,
@@ -6674,7 +6814,7 @@ format:`, anonymisedFormat);
     0,
     16384,
     0,
-    0,
+    16384,
     0,
     0,
     1 | 2 | 64,
@@ -6737,7 +6877,7 @@ format:`, anonymisedFormat);
     1 | 2 | 4,
     16384,
     0,
-    0,
+    16384,
     0,
     0
   ];
@@ -7009,6 +7149,71 @@ format:`, anonymisedFormat);
     return code <= 127 ? isIdPart[code] > 0 : isIDContinue(code) || (code === 8204 || code === 8205);
   }
   __name(isIdentifierPart, "isIdentifierPart");
+  function advanceChar(parser) {
+    parser.column++;
+    return parser.currentChar = parser.source.charCodeAt(++parser.index);
+  }
+  __name(advanceChar, "advanceChar");
+  function consumePossibleSurrogatePair(parser) {
+    const hi = parser.currentChar;
+    if ((hi & 64512) !== 55296)
+      return 0;
+    const lo = parser.source.charCodeAt(parser.index + 1);
+    if ((lo & 64512) !== 56320)
+      return 0;
+    return 65536 + ((hi & 1023) << 10) + (lo & 1023);
+  }
+  __name(consumePossibleSurrogatePair, "consumePossibleSurrogatePair");
+  function consumeLineFeed(parser, state) {
+    parser.currentChar = parser.source.charCodeAt(++parser.index);
+    parser.flags |= 1;
+    if ((state & 4) === 0) {
+      parser.column = 0;
+      parser.line++;
+    }
+  }
+  __name(consumeLineFeed, "consumeLineFeed");
+  function scanNewLine(parser) {
+    parser.flags |= 1;
+    parser.currentChar = parser.source.charCodeAt(++parser.index);
+    parser.column = 0;
+    parser.line++;
+  }
+  __name(scanNewLine, "scanNewLine");
+  function isExoticECMAScriptWhitespace(ch) {
+    return ch === 160 || ch === 65279 || ch === 133 || ch === 5760 || ch >= 8192 && ch <= 8203 || ch === 8239 || ch === 8287 || ch === 12288 || ch === 8201 || ch === 65519;
+  }
+  __name(isExoticECMAScriptWhitespace, "isExoticECMAScriptWhitespace");
+  function toHex(code) {
+    return code < 65 ? code - 48 : code - 65 + 10 & 15;
+  }
+  __name(toHex, "toHex");
+  function convertTokenType(t) {
+    switch (t) {
+      case 134283266:
+        return "NumericLiteral";
+      case 134283267:
+        return "StringLiteral";
+      case 86021:
+      case 86022:
+        return "BooleanLiteral";
+      case 86023:
+        return "NullLiteral";
+      case 65540:
+        return "RegularExpression";
+      case 67174408:
+      case 67174409:
+      case 132:
+        return "TemplateLiteral";
+      default:
+        if ((t & 143360) === 143360)
+          return "Identifier";
+        if ((t & 4096) === 4096)
+          return "Keyword";
+        return "Punctuator";
+    }
+  }
+  __name(convertTokenType, "convertTokenType");
   var CommentTypes = ["SingleLine", "MultiLine", "HTMLOpen", "HTMLClose", "HashbangComment"];
   function skipHashBang(parser) {
     const { source } = parser;
@@ -7118,6 +7323,757 @@ format:`, anonymisedFormat);
     parser.report(18);
   }
   __name(skipMultiLineComment, "skipMultiLineComment");
+  var errorMessages = {
+    [0]: "Unexpected token",
+    [30]: "Unexpected token: '%0'",
+    [1]: "Octal escape sequences are not allowed in strict mode",
+    [2]: "Octal escape sequences are not allowed in template strings",
+    [3]: "\\8 and \\9 are not allowed in template strings",
+    [4]: "Private identifier #%0 is not defined",
+    [5]: "Illegal Unicode escape sequence",
+    [6]: "Invalid code point %0",
+    [7]: "Invalid hexadecimal escape sequence",
+    [9]: "Octal literals are not allowed in strict mode",
+    [8]: "Decimal integer literals with a leading zero are forbidden in strict mode",
+    [10]: "Expected number in radix %0",
+    [153]: "Invalid left-hand side assignment to a destructible right-hand side",
+    [11]: "Non-number found after exponent indicator",
+    [12]: "Invalid BigIntLiteral",
+    [13]: "No identifiers allowed directly after numeric literal",
+    [14]: "Escapes \\8 or \\9 are not syntactically valid escapes",
+    [15]: "Escapes \\8 or \\9 are not allowed in strict mode",
+    [16]: "Unterminated string literal",
+    [17]: "Unterminated template literal",
+    [18]: "Multiline comment was not closed properly",
+    [19]: "The identifier contained dynamic unicode escape that was not closed",
+    [20]: "Illegal character '%0'",
+    [21]: "Missing hexadecimal digits",
+    [22]: "Invalid implicit octal",
+    [23]: "Invalid line break in string literal",
+    [24]: "Only unicode escapes are legal in identifier names",
+    [25]: "Expected '%0'",
+    [26]: "Invalid left-hand side in assignment",
+    [27]: "Invalid left-hand side in async arrow",
+    [28]: 'Calls to super must be in the "constructor" method of a class expression or class declaration that has a superclass',
+    [29]: "Member access on super must be in a method",
+    [31]: "Await expression not allowed in formal parameter",
+    [32]: "Yield expression not allowed in formal parameter",
+    [95]: "Unexpected token: 'escaped keyword'",
+    [33]: "Unary expressions as the left operand of an exponentiation expression must be disambiguated with parentheses",
+    [125]: "Async functions can only be declared at the top level or inside a block",
+    [34]: "Unterminated regular expression",
+    [35]: "Unexpected regular expression flag",
+    [36]: "Duplicate regular expression flag '%0'",
+    [37]: "%0 functions must have exactly %1 argument%2",
+    [38]: "Setter function argument must not be a rest parameter",
+    [39]: "%0 declaration must have a name in this context",
+    [40]: "Function name may not contain any reserved words or be eval or arguments in strict mode",
+    [41]: "The rest operator is missing an argument",
+    [42]: "A getter cannot be a generator",
+    [43]: "A setter cannot be a generator",
+    [44]: "A computed property name must be followed by a colon or paren",
+    [136]: "Object literal keys that are strings or numbers must be a method or have a colon",
+    [46]: "Found `* async x(){}` but this should be `async * x(){}`",
+    [45]: "Getters and setters can not be generators",
+    [47]: "'%0' can not be generator method",
+    [48]: "No line break is allowed after '=>'",
+    [49]: "The left-hand side of the arrow can only be destructed through assignment",
+    [50]: "The binding declaration is not destructible",
+    [51]: "Async arrow can not be followed by new expression",
+    [52]: "Classes may not have a static property named 'prototype'",
+    [53]: "Class constructor may not be a %0",
+    [54]: "Duplicate constructor method in class",
+    [55]: "Invalid increment/decrement operand",
+    [56]: "Invalid use of `new` keyword on an increment/decrement expression",
+    [57]: "`=>` is an invalid assignment target",
+    [58]: "Rest element may not have a trailing comma",
+    [59]: "Missing initializer in %0 declaration",
+    [60]: "'for-%0' loop head declarations can not have an initializer",
+    [61]: "Invalid left-hand side in for-%0 loop: Must have a single binding",
+    [62]: "Invalid shorthand property initializer",
+    [63]: "Property name __proto__ appears more than once in object literal",
+    [64]: "Let is disallowed as a lexically bound name",
+    [65]: "Invalid use of '%0' inside new expression",
+    [66]: "Illegal 'use strict' directive in function with non-simple parameter list",
+    [67]: 'Identifier "let" disallowed as left-hand side expression in strict mode',
+    [68]: "Illegal continue statement",
+    [69]: "Illegal break statement",
+    [70]: "Cannot have `let[...]` as a var name in strict mode",
+    [71]: "Invalid destructuring assignment target",
+    [72]: "Rest parameter may not have a default initializer",
+    [73]: "The rest argument must the be last parameter",
+    [74]: "Invalid rest argument",
+    [76]: "In strict mode code, functions can only be declared at top level or inside a block",
+    [77]: "In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement",
+    [78]: "Without web compatibility enabled functions can not be declared at top level, inside a block, or as the body of an if statement",
+    [79]: "Class declaration can't appear in single-statement context",
+    [80]: "Invalid left-hand side in for-%0",
+    [81]: "Invalid assignment in for-%0",
+    [82]: "for await (... of ...) is only valid in async functions and async generators",
+    [83]: "The first token after the template expression should be a continuation of the template",
+    [85]: "`let` declaration not allowed here and `let` cannot be a regular var name in strict mode",
+    [84]: "`let \n [` is a restricted production at the start of a statement",
+    [86]: "Catch clause requires exactly one parameter, not more (and no trailing comma)",
+    [87]: "Catch clause parameter does not support default values",
+    [88]: "Missing catch or finally after try",
+    [89]: "More than one default clause in switch statement",
+    [90]: "Illegal newline after throw",
+    [91]: "Strict mode code may not include a with statement",
+    [92]: "Illegal return statement",
+    [93]: "The left hand side of the for-header binding declaration is not destructible",
+    [94]: "new.target only allowed within functions or static blocks",
+    [96]: "'#' not followed by identifier",
+    [102]: "Invalid keyword",
+    [101]: "Can not use 'let' as a class name",
+    [100]: "'A lexical declaration can't define a 'let' binding",
+    [99]: "Can not use `let` as variable name in strict mode",
+    [97]: "'%0' may not be used as an identifier in this context",
+    [98]: "Await is only valid in async functions",
+    [103]: "The %0 keyword can only be used with the module goal",
+    [104]: "Unicode codepoint must not be greater than 0x10FFFF",
+    [105]: "%0 source must be string",
+    [106]: "Only a identifier or string can be used to indicate alias",
+    [107]: "Only '*' or '{...}' can be imported after default",
+    [108]: "'import defer' must be followed by a namespace import",
+    [109]: "'import source' must be followed by a default import",
+    [110]: "Trailing decorator may be followed by method",
+    [111]: "Decorators can't be used with a constructor",
+    [112]: "Can not use `await` as identifier in module or async func",
+    [113]: "Can not use `await` as identifier in module",
+    [114]: "HTML comments are only allowed with web compatibility (Annex B)",
+    [115]: "The identifier 'let' must not be in expression position in strict mode",
+    [116]: "Cannot assign to `eval` and `arguments` in strict mode",
+    [117]: "The left-hand side of a for-of loop may not start with 'let'",
+    [118]: "Block body arrows can not be immediately invoked without a group",
+    [119]: "Block body arrows can not be immediately accessed without a group",
+    [120]: "Unexpected strict mode reserved word",
+    [121]: "Unexpected eval or arguments in strict mode",
+    [122]: "Decorators must not be followed by a semicolon",
+    [123]: "Calling delete on expression not allowed in strict mode",
+    [124]: "Pattern can not have a tail",
+    [126]: "Can not have a `yield` expression on the left side of a ternary",
+    [127]: "An arrow function can not have a postfix update operator",
+    [128]: "Invalid object literal key character after generator star",
+    [129]: "Private fields can not be deleted",
+    [131]: "Classes may not have a field called constructor",
+    [130]: "Classes may not have a private element named constructor",
+    [132]: "A class field initializer or static block may not contain arguments",
+    [133]: "Generators can only be declared at the top level or inside a block",
+    [134]: "Async methods are a restricted production and cannot have a newline following it",
+    [135]: "Unexpected character after object literal property name",
+    [137]: "Invalid key token",
+    [138]: "Label '%0' has already been declared",
+    [139]: "continue statement must be nested within an iteration statement",
+    [140]: "Undefined label '%0'",
+    [141]: "Trailing comma is disallowed inside import(...) arguments",
+    [142]: "Invalid binding in JSON import",
+    [143]: "import() requires exactly one argument",
+    [144]: "Cannot use new with import(...)",
+    [145]: "... is not allowed in import()",
+    [146]: "Expected '=>'",
+    [147]: "Duplicate binding '%0'",
+    [148]: "Duplicate private identifier #%0",
+    [149]: "Cannot export a duplicate name '%0'",
+    [152]: "Duplicate %0 for-binding",
+    [150]: "Exported binding '%0' needs to refer to a top-level declared variable",
+    [151]: "Unexpected private field",
+    [155]: "Numeric separators are not allowed at the end of numeric literals",
+    [154]: "Only one underscore is allowed as numeric separator",
+    [156]: "JSX value should be either an expression or a quoted JSX text",
+    [157]: "Expected corresponding JSX closing tag for %0",
+    [158]: "Adjacent JSX elements must be wrapped in an enclosing tag",
+    [159]: "JSX attributes must only be assigned a non-empty 'expression'",
+    [160]: "'%0' has already been declared",
+    [161]: "'%0' shadowed a catch clause binding",
+    [162]: "Dot property must be an identifier",
+    [163]: "Encountered invalid input after spread/rest argument",
+    [164]: "Catch without try",
+    [165]: "Finally without try",
+    [166]: "Expected corresponding closing tag for JSX fragment",
+    [167]: "Coalescing and logical operators used together in the same expression must be disambiguated with parentheses",
+    [168]: "Invalid tagged template on optional chain",
+    [169]: "Invalid optional chain from super property",
+    [170]: "Invalid optional chain from new expression",
+    [171]: 'Cannot use "import.meta" outside a module',
+    [172]: "Leading decorators must be attached to a class declaration",
+    [173]: "An export name cannot include a lone surrogate",
+    [174]: "A string literal cannot be used as an exported binding without `from`",
+    [175]: "Private fields can't be accessed on super",
+    [176]: "The only valid meta property for import is 'import.meta'",
+    [177]: "'import.meta' must not contain escaped characters",
+    [178]: 'cannot use "await" as identifier inside an async function',
+    [179]: 'cannot use "await" in static blocks',
+    [180]: "Unexpected token `}`. Did you mean `&rbrace;` or `{'}'}`?",
+    [181]: "Unexpected token `>`. Did you mean `&gt;` or `{'>'}`?"
+  };
+  var _ParseError = class _ParseError extends SyntaxError {
+    constructor(start, end, type, ...params) {
+      const description = errorMessages[type].replaceAll(/%(\d+)/g, (_, i2) => params[i2]);
+      const message = "[" + start.line + ":" + start.column + "-" + end.line + ":" + end.column + "]: " + description;
+      super(message);
+      __publicField(this, "start");
+      __publicField(this, "end");
+      __publicField(this, "range");
+      __publicField(this, "loc");
+      __publicField(this, "description");
+      this.start = start.index;
+      this.end = end.index;
+      this.range = [start.index, end.index];
+      this.loc = {
+        start: { line: start.line, column: start.column },
+        end: { line: end.line, column: end.column }
+      };
+      this.description = description;
+    }
+  };
+  __name(_ParseError, "ParseError");
+  var ParseError = _ParseError;
+  var KeywordDescTable = [
+    "end of source",
+    "identifier",
+    "number",
+    "string",
+    "regular expression",
+    "false",
+    "true",
+    "null",
+    "template continuation",
+    "template tail",
+    "=>",
+    "(",
+    "{",
+    ".",
+    "...",
+    "}",
+    ")",
+    ";",
+    ",",
+    "[",
+    "]",
+    ":",
+    "?",
+    "'",
+    '"',
+    "++",
+    "--",
+    "=",
+    "<<=",
+    ">>=",
+    ">>>=",
+    "**=",
+    "+=",
+    "-=",
+    "*=",
+    "/=",
+    "%=",
+    "^=",
+    "|=",
+    "&=",
+    "||=",
+    "&&=",
+    "??=",
+    "typeof",
+    "delete",
+    "void",
+    "!",
+    "~",
+    "+",
+    "-",
+    "in",
+    "instanceof",
+    "*",
+    "%",
+    "/",
+    "**",
+    "&&",
+    "||",
+    "===",
+    "!==",
+    "==",
+    "!=",
+    "<=",
+    ">=",
+    "<",
+    ">",
+    "<<",
+    ">>",
+    ">>>",
+    "&",
+    "|",
+    "^",
+    "var",
+    "let",
+    "const",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "continue",
+    "debugger",
+    "default",
+    "do",
+    "else",
+    "export",
+    "extends",
+    "finally",
+    "for",
+    "function",
+    "if",
+    "import",
+    "new",
+    "return",
+    "super",
+    "switch",
+    "this",
+    "throw",
+    "try",
+    "while",
+    "with",
+    "implements",
+    "interface",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "static",
+    "yield",
+    "as",
+    "async",
+    "await",
+    "constructor",
+    "get",
+    "set",
+    "accessor",
+    "from",
+    "of",
+    "using",
+    "enum",
+    "eval",
+    "arguments",
+    "escaped keyword",
+    "escaped future reserved keyword",
+    "reserved if strict",
+    "#",
+    "BigIntLiteral",
+    "??",
+    "?.",
+    "WhiteSpace",
+    "Illegal",
+    "LineTerminator",
+    "PrivateField",
+    "Template",
+    "@",
+    "target",
+    "meta",
+    "LineFeed",
+    "Escaped",
+    "JSXText"
+  ];
+  var descKeywordTable = /* @__PURE__ */ new Map([
+    ["this", 86111],
+    ["function", 86104],
+    ["if", 20569],
+    ["return", 20572],
+    ["var", 86088],
+    ["else", 20563],
+    ["for", 20567],
+    ["new", 86107],
+    ["in", 8673330],
+    ["typeof", 16863275],
+    ["while", 20578],
+    ["case", 20556],
+    ["break", 20555],
+    ["try", 20577],
+    ["catch", 20557],
+    ["delete", 16863276],
+    ["throw", 86112],
+    ["switch", 86110],
+    ["continue", 20559],
+    ["default", 20561],
+    ["instanceof", 8411187],
+    ["do", 20562],
+    ["void", 16863277],
+    ["finally", 20566],
+    ["async", 209005],
+    ["await", 209006],
+    ["class", 86094],
+    ["const", 86090],
+    ["constructor", 209007],
+    ["debugger", 20560],
+    ["export", 20564],
+    ["extends", 20565],
+    ["false", 86021],
+    ["from", 209011],
+    ["get", 209008],
+    ["implements", 36964],
+    ["import", 86106],
+    ["interface", 36965],
+    ["let", 241737],
+    ["null", 86023],
+    ["of", 471156],
+    ["using", 209013],
+    ["package", 36966],
+    ["private", 36967],
+    ["protected", 36968],
+    ["public", 36969],
+    ["set", 209009],
+    ["static", 36970],
+    ["super", 86109],
+    ["true", 86022],
+    ["with", 20579],
+    ["yield", 241771],
+    ["enum", 86134],
+    ["eval", 537079927],
+    ["as", 77932],
+    ["arguments", 537079928],
+    ["target", 209030],
+    ["meta", 209031],
+    ["accessor", 209010]
+  ]);
+  var keywordLengths = [...descKeywordTable.keys()].map((keyword) => keyword.length);
+  var minKeywordLength = Math.min(...keywordLengths);
+  var maxKeywordLength = Math.max(...keywordLengths);
+  function scanIdentifier(parser, context, isValidAsKeyword) {
+    var _a2;
+    while (isIdPart[advanceChar(parser)])
+      ;
+    parser.tokenValue = parser.source.slice(parser.tokenIndex, parser.index);
+    if (parser.currentChar === 92 || parser.currentChar > 126) {
+      return scanIdentifierSlowCase(parser, context, 0, isValidAsKeyword);
+    }
+    const length = parser.index - parser.tokenIndex;
+    if (length < minKeywordLength || length > maxKeywordLength)
+      return 208897;
+    return (_a2 = descKeywordTable.get(parser.tokenValue)) != null ? _a2 : 208897;
+  }
+  __name(scanIdentifier, "scanIdentifier");
+  function scanUnicodeIdentifier(parser, context) {
+    const cookedChar = scanIdentifierUnicodeEscape(parser);
+    if (!isIdentifierStart(cookedChar))
+      parser.report(5);
+    parser.tokenValue = String.fromCodePoint(cookedChar);
+    return scanIdentifierSlowCase(parser, context, 1, CharTypes[cookedChar] & 4);
+  }
+  __name(scanUnicodeIdentifier, "scanUnicodeIdentifier");
+  function scanIdentifierSlowCase(parser, context, hasEscape, isValidAsKeyword) {
+    let start = parser.index;
+    while (parser.index < parser.end) {
+      if (parser.currentChar === 92) {
+        parser.tokenValue += parser.source.slice(start, parser.index);
+        hasEscape = 1;
+        const code = scanIdentifierUnicodeEscape(parser);
+        if (!isIdentifierPart(code))
+          parser.report(5);
+        isValidAsKeyword = isValidAsKeyword && CharTypes[code] & 4;
+        parser.tokenValue += String.fromCodePoint(code);
+        start = parser.index;
+      } else {
+        const merged = consumePossibleSurrogatePair(parser);
+        if (merged > 0) {
+          if (!isIdentifierPart(merged)) {
+            parser.report(20, String.fromCodePoint(merged));
+          }
+          parser.currentChar = merged;
+          parser.index++;
+          parser.column++;
+        } else if (!isIdentifierPart(parser.currentChar)) {
+          break;
+        }
+        advanceChar(parser);
+      }
+    }
+    if (parser.index <= parser.end) {
+      parser.tokenValue += parser.source.slice(start, parser.index);
+    }
+    const { length } = parser.tokenValue;
+    if (isValidAsKeyword && length >= minKeywordLength && length <= maxKeywordLength) {
+      const token = descKeywordTable.get(parser.tokenValue);
+      if (token === void 0)
+        return 208897 | (hasEscape ? -2147483648 : 0);
+      if (!hasEscape)
+        return token;
+      if (token === 209006) {
+        if ((context & (2 | 2048)) === 0) {
+          return token | -2147483648;
+        }
+        return -2147483527;
+      }
+      if (context & 1) {
+        if (token === 36970) {
+          return -2147483526;
+        }
+        if ((token & 36864) === 36864) {
+          return -2147483526;
+        }
+        if ((token & 20480) === 20480) {
+          if (context & 262144 && (context & 8) === 0) {
+            return token | -2147483648;
+          } else {
+            return -2147483527;
+          }
+        }
+        return 209019 | -2147483648;
+      }
+      if (context & 262144 && (context & 8) === 0 && (token & 20480) === 20480) {
+        return token | -2147483648;
+      }
+      if (token === 241771) {
+        return context & 262144 ? 209019 | -2147483648 : context & 1024 ? -2147483527 : token | -2147483648;
+      }
+      if (token === 209005) {
+        return 209019 | -2147483648;
+      }
+      if ((token & 36864) === 36864) {
+        return token | 12288 | -2147483648;
+      }
+      return -2147483527;
+    }
+    return 208897 | (hasEscape ? -2147483648 : 0);
+  }
+  __name(scanIdentifierSlowCase, "scanIdentifierSlowCase");
+  function scanPrivateIdentifier(parser) {
+    let char = advanceChar(parser);
+    if (char === 92)
+      return 131;
+    const merged = consumePossibleSurrogatePair(parser);
+    if (merged)
+      char = merged;
+    if (!isIdentifierStart(char))
+      parser.report(96);
+    return 131;
+  }
+  __name(scanPrivateIdentifier, "scanPrivateIdentifier");
+  function scanIdentifierUnicodeEscape(parser) {
+    if (parser.source.charCodeAt(parser.index + 1) !== 117) {
+      parser.report(5);
+    }
+    parser.currentChar = parser.source.charCodeAt(parser.index += 2);
+    parser.column += 2;
+    return scanUnicodeEscape(parser);
+  }
+  __name(scanIdentifierUnicodeEscape, "scanIdentifierUnicodeEscape");
+  function scanUnicodeEscape(parser) {
+    let codePoint = 0;
+    const char = parser.currentChar;
+    if (char === 123) {
+      const begin = parser.index - 2;
+      while (CharTypes[advanceChar(parser)] & 64) {
+        codePoint = codePoint << 4 | toHex(parser.currentChar);
+        if (codePoint > 1114111)
+          throw new ParseError({ index: begin, line: parser.line, column: parser.column }, parser.currentLocation, 104);
+      }
+      if (parser.currentChar !== 125) {
+        throw new ParseError({ index: begin, line: parser.line, column: parser.column }, parser.currentLocation, 7);
+      }
+      advanceChar(parser);
+      return codePoint;
+    }
+    if ((CharTypes[char] & 64) === 0)
+      parser.report(7);
+    const char2 = parser.source.charCodeAt(parser.index + 1);
+    if ((CharTypes[char2] & 64) === 0)
+      parser.report(7);
+    const char3 = parser.source.charCodeAt(parser.index + 2);
+    if ((CharTypes[char3] & 64) === 0)
+      parser.report(7);
+    const char4 = parser.source.charCodeAt(parser.index + 3);
+    if ((CharTypes[char4] & 64) === 0)
+      parser.report(7);
+    codePoint = toHex(char) << 12 | toHex(char2) << 8 | toHex(char3) << 4 | toHex(char4);
+    parser.currentChar = parser.source.charCodeAt(parser.index += 4);
+    parser.column += 4;
+    return codePoint;
+  }
+  __name(scanUnicodeEscape, "scanUnicodeEscape");
+  function scanNumber(parser, context, kind) {
+    let char = parser.currentChar;
+    let value = 0;
+    let digit = 9;
+    let atStart = kind & 64 ? 0 : 1;
+    let digits = 0;
+    let allowSeparator = 0;
+    if (kind & 64) {
+      value = "." + scanDecimalDigitsOrSeparator(parser, char);
+      char = parser.currentChar;
+      if (char === 110)
+        parser.report(12);
+    } else {
+      if (char === 48) {
+        char = advanceChar(parser);
+        if ((char | 32) === 120) {
+          kind = 8 | 128;
+          char = advanceChar(parser);
+          while (CharTypes[char] & (64 | 4096)) {
+            if (char === 95) {
+              if (!allowSeparator)
+                parser.report(154);
+              allowSeparator = 0;
+              char = advanceChar(parser);
+              continue;
+            }
+            allowSeparator = 1;
+            value = value * 16 + toHex(char);
+            digits++;
+            char = advanceChar(parser);
+          }
+          if (digits === 0 || !allowSeparator) {
+            parser.report(digits === 0 ? 21 : 155);
+          }
+        } else if ((char | 32) === 111) {
+          kind = 4 | 128;
+          char = advanceChar(parser);
+          while (CharTypes[char] & (32 | 4096)) {
+            if (char === 95) {
+              if (!allowSeparator) {
+                parser.report(154);
+              }
+              allowSeparator = 0;
+              char = advanceChar(parser);
+              continue;
+            }
+            allowSeparator = 1;
+            value = value * 8 + (char - 48);
+            digits++;
+            char = advanceChar(parser);
+          }
+          if (digits === 0 || !allowSeparator) {
+            parser.report(digits === 0 ? 0 : 155);
+          }
+        } else if ((char | 32) === 98) {
+          kind = 2 | 128;
+          char = advanceChar(parser);
+          while (CharTypes[char] & (128 | 4096)) {
+            if (char === 95) {
+              if (!allowSeparator) {
+                parser.report(154);
+              }
+              allowSeparator = 0;
+              char = advanceChar(parser);
+              continue;
+            }
+            allowSeparator = 1;
+            value = value * 2 + (char - 48);
+            digits++;
+            char = advanceChar(parser);
+          }
+          if (digits === 0 || !allowSeparator) {
+            parser.report(digits === 0 ? 0 : 155);
+          }
+        } else if (CharTypes[char] & 32) {
+          if (context & 1)
+            parser.report(1);
+          kind = 1;
+          while (CharTypes[char] & 16) {
+            if (CharTypes[char] & 512) {
+              kind = 32;
+              atStart = 0;
+              break;
+            }
+            value = value * 8 + (char - 48);
+            char = advanceChar(parser);
+          }
+        } else if (CharTypes[char] & 512) {
+          if (context & 1)
+            parser.report(1);
+          parser.flags |= 64;
+          kind = 32;
+        } else if (char === 95) {
+          parser.report(0);
+        }
+      }
+      if (kind & 48) {
+        if (atStart) {
+          while (digit >= 0 && CharTypes[char] & (16 | 4096)) {
+            if (char === 95) {
+              char = advanceChar(parser);
+              if (char === 95 || kind & 32) {
+                throw new ParseError(parser.currentLocation, { index: parser.index + 1, line: parser.line, column: parser.column }, 154);
+              }
+              allowSeparator = 1;
+              continue;
+            }
+            allowSeparator = 0;
+            value = 10 * value + (char - 48);
+            char = advanceChar(parser);
+            --digit;
+          }
+          if (allowSeparator) {
+            throw new ParseError(parser.currentLocation, { index: parser.index + 1, line: parser.line, column: parser.column }, 155);
+          }
+          if (digit >= 0 && !isIdentifierStart(char) && char !== 46) {
+            parser.tokenValue = value;
+            if (parser.options.raw)
+              parser.tokenRaw = parser.source.slice(parser.tokenIndex, parser.index);
+            return 134283266;
+          }
+        }
+        value += scanDecimalDigitsOrSeparator(parser, char);
+        char = parser.currentChar;
+        if (char === 46) {
+          if (advanceChar(parser) === 95)
+            parser.report(0);
+          kind = 64;
+          value += "." + scanDecimalDigitsOrSeparator(parser, parser.currentChar);
+          char = parser.currentChar;
+        }
+      }
+    }
+    const end = parser.index;
+    let isBigInt = 0;
+    if (char === 110 && kind & 128) {
+      isBigInt = 1;
+      char = advanceChar(parser);
+    } else {
+      if ((char | 32) === 101) {
+        char = advanceChar(parser);
+        if (CharTypes[char] & 256)
+          char = advanceChar(parser);
+        const { index } = parser;
+        if ((CharTypes[char] & 16) === 0)
+          parser.report(11);
+        value += parser.source.substring(end, index) + scanDecimalDigitsOrSeparator(parser, char);
+        char = parser.currentChar;
+      }
+    }
+    if (parser.index < parser.end && CharTypes[char] & 16 || isIdentifierStart(char)) {
+      parser.report(13);
+    }
+    if (isBigInt) {
+      parser.tokenRaw = parser.source.slice(parser.tokenIndex, parser.index);
+      parser.tokenValue = BigInt(parser.tokenRaw.slice(0, -1).replaceAll("_", ""));
+      return 134283389;
+    }
+    parser.tokenValue = kind & (1 | 2 | 8 | 4) ? value : kind & 32 ? parseFloat(parser.source.substring(parser.tokenIndex, parser.index)) : +value;
+    if (parser.options.raw)
+      parser.tokenRaw = parser.source.slice(parser.tokenIndex, parser.index);
+    return 134283266;
+  }
+  __name(scanNumber, "scanNumber");
+  function scanDecimalDigitsOrSeparator(parser, char) {
+    let allowSeparator = 0;
+    let start = parser.index;
+    let ret = "";
+    while (CharTypes[char] & (16 | 4096)) {
+      if (char === 95) {
+        const { index } = parser;
+        char = advanceChar(parser);
+        if (char === 95) {
+          throw new ParseError(parser.currentLocation, { index: parser.index + 1, line: parser.line, column: parser.column }, 154);
+        }
+        allowSeparator = 1;
+        ret += parser.source.substring(start, index);
+        start = parser.index;
+        continue;
+      }
+      allowSeparator = 0;
+      char = advanceChar(parser);
+    }
+    if (allowSeparator) {
+      throw new ParseError(parser.currentLocation, { index: parser.index + 1, line: parser.line, column: parser.column }, 155);
+    }
+    return ret + parser.source.substring(start, parser.index);
+  }
+  __name(scanDecimalDigitsOrSeparator, "scanDecimalDigitsOrSeparator");
   var RegexState;
   (function(RegexState2) {
     RegexState2[RegexState2["Empty"] = 0] = "Empty";
@@ -7237,12 +8193,10 @@ format:`, anonymisedFormat);
     try {
       return new RegExp(pattern, flags);
     } catch {
-      try {
-        new RegExp(pattern, flags);
+      if (!parser.options.validateRegex) {
         return null;
-      } catch {
-        parser.report(34);
       }
+      parser.report(34);
     }
   }
   __name(validate, "validate");
@@ -7387,12 +8341,14 @@ format:`, anonymisedFormat);
         const ch = advanceChar(parser);
         if (parser.currentChar === 123) {
           let code = 0;
+          let digits = 0;
           while ((CharTypes[advanceChar(parser)] & 64) !== 0) {
             code = code << 4 | toHex(parser.currentChar);
             if (code > 1114111)
               return -5;
+            digits++;
           }
-          if (parser.currentChar < 1 || parser.currentChar !== 125) {
+          if (digits === 0 || parser.currentChar < 1 || parser.currentChar !== 125) {
             return -4;
           }
           return code;
@@ -7416,7 +8372,7 @@ format:`, anonymisedFormat);
       }
       case 56:
       case 57:
-        if (isTemplate || !parser.options.webcompat || context & 1)
+        if (isTemplate || context & 1)
           return -3;
         parser.flags |= 4096;
       default:
@@ -7443,6 +8399,7 @@ format:`, anonymisedFormat);
     const { index: start } = parser;
     let token = 67174409;
     let ret = "";
+    let hasCarriageReturn = false;
     let char = advanceChar(parser);
     while (char !== 96) {
       if (char === 36 && parser.source.charCodeAt(parser.index + 1) === 123) {
@@ -7451,6 +8408,8 @@ format:`, anonymisedFormat);
         break;
       } else if (char === 92) {
         char = advanceChar(parser);
+        if (char === 13)
+          hasCarriageReturn = true;
         if (char > 126) {
           ret += String.fromCodePoint(char);
         } else {
@@ -7463,7 +8422,9 @@ format:`, anonymisedFormat);
             parser.line = line;
             parser.column = column;
             ret = null;
-            char = scanBadTemplate(parser, char);
+            char = scanBadTemplate(parser, char, () => {
+              hasCarriageReturn = true;
+            });
             if (char < 0)
               token = 67174408;
             break;
@@ -7472,10 +8433,13 @@ format:`, anonymisedFormat);
           }
         }
       } else if (parser.index < parser.end) {
-        if (char === 13 && parser.source.charCodeAt(parser.index) === 10) {
-          ret += String.fromCodePoint(char);
+        if (char === 13)
+          hasCarriageReturn = true;
+        if (char === 13 && parser.source.charCodeAt(parser.index + 1) === 10) {
           parser.currentChar = parser.source.charCodeAt(++parser.index);
         }
+        if (char === 13)
+          char = 10;
         if ((char & 83) < 3 && char === 10 || (char ^ 8232) <= 1) {
           parser.column = -1;
           parser.line++;
@@ -7488,13 +8452,17 @@ format:`, anonymisedFormat);
     }
     advanceChar(parser);
     parser.tokenValue = ret;
-    parser.tokenRaw = parser.source.slice(start + 1, parser.index - (token === 67174409 ? 1 : 2));
+    const tokenRaw = parser.source.slice(start + 1, parser.index - (token === 67174409 ? 1 : 2));
+    parser.tokenRaw = hasCarriageReturn ? tokenRaw.replaceAll(/\r\n?/g, "\n") : tokenRaw;
     return token;
   }
   __name(scanTemplate, "scanTemplate");
-  function scanBadTemplate(parser, ch) {
+  function scanBadTemplate(parser, ch, onCarriageReturn) {
     while (ch !== 96) {
       switch (ch) {
+        case 13:
+          onCarriageReturn();
+          break;
         case 36: {
           const index = parser.index + 1;
           if (index < parser.end && parser.source.charCodeAt(index) === 123) {
@@ -7525,978 +8493,43 @@ format:`, anonymisedFormat);
     return scanTemplate(parser, context);
   }
   __name(scanTemplateTail, "scanTemplateTail");
-  var errorMessages = {
-    [0]: "Unexpected token",
-    [30]: "Unexpected token: '%0'",
-    [1]: "Octal escape sequences are not allowed in strict mode",
-    [2]: "Octal escape sequences are not allowed in template strings",
-    [3]: "\\8 and \\9 are not allowed in template strings",
-    [4]: "Private identifier #%0 is not defined",
-    [5]: "Illegal Unicode escape sequence",
-    [6]: "Invalid code point %0",
-    [7]: "Invalid hexadecimal escape sequence",
-    [9]: "Octal literals are not allowed in strict mode",
-    [8]: "Decimal integer literals with a leading zero are forbidden in strict mode",
-    [10]: "Expected number in radix %0",
-    [151]: "Invalid left-hand side assignment to a destructible right-hand side",
-    [11]: "Non-number found after exponent indicator",
-    [12]: "Invalid BigIntLiteral",
-    [13]: "No identifiers allowed directly after numeric literal",
-    [14]: "Escapes \\8 or \\9 are not syntactically valid escapes",
-    [15]: "Escapes \\8 or \\9 are not allowed in strict mode",
-    [16]: "Unterminated string literal",
-    [17]: "Unterminated template literal",
-    [18]: "Multiline comment was not closed properly",
-    [19]: "The identifier contained dynamic unicode escape that was not closed",
-    [20]: "Illegal character '%0'",
-    [21]: "Missing hexadecimal digits",
-    [22]: "Invalid implicit octal",
-    [23]: "Invalid line break in string literal",
-    [24]: "Only unicode escapes are legal in identifier names",
-    [25]: "Expected '%0'",
-    [26]: "Invalid left-hand side in assignment",
-    [27]: "Invalid left-hand side in async arrow",
-    [28]: 'Calls to super must be in the "constructor" method of a class expression or class declaration that has a superclass',
-    [29]: "Member access on super must be in a method",
-    [31]: "Await expression not allowed in formal parameter",
-    [32]: "Yield expression not allowed in formal parameter",
-    [95]: "Unexpected token: 'escaped keyword'",
-    [33]: "Unary expressions as the left operand of an exponentiation expression must be disambiguated with parentheses",
-    [123]: "Async functions can only be declared at the top level or inside a block",
-    [34]: "Unterminated regular expression",
-    [35]: "Unexpected regular expression flag",
-    [36]: "Duplicate regular expression flag '%0'",
-    [37]: "%0 functions must have exactly %1 argument%2",
-    [38]: "Setter function argument must not be a rest parameter",
-    [39]: "%0 declaration must have a name in this context",
-    [40]: "Function name may not contain any reserved words or be eval or arguments in strict mode",
-    [41]: "The rest operator is missing an argument",
-    [42]: "A getter cannot be a generator",
-    [43]: "A setter cannot be a generator",
-    [44]: "A computed property name must be followed by a colon or paren",
-    [134]: "Object literal keys that are strings or numbers must be a method or have a colon",
-    [46]: "Found `* async x(){}` but this should be `async * x(){}`",
-    [45]: "Getters and setters can not be generators",
-    [47]: "'%0' can not be generator method",
-    [48]: "No line break is allowed after '=>'",
-    [49]: "The left-hand side of the arrow can only be destructed through assignment",
-    [50]: "The binding declaration is not destructible",
-    [51]: "Async arrow can not be followed by new expression",
-    [52]: "Classes may not have a static property named 'prototype'",
-    [53]: "Class constructor may not be a %0",
-    [54]: "Duplicate constructor method in class",
-    [55]: "Invalid increment/decrement operand",
-    [56]: "Invalid use of `new` keyword on an increment/decrement expression",
-    [57]: "`=>` is an invalid assignment target",
-    [58]: "Rest element may not have a trailing comma",
-    [59]: "Missing initializer in %0 declaration",
-    [60]: "'for-%0' loop head declarations can not have an initializer",
-    [61]: "Invalid left-hand side in for-%0 loop: Must have a single binding",
-    [62]: "Invalid shorthand property initializer",
-    [63]: "Property name __proto__ appears more than once in object literal",
-    [64]: "Let is disallowed as a lexically bound name",
-    [65]: "Invalid use of '%0' inside new expression",
-    [66]: "Illegal 'use strict' directive in function with non-simple parameter list",
-    [67]: 'Identifier "let" disallowed as left-hand side expression in strict mode',
-    [68]: "Illegal continue statement",
-    [69]: "Illegal break statement",
-    [70]: "Cannot have `let[...]` as a var name in strict mode",
-    [71]: "Invalid destructuring assignment target",
-    [72]: "Rest parameter may not have a default initializer",
-    [73]: "The rest argument must the be last parameter",
-    [74]: "Invalid rest argument",
-    [76]: "In strict mode code, functions can only be declared at top level or inside a block",
-    [77]: "In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement",
-    [78]: "Without web compatibility enabled functions can not be declared at top level, inside a block, or as the body of an if statement",
-    [79]: "Class declaration can't appear in single-statement context",
-    [80]: "Invalid left-hand side in for-%0",
-    [81]: "Invalid assignment in for-%0",
-    [82]: "for await (... of ...) is only valid in async functions and async generators",
-    [83]: "The first token after the template expression should be a continuation of the template",
-    [85]: "`let` declaration not allowed here and `let` cannot be a regular var name in strict mode",
-    [84]: "`let \n [` is a restricted production at the start of a statement",
-    [86]: "Catch clause requires exactly one parameter, not more (and no trailing comma)",
-    [87]: "Catch clause parameter does not support default values",
-    [88]: "Missing catch or finally after try",
-    [89]: "More than one default clause in switch statement",
-    [90]: "Illegal newline after throw",
-    [91]: "Strict mode code may not include a with statement",
-    [92]: "Illegal return statement",
-    [93]: "The left hand side of the for-header binding declaration is not destructible",
-    [94]: "new.target only allowed within functions or static blocks",
-    [96]: "'#' not followed by identifier",
-    [102]: "Invalid keyword",
-    [101]: "Can not use 'let' as a class name",
-    [100]: "'A lexical declaration can't define a 'let' binding",
-    [99]: "Can not use `let` as variable name in strict mode",
-    [97]: "'%0' may not be used as an identifier in this context",
-    [98]: "Await is only valid in async functions",
-    [103]: "The %0 keyword can only be used with the module goal",
-    [104]: "Unicode codepoint must not be greater than 0x10FFFF",
-    [105]: "%0 source must be string",
-    [106]: "Only a identifier or string can be used to indicate alias",
-    [107]: "Only '*' or '{...}' can be imported after default",
-    [108]: "Trailing decorator may be followed by method",
-    [109]: "Decorators can't be used with a constructor",
-    [110]: "Can not use `await` as identifier in module or async func",
-    [111]: "Can not use `await` as identifier in module",
-    [112]: "HTML comments are only allowed with web compatibility (Annex B)",
-    [113]: "The identifier 'let' must not be in expression position in strict mode",
-    [114]: "Cannot assign to `eval` and `arguments` in strict mode",
-    [115]: "The left-hand side of a for-of loop may not start with 'let'",
-    [116]: "Block body arrows can not be immediately invoked without a group",
-    [117]: "Block body arrows can not be immediately accessed without a group",
-    [118]: "Unexpected strict mode reserved word",
-    [119]: "Unexpected eval or arguments in strict mode",
-    [120]: "Decorators must not be followed by a semicolon",
-    [121]: "Calling delete on expression not allowed in strict mode",
-    [122]: "Pattern can not have a tail",
-    [124]: "Can not have a `yield` expression on the left side of a ternary",
-    [125]: "An arrow function can not have a postfix update operator",
-    [126]: "Invalid object literal key character after generator star",
-    [127]: "Private fields can not be deleted",
-    [129]: "Classes may not have a field called constructor",
-    [128]: "Classes may not have a private element named constructor",
-    [130]: "A class field initializer or static block may not contain arguments",
-    [131]: "Generators can only be declared at the top level or inside a block",
-    [132]: "Async methods are a restricted production and cannot have a newline following it",
-    [133]: "Unexpected character after object literal property name",
-    [135]: "Invalid key token",
-    [136]: "Label '%0' has already been declared",
-    [137]: "continue statement must be nested within an iteration statement",
-    [138]: "Undefined label '%0'",
-    [139]: "Trailing comma is disallowed inside import(...) arguments",
-    [140]: "Invalid binding in JSON import",
-    [141]: "import() requires exactly one argument",
-    [142]: "Cannot use new with import(...)",
-    [143]: "... is not allowed in import()",
-    [144]: "Expected '=>'",
-    [145]: "Duplicate binding '%0'",
-    [146]: "Duplicate private identifier #%0",
-    [147]: "Cannot export a duplicate name '%0'",
-    [150]: "Duplicate %0 for-binding",
-    [148]: "Exported binding '%0' needs to refer to a top-level declared variable",
-    [149]: "Unexpected private field",
-    [153]: "Numeric separators are not allowed at the end of numeric literals",
-    [152]: "Only one underscore is allowed as numeric separator",
-    [154]: "JSX value should be either an expression or a quoted JSX text",
-    [155]: "Expected corresponding JSX closing tag for %0",
-    [156]: "Adjacent JSX elements must be wrapped in an enclosing tag",
-    [157]: "JSX attributes must only be assigned a non-empty 'expression'",
-    [158]: "'%0' has already been declared",
-    [159]: "'%0' shadowed a catch clause binding",
-    [160]: "Dot property must be an identifier",
-    [161]: "Encountered invalid input after spread/rest argument",
-    [162]: "Catch without try",
-    [163]: "Finally without try",
-    [164]: "Expected corresponding closing tag for JSX fragment",
-    [165]: "Coalescing and logical operators used together in the same expression must be disambiguated with parentheses",
-    [166]: "Invalid tagged template on optional chain",
-    [167]: "Invalid optional chain from super property",
-    [168]: "Invalid optional chain from new expression",
-    [169]: 'Cannot use "import.meta" outside a module',
-    [170]: "Leading decorators must be attached to a class declaration",
-    [171]: "An export name cannot include a lone surrogate, found %0",
-    [172]: "A string literal cannot be used as an exported binding without `from`",
-    [173]: "Private fields can't be accessed on super",
-    [174]: "The only valid meta property for import is 'import.meta'",
-    [175]: "'import.meta' must not contain escaped characters",
-    [176]: 'cannot use "await" as identifier inside an async function',
-    [177]: 'cannot use "await" in static blocks'
-  };
-  var _ParseError = class _ParseError extends SyntaxError {
-    constructor(start, end, type, ...params) {
-      const description = errorMessages[type].replace(/%(\d+)/g, (_, i2) => params[i2]);
-      const message = "[" + start.line + ":" + start.column + "-" + end.line + ":" + end.column + "]: " + description;
-      super(message);
-      __publicField(this, "start");
-      __publicField(this, "end");
-      __publicField(this, "range");
-      __publicField(this, "loc");
-      __publicField(this, "description");
-      this.start = start.index;
-      this.end = end.index;
-      this.range = [start.index, end.index];
-      this.loc = {
-        start: { line: start.line, column: start.column },
-        end: { line: end.line, column: end.column }
-      };
-      this.description = description;
-    }
-  };
-  __name(_ParseError, "ParseError");
-  var ParseError = _ParseError;
-  function scanNumber(parser, context, kind) {
-    let char = parser.currentChar;
-    let value = 0;
-    let digit = 9;
-    let atStart = kind & 64 ? 0 : 1;
-    let digits = 0;
-    let allowSeparator = 0;
-    if (kind & 64) {
-      value = "." + scanDecimalDigitsOrSeparator(parser, char);
-      char = parser.currentChar;
-      if (char === 110)
-        parser.report(12);
-    } else {
-      if (char === 48) {
-        char = advanceChar(parser);
-        if ((char | 32) === 120) {
-          kind = 8 | 128;
-          char = advanceChar(parser);
-          while (CharTypes[char] & (64 | 4096)) {
-            if (char === 95) {
-              if (!allowSeparator)
-                parser.report(152);
-              allowSeparator = 0;
-              char = advanceChar(parser);
-              continue;
-            }
-            allowSeparator = 1;
-            value = value * 16 + toHex(char);
-            digits++;
-            char = advanceChar(parser);
-          }
-          if (digits === 0 || !allowSeparator) {
-            parser.report(digits === 0 ? 21 : 153);
-          }
-        } else if ((char | 32) === 111) {
-          kind = 4 | 128;
-          char = advanceChar(parser);
-          while (CharTypes[char] & (32 | 4096)) {
-            if (char === 95) {
-              if (!allowSeparator) {
-                parser.report(152);
-              }
-              allowSeparator = 0;
-              char = advanceChar(parser);
-              continue;
-            }
-            allowSeparator = 1;
-            value = value * 8 + (char - 48);
-            digits++;
-            char = advanceChar(parser);
-          }
-          if (digits === 0 || !allowSeparator) {
-            parser.report(digits === 0 ? 0 : 153);
-          }
-        } else if ((char | 32) === 98) {
-          kind = 2 | 128;
-          char = advanceChar(parser);
-          while (CharTypes[char] & (128 | 4096)) {
-            if (char === 95) {
-              if (!allowSeparator) {
-                parser.report(152);
-              }
-              allowSeparator = 0;
-              char = advanceChar(parser);
-              continue;
-            }
-            allowSeparator = 1;
-            value = value * 2 + (char - 48);
-            digits++;
-            char = advanceChar(parser);
-          }
-          if (digits === 0 || !allowSeparator) {
-            parser.report(digits === 0 ? 0 : 153);
-          }
-        } else if (CharTypes[char] & 32) {
-          if (context & 1)
-            parser.report(1);
-          kind = 1;
-          while (CharTypes[char] & 16) {
-            if (CharTypes[char] & 512) {
-              kind = 32;
-              atStart = 0;
-              break;
-            }
-            value = value * 8 + (char - 48);
-            char = advanceChar(parser);
-          }
-        } else if (CharTypes[char] & 512) {
-          if (context & 1)
-            parser.report(1);
-          parser.flags |= 64;
-          kind = 32;
-        } else if (char === 95) {
-          parser.report(0);
-        }
-      }
-      if (kind & 48) {
-        if (atStart) {
-          while (digit >= 0 && CharTypes[char] & (16 | 4096)) {
-            if (char === 95) {
-              char = advanceChar(parser);
-              if (char === 95 || kind & 32) {
-                throw new ParseError(parser.currentLocation, { index: parser.index + 1, line: parser.line, column: parser.column }, 152);
-              }
-              allowSeparator = 1;
-              continue;
-            }
-            allowSeparator = 0;
-            value = 10 * value + (char - 48);
-            char = advanceChar(parser);
-            --digit;
-          }
-          if (allowSeparator) {
-            throw new ParseError(parser.currentLocation, { index: parser.index + 1, line: parser.line, column: parser.column }, 153);
-          }
-          if (digit >= 0 && !isIdentifierStart(char) && char !== 46) {
-            parser.tokenValue = value;
-            if (parser.options.raw)
-              parser.tokenRaw = parser.source.slice(parser.tokenIndex, parser.index);
-            return 134283266;
-          }
-        }
-        value += scanDecimalDigitsOrSeparator(parser, char);
-        char = parser.currentChar;
-        if (char === 46) {
-          if (advanceChar(parser) === 95)
-            parser.report(0);
-          kind = 64;
-          value += "." + scanDecimalDigitsOrSeparator(parser, parser.currentChar);
-          char = parser.currentChar;
-        }
-      }
-    }
-    const end = parser.index;
-    let isBigInt = 0;
-    if (char === 110 && kind & 128) {
-      isBigInt = 1;
-      char = advanceChar(parser);
-    } else {
-      if ((char | 32) === 101) {
-        char = advanceChar(parser);
-        if (CharTypes[char] & 256)
-          char = advanceChar(parser);
-        const { index } = parser;
-        if ((CharTypes[char] & 16) === 0)
-          parser.report(11);
-        value += parser.source.substring(end, index) + scanDecimalDigitsOrSeparator(parser, char);
-        char = parser.currentChar;
-      }
-    }
-    if (parser.index < parser.end && CharTypes[char] & 16 || isIdentifierStart(char)) {
-      parser.report(13);
-    }
-    if (isBigInt) {
-      parser.tokenRaw = parser.source.slice(parser.tokenIndex, parser.index);
-      parser.tokenValue = BigInt(parser.tokenRaw.slice(0, -1).replaceAll("_", ""));
-      return 134283388;
-    }
-    parser.tokenValue = kind & (1 | 2 | 8 | 4) ? value : kind & 32 ? parseFloat(parser.source.substring(parser.tokenIndex, parser.index)) : +value;
-    if (parser.options.raw)
-      parser.tokenRaw = parser.source.slice(parser.tokenIndex, parser.index);
-    return 134283266;
-  }
-  __name(scanNumber, "scanNumber");
-  function scanDecimalDigitsOrSeparator(parser, char) {
-    let allowSeparator = 0;
-    let start = parser.index;
-    let ret = "";
-    while (CharTypes[char] & (16 | 4096)) {
-      if (char === 95) {
-        const { index } = parser;
-        char = advanceChar(parser);
-        if (char === 95) {
-          throw new ParseError(parser.currentLocation, { index: parser.index + 1, line: parser.line, column: parser.column }, 152);
-        }
-        allowSeparator = 1;
-        ret += parser.source.substring(start, index);
-        start = parser.index;
-        continue;
-      }
-      allowSeparator = 0;
-      char = advanceChar(parser);
-    }
-    if (allowSeparator) {
-      throw new ParseError(parser.currentLocation, { index: parser.index + 1, line: parser.line, column: parser.column }, 153);
-    }
-    return ret + parser.source.substring(start, parser.index);
-  }
-  __name(scanDecimalDigitsOrSeparator, "scanDecimalDigitsOrSeparator");
-  var KeywordDescTable = [
-    "end of source",
-    "identifier",
-    "number",
-    "string",
-    "regular expression",
-    "false",
-    "true",
-    "null",
-    "template continuation",
-    "template tail",
-    "=>",
-    "(",
-    "{",
-    ".",
-    "...",
-    "}",
-    ")",
-    ";",
-    ",",
-    "[",
-    "]",
-    ":",
-    "?",
-    "'",
-    '"',
-    "++",
-    "--",
-    "=",
-    "<<=",
-    ">>=",
-    ">>>=",
-    "**=",
-    "+=",
-    "-=",
-    "*=",
-    "/=",
-    "%=",
-    "^=",
-    "|=",
-    "&=",
-    "||=",
-    "&&=",
-    "??=",
-    "typeof",
-    "delete",
-    "void",
-    "!",
-    "~",
-    "+",
-    "-",
-    "in",
-    "instanceof",
-    "*",
-    "%",
-    "/",
-    "**",
-    "&&",
-    "||",
-    "===",
-    "!==",
-    "==",
-    "!=",
-    "<=",
-    ">=",
-    "<",
-    ">",
-    "<<",
-    ">>",
-    ">>>",
-    "&",
-    "|",
-    "^",
-    "var",
-    "let",
-    "const",
-    "break",
-    "case",
-    "catch",
-    "class",
-    "continue",
-    "debugger",
-    "default",
-    "do",
-    "else",
-    "export",
-    "extends",
-    "finally",
-    "for",
-    "function",
-    "if",
-    "import",
-    "new",
-    "return",
-    "super",
-    "switch",
-    "this",
-    "throw",
-    "try",
-    "while",
-    "with",
-    "implements",
-    "interface",
-    "package",
-    "private",
-    "protected",
-    "public",
-    "static",
-    "yield",
-    "as",
-    "async",
-    "await",
-    "constructor",
-    "get",
-    "set",
-    "accessor",
-    "from",
-    "of",
-    "enum",
-    "eval",
-    "arguments",
-    "escaped keyword",
-    "escaped future reserved keyword",
-    "reserved if strict",
-    "#",
-    "BigIntLiteral",
-    "??",
-    "?.",
-    "WhiteSpace",
-    "Illegal",
-    "LineTerminator",
-    "PrivateField",
-    "Template",
-    "@",
-    "target",
-    "meta",
-    "LineFeed",
-    "Escaped",
-    "JSXText"
-  ];
-  var descKeywordTable = {
-    this: 86111,
-    function: 86104,
-    if: 20569,
-    return: 20572,
-    var: 86088,
-    else: 20563,
-    for: 20567,
-    new: 86107,
-    in: 8673330,
-    typeof: 16863275,
-    while: 20578,
-    case: 20556,
-    break: 20555,
-    try: 20577,
-    catch: 20557,
-    delete: 16863276,
-    throw: 86112,
-    switch: 86110,
-    continue: 20559,
-    default: 20561,
-    instanceof: 8411187,
-    do: 20562,
-    void: 16863277,
-    finally: 20566,
-    async: 209005,
-    await: 209006,
-    class: 86094,
-    const: 86090,
-    constructor: 12399,
-    debugger: 20560,
-    export: 20564,
-    extends: 20565,
-    false: 86021,
-    from: 209011,
-    get: 209008,
-    implements: 36964,
-    import: 86106,
-    interface: 36965,
-    let: 241737,
-    null: 86023,
-    of: 471156,
-    package: 36966,
-    private: 36967,
-    protected: 36968,
-    public: 36969,
-    set: 209009,
-    static: 36970,
-    super: 86109,
-    true: 86022,
-    with: 20579,
-    yield: 241771,
-    enum: 86133,
-    eval: 537079926,
-    as: 77932,
-    arguments: 537079927,
-    target: 209029,
-    meta: 209030,
-    accessor: 12402
-  };
-  function matchOrInsertSemicolon(parser, context) {
-    var _a2, _b2;
-    if ((parser.flags & 1) === 0 && (parser.getToken() & 1048576) !== 1048576) {
-      parser.report(30, KeywordDescTable[parser.getToken() & 255]);
-    }
-    if (!consumeOpt(parser, context, 1074790417)) {
-      (_b2 = (_a2 = parser.options).onInsertedSemicolon) == null ? void 0 : _b2.call(_a2, parser.startIndex);
-    }
-  }
-  __name(matchOrInsertSemicolon, "matchOrInsertSemicolon");
-  function isValidStrictMode(parser, index, tokenIndex, tokenValue) {
-    if (index - tokenIndex < 13 && tokenValue === "use strict") {
-      if ((parser.getToken() & 1048576) === 1048576 || parser.flags & 1) {
-        return 1;
-      }
-    }
-    return 0;
-  }
-  __name(isValidStrictMode, "isValidStrictMode");
-  function optionalBit(parser, context, t) {
-    if (parser.getToken() !== t)
-      return 0;
-    nextToken(parser, context);
-    return 1;
-  }
-  __name(optionalBit, "optionalBit");
-  function consumeOpt(parser, context, t) {
-    if (parser.getToken() !== t)
-      return false;
-    nextToken(parser, context);
-    return true;
-  }
-  __name(consumeOpt, "consumeOpt");
-  function consume(parser, context, t) {
-    if (parser.getToken() !== t)
-      parser.report(25, KeywordDescTable[t & 255]);
-    nextToken(parser, context);
-  }
-  __name(consume, "consume");
-  function reinterpretToPattern(parser, node) {
-    switch (node.type) {
-      case "ArrayExpression": {
-        node.type = "ArrayPattern";
-        const { elements } = node;
-        for (let i2 = 0, n = elements.length; i2 < n; ++i2) {
-          const element = elements[i2];
-          if (element)
-            reinterpretToPattern(parser, element);
-        }
-        return;
-      }
-      case "ObjectExpression": {
-        node.type = "ObjectPattern";
-        const { properties } = node;
-        for (let i2 = 0, n = properties.length; i2 < n; ++i2) {
-          reinterpretToPattern(parser, properties[i2]);
-        }
-        return;
-      }
-      case "AssignmentExpression":
-        node.type = "AssignmentPattern";
-        if (node.operator !== "=")
-          parser.report(71);
-        delete node.operator;
-        reinterpretToPattern(parser, node.left);
-        return;
-      case "Property":
-        reinterpretToPattern(parser, node.value);
-        return;
-      case "SpreadElement":
-        node.type = "RestElement";
-        reinterpretToPattern(parser, node.argument);
-    }
-  }
-  __name(reinterpretToPattern, "reinterpretToPattern");
-  function validateBindingIdentifier(parser, context, kind, t, skipEvalArgCheck) {
-    if (context & 1) {
-      if ((t & 36864) === 36864) {
-        parser.report(118);
-      }
-      if (!skipEvalArgCheck && (t & 537079808) === 537079808) {
-        parser.report(119);
-      }
-    }
-    if ((t & 20480) === 20480 || t === -2147483528) {
-      parser.report(102);
-    }
-    if (kind & (8 | 16) && (t & 255) === (241737 & 255)) {
-      parser.report(100);
-    }
-    if (context & (2048 | 2) && t === 209006) {
-      parser.report(110);
-    }
-    if (context & (1024 | 1) && t === 241771) {
-      parser.report(97, "yield");
-    }
-  }
-  __name(validateBindingIdentifier, "validateBindingIdentifier");
-  function validateFunctionName(parser, context, t) {
-    if (context & 1) {
-      if ((t & 36864) === 36864) {
-        parser.report(118);
-      }
-      if ((t & 537079808) === 537079808) {
-        parser.report(119);
-      }
-      if (t === -2147483527) {
-        parser.report(95);
-      }
-      if (t === -2147483528) {
-        parser.report(95);
-      }
-    }
-    if ((t & 20480) === 20480) {
-      parser.report(102);
-    }
-    if (context & (2048 | 2) && t === 209006) {
-      parser.report(110);
-    }
-    if (context & (1024 | 1) && t === 241771) {
-      parser.report(97, "yield");
-    }
-  }
-  __name(validateFunctionName, "validateFunctionName");
-  function isStrictReservedWord(parser, context, t) {
-    if (t === 209006) {
-      if (context & (2048 | 2))
-        parser.report(110);
-      parser.destructible |= 128;
-    }
-    if (t === 241771 && context & 1024)
-      parser.report(97, "yield");
-    return (t & 20480) === 20480 || (t & 36864) === 36864 || t == -2147483527;
-  }
-  __name(isStrictReservedWord, "isStrictReservedWord");
-  function isPropertyWithPrivateFieldKey(expr) {
-    return !expr.property ? false : expr.property.type === "PrivateIdentifier";
-  }
-  __name(isPropertyWithPrivateFieldKey, "isPropertyWithPrivateFieldKey");
-  function isValidLabel(parser, labels, name, isIterationStatement) {
-    while (labels) {
-      if (labels["$" + name]) {
-        if (isIterationStatement)
-          parser.report(137);
-        return 1;
-      }
-      if (isIterationStatement && labels.loop)
-        isIterationStatement = 0;
-      labels = labels["$"];
-    }
-    return 0;
-  }
-  __name(isValidLabel, "isValidLabel");
-  function validateAndDeclareLabel(parser, labels, name) {
-    let set = labels;
-    while (set) {
-      if (set["$" + name])
-        parser.report(136, name);
-      set = set["$"];
-    }
-    labels["$" + name] = 1;
-  }
-  __name(validateAndDeclareLabel, "validateAndDeclareLabel");
-  function isEqualTagName(elementName) {
-    switch (elementName.type) {
-      case "JSXIdentifier":
-        return elementName.name;
-      case "JSXNamespacedName":
-        return elementName.namespace + ":" + elementName.name;
-      case "JSXMemberExpression":
-        return isEqualTagName(elementName.object) + "." + isEqualTagName(elementName.property);
-    }
-  }
-  __name(isEqualTagName, "isEqualTagName");
-  function isValidIdentifier(context, t) {
-    if (context & (1 | 1024)) {
-      if (context & 2 && t === 209006)
-        return false;
-      if (context & 1024 && t === 241771)
-        return false;
-      return (t & 12288) === 12288;
-    }
-    return (t & 12288) === 12288 || (t & 36864) === 36864;
-  }
-  __name(isValidIdentifier, "isValidIdentifier");
-  function classifyIdentifier(parser, context, t) {
-    if ((t & 537079808) === 537079808) {
-      if (context & 1)
-        parser.report(119);
-      parser.flags |= 512;
-    }
-    if (!isValidIdentifier(context, t))
-      parser.report(0);
-  }
-  __name(classifyIdentifier, "classifyIdentifier");
-  function getOwnProperty(object, key) {
-    return Object.hasOwn(object, key) ? object[key] : void 0;
-  }
-  __name(getOwnProperty, "getOwnProperty");
-  function scanIdentifier(parser, context, isValidAsKeyword) {
-    var _a2;
-    while (isIdPart[advanceChar(parser)])
-      ;
-    parser.tokenValue = parser.source.slice(parser.tokenIndex, parser.index);
-    return parser.currentChar !== 92 && parser.currentChar <= 126 ? (_a2 = getOwnProperty(descKeywordTable, parser.tokenValue)) != null ? _a2 : 208897 : scanIdentifierSlowCase(parser, context, 0, isValidAsKeyword);
-  }
-  __name(scanIdentifier, "scanIdentifier");
-  function scanUnicodeIdentifier(parser, context) {
-    const cookedChar = scanIdentifierUnicodeEscape(parser);
-    if (!isIdentifierStart(cookedChar))
-      parser.report(5);
-    parser.tokenValue = String.fromCodePoint(cookedChar);
-    return scanIdentifierSlowCase(parser, context, 1, CharTypes[cookedChar] & 4);
-  }
-  __name(scanUnicodeIdentifier, "scanUnicodeIdentifier");
-  function scanIdentifierSlowCase(parser, context, hasEscape, isValidAsKeyword) {
-    let start = parser.index;
-    while (parser.index < parser.end) {
-      if (parser.currentChar === 92) {
-        parser.tokenValue += parser.source.slice(start, parser.index);
-        hasEscape = 1;
-        const code = scanIdentifierUnicodeEscape(parser);
-        if (!isIdentifierPart(code))
-          parser.report(5);
-        isValidAsKeyword = isValidAsKeyword && CharTypes[code] & 4;
-        parser.tokenValue += String.fromCodePoint(code);
-        start = parser.index;
-      } else {
-        const merged = consumePossibleSurrogatePair(parser);
-        if (merged > 0) {
-          if (!isIdentifierPart(merged)) {
-            parser.report(20, String.fromCodePoint(merged));
-          }
-          parser.currentChar = merged;
-          parser.index++;
-          parser.column++;
-        } else if (!isIdentifierPart(parser.currentChar)) {
-          break;
-        }
-        advanceChar(parser);
-      }
-    }
-    if (parser.index <= parser.end) {
-      parser.tokenValue += parser.source.slice(start, parser.index);
-    }
-    const { length } = parser.tokenValue;
-    if (isValidAsKeyword && length >= 2 && length <= 11) {
-      const token = getOwnProperty(descKeywordTable, parser.tokenValue);
-      if (token === void 0)
-        return 208897 | (hasEscape ? -2147483648 : 0);
-      if (!hasEscape)
-        return token;
-      if (token === 209006) {
-        if ((context & (2 | 2048)) === 0) {
-          return token | -2147483648;
-        }
-        return -2147483528;
-      }
-      if (context & 1) {
-        if (token === 36970) {
-          return -2147483527;
-        }
-        if ((token & 36864) === 36864) {
-          return -2147483527;
-        }
-        if ((token & 20480) === 20480) {
-          if (context & 262144 && (context & 8) === 0) {
-            return token | -2147483648;
-          } else {
-            return -2147483528;
-          }
-        }
-        return 209018 | -2147483648;
-      }
-      if (context & 262144 && (context & 8) === 0 && (token & 20480) === 20480) {
-        return token | -2147483648;
-      }
-      if (token === 241771) {
-        return context & 262144 ? 209018 | -2147483648 : context & 1024 ? -2147483528 : token | -2147483648;
-      }
-      if (token === 209005) {
-        return 209018 | -2147483648;
-      }
-      if ((token & 36864) === 36864) {
-        return token | 12288 | -2147483648;
-      }
-      return -2147483528;
-    }
-    return 208897 | (hasEscape ? -2147483648 : 0);
-  }
-  __name(scanIdentifierSlowCase, "scanIdentifierSlowCase");
-  function scanPrivateIdentifier(parser) {
-    let char = advanceChar(parser);
-    if (char === 92)
-      return 130;
-    const merged = consumePossibleSurrogatePair(parser);
-    if (merged)
-      char = merged;
-    if (!isIdentifierStart(char))
-      parser.report(96);
-    return 130;
-  }
-  __name(scanPrivateIdentifier, "scanPrivateIdentifier");
-  function scanIdentifierUnicodeEscape(parser) {
-    if (parser.source.charCodeAt(parser.index + 1) !== 117) {
-      parser.report(5);
-    }
-    parser.currentChar = parser.source.charCodeAt(parser.index += 2);
-    parser.column += 2;
-    return scanUnicodeEscape(parser);
-  }
-  __name(scanIdentifierUnicodeEscape, "scanIdentifierUnicodeEscape");
-  function scanUnicodeEscape(parser) {
-    let codePoint = 0;
-    const char = parser.currentChar;
-    if (char === 123) {
-      const begin = parser.index - 2;
-      while (CharTypes[advanceChar(parser)] & 64) {
-        codePoint = codePoint << 4 | toHex(parser.currentChar);
-        if (codePoint > 1114111)
-          throw new ParseError({ index: begin, line: parser.line, column: parser.column }, parser.currentLocation, 104);
-      }
-      if (parser.currentChar !== 125) {
-        throw new ParseError({ index: begin, line: parser.line, column: parser.column }, parser.currentLocation, 7);
-      }
-      advanceChar(parser);
-      return codePoint;
-    }
-    if ((CharTypes[char] & 64) === 0)
-      parser.report(7);
-    const char2 = parser.source.charCodeAt(parser.index + 1);
-    if ((CharTypes[char2] & 64) === 0)
-      parser.report(7);
-    const char3 = parser.source.charCodeAt(parser.index + 2);
-    if ((CharTypes[char3] & 64) === 0)
-      parser.report(7);
-    const char4 = parser.source.charCodeAt(parser.index + 3);
-    if ((CharTypes[char4] & 64) === 0)
-      parser.report(7);
-    codePoint = toHex(char) << 12 | toHex(char2) << 8 | toHex(char3) << 4 | toHex(char4);
-    parser.currentChar = parser.source.charCodeAt(parser.index += 4);
-    parser.column += 4;
-    return codePoint;
-  }
-  __name(scanUnicodeEscape, "scanUnicodeEscape");
   var TokenLookup = [
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    127,
-    135,
-    127,
-    127,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
     129,
     128,
+    136,
     128,
     128,
+    130,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
+    129,
     128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    128,
-    127,
     16842798,
     134283267,
-    130,
+    131,
     208897,
     8391477,
     8390213,
@@ -8525,7 +8558,7 @@ format:`, anonymisedFormat);
     1077936155,
     8390721,
     22,
-    132,
+    133,
     208897,
     208897,
     208897,
@@ -8553,11 +8586,11 @@ format:`, anonymisedFormat);
     208897,
     208897,
     69271571,
-    136,
+    137,
     20,
     8389959,
     208897,
-    131,
+    132,
     4096,
     4096,
     4096,
@@ -8588,7 +8621,7 @@ format:`, anonymisedFormat);
     8389702,
     1074790415,
     16842799,
-    128
+    129
   ];
   function nextToken(parser, context) {
     parser.flags = (parser.flags | 1) ^ 1;
@@ -8601,7 +8634,6 @@ format:`, anonymisedFormat);
   function scanSingleToken(parser, context, state) {
     const isStartOfLine = parser.index === 0;
     const { source } = parser;
-    let start = parser.currentLocation;
     while (parser.index < parser.end) {
       parser.tokenIndex = parser.index;
       parser.tokenColumn = parser.column;
@@ -8620,8 +8652,8 @@ format:`, anonymisedFormat);
           case 1074790417:
           case 18:
           case 16842799:
-          case 132:
-          case 128:
+          case 133:
+          case 129:
             advanceChar(parser);
             return token;
           case 208897:
@@ -8632,20 +8664,20 @@ format:`, anonymisedFormat);
             return scanNumber(parser, context, 16 | 128);
           case 134283267:
             return scanString(parser, context, char);
-          case 131:
+          case 132:
             return scanTemplate(parser, context);
-          case 136:
+          case 137:
             return scanUnicodeIdentifier(parser, context);
-          case 130:
+          case 131:
             return scanPrivateIdentifier(parser);
-          case 127:
+          case 128:
             advanceChar(parser);
             break;
-          case 129:
+          case 130:
             state |= 1 | 4;
             scanNewLine(parser);
             break;
-          case 135:
+          case 136:
             consumeLineFeed(parser, state);
             state = state & -5 | 1;
             break;
@@ -8668,7 +8700,6 @@ format:`, anonymisedFormat);
                   parser.column += 3;
                   parser.currentChar = source.charCodeAt(parser.index += 3);
                   state = skipSingleHTMLComment(parser, source, state, context, 2, parser.tokenStart);
-                  start = parser.tokenStart;
                   continue;
                 }
                 return 8456256;
@@ -8747,10 +8778,9 @@ format:`, anonymisedFormat);
               advanceChar(parser);
               if ((state & 1 || isStartOfLine) && parser.currentChar === 62) {
                 if (!parser.options.webcompat)
-                  parser.report(112);
+                  parser.report(114);
                 advanceChar(parser);
-                state = skipSingleHTMLComment(parser, source, state, context, 3, start);
-                start = parser.tokenStart;
+                state = skipSingleHTMLComment(parser, source, state, context, 3, parser.tokenStart);
                 continue;
               }
               return 33619994;
@@ -8768,13 +8798,11 @@ format:`, anonymisedFormat);
               if (ch === 47) {
                 advanceChar(parser);
                 state = skipSingleLineComment(parser, source, state, 0, parser.tokenStart);
-                start = parser.tokenStart;
                 continue;
               }
               if (ch === 42) {
                 advanceChar(parser);
                 state = skipMultiLineComment(parser, source, state);
-                start = parser.tokenStart;
                 continue;
               }
               if (context & 32) {
@@ -8808,7 +8836,7 @@ format:`, anonymisedFormat);
               advanceChar(parser);
               if (parser.currentChar === 61) {
                 advanceChar(parser);
-                return 4194344;
+                return 4718632;
               }
               return 8913465;
             }
@@ -8820,6 +8848,9 @@ format:`, anonymisedFormat);
           }
           case 8390721: {
             advanceChar(parser);
+            if (context & 1048576) {
+              return 8390721;
+            }
             const ch = parser.currentChar;
             if (ch === 61) {
               advanceChar(parser);
@@ -8851,7 +8882,7 @@ format:`, anonymisedFormat);
               advanceChar(parser);
               if (parser.currentChar === 61) {
                 advanceChar(parser);
-                return 4194345;
+                return 4718633;
               }
               return 8913720;
             }
@@ -8867,9 +8898,9 @@ format:`, anonymisedFormat);
               advanceChar(parser);
               if (parser.currentChar === 61) {
                 advanceChar(parser);
-                return 4194346;
+                return 4718634;
               }
-              return 276824445;
+              return 276824446;
             }
             if (ch === 46) {
               const index = parser.index + 1;
@@ -8877,7 +8908,7 @@ format:`, anonymisedFormat);
                 ch = source.charCodeAt(index);
                 if (!(ch >= 48 && ch <= 57)) {
                   advanceChar(parser);
-                  return 67108990;
+                  return 67108991;
                 }
               }
             }
@@ -8907,2183 +8938,472 @@ format:`, anonymisedFormat);
     return 1048576;
   }
   __name(scanSingleToken, "scanSingleToken");
-  var entities = {
-    AElig: "\xC6",
-    AMP: "&",
-    Aacute: "\xC1",
-    Abreve: "\u0102",
-    Acirc: "\xC2",
-    Acy: "\u0410",
-    Afr: "\u{1D504}",
-    Agrave: "\xC0",
-    Alpha: "\u0391",
-    Amacr: "\u0100",
-    And: "\u2A53",
-    Aogon: "\u0104",
-    Aopf: "\u{1D538}",
-    ApplyFunction: "\u2061",
-    Aring: "\xC5",
-    Ascr: "\u{1D49C}",
-    Assign: "\u2254",
-    Atilde: "\xC3",
-    Auml: "\xC4",
-    Backslash: "\u2216",
-    Barv: "\u2AE7",
-    Barwed: "\u2306",
-    Bcy: "\u0411",
-    Because: "\u2235",
-    Bernoullis: "\u212C",
-    Beta: "\u0392",
-    Bfr: "\u{1D505}",
-    Bopf: "\u{1D539}",
-    Breve: "\u02D8",
-    Bscr: "\u212C",
-    Bumpeq: "\u224E",
-    CHcy: "\u0427",
-    COPY: "\xA9",
-    Cacute: "\u0106",
-    Cap: "\u22D2",
-    CapitalDifferentialD: "\u2145",
-    Cayleys: "\u212D",
-    Ccaron: "\u010C",
-    Ccedil: "\xC7",
-    Ccirc: "\u0108",
-    Cconint: "\u2230",
-    Cdot: "\u010A",
-    Cedilla: "\xB8",
-    CenterDot: "\xB7",
-    Cfr: "\u212D",
-    Chi: "\u03A7",
-    CircleDot: "\u2299",
-    CircleMinus: "\u2296",
-    CirclePlus: "\u2295",
-    CircleTimes: "\u2297",
-    ClockwiseContourIntegral: "\u2232",
-    CloseCurlyDoubleQuote: "\u201D",
-    CloseCurlyQuote: "\u2019",
-    Colon: "\u2237",
-    Colone: "\u2A74",
-    Congruent: "\u2261",
-    Conint: "\u222F",
-    ContourIntegral: "\u222E",
-    Copf: "\u2102",
-    Coproduct: "\u2210",
-    CounterClockwiseContourIntegral: "\u2233",
-    Cross: "\u2A2F",
-    Cscr: "\u{1D49E}",
-    Cup: "\u22D3",
-    CupCap: "\u224D",
-    DD: "\u2145",
-    DDotrahd: "\u2911",
-    DJcy: "\u0402",
-    DScy: "\u0405",
-    DZcy: "\u040F",
-    Dagger: "\u2021",
-    Darr: "\u21A1",
-    Dashv: "\u2AE4",
-    Dcaron: "\u010E",
-    Dcy: "\u0414",
-    Del: "\u2207",
-    Delta: "\u0394",
-    Dfr: "\u{1D507}",
-    DiacriticalAcute: "\xB4",
-    DiacriticalDot: "\u02D9",
-    DiacriticalDoubleAcute: "\u02DD",
-    DiacriticalGrave: "`",
-    DiacriticalTilde: "\u02DC",
-    Diamond: "\u22C4",
-    DifferentialD: "\u2146",
-    Dopf: "\u{1D53B}",
-    Dot: "\xA8",
-    DotDot: "\u20DC",
-    DotEqual: "\u2250",
-    DoubleContourIntegral: "\u222F",
-    DoubleDot: "\xA8",
-    DoubleDownArrow: "\u21D3",
-    DoubleLeftArrow: "\u21D0",
-    DoubleLeftRightArrow: "\u21D4",
-    DoubleLeftTee: "\u2AE4",
-    DoubleLongLeftArrow: "\u27F8",
-    DoubleLongLeftRightArrow: "\u27FA",
-    DoubleLongRightArrow: "\u27F9",
-    DoubleRightArrow: "\u21D2",
-    DoubleRightTee: "\u22A8",
-    DoubleUpArrow: "\u21D1",
-    DoubleUpDownArrow: "\u21D5",
-    DoubleVerticalBar: "\u2225",
-    DownArrow: "\u2193",
-    DownArrowBar: "\u2913",
-    DownArrowUpArrow: "\u21F5",
-    DownBreve: "\u0311",
-    DownLeftRightVector: "\u2950",
-    DownLeftTeeVector: "\u295E",
-    DownLeftVector: "\u21BD",
-    DownLeftVectorBar: "\u2956",
-    DownRightTeeVector: "\u295F",
-    DownRightVector: "\u21C1",
-    DownRightVectorBar: "\u2957",
-    DownTee: "\u22A4",
-    DownTeeArrow: "\u21A7",
-    Downarrow: "\u21D3",
-    Dscr: "\u{1D49F}",
-    Dstrok: "\u0110",
-    ENG: "\u014A",
-    ETH: "\xD0",
-    Eacute: "\xC9",
-    Ecaron: "\u011A",
-    Ecirc: "\xCA",
-    Ecy: "\u042D",
-    Edot: "\u0116",
-    Efr: "\u{1D508}",
-    Egrave: "\xC8",
-    Element: "\u2208",
-    Emacr: "\u0112",
-    EmptySmallSquare: "\u25FB",
-    EmptyVerySmallSquare: "\u25AB",
-    Eogon: "\u0118",
-    Eopf: "\u{1D53C}",
-    Epsilon: "\u0395",
-    Equal: "\u2A75",
-    EqualTilde: "\u2242",
-    Equilibrium: "\u21CC",
-    Escr: "\u2130",
-    Esim: "\u2A73",
-    Eta: "\u0397",
-    Euml: "\xCB",
-    Exists: "\u2203",
-    ExponentialE: "\u2147",
-    Fcy: "\u0424",
-    Ffr: "\u{1D509}",
-    FilledSmallSquare: "\u25FC",
-    FilledVerySmallSquare: "\u25AA",
-    Fopf: "\u{1D53D}",
-    ForAll: "\u2200",
-    Fouriertrf: "\u2131",
-    Fscr: "\u2131",
-    GJcy: "\u0403",
-    GT: ">",
-    Gamma: "\u0393",
-    Gammad: "\u03DC",
-    Gbreve: "\u011E",
-    Gcedil: "\u0122",
-    Gcirc: "\u011C",
-    Gcy: "\u0413",
-    Gdot: "\u0120",
-    Gfr: "\u{1D50A}",
-    Gg: "\u22D9",
-    Gopf: "\u{1D53E}",
-    GreaterEqual: "\u2265",
-    GreaterEqualLess: "\u22DB",
-    GreaterFullEqual: "\u2267",
-    GreaterGreater: "\u2AA2",
-    GreaterLess: "\u2277",
-    GreaterSlantEqual: "\u2A7E",
-    GreaterTilde: "\u2273",
-    Gscr: "\u{1D4A2}",
-    Gt: "\u226B",
-    HARDcy: "\u042A",
-    Hacek: "\u02C7",
-    Hat: "^",
-    Hcirc: "\u0124",
-    Hfr: "\u210C",
-    HilbertSpace: "\u210B",
-    Hopf: "\u210D",
-    HorizontalLine: "\u2500",
-    Hscr: "\u210B",
-    Hstrok: "\u0126",
-    HumpDownHump: "\u224E",
-    HumpEqual: "\u224F",
-    IEcy: "\u0415",
-    IJlig: "\u0132",
-    IOcy: "\u0401",
-    Iacute: "\xCD",
-    Icirc: "\xCE",
-    Icy: "\u0418",
-    Idot: "\u0130",
-    Ifr: "\u2111",
-    Igrave: "\xCC",
-    Im: "\u2111",
-    Imacr: "\u012A",
-    ImaginaryI: "\u2148",
-    Implies: "\u21D2",
-    Int: "\u222C",
-    Integral: "\u222B",
-    Intersection: "\u22C2",
-    InvisibleComma: "\u2063",
-    InvisibleTimes: "\u2062",
-    Iogon: "\u012E",
-    Iopf: "\u{1D540}",
-    Iota: "\u0399",
-    Iscr: "\u2110",
-    Itilde: "\u0128",
-    Iukcy: "\u0406",
-    Iuml: "\xCF",
-    Jcirc: "\u0134",
-    Jcy: "\u0419",
-    Jfr: "\u{1D50D}",
-    Jopf: "\u{1D541}",
-    Jscr: "\u{1D4A5}",
-    Jsercy: "\u0408",
-    Jukcy: "\u0404",
-    KHcy: "\u0425",
-    KJcy: "\u040C",
-    Kappa: "\u039A",
-    Kcedil: "\u0136",
-    Kcy: "\u041A",
-    Kfr: "\u{1D50E}",
-    Kopf: "\u{1D542}",
-    Kscr: "\u{1D4A6}",
-    LJcy: "\u0409",
-    LT: "<",
-    Lacute: "\u0139",
-    Lambda: "\u039B",
-    Lang: "\u27EA",
-    Laplacetrf: "\u2112",
-    Larr: "\u219E",
-    Lcaron: "\u013D",
-    Lcedil: "\u013B",
-    Lcy: "\u041B",
-    LeftAngleBracket: "\u27E8",
-    LeftArrow: "\u2190",
-    LeftArrowBar: "\u21E4",
-    LeftArrowRightArrow: "\u21C6",
-    LeftCeiling: "\u2308",
-    LeftDoubleBracket: "\u27E6",
-    LeftDownTeeVector: "\u2961",
-    LeftDownVector: "\u21C3",
-    LeftDownVectorBar: "\u2959",
-    LeftFloor: "\u230A",
-    LeftRightArrow: "\u2194",
-    LeftRightVector: "\u294E",
-    LeftTee: "\u22A3",
-    LeftTeeArrow: "\u21A4",
-    LeftTeeVector: "\u295A",
-    LeftTriangle: "\u22B2",
-    LeftTriangleBar: "\u29CF",
-    LeftTriangleEqual: "\u22B4",
-    LeftUpDownVector: "\u2951",
-    LeftUpTeeVector: "\u2960",
-    LeftUpVector: "\u21BF",
-    LeftUpVectorBar: "\u2958",
-    LeftVector: "\u21BC",
-    LeftVectorBar: "\u2952",
-    Leftarrow: "\u21D0",
-    Leftrightarrow: "\u21D4",
-    LessEqualGreater: "\u22DA",
-    LessFullEqual: "\u2266",
-    LessGreater: "\u2276",
-    LessLess: "\u2AA1",
-    LessSlantEqual: "\u2A7D",
-    LessTilde: "\u2272",
-    Lfr: "\u{1D50F}",
-    Ll: "\u22D8",
-    Lleftarrow: "\u21DA",
-    Lmidot: "\u013F",
-    LongLeftArrow: "\u27F5",
-    LongLeftRightArrow: "\u27F7",
-    LongRightArrow: "\u27F6",
-    Longleftarrow: "\u27F8",
-    Longleftrightarrow: "\u27FA",
-    Longrightarrow: "\u27F9",
-    Lopf: "\u{1D543}",
-    LowerLeftArrow: "\u2199",
-    LowerRightArrow: "\u2198",
-    Lscr: "\u2112",
-    Lsh: "\u21B0",
-    Lstrok: "\u0141",
-    Lt: "\u226A",
-    Map: "\u2905",
-    Mcy: "\u041C",
-    MediumSpace: "\u205F",
-    Mellintrf: "\u2133",
-    Mfr: "\u{1D510}",
-    MinusPlus: "\u2213",
-    Mopf: "\u{1D544}",
-    Mscr: "\u2133",
-    Mu: "\u039C",
-    NJcy: "\u040A",
-    Nacute: "\u0143",
-    Ncaron: "\u0147",
-    Ncedil: "\u0145",
-    Ncy: "\u041D",
-    NegativeMediumSpace: "\u200B",
-    NegativeThickSpace: "\u200B",
-    NegativeThinSpace: "\u200B",
-    NegativeVeryThinSpace: "\u200B",
-    NestedGreaterGreater: "\u226B",
-    NestedLessLess: "\u226A",
-    NewLine: "\n",
-    Nfr: "\u{1D511}",
-    NoBreak: "\u2060",
-    NonBreakingSpace: "\xA0",
-    Nopf: "\u2115",
-    Not: "\u2AEC",
-    NotCongruent: "\u2262",
-    NotCupCap: "\u226D",
-    NotDoubleVerticalBar: "\u2226",
-    NotElement: "\u2209",
-    NotEqual: "\u2260",
-    NotEqualTilde: "\u2242\u0338",
-    NotExists: "\u2204",
-    NotGreater: "\u226F",
-    NotGreaterEqual: "\u2271",
-    NotGreaterFullEqual: "\u2267\u0338",
-    NotGreaterGreater: "\u226B\u0338",
-    NotGreaterLess: "\u2279",
-    NotGreaterSlantEqual: "\u2A7E\u0338",
-    NotGreaterTilde: "\u2275",
-    NotHumpDownHump: "\u224E\u0338",
-    NotHumpEqual: "\u224F\u0338",
-    NotLeftTriangle: "\u22EA",
-    NotLeftTriangleBar: "\u29CF\u0338",
-    NotLeftTriangleEqual: "\u22EC",
-    NotLess: "\u226E",
-    NotLessEqual: "\u2270",
-    NotLessGreater: "\u2278",
-    NotLessLess: "\u226A\u0338",
-    NotLessSlantEqual: "\u2A7D\u0338",
-    NotLessTilde: "\u2274",
-    NotNestedGreaterGreater: "\u2AA2\u0338",
-    NotNestedLessLess: "\u2AA1\u0338",
-    NotPrecedes: "\u2280",
-    NotPrecedesEqual: "\u2AAF\u0338",
-    NotPrecedesSlantEqual: "\u22E0",
-    NotReverseElement: "\u220C",
-    NotRightTriangle: "\u22EB",
-    NotRightTriangleBar: "\u29D0\u0338",
-    NotRightTriangleEqual: "\u22ED",
-    NotSquareSubset: "\u228F\u0338",
-    NotSquareSubsetEqual: "\u22E2",
-    NotSquareSuperset: "\u2290\u0338",
-    NotSquareSupersetEqual: "\u22E3",
-    NotSubset: "\u2282\u20D2",
-    NotSubsetEqual: "\u2288",
-    NotSucceeds: "\u2281",
-    NotSucceedsEqual: "\u2AB0\u0338",
-    NotSucceedsSlantEqual: "\u22E1",
-    NotSucceedsTilde: "\u227F\u0338",
-    NotSuperset: "\u2283\u20D2",
-    NotSupersetEqual: "\u2289",
-    NotTilde: "\u2241",
-    NotTildeEqual: "\u2244",
-    NotTildeFullEqual: "\u2247",
-    NotTildeTilde: "\u2249",
-    NotVerticalBar: "\u2224",
-    Nscr: "\u{1D4A9}",
-    Ntilde: "\xD1",
-    Nu: "\u039D",
-    OElig: "\u0152",
-    Oacute: "\xD3",
-    Ocirc: "\xD4",
-    Ocy: "\u041E",
-    Odblac: "\u0150",
-    Ofr: "\u{1D512}",
-    Ograve: "\xD2",
-    Omacr: "\u014C",
-    Omega: "\u03A9",
-    Omicron: "\u039F",
-    Oopf: "\u{1D546}",
-    OpenCurlyDoubleQuote: "\u201C",
-    OpenCurlyQuote: "\u2018",
-    Or: "\u2A54",
-    Oscr: "\u{1D4AA}",
-    Oslash: "\xD8",
-    Otilde: "\xD5",
-    Otimes: "\u2A37",
-    Ouml: "\xD6",
-    OverBar: "\u203E",
-    OverBrace: "\u23DE",
-    OverBracket: "\u23B4",
-    OverParenthesis: "\u23DC",
-    PartialD: "\u2202",
-    Pcy: "\u041F",
-    Pfr: "\u{1D513}",
-    Phi: "\u03A6",
-    Pi: "\u03A0",
-    PlusMinus: "\xB1",
-    Poincareplane: "\u210C",
-    Popf: "\u2119",
-    Pr: "\u2ABB",
-    Precedes: "\u227A",
-    PrecedesEqual: "\u2AAF",
-    PrecedesSlantEqual: "\u227C",
-    PrecedesTilde: "\u227E",
-    Prime: "\u2033",
-    Product: "\u220F",
-    Proportion: "\u2237",
-    Proportional: "\u221D",
-    Pscr: "\u{1D4AB}",
-    Psi: "\u03A8",
-    QUOT: '"',
-    Qfr: "\u{1D514}",
-    Qopf: "\u211A",
-    Qscr: "\u{1D4AC}",
-    RBarr: "\u2910",
-    REG: "\xAE",
-    Racute: "\u0154",
-    Rang: "\u27EB",
-    Rarr: "\u21A0",
-    Rarrtl: "\u2916",
-    Rcaron: "\u0158",
-    Rcedil: "\u0156",
-    Rcy: "\u0420",
-    Re: "\u211C",
-    ReverseElement: "\u220B",
-    ReverseEquilibrium: "\u21CB",
-    ReverseUpEquilibrium: "\u296F",
-    Rfr: "\u211C",
-    Rho: "\u03A1",
-    RightAngleBracket: "\u27E9",
-    RightArrow: "\u2192",
-    RightArrowBar: "\u21E5",
-    RightArrowLeftArrow: "\u21C4",
-    RightCeiling: "\u2309",
-    RightDoubleBracket: "\u27E7",
-    RightDownTeeVector: "\u295D",
-    RightDownVector: "\u21C2",
-    RightDownVectorBar: "\u2955",
-    RightFloor: "\u230B",
-    RightTee: "\u22A2",
-    RightTeeArrow: "\u21A6",
-    RightTeeVector: "\u295B",
-    RightTriangle: "\u22B3",
-    RightTriangleBar: "\u29D0",
-    RightTriangleEqual: "\u22B5",
-    RightUpDownVector: "\u294F",
-    RightUpTeeVector: "\u295C",
-    RightUpVector: "\u21BE",
-    RightUpVectorBar: "\u2954",
-    RightVector: "\u21C0",
-    RightVectorBar: "\u2953",
-    Rightarrow: "\u21D2",
-    Ropf: "\u211D",
-    RoundImplies: "\u2970",
-    Rrightarrow: "\u21DB",
-    Rscr: "\u211B",
-    Rsh: "\u21B1",
-    RuleDelayed: "\u29F4",
-    SHCHcy: "\u0429",
-    SHcy: "\u0428",
-    SOFTcy: "\u042C",
-    Sacute: "\u015A",
-    Sc: "\u2ABC",
-    Scaron: "\u0160",
-    Scedil: "\u015E",
-    Scirc: "\u015C",
-    Scy: "\u0421",
-    Sfr: "\u{1D516}",
-    ShortDownArrow: "\u2193",
-    ShortLeftArrow: "\u2190",
-    ShortRightArrow: "\u2192",
-    ShortUpArrow: "\u2191",
-    Sigma: "\u03A3",
-    SmallCircle: "\u2218",
-    Sopf: "\u{1D54A}",
-    Sqrt: "\u221A",
-    Square: "\u25A1",
-    SquareIntersection: "\u2293",
-    SquareSubset: "\u228F",
-    SquareSubsetEqual: "\u2291",
-    SquareSuperset: "\u2290",
-    SquareSupersetEqual: "\u2292",
-    SquareUnion: "\u2294",
-    Sscr: "\u{1D4AE}",
-    Star: "\u22C6",
-    Sub: "\u22D0",
-    Subset: "\u22D0",
-    SubsetEqual: "\u2286",
-    Succeeds: "\u227B",
-    SucceedsEqual: "\u2AB0",
-    SucceedsSlantEqual: "\u227D",
-    SucceedsTilde: "\u227F",
-    SuchThat: "\u220B",
-    Sum: "\u2211",
-    Sup: "\u22D1",
-    Superset: "\u2283",
-    SupersetEqual: "\u2287",
-    Supset: "\u22D1",
-    THORN: "\xDE",
-    TRADE: "\u2122",
-    TSHcy: "\u040B",
-    TScy: "\u0426",
-    Tab: "	",
-    Tau: "\u03A4",
-    Tcaron: "\u0164",
-    Tcedil: "\u0162",
-    Tcy: "\u0422",
-    Tfr: "\u{1D517}",
-    Therefore: "\u2234",
-    Theta: "\u0398",
-    ThickSpace: "\u205F\u200A",
-    ThinSpace: "\u2009",
-    Tilde: "\u223C",
-    TildeEqual: "\u2243",
-    TildeFullEqual: "\u2245",
-    TildeTilde: "\u2248",
-    Topf: "\u{1D54B}",
-    TripleDot: "\u20DB",
-    Tscr: "\u{1D4AF}",
-    Tstrok: "\u0166",
-    Uacute: "\xDA",
-    Uarr: "\u219F",
-    Uarrocir: "\u2949",
-    Ubrcy: "\u040E",
-    Ubreve: "\u016C",
-    Ucirc: "\xDB",
-    Ucy: "\u0423",
-    Udblac: "\u0170",
-    Ufr: "\u{1D518}",
-    Ugrave: "\xD9",
-    Umacr: "\u016A",
-    UnderBar: "_",
-    UnderBrace: "\u23DF",
-    UnderBracket: "\u23B5",
-    UnderParenthesis: "\u23DD",
-    Union: "\u22C3",
-    UnionPlus: "\u228E",
-    Uogon: "\u0172",
-    Uopf: "\u{1D54C}",
-    UpArrow: "\u2191",
-    UpArrowBar: "\u2912",
-    UpArrowDownArrow: "\u21C5",
-    UpDownArrow: "\u2195",
-    UpEquilibrium: "\u296E",
-    UpTee: "\u22A5",
-    UpTeeArrow: "\u21A5",
-    Uparrow: "\u21D1",
-    Updownarrow: "\u21D5",
-    UpperLeftArrow: "\u2196",
-    UpperRightArrow: "\u2197",
-    Upsi: "\u03D2",
-    Upsilon: "\u03A5",
-    Uring: "\u016E",
-    Uscr: "\u{1D4B0}",
-    Utilde: "\u0168",
-    Uuml: "\xDC",
-    VDash: "\u22AB",
-    Vbar: "\u2AEB",
-    Vcy: "\u0412",
-    Vdash: "\u22A9",
-    Vdashl: "\u2AE6",
-    Vee: "\u22C1",
-    Verbar: "\u2016",
-    Vert: "\u2016",
-    VerticalBar: "\u2223",
-    VerticalLine: "|",
-    VerticalSeparator: "\u2758",
-    VerticalTilde: "\u2240",
-    VeryThinSpace: "\u200A",
-    Vfr: "\u{1D519}",
-    Vopf: "\u{1D54D}",
-    Vscr: "\u{1D4B1}",
-    Vvdash: "\u22AA",
-    Wcirc: "\u0174",
-    Wedge: "\u22C0",
-    Wfr: "\u{1D51A}",
-    Wopf: "\u{1D54E}",
-    Wscr: "\u{1D4B2}",
-    Xfr: "\u{1D51B}",
-    Xi: "\u039E",
-    Xopf: "\u{1D54F}",
-    Xscr: "\u{1D4B3}",
-    YAcy: "\u042F",
-    YIcy: "\u0407",
-    YUcy: "\u042E",
-    Yacute: "\xDD",
-    Ycirc: "\u0176",
-    Ycy: "\u042B",
-    Yfr: "\u{1D51C}",
-    Yopf: "\u{1D550}",
-    Yscr: "\u{1D4B4}",
-    Yuml: "\u0178",
-    ZHcy: "\u0416",
-    Zacute: "\u0179",
-    Zcaron: "\u017D",
-    Zcy: "\u0417",
-    Zdot: "\u017B",
-    ZeroWidthSpace: "\u200B",
-    Zeta: "\u0396",
-    Zfr: "\u2128",
-    Zopf: "\u2124",
-    Zscr: "\u{1D4B5}",
-    aacute: "\xE1",
-    abreve: "\u0103",
-    ac: "\u223E",
-    acE: "\u223E\u0333",
-    acd: "\u223F",
-    acirc: "\xE2",
-    acute: "\xB4",
-    acy: "\u0430",
-    aelig: "\xE6",
-    af: "\u2061",
-    afr: "\u{1D51E}",
-    agrave: "\xE0",
-    alefsym: "\u2135",
-    aleph: "\u2135",
-    alpha: "\u03B1",
-    amacr: "\u0101",
-    amalg: "\u2A3F",
-    amp: "&",
-    and: "\u2227",
-    andand: "\u2A55",
-    andd: "\u2A5C",
-    andslope: "\u2A58",
-    andv: "\u2A5A",
-    ang: "\u2220",
-    ange: "\u29A4",
-    angle: "\u2220",
-    angmsd: "\u2221",
-    angmsdaa: "\u29A8",
-    angmsdab: "\u29A9",
-    angmsdac: "\u29AA",
-    angmsdad: "\u29AB",
-    angmsdae: "\u29AC",
-    angmsdaf: "\u29AD",
-    angmsdag: "\u29AE",
-    angmsdah: "\u29AF",
-    angrt: "\u221F",
-    angrtvb: "\u22BE",
-    angrtvbd: "\u299D",
-    angsph: "\u2222",
-    angst: "\xC5",
-    angzarr: "\u237C",
-    aogon: "\u0105",
-    aopf: "\u{1D552}",
-    ap: "\u2248",
-    apE: "\u2A70",
-    apacir: "\u2A6F",
-    ape: "\u224A",
-    apid: "\u224B",
-    apos: "'",
-    approx: "\u2248",
-    approxeq: "\u224A",
-    aring: "\xE5",
-    ascr: "\u{1D4B6}",
-    ast: "*",
-    asymp: "\u2248",
-    asympeq: "\u224D",
-    atilde: "\xE3",
-    auml: "\xE4",
-    awconint: "\u2233",
-    awint: "\u2A11",
-    bNot: "\u2AED",
-    backcong: "\u224C",
-    backepsilon: "\u03F6",
-    backprime: "\u2035",
-    backsim: "\u223D",
-    backsimeq: "\u22CD",
-    barvee: "\u22BD",
-    barwed: "\u2305",
-    barwedge: "\u2305",
-    bbrk: "\u23B5",
-    bbrktbrk: "\u23B6",
-    bcong: "\u224C",
-    bcy: "\u0431",
-    bdquo: "\u201E",
-    becaus: "\u2235",
-    because: "\u2235",
-    bemptyv: "\u29B0",
-    bepsi: "\u03F6",
-    bernou: "\u212C",
-    beta: "\u03B2",
-    beth: "\u2136",
-    between: "\u226C",
-    bfr: "\u{1D51F}",
-    bigcap: "\u22C2",
-    bigcirc: "\u25EF",
-    bigcup: "\u22C3",
-    bigodot: "\u2A00",
-    bigoplus: "\u2A01",
-    bigotimes: "\u2A02",
-    bigsqcup: "\u2A06",
-    bigstar: "\u2605",
-    bigtriangledown: "\u25BD",
-    bigtriangleup: "\u25B3",
-    biguplus: "\u2A04",
-    bigvee: "\u22C1",
-    bigwedge: "\u22C0",
-    bkarow: "\u290D",
-    blacklozenge: "\u29EB",
-    blacksquare: "\u25AA",
-    blacktriangle: "\u25B4",
-    blacktriangledown: "\u25BE",
-    blacktriangleleft: "\u25C2",
-    blacktriangleright: "\u25B8",
-    blank: "\u2423",
-    blk12: "\u2592",
-    blk14: "\u2591",
-    blk34: "\u2593",
-    block: "\u2588",
-    bne: "=\u20E5",
-    bnequiv: "\u2261\u20E5",
-    bnot: "\u2310",
-    bopf: "\u{1D553}",
-    bot: "\u22A5",
-    bottom: "\u22A5",
-    bowtie: "\u22C8",
-    boxDL: "\u2557",
-    boxDR: "\u2554",
-    boxDl: "\u2556",
-    boxDr: "\u2553",
-    boxH: "\u2550",
-    boxHD: "\u2566",
-    boxHU: "\u2569",
-    boxHd: "\u2564",
-    boxHu: "\u2567",
-    boxUL: "\u255D",
-    boxUR: "\u255A",
-    boxUl: "\u255C",
-    boxUr: "\u2559",
-    boxV: "\u2551",
-    boxVH: "\u256C",
-    boxVL: "\u2563",
-    boxVR: "\u2560",
-    boxVh: "\u256B",
-    boxVl: "\u2562",
-    boxVr: "\u255F",
-    boxbox: "\u29C9",
-    boxdL: "\u2555",
-    boxdR: "\u2552",
-    boxdl: "\u2510",
-    boxdr: "\u250C",
-    boxh: "\u2500",
-    boxhD: "\u2565",
-    boxhU: "\u2568",
-    boxhd: "\u252C",
-    boxhu: "\u2534",
-    boxminus: "\u229F",
-    boxplus: "\u229E",
-    boxtimes: "\u22A0",
-    boxuL: "\u255B",
-    boxuR: "\u2558",
-    boxul: "\u2518",
-    boxur: "\u2514",
-    boxv: "\u2502",
-    boxvH: "\u256A",
-    boxvL: "\u2561",
-    boxvR: "\u255E",
-    boxvh: "\u253C",
-    boxvl: "\u2524",
-    boxvr: "\u251C",
-    bprime: "\u2035",
-    breve: "\u02D8",
-    brvbar: "\xA6",
-    bscr: "\u{1D4B7}",
-    bsemi: "\u204F",
-    bsim: "\u223D",
-    bsime: "\u22CD",
-    bsol: "\\",
-    bsolb: "\u29C5",
-    bsolhsub: "\u27C8",
-    bull: "\u2022",
-    bullet: "\u2022",
-    bump: "\u224E",
-    bumpE: "\u2AAE",
-    bumpe: "\u224F",
-    bumpeq: "\u224F",
-    cacute: "\u0107",
-    cap: "\u2229",
-    capand: "\u2A44",
-    capbrcup: "\u2A49",
-    capcap: "\u2A4B",
-    capcup: "\u2A47",
-    capdot: "\u2A40",
-    caps: "\u2229\uFE00",
-    caret: "\u2041",
-    caron: "\u02C7",
-    ccaps: "\u2A4D",
-    ccaron: "\u010D",
-    ccedil: "\xE7",
-    ccirc: "\u0109",
-    ccups: "\u2A4C",
-    ccupssm: "\u2A50",
-    cdot: "\u010B",
-    cedil: "\xB8",
-    cemptyv: "\u29B2",
-    cent: "\xA2",
-    centerdot: "\xB7",
-    cfr: "\u{1D520}",
-    chcy: "\u0447",
-    check: "\u2713",
-    checkmark: "\u2713",
-    chi: "\u03C7",
-    cir: "\u25CB",
-    cirE: "\u29C3",
-    circ: "\u02C6",
-    circeq: "\u2257",
-    circlearrowleft: "\u21BA",
-    circlearrowright: "\u21BB",
-    circledR: "\xAE",
-    circledS: "\u24C8",
-    circledast: "\u229B",
-    circledcirc: "\u229A",
-    circleddash: "\u229D",
-    cire: "\u2257",
-    cirfnint: "\u2A10",
-    cirmid: "\u2AEF",
-    cirscir: "\u29C2",
-    clubs: "\u2663",
-    clubsuit: "\u2663",
-    colon: ":",
-    colone: "\u2254",
-    coloneq: "\u2254",
-    comma: ",",
-    commat: "@",
-    comp: "\u2201",
-    compfn: "\u2218",
-    complement: "\u2201",
-    complexes: "\u2102",
-    cong: "\u2245",
-    congdot: "\u2A6D",
-    conint: "\u222E",
-    copf: "\u{1D554}",
-    coprod: "\u2210",
-    copy: "\xA9",
-    copysr: "\u2117",
-    crarr: "\u21B5",
-    cross: "\u2717",
-    cscr: "\u{1D4B8}",
-    csub: "\u2ACF",
-    csube: "\u2AD1",
-    csup: "\u2AD0",
-    csupe: "\u2AD2",
-    ctdot: "\u22EF",
-    cudarrl: "\u2938",
-    cudarrr: "\u2935",
-    cuepr: "\u22DE",
-    cuesc: "\u22DF",
-    cularr: "\u21B6",
-    cularrp: "\u293D",
-    cup: "\u222A",
-    cupbrcap: "\u2A48",
-    cupcap: "\u2A46",
-    cupcup: "\u2A4A",
-    cupdot: "\u228D",
-    cupor: "\u2A45",
-    cups: "\u222A\uFE00",
-    curarr: "\u21B7",
-    curarrm: "\u293C",
-    curlyeqprec: "\u22DE",
-    curlyeqsucc: "\u22DF",
-    curlyvee: "\u22CE",
-    curlywedge: "\u22CF",
-    curren: "\xA4",
-    curvearrowleft: "\u21B6",
-    curvearrowright: "\u21B7",
-    cuvee: "\u22CE",
-    cuwed: "\u22CF",
-    cwconint: "\u2232",
-    cwint: "\u2231",
-    cylcty: "\u232D",
-    dArr: "\u21D3",
-    dHar: "\u2965",
-    dagger: "\u2020",
-    daleth: "\u2138",
-    darr: "\u2193",
-    dash: "\u2010",
-    dashv: "\u22A3",
-    dbkarow: "\u290F",
-    dblac: "\u02DD",
-    dcaron: "\u010F",
-    dcy: "\u0434",
-    dd: "\u2146",
-    ddagger: "\u2021",
-    ddarr: "\u21CA",
-    ddotseq: "\u2A77",
-    deg: "\xB0",
-    delta: "\u03B4",
-    demptyv: "\u29B1",
-    dfisht: "\u297F",
-    dfr: "\u{1D521}",
-    dharl: "\u21C3",
-    dharr: "\u21C2",
-    diam: "\u22C4",
-    diamond: "\u22C4",
-    diamondsuit: "\u2666",
-    diams: "\u2666",
-    die: "\xA8",
-    digamma: "\u03DD",
-    disin: "\u22F2",
-    div: "\xF7",
-    divide: "\xF7",
-    divideontimes: "\u22C7",
-    divonx: "\u22C7",
-    djcy: "\u0452",
-    dlcorn: "\u231E",
-    dlcrop: "\u230D",
-    dollar: "$",
-    dopf: "\u{1D555}",
-    dot: "\u02D9",
-    doteq: "\u2250",
-    doteqdot: "\u2251",
-    dotminus: "\u2238",
-    dotplus: "\u2214",
-    dotsquare: "\u22A1",
-    doublebarwedge: "\u2306",
-    downarrow: "\u2193",
-    downdownarrows: "\u21CA",
-    downharpoonleft: "\u21C3",
-    downharpoonright: "\u21C2",
-    drbkarow: "\u2910",
-    drcorn: "\u231F",
-    drcrop: "\u230C",
-    dscr: "\u{1D4B9}",
-    dscy: "\u0455",
-    dsol: "\u29F6",
-    dstrok: "\u0111",
-    dtdot: "\u22F1",
-    dtri: "\u25BF",
-    dtrif: "\u25BE",
-    duarr: "\u21F5",
-    duhar: "\u296F",
-    dwangle: "\u29A6",
-    dzcy: "\u045F",
-    dzigrarr: "\u27FF",
-    eDDot: "\u2A77",
-    eDot: "\u2251",
-    eacute: "\xE9",
-    easter: "\u2A6E",
-    ecaron: "\u011B",
-    ecir: "\u2256",
-    ecirc: "\xEA",
-    ecolon: "\u2255",
-    ecy: "\u044D",
-    edot: "\u0117",
-    ee: "\u2147",
-    efDot: "\u2252",
-    efr: "\u{1D522}",
-    eg: "\u2A9A",
-    egrave: "\xE8",
-    egs: "\u2A96",
-    egsdot: "\u2A98",
-    el: "\u2A99",
-    elinters: "\u23E7",
-    ell: "\u2113",
-    els: "\u2A95",
-    elsdot: "\u2A97",
-    emacr: "\u0113",
-    empty: "\u2205",
-    emptyset: "\u2205",
-    emptyv: "\u2205",
-    emsp13: "\u2004",
-    emsp14: "\u2005",
-    emsp: "\u2003",
-    eng: "\u014B",
-    ensp: "\u2002",
-    eogon: "\u0119",
-    eopf: "\u{1D556}",
-    epar: "\u22D5",
-    eparsl: "\u29E3",
-    eplus: "\u2A71",
-    epsi: "\u03B5",
-    epsilon: "\u03B5",
-    epsiv: "\u03F5",
-    eqcirc: "\u2256",
-    eqcolon: "\u2255",
-    eqsim: "\u2242",
-    eqslantgtr: "\u2A96",
-    eqslantless: "\u2A95",
-    equals: "=",
-    equest: "\u225F",
-    equiv: "\u2261",
-    equivDD: "\u2A78",
-    eqvparsl: "\u29E5",
-    erDot: "\u2253",
-    erarr: "\u2971",
-    escr: "\u212F",
-    esdot: "\u2250",
-    esim: "\u2242",
-    eta: "\u03B7",
-    eth: "\xF0",
-    euml: "\xEB",
-    euro: "\u20AC",
-    excl: "!",
-    exist: "\u2203",
-    expectation: "\u2130",
-    exponentiale: "\u2147",
-    fallingdotseq: "\u2252",
-    fcy: "\u0444",
-    female: "\u2640",
-    ffilig: "\uFB03",
-    fflig: "\uFB00",
-    ffllig: "\uFB04",
-    ffr: "\u{1D523}",
-    filig: "\uFB01",
-    fjlig: "fj",
-    flat: "\u266D",
-    fllig: "\uFB02",
-    fltns: "\u25B1",
-    fnof: "\u0192",
-    fopf: "\u{1D557}",
-    forall: "\u2200",
-    fork: "\u22D4",
-    forkv: "\u2AD9",
-    fpartint: "\u2A0D",
-    frac12: "\xBD",
-    frac13: "\u2153",
-    frac14: "\xBC",
-    frac15: "\u2155",
-    frac16: "\u2159",
-    frac18: "\u215B",
-    frac23: "\u2154",
-    frac25: "\u2156",
-    frac34: "\xBE",
-    frac35: "\u2157",
-    frac38: "\u215C",
-    frac45: "\u2158",
-    frac56: "\u215A",
-    frac58: "\u215D",
-    frac78: "\u215E",
-    frasl: "\u2044",
-    frown: "\u2322",
-    fscr: "\u{1D4BB}",
-    gE: "\u2267",
-    gEl: "\u2A8C",
-    gacute: "\u01F5",
-    gamma: "\u03B3",
-    gammad: "\u03DD",
-    gap: "\u2A86",
-    gbreve: "\u011F",
-    gcirc: "\u011D",
-    gcy: "\u0433",
-    gdot: "\u0121",
-    ge: "\u2265",
-    gel: "\u22DB",
-    geq: "\u2265",
-    geqq: "\u2267",
-    geqslant: "\u2A7E",
-    ges: "\u2A7E",
-    gescc: "\u2AA9",
-    gesdot: "\u2A80",
-    gesdoto: "\u2A82",
-    gesdotol: "\u2A84",
-    gesl: "\u22DB\uFE00",
-    gesles: "\u2A94",
-    gfr: "\u{1D524}",
-    gg: "\u226B",
-    ggg: "\u22D9",
-    gimel: "\u2137",
-    gjcy: "\u0453",
-    gl: "\u2277",
-    glE: "\u2A92",
-    gla: "\u2AA5",
-    glj: "\u2AA4",
-    gnE: "\u2269",
-    gnap: "\u2A8A",
-    gnapprox: "\u2A8A",
-    gne: "\u2A88",
-    gneq: "\u2A88",
-    gneqq: "\u2269",
-    gnsim: "\u22E7",
-    gopf: "\u{1D558}",
-    grave: "`",
-    gscr: "\u210A",
-    gsim: "\u2273",
-    gsime: "\u2A8E",
-    gsiml: "\u2A90",
-    gt: ">",
-    gtcc: "\u2AA7",
-    gtcir: "\u2A7A",
-    gtdot: "\u22D7",
-    gtlPar: "\u2995",
-    gtquest: "\u2A7C",
-    gtrapprox: "\u2A86",
-    gtrarr: "\u2978",
-    gtrdot: "\u22D7",
-    gtreqless: "\u22DB",
-    gtreqqless: "\u2A8C",
-    gtrless: "\u2277",
-    gtrsim: "\u2273",
-    gvertneqq: "\u2269\uFE00",
-    gvnE: "\u2269\uFE00",
-    hArr: "\u21D4",
-    hairsp: "\u200A",
-    half: "\xBD",
-    hamilt: "\u210B",
-    hardcy: "\u044A",
-    harr: "\u2194",
-    harrcir: "\u2948",
-    harrw: "\u21AD",
-    hbar: "\u210F",
-    hcirc: "\u0125",
-    hearts: "\u2665",
-    heartsuit: "\u2665",
-    hellip: "\u2026",
-    hercon: "\u22B9",
-    hfr: "\u{1D525}",
-    hksearow: "\u2925",
-    hkswarow: "\u2926",
-    hoarr: "\u21FF",
-    homtht: "\u223B",
-    hookleftarrow: "\u21A9",
-    hookrightarrow: "\u21AA",
-    hopf: "\u{1D559}",
-    horbar: "\u2015",
-    hscr: "\u{1D4BD}",
-    hslash: "\u210F",
-    hstrok: "\u0127",
-    hybull: "\u2043",
-    hyphen: "\u2010",
-    iacute: "\xED",
-    ic: "\u2063",
-    icirc: "\xEE",
-    icy: "\u0438",
-    iecy: "\u0435",
-    iexcl: "\xA1",
-    iff: "\u21D4",
-    ifr: "\u{1D526}",
-    igrave: "\xEC",
-    ii: "\u2148",
-    iiiint: "\u2A0C",
-    iiint: "\u222D",
-    iinfin: "\u29DC",
-    iiota: "\u2129",
-    ijlig: "\u0133",
-    imacr: "\u012B",
-    image: "\u2111",
-    imagline: "\u2110",
-    imagpart: "\u2111",
-    imath: "\u0131",
-    imof: "\u22B7",
-    imped: "\u01B5",
-    in: "\u2208",
-    incare: "\u2105",
-    infin: "\u221E",
-    infintie: "\u29DD",
-    inodot: "\u0131",
-    int: "\u222B",
-    intcal: "\u22BA",
-    integers: "\u2124",
-    intercal: "\u22BA",
-    intlarhk: "\u2A17",
-    intprod: "\u2A3C",
-    iocy: "\u0451",
-    iogon: "\u012F",
-    iopf: "\u{1D55A}",
-    iota: "\u03B9",
-    iprod: "\u2A3C",
-    iquest: "\xBF",
-    iscr: "\u{1D4BE}",
-    isin: "\u2208",
-    isinE: "\u22F9",
-    isindot: "\u22F5",
-    isins: "\u22F4",
-    isinsv: "\u22F3",
-    isinv: "\u2208",
-    it: "\u2062",
-    itilde: "\u0129",
-    iukcy: "\u0456",
-    iuml: "\xEF",
-    jcirc: "\u0135",
-    jcy: "\u0439",
-    jfr: "\u{1D527}",
-    jmath: "\u0237",
-    jopf: "\u{1D55B}",
-    jscr: "\u{1D4BF}",
-    jsercy: "\u0458",
-    jukcy: "\u0454",
-    kappa: "\u03BA",
-    kappav: "\u03F0",
-    kcedil: "\u0137",
-    kcy: "\u043A",
-    kfr: "\u{1D528}",
-    kgreen: "\u0138",
-    khcy: "\u0445",
-    kjcy: "\u045C",
-    kopf: "\u{1D55C}",
-    kscr: "\u{1D4C0}",
-    lAarr: "\u21DA",
-    lArr: "\u21D0",
-    lAtail: "\u291B",
-    lBarr: "\u290E",
-    lE: "\u2266",
-    lEg: "\u2A8B",
-    lHar: "\u2962",
-    lacute: "\u013A",
-    laemptyv: "\u29B4",
-    lagran: "\u2112",
-    lambda: "\u03BB",
-    lang: "\u27E8",
-    langd: "\u2991",
-    langle: "\u27E8",
-    lap: "\u2A85",
-    laquo: "\xAB",
-    larr: "\u2190",
-    larrb: "\u21E4",
-    larrbfs: "\u291F",
-    larrfs: "\u291D",
-    larrhk: "\u21A9",
-    larrlp: "\u21AB",
-    larrpl: "\u2939",
-    larrsim: "\u2973",
-    larrtl: "\u21A2",
-    lat: "\u2AAB",
-    latail: "\u2919",
-    late: "\u2AAD",
-    lates: "\u2AAD\uFE00",
-    lbarr: "\u290C",
-    lbbrk: "\u2772",
-    lbrace: "{",
-    lbrack: "[",
-    lbrke: "\u298B",
-    lbrksld: "\u298F",
-    lbrkslu: "\u298D",
-    lcaron: "\u013E",
-    lcedil: "\u013C",
-    lceil: "\u2308",
-    lcub: "{",
-    lcy: "\u043B",
-    ldca: "\u2936",
-    ldquo: "\u201C",
-    ldquor: "\u201E",
-    ldrdhar: "\u2967",
-    ldrushar: "\u294B",
-    ldsh: "\u21B2",
-    le: "\u2264",
-    leftarrow: "\u2190",
-    leftarrowtail: "\u21A2",
-    leftharpoondown: "\u21BD",
-    leftharpoonup: "\u21BC",
-    leftleftarrows: "\u21C7",
-    leftrightarrow: "\u2194",
-    leftrightarrows: "\u21C6",
-    leftrightharpoons: "\u21CB",
-    leftrightsquigarrow: "\u21AD",
-    leftthreetimes: "\u22CB",
-    leg: "\u22DA",
-    leq: "\u2264",
-    leqq: "\u2266",
-    leqslant: "\u2A7D",
-    les: "\u2A7D",
-    lescc: "\u2AA8",
-    lesdot: "\u2A7F",
-    lesdoto: "\u2A81",
-    lesdotor: "\u2A83",
-    lesg: "\u22DA\uFE00",
-    lesges: "\u2A93",
-    lessapprox: "\u2A85",
-    lessdot: "\u22D6",
-    lesseqgtr: "\u22DA",
-    lesseqqgtr: "\u2A8B",
-    lessgtr: "\u2276",
-    lesssim: "\u2272",
-    lfisht: "\u297C",
-    lfloor: "\u230A",
-    lfr: "\u{1D529}",
-    lg: "\u2276",
-    lgE: "\u2A91",
-    lhard: "\u21BD",
-    lharu: "\u21BC",
-    lharul: "\u296A",
-    lhblk: "\u2584",
-    ljcy: "\u0459",
-    ll: "\u226A",
-    llarr: "\u21C7",
-    llcorner: "\u231E",
-    llhard: "\u296B",
-    lltri: "\u25FA",
-    lmidot: "\u0140",
-    lmoust: "\u23B0",
-    lmoustache: "\u23B0",
-    lnE: "\u2268",
-    lnap: "\u2A89",
-    lnapprox: "\u2A89",
-    lne: "\u2A87",
-    lneq: "\u2A87",
-    lneqq: "\u2268",
-    lnsim: "\u22E6",
-    loang: "\u27EC",
-    loarr: "\u21FD",
-    lobrk: "\u27E6",
-    longleftarrow: "\u27F5",
-    longleftrightarrow: "\u27F7",
-    longmapsto: "\u27FC",
-    longrightarrow: "\u27F6",
-    looparrowleft: "\u21AB",
-    looparrowright: "\u21AC",
-    lopar: "\u2985",
-    lopf: "\u{1D55D}",
-    loplus: "\u2A2D",
-    lotimes: "\u2A34",
-    lowast: "\u2217",
-    lowbar: "_",
-    loz: "\u25CA",
-    lozenge: "\u25CA",
-    lozf: "\u29EB",
-    lpar: "(",
-    lparlt: "\u2993",
-    lrarr: "\u21C6",
-    lrcorner: "\u231F",
-    lrhar: "\u21CB",
-    lrhard: "\u296D",
-    lrm: "\u200E",
-    lrtri: "\u22BF",
-    lsaquo: "\u2039",
-    lscr: "\u{1D4C1}",
-    lsh: "\u21B0",
-    lsim: "\u2272",
-    lsime: "\u2A8D",
-    lsimg: "\u2A8F",
-    lsqb: "[",
-    lsquo: "\u2018",
-    lsquor: "\u201A",
-    lstrok: "\u0142",
-    lt: "<",
-    ltcc: "\u2AA6",
-    ltcir: "\u2A79",
-    ltdot: "\u22D6",
-    lthree: "\u22CB",
-    ltimes: "\u22C9",
-    ltlarr: "\u2976",
-    ltquest: "\u2A7B",
-    ltrPar: "\u2996",
-    ltri: "\u25C3",
-    ltrie: "\u22B4",
-    ltrif: "\u25C2",
-    lurdshar: "\u294A",
-    luruhar: "\u2966",
-    lvertneqq: "\u2268\uFE00",
-    lvnE: "\u2268\uFE00",
-    mDDot: "\u223A",
-    macr: "\xAF",
-    male: "\u2642",
-    malt: "\u2720",
-    maltese: "\u2720",
-    map: "\u21A6",
-    mapsto: "\u21A6",
-    mapstodown: "\u21A7",
-    mapstoleft: "\u21A4",
-    mapstoup: "\u21A5",
-    marker: "\u25AE",
-    mcomma: "\u2A29",
-    mcy: "\u043C",
-    mdash: "\u2014",
-    measuredangle: "\u2221",
-    mfr: "\u{1D52A}",
-    mho: "\u2127",
-    micro: "\xB5",
-    mid: "\u2223",
-    midast: "*",
-    midcir: "\u2AF0",
-    middot: "\xB7",
-    minus: "\u2212",
-    minusb: "\u229F",
-    minusd: "\u2238",
-    minusdu: "\u2A2A",
-    mlcp: "\u2ADB",
-    mldr: "\u2026",
-    mnplus: "\u2213",
-    models: "\u22A7",
-    mopf: "\u{1D55E}",
-    mp: "\u2213",
-    mscr: "\u{1D4C2}",
-    mstpos: "\u223E",
-    mu: "\u03BC",
-    multimap: "\u22B8",
-    mumap: "\u22B8",
-    nGg: "\u22D9\u0338",
-    nGt: "\u226B\u20D2",
-    nGtv: "\u226B\u0338",
-    nLeftarrow: "\u21CD",
-    nLeftrightarrow: "\u21CE",
-    nLl: "\u22D8\u0338",
-    nLt: "\u226A\u20D2",
-    nLtv: "\u226A\u0338",
-    nRightarrow: "\u21CF",
-    nVDash: "\u22AF",
-    nVdash: "\u22AE",
-    nabla: "\u2207",
-    nacute: "\u0144",
-    nang: "\u2220\u20D2",
-    nap: "\u2249",
-    napE: "\u2A70\u0338",
-    napid: "\u224B\u0338",
-    napos: "\u0149",
-    napprox: "\u2249",
-    natur: "\u266E",
-    natural: "\u266E",
-    naturals: "\u2115",
-    nbsp: "\xA0",
-    nbump: "\u224E\u0338",
-    nbumpe: "\u224F\u0338",
-    ncap: "\u2A43",
-    ncaron: "\u0148",
-    ncedil: "\u0146",
-    ncong: "\u2247",
-    ncongdot: "\u2A6D\u0338",
-    ncup: "\u2A42",
-    ncy: "\u043D",
-    ndash: "\u2013",
-    ne: "\u2260",
-    neArr: "\u21D7",
-    nearhk: "\u2924",
-    nearr: "\u2197",
-    nearrow: "\u2197",
-    nedot: "\u2250\u0338",
-    nequiv: "\u2262",
-    nesear: "\u2928",
-    nesim: "\u2242\u0338",
-    nexist: "\u2204",
-    nexists: "\u2204",
-    nfr: "\u{1D52B}",
-    ngE: "\u2267\u0338",
-    nge: "\u2271",
-    ngeq: "\u2271",
-    ngeqq: "\u2267\u0338",
-    ngeqslant: "\u2A7E\u0338",
-    nges: "\u2A7E\u0338",
-    ngsim: "\u2275",
-    ngt: "\u226F",
-    ngtr: "\u226F",
-    nhArr: "\u21CE",
-    nharr: "\u21AE",
-    nhpar: "\u2AF2",
-    ni: "\u220B",
-    nis: "\u22FC",
-    nisd: "\u22FA",
-    niv: "\u220B",
-    njcy: "\u045A",
-    nlArr: "\u21CD",
-    nlE: "\u2266\u0338",
-    nlarr: "\u219A",
-    nldr: "\u2025",
-    nle: "\u2270",
-    nleftarrow: "\u219A",
-    nleftrightarrow: "\u21AE",
-    nleq: "\u2270",
-    nleqq: "\u2266\u0338",
-    nleqslant: "\u2A7D\u0338",
-    nles: "\u2A7D\u0338",
-    nless: "\u226E",
-    nlsim: "\u2274",
-    nlt: "\u226E",
-    nltri: "\u22EA",
-    nltrie: "\u22EC",
-    nmid: "\u2224",
-    nopf: "\u{1D55F}",
-    not: "\xAC",
-    notin: "\u2209",
-    notinE: "\u22F9\u0338",
-    notindot: "\u22F5\u0338",
-    notinva: "\u2209",
-    notinvb: "\u22F7",
-    notinvc: "\u22F6",
-    notni: "\u220C",
-    notniva: "\u220C",
-    notnivb: "\u22FE",
-    notnivc: "\u22FD",
-    npar: "\u2226",
-    nparallel: "\u2226",
-    nparsl: "\u2AFD\u20E5",
-    npart: "\u2202\u0338",
-    npolint: "\u2A14",
-    npr: "\u2280",
-    nprcue: "\u22E0",
-    npre: "\u2AAF\u0338",
-    nprec: "\u2280",
-    npreceq: "\u2AAF\u0338",
-    nrArr: "\u21CF",
-    nrarr: "\u219B",
-    nrarrc: "\u2933\u0338",
-    nrarrw: "\u219D\u0338",
-    nrightarrow: "\u219B",
-    nrtri: "\u22EB",
-    nrtrie: "\u22ED",
-    nsc: "\u2281",
-    nsccue: "\u22E1",
-    nsce: "\u2AB0\u0338",
-    nscr: "\u{1D4C3}",
-    nshortmid: "\u2224",
-    nshortparallel: "\u2226",
-    nsim: "\u2241",
-    nsime: "\u2244",
-    nsimeq: "\u2244",
-    nsmid: "\u2224",
-    nspar: "\u2226",
-    nsqsube: "\u22E2",
-    nsqsupe: "\u22E3",
-    nsub: "\u2284",
-    nsubE: "\u2AC5\u0338",
-    nsube: "\u2288",
-    nsubset: "\u2282\u20D2",
-    nsubseteq: "\u2288",
-    nsubseteqq: "\u2AC5\u0338",
-    nsucc: "\u2281",
-    nsucceq: "\u2AB0\u0338",
-    nsup: "\u2285",
-    nsupE: "\u2AC6\u0338",
-    nsupe: "\u2289",
-    nsupset: "\u2283\u20D2",
-    nsupseteq: "\u2289",
-    nsupseteqq: "\u2AC6\u0338",
-    ntgl: "\u2279",
-    ntilde: "\xF1",
-    ntlg: "\u2278",
-    ntriangleleft: "\u22EA",
-    ntrianglelefteq: "\u22EC",
-    ntriangleright: "\u22EB",
-    ntrianglerighteq: "\u22ED",
-    nu: "\u03BD",
-    num: "#",
-    numero: "\u2116",
-    numsp: "\u2007",
-    nvDash: "\u22AD",
-    nvHarr: "\u2904",
-    nvap: "\u224D\u20D2",
-    nvdash: "\u22AC",
-    nvge: "\u2265\u20D2",
-    nvgt: ">\u20D2",
-    nvinfin: "\u29DE",
-    nvlArr: "\u2902",
-    nvle: "\u2264\u20D2",
-    nvlt: "<\u20D2",
-    nvltrie: "\u22B4\u20D2",
-    nvrArr: "\u2903",
-    nvrtrie: "\u22B5\u20D2",
-    nvsim: "\u223C\u20D2",
-    nwArr: "\u21D6",
-    nwarhk: "\u2923",
-    nwarr: "\u2196",
-    nwarrow: "\u2196",
-    nwnear: "\u2927",
-    oS: "\u24C8",
-    oacute: "\xF3",
-    oast: "\u229B",
-    ocir: "\u229A",
-    ocirc: "\xF4",
-    ocy: "\u043E",
-    odash: "\u229D",
-    odblac: "\u0151",
-    odiv: "\u2A38",
-    odot: "\u2299",
-    odsold: "\u29BC",
-    oelig: "\u0153",
-    ofcir: "\u29BF",
-    ofr: "\u{1D52C}",
-    ogon: "\u02DB",
-    ograve: "\xF2",
-    ogt: "\u29C1",
-    ohbar: "\u29B5",
-    ohm: "\u03A9",
-    oint: "\u222E",
-    olarr: "\u21BA",
-    olcir: "\u29BE",
-    olcross: "\u29BB",
-    oline: "\u203E",
-    olt: "\u29C0",
-    omacr: "\u014D",
-    omega: "\u03C9",
-    omicron: "\u03BF",
-    omid: "\u29B6",
-    ominus: "\u2296",
-    oopf: "\u{1D560}",
-    opar: "\u29B7",
-    operp: "\u29B9",
-    oplus: "\u2295",
-    or: "\u2228",
-    orarr: "\u21BB",
-    ord: "\u2A5D",
-    order: "\u2134",
-    orderof: "\u2134",
-    ordf: "\xAA",
-    ordm: "\xBA",
-    origof: "\u22B6",
-    oror: "\u2A56",
-    orslope: "\u2A57",
-    orv: "\u2A5B",
-    oscr: "\u2134",
-    oslash: "\xF8",
-    osol: "\u2298",
-    otilde: "\xF5",
-    otimes: "\u2297",
-    otimesas: "\u2A36",
-    ouml: "\xF6",
-    ovbar: "\u233D",
-    par: "\u2225",
-    para: "\xB6",
-    parallel: "\u2225",
-    parsim: "\u2AF3",
-    parsl: "\u2AFD",
-    part: "\u2202",
-    pcy: "\u043F",
-    percnt: "%",
-    period: ".",
-    permil: "\u2030",
-    perp: "\u22A5",
-    pertenk: "\u2031",
-    pfr: "\u{1D52D}",
-    phi: "\u03C6",
-    phiv: "\u03D5",
-    phmmat: "\u2133",
-    phone: "\u260E",
-    pi: "\u03C0",
-    pitchfork: "\u22D4",
-    piv: "\u03D6",
-    planck: "\u210F",
-    planckh: "\u210E",
-    plankv: "\u210F",
-    plus: "+",
-    plusacir: "\u2A23",
-    plusb: "\u229E",
-    pluscir: "\u2A22",
-    plusdo: "\u2214",
-    plusdu: "\u2A25",
-    pluse: "\u2A72",
-    plusmn: "\xB1",
-    plussim: "\u2A26",
-    plustwo: "\u2A27",
-    pm: "\xB1",
-    pointint: "\u2A15",
-    popf: "\u{1D561}",
-    pound: "\xA3",
-    pr: "\u227A",
-    prE: "\u2AB3",
-    prap: "\u2AB7",
-    prcue: "\u227C",
-    pre: "\u2AAF",
-    prec: "\u227A",
-    precapprox: "\u2AB7",
-    preccurlyeq: "\u227C",
-    preceq: "\u2AAF",
-    precnapprox: "\u2AB9",
-    precneqq: "\u2AB5",
-    precnsim: "\u22E8",
-    precsim: "\u227E",
-    prime: "\u2032",
-    primes: "\u2119",
-    prnE: "\u2AB5",
-    prnap: "\u2AB9",
-    prnsim: "\u22E8",
-    prod: "\u220F",
-    profalar: "\u232E",
-    profline: "\u2312",
-    profsurf: "\u2313",
-    prop: "\u221D",
-    propto: "\u221D",
-    prsim: "\u227E",
-    prurel: "\u22B0",
-    pscr: "\u{1D4C5}",
-    psi: "\u03C8",
-    puncsp: "\u2008",
-    qfr: "\u{1D52E}",
-    qint: "\u2A0C",
-    qopf: "\u{1D562}",
-    qprime: "\u2057",
-    qscr: "\u{1D4C6}",
-    quaternions: "\u210D",
-    quatint: "\u2A16",
-    quest: "?",
-    questeq: "\u225F",
+  function matchOrInsertSemicolon(parser, context) {
+    var _a2, _b2;
+    if ((parser.flags & 1) === 0 && (parser.getToken() & 1048576) !== 1048576) {
+      parser.report(30, KeywordDescTable[parser.getToken() & 255]);
+    }
+    if (!consumeOpt(parser, context, 1074790417)) {
+      (_b2 = (_a2 = parser.options).onInsertedSemicolon) == null ? void 0 : _b2.call(_a2, parser.startIndex);
+    }
+  }
+  __name(matchOrInsertSemicolon, "matchOrInsertSemicolon");
+  function isValidStrictMode(parser, index, tokenIndex, tokenValue) {
+    if (index - tokenIndex < 13 && tokenValue === "use strict") {
+      if ((parser.getToken() & 1048576) === 1048576 || parser.flags & 1) {
+        return 1;
+      }
+    }
+    return 0;
+  }
+  __name(isValidStrictMode, "isValidStrictMode");
+  function optionalBit(parser, context, t) {
+    if (parser.getToken() !== t)
+      return 0;
+    nextToken(parser, context);
+    return 1;
+  }
+  __name(optionalBit, "optionalBit");
+  function consumeOpt(parser, context, t) {
+    if (parser.getToken() !== t)
+      return false;
+    nextToken(parser, context);
+    return true;
+  }
+  __name(consumeOpt, "consumeOpt");
+  function consume(parser, context, t) {
+    if (parser.getToken() !== t)
+      parser.report(25, KeywordDescTable[t & 255]);
+    nextToken(parser, context);
+  }
+  __name(consume, "consume");
+  function reinterpretToPattern(parser, node) {
+    switch (node.type) {
+      case "ArrayExpression": {
+        node.type = "ArrayPattern";
+        const { elements } = node;
+        for (let i2 = 0, n = elements.length; i2 < n; ++i2) {
+          const element = elements[i2];
+          if (element)
+            reinterpretToPattern(parser, element);
+        }
+        return;
+      }
+      case "ObjectExpression": {
+        node.type = "ObjectPattern";
+        const { properties } = node;
+        for (let i2 = 0, n = properties.length; i2 < n; ++i2) {
+          reinterpretToPattern(parser, properties[i2]);
+        }
+        return;
+      }
+      case "AssignmentExpression":
+        node.type = "AssignmentPattern";
+        if (node.operator !== "=")
+          parser.report(71);
+        delete node.operator;
+        reinterpretToPattern(parser, node.left);
+        return;
+      case "Property":
+        reinterpretToPattern(parser, node.value);
+        return;
+      case "SpreadElement":
+        node.type = "RestElement";
+        reinterpretToPattern(parser, node.argument);
+    }
+  }
+  __name(reinterpretToPattern, "reinterpretToPattern");
+  function validateBindingIdentifier(parser, context, kind, t, skipEvalArgCheck) {
+    if (context & 1) {
+      if ((t & 36864) === 36864) {
+        parser.report(120);
+      }
+      if (!skipEvalArgCheck && (t & 537079808) === 537079808) {
+        parser.report(121);
+      }
+    }
+    if ((t & 20480) === 20480 || t === -2147483527) {
+      parser.report(102);
+    }
+    if (kind & (8 | 16) && (t & 255) === (241737 & 255)) {
+      parser.report(100);
+    }
+    if (context & (2048 | 2) && t === 209006) {
+      parser.report(112);
+    }
+    if (context & (1024 | 1) && t === 241771) {
+      parser.report(97, "yield");
+    }
+  }
+  __name(validateBindingIdentifier, "validateBindingIdentifier");
+  function validateFunctionName(parser, context, t) {
+    if (context & 1) {
+      if ((t & 36864) === 36864) {
+        parser.report(120);
+      }
+      if ((t & 537079808) === 537079808) {
+        parser.report(121);
+      }
+      if (t === -2147483526) {
+        parser.report(95);
+      }
+      if (t === -2147483527) {
+        parser.report(95);
+      }
+    }
+    if ((t & 20480) === 20480) {
+      parser.report(102);
+    }
+    if (context & (2048 | 2) && t === 209006) {
+      parser.report(112);
+    }
+    if (context & (1024 | 1) && t === 241771) {
+      parser.report(97, "yield");
+    }
+  }
+  __name(validateFunctionName, "validateFunctionName");
+  function isStrictReservedWord(parser, context, t) {
+    var _a2;
+    if (t === 209006) {
+      if (context & (2048 | 2))
+        parser.report(112);
+      if ((parser.destructible & 128) === 0) {
+        (_a2 = parser.firstAwaitLocation) != null ? _a2 : parser.firstAwaitLocation = { start: parser.tokenStart, end: parser.currentLocation };
+      }
+      parser.destructible |= 128;
+    }
+    if (t === 241771 && context & 1024)
+      parser.report(97, "yield");
+    return (t & 20480) === 20480 || (t & 36864) === 36864 || t == -2147483526;
+  }
+  __name(isStrictReservedWord, "isStrictReservedWord");
+  function isPropertyWithPrivateFieldKey(expr) {
+    return !expr.property ? false : expr.property.type === "PrivateIdentifier";
+  }
+  __name(isPropertyWithPrivateFieldKey, "isPropertyWithPrivateFieldKey");
+  function isValidLabel(parser, labels, name, isIterationStatement) {
+    while (labels) {
+      if (labels["$" + name]) {
+        if (isIterationStatement)
+          parser.report(139);
+        return 1;
+      }
+      if (isIterationStatement && labels.loop)
+        isIterationStatement = 0;
+      labels = labels["$"];
+    }
+    return 0;
+  }
+  __name(isValidLabel, "isValidLabel");
+  function validateAndDeclareLabel(parser, labels, name) {
+    let set = labels;
+    while (set) {
+      if (set["$" + name])
+        parser.report(138, name);
+      set = set["$"];
+    }
+    labels["$" + name] = 1;
+  }
+  __name(validateAndDeclareLabel, "validateAndDeclareLabel");
+  function isEqualTagName(elementName) {
+    switch (elementName.type) {
+      case "JSXIdentifier":
+        return elementName.name;
+      case "JSXNamespacedName":
+        return elementName.namespace + ":" + elementName.name;
+      case "JSXMemberExpression":
+        return isEqualTagName(elementName.object) + "." + isEqualTagName(elementName.property);
+    }
+  }
+  __name(isEqualTagName, "isEqualTagName");
+  function isValidIdentifier(context, t) {
+    if (context & (1 | 1024)) {
+      if (context & 2 && t === 209006)
+        return false;
+      if (context & 1024 && t === 241771)
+        return false;
+      return (t & 12288) === 12288;
+    }
+    return (t & 12288) === 12288 || (t & 36864) === 36864;
+  }
+  __name(isValidIdentifier, "isValidIdentifier");
+  function classifyIdentifier(parser, context, t) {
+    if ((t & 537079808) === 537079808) {
+      if (context & 1)
+        parser.report(121);
+      parser.flags |= 512;
+    }
+    if (!isValidIdentifier(context, t))
+      parser.report(0);
+  }
+  __name(classifyIdentifier, "classifyIdentifier");
+  var entities = new Map(Object.entries({
     quot: '"',
-    rAarr: "\u21DB",
-    rArr: "\u21D2",
-    rAtail: "\u291C",
-    rBarr: "\u290F",
-    rHar: "\u2964",
-    race: "\u223D\u0331",
-    racute: "\u0155",
-    radic: "\u221A",
-    raemptyv: "\u29B3",
-    rang: "\u27E9",
-    rangd: "\u2992",
-    range: "\u29A5",
-    rangle: "\u27E9",
-    raquo: "\xBB",
-    rarr: "\u2192",
-    rarrap: "\u2975",
-    rarrb: "\u21E5",
-    rarrbfs: "\u2920",
-    rarrc: "\u2933",
-    rarrfs: "\u291E",
-    rarrhk: "\u21AA",
-    rarrlp: "\u21AC",
-    rarrpl: "\u2945",
-    rarrsim: "\u2974",
-    rarrtl: "\u21A3",
-    rarrw: "\u219D",
-    ratail: "\u291A",
-    ratio: "\u2236",
-    rationals: "\u211A",
-    rbarr: "\u290D",
-    rbbrk: "\u2773",
-    rbrace: "}",
-    rbrack: "]",
-    rbrke: "\u298C",
-    rbrksld: "\u298E",
-    rbrkslu: "\u2990",
-    rcaron: "\u0159",
-    rcedil: "\u0157",
-    rceil: "\u2309",
-    rcub: "}",
-    rcy: "\u0440",
-    rdca: "\u2937",
-    rdldhar: "\u2969",
-    rdquo: "\u201D",
-    rdquor: "\u201D",
-    rdsh: "\u21B3",
-    real: "\u211C",
-    realine: "\u211B",
-    realpart: "\u211C",
-    reals: "\u211D",
-    rect: "\u25AD",
-    reg: "\xAE",
-    rfisht: "\u297D",
-    rfloor: "\u230B",
-    rfr: "\u{1D52F}",
-    rhard: "\u21C1",
-    rharu: "\u21C0",
-    rharul: "\u296C",
-    rho: "\u03C1",
-    rhov: "\u03F1",
-    rightarrow: "\u2192",
-    rightarrowtail: "\u21A3",
-    rightharpoondown: "\u21C1",
-    rightharpoonup: "\u21C0",
-    rightleftarrows: "\u21C4",
-    rightleftharpoons: "\u21CC",
-    rightrightarrows: "\u21C9",
-    rightsquigarrow: "\u219D",
-    rightthreetimes: "\u22CC",
-    ring: "\u02DA",
-    risingdotseq: "\u2253",
-    rlarr: "\u21C4",
-    rlhar: "\u21CC",
-    rlm: "\u200F",
-    rmoust: "\u23B1",
-    rmoustache: "\u23B1",
-    rnmid: "\u2AEE",
-    roang: "\u27ED",
-    roarr: "\u21FE",
-    robrk: "\u27E7",
-    ropar: "\u2986",
-    ropf: "\u{1D563}",
-    roplus: "\u2A2E",
-    rotimes: "\u2A35",
-    rpar: ")",
-    rpargt: "\u2994",
-    rppolint: "\u2A12",
-    rrarr: "\u21C9",
-    rsaquo: "\u203A",
-    rscr: "\u{1D4C7}",
-    rsh: "\u21B1",
-    rsqb: "]",
-    rsquo: "\u2019",
-    rsquor: "\u2019",
-    rthree: "\u22CC",
-    rtimes: "\u22CA",
-    rtri: "\u25B9",
-    rtrie: "\u22B5",
-    rtrif: "\u25B8",
-    rtriltri: "\u29CE",
-    ruluhar: "\u2968",
-    rx: "\u211E",
-    sacute: "\u015B",
-    sbquo: "\u201A",
-    sc: "\u227B",
-    scE: "\u2AB4",
-    scap: "\u2AB8",
-    scaron: "\u0161",
-    sccue: "\u227D",
-    sce: "\u2AB0",
-    scedil: "\u015F",
-    scirc: "\u015D",
-    scnE: "\u2AB6",
-    scnap: "\u2ABA",
-    scnsim: "\u22E9",
-    scpolint: "\u2A13",
-    scsim: "\u227F",
-    scy: "\u0441",
-    sdot: "\u22C5",
-    sdotb: "\u22A1",
-    sdote: "\u2A66",
-    seArr: "\u21D8",
-    searhk: "\u2925",
-    searr: "\u2198",
-    searrow: "\u2198",
+    amp: "&",
+    apos: "'",
+    lt: "<",
+    gt: ">",
+    nbsp: "\xA0",
+    iexcl: "\xA1",
+    cent: "\xA2",
+    pound: "\xA3",
+    curren: "\xA4",
+    yen: "\xA5",
+    brvbar: "\xA6",
     sect: "\xA7",
-    semi: ";",
-    seswar: "\u2929",
-    setminus: "\u2216",
-    setmn: "\u2216",
-    sext: "\u2736",
-    sfr: "\u{1D530}",
-    sfrown: "\u2322",
-    sharp: "\u266F",
-    shchcy: "\u0449",
-    shcy: "\u0448",
-    shortmid: "\u2223",
-    shortparallel: "\u2225",
+    uml: "\xA8",
+    copy: "\xA9",
+    ordf: "\xAA",
+    laquo: "\xAB",
+    not: "\xAC",
     shy: "\xAD",
-    sigma: "\u03C3",
-    sigmaf: "\u03C2",
-    sigmav: "\u03C2",
-    sim: "\u223C",
-    simdot: "\u2A6A",
-    sime: "\u2243",
-    simeq: "\u2243",
-    simg: "\u2A9E",
-    simgE: "\u2AA0",
-    siml: "\u2A9D",
-    simlE: "\u2A9F",
-    simne: "\u2246",
-    simplus: "\u2A24",
-    simrarr: "\u2972",
-    slarr: "\u2190",
-    smallsetminus: "\u2216",
-    smashp: "\u2A33",
-    smeparsl: "\u29E4",
-    smid: "\u2223",
-    smile: "\u2323",
-    smt: "\u2AAA",
-    smte: "\u2AAC",
-    smtes: "\u2AAC\uFE00",
-    softcy: "\u044C",
-    sol: "/",
-    solb: "\u29C4",
-    solbar: "\u233F",
-    sopf: "\u{1D564}",
-    spades: "\u2660",
-    spadesuit: "\u2660",
-    spar: "\u2225",
-    sqcap: "\u2293",
-    sqcaps: "\u2293\uFE00",
-    sqcup: "\u2294",
-    sqcups: "\u2294\uFE00",
-    sqsub: "\u228F",
-    sqsube: "\u2291",
-    sqsubset: "\u228F",
-    sqsubseteq: "\u2291",
-    sqsup: "\u2290",
-    sqsupe: "\u2292",
-    sqsupset: "\u2290",
-    sqsupseteq: "\u2292",
-    squ: "\u25A1",
-    square: "\u25A1",
-    squarf: "\u25AA",
-    squf: "\u25AA",
-    srarr: "\u2192",
-    sscr: "\u{1D4C8}",
-    ssetmn: "\u2216",
-    ssmile: "\u2323",
-    sstarf: "\u22C6",
-    star: "\u2606",
-    starf: "\u2605",
-    straightepsilon: "\u03F5",
-    straightphi: "\u03D5",
-    strns: "\xAF",
-    sub: "\u2282",
-    subE: "\u2AC5",
-    subdot: "\u2ABD",
-    sube: "\u2286",
-    subedot: "\u2AC3",
-    submult: "\u2AC1",
-    subnE: "\u2ACB",
-    subne: "\u228A",
-    subplus: "\u2ABF",
-    subrarr: "\u2979",
-    subset: "\u2282",
-    subseteq: "\u2286",
-    subseteqq: "\u2AC5",
-    subsetneq: "\u228A",
-    subsetneqq: "\u2ACB",
-    subsim: "\u2AC7",
-    subsub: "\u2AD5",
-    subsup: "\u2AD3",
-    succ: "\u227B",
-    succapprox: "\u2AB8",
-    succcurlyeq: "\u227D",
-    succeq: "\u2AB0",
-    succnapprox: "\u2ABA",
-    succneqq: "\u2AB6",
-    succnsim: "\u22E9",
-    succsim: "\u227F",
-    sum: "\u2211",
-    sung: "\u266A",
-    sup1: "\xB9",
+    reg: "\xAE",
+    macr: "\xAF",
+    deg: "\xB0",
+    plusmn: "\xB1",
     sup2: "\xB2",
     sup3: "\xB3",
-    sup: "\u2283",
-    supE: "\u2AC6",
-    supdot: "\u2ABE",
-    supdsub: "\u2AD8",
-    supe: "\u2287",
-    supedot: "\u2AC4",
-    suphsol: "\u27C9",
-    suphsub: "\u2AD7",
-    suplarr: "\u297B",
-    supmult: "\u2AC2",
-    supnE: "\u2ACC",
-    supne: "\u228B",
-    supplus: "\u2AC0",
-    supset: "\u2283",
-    supseteq: "\u2287",
-    supseteqq: "\u2AC6",
-    supsetneq: "\u228B",
-    supsetneqq: "\u2ACC",
-    supsim: "\u2AC8",
-    supsub: "\u2AD4",
-    supsup: "\u2AD6",
-    swArr: "\u21D9",
-    swarhk: "\u2926",
-    swarr: "\u2199",
-    swarrow: "\u2199",
-    swnwar: "\u292A",
-    szlig: "\xDF",
-    target: "\u2316",
-    tau: "\u03C4",
-    tbrk: "\u23B4",
-    tcaron: "\u0165",
-    tcedil: "\u0163",
-    tcy: "\u0442",
-    tdot: "\u20DB",
-    telrec: "\u2315",
-    tfr: "\u{1D531}",
-    there4: "\u2234",
-    therefore: "\u2234",
-    theta: "\u03B8",
-    thetasym: "\u03D1",
-    thetav: "\u03D1",
-    thickapprox: "\u2248",
-    thicksim: "\u223C",
-    thinsp: "\u2009",
-    thkap: "\u2248",
-    thksim: "\u223C",
-    thorn: "\xFE",
-    tilde: "\u02DC",
+    acute: "\xB4",
+    micro: "\xB5",
+    para: "\xB6",
+    middot: "\xB7",
+    cedil: "\xB8",
+    sup1: "\xB9",
+    ordm: "\xBA",
+    raquo: "\xBB",
+    frac14: "\xBC",
+    frac12: "\xBD",
+    frac34: "\xBE",
+    iquest: "\xBF",
+    Agrave: "\xC0",
+    Aacute: "\xC1",
+    Acirc: "\xC2",
+    Atilde: "\xC3",
+    Auml: "\xC4",
+    Aring: "\xC5",
+    AElig: "\xC6",
+    Ccedil: "\xC7",
+    Egrave: "\xC8",
+    Eacute: "\xC9",
+    Ecirc: "\xCA",
+    Euml: "\xCB",
+    Igrave: "\xCC",
+    Iacute: "\xCD",
+    Icirc: "\xCE",
+    Iuml: "\xCF",
+    ETH: "\xD0",
+    Ntilde: "\xD1",
+    Ograve: "\xD2",
+    Oacute: "\xD3",
+    Ocirc: "\xD4",
+    Otilde: "\xD5",
+    Ouml: "\xD6",
     times: "\xD7",
-    timesb: "\u22A0",
-    timesbar: "\u2A31",
-    timesd: "\u2A30",
-    tint: "\u222D",
-    toea: "\u2928",
-    top: "\u22A4",
-    topbot: "\u2336",
-    topcir: "\u2AF1",
-    topf: "\u{1D565}",
-    topfork: "\u2ADA",
-    tosa: "\u2929",
-    tprime: "\u2034",
-    trade: "\u2122",
-    triangle: "\u25B5",
-    triangledown: "\u25BF",
-    triangleleft: "\u25C3",
-    trianglelefteq: "\u22B4",
-    triangleq: "\u225C",
-    triangleright: "\u25B9",
-    trianglerighteq: "\u22B5",
-    tridot: "\u25EC",
-    trie: "\u225C",
-    triminus: "\u2A3A",
-    triplus: "\u2A39",
-    trisb: "\u29CD",
-    tritime: "\u2A3B",
-    trpezium: "\u23E2",
-    tscr: "\u{1D4C9}",
-    tscy: "\u0446",
-    tshcy: "\u045B",
-    tstrok: "\u0167",
-    twixt: "\u226C",
-    twoheadleftarrow: "\u219E",
-    twoheadrightarrow: "\u21A0",
-    uArr: "\u21D1",
-    uHar: "\u2963",
-    uacute: "\xFA",
-    uarr: "\u2191",
-    ubrcy: "\u045E",
-    ubreve: "\u016D",
-    ucirc: "\xFB",
-    ucy: "\u0443",
-    udarr: "\u21C5",
-    udblac: "\u0171",
-    udhar: "\u296E",
-    ufisht: "\u297E",
-    ufr: "\u{1D532}",
+    Oslash: "\xD8",
+    Ugrave: "\xD9",
+    Uacute: "\xDA",
+    Ucirc: "\xDB",
+    Uuml: "\xDC",
+    Yacute: "\xDD",
+    THORN: "\xDE",
+    szlig: "\xDF",
+    agrave: "\xE0",
+    aacute: "\xE1",
+    acirc: "\xE2",
+    atilde: "\xE3",
+    auml: "\xE4",
+    aring: "\xE5",
+    aelig: "\xE6",
+    ccedil: "\xE7",
+    egrave: "\xE8",
+    eacute: "\xE9",
+    ecirc: "\xEA",
+    euml: "\xEB",
+    igrave: "\xEC",
+    iacute: "\xED",
+    icirc: "\xEE",
+    iuml: "\xEF",
+    eth: "\xF0",
+    ntilde: "\xF1",
+    ograve: "\xF2",
+    oacute: "\xF3",
+    ocirc: "\xF4",
+    otilde: "\xF5",
+    ouml: "\xF6",
+    divide: "\xF7",
+    oslash: "\xF8",
     ugrave: "\xF9",
-    uharl: "\u21BF",
-    uharr: "\u21BE",
-    uhblk: "\u2580",
-    ulcorn: "\u231C",
-    ulcorner: "\u231C",
-    ulcrop: "\u230F",
-    ultri: "\u25F8",
-    umacr: "\u016B",
-    uml: "\xA8",
-    uogon: "\u0173",
-    uopf: "\u{1D566}",
-    uparrow: "\u2191",
-    updownarrow: "\u2195",
-    upharpoonleft: "\u21BF",
-    upharpoonright: "\u21BE",
-    uplus: "\u228E",
-    upsi: "\u03C5",
-    upsih: "\u03D2",
-    upsilon: "\u03C5",
-    upuparrows: "\u21C8",
-    urcorn: "\u231D",
-    urcorner: "\u231D",
-    urcrop: "\u230E",
-    uring: "\u016F",
-    urtri: "\u25F9",
-    uscr: "\u{1D4CA}",
-    utdot: "\u22F0",
-    utilde: "\u0169",
-    utri: "\u25B5",
-    utrif: "\u25B4",
-    uuarr: "\u21C8",
+    uacute: "\xFA",
+    ucirc: "\xFB",
     uuml: "\xFC",
-    uwangle: "\u29A7",
-    vArr: "\u21D5",
-    vBar: "\u2AE8",
-    vBarv: "\u2AE9",
-    vDash: "\u22A8",
-    vangrt: "\u299C",
-    varepsilon: "\u03F5",
-    varkappa: "\u03F0",
-    varnothing: "\u2205",
-    varphi: "\u03D5",
-    varpi: "\u03D6",
-    varpropto: "\u221D",
-    varr: "\u2195",
-    varrho: "\u03F1",
-    varsigma: "\u03C2",
-    varsubsetneq: "\u228A\uFE00",
-    varsubsetneqq: "\u2ACB\uFE00",
-    varsupsetneq: "\u228B\uFE00",
-    varsupsetneqq: "\u2ACC\uFE00",
-    vartheta: "\u03D1",
-    vartriangleleft: "\u22B2",
-    vartriangleright: "\u22B3",
-    vcy: "\u0432",
-    vdash: "\u22A2",
-    vee: "\u2228",
-    veebar: "\u22BB",
-    veeeq: "\u225A",
-    vellip: "\u22EE",
-    verbar: "|",
-    vert: "|",
-    vfr: "\u{1D533}",
-    vltri: "\u22B2",
-    vnsub: "\u2282\u20D2",
-    vnsup: "\u2283\u20D2",
-    vopf: "\u{1D567}",
-    vprop: "\u221D",
-    vrtri: "\u22B3",
-    vscr: "\u{1D4CB}",
-    vsubnE: "\u2ACB\uFE00",
-    vsubne: "\u228A\uFE00",
-    vsupnE: "\u2ACC\uFE00",
-    vsupne: "\u228B\uFE00",
-    vzigzag: "\u299A",
-    wcirc: "\u0175",
-    wedbar: "\u2A5F",
-    wedge: "\u2227",
-    wedgeq: "\u2259",
-    weierp: "\u2118",
-    wfr: "\u{1D534}",
-    wopf: "\u{1D568}",
-    wp: "\u2118",
-    wr: "\u2240",
-    wreath: "\u2240",
-    wscr: "\u{1D4CC}",
-    xcap: "\u22C2",
-    xcirc: "\u25EF",
-    xcup: "\u22C3",
-    xdtri: "\u25BD",
-    xfr: "\u{1D535}",
-    xhArr: "\u27FA",
-    xharr: "\u27F7",
-    xi: "\u03BE",
-    xlArr: "\u27F8",
-    xlarr: "\u27F5",
-    xmap: "\u27FC",
-    xnis: "\u22FB",
-    xodot: "\u2A00",
-    xopf: "\u{1D569}",
-    xoplus: "\u2A01",
-    xotime: "\u2A02",
-    xrArr: "\u27F9",
-    xrarr: "\u27F6",
-    xscr: "\u{1D4CD}",
-    xsqcup: "\u2A06",
-    xuplus: "\u2A04",
-    xutri: "\u25B3",
-    xvee: "\u22C1",
-    xwedge: "\u22C0",
     yacute: "\xFD",
-    yacy: "\u044F",
-    ycirc: "\u0177",
-    ycy: "\u044B",
-    yen: "\xA5",
-    yfr: "\u{1D536}",
-    yicy: "\u0457",
-    yopf: "\u{1D56A}",
-    yscr: "\u{1D4CE}",
-    yucy: "\u044E",
+    thorn: "\xFE",
     yuml: "\xFF",
-    zacute: "\u017A",
-    zcaron: "\u017E",
-    zcy: "\u0437",
-    zdot: "\u017C",
-    zeetrf: "\u2128",
+    OElig: "\u0152",
+    oelig: "\u0153",
+    Scaron: "\u0160",
+    scaron: "\u0161",
+    Yuml: "\u0178",
+    fnof: "\u0192",
+    circ: "\u02C6",
+    tilde: "\u02DC",
+    Alpha: "\u0391",
+    Beta: "\u0392",
+    Gamma: "\u0393",
+    Delta: "\u0394",
+    Epsilon: "\u0395",
+    Zeta: "\u0396",
+    Eta: "\u0397",
+    Theta: "\u0398",
+    Iota: "\u0399",
+    Kappa: "\u039A",
+    Lambda: "\u039B",
+    Mu: "\u039C",
+    Nu: "\u039D",
+    Xi: "\u039E",
+    Omicron: "\u039F",
+    Pi: "\u03A0",
+    Rho: "\u03A1",
+    Sigma: "\u03A3",
+    Tau: "\u03A4",
+    Upsilon: "\u03A5",
+    Phi: "\u03A6",
+    Chi: "\u03A7",
+    Psi: "\u03A8",
+    Omega: "\u03A9",
+    alpha: "\u03B1",
+    beta: "\u03B2",
+    gamma: "\u03B3",
+    delta: "\u03B4",
+    epsilon: "\u03B5",
     zeta: "\u03B6",
-    zfr: "\u{1D537}",
-    zhcy: "\u0436",
-    zigrarr: "\u21DD",
-    zopf: "\u{1D56B}",
-    zscr: "\u{1D4CF}",
+    eta: "\u03B7",
+    theta: "\u03B8",
+    iota: "\u03B9",
+    kappa: "\u03BA",
+    lambda: "\u03BB",
+    mu: "\u03BC",
+    nu: "\u03BD",
+    xi: "\u03BE",
+    omicron: "\u03BF",
+    pi: "\u03C0",
+    rho: "\u03C1",
+    sigmaf: "\u03C2",
+    sigma: "\u03C3",
+    tau: "\u03C4",
+    upsilon: "\u03C5",
+    phi: "\u03C6",
+    chi: "\u03C7",
+    psi: "\u03C8",
+    omega: "\u03C9",
+    thetasym: "\u03D1",
+    upsih: "\u03D2",
+    piv: "\u03D6",
+    ensp: "\u2002",
+    emsp: "\u2003",
+    thinsp: "\u2009",
+    zwnj: "\u200C",
     zwj: "\u200D",
-    zwnj: "\u200C"
-  };
-  var decodeMap = {
-    "0": 65533,
-    "128": 8364,
-    "130": 8218,
-    "131": 402,
-    "132": 8222,
-    "133": 8230,
-    "134": 8224,
-    "135": 8225,
-    "136": 710,
-    "137": 8240,
-    "138": 352,
-    "139": 8249,
-    "140": 338,
-    "142": 381,
-    "145": 8216,
-    "146": 8217,
-    "147": 8220,
-    "148": 8221,
-    "149": 8226,
-    "150": 8211,
-    "151": 8212,
-    "152": 732,
-    "153": 8482,
-    "154": 353,
-    "155": 8250,
-    "156": 339,
-    "158": 382,
-    "159": 376
-  };
+    lrm: "\u200E",
+    rlm: "\u200F",
+    ndash: "\u2013",
+    mdash: "\u2014",
+    lsquo: "\u2018",
+    rsquo: "\u2019",
+    sbquo: "\u201A",
+    ldquo: "\u201C",
+    rdquo: "\u201D",
+    bdquo: "\u201E",
+    dagger: "\u2020",
+    Dagger: "\u2021",
+    bull: "\u2022",
+    hellip: "\u2026",
+    permil: "\u2030",
+    prime: "\u2032",
+    Prime: "\u2033",
+    lsaquo: "\u2039",
+    rsaquo: "\u203A",
+    oline: "\u203E",
+    frasl: "\u2044",
+    euro: "\u20AC",
+    image: "\u2111",
+    weierp: "\u2118",
+    real: "\u211C",
+    trade: "\u2122",
+    alefsym: "\u2135",
+    larr: "\u2190",
+    uarr: "\u2191",
+    rarr: "\u2192",
+    darr: "\u2193",
+    harr: "\u2194",
+    crarr: "\u21B5",
+    lArr: "\u21D0",
+    uArr: "\u21D1",
+    rArr: "\u21D2",
+    dArr: "\u21D3",
+    hArr: "\u21D4",
+    forall: "\u2200",
+    part: "\u2202",
+    exist: "\u2203",
+    empty: "\u2205",
+    nabla: "\u2207",
+    isin: "\u2208",
+    notin: "\u2209",
+    ni: "\u220B",
+    prod: "\u220F",
+    sum: "\u2211",
+    minus: "\u2212",
+    lowast: "\u2217",
+    radic: "\u221A",
+    prop: "\u221D",
+    infin: "\u221E",
+    ang: "\u2220",
+    and: "\u2227",
+    or: "\u2228",
+    cap: "\u2229",
+    cup: "\u222A",
+    int: "\u222B",
+    there4: "\u2234",
+    sim: "\u223C",
+    cong: "\u2245",
+    asymp: "\u2248",
+    ne: "\u2260",
+    equiv: "\u2261",
+    le: "\u2264",
+    ge: "\u2265",
+    sub: "\u2282",
+    sup: "\u2283",
+    nsub: "\u2284",
+    sube: "\u2286",
+    supe: "\u2287",
+    oplus: "\u2295",
+    otimes: "\u2297",
+    perp: "\u22A5",
+    sdot: "\u22C5",
+    lceil: "\u2308",
+    rceil: "\u2309",
+    lfloor: "\u230A",
+    rfloor: "\u230B",
+    lang: "\u2329",
+    rang: "\u232A",
+    loz: "\u25CA",
+    spades: "\u2660",
+    clubs: "\u2663",
+    hearts: "\u2665",
+    diams: "\u2666"
+  }));
   function decodeHTMLStrict(text) {
-    return text.replace(/&(?:[a-zA-Z]+|#[xX][\da-fA-F]+|#\d+);/g, (key) => {
+    return text.replaceAll(/&(?:[\da-zA-Z]+|#x[\da-fA-F]+|#\d+);/g, (key) => {
       var _a2;
       if (key.charAt(1) === "#") {
         const secondChar = key.charAt(2);
-        const codePoint = secondChar === "X" || secondChar === "x" ? parseInt(key.slice(3), 16) : parseInt(key.slice(2), 10);
-        return decodeCodePoint(codePoint);
+        const codePoint = secondChar === "x" ? parseInt(key.slice(3), 16) : parseInt(key.slice(2), 10);
+        return codePoint > 1114111 ? key : String.fromCodePoint(codePoint);
       }
-      return (_a2 = getOwnProperty(entities, key.slice(1, -1))) != null ? _a2 : key;
+      return (_a2 = entities.get(key.slice(1, -1))) != null ? _a2 : key;
     });
   }
   __name(decodeHTMLStrict, "decodeHTMLStrict");
-  function decodeCodePoint(codePoint) {
-    var _a2;
-    if (codePoint >= 55296 && codePoint <= 57343 || codePoint > 1114111) {
-      return "\uFFFD";
-    }
-    return String.fromCodePoint((_a2 = getOwnProperty(decodeMap, codePoint)) != null ? _a2 : codePoint);
-  }
-  __name(decodeCodePoint, "decodeCodePoint");
   function scanJSXAttributeValue(parser, context) {
     parser.startIndex = parser.tokenIndex = parser.index;
     parser.startColumn = parser.tokenColumn = parser.column;
@@ -11099,11 +9419,20 @@ format:`, anonymisedFormat);
     while (char !== quote) {
       if (parser.index >= parser.end)
         parser.report(16);
+      if (char === 13) {
+        if (parser.source.charCodeAt(parser.index + 1) === 10)
+          advanceChar(parser);
+        parser.column = -1;
+        parser.line++;
+      } else if (char === 10 || char === 8232 || char === 8233) {
+        parser.column = -1;
+        parser.line++;
+      }
       char = advanceChar(parser);
     }
     if (char !== quote)
       parser.report(16);
-    parser.tokenValue = parser.source.slice(start, parser.index);
+    parser.tokenValue = decodeHTMLStrict(parser.source.slice(start, parser.index));
     advanceChar(parser);
     if (parser.options.raw)
       parser.tokenRaw = parser.source.slice(parser.tokenIndex, parser.index);
@@ -11128,14 +9457,28 @@ format:`, anonymisedFormat);
       parser.setToken(2162700);
       return;
     }
+    if (parser.currentChar === 125) {
+      parser.report(180);
+    }
+    if (parser.currentChar === 62) {
+      parser.report(181);
+    }
     let state = 0;
+    let hasCarriageReturn = false;
     while (parser.index < parser.end) {
-      const type = CharTypes[parser.source.charCodeAt(parser.index)];
-      if (type & 1024) {
+      const char = parser.source.charCodeAt(parser.index);
+      if (char === 13) {
         state |= 1 | 4;
+        hasCarriageReturn = true;
         scanNewLine(parser);
-      } else if (type & 2048) {
+      } else if (char === 10) {
         consumeLineFeed(parser, state);
+        state = state & -5 | 1;
+      } else if (char === 8232 || char === 8233) {
+        parser.flags |= 1;
+        parser.currentChar = parser.source.charCodeAt(++parser.index);
+        parser.column = 0;
+        parser.line++;
         state = state & -5 | 1;
       } else {
         advanceChar(parser);
@@ -11145,15 +9488,16 @@ format:`, anonymisedFormat);
     }
     if (parser.tokenIndex === parser.index)
       parser.report(0);
-    const raw = parser.source.slice(parser.tokenIndex, parser.index);
+    const sourceSlice = parser.source.slice(parser.tokenIndex, parser.index);
+    const raw = hasCarriageReturn ? sourceSlice.replaceAll("\r\n", "\n") : sourceSlice;
     if (parser.options.raw)
       parser.tokenRaw = raw;
     parser.tokenValue = decodeHTMLStrict(raw);
-    parser.setToken(137);
+    parser.setToken(138);
   }
   __name(nextJSXToken, "nextJSXToken");
   function rescanJSXIdentifier(parser) {
-    if ((parser.getToken() & 143360) === 143360) {
+    if (parser.getToken() & 143360) {
       const { index } = parser;
       let char = parser.currentChar;
       while (CharTypes[char] & (32768 | 2)) {
@@ -11165,107 +9509,45 @@ format:`, anonymisedFormat);
     return parser.getToken();
   }
   __name(rescanJSXIdentifier, "rescanJSXIdentifier");
-  var _Scope = class _Scope {
-    constructor(parser, type = 2, parent) {
-      __publicField(this, "parser");
-      __publicField(this, "type");
-      __publicField(this, "parent");
-      __publicField(this, "scopeError");
-      __publicField(this, "variableBindings", /* @__PURE__ */ new Map());
-      this.parser = parser;
-      this.type = type;
-      this.parent = parent;
-    }
-    createChildScope(type) {
-      return new _Scope(this.parser, type, this);
-    }
-    addVarOrBlock(context, name, kind, origin) {
-      if (kind & 4) {
-        this.addVarName(context, name, kind);
-      } else {
-        this.addBlockName(context, name, kind, origin);
-      }
-      if (origin & 64) {
-        this.parser.declareUnboundVariable(name);
-      }
-    }
-    addVarName(context, name, kind) {
-      const { parser } = this;
-      let currentScope = this;
-      while (currentScope && (currentScope.type & 128) === 0) {
-        const { variableBindings } = currentScope;
-        const value = variableBindings.get(name);
-        if (value && value & 248) {
-          if (parser.options.webcompat && (context & 1) === 0 && (kind & 128 && value & 68 || value & 128 && kind & 68)) ;
-          else {
-            parser.report(145, name);
-          }
-        }
-        if (currentScope === this) {
-          if (value && value & 1 && kind & 1) {
-            currentScope.recordScopeError(145, name);
-          }
-        }
-        if (value && (value & 256 || value & 512 && !parser.options.webcompat)) {
-          parser.report(145, name);
-        }
-        currentScope.variableBindings.set(name, kind);
-        currentScope = currentScope.parent;
-      }
-    }
-    hasVariable(name) {
-      return this.variableBindings.has(name);
-    }
-    addBlockName(context, name, kind, origin) {
-      var _a2;
-      const { parser } = this;
-      const value = this.variableBindings.get(name);
-      if (value && (value & 2) === 0) {
-        if (kind & 1) {
-          this.recordScopeError(145, name);
-        } else if (parser.options.webcompat && (context & 1) === 0 && origin & 2 && value === 64 && kind === 64) ;
-        else {
-          parser.report(145, name);
-        }
-      }
-      if (this.type & 64 && ((_a2 = this.parent) == null ? void 0 : _a2.hasVariable(name)) && (this.parent.variableBindings.get(name) & 2) === 0) {
-        parser.report(145, name);
-      }
-      if (this.type & 512 && value && (value & 2) === 0) {
-        if (kind & 1) {
-          this.recordScopeError(145, name);
-        }
-      }
-      if (this.type & 32) {
-        if (this.parent.variableBindings.get(name) & 768)
-          parser.report(159, name);
-      }
-      this.variableBindings.set(name, kind);
-    }
-    recordScopeError(type, ...params) {
-      this.scopeError = {
-        type,
-        params,
-        start: this.parser.tokenStart,
-        end: this.parser.currentLocation
-      };
-    }
-    reportScopeError() {
-      const { scopeError } = this;
-      if (!scopeError) {
-        return;
-      }
-      throw new ParseError(scopeError.start, scopeError.end, scopeError.type, ...scopeError.params);
-    }
-  };
-  __name(_Scope, "Scope");
-  var Scope = _Scope;
-  function createArrowHeadParsingScope(parser, context, value) {
-    const scope = parser.createScope().createChildScope(512);
-    scope.addBlockName(context, value, 1, 0);
-    return scope;
+  var nextFeatures = 1 | 2 | 4;
+  function normalizeRanges(ranges) {
+    var _a2, _b2, _c;
+    if (!ranges)
+      return void 0;
+    if (ranges === true)
+      return { start: true, end: true, range: true };
+    return {
+      start: (_a2 = ranges.start) != null ? _a2 : false,
+      end: (_b2 = ranges.end) != null ? _b2 : false,
+      range: (_c = ranges.range) != null ? _c : false
+    };
   }
-  __name(createArrowHeadParsingScope, "createArrowHeadParsingScope");
+  __name(normalizeRanges, "normalizeRanges");
+  function normalizeOptions(rawOptions) {
+    let { features, next, ranges, module, sourceType, globalReturn, ...restOptions } = {
+      validateRegex: true,
+      features: 0,
+      ...rawOptions
+    };
+    if (next) {
+      features |= nextFeatures;
+    }
+    ranges = normalizeRanges(ranges);
+    if (module && !sourceType) {
+      sourceType = "module";
+    }
+    if (globalReturn && (!sourceType || sourceType === "script")) {
+      sourceType = "commonjs";
+    }
+    const options = {
+      ...restOptions,
+      ranges,
+      features,
+      sourceType
+    };
+    return options;
+  }
+  __name(normalizeOptions, "normalizeOptions");
   var _PrivateScope = class _PrivateScope {
     constructor(parser, parent) {
       __publicField(this, "parser");
@@ -11282,7 +9564,7 @@ format:`, anonymisedFormat);
         focusKind |= 768;
       const value = privateIdentifiers.get(name);
       if (this.hasPrivateIdentifier(name) && ((value & 32) !== (focusKind & 32) || value & focusKind & 768)) {
-        this.parser.report(146, name);
+        this.parser.report(148, name);
       }
       privateIdentifiers.set(name, this.hasPrivateIdentifier(name) ? value | focusKind : focusKind);
     }
@@ -11309,13 +9591,116 @@ format:`, anonymisedFormat);
   };
   __name(_PrivateScope, "PrivateScope");
   var PrivateScope = _PrivateScope;
+  var _Scope = class _Scope {
+    constructor(parser, type = 2, parent) {
+      __publicField(this, "parser");
+      __publicField(this, "type");
+      __publicField(this, "parent");
+      __publicField(this, "scopeError");
+      __publicField(this, "variableBindings", /* @__PURE__ */ new Map());
+      this.parser = parser;
+      this.type = type;
+      this.parent = parent;
+    }
+    createChildScope(type) {
+      return new _Scope(this.parser, type, this);
+    }
+    addVarOrBlock(context, name, kind, tokenStart, tokenEnd, origin) {
+      if (kind & 4) {
+        this.addVarName(context, name, kind, tokenStart, tokenEnd);
+      } else {
+        this.addBlockName(context, name, kind, tokenStart, tokenEnd, origin);
+      }
+      if (origin & 64) {
+        this.parser.declareUnboundVariable(name);
+      }
+    }
+    addVarName(context, name, kind, tokenStart, tokenEnd) {
+      const { parser } = this;
+      let currentScope = this;
+      while (currentScope && (currentScope.type & 128) === 0) {
+        const { variableBindings } = currentScope;
+        const value = variableBindings.get(name);
+        if (value && value & 248) {
+          if (parser.options.webcompat && (context & 1) === 0 && (kind & 128 && value & 68 || value & 128 && kind & 68)) ;
+          else {
+            throw new ParseError(tokenStart, tokenEnd, 147, name);
+          }
+        }
+        if (currentScope === this) {
+          if (value && value & 1 && kind & 1) {
+            currentScope.recordScopeError(147, tokenStart, tokenEnd, name);
+          }
+        }
+        if (value && (value & 256 || value & 512 && !parser.options.webcompat)) {
+          throw new ParseError(tokenStart, tokenEnd, 147, name);
+        }
+        currentScope.variableBindings.set(name, kind);
+        currentScope = currentScope.parent;
+      }
+    }
+    hasVariable(name) {
+      return this.variableBindings.has(name);
+    }
+    addBlockName(context, name, kind, tokenStart, tokenEnd, origin = 0) {
+      var _a2;
+      const { parser } = this;
+      const value = this.variableBindings.get(name);
+      if (value && (value & 2) === 0) {
+        if (kind & 1) {
+          this.recordScopeError(147, tokenStart, tokenEnd, name);
+        } else if (parser.options.webcompat && (context & 1) === 0 && origin & 2 && value === 64 && kind === 64) ;
+        else {
+          throw new ParseError(tokenStart, tokenEnd, 147, name);
+        }
+      }
+      if (this.type & 64 && ((_a2 = this.parent) == null ? void 0 : _a2.hasVariable(name)) && (this.parent.variableBindings.get(name) & 2) === 0) {
+        throw new ParseError(tokenStart, tokenEnd, 147, name);
+      }
+      if (this.type & 512 && value && (value & 2) === 0) {
+        if (kind & 1) {
+          this.recordScopeError(147, tokenStart, tokenEnd, name);
+        }
+      }
+      if (this.type & 32) {
+        if (this.parent.variableBindings.get(name) & 768)
+          throw new ParseError(tokenStart, tokenEnd, 161, name);
+      }
+      this.variableBindings.set(name, kind);
+    }
+    recordScopeError(type, tokenStart, tokenEnd, ...params) {
+      var _a2;
+      (_a2 = this.scopeError) != null ? _a2 : this.scopeError = {
+        type,
+        params,
+        start: tokenStart,
+        end: tokenEnd
+      };
+    }
+    reportScopeError() {
+      const { scopeError } = this;
+      if (!scopeError) {
+        return;
+      }
+      throw new ParseError(scopeError.start, scopeError.end, scopeError.type, ...scopeError.params);
+    }
+  };
+  __name(_Scope, "Scope");
+  var Scope = _Scope;
+  function createArrowHeadParsingScope(parser, context, value, tokenStart, tokenEnd) {
+    const scope = parser.createScope().createChildScope(512);
+    scope.addBlockName(context, value, 1, tokenStart, tokenEnd);
+    return scope;
+  }
+  __name(createArrowHeadParsingScope, "createArrowHeadParsingScope");
   var _Parser = class _Parser {
-    constructor(source, options = {}) {
+    constructor(source, rawOptions = {}) {
       __publicField(this, "source");
-      __publicField(this, "options");
       __publicField(this, "lastOnToken", null);
+      __publicField(this, "options");
       __publicField(this, "token", 1048576);
       __publicField(this, "flags", 0);
+      __publicField(this, "features", 0);
       __publicField(this, "index", 0);
       __publicField(this, "line", 1);
       __publicField(this, "column", 0);
@@ -11332,13 +9717,22 @@ format:`, anonymisedFormat);
       __publicField(this, "currentChar", 0);
       __publicField(this, "exportedNames", /* @__PURE__ */ new Set());
       __publicField(this, "exportedBindings", /* @__PURE__ */ new Set());
-      __publicField(this, "assignable", 1);
+      __publicField(this, "assignable", 0);
       __publicField(this, "destructible", 0);
+      __publicField(this, "strictReservedRange", null);
+      __publicField(this, "firstAwaitLocation", null);
       __publicField(this, "leadingDecorators", { decorators: [] });
       this.source = source;
-      this.options = options;
       this.end = source.length;
       this.currentChar = source.charCodeAt(0);
+      this.options = normalizeOptions(rawOptions);
+      this.features = this.options.features;
+      if (Array.isArray(this.options.onComment)) {
+        this.options.onComment = pushComment(this.options.onComment, this.options);
+      }
+      if (Array.isArray(this.options.onToken)) {
+        this.options.onToken = pushToken(this.options.onToken, this.options);
+      }
     }
     getToken() {
       return this.token;
@@ -11378,15 +9772,26 @@ format:`, anonymisedFormat);
         column: this.tokenColumn
       };
     }
+    get startPosition() {
+      return {
+        index: this.startIndex,
+        line: this.startLine,
+        column: this.startColumn
+      };
+    }
     get currentLocation() {
       return { index: this.index, line: this.line, column: this.column };
     }
     finishNode(node, start, end) {
-      if (this.options.ranges) {
-        node.start = start.index;
+      const { ranges } = this.options;
+      if (ranges) {
         const endIndex = end ? end.index : this.startIndex;
-        node.end = endIndex;
-        node.range = [start.index, endIndex];
+        if (ranges.start)
+          node.start = start.index;
+        if (ranges.end)
+          node.end = endIndex;
+        if (ranges.range)
+          node.range = [start.index, endIndex];
       }
       if (this.options.loc) {
         node.loc = {
@@ -11408,7 +9813,7 @@ format:`, anonymisedFormat);
     declareUnboundVariable(name) {
       const { exportedNames } = this;
       if (exportedNames.has(name)) {
-        this.report(147, name);
+        this.report(149, name);
       }
       exportedNames.add(name);
     }
@@ -11430,6 +9835,12 @@ format:`, anonymisedFormat);
       }
       return void 0;
     }
+    cloneIdentifier(original) {
+      return structuredClone(original);
+    }
+    cloneStringLiteral(original) {
+      return structuredClone(original);
+    }
   };
   __name(_Parser, "Parser");
   var Parser = _Parser;
@@ -11439,10 +9850,14 @@ format:`, anonymisedFormat);
         type,
         value
       };
-      if (options.ranges) {
-        comment.start = start;
-        comment.end = end;
-        comment.range = [start, end];
+      const { ranges } = options;
+      if (ranges) {
+        if (ranges.start)
+          comment.start = start;
+        if (ranges.end)
+          comment.end = end;
+        if (ranges.range)
+          comment.range = [start, end];
       }
       if (options.loc) {
         comment.loc = loc;
@@ -11456,10 +9871,14 @@ format:`, anonymisedFormat);
       const token = {
         token: type
       };
-      if (options.ranges) {
-        token.start = start;
-        token.end = end;
-        token.range = [start, end];
+      const { ranges } = options;
+      if (ranges) {
+        if (ranges.start)
+          token.start = start;
+        if (ranges.end)
+          token.end = end;
+        if (ranges.range)
+          token.range = [start, end];
       }
       if (options.loc) {
         token.loc = loc;
@@ -11468,29 +9887,17 @@ format:`, anonymisedFormat);
     };
   }
   __name(pushToken, "pushToken");
-  function normalizeOptions(rawOptions) {
-    const options = { ...rawOptions };
-    if (options.onComment) {
-      options.onComment = Array.isArray(options.onComment) ? pushComment(options.onComment, options) : options.onComment;
-    }
-    if (options.onToken) {
-      options.onToken = Array.isArray(options.onToken) ? pushToken(options.onToken, options) : options.onToken;
-    }
-    return options;
-  }
-  __name(normalizeOptions, "normalizeOptions");
   function parseSource(source, rawOptions = {}, context = 0) {
-    const options = normalizeOptions(rawOptions);
-    if (options.module)
+    const parser = new Parser(source, rawOptions);
+    if (parser.options.sourceType === "module")
       context |= 2 | 1;
-    if (options.globalReturn)
-      context |= 4096;
-    if (options.impliedStrict)
+    if (parser.options.sourceType === "commonjs")
+      context |= 4096 | 65536;
+    if (parser.options.impliedStrict)
       context |= 1;
-    const parser = new Parser(source, options);
     skipHashBang(parser);
     const scope = parser.createScopeIfLexical();
-    let body = [];
+    let body;
     let sourceType = "script";
     if (context & 2) {
       sourceType = "module";
@@ -11498,7 +9905,7 @@ format:`, anonymisedFormat);
       if (scope) {
         for (const name of parser.exportedBindings) {
           if (!scope.hasVariable(name))
-            parser.report(148, name);
+            parser.report(150, name);
         }
       }
     } else {
@@ -11530,7 +9937,7 @@ format:`, anonymisedFormat);
       statements.push(parseDirective(parser, context, expr, token, tokenStart));
     }
     while (parser.getToken() !== 1048576) {
-      statements.push(parseStatementListItem(parser, context, scope, void 0, 4, {}));
+      statements.push(parseStatementListItem(parser, context, scope, void 0, {}, 4));
     }
     return statements;
   }
@@ -11550,8 +9957,7 @@ format:`, anonymisedFormat);
   }
   __name(parseModuleItemList, "parseModuleItemList");
   function parseModuleItem(parser, context, scope) {
-    var _a2;
-    if (parser.getToken() === 132) {
+    if (parser.getToken() === 133) {
       Object.assign(parser.leadingDecorators, {
         start: parser.tokenStart,
         decorators: parseDecorators(parser, context, void 0)
@@ -11563,29 +9969,42 @@ format:`, anonymisedFormat);
         moduleItem = parseExportDeclaration(parser, context, scope);
         break;
       case 86106:
+        if (parser.leadingDecorators.decorators.length) {
+          parser.report(172);
+        }
         moduleItem = parseImportDeclaration(parser, context, scope);
         break;
       default:
-        moduleItem = parseStatementListItem(parser, context, scope, void 0, 4, {});
-    }
-    if ((_a2 = parser.leadingDecorators) == null ? void 0 : _a2.decorators.length) {
-      parser.report(170);
+        moduleItem = parseStatementListItem(parser, context, scope, void 0, {}, 4);
     }
     return moduleItem;
   }
   __name(parseModuleItem, "parseModuleItem");
-  function parseStatementListItem(parser, context, scope, privateScope, origin, labels) {
+  function parseStatementListItem(parser, context, scope, privateScope, labels, origin = 2) {
     const start = parser.tokenStart;
+    if (parser.leadingDecorators.decorators.length && parser.getToken() !== 86094) {
+      parser.report(172);
+    }
     switch (parser.getToken()) {
       case 86104:
-        return parseFunctionDeclaration(parser, context, scope, privateScope, origin, 1, 0, 0, start);
-      case 132:
+        return parseFunctionDeclaration(parser, context, scope, privateScope, 1, 0, 0, start, origin);
+      case 133:
+        if (!(parser.features & 1)) {
+          parser.report(30, "@");
+        }
       case 86094:
         return parseClassDeclaration(parser, context, scope, privateScope, 0);
       case 86090:
-        return parseLexicalDeclaration(parser, context, scope, privateScope, 16, 0);
+        return parseLexicalDeclaration(parser, context, scope, privateScope, 16);
       case 241737:
         return parseLetIdentOrVarDeclarationStatement(parser, context, scope, privateScope, origin);
+      case 209013:
+        return parseUsingDeclarationOrExpressionStatement(parser, context, scope, privateScope, labels, origin);
+      case 209006:
+        if ((context & 2048 || context & 2 && context & 8) && nextTokenIsUsingOnSameLine(parser)) {
+          return parseAwaitUsingDeclarationOrExpressionStatement(parser, context, scope, privateScope, labels, origin);
+        }
+        return parseStatement(parser, context, scope, privateScope, labels, 1, origin);
       case 20564:
         parser.report(103, "export");
       case 86106:
@@ -11599,16 +10018,16 @@ format:`, anonymisedFormat);
             parser.report(103, "import");
         }
       case 209005:
-        return parseAsyncArrowOrAsyncFunctionDeclaration(parser, context, scope, privateScope, origin, labels, 1);
+        return parseAsyncArrowOrAsyncFunctionDeclaration(parser, context, scope, privateScope, labels, 1, origin);
       default:
-        return parseStatement(parser, context, scope, privateScope, origin, labels, 1);
+        return parseStatement(parser, context, scope, privateScope, labels, 1, origin);
     }
   }
   __name(parseStatementListItem, "parseStatementListItem");
-  function parseStatement(parser, context, scope, privateScope, origin, labels, allowFuncDecl) {
+  function parseStatement(parser, context, scope, privateScope, labels, allowFuncDecl, origin = 0) {
     switch (parser.getToken()) {
       case 86088:
-        return parseVariableStatement(parser, context, scope, privateScope, 0);
+        return parseVariableStatement(parser, context, scope, privateScope);
       case 20572:
         return parseReturnStatement(parser, context, privateScope);
       case 20569:
@@ -11638,21 +10057,21 @@ format:`, anonymisedFormat);
       case 20560:
         return parseDebuggerStatement(parser, context);
       case 209005:
-        return parseAsyncArrowOrAsyncFunctionDeclaration(parser, context, scope, privateScope, origin, labels, 0);
+        return parseAsyncArrowOrAsyncFunctionDeclaration(parser, context, scope, privateScope, labels, 0, origin);
       case 20557:
-        parser.report(162);
+        parser.report(164);
       case 20566:
-        parser.report(163);
+        parser.report(165);
       case 86104:
         parser.report(context & 1 ? 76 : !parser.options.webcompat ? 78 : 77);
       case 86094:
         parser.report(79);
       default:
-        return parseExpressionOrLabelledStatement(parser, context, scope, privateScope, origin, labels, allowFuncDecl);
+        return parseExpressionOrLabelledStatement(parser, context, scope, privateScope, labels, allowFuncDecl, origin);
     }
   }
   __name(parseStatement, "parseStatement");
-  function parseExpressionOrLabelledStatement(parser, context, scope, privateScope, origin, labels, allowFuncDecl) {
+  function parseExpressionOrLabelledStatement(parser, context, scope, privateScope, labels, allowFuncDecl, origin) {
     const { tokenValue, tokenStart } = parser;
     const token = parser.getToken();
     let expr;
@@ -11665,24 +10084,28 @@ format:`, anonymisedFormat);
           parser.report(84);
         break;
       default:
-        expr = parsePrimaryExpression(parser, context, privateScope, 2, 0, 1, 0, 1, parser.tokenStart);
+        expr = parsePrimaryExpression(parser, context, privateScope, 2, 0, 1, 0, 1, parser.tokenStart, 0, 1);
     }
-    if (token & 143360 && parser.getToken() === 21) {
-      return parseLabelledStatement(parser, context, scope, privateScope, origin, labels, tokenValue, expr, token, allowFuncDecl, tokenStart);
-    }
-    expr = parseMemberOrUpdateExpression(parser, context, privateScope, expr, 0, 0, tokenStart);
-    expr = parseAssignmentExpression(parser, context, privateScope, 0, 0, tokenStart, expr);
-    if (parser.getToken() === 18) {
-      expr = parseSequenceExpression(parser, context, privateScope, 0, tokenStart, expr);
-    }
-    return parseExpressionStatement(parser, context, expr, tokenStart);
+    return finishExpressionOrLabelledStatement(parser, context, scope, privateScope, labels, allowFuncDecl, expr, token, tokenValue, tokenStart, origin);
   }
   __name(parseExpressionOrLabelledStatement, "parseExpressionOrLabelledStatement");
+  function finishExpressionOrLabelledStatement(parser, context, scope, privateScope, labels, allowFuncDecl, initialExpression, token, tokenValue, tokenStart, origin) {
+    if (token & 143360 && parser.getToken() === 21) {
+      return parseLabelledStatement(parser, context, scope, privateScope, labels, tokenValue, initialExpression, token, allowFuncDecl, tokenStart, origin);
+    }
+    let expression = parseMemberOrUpdateExpression(parser, context, privateScope, initialExpression, 0, 0, tokenStart);
+    expression = parseAssignmentExpression(parser, context, privateScope, 0, 0, tokenStart, expression);
+    if (parser.getToken() === 18) {
+      expression = parseSequenceExpression(parser, context, privateScope, 0, tokenStart, expression);
+    }
+    return parseExpressionStatement(parser, context, expression, tokenStart);
+  }
+  __name(finishExpressionOrLabelledStatement, "finishExpressionOrLabelledStatement");
   function parseBlock(parser, context, scope, privateScope, labels, start = parser.tokenStart, type = "BlockStatement") {
     const body = [];
     consume(parser, context | 32, 2162700);
     while (parser.getToken() !== 1074790415) {
-      body.push(parseStatementListItem(parser, context, scope, privateScope, 2, { $: labels }));
+      body.push(parseStatementListItem(parser, context, scope, privateScope, { $: labels }));
     }
     consume(parser, context | 32, 1074790415);
     return parser.finishNode({
@@ -11712,11 +10135,11 @@ format:`, anonymisedFormat);
     }, start);
   }
   __name(parseExpressionStatement, "parseExpressionStatement");
-  function parseLabelledStatement(parser, context, scope, privateScope, origin, labels, value, expr, token, allowFuncDecl, start) {
+  function parseLabelledStatement(parser, context, scope, privateScope, labels, value, expr, token, allowFuncDecl, start, origin) {
     validateBindingIdentifier(parser, context, 0, token, 1);
     validateAndDeclareLabel(parser, labels, value);
     nextToken(parser, context | 32);
-    const body = allowFuncDecl && (context & 1) === 0 && parser.options.webcompat && parser.getToken() === 86104 ? parseFunctionDeclaration(parser, context, scope == null ? void 0 : scope.createChildScope(), privateScope, origin, 0, 0, 0, parser.tokenStart) : parseStatement(parser, context, scope, privateScope, origin, labels, allowFuncDecl);
+    const body = allowFuncDecl && (context & 1) === 0 && parser.options.webcompat && parser.getToken() === 86104 ? parseFunctionDeclaration(parser, context, scope == null ? void 0 : scope.createChildScope(), privateScope, 0, 0, 0, parser.tokenStart, origin) : parseStatement(parser, context, scope, privateScope, labels, allowFuncDecl, origin);
     return parser.finishNode({
       type: "LabeledStatement",
       label: expr,
@@ -11724,19 +10147,19 @@ format:`, anonymisedFormat);
     }, start);
   }
   __name(parseLabelledStatement, "parseLabelledStatement");
-  function parseAsyncArrowOrAsyncFunctionDeclaration(parser, context, scope, privateScope, origin, labels, allowFuncDecl) {
+  function parseAsyncArrowOrAsyncFunctionDeclaration(parser, context, scope, privateScope, labels, allowFuncDecl, origin) {
     const { tokenValue, tokenStart: start } = parser;
     const token = parser.getToken();
     let expr = parseIdentifier(parser, context);
     if (parser.getToken() === 21) {
-      return parseLabelledStatement(parser, context, scope, privateScope, origin, labels, tokenValue, expr, token, 1, start);
+      return parseLabelledStatement(parser, context, scope, privateScope, labels, tokenValue, expr, token, 1, start, origin);
     }
     const asyncNewLine = parser.flags & 1;
     if (!asyncNewLine) {
       if (parser.getToken() === 86104) {
         if (!allowFuncDecl)
-          parser.report(123);
-        return parseFunctionDeclaration(parser, context, scope, privateScope, origin, 1, 0, 1, start);
+          parser.report(125);
+        return parseFunctionDeclaration(parser, context, scope, privateScope, 1, 0, 1, start, origin);
       }
       if (isValidIdentifier(context, parser.getToken())) {
         expr = parseAsyncArrowAfterIdent(parser, context, privateScope, 1, start);
@@ -11746,7 +10169,7 @@ format:`, anonymisedFormat);
       }
     }
     if (parser.getToken() === 67174411) {
-      expr = parseAsyncArrowOrCallExpression(parser, context, privateScope, expr, 1, 1, 0, asyncNewLine, start);
+      expr = parseAsyncArrowOrCallExpression(parser, context, privateScope, expr, 1, 1, asyncNewLine, start);
     } else {
       if (parser.getToken() === 10) {
         classifyIdentifier(parser, context, token);
@@ -11833,7 +10256,7 @@ format:`, anonymisedFormat);
   __name(parseIfStatement, "parseIfStatement");
   function parseConsequentOrAlternative(parser, context, scope, privateScope, labels) {
     const { tokenStart } = parser;
-    return context & 1 || !parser.options.webcompat || parser.getToken() !== 86104 ? parseStatement(parser, context, scope, privateScope, 0, { $: labels }, 0) : parseFunctionDeclaration(parser, context, scope == null ? void 0 : scope.createChildScope(), privateScope, 0, 0, 0, 0, tokenStart);
+    return context & 1 || !parser.options.webcompat || parser.getToken() !== 86104 ? parseStatement(parser, context, scope, privateScope, { $: labels }, 0) : parseFunctionDeclaration(parser, context, scope == null ? void 0 : scope.createChildScope(), privateScope, 0, 0, 0, tokenStart);
   }
   __name(parseConsequentOrAlternative, "parseConsequentOrAlternative");
   function parseSwitchStatement(parser, context, scope, privateScope, labels) {
@@ -11860,9 +10283,13 @@ format:`, anonymisedFormat);
       }
       consume(parser, context | 32, 21);
       while (parser.getToken() !== 20556 && parser.getToken() !== 1074790415 && parser.getToken() !== 20561) {
-        consequent.push(parseStatementListItem(parser, context | 4, scope, privateScope, 2, {
+        const statement = parseStatementListItem(parser, context | 4, scope, privateScope, {
           $: labels
-        }));
+        });
+        if (statement.type === "VariableDeclaration" && (statement.kind === "using" || statement.kind === "await using")) {
+          parser.report(30, statement.kind);
+        }
+        consequent.push(statement);
       }
       cases.push(parser.finishNode({
         type: "SwitchCase",
@@ -11893,7 +10320,7 @@ format:`, anonymisedFormat);
   }
   __name(parseWhileStatement, "parseWhileStatement");
   function parseIterationStatementBody(parser, context, scope, privateScope, labels) {
-    return parseStatement(parser, (context | 131072) ^ 131072 | 128, scope, privateScope, 0, { loop: 1, $: labels }, 0);
+    return parseStatement(parser, (context | 131072) ^ 131072 | 128, scope, privateScope, { loop: 1, $: labels }, 0);
   }
   __name(parseIterationStatementBody, "parseIterationStatementBody");
   function parseContinueStatement(parser, context, labels) {
@@ -11906,7 +10333,7 @@ format:`, anonymisedFormat);
       const { tokenValue } = parser;
       label = parseIdentifier(parser, context | 32);
       if (!isValidLabel(parser, labels, tokenValue, 1))
-        parser.report(138, tokenValue);
+        parser.report(140, tokenValue);
     }
     matchOrInsertSemicolon(parser, context | 32);
     return parser.finishNode({
@@ -11923,7 +10350,7 @@ format:`, anonymisedFormat);
       const { tokenValue } = parser;
       label = parseIdentifier(parser, context | 32);
       if (!isValidLabel(parser, labels, tokenValue, 0))
-        parser.report(138, tokenValue);
+        parser.report(140, tokenValue);
     } else if ((context & (4 | 128)) === 0) {
       parser.report(69);
     }
@@ -11942,7 +10369,7 @@ format:`, anonymisedFormat);
     consume(parser, context | 32, 67174411);
     const object = parseExpressions(parser, context, privateScope, 0, 1, parser.tokenStart);
     consume(parser, context | 32, 16);
-    const body = parseStatement(parser, context, scope, privateScope, 2, labels, 0);
+    const body = parseStatement(parser, context, scope, privateScope, labels, 0, 2);
     return parser.finishNode({
       type: "WithStatement",
       object,
@@ -11986,10 +10413,9 @@ format:`, anonymisedFormat);
   __name(parseTryStatement, "parseTryStatement");
   function parseCatchBlock(parser, context, scope, privateScope, labels, start) {
     let param = null;
-    let additionalScope = scope;
     if (consumeOpt(parser, context, 67174411)) {
       scope = scope == null ? void 0 : scope.createChildScope(4);
-      param = parseBindingPattern(parser, context, scope, privateScope, (parser.getToken() & 2097152) === 2097152 ? 256 : 512, 0);
+      param = parseBindingPattern(parser, context, scope, privateScope, (parser.getToken() & 2097152) === 2097152 ? 256 : 512);
       if (parser.getToken() === 18) {
         parser.report(86);
       } else if (parser.getToken() === 1077936155) {
@@ -11997,7 +10423,7 @@ format:`, anonymisedFormat);
       }
       consume(parser, context | 32, 16);
     }
-    additionalScope = scope == null ? void 0 : scope.createChildScope(32);
+    const additionalScope = scope == null ? void 0 : scope.createChildScope(32);
     const body = parseBlock(parser, context, additionalScope, privateScope, { $: labels });
     return parser.finishNode({
       type: "CatchClause",
@@ -12030,11 +10456,11 @@ format:`, anonymisedFormat);
   }
   __name(parseDoWhileStatement, "parseDoWhileStatement");
   function parseLetIdentOrVarDeclarationStatement(parser, context, scope, privateScope, origin) {
-    const { tokenValue, tokenStart } = parser;
+    const { tokenValue, tokenStart, currentLocation } = parser;
     const token = parser.getToken();
     let expr = parseIdentifier(parser, context);
-    if (parser.getToken() & (143360 | 2097152)) {
-      const declarations = parseVariableDeclarationList(parser, context, scope, privateScope, 8, 0);
+    if (parser.getToken() & (143360 | 2097152) && (parser.getToken() & 20480) !== 20480) {
+      const declarations = parseVariableDeclarationList(parser, context, scope, privateScope, 8);
       matchOrInsertSemicolon(parser, context | 32);
       return parser.finishNode({
         type: "VariableDeclaration",
@@ -12046,12 +10472,12 @@ format:`, anonymisedFormat);
     if (context & 1)
       parser.report(85);
     if (parser.getToken() === 21) {
-      return parseLabelledStatement(parser, context, scope, privateScope, origin, {}, tokenValue, expr, token, 0, tokenStart);
+      return parseLabelledStatement(parser, context, scope, privateScope, {}, tokenValue, expr, token, 0, tokenStart, origin);
     }
     if (parser.getToken() === 10) {
       let scope2 = void 0;
       if (parser.options.lexical)
-        scope2 = createArrowHeadParsingScope(parser, context, tokenValue);
+        scope2 = createArrowHeadParsingScope(parser, context, tokenValue, tokenStart, currentLocation);
       parser.flags = (parser.flags | 128) ^ 128;
       expr = parseArrowFunctionExpression(parser, context, scope2, privateScope, [expr], 0, tokenStart);
     } else {
@@ -12064,19 +10490,106 @@ format:`, anonymisedFormat);
     return parseExpressionStatement(parser, context, expr, tokenStart);
   }
   __name(parseLetIdentOrVarDeclarationStatement, "parseLetIdentOrVarDeclarationStatement");
-  function parseLexicalDeclaration(parser, context, scope, privateScope, kind, origin) {
+  function nextTokenIsUsingOnSameLine(parser) {
+    const { index: parserIndex, source } = parser;
+    let index = parserIndex;
+    while (index < parser.end) {
+      const char = source.charCodeAt(index);
+      if (char === 10 || char === 13 || char === 8232 || char === 8233)
+        return false;
+      if (/\s/u.test(source[index])) {
+        index++;
+        continue;
+      }
+      if (char === 47 && source.charCodeAt(index + 1) === 42) {
+        index += 2;
+        while (index < parser.end) {
+          const commentChar = source.charCodeAt(index);
+          if (commentChar === 10 || commentChar === 13 || commentChar === 8232 || commentChar === 8233) {
+            return false;
+          }
+          if (commentChar === 42 && source.charCodeAt(index + 1) === 47) {
+            index += 2;
+            break;
+          }
+          index++;
+        }
+        continue;
+      }
+      break;
+    }
+    if (source.slice(index, index + 5) !== "using")
+      return false;
+    const following = source.codePointAt(index + 5);
+    return following === void 0 || following !== 92 && !isIdentifierPart(following);
+  }
+  __name(nextTokenIsUsingOnSameLine, "nextTokenIsUsingOnSameLine");
+  function isResourceBindingStart(token) {
+    return (token & 143360) === 143360 && (token & 20480) !== 20480;
+  }
+  __name(isResourceBindingStart, "isResourceBindingStart");
+  function parseUsingDeclarationOrExpressionStatement(parser, context, scope, privateScope, labels, origin) {
+    const { tokenStart, tokenValue, currentLocation } = parser;
+    const token = parser.getToken();
+    const expression = parseIdentifier(parser, context);
+    if ((parser.flags & 1) === 0 && isResourceBindingStart(parser.getToken())) {
+      if (origin & 4 && context & 8 && (context & 2) === 0 && (context & 4096) === 0) {
+        parser.report(30, KeywordDescTable[parser.getToken() & 255]);
+      }
+      return parseLexicalDeclaration(parser, context, scope, privateScope, 16, origin, "using", tokenStart, 1);
+    }
+    parser.assignable = 1;
+    if (parser.getToken() === 10) {
+      let arrowScope = void 0;
+      if (parser.options.lexical)
+        arrowScope = createArrowHeadParsingScope(parser, context, tokenValue, tokenStart, currentLocation);
+      parser.flags = (parser.flags | 128) ^ 128;
+      const arrow = parseArrowFunctionExpression(parser, context, arrowScope, privateScope, [expression], 0, tokenStart);
+      return parseExpressionStatement(parser, context, arrow, tokenStart);
+    }
+    return finishExpressionOrLabelledStatement(parser, context, scope, privateScope, labels, 1, expression, token, tokenValue, tokenStart, origin);
+  }
+  __name(parseUsingDeclarationOrExpressionStatement, "parseUsingDeclarationOrExpressionStatement");
+  function parseAwaitUsingDeclarationOrExpressionStatement(parser, context, scope, privateScope, labels, origin) {
     const start = parser.tokenStart;
-    nextToken(parser, context);
-    const declarations = parseVariableDeclarationList(parser, context, scope, privateScope, kind, origin);
+    if (context & 524288)
+      parser.report(179);
+    nextToken(parser, context | 32);
+    let argument;
+    if ((parser.flags & 1) === 0 && parser.getToken() === 209013) {
+      const usingStart = parser.tokenStart;
+      const usingIdentifier = parseIdentifier(parser, context);
+      if ((parser.flags & 1) === 0 && isResourceBindingStart(parser.getToken())) {
+        return parseLexicalDeclaration(parser, context, scope, privateScope, 16, origin, "await using", start, 1);
+      }
+      argument = parseMemberOrUpdateExpression(parser, context, privateScope, usingIdentifier, 0, 0, usingStart);
+    } else {
+      argument = parseLeftHandSideExpression(parser, context, privateScope, 0, 0, 1);
+    }
+    if (parser.getToken() === 8391735)
+      parser.report(33);
+    parser.assignable = 2;
+    const expression = parser.finishNode({
+      type: "AwaitExpression",
+      argument
+    }, start);
+    return finishExpressionOrLabelledStatement(parser, context, scope, privateScope, labels, 0, expression, 1048576, "", start, origin);
+  }
+  __name(parseAwaitUsingDeclarationOrExpressionStatement, "parseAwaitUsingDeclarationOrExpressionStatement");
+  function parseLexicalDeclaration(parser, context, scope, privateScope, kind, origin = 0, declarationKind, declarationStart = parser.tokenStart, keywordConsumed = 0) {
+    const start = declarationStart;
+    if (!keywordConsumed)
+      nextToken(parser, context);
+    const declarations = parseVariableDeclarationList(parser, context, scope, privateScope, kind, origin, declarationKind);
     matchOrInsertSemicolon(parser, context | 32);
     return parser.finishNode({
       type: "VariableDeclaration",
-      kind: kind & 8 ? "let" : "const",
+      kind: declarationKind != null ? declarationKind : kind & 8 ? "let" : "const",
       declarations
     }, start);
   }
   __name(parseLexicalDeclaration, "parseLexicalDeclaration");
-  function parseVariableStatement(parser, context, scope, privateScope, origin) {
+  function parseVariableStatement(parser, context, scope, privateScope, origin = 0) {
     const start = parser.tokenStart;
     nextToken(parser, context);
     const declarations = parseVariableDeclarationList(parser, context, scope, privateScope, 4, origin);
@@ -12088,14 +10601,21 @@ format:`, anonymisedFormat);
     }, start);
   }
   __name(parseVariableStatement, "parseVariableStatement");
-  function parseVariableDeclarationList(parser, context, scope, privateScope, kind, origin) {
+  function parseVariableDeclarationList(parser, context, scope, privateScope, kind, origin = 0, declarationKind) {
     let bindingCount = 1;
-    const list = [
-      parseVariableDeclaration(parser, context, scope, privateScope, kind, origin)
-    ];
+    const firstDeclaration = parseVariableDeclaration(parser, context, scope, privateScope, kind, origin, declarationKind);
+    const list = [firstDeclaration];
+    const resourceNames = declarationKind && parser.options.lexical ? /* @__PURE__ */ new Set([firstDeclaration.id.name]) : void 0;
     while (consumeOpt(parser, context, 18)) {
       bindingCount++;
-      list.push(parseVariableDeclaration(parser, context, scope, privateScope, kind, origin));
+      const declaration = parseVariableDeclaration(parser, context, scope, privateScope, kind, origin, declarationKind);
+      if (resourceNames) {
+        const { name } = declaration.id;
+        if (resourceNames.has(name))
+          parser.report(147, name);
+        resourceNames.add(name);
+      }
+      list.push(declaration);
     }
     if (bindingCount > 1 && origin & 32 && parser.getToken() & 262144) {
       parser.report(61, KeywordDescTable[parser.getToken() & 255]);
@@ -12103,21 +10623,24 @@ format:`, anonymisedFormat);
     return list;
   }
   __name(parseVariableDeclarationList, "parseVariableDeclarationList");
-  function parseVariableDeclaration(parser, context, scope, privateScope, kind, origin) {
+  function parseVariableDeclaration(parser, context, scope, privateScope, kind, origin, declarationKind) {
     const { tokenStart } = parser;
     const token = parser.getToken();
     let init = null;
+    if (declarationKind && (token & 2097152) === 2097152) {
+      parser.report(50);
+    }
     const id = parseBindingPattern(parser, context, scope, privateScope, kind, origin);
     if (parser.getToken() === 1077936155) {
       nextToken(parser, context | 32);
-      init = parseExpression(parser, context, privateScope, 1, 0, parser.tokenStart);
-      if (origin & 32 || (token & 2097152) === 0) {
-        if (parser.getToken() === 471156 || parser.getToken() === 8673330 && (token & 2097152 || (kind & 4) === 0 || context & 1)) {
+      init = parseExpression(parser, context, privateScope, 1, 0, parser.tokenStart, origin);
+      if (origin & 32) {
+        if (parser.getToken() === 471156 || parser.getToken() === 8673330 && (token & 2097152 || (kind & 4) === 0 || context & 1 || !parser.options.webcompat)) {
           throw new ParseError(tokenStart, parser.currentLocation, 60, parser.getToken() === 471156 ? "of" : "in");
         }
       }
     } else if ((kind & 16 || (token & 2097152) > 0) && (parser.getToken() & 262144) !== 262144) {
-      parser.report(59, kind & 16 ? "const" : "destructuring");
+      parser.report(59, declarationKind != null ? declarationKind : kind & 16 ? "const" : "destructuring");
     }
     return parser.finishNode({
       type: "VariableDeclarator",
@@ -12136,24 +10659,21 @@ format:`, anonymisedFormat);
     let update = null;
     let destructible = 0;
     let init = null;
-    let isVarDecl = parser.getToken() === 86088 || parser.getToken() === 241737 || parser.getToken() === 86090;
+    let isVarDecl = parser.getToken() === 86088 || parser.getToken() === 241737 || parser.getToken() === 86090 || parser.getToken() === 209013;
+    let resourceDeclarationKind;
+    let consumedForOfDelimiter = false;
     let right;
     const { tokenStart } = parser;
     const token = parser.getToken();
     if (isVarDecl) {
       if (token === 241737) {
         init = parseIdentifier(parser, context);
-        if (parser.getToken() & (143360 | 2097152)) {
-          if (parser.getToken() === 8673330) {
-            if (context & 1)
-              parser.report(67);
-          } else {
-            init = parser.finishNode({
-              type: "VariableDeclaration",
-              kind: "let",
-              declarations: parseVariableDeclarationList(parser, context | 131072, scope, privateScope, 8, 32)
-            }, tokenStart);
-          }
+        if (parser.getToken() & (143360 | 2097152) && (parser.getToken() & 20480) !== 20480) {
+          init = parser.finishNode({
+            type: "VariableDeclaration",
+            kind: "let",
+            declarations: parseVariableDeclarationList(parser, context | 131072, scope, privateScope, 8, 32)
+          }, tokenStart);
           parser.assignable = 1;
         } else if (context & 1) {
           parser.report(67);
@@ -12162,7 +10682,75 @@ format:`, anonymisedFormat);
           parser.assignable = 1;
           init = parseMemberOrUpdateExpression(parser, context, privateScope, init, 0, 0, tokenStart);
           if (parser.getToken() === 471156)
-            parser.report(115);
+            parser.report(117);
+        }
+      } else if (token === 209013) {
+        const usingIdentifier = parseIdentifier(parser, context);
+        if ((parser.flags & 1) !== 0 || !isResourceBindingStart(parser.getToken())) {
+          isVarDecl = false;
+          parser.assignable = 1;
+          init = parseMemberOrUpdateExpression(parser, context, privateScope, usingIdentifier, 0, 0, tokenStart);
+        } else if (parser.getToken() === 471156) {
+          const ofStart = parser.tokenStart;
+          const ofEnd = parser.currentLocation;
+          const ofToken = parser.getToken();
+          const ofValue = parser.tokenValue;
+          const ofIdentifier = parseIdentifier(parser, context);
+          if (parser.getToken() !== 1077936155 && parser.getToken() !== 8673330 && parser.getToken() !== 1074790417 && parser.getToken() !== 18) {
+            isVarDecl = false;
+            consumedForOfDelimiter = true;
+            parser.assignable = 1;
+            init = usingIdentifier;
+          } else {
+            resourceDeclarationKind = "using";
+            validateBindingIdentifier(parser, context, 16, ofToken, 0);
+            scope == null ? void 0 : scope.addBlockName(context, ofValue, 16, ofStart, ofEnd, 32);
+            let declarationInitializer = null;
+            if (parser.getToken() === 1077936155) {
+              nextToken(parser, context | 32);
+              declarationInitializer = parseExpression(parser, context | 131072, privateScope, 1, 0, parser.tokenStart);
+              if ((parser.getToken() & 262144) === 262144) {
+                throw new ParseError(ofStart, parser.currentLocation, 60, parser.getToken() === 471156 ? "of" : "in");
+              }
+            } else if (parser.getToken() !== 8673330) {
+              parser.report(59, resourceDeclarationKind);
+            }
+            const declarations = [
+              parser.finishNode({
+                type: "VariableDeclarator",
+                id: ofIdentifier,
+                init: declarationInitializer
+              }, ofStart)
+            ];
+            const resourceNames = parser.options.lexical ? /* @__PURE__ */ new Set([ofValue]) : void 0;
+            while (consumeOpt(parser, context | 131072, 18)) {
+              const declaration = parseVariableDeclaration(parser, context | 131072, scope, privateScope, 16, 32, resourceDeclarationKind);
+              if (resourceNames) {
+                const { name } = declaration.id;
+                if (resourceNames.has(name))
+                  parser.report(147, name);
+                resourceNames.add(name);
+              }
+              declarations.push(declaration);
+            }
+            if (declarations.length > 1 && parser.getToken() & 262144) {
+              parser.report(61, KeywordDescTable[parser.getToken() & 255]);
+            }
+            init = parser.finishNode({
+              type: "VariableDeclaration",
+              kind: resourceDeclarationKind,
+              declarations
+            }, tokenStart);
+            parser.assignable = 1;
+          }
+        } else {
+          resourceDeclarationKind = "using";
+          init = parser.finishNode({
+            type: "VariableDeclaration",
+            kind: resourceDeclarationKind,
+            declarations: parseVariableDeclarationList(parser, context | 131072, scope, privateScope, 16, 32, resourceDeclarationKind)
+          }, tokenStart);
+          parser.assignable = 1;
         }
       } else {
         nextToken(parser, context);
@@ -12177,6 +10765,42 @@ format:`, anonymisedFormat);
         }, tokenStart);
         parser.assignable = 1;
       }
+    } else if (token === 209006 && (context & 2048 || context & 2 && context & 8)) {
+      if (context & 524288)
+        parser.report(179);
+      nextToken(parser, context | 32);
+      let awaitArgument;
+      if ((parser.flags & 1) === 0 && parser.getToken() === 209013) {
+        const usingStart = parser.tokenStart;
+        const usingIdentifier = parseIdentifier(parser, context);
+        if ((parser.flags & 1) === 0 && isResourceBindingStart(parser.getToken())) {
+          resourceDeclarationKind = "await using";
+          isVarDecl = true;
+          init = parser.finishNode({
+            type: "VariableDeclaration",
+            kind: resourceDeclarationKind,
+            declarations: parseVariableDeclarationList(parser, context | 131072, scope, privateScope, 16, 32, resourceDeclarationKind)
+          }, tokenStart);
+          parser.assignable = 1;
+        } else {
+          awaitArgument = parseMemberOrUpdateExpression(parser, context, privateScope, usingIdentifier, 0, 0, usingStart);
+        }
+      } else {
+        awaitArgument = parseLeftHandSideExpression(parser, context, privateScope, 0, 0, 1);
+      }
+      if (!isVarDecl) {
+        if (parser.getToken() === 8391735)
+          parser.report(33);
+        parser.assignable = 2;
+        init = parser.finishNode({
+          type: "AwaitExpression",
+          argument: awaitArgument
+        }, tokenStart);
+      }
+    } else if (forAwait && token === 209005) {
+      const asyncIdentifier = parseIdentifier(parser, context);
+      parser.assignable = 1;
+      init = parseMemberOrUpdateExpression(parser, context | 131072, privateScope, asyncIdentifier, 0, 0, tokenStart);
     } else if (token === 1074790417) {
       if (forAwait)
         parser.report(82);
@@ -12192,12 +10816,13 @@ format:`, anonymisedFormat);
     } else {
       init = parseLeftHandSideExpression(parser, context | 131072, privateScope, 1, 0, 1);
     }
-    if ((parser.getToken() & 262144) === 262144) {
-      if (parser.getToken() === 471156) {
+    if (consumedForOfDelimiter || (parser.getToken() & 262144) === 262144) {
+      if (consumedForOfDelimiter || parser.getToken() === 471156) {
         if (parser.assignable & 2)
           parser.report(80, forAwait ? "await" : "of");
         reinterpretToPattern(parser, init);
-        nextToken(parser, context | 32);
+        if (!consumedForOfDelimiter)
+          nextToken(parser, context | 32);
         right = parseExpression(parser, context, privateScope, 1, 0, parser.tokenStart);
         consume(parser, context | 32, 16);
         const body3 = parseIterationStatementBody(parser, context, scope, privateScope, labels);
@@ -12209,6 +10834,8 @@ format:`, anonymisedFormat);
           await: forAwait
         }, start);
       }
+      if (resourceDeclarationKind)
+        parser.report(30, "in");
       if (parser.assignable & 2)
         parser.report(80, "in");
       reinterpretToPattern(parser, init);
@@ -12254,31 +10881,105 @@ format:`, anonymisedFormat);
   __name(parseForStatement, "parseForStatement");
   function parseRestrictedIdentifier(parser, context, scope) {
     if (!isValidIdentifier(context, parser.getToken()))
-      parser.report(118);
+      parser.report(120);
     if ((parser.getToken() & 537079808) === 537079808)
-      parser.report(119);
-    scope == null ? void 0 : scope.addBlockName(context, parser.tokenValue, 8, 0);
+      parser.report(121);
+    scope == null ? void 0 : scope.addBlockName(context, parser.tokenValue, 8, parser.tokenStart, parser.currentLocation);
     return parseIdentifier(parser, context);
   }
   __name(parseRestrictedIdentifier, "parseRestrictedIdentifier");
   function parseImportDeclaration(parser, context, scope) {
     const start = parser.tokenStart;
     nextToken(parser, context);
-    let source = null;
+    let source;
+    let sourceParsed = false;
+    let phase = null;
     const { tokenStart } = parser;
     let specifiers = [];
     if (parser.getToken() === 134283267) {
       source = parseLiteral(parser, context);
     } else {
       if (parser.getToken() & 143360) {
-        const local = parseRestrictedIdentifier(parser, context, scope);
-        specifiers = [
-          parser.finishNode({
-            type: "ImportDefaultSpecifier",
-            local
-          }, tokenStart)
-        ];
-        if (consumeOpt(parser, context, 18)) {
+        const token = parser.getToken();
+        const { tokenValue, tokenStart: start2, currentLocation } = parser;
+        const isPhaseDefer = parser.features & 2 && (token & -2147483648) === 0 && tokenValue == "defer";
+        const isPhaseSource = parser.features & 4 && (token & -2147483648) === 0 && tokenValue == "source";
+        if (isPhaseDefer || isPhaseSource) {
+          const phaseOrLocal = parseIdentifier(parser, context);
+          if (tokenValue === "defer") {
+            if (parser.getToken() === 8391476) {
+              phase = "defer";
+              specifiers = [parseImportNamespaceSpecifier(parser, context, scope)];
+            } else if (parser.getToken() === 209011 || parser.getToken() === 18) {
+              scope == null ? void 0 : scope.addBlockName(context, tokenValue, 8, start2, currentLocation);
+              specifiers = [
+                parser.finishNode({
+                  type: "ImportDefaultSpecifier",
+                  local: phaseOrLocal
+                }, tokenStart)
+              ];
+            } else {
+              parser.report(108);
+            }
+          } else if (parser.getToken() === 209011) {
+            const fromToken = parser.getToken();
+            const fromStart = parser.tokenStart;
+            const fromEnd = parser.currentLocation;
+            const fromLocal = parseIdentifier(parser, context);
+            if (parser.getToken() === 209011) {
+              validateBindingIdentifier(parser, context, 16, fromToken, 0);
+              scope == null ? void 0 : scope.addBlockName(context, fromLocal.name, 8, fromStart, fromEnd);
+              phase = "source";
+              specifiers = [
+                parser.finishNode({
+                  type: "ImportDefaultSpecifier",
+                  local: fromLocal
+                }, fromStart)
+              ];
+            } else {
+              scope == null ? void 0 : scope.addBlockName(context, tokenValue, 8, start2, currentLocation);
+              specifiers = [
+                parser.finishNode({
+                  type: "ImportDefaultSpecifier",
+                  local: phaseOrLocal
+                }, tokenStart)
+              ];
+              if (parser.getToken() !== 134283267)
+                parser.report(105, "Import");
+              source = parseLiteral(parser, context);
+              sourceParsed = true;
+            }
+          } else if (parser.getToken() & 143360) {
+            phase = "source";
+            const localStart = parser.tokenStart;
+            const local = parseRestrictedIdentifier(parser, context, scope);
+            specifiers = [
+              parser.finishNode({
+                type: "ImportDefaultSpecifier",
+                local
+              }, localStart)
+            ];
+          } else if (parser.getToken() === 18) {
+            scope == null ? void 0 : scope.addBlockName(context, tokenValue, 8, start2, currentLocation);
+            specifiers = [
+              parser.finishNode({
+                type: "ImportDefaultSpecifier",
+                local: phaseOrLocal
+              }, tokenStart)
+            ];
+          } else {
+            parser.report(109);
+          }
+        } else {
+          const local = parseRestrictedIdentifier(parser, context, scope);
+          specifiers = [
+            parser.finishNode({
+              type: "ImportDefaultSpecifier",
+              local
+            }, tokenStart)
+          ];
+        }
+        if (phase === null && !sourceParsed && consumeOpt(parser, context, 18)) {
           switch (parser.getToken()) {
             case 8391476:
               specifiers.push(parseImportNamespaceSpecifier(parser, context, scope));
@@ -12306,14 +11007,16 @@ format:`, anonymisedFormat);
             parser.report(30, KeywordDescTable[parser.getToken() & 255]);
         }
       }
-      source = parseModuleSpecifier(parser, context);
+      if (!sourceParsed)
+        source = parseModuleSpecifier(parser, context);
     }
     const attributes = parseImportAttributes(parser, context);
     const node = {
       type: "ImportDeclaration",
       specifiers,
       source,
-      attributes
+      attributes,
+      ...parser.features & 2 || parser.features & 4 ? { phase } : null
     };
     matchOrInsertSemicolon(parser, context | 32);
     return parser.finishNode(node, start);
@@ -12342,7 +11045,8 @@ format:`, anonymisedFormat);
   function parseImportSpecifierOrNamedImports(parser, context, scope, specifiers) {
     nextToken(parser, context);
     while (parser.getToken() & 143360 || parser.getToken() === 134283267) {
-      let { tokenValue, tokenStart } = parser;
+      let { tokenValue, tokenStart, currentLocation } = parser;
+      const start = tokenStart;
       const token = parser.getToken();
       const imported = parseModuleExportName(parser, context);
       let local;
@@ -12353,19 +11057,21 @@ format:`, anonymisedFormat);
           validateBindingIdentifier(parser, context, 16, parser.getToken(), 0);
         }
         tokenValue = parser.tokenValue;
+        tokenStart = parser.tokenStart;
+        currentLocation = parser.currentLocation;
         local = parseIdentifier(parser, context);
       } else if (imported.type === "Identifier") {
         validateBindingIdentifier(parser, context, 16, token, 0);
-        local = imported;
+        local = parser.cloneIdentifier(imported);
       } else {
         parser.report(25, KeywordDescTable[77932 & 255]);
       }
-      scope == null ? void 0 : scope.addBlockName(context, tokenValue, 8, 0);
+      scope == null ? void 0 : scope.addBlockName(context, tokenValue, 8, tokenStart, currentLocation);
       specifiers.push(parser.finishNode({
         type: "ImportSpecifier",
         local,
         imported
-      }, tokenStart));
+      }, start));
       if (parser.getToken() !== 1074790415)
         consume(parser, context, 18);
     }
@@ -12398,17 +11104,24 @@ format:`, anonymisedFormat);
   function parseExportDeclaration(parser, context, scope) {
     const start = parser.leadingDecorators.decorators.length ? parser.leadingDecorators.start : parser.tokenStart;
     nextToken(parser, context | 32);
+    const isDefaultExport = consumeOpt(parser, context | 32, 20561);
+    if (parser.leadingDecorators.decorators.length && parser.getToken() !== 86094) {
+      parser.report(172);
+    }
     const specifiers = [];
     let declaration = null;
     let source = null;
     let attributes = [];
-    if (consumeOpt(parser, context | 32, 20561)) {
+    if (isDefaultExport) {
       switch (parser.getToken()) {
         case 86104: {
-          declaration = parseFunctionDeclaration(parser, context, scope, void 0, 4, 1, 1, 0, parser.tokenStart);
+          declaration = parseFunctionDeclaration(parser, context, scope, void 0, 1, 1, 0, parser.tokenStart, 4);
           break;
         }
-        case 132:
+        case 133:
+          if (!(parser.features & 1)) {
+            parser.report(30, "@");
+          }
         case 86094:
           declaration = parseClassDeclaration(parser, context, scope, void 0, 1);
           break;
@@ -12418,15 +11131,15 @@ format:`, anonymisedFormat);
           const { flags } = parser;
           if ((flags & 1) === 0) {
             if (parser.getToken() === 86104) {
-              declaration = parseFunctionDeclaration(parser, context, scope, void 0, 4, 1, 1, 1, tokenStart);
+              declaration = parseFunctionDeclaration(parser, context, scope, void 0, 1, 1, 1, tokenStart, 4);
             } else {
               if (parser.getToken() === 67174411) {
-                declaration = parseAsyncArrowOrCallExpression(parser, context, void 0, declaration, 1, 1, 0, flags, tokenStart);
+                declaration = parseAsyncArrowOrCallExpression(parser, context, void 0, declaration, 1, 1, flags, tokenStart);
                 declaration = parseMemberOrUpdateExpression(parser, context, void 0, declaration, 0, 0, tokenStart);
                 declaration = parseAssignmentExpression(parser, context, void 0, 0, 0, tokenStart, declaration);
               } else if (parser.getToken() & 143360) {
                 if (scope)
-                  scope = createArrowHeadParsingScope(parser, context, parser.tokenValue);
+                  scope = createArrowHeadParsingScope(parser, context, parser.tokenValue, parser.tokenStart, parser.currentLocation);
                 declaration = parseIdentifier(parser, context);
                 declaration = parseArrowFunctionExpression(parser, context, scope, void 0, [declaration], 1, tokenStart);
               }
@@ -12496,7 +11209,7 @@ format:`, anonymisedFormat);
               tmpExportedNames.push(parser.tokenValue);
               tmpExportedBindings.push(parser.tokenValue);
             }
-            exported = local;
+            exported = local.type === "Literal" ? parser.cloneStringLiteral(local) : parser.cloneIdentifier(local);
           }
           specifiers.push(parser.finishNode({
             type: "ExportSpecifier",
@@ -12517,7 +11230,7 @@ format:`, anonymisedFormat);
           }
         } else {
           if (hasLiteralLocal) {
-            parser.report(172);
+            parser.report(174);
           }
           if (scope) {
             tmpExportedNames.forEach((n) => parser.declareUnboundVariable(n));
@@ -12527,12 +11240,15 @@ format:`, anonymisedFormat);
         matchOrInsertSemicolon(parser, context | 32);
         break;
       }
-      case 132:
+      case 133:
+        if (!(parser.features & 1)) {
+          parser.report(30, "@");
+        }
       case 86094:
         declaration = parseClassDeclaration(parser, context, scope, void 0, 2);
         break;
       case 86104:
-        declaration = parseFunctionDeclaration(parser, context, scope, void 0, 4, 1, 2, 0, parser.tokenStart);
+        declaration = parseFunctionDeclaration(parser, context, scope, void 0, 1, 2, 0, parser.tokenStart, 4);
         break;
       case 241737:
         declaration = parseLexicalDeclaration(parser, context, scope, void 0, 8, 64);
@@ -12547,7 +11263,7 @@ format:`, anonymisedFormat);
         const { tokenStart } = parser;
         nextToken(parser, context);
         if ((parser.flags & 1) === 0 && parser.getToken() === 86104) {
-          declaration = parseFunctionDeclaration(parser, context, scope, void 0, 4, 1, 2, 1, tokenStart);
+          declaration = parseFunctionDeclaration(parser, context, scope, void 0, 1, 2, 1, tokenStart, 4);
           break;
         }
       }
@@ -12564,8 +11280,8 @@ format:`, anonymisedFormat);
     return parser.finishNode(node, start);
   }
   __name(parseExportDeclaration, "parseExportDeclaration");
-  function parseExpression(parser, context, privateScope, canAssign, inGroup, start) {
-    let expr = parsePrimaryExpression(parser, context, privateScope, 2, 0, canAssign, inGroup, 1, start);
+  function parseExpression(parser, context, privateScope, canAssign, inGroup, start, origin = 0) {
+    let expr = parsePrimaryExpression(parser, context, privateScope, 2, 0, canAssign, inGroup, 1, start, origin, context & 131072 ? 0 : 1);
     expr = parseMemberOrUpdateExpression(parser, context, privateScope, expr, inGroup, 0, start);
     return parseAssignmentExpression(parser, context, privateScope, inGroup, 0, start, expr);
   }
@@ -12590,6 +11306,8 @@ format:`, anonymisedFormat);
     const token = parser.getToken();
     if ((token & 4194304) === 4194304) {
       if (parser.assignable & 2)
+        parser.report(26);
+      if ((token & 524288) === 524288 && parser.assignable & 4)
         parser.report(26);
       if (!isPattern && token === 1077936155 && left.type === "ArrayExpression" || left.type === "ObjectExpression") {
         reinterpretToPattern(parser, left);
@@ -12658,7 +11376,7 @@ format:`, anonymisedFormat);
       t = parser.getToken();
       precedence = t & 3840;
       if (t & 524288 && operator & 268435456 || operator & 524288 && t & 268435456) {
-        parser.report(165);
+        parser.report(167);
       }
       if (precedence + ((t === 8391735) << 8) - ((bit === t) << 12) <= minPrecedence)
         break;
@@ -12666,7 +11384,7 @@ format:`, anonymisedFormat);
       left = parser.finishNode({
         type: t & 524288 || t & 268435456 ? "LogicalExpression" : "BinaryExpression",
         left,
-        right: parseBinaryExpression(parser, context, privateScope, inGroup, parser.tokenStart, precedence, t, parseLeftHandSideExpression(parser, context, privateScope, 0, inGroup, 1)),
+        right: parseBinaryExpression(parser, context, privateScope, inGroup, parser.tokenStart, precedence, t, parseLeftHandSideExpression(parser, context, privateScope, 0, inGroup, 1, (context & 131072) === 0 && (8673330 & 3840) > precedence ? 1 : 0)),
         operator: KeywordDescTable[t & 255]
       }, start);
     }
@@ -12686,9 +11404,9 @@ format:`, anonymisedFormat);
       parser.report(33);
     if (context & 1 && unaryOperator === 16863276) {
       if (arg.type === "Identifier") {
-        parser.report(121);
+        parser.report(123);
       } else if (isPropertyWithPrivateFieldKey(arg)) {
-        parser.report(127);
+        parser.report(129);
       }
     }
     parser.assignable = 2;
@@ -12718,7 +11436,7 @@ format:`, anonymisedFormat);
       }
     }
     if (!inNew && parser.getToken() === 67174411) {
-      return parseAsyncArrowOrCallExpression(parser, context, privateScope, expr, canAssign, 1, 0, flags, start);
+      return parseAsyncArrowOrCallExpression(parser, context, privateScope, expr, canAssign, 1, flags, start);
     }
     if (parser.getToken() === 10) {
       classifyIdentifier(parser, context, token);
@@ -12743,7 +11461,7 @@ format:`, anonymisedFormat);
       if (!canAssign)
         parser.report(26);
       if (parser.getToken() === 22)
-        parser.report(124);
+        parser.report(126);
       let argument = null;
       let delegate = false;
       if ((parser.flags & 1) === 0) {
@@ -12767,27 +11485,32 @@ format:`, anonymisedFormat);
   }
   __name(parseYieldExpressionOrIdentifier, "parseYieldExpressionOrIdentifier");
   function parseAwaitExpressionOrIdentifier(parser, context, privateScope, inNew, inGroup, start) {
-    if (inGroup)
+    var _a2;
+    if (inGroup) {
+      if ((parser.destructible & 128) === 0) {
+        (_a2 = parser.firstAwaitLocation) != null ? _a2 : parser.firstAwaitLocation = { start, end: parser.currentLocation };
+      }
       parser.destructible |= 128;
+    }
     if (context & 524288)
-      parser.report(177);
+      parser.report(179);
     const possibleIdentifierOrArrowFunc = parseIdentifierOrArrow(parser, context, privateScope);
     const isIdentifier = possibleIdentifierOrArrowFunc.type === "ArrowFunctionExpression" || (parser.getToken() & 65536) === 0;
     if (isIdentifier) {
       if (context & 2048)
-        throw new ParseError(start, { index: parser.startIndex, line: parser.startLine, column: parser.startColumn }, 176);
+        throw new ParseError(start, parser.startPosition, 178);
       if (context & 2)
-        throw new ParseError(start, { index: parser.startIndex, line: parser.startLine, column: parser.startColumn }, 110);
+        throw new ParseError(start, parser.startPosition, 112);
       if (context & 8192 && context & 2048)
-        throw new ParseError(start, { index: parser.startIndex, line: parser.startLine, column: parser.startColumn }, 110);
+        throw new ParseError(start, parser.startPosition, 112);
       return possibleIdentifierOrArrowFunc;
     }
     if (context & 8192) {
-      throw new ParseError(start, { index: parser.startIndex, line: parser.startLine, column: parser.startColumn }, 31);
+      throw new ParseError(start, parser.startPosition, 31);
     }
     if (context & 2048 || context & 2 && context & 8) {
       if (inNew)
-        throw new ParseError(start, { index: parser.startIndex, line: parser.startLine, column: parser.startColumn }, 0);
+        throw new ParseError(start, parser.startPosition, 0);
       const argument = parseLeftHandSideExpression(parser, context, privateScope, 0, 0, 1);
       if (parser.getToken() === 8391735)
         parser.report(33);
@@ -12798,12 +11521,13 @@ format:`, anonymisedFormat);
       }, start);
     }
     if (context & 2)
-      throw new ParseError(start, { index: parser.startIndex, line: parser.startLine, column: parser.startColumn }, 98);
+      throw new ParseError(start, parser.startPosition, 98);
     return possibleIdentifierOrArrowFunc;
   }
   __name(parseAwaitExpressionOrIdentifier, "parseAwaitExpressionOrIdentifier");
-  function parseFunctionBody(parser, context, scope, privateScope, origin, funcNameToken, functionScope) {
+  function parseFunctionBody(parser, context, scope, privateScope, funcNameToken, functionScope, origin = 0) {
     const { tokenStart } = parser;
+    parser.flags &= -4161;
     consume(parser, context | 32, 2162700);
     const body = [];
     if (parser.getToken() !== 1074790415) {
@@ -12829,22 +11553,26 @@ format:`, anonymisedFormat);
       if (context & 1) {
         if (funcNameToken) {
           if ((funcNameToken & 537079808) === 537079808) {
-            parser.report(119);
+            parser.report(121);
           }
           if ((funcNameToken & 36864) === 36864) {
             parser.report(40);
           }
         }
         if (parser.flags & 512)
-          parser.report(119);
-        if (parser.flags & 256)
-          parser.report(118);
+          parser.report(121);
+        if (parser.flags & 256) {
+          if (parser.strictReservedRange) {
+            throw new ParseError(parser.strictReservedRange[0], parser.strictReservedRange[1], 120);
+          }
+          parser.report(120);
+        }
       }
     }
     parser.flags = (parser.flags | 512 | 256 | 64 | 4096) ^ (512 | 256 | 64 | 4096);
     parser.destructible = (parser.destructible | 256) ^ 256;
     while (parser.getToken() !== 1074790415) {
-      body.push(parseStatementListItem(parser, context, scope, privateScope, 4, {}));
+      body.push(parseStatementListItem(parser, context, scope, privateScope, {}, 4));
     }
     consume(parser, origin & (16 | 8) ? context | 32 : context, 1074790415);
     parser.flags &= -4289;
@@ -12860,8 +11588,8 @@ format:`, anonymisedFormat);
     const { tokenStart } = parser;
     nextToken(parser, context);
     switch (parser.getToken()) {
-      case 67108990:
-        parser.report(167);
+      case 67108991:
+        parser.report(169);
       case 67174411: {
         if ((context & 512) === 0)
           parser.report(28);
@@ -12881,9 +11609,9 @@ format:`, anonymisedFormat);
     return parser.finishNode({ type: "Super" }, tokenStart);
   }
   __name(parseSuperExpression, "parseSuperExpression");
-  function parseLeftHandSideExpression(parser, context, privateScope, canAssign, inGroup, isLHS) {
+  function parseLeftHandSideExpression(parser, context, privateScope, canAssign, inGroup, isLHS, allowPrivateId = 0) {
     const start = parser.tokenStart;
-    const expression = parsePrimaryExpression(parser, context, privateScope, 2, 0, canAssign, inGroup, isLHS, start);
+    const expression = parsePrimaryExpression(parser, context, privateScope, 2, 0, canAssign, inGroup, isLHS, start, 0, allowPrivateId);
     return parseMemberOrUpdateExpression(parser, context, privateScope, expression, inGroup, 0, start);
   }
   __name(parseLeftHandSideExpression, "parseLeftHandSideExpression");
@@ -12909,11 +11637,11 @@ format:`, anonymisedFormat);
       switch (parser.getToken()) {
         case 67108877: {
           nextToken(parser, (context | 262144 | 8) ^ 8);
-          if (context & 16 && parser.getToken() === 130 && parser.tokenValue === "super") {
-            parser.report(173);
+          if (context & 16 && parser.getToken() === 131 && parser.tokenValue === "super") {
+            parser.report(175);
           }
-          parser.assignable = 1;
-          const property = parsePropertyOrPrivatePropertyName(parser, context | 64, privateScope);
+          parser.assignable = (parser.flags & 2048) === 2048 ? 2 : 1;
+          const property = parsePropertyOrPrivatePropertyName(parser, context | 64, privateScope, 1);
           expr = parser.finishNode({
             type: "MemberExpression",
             object: expr,
@@ -12924,6 +11652,10 @@ format:`, anonymisedFormat);
           break;
         }
         case 69271571: {
+          if ((parser.flags & 8192) === 8192) {
+            parser.flags = (parser.flags | 8192) ^ 8192;
+            return expr;
+          }
           let restoreHasOptionalChaining = false;
           if ((parser.flags & 2048) === 2048) {
             restoreHasOptionalChaining = true;
@@ -12933,7 +11665,7 @@ format:`, anonymisedFormat);
           const { tokenStart } = parser;
           const property = parseExpressions(parser, context, privateScope, inGroup, 1, tokenStart);
           consume(parser, context, 20);
-          parser.assignable = 1;
+          parser.assignable = restoreHasOptionalChaining ? 2 : 1;
           expr = parser.finishNode({
             type: "MemberExpression",
             object: expr,
@@ -12957,7 +11689,11 @@ format:`, anonymisedFormat);
             parser.flags = (parser.flags | 2048) ^ 2048;
           }
           const args = parseArguments(parser, context, privateScope, inGroup);
-          parser.assignable = 2;
+          if (!(context & 1) && parser.options.webcompat) {
+            parser.assignable = 4;
+          } else {
+            parser.assignable = 2;
+          }
           expr = parser.finishNode({
             type: "CallExpression",
             callee: expr,
@@ -12969,7 +11705,7 @@ format:`, anonymisedFormat);
           }
           break;
         }
-        case 67108990: {
+        case 67108991: {
           nextToken(parser, (context | 262144 | 8) ^ 8);
           parser.flags |= 2048;
           parser.assignable = 2;
@@ -12978,7 +11714,7 @@ format:`, anonymisedFormat);
         }
         default:
           if ((parser.flags & 2048) === 2048) {
-            parser.report(166);
+            parser.report(168);
           }
           parser.assignable = 2;
           expr = parser.finishNode({
@@ -13023,7 +11759,11 @@ format:`, anonymisedFormat);
       }, start);
     } else if (parser.getToken() === 67174411) {
       const args = parseArguments(parser, context, privateScope, 0);
-      parser.assignable = 2;
+      if (!(context & 1) && parser.options.webcompat) {
+        parser.assignable = 4;
+      } else {
+        parser.assignable = 2;
+      }
       node = parser.finishNode({
         type: "CallExpression",
         callee: expr,
@@ -13031,7 +11771,7 @@ format:`, anonymisedFormat);
         optional: true
       }, start);
     } else {
-      const property = parsePropertyOrPrivatePropertyName(parser, context, privateScope);
+      const property = parsePropertyOrPrivatePropertyName(parser, context, privateScope, 1);
       parser.assignable = 2;
       node = parser.finishNode({
         type: "MemberExpression",
@@ -13047,11 +11787,11 @@ format:`, anonymisedFormat);
     return node;
   }
   __name(parseOptionalChain, "parseOptionalChain");
-  function parsePropertyOrPrivatePropertyName(parser, context, privateScope) {
-    if ((parser.getToken() & 143360) === 0 && parser.getToken() !== -2147483528 && parser.getToken() !== -2147483527 && parser.getToken() !== 130) {
-      parser.report(160);
+  function parsePropertyOrPrivatePropertyName(parser, context, privateScope, allowPrivateId = 0) {
+    if ((parser.getToken() & 143360) === 0 && parser.getToken() !== -2147483527 && parser.getToken() !== -2147483526 && (parser.getToken() !== 131 || !allowPrivateId)) {
+      parser.report(162);
     }
-    return parser.getToken() === 130 ? parsePrivateIdentifier(parser, context, privateScope, 0) : parseIdentifier(parser, context);
+    return parser.getToken() === 131 ? parsePrivateIdentifier(parser, context, privateScope, 0) : parseIdentifier(parser, context);
   }
   __name(parsePropertyOrPrivatePropertyName, "parsePropertyOrPrivatePropertyName");
   function parseUpdateExpressionPrefixed(parser, context, privateScope, inNew, isLHS, start) {
@@ -13074,7 +11814,7 @@ format:`, anonymisedFormat);
     }, start);
   }
   __name(parseUpdateExpressionPrefixed, "parseUpdateExpressionPrefixed");
-  function parsePrimaryExpression(parser, context, privateScope, kind, inNew, canAssign, inGroup, isLHS, start) {
+  function parsePrimaryExpression(parser, context, privateScope, kind, inNew, canAssign, inGroup, isLHS, start, origin = 0, allowPrivateId = 0) {
     if ((parser.getToken() & 143360) === 143360) {
       switch (parser.getToken()) {
         case 209006:
@@ -13094,13 +11834,13 @@ format:`, anonymisedFormat);
         if ((token & 36864) === 36864) {
           parser.flags |= 256;
         }
-        return parseArrowFromIdentifier(parser, context, privateScope, tokenValue, expr, inNew, canAssign, 0, start);
+        return parseArrowFromIdentifier(parser, context, privateScope, tokenValue, expr, inNew, canAssign, 0, start, origin);
       }
       if (context & 16 && !(context & 32768) && !(context & 8192) && parser.tokenValue === "arguments")
-        parser.report(130);
+        parser.report(132);
       if ((token & 255) === (241737 & 255)) {
         if (context & 1)
-          parser.report(113);
+          parser.report(115);
         if (kind & (8 | 16))
           parser.report(100);
       }
@@ -13129,7 +11869,7 @@ format:`, anonymisedFormat);
       case 69271571:
         return parseArrayLiteral(parser, context, privateScope, canAssign ? 0 : 1, inGroup);
       case 67174411:
-        return parseParenthesizedExpression(parser, context | 64, privateScope, canAssign, 1, 0, start);
+        return parseParenthesizedExpression(parser, context | 64, privateScope, canAssign, 1, start, origin);
       case 86021:
       case 86022:
       case 86023:
@@ -13138,7 +11878,10 @@ format:`, anonymisedFormat);
         return parseThisExpression(parser, context);
       case 65540:
         return parseRegExpLiteral(parser, context);
-      case 132:
+      case 133:
+        if (!(parser.features & 1)) {
+          parser.report(30, "@");
+        }
       case 86094:
         return parseClassExpression(parser, context, privateScope, inGroup, start);
       case 86109:
@@ -13149,10 +11892,18 @@ format:`, anonymisedFormat);
         return parseTemplate(parser, context, privateScope);
       case 86107:
         return parseNewExpression(parser, context, privateScope, inGroup);
-      case 134283388:
+      case 134283389:
         return parseBigIntLiteral(parser, context);
-      case 130:
-        return parsePrivateIdentifier(parser, context, privateScope, 0);
+      case 131: {
+        if (!allowPrivateId)
+          parser.report(30, "PrivateField");
+        const { tokenStart } = parser;
+        const expression = parsePrivateIdentifier(parser, context, privateScope, 0);
+        if (parser.getToken() !== 8673330) {
+          throw new ParseError(tokenStart, parser.startPosition, 151);
+        }
+        return expression;
+      }
       case 86106:
         return parseImportCallOrMetaExpression(parser, context, privateScope, inNew, inGroup, start);
       case 8456256:
@@ -13168,24 +11919,37 @@ format:`, anonymisedFormat);
   function parseImportCallOrMetaExpression(parser, context, privateScope, inNew, inGroup, start) {
     let expr = parseIdentifier(parser, context);
     if (parser.getToken() === 67108877) {
-      return parseImportMetaExpression(parser, context, expr, start);
+      return parseImportMetaExpression(parser, context, expr, start, privateScope, inGroup, inNew);
     }
     if (inNew)
-      parser.report(142);
+      parser.report(144);
     expr = parseImportExpression(parser, context, privateScope, inGroup, start);
     parser.assignable = 2;
     return parseMemberOrUpdateExpression(parser, context, privateScope, expr, inGroup, 0, start);
   }
   __name(parseImportCallOrMetaExpression, "parseImportCallOrMetaExpression");
-  function parseImportMetaExpression(parser, context, meta, start) {
-    if ((context & 2) === 0)
-      parser.report(169);
+  function parseImportMetaExpression(parser, context, meta, start, privateScope, inGroup = 0, inNew = 0) {
+    const propertyStart = parser.tokenStart;
+    const propertyEnd = parser.currentLocation;
     nextToken(parser, context);
     const token = parser.getToken();
-    if (token !== 209030 && parser.tokenValue !== "meta") {
-      parser.report(174);
+    const isPhaseDefer = parser.features & 2 && (token & -2147483648) === 0 && parser.tokenValue === "defer";
+    const isPhaseSource = parser.features & 4 && (token & -2147483648) === 0 && parser.tokenValue === "source";
+    if (isPhaseDefer || isPhaseSource) {
+      if (inNew)
+        parser.report(144);
+      nextToken(parser, context);
+      const expression = parseImportExpression(parser, context, privateScope, inGroup, start, parser.tokenValue);
+      parser.assignable = 2;
+      return expression;
+    }
+    if ((context & 2) === 0) {
+      throw new ParseError(propertyStart, propertyEnd, 171);
+    }
+    if (token !== 209031 && parser.tokenValue !== "meta") {
+      parser.report(176);
     } else if (token & -2147483648) {
-      parser.report(175);
+      parser.report(177);
     }
     parser.assignable = 2;
     return parser.finishNode({
@@ -13195,10 +11959,10 @@ format:`, anonymisedFormat);
     }, start);
   }
   __name(parseImportMetaExpression, "parseImportMetaExpression");
-  function parseImportExpression(parser, context, privateScope, inGroup, start) {
+  function parseImportExpression(parser, context, privateScope, inGroup, start, phase = null) {
     consume(parser, context | 32, 67174411);
     if (parser.getToken() === 14)
-      parser.report(143);
+      parser.report(145);
     const source = parseExpression(parser, context, privateScope, 1, inGroup, parser.tokenStart);
     let options = null;
     if (parser.getToken() === 18) {
@@ -13212,7 +11976,8 @@ format:`, anonymisedFormat);
     const node = {
       type: "ImportExpression",
       source,
-      options
+      options,
+      ...parser.features & 2 || parser.features & 4 ? { phase } : null
     };
     consume(parser, context, 16);
     return parser.finishNode(node, start);
@@ -13231,7 +11996,7 @@ format:`, anonymisedFormat);
       const value = parseStringLiteral(parser, context);
       const keyContent = key.type === "Literal" ? key.value : key.name;
       if (keysContent.has(keyContent)) {
-        parser.report(145, `${keyContent}`);
+        parser.report(147, keyContent);
       }
       keysContent.add(keyContent);
       attributes.push(parser.finishNode({
@@ -13265,21 +12030,12 @@ format:`, anonymisedFormat);
     }
   }
   __name(parseIdentifierOrStringLiteral, "parseIdentifierOrStringLiteral");
-  function validateStringWellFormed(parser, str) {
-    const len = str.length;
-    for (let i2 = 0; i2 < len; i2++) {
-      const code = str.charCodeAt(i2);
-      if ((code & 64512) !== 55296)
-        continue;
-      if (code > 56319 || ++i2 >= len || (str.charCodeAt(i2) & 64512) !== 56320) {
-        parser.report(171, JSON.stringify(str.charAt(i2--)));
-      }
-    }
-  }
-  __name(validateStringWellFormed, "validateStringWellFormed");
   function parseModuleExportName(parser, context) {
     if (parser.getToken() === 134283267) {
-      validateStringWellFormed(parser, parser.tokenValue);
+      const value = parser.tokenValue;
+      if (!value.isWellFormed()) {
+        parser.report(173);
+      }
       return parseLiteral(parser, context);
     } else if (parser.getToken() & 143360) {
       return parseIdentifier(parser, context);
@@ -13338,6 +12094,7 @@ format:`, anonymisedFormat);
       consume(parser, context, 67174409);
       quasis.push(parseTemplateElement(parser, tokenValue2, tokenRaw2, tokenStart2, true));
     }
+    parser.assignable = 2;
     return parser.finishNode({
       type: "TemplateLiteral",
       expressions,
@@ -13355,11 +12112,16 @@ format:`, anonymisedFormat);
       tail
     }, start);
     const tailSize = tail ? 1 : 2;
-    if (parser.options.ranges) {
-      node.start += 1;
-      node.range[0] += 1;
-      node.end -= tailSize;
-      node.range[1] -= tailSize;
+    const { ranges } = parser.options;
+    if (ranges) {
+      if (ranges.start)
+        node.start += 1;
+      if (ranges.end)
+        node.end -= tailSize;
+      if (ranges.range) {
+        node.range[0] += 1;
+        node.range[1] -= tailSize;
+      }
     }
     if (parser.options.loc) {
       node.loc.start.column += 1;
@@ -13415,35 +12177,35 @@ format:`, anonymisedFormat);
   __name(parseIdentifier, "parseIdentifier");
   function parseLiteral(parser, context) {
     const { tokenValue, tokenRaw, tokenStart } = parser;
-    if (parser.getToken() === 134283388) {
+    if (parser.getToken() === 134283389) {
       return parseBigIntLiteral(parser, context);
+    }
+    const node = {
+      type: "Literal",
+      value: tokenValue
+    };
+    if (parser.options.raw) {
+      node.raw = tokenRaw;
     }
     nextToken(parser, context);
     parser.assignable = 2;
-    return parser.finishNode(parser.options.raw ? {
-      type: "Literal",
-      value: tokenValue,
-      raw: tokenRaw
-    } : {
-      type: "Literal",
-      value: tokenValue
-    }, tokenStart);
+    return parser.finishNode(node, tokenStart);
   }
   __name(parseLiteral, "parseLiteral");
   function parseNullOrTrueOrFalseLiteral(parser, context) {
     const start = parser.tokenStart;
     const raw = KeywordDescTable[parser.getToken() & 255];
     const value = parser.getToken() === 86023 ? null : raw === "true";
-    nextToken(parser, context);
-    parser.assignable = 2;
-    return parser.finishNode(parser.options.raw ? {
-      type: "Literal",
-      value,
-      raw
-    } : {
+    const node = {
       type: "Literal",
       value
-    }, start);
+    };
+    if (parser.options.raw) {
+      node.raw = raw;
+    }
+    nextToken(parser, context);
+    parser.assignable = 2;
+    return parser.finishNode(node, start);
   }
   __name(parseNullOrTrueOrFalseLiteral, "parseNullOrTrueOrFalseLiteral");
   function parseThisExpression(parser, context) {
@@ -13455,7 +12217,7 @@ format:`, anonymisedFormat);
     }, tokenStart);
   }
   __name(parseThisExpression, "parseThisExpression");
-  function parseFunctionDeclaration(parser, context, scope, privateScope, origin, allowGen, flags, isAsync, start) {
+  function parseFunctionDeclaration(parser, context, scope, privateScope, allowGen, flags, isAsync, start, origin = 0) {
     nextToken(parser, context | 32);
     const isGenerator = allowGen ? optionalBit(parser, context, 8391476) : 0;
     let id = null;
@@ -13468,11 +12230,7 @@ format:`, anonymisedFormat);
       const kind = origin & 4 && ((context & 8) === 0 || (context & 2) === 0) ? 4 : 64 | (isAsync ? 1024 : 0) | (isGenerator ? 1024 : 0);
       validateFunctionName(parser, context, parser.getToken());
       if (scope) {
-        if (kind & 4) {
-          scope.addVarName(context, parser.tokenValue, kind);
-        } else {
-          scope.addBlockName(context, parser.tokenValue, kind, origin);
-        }
+        scope.addVarOrBlock(context, parser.tokenValue, kind, parser.tokenStart, parser.currentLocation, origin);
         functionScope = functionScope == null ? void 0 : functionScope.createChildScope(128);
         if (flags) {
           if (flags & 2) {
@@ -13494,7 +12252,7 @@ format:`, anonymisedFormat);
     functionScope = functionScope == null ? void 0 : functionScope.createChildScope(256);
     const params = parseFormalParametersOrFormalList(parser, (context | 8192) & -524289, functionScope, privateScope, 0, 1);
     const modifierFlags = 8 | 4 | 128 | 524288;
-    const body = parseFunctionBody(parser, (context | modifierFlags) ^ modifierFlags | 32768 | 4096, functionScope == null ? void 0 : functionScope.createChildScope(64), privateScope, 8, funcNameToken, functionScope);
+    const body = parseFunctionBody(parser, (context | modifierFlags) ^ modifierFlags | 32768 | 4096, functionScope == null ? void 0 : functionScope.createChildScope(64), privateScope, funcNameToken, functionScope, 8);
     return parser.finishNode({
       type: "FunctionDeclaration",
       id,
@@ -13522,7 +12280,7 @@ format:`, anonymisedFormat);
     context = (context | modifierFlags) ^ modifierFlags | 65536 | generatorAndAsyncFlags | (isGenerator ? 0 : 262144);
     scope = scope == null ? void 0 : scope.createChildScope(256);
     const params = parseFormalParametersOrFormalList(parser, (context | 8192) & -524289, scope, privateScope, inGroup, 1);
-    const body = parseFunctionBody(parser, context & -131229 | 32768 | 4096, scope == null ? void 0 : scope.createChildScope(64), privateScope, 0, funcNameToken, scope);
+    const body = parseFunctionBody(parser, context & -131229 | 32768 | 4096, scope == null ? void 0 : scope.createChildScope(64), privateScope, funcNameToken, scope);
     parser.assignable = 2;
     return parser.finishNode({
       type: "FunctionExpression",
@@ -13535,7 +12293,7 @@ format:`, anonymisedFormat);
   }
   __name(parseFunctionExpression, "parseFunctionExpression");
   function parseArrayLiteral(parser, context, privateScope, skipInitializer, inGroup) {
-    const expr = parseArrayExpressionOrPattern(parser, context, void 0, privateScope, skipInitializer, inGroup, 0, 2, 0);
+    const expr = parseArrayExpressionOrPattern(parser, context, void 0, privateScope, skipInitializer, inGroup, 0, 2);
     if (parser.destructible & 64) {
       parser.report(63);
     }
@@ -13545,7 +12303,7 @@ format:`, anonymisedFormat);
     return expr;
   }
   __name(parseArrayLiteral, "parseArrayLiteral");
-  function parseArrayExpressionOrPattern(parser, context, scope, privateScope, skipInitializer, inGroup, isPattern, kind, origin) {
+  function parseArrayExpressionOrPattern(parser, context, scope, privateScope, skipInitializer, inGroup, isPattern, kind, origin = 0) {
     const { tokenStart: start } = parser;
     nextToken(parser, context | 32);
     const elements = [];
@@ -13556,7 +12314,7 @@ format:`, anonymisedFormat);
         elements.push(null);
       } else {
         let left;
-        const { tokenStart, tokenValue } = parser;
+        const { tokenStart, tokenValue, currentLocation } = parser;
         const token = parser.getToken();
         if (token & 143360) {
           left = parsePrimaryExpression(parser, context, privateScope, kind, 0, 1, inGroup, 1, tokenStart);
@@ -13564,7 +12322,7 @@ format:`, anonymisedFormat);
             if (parser.assignable & 2)
               parser.report(26);
             nextToken(parser, context | 32);
-            scope == null ? void 0 : scope.addVarOrBlock(context, tokenValue, kind, origin);
+            scope == null ? void 0 : scope.addVarOrBlock(context, tokenValue, kind, tokenStart, currentLocation, origin);
             const right = parseExpression(parser, context, privateScope, 1, inGroup, parser.tokenStart);
             left = parser.finishNode(isPattern ? {
               type: "AssignmentPattern",
@@ -13576,14 +12334,14 @@ format:`, anonymisedFormat);
               left,
               right
             }, tokenStart);
-            destructible |= parser.destructible & 256 ? 256 : 0 | parser.destructible & 128 ? 128 : 0;
+            destructible |= (parser.destructible & 256 ? 256 : 0) | (parser.destructible & 128 ? 128 : 0);
           } else if (parser.getToken() === 18 || parser.getToken() === 20) {
             if (parser.assignable & 2) {
               destructible |= 16;
             } else {
-              scope == null ? void 0 : scope.addVarOrBlock(context, tokenValue, kind, origin);
+              scope == null ? void 0 : scope.addVarOrBlock(context, tokenValue, kind, tokenStart, currentLocation, origin);
             }
-            destructible |= parser.destructible & 256 ? 256 : 0 | parser.destructible & 128 ? 128 : 0;
+            destructible |= (parser.destructible & 256 ? 256 : 0) | (parser.destructible & 128 ? 128 : 0);
           } else {
             destructible |= kind & 1 ? 32 : (kind & 2) === 0 ? 16 : 0;
             left = parseMemberOrUpdateExpression(parser, context, privateScope, left, inGroup, 0, tokenStart);
@@ -13592,7 +12350,7 @@ format:`, anonymisedFormat);
                 destructible |= 16;
               left = parseAssignmentExpression(parser, context, privateScope, inGroup, isPattern, tokenStart, left);
             } else if (parser.getToken() !== 1077936155) {
-              destructible |= parser.assignable & 2 ? 16 : 32;
+              destructible |= parser.assignable & 1 ? 32 : 16;
             }
           }
         } else if (token & 2097152) {
@@ -13611,11 +12369,11 @@ format:`, anonymisedFormat);
             if (parser.getToken() !== 18 && parser.getToken() !== 20) {
               left = parseAssignmentExpression(parser, context, privateScope, inGroup, isPattern, tokenStart, left);
             } else if (parser.getToken() !== 1077936155) {
-              destructible |= parser.assignable & 2 ? 16 : 32;
+              destructible |= parser.assignable & 1 ? 32 : 16;
             }
           }
         } else if (token === 14) {
-          left = parseSpreadOrRestElement(parser, context, scope, privateScope, 20, kind, origin, 0, inGroup, isPattern);
+          left = parseSpreadOrRestElement(parser, context, scope, privateScope, 20, kind, 0, inGroup, isPattern, origin);
           destructible |= parser.destructible;
           if (parser.getToken() !== 18 && parser.getToken() !== 20)
             parser.report(30, KeywordDescTable[parser.getToken() & 255]);
@@ -13674,12 +12432,12 @@ format:`, anonymisedFormat);
     }, start);
   }
   __name(parseArrayOrObjectAssignmentPattern, "parseArrayOrObjectAssignmentPattern");
-  function parseSpreadOrRestElement(parser, context, scope, privateScope, closingToken, kind, origin, isAsync, inGroup, isPattern) {
+  function parseSpreadOrRestElement(parser, context, scope, privateScope, closingToken, kind, isAsync, inGroup, isPattern, origin = 0) {
     const { tokenStart: start } = parser;
     nextToken(parser, context | 32);
     let argument = null;
     let destructible = 0;
-    const { tokenValue, tokenStart } = parser;
+    const { tokenValue, tokenStart, currentLocation } = parser;
     let token = parser.getToken();
     if (token & 143360) {
       parser.assignable = 1;
@@ -13695,7 +12453,7 @@ format:`, anonymisedFormat);
       if (parser.assignable & 2) {
         destructible |= 16;
       } else if (token === closingToken || token === 18) {
-        scope == null ? void 0 : scope.addVarOrBlock(context, tokenValue, kind, origin);
+        scope == null ? void 0 : scope.addVarOrBlock(context, tokenValue, kind, tokenStart, currentLocation, origin);
       } else {
         destructible |= 32;
       }
@@ -13709,7 +12467,7 @@ format:`, anonymisedFormat);
         if (parser.destructible & 8)
           parser.report(71);
         argument = parseMemberOrUpdateExpression(parser, context, privateScope, argument, inGroup, 0, tokenStart);
-        destructible |= parser.assignable & 2 ? 16 : 0;
+        destructible |= parser.assignable & 1 ? 0 : 16;
         if ((parser.getToken() & 4194304) === 4194304) {
           if (parser.getToken() !== 1077936155)
             destructible |= 16;
@@ -13721,7 +12479,7 @@ format:`, anonymisedFormat);
           if (consumeOpt(parser, context | 32, 22)) {
             argument = parseConditionalExpression(parser, context, privateScope, argument, tokenStart);
           }
-          destructible |= parser.assignable & 2 ? 16 : 32;
+          destructible |= parser.assignable & 1 ? 32 : 16;
         }
       } else {
         destructible |= closingToken === 1074790415 && token !== 1077936155 ? 16 : parser.destructible;
@@ -13746,7 +12504,7 @@ format:`, anonymisedFormat);
       }
       parser.destructible = destructible;
       if (parser.getToken() !== closingToken && parser.getToken() !== 18)
-        parser.report(161);
+        parser.report(163);
       return parser.finishNode({
         type: isPattern ? "RestElement" : "SpreadElement",
         argument
@@ -13788,7 +12546,7 @@ format:`, anonymisedFormat);
     let scope = parser.createScopeIfLexical(256);
     const params = parseMethodFormals(parser, (context | 8192) & -524289, scope, privateScope, kind, 1, inGroup);
     scope = scope == null ? void 0 : scope.createChildScope(64);
-    const body = parseFunctionBody(parser, context & -655373 | 32768 | 4096, scope, privateScope, 0, void 0, scope == null ? void 0 : scope.parent);
+    const body = parseFunctionBody(parser, context & -655373 | 32768 | 4096, scope, privateScope, void 0, scope == null ? void 0 : scope.parent);
     return parser.finishNode({
       type: "FunctionExpression",
       params,
@@ -13800,7 +12558,7 @@ format:`, anonymisedFormat);
   }
   __name(parseMethodDefinition, "parseMethodDefinition");
   function parseObjectLiteral(parser, context, privateScope, skipInitializer, inGroup) {
-    const expr = parseObjectLiteralOrPattern(parser, context, void 0, privateScope, skipInitializer, inGroup, 0, 2, 0);
+    const expr = parseObjectLiteralOrPattern(parser, context, void 0, privateScope, skipInitializer, inGroup, 0, 2);
     if (parser.destructible & 64) {
       parser.report(63);
     }
@@ -13810,7 +12568,7 @@ format:`, anonymisedFormat);
     return expr;
   }
   __name(parseObjectLiteral, "parseObjectLiteral");
-  function parseObjectLiteralOrPattern(parser, context, scope, privateScope, skipInitializer, inGroup, isPattern, kind, origin) {
+  function parseObjectLiteralOrPattern(parser, context, scope, privateScope, skipInitializer, inGroup, isPattern, kind, origin = 0) {
     const { tokenStart: start } = parser;
     nextToken(parser, context);
     const properties = [];
@@ -13818,16 +12576,16 @@ format:`, anonymisedFormat);
     let prototypeCount = 0;
     context = (context | 131072) ^ 131072;
     while (parser.getToken() !== 1074790415) {
-      const { tokenValue, tokenStart } = parser;
+      const { tokenValue, tokenStart, currentLocation } = parser;
       const token = parser.getToken();
       if (token === 14) {
-        properties.push(parseSpreadOrRestElement(parser, context, scope, privateScope, 1074790415, kind, origin, 0, inGroup, isPattern));
+        properties.push(parseSpreadOrRestElement(parser, context, scope, privateScope, 1074790415, kind, 0, inGroup, isPattern, origin));
       } else {
         let state = 0;
         let key = null;
         let value;
-        if (parser.getToken() & 143360 || parser.getToken() === -2147483528 || parser.getToken() === -2147483527) {
-          if (parser.getToken() === -2147483527)
+        if (parser.getToken() & 143360 || parser.getToken() === -2147483527 || parser.getToken() === -2147483526) {
+          if (parser.getToken() === -2147483526)
             destructible |= 16;
           key = parseIdentifier(parser, context);
           if (parser.getToken() === 18 || parser.getToken() === 1074790415 || parser.getToken() === 1077936155) {
@@ -13837,22 +12595,22 @@ format:`, anonymisedFormat);
             } else {
               validateBindingIdentifier(parser, context, kind, token, 0);
             }
-            scope == null ? void 0 : scope.addVarOrBlock(context, tokenValue, kind, origin);
+            scope == null ? void 0 : scope.addVarOrBlock(context, tokenValue, kind, tokenStart, currentLocation, origin);
             if (consumeOpt(parser, context | 32, 1077936155)) {
               destructible |= 8;
               const right = parseExpression(parser, context, privateScope, 1, inGroup, parser.tokenStart);
-              destructible |= parser.destructible & 256 ? 256 : 0 | parser.destructible & 128 ? 128 : 0;
+              destructible |= (parser.destructible & 256 ? 256 : 0) | (parser.destructible & 128 ? 128 : 0);
               value = parser.finishNode({
                 type: "AssignmentPattern",
-                left: parser.options.uniqueKeyInPattern ? Object.assign({}, key) : key,
+                left: parser.cloneIdentifier(key),
                 right
               }, tokenStart);
             } else {
-              destructible |= (token === 209006 ? 128 : 0) | (token === -2147483528 ? 16 : 0);
-              value = parser.options.uniqueKeyInPattern ? Object.assign({}, key) : key;
+              destructible |= (token === 209006 ? 128 : 0) | (token === -2147483527 ? 16 : 0);
+              value = parser.cloneIdentifier(key);
             }
           } else if (consumeOpt(parser, context | 32, 21)) {
-            const { tokenStart: tokenStart2 } = parser;
+            const { tokenStart: tokenStart2, currentLocation: currentLocation2 } = parser;
             if (tokenValue === "__proto__")
               prototypeCount++;
             if (parser.getToken() & 143360) {
@@ -13867,7 +12625,7 @@ format:`, anonymisedFormat);
                   if (parser.assignable & 2) {
                     destructible |= 16;
                   } else if ((tokenAfterColon & 143360) === 143360) {
-                    scope == null ? void 0 : scope.addVarOrBlock(context, valueAfterColon, kind, origin);
+                    scope == null ? void 0 : scope.addVarOrBlock(context, valueAfterColon, kind, tokenStart2, currentLocation2, origin);
                   }
                 } else {
                   destructible |= parser.assignable & 1 ? 32 : 16;
@@ -13878,7 +12636,7 @@ format:`, anonymisedFormat);
                 } else if (token2 !== 1077936155) {
                   destructible |= 32;
                 } else {
-                  scope == null ? void 0 : scope.addVarOrBlock(context, valueAfterColon, kind, origin);
+                  scope == null ? void 0 : scope.addVarOrBlock(context, valueAfterColon, kind, tokenStart2, currentLocation2, origin);
                 }
                 value = parseAssignmentExpression(parser, context, privateScope, inGroup, isPattern, tokenStart2, value);
               } else {
@@ -13911,7 +12669,7 @@ format:`, anonymisedFormat);
                   if (consumeOpt(parser, context | 32, 22)) {
                     value = parseConditionalExpression(parser, context, privateScope, value, tokenStart2);
                   }
-                  destructible |= parser.assignable & 2 ? 16 : 32;
+                  destructible |= parser.assignable & 1 ? 32 : 16;
                 }
               }
             } else {
@@ -13940,11 +12698,11 @@ format:`, anonymisedFormat);
             value = parseMethodDefinition(parser, context, privateScope, state, inGroup, parser.tokenStart);
           } else if (parser.getToken() & 143360) {
             destructible |= 16;
-            if (token === -2147483528)
+            if (token === -2147483527)
               parser.report(95);
             if (token === 209005) {
               if (parser.flags & 1)
-                parser.report(132);
+                parser.report(134);
               state |= 16 | 1;
             } else if (token === 209008) {
               state |= 256;
@@ -13990,7 +12748,7 @@ format:`, anonymisedFormat);
             key = parseLiteral(parser, context);
             value = parseMethodDefinition(parser, context, privateScope, state, inGroup, parser.tokenStart);
           } else {
-            parser.report(133);
+            parser.report(135);
           }
         } else if ((parser.getToken() & 134217728) === 134217728) {
           key = parseLiteral(parser, context);
@@ -14001,7 +12759,7 @@ format:`, anonymisedFormat);
               prototypeCount++;
             if (parser.getToken() & 143360) {
               value = parsePrimaryExpression(parser, context, privateScope, kind, 0, 1, inGroup, 1, tokenStart2);
-              const { tokenValue: valueAfterColon } = parser;
+              const { tokenValue: valueAfterColon, tokenStart: start2, currentLocation: currentLocation2 } = parser;
               const token2 = parser.getToken();
               value = parseMemberOrUpdateExpression(parser, context, privateScope, value, inGroup, 0, tokenStart2);
               if (parser.getToken() === 18 || parser.getToken() === 1074790415) {
@@ -14009,7 +12767,7 @@ format:`, anonymisedFormat);
                   if (parser.assignable & 2) {
                     destructible |= 16;
                   } else {
-                    scope == null ? void 0 : scope.addVarOrBlock(context, valueAfterColon, kind, origin);
+                    scope == null ? void 0 : scope.addVarOrBlock(context, valueAfterColon, kind, start2, currentLocation2, origin);
                   }
                 } else {
                   destructible |= parser.assignable & 1 ? 32 : 16;
@@ -14042,7 +12800,7 @@ format:`, anonymisedFormat);
                   if (consumeOpt(parser, context | 32, 22)) {
                     value = parseConditionalExpression(parser, context, privateScope, value, tokenStart2);
                   }
-                  destructible |= parser.assignable & 2 ? 16 : 32;
+                  destructible |= parser.assignable & 1 ? 32 : 16;
                 }
               }
             } else {
@@ -14065,9 +12823,9 @@ format:`, anonymisedFormat);
           } else if (parser.getToken() === 67174411) {
             state |= 1;
             value = parseMethodDefinition(parser, context, privateScope, state, inGroup, parser.tokenStart);
-            destructible = parser.assignable | 16;
+            destructible = 16;
           } else {
-            parser.report(134);
+            parser.report(136);
           }
         } else if (parser.getToken() === 69271571) {
           key = parseComputedPropertyName(parser, context, privateScope, inGroup);
@@ -14075,21 +12833,21 @@ format:`, anonymisedFormat);
           state |= 2;
           if (parser.getToken() === 21) {
             nextToken(parser, context | 32);
-            const { tokenStart: tokenStart2, tokenValue: tokenValue2 } = parser;
+            const { tokenStart: tokenStart2, tokenValue: tokenValue2, currentLocation: currentLocation2 } = parser;
             const tokenAfterColon = parser.getToken();
             if (parser.getToken() & 143360) {
               value = parsePrimaryExpression(parser, context, privateScope, kind, 0, 1, inGroup, 1, tokenStart2);
               const token2 = parser.getToken();
               value = parseMemberOrUpdateExpression(parser, context, privateScope, value, inGroup, 0, tokenStart2);
               if ((parser.getToken() & 4194304) === 4194304) {
-                destructible |= parser.assignable & 2 ? 16 : token2 === 1077936155 ? 0 : 32;
+                destructible |= parser.assignable & 1 ? token2 === 1077936155 ? 0 : 32 : 16;
                 value = parseAssignmentExpressionOrPattern(parser, context, privateScope, inGroup, isPattern, tokenStart2, value);
               } else if (parser.getToken() === 18 || parser.getToken() === 1074790415) {
                 if (token2 === 1077936155 || token2 === 1074790415 || token2 === 18) {
                   if (parser.assignable & 2) {
                     destructible |= 16;
                   } else if ((tokenAfterColon & 143360) === 143360) {
-                    scope == null ? void 0 : scope.addVarOrBlock(context, tokenValue2, kind, origin);
+                    scope == null ? void 0 : scope.addVarOrBlock(context, tokenValue2, kind, tokenStart2, currentLocation2, origin);
                   }
                 } else {
                   destructible |= parser.assignable & 1 ? 32 : 16;
@@ -14121,7 +12879,7 @@ format:`, anonymisedFormat);
                   if (consumeOpt(parser, context | 32, 22)) {
                     value = parseConditionalExpression(parser, context, privateScope, value, tokenStart2);
                   }
-                  destructible |= parser.assignable & 2 ? 16 : 32;
+                  destructible |= parser.assignable & 1 ? 32 : 16;
                 }
               }
             } else {
@@ -14171,7 +12929,7 @@ format:`, anonymisedFormat);
             key = parseComputedPropertyName(parser, context, privateScope, inGroup);
             value = parseMethodDefinition(parser, context, privateScope, state, inGroup, parser.tokenStart);
           } else {
-            parser.report(126);
+            parser.report(128);
           }
         } else {
           parser.report(30, KeywordDescTable[token & 255]);
@@ -14208,9 +12966,12 @@ format:`, anonymisedFormat);
   }
   __name(parseObjectLiteralOrPattern, "parseObjectLiteralOrPattern");
   function parseMethodFormals(parser, context, scope, privateScope, kind, type, inGroup) {
+    var _a2;
     consume(parser, context, 67174411);
     const params = [];
     parser.flags = (parser.flags | 128) ^ 128;
+    parser.strictReservedRange = null;
+    parser.firstAwaitLocation = null;
     if (parser.getToken() === 16) {
       if (kind & 512) {
         parser.report(37, "Setter", "one", "");
@@ -14234,19 +12995,20 @@ format:`, anonymisedFormat);
         if ((context & 1) === 0) {
           if ((parser.getToken() & 36864) === 36864) {
             parser.flags |= 256;
+            (_a2 = parser.strictReservedRange) != null ? _a2 : parser.strictReservedRange = [tokenStart, parser.currentLocation];
           }
           if ((parser.getToken() & 537079808) === 537079808) {
             parser.flags |= 512;
           }
         }
-        left = parseAndClassifyIdentifier(parser, context, scope, kind | 1, 0);
+        left = parseAndClassifyIdentifier(parser, context, scope, kind | 1);
       } else {
         if (parser.getToken() === 2162700) {
-          left = parseObjectLiteralOrPattern(parser, context, scope, privateScope, 1, inGroup, 1, type, 0);
+          left = parseObjectLiteralOrPattern(parser, context, scope, privateScope, 1, inGroup, 1, type);
         } else if (parser.getToken() === 69271571) {
-          left = parseArrayExpressionOrPattern(parser, context, scope, privateScope, 1, inGroup, 1, type, 0);
+          left = parseArrayExpressionOrPattern(parser, context, scope, privateScope, 1, inGroup, 1, type);
         } else if (parser.getToken() === 14) {
-          left = parseSpreadOrRestElement(parser, context, scope, privateScope, 16, type, 0, 0, inGroup, 1);
+          left = parseSpreadOrRestElement(parser, context, scope, privateScope, 16, type, 0, inGroup, 1);
         }
         isNonSimpleParameterList = 1;
         if (parser.destructible & (32 | 16))
@@ -14287,7 +13049,7 @@ format:`, anonymisedFormat);
     return key;
   }
   __name(parseComputedPropertyName, "parseComputedPropertyName");
-  function parseParenthesizedExpression(parser, context, privateScope, canAssign, kind, origin, start) {
+  function parseParenthesizedExpression(parser, context, privateScope, canAssign, kind, start, origin) {
     var _a2;
     parser.flags = (parser.flags | 128) ^ 128;
     const parenthesesStart = parser.tokenStart;
@@ -14295,10 +13057,13 @@ format:`, anonymisedFormat);
     const scope = (_a2 = parser.createScopeIfLexical()) == null ? void 0 : _a2.createChildScope(512);
     context = (context | 131072) ^ 131072;
     if (consumeOpt(parser, context, 16)) {
-      return parseParenthesizedArrow(parser, context, scope, privateScope, [], canAssign, 0, start);
+      return parseParenthesizedArrow(parser, context, scope, privateScope, [], canAssign, 0, start, origin);
     }
     let destructible = 0;
+    const previousAwaitYield = parser.destructible & (256 | 128);
     parser.destructible &= -385;
+    const previousFirstAwaitLocation = parser.firstAwaitLocation;
+    parser.firstAwaitLocation = null;
     let expr;
     let expressions = [];
     let isSequence = 0;
@@ -14307,16 +13072,16 @@ format:`, anonymisedFormat);
     const tokenAfterParenthesesStart = parser.tokenStart;
     parser.assignable = 1;
     while (parser.getToken() !== 16) {
-      const { tokenStart } = parser;
+      const { tokenStart, currentLocation } = parser;
       const token = parser.getToken();
       if (token & 143360) {
-        scope == null ? void 0 : scope.addBlockName(context, parser.tokenValue, 1, 0);
+        scope == null ? void 0 : scope.addBlockName(context, parser.tokenValue, 1, tokenStart, currentLocation);
         if ((token & 537079808) === 537079808) {
           isNonSimpleParameterList = 1;
         } else if ((token & 36864) === 36864) {
           hasStrictReserved = 1;
         }
-        expr = parsePrimaryExpression(parser, context, privateScope, kind, 0, 1, 1, 1, tokenStart);
+        expr = parsePrimaryExpression(parser, context, privateScope, kind, 0, 1, 1, 1, tokenStart, 0);
         if (parser.getToken() === 16 || parser.getToken() === 18) {
           if (parser.assignable & 2) {
             destructible |= 16;
@@ -14334,13 +13099,13 @@ format:`, anonymisedFormat);
           }
         }
       } else if ((token & 2097152) === 2097152) {
-        expr = token === 2162700 ? parseObjectLiteralOrPattern(parser, context | 262144, scope, privateScope, 0, 1, 0, kind, origin) : parseArrayExpressionOrPattern(parser, context | 262144, scope, privateScope, 0, 1, 0, kind, origin);
+        expr = token === 2162700 ? parseObjectLiteralOrPattern(parser, context | 262144, scope, privateScope, 0, 1, 0, kind) : parseArrayExpressionOrPattern(parser, context | 262144, scope, privateScope, 0, 1, 0, kind);
         destructible |= parser.destructible;
         isNonSimpleParameterList = 1;
         parser.assignable = 2;
         if (parser.getToken() !== 16 && parser.getToken() !== 18) {
           if (destructible & 8)
-            parser.report(122);
+            parser.report(124);
           expr = parseMemberOrUpdateExpression(parser, context, privateScope, expr, 0, 0, tokenStart);
           destructible |= 16;
           if (parser.getToken() !== 16 && parser.getToken() !== 18) {
@@ -14348,7 +13113,7 @@ format:`, anonymisedFormat);
           }
         }
       } else if (token === 14) {
-        expr = parseSpreadOrRestElement(parser, context, scope, privateScope, 16, kind, origin, 0, 1, 0);
+        expr = parseSpreadOrRestElement(parser, context, scope, privateScope, 16, kind, 0, 1, 0);
         if (parser.destructible & 16)
           parser.report(74);
         isNonSimpleParameterList = 1;
@@ -14380,7 +13145,10 @@ format:`, anonymisedFormat);
           }, tokenAfterParenthesesStart);
         }
         consume(parser, context, 16);
-        parser.destructible = destructible;
+        parser.destructible = destructible | previousAwaitYield;
+        if (previousFirstAwaitLocation) {
+          parser.firstAwaitLocation = previousFirstAwaitLocation;
+        }
         return parser.options.preserveParens ? parser.finishNode({
           type: "ParenthesizedExpression",
           expression: expr
@@ -14409,13 +13177,17 @@ format:`, anonymisedFormat);
     }
     consume(parser, context, 16);
     if (destructible & 16 && destructible & 8)
-      parser.report(151);
-    destructible |= parser.destructible & 256 ? 256 : 0 | parser.destructible & 128 ? 128 : 0;
+      parser.report(153);
+    destructible |= (parser.destructible & 256 ? 256 : 0) | (parser.destructible & 128 ? 128 : 0);
     if (parser.getToken() === 10) {
       if (destructible & (32 | 16))
         parser.report(49);
-      if (context & (2048 | 2) && destructible & 128)
+      if (context & (2048 | 2) && destructible & 128) {
+        const loc = parser.firstAwaitLocation;
+        if (loc)
+          throw new ParseError(loc.start, loc.end, 31);
         parser.report(31);
+      }
       if (context & (1 | 1024) && destructible & 256) {
         parser.report(32);
       }
@@ -14423,15 +13195,22 @@ format:`, anonymisedFormat);
         parser.flags |= 128;
       if (hasStrictReserved)
         parser.flags |= 256;
-      return parseParenthesizedArrow(parser, context, scope, privateScope, isSequence ? expressions : [expr], canAssign, 0, start);
+      parser.destructible |= previousAwaitYield;
+      if (previousFirstAwaitLocation) {
+        parser.firstAwaitLocation = previousFirstAwaitLocation;
+      }
+      return parseParenthesizedArrow(parser, context, scope, privateScope, isSequence ? expressions : [expr], canAssign, 0, start, origin);
     }
     if (destructible & 64) {
       parser.report(63);
     }
     if (destructible & 8) {
-      parser.report(144);
+      parser.report(146);
     }
-    parser.destructible = (parser.destructible | 256) ^ 256 | destructible;
+    parser.destructible = (parser.destructible | 256) ^ 256 | destructible | previousAwaitYield;
+    if (previousFirstAwaitLocation) {
+      parser.firstAwaitLocation = previousFirstAwaitLocation;
+    }
     return parser.options.preserveParens ? parser.finishNode({
       type: "ParenthesizedExpression",
       expression: expr
@@ -14439,8 +13218,7 @@ format:`, anonymisedFormat);
   }
   __name(parseParenthesizedExpression, "parseParenthesizedExpression");
   function parseIdentifierOrArrow(parser, context, privateScope) {
-    const { tokenStart: start } = parser;
-    const { tokenValue } = parser;
+    const { tokenValue, tokenStart, currentLocation } = parser;
     let isNonSimpleParameterList = 0;
     let hasStrictReserved = 0;
     if ((parser.getToken() & 537079808) === 537079808) {
@@ -14451,35 +13229,35 @@ format:`, anonymisedFormat);
     const expr = parseIdentifier(parser, context);
     parser.assignable = 1;
     if (parser.getToken() === 10) {
-      const scope = parser.options.lexical ? createArrowHeadParsingScope(parser, context, tokenValue) : void 0;
+      const scope = parser.options.lexical ? createArrowHeadParsingScope(parser, context, tokenValue, tokenStart, currentLocation) : void 0;
       if (isNonSimpleParameterList)
         parser.flags |= 128;
       if (hasStrictReserved)
         parser.flags |= 256;
-      return parseArrowFunctionExpression(parser, context, scope, privateScope, [expr], 0, start);
+      return parseArrowFunctionExpression(parser, context, scope, privateScope, [expr], 0, tokenStart);
     }
     return expr;
   }
   __name(parseIdentifierOrArrow, "parseIdentifierOrArrow");
-  function parseArrowFromIdentifier(parser, context, privateScope, value, expr, inNew, canAssign, isAsync, start) {
+  function parseArrowFromIdentifier(parser, context, privateScope, value, expr, inNew, canAssign, isAsync, start, origin = 0) {
     if (!canAssign)
       parser.report(57);
     if (inNew)
       parser.report(51);
     parser.flags &= -129;
-    const scope = parser.options.lexical ? createArrowHeadParsingScope(parser, context, value) : void 0;
-    return parseArrowFunctionExpression(parser, context, scope, privateScope, [expr], isAsync, start);
+    const scope = parser.options.lexical ? createArrowHeadParsingScope(parser, context, value, start, parser.currentLocation) : void 0;
+    return parseArrowFunctionExpression(parser, context, scope, privateScope, [expr], isAsync, start, origin);
   }
   __name(parseArrowFromIdentifier, "parseArrowFromIdentifier");
-  function parseParenthesizedArrow(parser, context, scope, privateScope, params, canAssign, isAsync, start) {
+  function parseParenthesizedArrow(parser, context, scope, privateScope, params, canAssign, isAsync, start, origin = 0) {
     if (!canAssign)
       parser.report(57);
     for (let i2 = 0; i2 < params.length; ++i2)
       reinterpretToPattern(parser, params[i2]);
-    return parseArrowFunctionExpression(parser, context, scope, privateScope, params, isAsync, start);
+    return parseArrowFunctionExpression(parser, context, scope, privateScope, params, isAsync, start, origin);
   }
   __name(parseParenthesizedArrow, "parseParenthesizedArrow");
-  function parseArrowFunctionExpression(parser, context, scope, privateScope, params, isAsync, start) {
+  function parseArrowFunctionExpression(parser, context, scope, privateScope, params, isAsync, start, origin = 0) {
     if (parser.flags & 1)
       parser.report(48);
     consume(parser, context | 32, 10);
@@ -14494,28 +13272,32 @@ format:`, anonymisedFormat);
     } else {
       scope = scope == null ? void 0 : scope.createChildScope(64);
       const modifierFlags2 = 4 | 131072 | 8;
-      body = parseFunctionBody(parser, (context | modifierFlags2) ^ modifierFlags2 | 4096, scope, privateScope, 16, void 0, void 0);
+      body = parseFunctionBody(parser, (context | modifierFlags2) ^ modifierFlags2 | 4096, scope, privateScope, void 0, void 0, 16);
       switch (parser.getToken()) {
         case 69271571:
           if ((parser.flags & 1) === 0) {
-            parser.report(116);
+            parser.report(118);
           }
+          parser.flags |= 8192;
           break;
         case 67108877:
         case 67174409:
         case 22:
-          parser.report(117);
+          parser.report(119);
         case 67174411:
           if ((parser.flags & 1) === 0) {
-            parser.report(116);
+            parser.report(118);
           }
           parser.flags |= 1024;
           break;
       }
-      if ((parser.getToken() & 8388608) === 8388608 && (parser.flags & 1) === 0)
-        parser.report(30, KeywordDescTable[parser.getToken() & 255]);
+      if ((parser.getToken() & 8388608) === 8388608 && (parser.flags & 1) === 0) {
+        if (parser.getToken() !== 8673330 || origin !== 32) {
+          parser.report(30, KeywordDescTable[parser.getToken() & 255]);
+        }
+      }
       if ((parser.getToken() & 33619968) === 33619968)
-        parser.report(125);
+        parser.report(127);
     }
     parser.assignable = 2;
     return parser.finishNode({
@@ -14529,8 +13311,11 @@ format:`, anonymisedFormat);
   }
   __name(parseArrowFunctionExpression, "parseArrowFunctionExpression");
   function parseFormalParametersOrFormalList(parser, context, scope, privateScope, inGroup, kind) {
+    var _a2;
     consume(parser, context, 67174411);
     parser.flags = (parser.flags | 128) ^ 128;
+    parser.strictReservedRange = null;
+    parser.firstAwaitLocation = null;
     const params = [];
     if (consumeOpt(parser, context, 16))
       return params;
@@ -14544,19 +13329,20 @@ format:`, anonymisedFormat);
         if ((context & 1) === 0) {
           if ((token & 36864) === 36864) {
             parser.flags |= 256;
+            (_a2 = parser.strictReservedRange) != null ? _a2 : parser.strictReservedRange = [tokenStart, parser.currentLocation];
           }
           if ((token & 537079808) === 537079808) {
             parser.flags |= 512;
           }
         }
-        left = parseAndClassifyIdentifier(parser, context, scope, kind | 1, 0);
+        left = parseAndClassifyIdentifier(parser, context, scope, kind | 1);
       } else {
         if (token === 2162700) {
-          left = parseObjectLiteralOrPattern(parser, context, scope, privateScope, 1, inGroup, 1, kind, 0);
+          left = parseObjectLiteralOrPattern(parser, context, scope, privateScope, 1, inGroup, 1, kind);
         } else if (token === 69271571) {
-          left = parseArrayExpressionOrPattern(parser, context, scope, privateScope, 1, inGroup, 1, kind, 0);
+          left = parseArrayExpressionOrPattern(parser, context, scope, privateScope, 1, inGroup, 1, kind);
         } else if (token === 14) {
-          left = parseSpreadOrRestElement(parser, context, scope, privateScope, 16, kind, 0, 0, inGroup, 1);
+          left = parseSpreadOrRestElement(parser, context, scope, privateScope, 16, kind, 0, inGroup, 1);
         } else {
           parser.report(30, KeywordDescTable[token & 255]);
         }
@@ -14597,7 +13383,7 @@ format:`, anonymisedFormat);
       if (token === 67108877) {
         nextToken(parser, context | 262144);
         parser.assignable = 1;
-        const property = parsePropertyOrPrivatePropertyName(parser, context, privateScope);
+        const property = parsePropertyOrPrivatePropertyName(parser, context, privateScope, 1);
         return parseMemberExpressionNoCall(parser, context, privateScope, parser.finishNode({
           type: "MemberExpression",
           object: expr,
@@ -14635,7 +13421,7 @@ format:`, anonymisedFormat);
     const id = parseIdentifier(parser, context | 32);
     const { tokenStart } = parser;
     if (consumeOpt(parser, context, 67108877)) {
-      if (context & 65536 && parser.getToken() === 209029) {
+      if (context & 65536 && parser.getToken() === 209030) {
         parser.assignable = 2;
         return parseMetaProperty(parser, context, id, start);
       }
@@ -14647,8 +13433,8 @@ format:`, anonymisedFormat);
     }
     const expr = parsePrimaryExpression(parser, context, privateScope, 2, 1, 0, inGroup, 1, tokenStart);
     context = (context | 131072) ^ 131072;
-    if (parser.getToken() === 67108990)
-      parser.report(168);
+    if (parser.getToken() === 67108991)
+      parser.report(170);
     const callee = parseMemberExpressionNoCall(parser, context, privateScope, expr, inGroup, tokenStart);
     parser.assignable = 2;
     return parser.finishNode({
@@ -14680,10 +13466,12 @@ format:`, anonymisedFormat);
     return parseArrowFromIdentifier(parser, context & -524289 | 2048, privateScope, parser.tokenValue, parseIdentifier(parser, context), 0, canAssign, 1, start);
   }
   __name(parseAsyncArrowAfterIdent, "parseAsyncArrowAfterIdent");
-  function parseAsyncArrowOrCallExpression(parser, context, privateScope, callee, canAssign, kind, origin, flags, start) {
+  function parseAsyncArrowOrCallExpression(parser, context, privateScope, callee, canAssign, kind, flags, start) {
     var _a2;
     nextToken(parser, context | 32);
     const scope = (_a2 = parser.createScopeIfLexical()) == null ? void 0 : _a2.createChildScope(512);
+    const previousFirstAwaitLocation = parser.firstAwaitLocation;
+    parser.firstAwaitLocation = null;
     context = (context | 131072) ^ 131072;
     if (consumeOpt(parser, context, 16)) {
       if (parser.getToken() === 10) {
@@ -14691,6 +13479,13 @@ format:`, anonymisedFormat);
           parser.report(48);
         return parseParenthesizedArrow(parser, context, scope, privateScope, [], canAssign, 1, start);
       }
+      if (!(context & 1) && parser.options.webcompat) {
+        parser.assignable = 4;
+      } else {
+        parser.assignable = 2;
+      }
+      if (previousFirstAwaitLocation)
+        parser.firstAwaitLocation = previousFirstAwaitLocation;
       return parser.finishNode({
         type: "CallExpression",
         callee,
@@ -14699,15 +13494,15 @@ format:`, anonymisedFormat);
       }, start);
     }
     let destructible = 0;
-    let expr = null;
+    let expr;
     let isNonSimpleParameterList = 0;
     parser.destructible = (parser.destructible | 256 | 128) ^ (256 | 128);
     const params = [];
     while (parser.getToken() !== 16) {
-      const { tokenStart } = parser;
+      const { tokenStart, currentLocation } = parser;
       const token = parser.getToken();
       if (token & 143360) {
-        scope == null ? void 0 : scope.addBlockName(context, parser.tokenValue, kind, 0);
+        scope == null ? void 0 : scope.addBlockName(context, parser.tokenValue, kind, tokenStart, currentLocation);
         if ((token & 537079808) === 537079808) {
           parser.flags |= 512;
         } else if ((token & 36864) === 36864) {
@@ -14731,12 +13526,12 @@ format:`, anonymisedFormat);
           }
         }
       } else if (token & 2097152) {
-        expr = token === 2162700 ? parseObjectLiteralOrPattern(parser, context, scope, privateScope, 0, 1, 0, kind, origin) : parseArrayExpressionOrPattern(parser, context, scope, privateScope, 0, 1, 0, kind, origin);
+        expr = token === 2162700 ? parseObjectLiteralOrPattern(parser, context, scope, privateScope, 0, 1, 0, kind) : parseArrayExpressionOrPattern(parser, context, scope, privateScope, 0, 1, 0, kind);
         destructible |= parser.destructible;
         isNonSimpleParameterList = 1;
         if (parser.getToken() !== 16 && parser.getToken() !== 18) {
           if (destructible & 8)
-            parser.report(122);
+            parser.report(124);
           expr = parseMemberOrUpdateExpression(parser, context, privateScope, expr, 0, 0, tokenStart);
           destructible |= 16;
           if ((parser.getToken() & 8388608) === 8388608) {
@@ -14747,12 +13542,12 @@ format:`, anonymisedFormat);
           }
         }
       } else if (token === 14) {
-        expr = parseSpreadOrRestElement(parser, context, scope, privateScope, 16, kind, origin, 1, 1, 0);
+        expr = parseSpreadOrRestElement(parser, context, scope, privateScope, 16, kind, 1, 1, 0);
         destructible |= (parser.getToken() === 16 ? 0 : 16) | parser.destructible;
         isNonSimpleParameterList = 1;
       } else {
         expr = parseExpression(parser, context, privateScope, 1, 0, tokenStart);
-        destructible = parser.assignable;
+        destructible = 0;
         params.push(expr);
         while (consumeOpt(parser, context | 32, 18)) {
           params.push(parseExpression(parser, context, privateScope, 1, 0, tokenStart));
@@ -14760,7 +13555,13 @@ format:`, anonymisedFormat);
         destructible |= parser.assignable;
         consume(parser, context, 16);
         parser.destructible = destructible | 16;
-        parser.assignable = 2;
+        if (!(context & 1) && parser.options.webcompat) {
+          parser.assignable = 4;
+        } else {
+          parser.assignable = 2;
+        }
+        if (previousFirstAwaitLocation)
+          parser.firstAwaitLocation = previousFirstAwaitLocation;
         return parser.finishNode({
           type: "CallExpression",
           callee,
@@ -14773,14 +13574,18 @@ format:`, anonymisedFormat);
         break;
     }
     consume(parser, context, 16);
-    destructible |= parser.destructible & 256 ? 256 : 0 | parser.destructible & 128 ? 128 : 0;
+    destructible |= (parser.destructible & 256 ? 256 : 0) | (parser.destructible & 128 ? 128 : 0);
     if (parser.getToken() === 10) {
       if (destructible & (32 | 16))
         parser.report(27);
       if (parser.flags & 1 || flags & 1)
         parser.report(48);
-      if (destructible & 128)
+      if (destructible & 128) {
+        const loc = parser.firstAwaitLocation;
+        if (loc)
+          throw new ParseError(loc.start, loc.end, 31);
         parser.report(31);
+      }
       if (context & (1 | 1024) && destructible & 256)
         parser.report(32);
       if (isNonSimpleParameterList)
@@ -14793,7 +13598,13 @@ format:`, anonymisedFormat);
     if (destructible & 8) {
       parser.report(62);
     }
-    parser.assignable = 2;
+    if (!(context & 1) && parser.options.webcompat) {
+      parser.assignable = 4;
+    } else {
+      parser.assignable = 2;
+    }
+    if (previousFirstAwaitLocation)
+      parser.firstAwaitLocation = previousFirstAwaitLocation;
     return parser.finishNode({
       type: "CallExpression",
       callee,
@@ -14821,9 +13632,6 @@ format:`, anonymisedFormat);
     let start;
     let decorators;
     if (parser.leadingDecorators.decorators.length) {
-      if (parser.getToken() === 132) {
-        parser.report(30, "@");
-      }
       start = parser.leadingDecorators.start;
       decorators = [...parser.leadingDecorators.decorators];
       parser.leadingDecorators.decorators.length = 0;
@@ -14832,19 +13640,19 @@ format:`, anonymisedFormat);
       decorators = parseDecorators(parser, context, privateScope);
     }
     context = (context | 16384 | 1) ^ 16384;
-    nextToken(parser, context);
+    consume(parser, context, 86094);
     let id = null;
     let superClass = null;
-    const { tokenValue } = parser;
+    const { tokenValue, tokenStart, currentLocation } = parser;
     if (parser.getToken() & 4096 && parser.getToken() !== 20565) {
       if (isStrictReservedWord(parser, context, parser.getToken())) {
-        parser.report(118);
+        parser.report(120);
       }
       if ((parser.getToken() & 537079808) === 537079808) {
-        parser.report(119);
+        parser.report(121);
       }
       if (scope) {
-        scope.addBlockName(context, tokenValue, 32, 0);
+        scope.addBlockName(context, tokenValue, 32, tokenStart, currentLocation);
         if (flags) {
           if (flags & 2) {
             parser.declareUnboundVariable(tokenValue);
@@ -14863,13 +13671,13 @@ format:`, anonymisedFormat);
     } else {
       inheritedContext = (inheritedContext | 512) ^ 512;
     }
-    const body = parseClassBody(parser, inheritedContext, context, scope, privateScope, 2, 8, 0);
+    const body = parseClassBody(parser, inheritedContext, context, scope, privateScope, 2, 0, 8);
     return parser.finishNode({
       type: "ClassDeclaration",
       id,
       superClass,
       body,
-      ...parser.options.next ? { decorators } : null
+      ...parser.features & 1 ? { decorators } : null
     }, start);
   }
   __name(parseClassDeclaration, "parseClassDeclaration");
@@ -14878,12 +13686,12 @@ format:`, anonymisedFormat);
     let superClass = null;
     const decorators = parseDecorators(parser, context, privateScope);
     context = (context | 1 | 16384) ^ 16384;
-    nextToken(parser, context);
+    consume(parser, context, 86094);
     if (parser.getToken() & 4096 && parser.getToken() !== 20565) {
       if (isStrictReservedWord(parser, context, parser.getToken()))
-        parser.report(118);
+        parser.report(120);
       if ((parser.getToken() & 537079808) === 537079808) {
-        parser.report(119);
+        parser.report(121);
       }
       id = parseIdentifier(parser, context);
     }
@@ -14894,39 +13702,75 @@ format:`, anonymisedFormat);
     } else {
       inheritedContext = (inheritedContext | 512) ^ 512;
     }
-    const body = parseClassBody(parser, inheritedContext, context, void 0, privateScope, 2, 0, inGroup);
+    const body = parseClassBody(parser, inheritedContext, context, void 0, privateScope, 2, inGroup);
     parser.assignable = 2;
     return parser.finishNode({
       type: "ClassExpression",
       id,
       superClass,
       body,
-      ...parser.options.next ? { decorators } : null
+      ...parser.features & 1 ? { decorators } : null
     }, start);
   }
   __name(parseClassExpression, "parseClassExpression");
   function parseDecorators(parser, context, privateScope) {
     const list = [];
-    if (parser.options.next) {
-      while (parser.getToken() === 132) {
-        list.push(parseDecoratorList(parser, context, privateScope));
+    if (parser.features & 1) {
+      while (parser.getToken() === 133) {
+        list.push(parseDecorator(parser, context, privateScope));
       }
     }
     return list;
   }
   __name(parseDecorators, "parseDecorators");
-  function parseDecoratorList(parser, context, privateScope) {
+  function parseDecorator(parser, context, privateScope) {
     const start = parser.tokenStart;
     nextToken(parser, context | 32);
-    let expression = parsePrimaryExpression(parser, context, privateScope, 2, 0, 1, 0, 1, start);
-    expression = parseMemberOrUpdateExpression(parser, context, privateScope, expression, 0, 0, parser.tokenStart);
+    const expressionStart = parser.tokenStart;
+    let expression;
+    if (parser.getToken() === 67174411) {
+      expression = parsePrimaryExpression(parser, context, privateScope, 2, 0, 1, 0, 1, start);
+    } else {
+      const token = parser.getToken();
+      if ((token & 143360) !== 143360 && !isValidIdentifier(context, token) || context & 1 && (token & 36864) === 36864) {
+        parser.report(30, KeywordDescTable[token & 255]);
+      }
+      if (token === 209006 && context & (2048 | 2)) {
+        parser.report(112);
+      }
+      if (token === 241771 && context & 1024) {
+        parser.report(97, "yield");
+      }
+      let memberExpression = parseIdentifier(parser, context | 64);
+      while (parser.getToken() === 67108877) {
+        nextToken(parser, (context | 262144 | 8) ^ 8);
+        const property = parsePropertyOrPrivatePropertyName(parser, context | 64, privateScope, 1);
+        memberExpression = parser.finishNode({
+          type: "MemberExpression",
+          object: memberExpression,
+          computed: false,
+          property,
+          optional: false
+        }, expressionStart);
+      }
+      expression = memberExpression;
+      if (parser.getToken() === 67174411) {
+        const args = parseArguments(parser, context, privateScope, 0);
+        expression = parser.finishNode({
+          type: "CallExpression",
+          callee: memberExpression,
+          arguments: args,
+          optional: false
+        }, expressionStart);
+      }
+    }
     return parser.finishNode({
       type: "Decorator",
       expression
     }, start);
   }
-  __name(parseDecoratorList, "parseDecoratorList");
-  function parseClassBody(parser, context, inheritedContext, scope, parentScope, kind, origin, inGroup) {
+  __name(parseDecorator, "parseDecorator");
+  function parseClassBody(parser, context, inheritedContext, scope, parentScope, kind, inGroup, origin = 0) {
     const { tokenStart } = parser;
     const privateScope = parser.createPrivateScopeIfLexical(parentScope);
     consume(parser, context | 32, 2162700);
@@ -14939,13 +13783,13 @@ format:`, anonymisedFormat);
       const decoratorStart = parser.tokenStart;
       const decorators = parseDecorators(parser, context, privateScope);
       if (decorators.length > 0 && parser.tokenValue === "constructor") {
-        parser.report(109);
+        parser.report(111);
       }
       if (parser.getToken() === 1074790415)
-        parser.report(108);
+        parser.report(110);
       if (consumeOpt(parser, context, 1074790417)) {
         if (decorators.length > 0)
-          parser.report(120);
+          parser.report(122);
         continue;
       }
       body.push(parseClassElementList(parser, context, scope, privateScope, inheritedContext, kind, decorators, 0, inGroup, decorators.length > 0 ? decoratorStart : parser.tokenStart));
@@ -14963,7 +13807,7 @@ format:`, anonymisedFormat);
     let kind = isStatic ? 32 : 0;
     let key = null;
     const token = parser.getToken();
-    if (token & (143360 | 36864) || token === -2147483528) {
+    if (token & (143360 | 36864) || token === -2147483527) {
       key = parseIdentifier(parser, context);
       switch (token) {
         case 36970:
@@ -14981,6 +13825,9 @@ format:`, anonymisedFormat);
           break;
         case 209008:
           if (parser.getToken() !== 67174411) {
+            if (parser.getToken() === 8391476 && parser.flags & 1) {
+              return parsePropertyDefinition(parser, context, privateScope, key, kind, decorators, start);
+            }
             if ((parser.getToken() & 1073741824) === 1073741824) {
               return parsePropertyDefinition(parser, context, privateScope, key, kind, decorators, start);
             }
@@ -14989,18 +13836,21 @@ format:`, anonymisedFormat);
           break;
         case 209009:
           if (parser.getToken() !== 67174411) {
+            if (parser.getToken() === 8391476 && parser.flags & 1) {
+              return parsePropertyDefinition(parser, context, privateScope, key, kind, decorators, start);
+            }
             if ((parser.getToken() & 1073741824) === 1073741824) {
               return parsePropertyDefinition(parser, context, privateScope, key, kind, decorators, start);
             }
             kind |= 512;
           }
           break;
-        case 12402:
+        case 209010:
           if (parser.getToken() !== 67174411 && (parser.flags & 1) === 0) {
             if ((parser.getToken() & 1073741824) === 1073741824) {
               return parsePropertyDefinition(parser, context, privateScope, key, kind, decorators, start);
             }
-            if (parser.options.next)
+            if (parser.features & 1)
               kind |= 1024;
           }
           break;
@@ -15013,14 +13863,14 @@ format:`, anonymisedFormat);
     } else if (token === 8391476) {
       kind |= 8;
       nextToken(parser, context);
-    } else if (parser.getToken() === 130) {
+    } else if (parser.getToken() === 131) {
       kind |= 8192;
       key = parsePrivateIdentifier(parser, context | 16, privateScope, 768);
     } else if ((parser.getToken() & 1073741824) === 1073741824) {
       kind |= 128;
     } else if (isStatic && token === 2162700) {
       return parseStaticBlock(parser, context | 16, scope, privateScope, start);
-    } else if (token === -2147483527) {
+    } else if (token === -2147483526) {
       key = parseIdentifier(parser, context);
       if (parser.getToken() !== 67174411)
         parser.report(30, KeywordDescTable[parser.getToken() & 255]);
@@ -15028,23 +13878,23 @@ format:`, anonymisedFormat);
       parser.report(30, KeywordDescTable[parser.getToken() & 255]);
     }
     if (kind & (8 | 16 | 768 | 1024)) {
-      if (parser.getToken() & 143360 || parser.getToken() === -2147483528 || parser.getToken() === -2147483527) {
+      if (parser.getToken() & 143360 || parser.getToken() === -2147483527 || parser.getToken() === -2147483526) {
         key = parseIdentifier(parser, context);
       } else if ((parser.getToken() & 134217728) === 134217728) {
         key = parseLiteral(parser, context);
       } else if (parser.getToken() === 69271571) {
         kind |= 2;
         key = parseComputedPropertyName(parser, context, privateScope, 0);
-      } else if (parser.getToken() === 130) {
+      } else if (parser.getToken() === 131) {
         kind |= 8192;
         key = parsePrivateIdentifier(parser, context, privateScope, kind);
       } else
-        parser.report(135);
+        parser.report(137);
     }
     if ((kind & 2) === 0) {
       if (parser.tokenValue === "constructor") {
         if ((parser.getToken() & 1073741824) === 1073741824) {
-          parser.report(129);
+          parser.report(131);
         } else if ((kind & 32) === 0 && parser.getToken() === 67174411) {
           if (kind & (768 | 16 | 128 | 8)) {
             parser.report(53, "accessor");
@@ -15071,7 +13921,7 @@ format:`, anonymisedFormat);
       computed: (kind & 2) > 0,
       key,
       value,
-      ...parser.options.next ? { decorators } : null
+      ...parser.features & 1 ? { decorators } : null
     }, start);
   }
   __name(parseClassElementList, "parseClassElementList");
@@ -15080,7 +13930,7 @@ format:`, anonymisedFormat);
     nextToken(parser, context);
     const { tokenValue } = parser;
     if (tokenValue === "constructor")
-      parser.report(128);
+      parser.report(130);
     if (parser.options.lexical) {
       if (!privateScope)
         parser.report(4, tokenValue);
@@ -15104,11 +13954,11 @@ format:`, anonymisedFormat);
     if (parser.getToken() === 1077936155) {
       nextToken(parser, context | 32);
       const { tokenStart } = parser;
-      if (parser.getToken() === 537079927)
-        parser.report(119);
+      if (parser.getToken() === 537079928)
+        parser.report(121);
       const modifierFlags = 1024 | 2048 | 8192 | ((state & 64) === 0 ? 512 | 16384 : 0);
       context = (context | modifierFlags) ^ modifierFlags | (state & 8 ? 1024 : 0) | (state & 16 ? 2048 : 0) | (state & 64 ? 16384 : 0) | 256 | 65536;
-      value = parsePrimaryExpression(parser, context | 16, privateScope, 2, 0, 1, 0, 1, tokenStart);
+      value = parsePrimaryExpression(parser, context | 16, privateScope, 2, 0, 1, 0, 1, tokenStart, 0, 1);
       if ((parser.getToken() & 1073741824) !== 1073741824 || (parser.getToken() & 4194304) === 4194304) {
         value = parseMemberOrUpdateExpression(parser, context | 16, privateScope, value, 0, 0, tokenStart);
         value = parseAssignmentExpression(parser, context | 16, privateScope, 0, 0, tokenStart, value);
@@ -15121,16 +13971,16 @@ format:`, anonymisedFormat);
       value,
       static: (state & 32) > 0,
       computed: (state & 2) > 0,
-      ...parser.options.next ? { decorators } : null
+      ...parser.features & 1 ? { decorators } : null
     }, start);
   }
   __name(parsePropertyDefinition, "parsePropertyDefinition");
-  function parseBindingPattern(parser, context, scope, privateScope, type, origin) {
-    if (parser.getToken() & 143360 || (context & 1) === 0 && parser.getToken() === -2147483527)
-      return parseAndClassifyIdentifier(parser, context, scope, type, origin);
+  function parseBindingPattern(parser, context, scope, privateScope, kind, origin = 0) {
+    if (parser.getToken() & 143360 || (context & 1) === 0 && parser.getToken() === -2147483526)
+      return parseAndClassifyIdentifier(parser, context, scope, kind, origin);
     if ((parser.getToken() & 2097152) !== 2097152)
       parser.report(30, KeywordDescTable[parser.getToken() & 255]);
-    const left = parser.getToken() === 69271571 ? parseArrayExpressionOrPattern(parser, context, scope, privateScope, 1, 0, 1, type, origin) : parseObjectLiteralOrPattern(parser, context, scope, privateScope, 1, 0, 1, type, origin);
+    const left = parser.getToken() === 69271571 ? parseArrayExpressionOrPattern(parser, context, scope, privateScope, 1, 0, 1, kind, origin) : parseObjectLiteralOrPattern(parser, context, scope, privateScope, 1, 0, 1, kind, origin);
     if (parser.destructible & 16)
       parser.report(50);
     if (parser.destructible & 32)
@@ -15138,13 +13988,13 @@ format:`, anonymisedFormat);
     return left;
   }
   __name(parseBindingPattern, "parseBindingPattern");
-  function parseAndClassifyIdentifier(parser, context, scope, kind, origin) {
+  function parseAndClassifyIdentifier(parser, context, scope, kind, origin = 0) {
     const token = parser.getToken();
     if (context & 1) {
       if ((token & 537079808) === 537079808) {
-        parser.report(119);
-      } else if ((token & 36864) === 36864 || token === -2147483527) {
-        parser.report(118);
+        parser.report(121);
+      } else if ((token & 36864) === 36864 || token === -2147483526) {
+        parser.report(120);
       }
     }
     if ((token & 20480) === 20480) {
@@ -15154,7 +14004,7 @@ format:`, anonymisedFormat);
       if (context & 1024)
         parser.report(32);
       if (context & 2)
-        parser.report(111);
+        parser.report(113);
     }
     if ((token & 255) === (241737 & 255)) {
       if (kind & (8 | 16))
@@ -15162,17 +14012,17 @@ format:`, anonymisedFormat);
     }
     if (token === 209006) {
       if (context & 2048)
-        parser.report(176);
+        parser.report(178);
       if (context & 2)
-        parser.report(110);
+        parser.report(112);
     }
-    const { tokenValue, tokenStart: start } = parser;
+    const { tokenValue, tokenStart, currentLocation } = parser;
     nextToken(parser, context);
-    scope == null ? void 0 : scope.addVarOrBlock(context, tokenValue, kind, origin);
+    scope == null ? void 0 : scope.addVarOrBlock(context, tokenValue, kind, tokenStart, currentLocation, origin);
     return parser.finishNode({
       type: "Identifier",
       name: tokenValue
-    }, start);
+    }, tokenStart);
   }
   __name(parseAndClassifyIdentifier, "parseAndClassifyIdentifier");
   function parseJSXRootElementOrFragment(parser, context, privateScope, inJSXChild, start) {
@@ -15197,7 +14047,7 @@ format:`, anonymisedFormat);
       [children, closingElement] = parseJSXChildrenAndClosingElement(parser, context, privateScope, inJSXChild);
       const close = isEqualTagName(closingElement.name);
       if (isEqualTagName(openingElement.name) !== close)
-        parser.report(155, close);
+        parser.report(157, close);
     }
     return parser.finishNode({
       type: "JSXElement",
@@ -15269,8 +14119,8 @@ format:`, anonymisedFormat);
   }
   __name(parseJSXChildrenAndClosingFragment, "parseJSXChildrenAndClosingFragment");
   function parseJSXChildOrClosingElement(parser, context, privateScope, inJSXChild) {
-    if (parser.getToken() === 137)
-      return parseJSXText(parser, context);
+    if (parser.getToken() === 138)
+      return parseJSXText(parser);
     if (parser.getToken() === 2162700)
       return parseJSXExpressionContainer(parser, context, privateScope, 1, 0);
     if (parser.getToken() === 8456256) {
@@ -15284,8 +14134,8 @@ format:`, anonymisedFormat);
   }
   __name(parseJSXChildOrClosingElement, "parseJSXChildOrClosingElement");
   function parseJSXChildOrClosingFragment(parser, context, privateScope, inJSXChild) {
-    if (parser.getToken() === 137)
-      return parseJSXText(parser, context);
+    if (parser.getToken() === 138)
+      return parseJSXText(parser);
     if (parser.getToken() === 2162700)
       return parseJSXExpressionContainer(parser, context, privateScope, 1, 0);
     if (parser.getToken() === 8456256) {
@@ -15298,9 +14148,9 @@ format:`, anonymisedFormat);
     parser.report(0);
   }
   __name(parseJSXChildOrClosingFragment, "parseJSXChildOrClosingFragment");
-  function parseJSXText(parser, context) {
+  function parseJSXText(parser) {
     const start = parser.tokenStart;
-    nextToken(parser, context);
+    nextJSXToken(parser);
     const node = {
       type: "JSXText",
       value: parser.tokenValue
@@ -15318,7 +14168,7 @@ format:`, anonymisedFormat);
     const attributes = parseJSXAttributes(parser, context, privateScope);
     const selfClosing = parser.getToken() === 8457014;
     if (selfClosing)
-      consume(parser, context, 8457014);
+      consume(parser, context | 1048576, 8457014);
     if (parser.getToken() !== 8390721) {
       parser.report(25, KeywordDescTable[8390721 & 255]);
     }
@@ -15400,7 +14250,7 @@ format:`, anonymisedFormat);
           value = parseJSXExpressionContainer(parser, context, privateScope, 0, 1);
           break;
         default:
-          parser.report(154);
+          parser.report(156);
       }
     }
     return parser.finishNode({
@@ -15426,10 +14276,10 @@ format:`, anonymisedFormat);
     const { tokenStart } = parser;
     if (parser.getToken() === 14)
       return parseJSXSpreadChild(parser, context, privateScope, start);
-    let expression = null;
+    let expression;
     if (parser.getToken() === 1074790415) {
       if (isAttr)
-        parser.report(157);
+        parser.report(159);
       expression = parseJSXEmptyExpression(parser, {
         index: parser.startIndex,
         line: parser.startLine,
@@ -15474,19 +14324,20 @@ format:`, anonymisedFormat);
       parser.report(30, KeywordDescTable[parser.getToken() & 255]);
     }
     const { tokenValue } = parser;
-    nextToken(parser, context);
+    nextToken(parser, context | 1048576);
     return parser.finishNode({
       type: "JSXIdentifier",
       name: tokenValue
     }, start);
   }
   __name(parseJSXIdentifier, "parseJSXIdentifier");
+  var { version } = packageJson;
   function parseScript(source, options) {
-    return parseSource(source, options);
+    return parseSource(source, { ...options, sourceType: "script" });
   }
   __name(parseScript, "parseScript");
 
-  // dist/src/utils/javascript/JsAnalyzer.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/javascript/JsAnalyzer.js
   var _JsAnalyzer = class _JsAnalyzer {
     /**
      * Creates a new instance over the provided source.
@@ -15985,7 +14836,7 @@ format:`, anonymisedFormat);
   __name(_JsAnalyzer, "JsAnalyzer");
   var JsAnalyzer = _JsAnalyzer;
 
-  // dist/src/utils/javascript/JsExtractor.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/javascript/JsExtractor.js
   var _JsExtractor = class _JsExtractor {
     constructor(analyzer) {
       __publicField(this, "analyzer");
@@ -16348,7 +15199,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_JsExtractor, "JsExtractor");
   var JsExtractor = _JsExtractor;
 
-  // dist/src/parser/classes/actions/OpenPopupAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/OpenPopupAction.js
   var _OpenPopupAction = class _OpenPopupAction extends YTNode {
     constructor(data) {
       super();
@@ -16362,7 +15213,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_OpenPopupAction, "type", "OpenPopupAction");
   var OpenPopupAction = _OpenPopupAction;
 
-  // dist/src/parser/classes/Button.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Button.js
   var _Button = class _Button extends YTNode {
     constructor(data) {
       super();
@@ -16405,7 +15256,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Button, "type", "Button");
   var Button = _Button;
 
-  // dist/src/parser/classes/DropdownItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DropdownItem.js
   var _DropdownItem = class _DropdownItem extends YTNode {
     constructor(data) {
       var _a2;
@@ -16438,7 +15289,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DropdownItem, "type", "DropdownItem");
   var DropdownItem = _DropdownItem;
 
-  // dist/src/parser/classes/Dropdown.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Dropdown.js
   var _Dropdown = class _Dropdown extends YTNode {
     constructor(data) {
       super();
@@ -16452,7 +15303,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Dropdown, "type", "Dropdown");
   var Dropdown = _Dropdown;
 
-  // dist/src/parser/classes/CreatePlaylistDialog.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CreatePlaylistDialog.js
   var _CreatePlaylistDialog = class _CreatePlaylistDialog extends YTNode {
     constructor(data) {
       super();
@@ -16472,7 +15323,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CreatePlaylistDialog, "type", "CreatePlaylistDialog");
   var CreatePlaylistDialog = _CreatePlaylistDialog;
 
-  // dist/src/parser/classes/commands/CommandExecutorCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/CommandExecutorCommand.js
   var _CommandExecutorCommand = class _CommandExecutorCommand extends YTNode {
     constructor(data) {
       super();
@@ -16484,7 +15335,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommandExecutorCommand, "type", "CommandExecutorCommand");
   var CommandExecutorCommand = _CommandExecutorCommand;
 
-  // dist/src/parser/classes/NavigationEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/NavigationEndpoint.js
   var _NavigationEndpoint = class _NavigationEndpoint extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f, _g, _h;
@@ -16590,7 +15441,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_NavigationEndpoint, "type", "NavigationEndpoint");
   var NavigationEndpoint = _NavigationEndpoint;
 
-  // dist/src/parser/classes/misc/Thumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/Thumbnail.js
   var _Thumbnail = class _Thumbnail {
     constructor(data) {
       __publicField(this, "url");
@@ -16621,7 +15472,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_Thumbnail, "Thumbnail");
   var Thumbnail = _Thumbnail;
 
-  // dist/src/parser/classes/misc/EmojiRun.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/EmojiRun.js
   var _EmojiRun = class _EmojiRun {
     constructor(data) {
       __publicField(this, "text");
@@ -16647,7 +15498,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_EmojiRun, "EmojiRun");
   var EmojiRun = _EmojiRun;
 
-  // dist/src/parser/classes/misc/TextRun.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/TextRun.js
   var _TextRun = class _TextRun {
     constructor(data) {
       __publicField(this, "text");
@@ -16733,7 +15584,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_TextRun, "TextRun");
   var TextRun = _TextRun;
 
-  // dist/src/parser/classes/misc/Text.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/Text.js
   function escape(text) {
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
@@ -16814,8 +15665,16 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
         this.processStyleRuns(runs, style_runs, data);
       if (command_runs == null ? void 0 : command_runs.length)
         this.processCommandRuns(runs, command_runs, data);
-      if (attachment_runs == null ? void 0 : attachment_runs.length)
-        this.processAttachmentRuns(runs, attachment_runs, data);
+      const normalized_attachment_runs = attachment_runs == null ? void 0 : attachment_runs.map((run) => {
+        var _a3, _b2;
+        return {
+          ...run,
+          startIndex: (_a3 = run.startIndex) != null ? _a3 : 0,
+          length: (_b2 = run.length) != null ? _b2 : 0
+        };
+      });
+      if (normalized_attachment_runs == null ? void 0 : normalized_attachment_runs.length)
+        this.processAttachmentRuns(runs, normalized_attachment_runs, data);
       return new _Text({ runs });
     }
     static processStyleRuns(runs, style_runs, data) {
@@ -16893,7 +15752,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
           const offset_start_index = attachment_run.startIndex - matching_run.startIndex;
           const text = matching_run.text.substring(offset_start_index, offset_start_index + attachment_run.length);
           const is_custom_emoji = /^:[^:]+:$/.test(text);
-          if (((_c = (_b2 = (_a2 = attachment_run.element) == null ? void 0 : _a2.type) == null ? void 0 : _b2.imageType) == null ? void 0 : _c.image) && (is_custom_emoji || new RegExp("^(?:\\p{Emoji}|\\u200d)+$", "u").test(text))) {
+          if (((_c = (_b2 = (_a2 = attachment_run.element) == null ? void 0 : _a2.type) == null ? void 0 : _b2.imageType) == null ? void 0 : _c.image) && (is_custom_emoji || /^(?:\p{Emoji}|\u200d)+$/u.test(text))) {
             const emoji = {
               image: attachment_run.element.type.imageType.image,
               isCustomEmoji: is_custom_emoji,
@@ -16965,7 +15824,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   }
   __name(insertSubRun, "insertSubRun");
 
-  // dist/src/parser/classes/ChannelExternalLinkView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelExternalLinkView.js
   var _ChannelExternalLinkView = class _ChannelExternalLinkView extends YTNode {
     constructor(data) {
       super();
@@ -16981,7 +15840,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelExternalLinkView, "type", "ChannelExternalLinkView");
   var ChannelExternalLinkView = _ChannelExternalLinkView;
 
-  // dist/src/parser/classes/AboutChannelView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AboutChannelView.js
   var _AboutChannelView = class _AboutChannelView extends YTNode {
     constructor(data) {
       super();
@@ -17049,7 +15908,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AboutChannelView, "type", "AboutChannelView");
   var AboutChannelView = _AboutChannelView;
 
-  // dist/src/parser/classes/AboutChannel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AboutChannel.js
   var _AboutChannel = class _AboutChannel extends YTNode {
     constructor(data) {
       super();
@@ -17063,7 +15922,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AboutChannel, "type", "AboutChannel");
   var AboutChannel = _AboutChannel;
 
-  // dist/src/parser/classes/AccountChannel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AccountChannel.js
   var _AccountChannel = class _AccountChannel extends YTNode {
     constructor(data) {
       super();
@@ -17077,7 +15936,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AccountChannel, "type", "AccountChannel");
   var AccountChannel = _AccountChannel;
 
-  // dist/src/parser/classes/AccountItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AccountItem.js
   var _AccountItem = class _AccountItem extends YTNode {
     constructor(data) {
       super();
@@ -17103,7 +15962,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AccountItem, "type", "AccountItem");
   var AccountItem = _AccountItem;
 
-  // dist/src/parser/classes/AccountItemSectionHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AccountItemSectionHeader.js
   var _AccountItemSectionHeader = class _AccountItemSectionHeader extends YTNode {
     constructor(data) {
       super();
@@ -17115,7 +15974,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AccountItemSectionHeader, "type", "AccountItemSectionHeader");
   var AccountItemSectionHeader = _AccountItemSectionHeader;
 
-  // dist/src/parser/classes/CompactLink.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactLink.js
   var _CompactLink = class _CompactLink extends YTNode {
     constructor(data) {
       super();
@@ -17140,7 +15999,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompactLink, "type", "CompactLink");
   var CompactLink = _CompactLink;
 
-  // dist/src/parser/classes/AccountItemSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AccountItemSection.js
   var _AccountItemSection = class _AccountItemSection extends YTNode {
     constructor(data) {
       super();
@@ -17154,7 +16013,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AccountItemSection, "type", "AccountItemSection");
   var AccountItemSection = _AccountItemSection;
 
-  // dist/src/parser/classes/AccountSectionList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AccountSectionList.js
   var _AccountSectionList = class _AccountSectionList extends YTNode {
     constructor(data) {
       super();
@@ -17168,7 +16027,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AccountSectionList, "type", "AccountSectionList");
   var AccountSectionList = _AccountSectionList;
 
-  // dist/src/parser/classes/actions/AppendContinuationItemsAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/AppendContinuationItemsAction.js
   var _AppendContinuationItemsAction = class _AppendContinuationItemsAction extends YTNode {
     constructor(data) {
       super();
@@ -17182,7 +16041,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AppendContinuationItemsAction, "type", "AppendContinuationItemsAction");
   var AppendContinuationItemsAction = _AppendContinuationItemsAction;
 
-  // dist/src/parser/classes/actions/ChangeEngagementPanelVisibilityAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/ChangeEngagementPanelVisibilityAction.js
   var _ChangeEngagementPanelVisibilityAction = class _ChangeEngagementPanelVisibilityAction extends YTNode {
     constructor(data) {
       super();
@@ -17196,7 +16055,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChangeEngagementPanelVisibilityAction, "type", "ChangeEngagementPanelVisibilityAction");
   var ChangeEngagementPanelVisibilityAction = _ChangeEngagementPanelVisibilityAction;
 
-  // dist/src/parser/classes/menus/MultiPageMenu.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MultiPageMenu.js
   var _MultiPageMenu = class _MultiPageMenu extends YTNode {
     constructor(data) {
       super();
@@ -17212,7 +16071,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MultiPageMenu, "type", "MultiPageMenu");
   var MultiPageMenu = _MultiPageMenu;
 
-  // dist/src/parser/classes/actions/GetMultiPageMenuAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/GetMultiPageMenuAction.js
   var _GetMultiPageMenuAction = class _GetMultiPageMenuAction extends YTNode {
     constructor(data) {
       super();
@@ -17224,7 +16083,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GetMultiPageMenuAction, "type", "GetMultiPageMenuAction");
   var GetMultiPageMenuAction = _GetMultiPageMenuAction;
 
-  // dist/src/parser/classes/actions/SendFeedbackAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/SendFeedbackAction.js
   var _SendFeedbackAction = class _SendFeedbackAction extends YTNode {
     constructor(data) {
       super();
@@ -17236,7 +16095,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SendFeedbackAction, "type", "SendFeedbackAction");
   var SendFeedbackAction = _SendFeedbackAction;
 
-  // dist/src/parser/classes/actions/SignalAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/SignalAction.js
   var _SignalAction = class _SignalAction extends YTNode {
     constructor(data) {
       super();
@@ -17248,7 +16107,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SignalAction, "type", "SignalAction");
   var SignalAction = _SignalAction;
 
-  // dist/src/parser/classes/ChannelSwitcherPage.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelSwitcherPage.js
   var _ChannelSwitcherPage = class _ChannelSwitcherPage extends YTNode {
     constructor(data) {
       super();
@@ -17262,7 +16121,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelSwitcherPage, "type", "ChannelSwitcherPage");
   var ChannelSwitcherPage = _ChannelSwitcherPage;
 
-  // dist/src/parser/classes/actions/UpdateChannelSwitcherPageAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/UpdateChannelSwitcherPageAction.js
   var _UpdateChannelSwitcherPageAction = class _UpdateChannelSwitcherPageAction extends YTNode {
     constructor(data) {
       super();
@@ -17279,7 +16138,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateChannelSwitcherPageAction, "type", "UpdateChannelSwitcherPageAction");
   var UpdateChannelSwitcherPageAction = _UpdateChannelSwitcherPageAction;
 
-  // dist/src/parser/classes/SortFilterSubMenu.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SortFilterSubMenu.js
   var _SortFilterSubMenu = class _SortFilterSubMenu extends YTNode {
     constructor(data) {
       super();
@@ -17324,7 +16183,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SortFilterSubMenu, "type", "SortFilterSubMenu");
   var SortFilterSubMenu = _SortFilterSubMenu;
 
-  // dist/src/parser/classes/TranscriptFooter.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TranscriptFooter.js
   var _TranscriptFooter = class _TranscriptFooter extends YTNode {
     constructor(data) {
       super();
@@ -17336,7 +16195,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TranscriptFooter, "type", "TranscriptFooter");
   var TranscriptFooter = _TranscriptFooter;
 
-  // dist/src/parser/classes/TranscriptSearchBox.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSearchBox.js
   var _TranscriptSearchBox = class _TranscriptSearchBox extends YTNode {
     constructor(data) {
       super();
@@ -17354,7 +16213,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TranscriptSearchBox, "type", "TranscriptSearchBox");
   var TranscriptSearchBox = _TranscriptSearchBox;
 
-  // dist/src/parser/classes/TranscriptSectionHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSectionHeader.js
   var _TranscriptSectionHeader = class _TranscriptSectionHeader extends YTNode {
     constructor(data) {
       super();
@@ -17370,7 +16229,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TranscriptSectionHeader, "type", "TranscriptSectionHeader");
   var TranscriptSectionHeader = _TranscriptSectionHeader;
 
-  // dist/src/parser/classes/TranscriptSegment.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSegment.js
   var _TranscriptSegment = class _TranscriptSegment extends YTNode {
     constructor(data) {
       super();
@@ -17390,7 +16249,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TranscriptSegment, "type", "TranscriptSegment");
   var TranscriptSegment = _TranscriptSegment;
 
-  // dist/src/parser/classes/TranscriptSegmentList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSegmentList.js
   var _TranscriptSegmentList = class _TranscriptSegmentList extends YTNode {
     constructor(data) {
       super();
@@ -17408,7 +16267,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TranscriptSegmentList, "type", "TranscriptSegmentList");
   var TranscriptSegmentList = _TranscriptSegmentList;
 
-  // dist/src/parser/classes/TranscriptSearchPanel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSearchPanel.js
   var _TranscriptSearchPanel = class _TranscriptSearchPanel extends YTNode {
     constructor(data) {
       super();
@@ -17426,7 +16285,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TranscriptSearchPanel, "type", "TranscriptSearchPanel");
   var TranscriptSearchPanel = _TranscriptSearchPanel;
 
-  // dist/src/parser/classes/Transcript.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Transcript.js
   var _Transcript = class _Transcript extends YTNode {
     constructor(data) {
       super();
@@ -17438,7 +16297,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Transcript, "type", "Transcript");
   var Transcript = _Transcript;
 
-  // dist/src/parser/classes/actions/UpdateEngagementPanelAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/UpdateEngagementPanelAction.js
   var _UpdateEngagementPanelAction = class _UpdateEngagementPanelAction extends YTNode {
     constructor(data) {
       super();
@@ -17452,7 +16311,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateEngagementPanelAction, "type", "UpdateEngagementPanelAction");
   var UpdateEngagementPanelAction = _UpdateEngagementPanelAction;
 
-  // dist/src/parser/classes/actions/UpdateSubscribeButtonAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/UpdateSubscribeButtonAction.js
   var _UpdateSubscribeButtonAction = class _UpdateSubscribeButtonAction extends YTNode {
     constructor(data) {
       super();
@@ -17466,7 +16325,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateSubscribeButtonAction, "type", "UpdateSubscribeButtonAction");
   var UpdateSubscribeButtonAction = _UpdateSubscribeButtonAction;
 
-  // dist/src/parser/classes/ActiveAccountHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ActiveAccountHeader.js
   var _ActiveAccountHeader = class _ActiveAccountHeader extends YTNode {
     constructor(data) {
       super();
@@ -17486,7 +16345,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ActiveAccountHeader, "type", "ActiveAccountHeader");
   var ActiveAccountHeader = _ActiveAccountHeader;
 
-  // dist/src/parser/classes/MenuTitle.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MenuTitle.js
   var _MenuTitle = class _MenuTitle extends YTNode {
     constructor(data) {
       super();
@@ -17498,7 +16357,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MenuTitle, "type", "MenuTitle");
   var MenuTitle = _MenuTitle;
 
-  // dist/src/parser/classes/PlaylistAddToOption.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistAddToOption.js
   var _PlaylistAddToOption = class _PlaylistAddToOption extends YTNode {
     constructor(data) {
       var _a2;
@@ -17523,7 +16382,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistAddToOption, "type", "PlaylistAddToOption");
   var PlaylistAddToOption = _PlaylistAddToOption;
 
-  // dist/src/parser/classes/AddToPlaylist.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AddToPlaylist.js
   var _AddToPlaylist = class _AddToPlaylist extends YTNode {
     constructor(data) {
       super();
@@ -17537,7 +16396,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddToPlaylist, "type", "AddToPlaylist");
   var AddToPlaylist = _AddToPlaylist;
 
-  // dist/src/parser/classes/Alert.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Alert.js
   var _Alert = class _Alert extends YTNode {
     constructor(data) {
       super();
@@ -17551,7 +16410,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Alert, "type", "Alert");
   var Alert = _Alert;
 
-  // dist/src/parser/classes/AlertWithButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AlertWithButton.js
   var _AlertWithButton = class _AlertWithButton extends YTNode {
     constructor(data) {
       super();
@@ -17567,7 +16426,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AlertWithButton, "type", "AlertWithButton");
   var AlertWithButton = _AlertWithButton;
 
-  // dist/src/parser/classes/AnimatedThumbnailOverlayView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AnimatedThumbnailOverlayView.js
   var _AnimatedThumbnailOverlayView = class _AnimatedThumbnailOverlayView extends YTNode {
     constructor(data) {
       super();
@@ -17579,7 +16438,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AnimatedThumbnailOverlayView, "type", "AnimatedThumbnailOverlayView");
   var AnimatedThumbnailOverlayView = _AnimatedThumbnailOverlayView;
 
-  // dist/src/parser/classes/AttributionView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AttributionView.js
   var _AttributionView = class _AttributionView extends YTNode {
     constructor(data) {
       super();
@@ -17593,7 +16452,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AttributionView, "type", "AttributionView");
   var AttributionView = _AttributionView;
 
-  // dist/src/parser/classes/AudioOnlyPlayability.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AudioOnlyPlayability.js
   var _AudioOnlyPlayability = class _AudioOnlyPlayability extends YTNode {
     constructor(data) {
       super();
@@ -17605,7 +16464,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AudioOnlyPlayability, "type", "AudioOnlyPlayability");
   var AudioOnlyPlayability = _AudioOnlyPlayability;
 
-  // dist/src/parser/classes/AutomixPreviewVideo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AutomixPreviewVideo.js
   var _AutomixPreviewVideo = class _AutomixPreviewVideo extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -17622,7 +16481,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AutomixPreviewVideo, "type", "AutomixPreviewVideo");
   var AutomixPreviewVideo = _AutomixPreviewVideo;
 
-  // dist/src/parser/classes/AvatarView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AvatarView.js
   var _AvatarView = class _AvatarView extends YTNode {
     constructor(data) {
       super();
@@ -17644,7 +16503,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AvatarView, "type", "AvatarView");
   var AvatarView = _AvatarView;
 
-  // dist/src/parser/classes/misc/CommandContext.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/CommandContext.js
   var _CommandContext = class _CommandContext {
     constructor(data) {
       __publicField(this, "on_focus");
@@ -17682,7 +16541,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_CommandContext, "CommandContext");
   var CommandContext = _CommandContext;
 
-  // dist/src/parser/classes/misc/RendererContext.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/RendererContext.js
   var _RendererContext = class _RendererContext {
     constructor(data) {
       __publicField(this, "command_context");
@@ -17700,16 +16559,25 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_RendererContext, "RendererContext");
   var RendererContext = _RendererContext;
 
-  // dist/src/parser/classes/AvatarStackView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AvatarStackView.js
   var _AvatarStackView = class _AvatarStackView extends YTNode {
     constructor(data) {
       super();
       __publicField(this, "avatars");
       __publicField(this, "text");
+      __publicField(this, "avatar_cluster_size");
+      __publicField(this, "layout_type");
       __publicField(this, "renderer_context");
       this.avatars = parser_exports.parseArray(data.avatars, AvatarView);
-      if (Reflect.has(data, "text"))
+      if ("text" in data) {
         this.text = Text2.fromAttributed(data.text);
+      }
+      if ("avatarClusterSize" in data) {
+        this.avatar_cluster_size = data.avatarClusterSize;
+      }
+      if ("layoutType" in data) {
+        this.layout_type = data.layoutType;
+      }
       this.renderer_context = new RendererContext(data.rendererContext);
     }
   };
@@ -17717,7 +16585,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AvatarStackView, "type", "AvatarStackView");
   var AvatarStackView = _AvatarStackView;
 
-  // dist/src/parser/classes/ButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ButtonView.js
   var _ButtonView = class _ButtonView extends YTNode {
     constructor(data) {
       super();
@@ -17811,7 +16679,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ButtonView, "type", "ButtonView");
   var ButtonView = _ButtonView;
 
-  // dist/src/parser/classes/BackgroundPromo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BackgroundPromo.js
   var _BackgroundPromo = class _BackgroundPromo extends YTNode {
     constructor(data) {
       super();
@@ -17830,7 +16698,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BackgroundPromo, "type", "BackgroundPromo");
   var BackgroundPromo = _BackgroundPromo;
 
-  // dist/src/parser/classes/BackstageImage.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BackstageImage.js
   var _BackstageImage = class _BackstageImage extends YTNode {
     constructor(data) {
       super();
@@ -17844,7 +16712,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BackstageImage, "type", "BackstageImage");
   var BackstageImage = _BackstageImage;
 
-  // dist/src/parser/classes/ToggleButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ToggleButton.js
   var _ToggleButton = class _ToggleButton extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f, _g, _h, _i;
@@ -17888,7 +16756,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ToggleButton, "type", "ToggleButton");
   var ToggleButton = _ToggleButton;
 
-  // dist/src/parser/classes/comments/CreatorHeart.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CreatorHeart.js
   var _CreatorHeart = class _CreatorHeart extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -17919,7 +16787,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CreatorHeart, "type", "CreatorHeart");
   var CreatorHeart = _CreatorHeart;
 
-  // dist/src/parser/classes/comments/CommentActionButtons.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentActionButtons.js
   var _CommentActionButtons = class _CommentActionButtons extends YTNode {
     constructor(data) {
       super();
@@ -17937,7 +16805,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentActionButtons, "type", "CommentActionButtons");
   var CommentActionButtons = _CommentActionButtons;
 
-  // dist/src/parser/classes/ToggleButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ToggleButtonView.js
   var _ToggleButtonView = class _ToggleButtonView extends YTNode {
     constructor(data) {
       super();
@@ -17959,7 +16827,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ToggleButtonView, "type", "ToggleButtonView");
   var ToggleButtonView = _ToggleButtonView;
 
-  // dist/src/parser/classes/LikeButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LikeButtonView.js
   var _LikeButtonView = class _LikeButtonView extends YTNode {
     constructor(data) {
       super();
@@ -17978,7 +16846,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LikeButtonView, "type", "LikeButtonView");
   var LikeButtonView = _LikeButtonView;
 
-  // dist/src/parser/classes/DislikeButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DislikeButtonView.js
   var _DislikeButtonView = class _DislikeButtonView extends YTNode {
     constructor(data) {
       super();
@@ -17992,7 +16860,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DislikeButtonView, "type", "DislikeButtonView");
   var DislikeButtonView = _DislikeButtonView;
 
-  // dist/src/parser/classes/SegmentedLikeDislikeButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SegmentedLikeDislikeButtonView.js
   var _SegmentedLikeDislikeButtonView = class _SegmentedLikeDislikeButtonView extends YTNode {
     constructor(data) {
       super();
@@ -18033,7 +16901,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SegmentedLikeDislikeButtonView, "type", "SegmentedLikeDislikeButtonView");
   var SegmentedLikeDislikeButtonView = _SegmentedLikeDislikeButtonView;
 
-  // dist/src/parser/classes/menus/MenuServiceItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuServiceItem.js
   var _MenuServiceItem = class _MenuServiceItem extends Button {
     constructor(data) {
       super(data);
@@ -18043,7 +16911,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MenuServiceItem, "type", "MenuServiceItem");
   var MenuServiceItem = _MenuServiceItem;
 
-  // dist/src/parser/classes/DownloadButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DownloadButton.js
   var _DownloadButton = class _DownloadButton extends YTNode {
     constructor(data) {
       super();
@@ -18062,7 +16930,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DownloadButton, "type", "DownloadButton");
   var DownloadButton = _DownloadButton;
 
-  // dist/src/parser/classes/menus/MenuServiceItemDownload.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuServiceItemDownload.js
   var _MenuServiceItemDownload = class _MenuServiceItemDownload extends YTNode {
     constructor(data) {
       super();
@@ -18076,7 +16944,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MenuServiceItemDownload, "type", "MenuServiceItemDownload");
   var MenuServiceItemDownload = _MenuServiceItemDownload;
 
-  // dist/src/parser/classes/SubscribeButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SubscribeButtonView.js
   var _SubscribeButtonView_instances, parseButtonContent_fn;
   var _SubscribeButtonView = class _SubscribeButtonView extends YTNode {
     constructor(data) {
@@ -18135,7 +17003,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SubscribeButtonView, "type", "SubscribeButtonView");
   var SubscribeButtonView = _SubscribeButtonView;
 
-  // dist/src/parser/classes/ListItemView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ListItemView.js
   var _ListItemView = class _ListItemView extends YTNode {
     constructor(data) {
       var _a2;
@@ -18182,7 +17050,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ListItemView, "type", "ListItemView");
   var ListItemView = _ListItemView;
 
-  // dist/src/parser/classes/menus/MenuFlexibleItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuFlexibleItem.js
   var _MenuFlexibleItem = class _MenuFlexibleItem extends YTNode {
     constructor(data) {
       super();
@@ -18196,7 +17064,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MenuFlexibleItem, "type", "MenuFlexibleItem");
   var MenuFlexibleItem = _MenuFlexibleItem;
 
-  // dist/src/parser/classes/LikeButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LikeButton.js
   var _LikeButton = class _LikeButton extends YTNode {
     constructor(data) {
       super();
@@ -18218,7 +17086,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LikeButton, "type", "LikeButton");
   var LikeButton = _LikeButton;
 
-  // dist/src/parser/classes/FlexibleActionsView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FlexibleActionsView.js
   var _FlexibleActionsView = class _FlexibleActionsView extends YTNode {
     constructor(data) {
       super();
@@ -18234,7 +17102,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FlexibleActionsView, "type", "FlexibleActionsView");
   var FlexibleActionsView = _FlexibleActionsView;
 
-  // dist/src/parser/classes/menus/Menu.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/Menu.js
   var _Menu = class _Menu extends YTNode {
     constructor(data) {
       super();
@@ -18264,7 +17132,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Menu, "type", "Menu");
   var Menu = _Menu;
 
-  // dist/src/parser/classes/BackstagePost.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BackstagePost.js
   var _BackstagePost = class _BackstagePost extends YTNode {
     constructor(data) {
       super();
@@ -18319,7 +17187,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BackstagePost, "type", "BackstagePost");
   var BackstagePost = _BackstagePost;
 
-  // dist/src/parser/classes/BackstagePostThread.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BackstagePostThread.js
   var _BackstagePostThread = class _BackstagePostThread extends YTNode {
     constructor(data) {
       super();
@@ -18331,7 +17199,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BackstagePostThread, "type", "BackstagePostThread");
   var BackstagePostThread = _BackstagePostThread;
 
-  // dist/src/parser/classes/BadgeView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BadgeView.js
   var _BadgeView = class _BadgeView extends YTNode {
     constructor(data) {
       super();
@@ -18346,7 +17214,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_BadgeView, "BadgeView");
   var BadgeView = _BadgeView;
 
-  // dist/src/parser/classes/SubFeedOption.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SubFeedOption.js
   var _SubFeedOption = class _SubFeedOption extends YTNode {
     constructor(data) {
       super();
@@ -18362,7 +17230,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SubFeedOption, "type", "SubFeedOption");
   var SubFeedOption = _SubFeedOption;
 
-  // dist/src/parser/classes/SubFeedSelector.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SubFeedSelector.js
   var _SubFeedSelector = class _SubFeedSelector extends YTNode {
     constructor(data) {
       super();
@@ -18376,7 +17244,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SubFeedSelector, "type", "SubFeedSelector");
   var SubFeedSelector = _SubFeedSelector;
 
-  // dist/src/parser/classes/EomSettingsDisclaimer.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EomSettingsDisclaimer.js
   var _EomSettingsDisclaimer = class _EomSettingsDisclaimer extends YTNode {
     constructor(data) {
       super();
@@ -18394,7 +17262,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EomSettingsDisclaimer, "type", "EomSettingsDisclaimer");
   var EomSettingsDisclaimer = _EomSettingsDisclaimer;
 
-  // dist/src/parser/classes/SearchBox.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchBox.js
   var _SearchBox = class _SearchBox extends YTNode {
     constructor(data) {
       super();
@@ -18412,7 +17280,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchBox, "type", "SearchBox");
   var SearchBox = _SearchBox;
 
-  // dist/src/parser/classes/BrowseFeedActions.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BrowseFeedActions.js
   var _BrowseFeedActions = class _BrowseFeedActions extends YTNode {
     constructor(data) {
       super();
@@ -18424,7 +17292,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BrowseFeedActions, "type", "BrowseFeedActions");
   var BrowseFeedActions = _BrowseFeedActions;
 
-  // dist/src/parser/classes/BrowserMediaSession.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BrowserMediaSession.js
   var _BrowserMediaSession = class _BrowserMediaSession extends YTNode {
     constructor(data) {
       super();
@@ -18438,7 +17306,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BrowserMediaSession, "type", "BrowserMediaSession");
   var BrowserMediaSession = _BrowserMediaSession;
 
-  // dist/src/parser/classes/ButtonCardView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ButtonCardView.js
   var _ButtonCardView = class _ButtonCardView extends YTNode {
     constructor(data) {
       super();
@@ -18454,7 +17322,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ButtonCardView, "type", "ButtonCardView");
   var ButtonCardView = _ButtonCardView;
 
-  // dist/src/parser/classes/ChannelHeaderLinks.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelHeaderLinks.js
   var _HeaderLink = class _HeaderLink extends YTNode {
     constructor(data) {
       super();
@@ -18483,7 +17351,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelHeaderLinks, "type", "ChannelHeaderLinks");
   var ChannelHeaderLinks = _ChannelHeaderLinks;
 
-  // dist/src/parser/classes/ChannelHeaderLinksView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelHeaderLinksView.js
   var _ChannelHeaderLinksView = class _ChannelHeaderLinksView extends YTNode {
     constructor(data) {
       super();
@@ -18501,7 +17369,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelHeaderLinksView, "type", "ChannelHeaderLinksView");
   var ChannelHeaderLinksView = _ChannelHeaderLinksView;
 
-  // dist/src/parser/classes/ClipCreationTextInput.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ClipCreationTextInput.js
   var _ClipCreationTextInput = class _ClipCreationTextInput extends YTNode {
     constructor(data) {
       super();
@@ -18515,7 +17383,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ClipCreationTextInput, "type", "ClipCreationTextInput");
   var ClipCreationTextInput = _ClipCreationTextInput;
 
-  // dist/src/parser/classes/ClipCreationScrubber.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ClipCreationScrubber.js
   var _ClipCreationScrubber = class _ClipCreationScrubber extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f;
@@ -18542,7 +17410,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ClipCreationScrubber, "type", "ClipCreationScrubber");
   var ClipCreationScrubber = _ClipCreationScrubber;
 
-  // dist/src/parser/classes/ClipAdState.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ClipAdState.js
   var _ClipAdState = class _ClipAdState extends YTNode {
     constructor(data) {
       super();
@@ -18556,7 +17424,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ClipAdState, "type", "ClipAdState");
   var ClipAdState = _ClipAdState;
 
-  // dist/src/parser/classes/ClipCreation.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ClipCreation.js
   var _ClipCreation = class _ClipCreation extends YTNode {
     constructor(data) {
       super();
@@ -18586,7 +17454,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ClipCreation, "type", "ClipCreation");
   var ClipCreation = _ClipCreation;
 
-  // dist/src/parser/classes/ClipSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ClipSection.js
   var _ClipSection = class _ClipSection extends YTNode {
     constructor(data) {
       super();
@@ -18598,7 +17466,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ClipSection, "type", "ClipSection");
   var ClipSection = _ClipSection;
 
-  // dist/src/parser/classes/ContinuationItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ContinuationItem.js
   var _ContinuationItem = class _ContinuationItem extends YTNode {
     constructor(data) {
       super();
@@ -18616,7 +17484,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ContinuationItem, "type", "ContinuationItem");
   var ContinuationItem = _ContinuationItem;
 
-  // dist/src/parser/classes/EngagementPanelTitleHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EngagementPanelTitleHeader.js
   var _EngagementPanelTitleHeader = class _EngagementPanelTitleHeader extends YTNode {
     constructor(data) {
       super();
@@ -18634,7 +17502,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EngagementPanelTitleHeader, "type", "EngagementPanelTitleHeader");
   var EngagementPanelTitleHeader = _EngagementPanelTitleHeader;
 
-  // dist/src/parser/classes/MacroMarkersInfoItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MacroMarkersInfoItem.js
   var _MacroMarkersInfoItem = class _MacroMarkersInfoItem extends YTNode {
     constructor(data) {
       super();
@@ -18648,7 +17516,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MacroMarkersInfoItem, "type", "MacroMarkersInfoItem");
   var MacroMarkersInfoItem = _MacroMarkersInfoItem;
 
-  // dist/src/parser/classes/MacroMarkersListItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MacroMarkersListItem.js
   var _MacroMarkersListItem = class _MacroMarkersListItem extends YTNode {
     constructor(data) {
       super();
@@ -18670,7 +17538,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MacroMarkersListItem, "type", "MacroMarkersListItem");
   var MacroMarkersListItem = _MacroMarkersListItem;
 
-  // dist/src/parser/classes/MacroMarkersList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MacroMarkersList.js
   var _MacroMarkersList = class _MacroMarkersList extends YTNode {
     constructor(data) {
       super();
@@ -18684,7 +17552,103 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MacroMarkersList, "type", "MacroMarkersList");
   var MacroMarkersList = _MacroMarkersList;
 
-  // dist/src/parser/classes/ProductList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ContentListItemView.js
+  var _ContentListItemView = class _ContentListItemView extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "title");
+      __publicField(this, "action_button");
+      __publicField(this, "avatar");
+      __publicField(this, "image");
+      __publicField(this, "metadata");
+      __publicField(this, "renderer_context");
+      this.title = Text2.fromAttributed(data.title);
+      this.action_button = parser_exports.parseItem(data.actionButton);
+      this.avatar = parser_exports.parseItem(data.avatar);
+      this.image = Thumbnail.fromResponse(data.image);
+      this.metadata = parser_exports.parseItem(data.metadata);
+      if ("rendererContext" in data) {
+        this.renderer_context = new RendererContext(data.rendererContext);
+      }
+    }
+  };
+  __name(_ContentListItemView, "ContentListItemView");
+  __publicField(_ContentListItemView, "type", "ContentListItemView");
+  var ContentListItemView = _ContentListItemView;
+
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/PlaylistCollaborationFormSchema.js
+  var _PlaylistCollaborationFormSchema = class _PlaylistCollaborationFormSchema {
+    constructor(data) {
+      __publicField(this, "id");
+      __publicField(this, "initial_values");
+      var _a2, _b2, _c, _d;
+      this.id = data.id;
+      if ("initialValues" in data) {
+        this.initial_values = {
+          collaborator_channel_ids: (_a2 = data.initialValues) == null ? void 0 : _a2.collaboratorChannelIds,
+          is_allow_new_collaborators_enabled: (_b2 = data.initialValues) == null ? void 0 : _b2.isAllowNewCollaboratorsEnabled,
+          is_collaboration_enabled: (_c = data.initialValues) == null ? void 0 : _c.isCollaborationEnabled,
+          is_invite_collaborators_button_enabled: (_d = data.initialValues) == null ? void 0 : _d.isInviteCollaboratorsButtonEnabled
+        };
+      }
+    }
+  };
+  __name(_PlaylistCollaborationFormSchema, "PlaylistCollaborationFormSchema");
+  var PlaylistCollaborationFormSchema = _PlaylistCollaborationFormSchema;
+
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/PlaylistCollaborationViewModelPlaylistCollaboratorData.js
+  var _PlaylistCollaborationViewModelPlaylistCollaboratorData = class _PlaylistCollaborationViewModelPlaylistCollaboratorData {
+    constructor(data) {
+      __publicField(this, "remove_collaborator_confirmation_dialog");
+      __publicField(this, "external_channel_id");
+      __publicField(this, "collaborator_content_list_item");
+      this.remove_collaborator_confirmation_dialog = parser_exports.parseItem(data.removeCollaboratorConfirmationDialog);
+      this.external_channel_id = data.externalChannelId;
+      this.collaborator_content_list_item = parser_exports.parseItem(data.collaboratorContentListItem);
+    }
+  };
+  __name(_PlaylistCollaborationViewModelPlaylistCollaboratorData, "PlaylistCollaborationViewModelPlaylistCollaboratorData");
+  var PlaylistCollaborationViewModelPlaylistCollaboratorData = _PlaylistCollaborationViewModelPlaylistCollaboratorData;
+
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistCollaborationView.js
+  var _PlaylistCollaborationView = class _PlaylistCollaborationView extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "playlist_collaborators");
+      __publicField(this, "turn_off_collaboration_dialog");
+      __publicField(this, "copy_link_button");
+      __publicField(this, "collaborate_playlist_collaboration_setting");
+      __publicField(this, "playlist_collaboration_entity_key");
+      __publicField(this, "playlist_collaborators_data");
+      __publicField(this, "leave_collaborative_playlist_confirmation_dialog");
+      __publicField(this, "collaboration_type");
+      __publicField(this, "allow_new_collaborators_playlist_collaboration_setting");
+      __publicField(this, "playlist_collaboration_form_schema");
+      __publicField(this, "turn_off_allow_new_collaborators_dialog");
+      __publicField(this, "invite_collaborators_button");
+      this.playlist_collaborators = parser_exports.parseArray(data.playlistCollaborators, ContentListItemView);
+      this.turn_off_collaboration_dialog = parser_exports.parseItem(data.turnOffCollaborationDialog);
+      this.copy_link_button = parser_exports.parseItem(data.copyLinkButton);
+      this.collaborate_playlist_collaboration_setting = parser_exports.parseItem(data.collaboratePlaylistCollaborationSetting);
+      if ("playlistCollaboratorsData" in data) {
+        this.playlist_collaborators_data = data.playlistCollaboratorsData.map((item) => new PlaylistCollaborationViewModelPlaylistCollaboratorData(item));
+      }
+      if ("playlistCollaborationFormSchema" in data) {
+        this.playlist_collaboration_form_schema = new PlaylistCollaborationFormSchema(data.playlistCollaborationFormSchema);
+      }
+      this.leave_collaborative_playlist_confirmation_dialog = parser_exports.parseItem(data.leaveCollaborativePlaylistConfirmationDialog);
+      this.allow_new_collaborators_playlist_collaboration_setting = parser_exports.parseItem(data.allowNewCollaboratorsPlaylistCollaborationSetting);
+      this.turn_off_allow_new_collaborators_dialog = parser_exports.parseItem(data.turnOffAllowNewCollaboratorsDialog);
+      this.invite_collaborators_button = parser_exports.parseItem(data.inviteCollaboratorsButton);
+      this.playlist_collaboration_entity_key = data.playlistCollaborationEntityKey;
+      this.collaboration_type = data.collaborationType;
+    }
+  };
+  __name(_PlaylistCollaborationView, "PlaylistCollaborationView");
+  __publicField(_PlaylistCollaborationView, "type", "PlaylistCollaborationView");
+  var PlaylistCollaborationView = _PlaylistCollaborationView;
+
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProductList.js
   var _ProductList = class _ProductList extends YTNode {
     constructor(data) {
       super();
@@ -18696,7 +17660,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProductList, "type", "ProductList");
   var ProductList = _ProductList;
 
-  // dist/src/parser/classes/SectionList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SectionList.js
   var _SectionList = class _SectionList extends YTNode {
     constructor(data) {
       super();
@@ -18728,7 +17692,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SectionList, "type", "SectionList");
   var SectionList = _SectionList;
 
-  // dist/src/parser/classes/ExpandableVideoDescriptionBody.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ExpandableVideoDescriptionBody.js
   var _ExpandableVideoDescriptionBody = class _ExpandableVideoDescriptionBody extends YTNode {
     constructor(data) {
       super();
@@ -18746,7 +17710,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ExpandableVideoDescriptionBody, "type", "ExpandableVideoDescriptionBody");
   var ExpandableVideoDescriptionBody = _ExpandableVideoDescriptionBody;
 
-  // dist/src/parser/classes/SearchRefinementCard.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchRefinementCard.js
   var _SearchRefinementCard = class _SearchRefinementCard extends YTNode {
     constructor(data) {
       super();
@@ -18762,7 +17726,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchRefinementCard, "type", "SearchRefinementCard");
   var SearchRefinementCard = _SearchRefinementCard;
 
-  // dist/src/parser/classes/GameCard.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GameCard.js
   var _GameCard = class _GameCard extends YTNode {
     constructor(data) {
       super();
@@ -18774,7 +17738,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GameCard, "type", "GameCard");
   var GameCard = _GameCard;
 
-  // dist/src/parser/classes/HorizontalList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HorizontalList.js
   var _HorizontalList = class _HorizontalList extends YTNode {
     constructor(data) {
       super();
@@ -18792,7 +17756,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HorizontalList, "type", "HorizontalList");
   var HorizontalList = _HorizontalList;
 
-  // dist/src/parser/classes/VideoSummaryParagraphView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoSummaryParagraphView.js
   var _VideoSummaryParagraphView = class _VideoSummaryParagraphView extends YTNode {
     constructor(data) {
       super();
@@ -18804,7 +17768,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoSummaryParagraphView, "type", "VideoSummaryParagraphView");
   var VideoSummaryParagraphView = _VideoSummaryParagraphView;
 
-  // dist/src/parser/classes/VideoSummaryContentView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoSummaryContentView.js
   var _VideoSummaryContentView = class _VideoSummaryContentView extends YTNode {
     constructor(data) {
       super();
@@ -18824,7 +17788,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoSummaryContentView, "type", "VideoSummaryContentView");
   var VideoSummaryContentView = _VideoSummaryContentView;
 
-  // dist/src/parser/classes/ExpandableMetadata.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ExpandableMetadata.js
   var _ExpandableMetadata = class _ExpandableMetadata extends YTNode {
     constructor(data) {
       super();
@@ -18849,7 +17813,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ExpandableMetadata, "type", "ExpandableMetadata");
   var ExpandableMetadata = _ExpandableMetadata;
 
-  // dist/src/parser/classes/MetadataBadge.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MetadataBadge.js
   var _MetadataBadge = class _MetadataBadge extends YTNode {
     constructor(data) {
       super();
@@ -18875,7 +17839,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MetadataBadge, "type", "MetadataBadge");
   var MetadataBadge = _MetadataBadge;
 
-  // dist/src/parser/classes/ThumbnailOverlayTimeStatus.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayTimeStatus.js
   var _ThumbnailOverlayTimeStatus = class _ThumbnailOverlayTimeStatus extends YTNode {
     constructor(data) {
       super();
@@ -18889,7 +17853,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayTimeStatus, "type", "ThumbnailOverlayTimeStatus");
   var ThumbnailOverlayTimeStatus = _ThumbnailOverlayTimeStatus;
 
-  // dist/src/parser/classes/Video.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Video.js
   var _Video = class _Video extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -19015,7 +17979,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Video, "type", "Video");
   var Video = _Video;
 
-  // dist/src/parser/classes/VideoCard.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoCard.js
   var _VideoCard = class _VideoCard extends Video {
     constructor(data) {
       var _a2, _b2, _c, _d;
@@ -19037,7 +18001,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoCard, "type", "VideoCard");
   var VideoCard = _VideoCard;
 
-  // dist/src/parser/classes/ContentPreviewImageView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ContentPreviewImageView.js
   var _ContentPreviewImageView = class _ContentPreviewImageView extends YTNode {
     constructor(data) {
       super();
@@ -19051,7 +18015,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ContentPreviewImageView, "type", "ContentPreviewImageView");
   var ContentPreviewImageView = _ContentPreviewImageView;
 
-  // dist/src/parser/classes/VideoAttributeView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoAttributeView.js
   var _VideoAttributeView = class _VideoAttributeView extends YTNode {
     constructor(data) {
       var _a2;
@@ -19088,7 +18052,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoAttributeView, "type", "VideoAttributeView");
   var VideoAttributeView = _VideoAttributeView;
 
-  // dist/src/parser/classes/HorizontalCardList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HorizontalCardList.js
   var _HorizontalCardList = class _HorizontalCardList extends YTNode {
     constructor(data) {
       super();
@@ -19106,7 +18070,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HorizontalCardList, "type", "HorizontalCardList");
   var HorizontalCardList = _HorizontalCardList;
 
-  // dist/src/parser/classes/Factoid.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Factoid.js
   var _Factoid = class _Factoid extends YTNode {
     constructor(data) {
       super();
@@ -19122,7 +18086,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Factoid, "type", "Factoid");
   var Factoid = _Factoid;
 
-  // dist/src/parser/classes/UploadTimeFactoid.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/UploadTimeFactoid.js
   var _UploadTimeFactoid = class _UploadTimeFactoid extends YTNode {
     constructor(data) {
       super();
@@ -19134,7 +18098,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UploadTimeFactoid, "type", "UploadTimeFactoid");
   var UploadTimeFactoid = _UploadTimeFactoid;
 
-  // dist/src/parser/classes/ViewCountFactoid.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ViewCountFactoid.js
   var _ViewCountFactoid = class _ViewCountFactoid extends YTNode {
     constructor(data) {
       super();
@@ -19150,7 +18114,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ViewCountFactoid, "type", "ViewCountFactoid");
   var ViewCountFactoid = _ViewCountFactoid;
 
-  // dist/src/parser/classes/HypePointsFactoid.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HypePointsFactoid.js
   var _HypePointsFactoid = class _HypePointsFactoid extends YTNode {
     constructor(data) {
       super();
@@ -19162,7 +18126,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HypePointsFactoid, "type", "HypePointsFactoid");
   var HypePointsFactoid = _HypePointsFactoid;
 
-  // dist/src/parser/classes/VideoDescriptionHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionHeader.js
   var _VideoDescriptionHeader = class _VideoDescriptionHeader extends YTNode {
     constructor(data) {
       super();
@@ -19186,7 +18150,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoDescriptionHeader, "type", "VideoDescriptionHeader");
   var VideoDescriptionHeader = _VideoDescriptionHeader;
 
-  // dist/src/parser/classes/VideoDescriptionInfocardsSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionInfocardsSection.js
   var _VideoDescriptionInfocardsSection = class _VideoDescriptionInfocardsSection extends YTNode {
     constructor(data) {
       super();
@@ -19208,7 +18172,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoDescriptionInfocardsSection, "type", "VideoDescriptionInfocardsSection");
   var VideoDescriptionInfocardsSection = _VideoDescriptionInfocardsSection;
 
-  // dist/src/parser/classes/InfoRow.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/InfoRow.js
   var _InfoRow = class _InfoRow extends YTNode {
     constructor(data) {
       super();
@@ -19232,7 +18196,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_InfoRow, "type", "InfoRow");
   var InfoRow = _InfoRow;
 
-  // dist/src/parser/classes/CompactVideo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactVideo.js
   var _CompactVideo = class _CompactVideo extends YTNode {
     constructor(data) {
       super();
@@ -19324,7 +18288,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompactVideo, "type", "CompactVideo");
   var CompactVideo = _CompactVideo;
 
-  // dist/src/parser/classes/CarouselLockup.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CarouselLockup.js
   var _CarouselLockup = class _CarouselLockup extends YTNode {
     constructor(data) {
       super();
@@ -19338,7 +18302,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CarouselLockup, "type", "CarouselLockup");
   var CarouselLockup = _CarouselLockup;
 
-  // dist/src/parser/classes/VideoDescriptionMusicSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionMusicSection.js
   var _VideoDescriptionMusicSection = class _VideoDescriptionMusicSection extends YTNode {
     constructor(data) {
       super();
@@ -19352,7 +18316,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoDescriptionMusicSection, "type", "VideoDescriptionMusicSection");
   var VideoDescriptionMusicSection = _VideoDescriptionMusicSection;
 
-  // dist/src/parser/classes/VideoDescriptionTranscriptSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionTranscriptSection.js
   var _VideoDescriptionTranscriptSection = class _VideoDescriptionTranscriptSection extends YTNode {
     constructor(data) {
       super();
@@ -19368,7 +18332,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoDescriptionTranscriptSection, "type", "VideoDescriptionTranscriptSection");
   var VideoDescriptionTranscriptSection = _VideoDescriptionTranscriptSection;
 
-  // dist/src/parser/classes/StructuredDescriptionPlaylistLockup.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/StructuredDescriptionPlaylistLockup.js
   var _StructuredDescriptionPlaylistLockup = class _StructuredDescriptionPlaylistLockup extends YTNode {
     constructor(data) {
       super();
@@ -19398,7 +18362,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_StructuredDescriptionPlaylistLockup, "type", "StructuredDescriptionPlaylistLockup");
   var StructuredDescriptionPlaylistLockup = _StructuredDescriptionPlaylistLockup;
 
-  // dist/src/parser/classes/VideoDescriptionCourseSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionCourseSection.js
   var _VideoDescriptionCourseSection = class _VideoDescriptionCourseSection extends YTNode {
     constructor(data) {
       super();
@@ -19412,7 +18376,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoDescriptionCourseSection, "type", "VideoDescriptionCourseSection");
   var VideoDescriptionCourseSection = _VideoDescriptionCourseSection;
 
-  // dist/src/parser/classes/VideoAttributesSectionView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoAttributesSectionView.js
   var _VideoAttributesSectionView = class _VideoAttributesSectionView extends YTNode {
     constructor(data) {
       super();
@@ -19432,26 +18396,29 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoAttributesSectionView, "type", "VideoAttributesSectionView");
   var VideoAttributesSectionView = _VideoAttributesSectionView;
 
-  // dist/src/parser/classes/HowThisWasMadeSectionView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HowThisWasMadeSectionView.js
   var _HowThisWasMadeSectionView = class _HowThisWasMadeSectionView extends YTNode {
     constructor(data) {
       super();
       __publicField(this, "section_title");
       __publicField(this, "body_text");
       __publicField(this, "body_header");
+      __publicField(this, "attribution_text");
       if (Reflect.has(data, "sectionText"))
         this.section_title = Text2.fromAttributed(data.sectionText);
       if (Reflect.has(data, "bodyText"))
         this.body_text = Text2.fromAttributed(data.bodyText);
       if (Reflect.has(data, "bodyHeader"))
         this.body_header = Text2.fromAttributed(data.bodyHeader);
+      if (Reflect.has(data, "attributionText"))
+        this.attribution_text = Text2.fromAttributed(data.attributionText);
     }
   };
   __name(_HowThisWasMadeSectionView, "HowThisWasMadeSectionView");
   __publicField(_HowThisWasMadeSectionView, "type", "HowThisWasMadeSectionView");
   var HowThisWasMadeSectionView = _HowThisWasMadeSectionView;
 
-  // dist/src/parser/classes/ReelShelf.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ReelShelf.js
   var _ReelShelf = class _ReelShelf extends YTNode {
     constructor(data) {
       super();
@@ -19473,7 +18440,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReelShelf, "type", "ReelShelf");
   var ReelShelf = _ReelShelf;
 
-  // dist/src/parser/classes/MerchandiseShelf.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MerchandiseShelf.js
   var _MerchandiseShelf = class _MerchandiseShelf extends YTNode {
     constructor(data) {
       super();
@@ -19493,7 +18460,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MerchandiseShelf, "type", "MerchandiseShelf");
   var MerchandiseShelf = _MerchandiseShelf;
 
-  // dist/src/parser/classes/SectionHeaderView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SectionHeaderView.js
   var _SectionHeaderView = class _SectionHeaderView extends YTNode {
     constructor(data) {
       super();
@@ -19505,7 +18472,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SectionHeaderView, "type", "SectionHeaderView");
   var SectionHeaderView = _SectionHeaderView;
 
-  // dist/src/parser/classes/HypeFanCreditsSectionView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HypeFanCreditsSectionView.js
   var _HypeFanCreditsSectionView = class _HypeFanCreditsSectionView extends YTNode {
     constructor(data) {
       super();
@@ -19517,7 +18484,27 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HypeFanCreditsSectionView, "type", "HypeFanCreditsSectionView");
   var HypeFanCreditsSectionView = _HypeFanCreditsSectionView;
 
-  // dist/src/parser/classes/StructuredDescriptionContent.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionYouchatSectionView.js
+  var _VideoDescriptionYouchatSectionView = class _VideoDescriptionYouchatSectionView extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "section_title");
+      __publicField(this, "sub_header_text");
+      __publicField(this, "primary_button");
+      if ("sectionTitle" in data) {
+        this.section_title = Text2.fromAttributed(data.sectionTitle);
+      }
+      if ("subHeaderText" in data) {
+        this.sub_header_text = Text2.fromAttributed(data.subHeaderText);
+      }
+      this.primary_button = parser_exports.parseItem(data.primaryButton, ButtonView);
+    }
+  };
+  __name(_VideoDescriptionYouchatSectionView, "VideoDescriptionYouchatSectionView");
+  __publicField(_VideoDescriptionYouchatSectionView, "type", "VideoDescriptionYouchatSectionView");
+  var VideoDescriptionYouchatSectionView = _VideoDescriptionYouchatSectionView;
+
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/StructuredDescriptionContent.js
   var _StructuredDescriptionContent = class _StructuredDescriptionContent extends YTNode {
     constructor(data) {
       super();
@@ -19529,7 +18516,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
         VideoDescriptionInfocardsSection,
         VideoDescriptionCourseSection,
         VideoDescriptionTranscriptSection,
-        VideoDescriptionTranscriptSection,
+        VideoDescriptionYouchatSectionView,
         HorizontalCardList,
         ReelShelf,
         VideoAttributesSectionView,
@@ -19544,7 +18531,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_StructuredDescriptionContent, "type", "StructuredDescriptionContent");
   var StructuredDescriptionContent = _StructuredDescriptionContent;
 
-  // dist/src/parser/classes/EngagementPanelSectionList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EngagementPanelSectionList.js
   var _EngagementPanelSectionList = class _EngagementPanelSectionList extends YTNode {
     constructor(data) {
       super();
@@ -19555,12 +18542,23 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
       __publicField(this, "identifier");
       __publicField(this, "visibility");
       this.header = parser_exports.parseItem(data.header, EngagementPanelTitleHeader);
-      this.content = parser_exports.parseItem(data.content, [VideoAttributeView, SectionList, ContinuationItem, ClipSection, StructuredDescriptionContent, MacroMarkersList, ProductList]);
+      this.content = parser_exports.parseItem(data.content, [
+        PlaylistCollaborationView,
+        VideoAttributeView,
+        SectionList,
+        ContinuationItem,
+        ClipSection,
+        StructuredDescriptionContent,
+        MacroMarkersList,
+        ProductList
+      ]);
       this.panel_identifier = data.panelIdentifier;
-      this.identifier = data.identifier ? {
-        surface: data.identifier.surface,
-        tag: data.identifier.tag
-      } : void 0;
+      if ("identifier" in data) {
+        this.identifier = {
+          surface: data.identifier.surface,
+          tag: data.identifier.tag
+        };
+      }
       this.target_id = data.targetId;
       this.visibility = data.visibility;
     }
@@ -19569,7 +18567,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EngagementPanelSectionList, "type", "EngagementPanelSectionList");
   var EngagementPanelSectionList = _EngagementPanelSectionList;
 
-  // dist/src/parser/classes/ChannelTagline.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelTagline.js
   var _ChannelTagline = class _ChannelTagline extends YTNode {
     constructor(data) {
       super();
@@ -19600,7 +18598,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelTagline, "type", "ChannelTagline");
   var ChannelTagline = _ChannelTagline;
 
-  // dist/src/parser/classes/SubscriptionNotificationToggleButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SubscriptionNotificationToggleButton.js
   var _SubscriptionNotificationToggleButton = class _SubscriptionNotificationToggleButton extends YTNode {
     constructor(data) {
       super();
@@ -19620,7 +18618,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SubscriptionNotificationToggleButton, "type", "SubscriptionNotificationToggleButton");
   var SubscriptionNotificationToggleButton = _SubscriptionNotificationToggleButton;
 
-  // dist/src/parser/classes/SubscribeButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SubscribeButton.js
   var _SubscribeButton = class _SubscribeButton extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -19675,7 +18673,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SubscribeButton, "type", "SubscribeButton");
   var SubscribeButton = _SubscribeButton;
 
-  // dist/src/parser/classes/C4TabbedHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/C4TabbedHeader.js
   var _C4TabbedHeader = class _C4TabbedHeader extends YTNode {
     constructor(data) {
       super();
@@ -19734,7 +18732,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_C4TabbedHeader, "type", "C4TabbedHeader");
   var C4TabbedHeader = _C4TabbedHeader;
 
-  // dist/src/parser/classes/CallToActionButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CallToActionButton.js
   var _CallToActionButton = class _CallToActionButton extends YTNode {
     constructor(data) {
       super();
@@ -19750,7 +18748,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CallToActionButton, "type", "CallToActionButton");
   var CallToActionButton = _CallToActionButton;
 
-  // dist/src/parser/classes/Card.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Card.js
   var _Card = class _Card extends YTNode {
     constructor(data) {
       super();
@@ -19779,7 +18777,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Card, "type", "Card");
   var Card = _Card;
 
-  // dist/src/parser/classes/CardCollection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CardCollection.js
   var _CardCollection = class _CardCollection extends YTNode {
     constructor(data) {
       super();
@@ -19795,7 +18793,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CardCollection, "type", "CardCollection");
   var CardCollection = _CardCollection;
 
-  // dist/src/parser/classes/CarouselHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CarouselHeader.js
   var _CarouselHeader = class _CarouselHeader extends YTNode {
     constructor(data) {
       super();
@@ -19807,7 +18805,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CarouselHeader, "type", "CarouselHeader");
   var CarouselHeader = _CarouselHeader;
 
-  // dist/src/parser/classes/CarouselItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CarouselItem.js
   var _CarouselItem = class _CarouselItem extends YTNode {
     constructor(data) {
       super();
@@ -19831,7 +18829,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CarouselItem, "type", "CarouselItem");
   var CarouselItem = _CarouselItem;
 
-  // dist/src/parser/classes/TextCarouselItemView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TextCarouselItemView.js
   var _TextCarouselItemView = class _TextCarouselItemView extends YTNode {
     constructor(data) {
       super();
@@ -19849,7 +18847,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TextCarouselItemView, "type", "TextCarouselItemView");
   var TextCarouselItemView = _TextCarouselItemView;
 
-  // dist/src/parser/classes/CarouselItemView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CarouselItemView.js
   var _CarouselItemView = class _CarouselItemView extends YTNode {
     constructor(data) {
       super();
@@ -19863,7 +18861,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CarouselItemView, "type", "CarouselItemView");
   var CarouselItemView = _CarouselItemView;
 
-  // dist/src/parser/classes/CarouselTitleView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CarouselTitleView.js
   var _CarouselTitleView = class _CarouselTitleView extends YTNode {
     constructor(data) {
       super();
@@ -19879,7 +18877,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CarouselTitleView, "type", "CarouselTitleView");
   var CarouselTitleView = _CarouselTitleView;
 
-  // dist/src/parser/classes/Channel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Channel.js
   var _Channel = class _Channel extends YTNode {
     constructor(data) {
       super();
@@ -19910,7 +18908,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Channel, "type", "Channel");
   var Channel = _Channel;
 
-  // dist/src/parser/classes/ChannelAboutFullMetadata.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelAboutFullMetadata.js
   var _ChannelAboutFullMetadata = class _ChannelAboutFullMetadata extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -19949,7 +18947,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelAboutFullMetadata, "type", "ChannelAboutFullMetadata");
   var ChannelAboutFullMetadata = _ChannelAboutFullMetadata;
 
-  // dist/src/parser/classes/ChannelAgeGate.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelAgeGate.js
   var _ChannelAgeGate = class _ChannelAgeGate extends YTNode {
     constructor(data) {
       super();
@@ -19971,7 +18969,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelAgeGate, "type", "ChannelAgeGate");
   var ChannelAgeGate = _ChannelAgeGate;
 
-  // dist/src/parser/classes/ChannelFeaturedContent.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelFeaturedContent.js
   var _ChannelFeaturedContent = class _ChannelFeaturedContent extends YTNode {
     constructor(data) {
       super();
@@ -19985,7 +18983,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelFeaturedContent, "type", "ChannelFeaturedContent");
   var ChannelFeaturedContent = _ChannelFeaturedContent;
 
-  // dist/src/parser/classes/ChannelMetadata.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelMetadata.js
   var _ChannelMetadata = class _ChannelMetadata extends YTNode {
     constructor(data) {
       super();
@@ -20023,7 +19021,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelMetadata, "type", "ChannelMetadata");
   var ChannelMetadata = _ChannelMetadata;
 
-  // dist/src/parser/classes/ChannelMobileHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelMobileHeader.js
   var _ChannelMobileHeader = class _ChannelMobileHeader extends YTNode {
     constructor(data) {
       super();
@@ -20035,7 +19033,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelMobileHeader, "type", "ChannelMobileHeader");
   var ChannelMobileHeader = _ChannelMobileHeader;
 
-  // dist/src/parser/classes/ChannelOptions.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelOptions.js
   var _ChannelOptions = class _ChannelOptions extends YTNode {
     constructor(data) {
       super();
@@ -20053,7 +19051,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelOptions, "type", "ChannelOptions");
   var ChannelOptions = _ChannelOptions;
 
-  // dist/src/parser/classes/ChannelOwnerEmptyState.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelOwnerEmptyState.js
   var _ChannelOwnerEmptyState = class _ChannelOwnerEmptyState extends YTNode {
     constructor(data) {
       super();
@@ -20067,7 +19065,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelOwnerEmptyState, "type", "ChannelOwnerEmptyState");
   var ChannelOwnerEmptyState = _ChannelOwnerEmptyState;
 
-  // dist/src/parser/classes/ChannelSubMenu.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelSubMenu.js
   var _ChannelSubMenu = class _ChannelSubMenu extends YTNode {
     constructor(data) {
       var _a2, _b2, _c;
@@ -20086,7 +19084,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelSubMenu, "type", "ChannelSubMenu");
   var ChannelSubMenu = _ChannelSubMenu;
 
-  // dist/src/parser/classes/ChannelSwitcherHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelSwitcherHeader.js
   var _ChannelSwitcherHeader = class _ChannelSwitcherHeader extends YTNode {
     constructor(data) {
       super();
@@ -20102,7 +19100,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelSwitcherHeader, "type", "ChannelSwitcherHeader");
   var ChannelSwitcherHeader = _ChannelSwitcherHeader;
 
-  // dist/src/parser/classes/ChannelThumbnailWithLink.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelThumbnailWithLink.js
   var _ChannelThumbnailWithLink = class _ChannelThumbnailWithLink extends YTNode {
     constructor(data) {
       super();
@@ -20126,7 +19124,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelThumbnailWithLink, "type", "ChannelThumbnailWithLink");
   var ChannelThumbnailWithLink = _ChannelThumbnailWithLink;
 
-  // dist/src/parser/classes/ChannelVideoPlayer.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelVideoPlayer.js
   var _ChannelVideoPlayer = class _ChannelVideoPlayer extends YTNode {
     constructor(data) {
       super();
@@ -20146,7 +19144,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelVideoPlayer, "type", "ChannelVideoPlayer");
   var ChannelVideoPlayer = _ChannelVideoPlayer;
 
-  // dist/src/parser/classes/Chapter.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Chapter.js
   var _Chapter = class _Chapter extends YTNode {
     constructor(data) {
       super();
@@ -20162,7 +19160,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Chapter, "type", "Chapter");
   var Chapter = _Chapter;
 
-  // dist/src/parser/classes/ChildVideo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChildVideo.js
   var _ChildVideo = class _ChildVideo extends YTNode {
     constructor(data) {
       super();
@@ -20183,7 +19181,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChildVideo, "type", "ChildVideo");
   var ChildVideo = _ChildVideo;
 
-  // dist/src/parser/classes/ChipView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChipView.js
   var _ChipView = class _ChipView extends YTNode {
     constructor(data) {
       super();
@@ -20242,7 +19240,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChipView, "type", "ChipView");
   var ChipView = _ChipView;
 
-  // dist/src/parser/classes/ChipBarView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChipBarView.js
   var _ChipBarView = class _ChipBarView extends YTNode {
     constructor(data) {
       super();
@@ -20260,7 +19258,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChipBarView, "type", "ChipBarView");
   var ChipBarView = _ChipBarView;
 
-  // dist/src/parser/classes/ChipCloudChip.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChipCloudChip.js
   var _ChipCloudChip = class _ChipCloudChip extends YTNode {
     constructor(data) {
       super();
@@ -20278,7 +19276,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChipCloudChip, "type", "ChipCloudChip");
   var ChipCloudChip = _ChipCloudChip;
 
-  // dist/src/parser/classes/ChipCloud.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChipCloud.js
   var _ChipCloud = class _ChipCloud extends YTNode {
     constructor(data) {
       super();
@@ -20296,7 +19294,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChipCloud, "type", "ChipCloud");
   var ChipCloud = _ChipCloud;
 
-  // dist/src/parser/classes/ClientSideToggleMenuItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ClientSideToggleMenuItem.js
   var _ClientSideToggleMenuItem = class _ClientSideToggleMenuItem extends YTNode {
     constructor(data) {
       super();
@@ -20331,7 +19329,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ClientSideToggleMenuItem, "type", "ClientSideToggleMenuItem");
   var ClientSideToggleMenuItem = _ClientSideToggleMenuItem;
 
-  // dist/src/parser/classes/CollaboratorInfoCardContent.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CollaboratorInfoCardContent.js
   var _CollaboratorInfoCardContent = class _CollaboratorInfoCardContent extends YTNode {
     constructor(data) {
       super();
@@ -20351,7 +19349,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CollaboratorInfoCardContent, "type", "CollaboratorInfoCardContent");
   var CollaboratorInfoCardContent = _CollaboratorInfoCardContent;
 
-  // dist/src/parser/classes/CollageHeroImage.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CollageHeroImage.js
   var _CollageHeroImage = class _CollageHeroImage extends YTNode {
     constructor(data) {
       super();
@@ -20369,7 +19367,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CollageHeroImage, "type", "CollageHeroImage");
   var CollageHeroImage = _CollageHeroImage;
 
-  // dist/src/parser/classes/ThumbnailHoverOverlayView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailHoverOverlayView.js
   var _ThumbnailHoverOverlayView = class _ThumbnailHoverOverlayView extends YTNode {
     constructor(data) {
       super();
@@ -20385,7 +19383,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailHoverOverlayView, "type", "ThumbnailHoverOverlayView");
   var ThumbnailHoverOverlayView = _ThumbnailHoverOverlayView;
 
-  // dist/src/parser/classes/ThumbnailBadgeView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailBadgeView.js
   var _ThumbnailBadgeView = class _ThumbnailBadgeView extends YTNode {
     constructor(data) {
       super();
@@ -20410,7 +19408,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailBadgeView, "type", "ThumbnailBadgeView");
   var ThumbnailBadgeView = _ThumbnailBadgeView;
 
-  // dist/src/parser/classes/ThumbnailOverlayBadgeView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayBadgeView.js
   var _ThumbnailOverlayBadgeView = class _ThumbnailOverlayBadgeView extends YTNode {
     constructor(data) {
       super();
@@ -20424,7 +19422,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayBadgeView, "type", "ThumbnailOverlayBadgeView");
   var ThumbnailOverlayBadgeView = _ThumbnailOverlayBadgeView;
 
-  // dist/src/parser/classes/ThumbnailHoverOverlayToggleActionsView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailHoverOverlayToggleActionsView.js
   var _ThumbnailHoverOverlayToggleActionsView = class _ThumbnailHoverOverlayToggleActionsView extends YTNode {
     constructor(data) {
       super();
@@ -20436,7 +19434,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailHoverOverlayToggleActionsView, "type", "ThumbnailHoverOverlayToggleActionsView");
   var ThumbnailHoverOverlayToggleActionsView = _ThumbnailHoverOverlayToggleActionsView;
 
-  // dist/src/parser/classes/ThumbnailOverlayProgressBarView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayProgressBarView.js
   var _ThumbnailOverlayProgressBarView = class _ThumbnailOverlayProgressBarView extends YTNode {
     constructor(data) {
       super();
@@ -20448,7 +19446,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayProgressBarView, "type", "ThumbnailOverlayProgressBarView");
   var ThumbnailOverlayProgressBarView = _ThumbnailOverlayProgressBarView;
 
-  // dist/src/parser/classes/ThumbnailBottomOverlayView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailBottomOverlayView.js
   var _ThumbnailBottomOverlayView = class _ThumbnailBottomOverlayView extends YTNode {
     constructor(data) {
       super();
@@ -20462,7 +19460,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailBottomOverlayView, "type", "ThumbnailBottomOverlayView");
   var ThumbnailBottomOverlayView = _ThumbnailBottomOverlayView;
 
-  // dist/src/parser/classes/ThumbnailView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailView.js
   var _ThumbnailView = class _ThumbnailView extends YTNode {
     constructor(data) {
       super();
@@ -20489,7 +19487,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailView, "type", "ThumbnailView");
   var ThumbnailView = _ThumbnailView;
 
-  // dist/src/parser/classes/CollectionThumbnailView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CollectionThumbnailView.js
   var _CollectionThumbnailView = class _CollectionThumbnailView extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -20509,7 +19507,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CollectionThumbnailView, "type", "CollectionThumbnailView");
   var CollectionThumbnailView = _CollectionThumbnailView;
 
-  // dist/src/parser/classes/commands/AddToPlaylistCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/AddToPlaylistCommand.js
   var _AddToPlaylistCommand = class _AddToPlaylistCommand extends YTNode {
     constructor(data) {
       super();
@@ -20529,7 +19527,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddToPlaylistCommand, "type", "AddToPlaylistCommand");
   var AddToPlaylistCommand = _AddToPlaylistCommand;
 
-  // dist/src/parser/classes/commands/ContinuationCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/ContinuationCommand.js
   var _data;
   var _ContinuationCommand = class _ContinuationCommand extends YTNode {
     constructor(data) {
@@ -20582,7 +19580,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ContinuationCommand, "type", "ContinuationCommand");
   var ContinuationCommand = _ContinuationCommand;
 
-  // dist/src/parser/classes/commands/GetKidsBlocklistPickerCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/GetKidsBlocklistPickerCommand.js
   var API_PATH = "kids/get_kids_blocklist_picker";
   var _data2;
   var _GetKidsBlocklistPickerCommand = class _GetKidsBlocklistPickerCommand extends YTNode {
@@ -20606,7 +19604,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GetKidsBlocklistPickerCommand, "type", "GetKidsBlocklistPickerCommand");
   var GetKidsBlocklistPickerCommand = _GetKidsBlocklistPickerCommand;
 
-  // dist/src/parser/classes/commands/RunAttestationCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/RunAttestationCommand.js
   var _RunAttestationCommand = class _RunAttestationCommand extends YTNode {
     constructor(data) {
       super();
@@ -20631,7 +19629,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RunAttestationCommand, "type", "RunAttestationCommand");
   var RunAttestationCommand = _RunAttestationCommand;
 
-  // dist/src/parser/classes/commands/ShowDialogCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/ShowDialogCommand.js
   var _ShowDialogCommand = class _ShowDialogCommand extends YTNode {
     constructor(data) {
       var _a2;
@@ -20646,7 +19644,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowDialogCommand, "type", "ShowDialogCommand");
   var ShowDialogCommand = _ShowDialogCommand;
 
-  // dist/src/parser/classes/commands/ShowSheetCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/ShowSheetCommand.js
   var _ShowSheetCommand = class _ShowSheetCommand extends YTNode {
     constructor(data) {
       var _a2;
@@ -20661,7 +19659,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowSheetCommand, "type", "ShowSheetCommand");
   var ShowSheetCommand = _ShowSheetCommand;
 
-  // dist/src/parser/classes/commands/UpdateEngagementPanelContentCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/UpdateEngagementPanelContentCommand.js
   var _UpdateEngagementPanelContentCommand = class _UpdateEngagementPanelContentCommand extends YTNode {
     constructor(data) {
       super();
@@ -20675,7 +19673,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateEngagementPanelContentCommand, "type", "UpdateEngagementPanelContentCommand");
   var UpdateEngagementPanelContentCommand = _UpdateEngagementPanelContentCommand;
 
-  // dist/src/parser/classes/comments/AuthorCommentBadge.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/AuthorCommentBadge.js
   var _data3;
   var _AuthorCommentBadge = class _AuthorCommentBadge extends YTNode {
     constructor(data) {
@@ -20703,7 +19701,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AuthorCommentBadge, "type", "AuthorCommentBadge");
   var AuthorCommentBadge = _AuthorCommentBadge;
 
-  // dist/src/parser/classes/comments/EmojiPicker.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/EmojiPicker.js
   var _EmojiPicker = class _EmojiPicker extends YTNode {
     constructor(data) {
       super();
@@ -20739,7 +19737,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EmojiPicker, "type", "EmojiPicker");
   var EmojiPicker = _EmojiPicker;
 
-  // dist/src/parser/classes/comments/CommentDialog.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentDialog.js
   var _CommentDialog = class _CommentDialog extends YTNode {
     constructor(data) {
       super();
@@ -20763,7 +19761,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentDialog, "type", "CommentDialog");
   var CommentDialog = _CommentDialog;
 
-  // dist/src/parser/classes/comments/CommentReplyDialog.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentReplyDialog.js
   var _CommentReplyDialog = class _CommentReplyDialog extends YTNode {
     constructor(data) {
       super();
@@ -20783,7 +19781,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentReplyDialog, "type", "CommentReplyDialog");
   var CommentReplyDialog = _CommentReplyDialog;
 
-  // dist/src/parser/classes/comments/VoiceReplyContainerView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/VoiceReplyContainerView.js
   var _VoiceReplyContainerView = class _VoiceReplyContainerView extends YTNode {
     constructor(data) {
       super();
@@ -20797,7 +19795,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VoiceReplyContainerView, "type", "VoiceReplyContainerView");
   var VoiceReplyContainerView = _VoiceReplyContainerView;
 
-  // dist/src/parser/classes/comments/CommentView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentView.js
   var _actions;
   var _CommentView = class _CommentView extends YTNode {
     constructor(data) {
@@ -21011,7 +20009,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentView, "type", "CommentView");
   var CommentView = _CommentView;
 
-  // dist/src/parser/classes/misc/CommentsContinuation.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/CommentsContinuation.js
   var _actions2, _nextContinuationItem;
   var _CommentsContinuation = class _CommentsContinuation {
     constructor(actions, data) {
@@ -21059,7 +20057,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_CommentsContinuation, "CommentsContinuation");
   var CommentsContinuation = _CommentsContinuation;
 
-  // dist/src/parser/classes/comments/CommentThread.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentThread.js
   var _actions3, _continuation, _CommentThread_instances, processList_fn;
   var _CommentThread = class _CommentThread extends YTNode {
     constructor(data) {
@@ -21172,7 +20170,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentThread, "type", "CommentThread");
   var CommentThread = _CommentThread;
 
-  // dist/src/parser/classes/comments/CommentReplies.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentReplies.js
   var _CommentReplies = class _CommentReplies extends YTNode {
     constructor(data) {
       super();
@@ -21194,7 +20192,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentReplies, "type", "CommentReplies");
   var CommentReplies = _CommentReplies;
 
-  // dist/src/parser/classes/comments/CommentsSimplebox.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentsSimplebox.js
   var _CommentsSimplebox = class _CommentsSimplebox extends YTNode {
     constructor(data) {
       super();
@@ -21208,7 +20206,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentsSimplebox, "type", "CommentsSimplebox");
   var CommentsSimplebox = _CommentsSimplebox;
 
-  // dist/src/parser/classes/comments/CommentsEntryPointTeaser.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentsEntryPointTeaser.js
   var _CommentsEntryPointTeaser = class _CommentsEntryPointTeaser extends YTNode {
     constructor(data) {
       super();
@@ -21226,7 +20224,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentsEntryPointTeaser, "type", "CommentsEntryPointTeaser");
   var CommentsEntryPointTeaser = _CommentsEntryPointTeaser;
 
-  // dist/src/parser/classes/comments/CommentsEntryPointHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentsEntryPointHeader.js
   var _CommentsEntryPointHeader = class _CommentsEntryPointHeader extends YTNode {
     constructor(data) {
       super();
@@ -21260,7 +20258,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentsEntryPointHeader, "type", "CommentsEntryPointHeader");
   var CommentsEntryPointHeader = _CommentsEntryPointHeader;
 
-  // dist/src/parser/classes/comments/CommentsHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentsHeader.js
   var _CommentsHeader = class _CommentsHeader extends YTNode {
     constructor(data) {
       super();
@@ -21290,7 +20288,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentsHeader, "type", "CommentsHeader");
   var CommentsHeader = _CommentsHeader;
 
-  // dist/src/parser/classes/comments/CommentSimplebox.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentSimplebox.js
   var _CommentSimplebox = class _CommentSimplebox extends YTNode {
     constructor(data) {
       super();
@@ -21310,7 +20308,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentSimplebox, "type", "CommentSimplebox");
   var CommentSimplebox = _CommentSimplebox;
 
-  // dist/src/parser/classes/comments/PdgCommentChip.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/PdgCommentChip.js
   var _PdgCommentChip = class _PdgCommentChip extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -21332,7 +20330,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PdgCommentChip, "type", "PdgCommentChip");
   var PdgCommentChip = _PdgCommentChip;
 
-  // dist/src/parser/classes/comments/SponsorCommentBadge.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/SponsorCommentBadge.js
   var _SponsorCommentBadge = class _SponsorCommentBadge extends YTNode {
     constructor(data) {
       super();
@@ -21346,7 +20344,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SponsorCommentBadge, "type", "SponsorCommentBadge");
   var SponsorCommentBadge = _SponsorCommentBadge;
 
-  // dist/src/parser/classes/CompactChannel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactChannel.js
   var _CompactChannel = class _CompactChannel extends YTNode {
     constructor(data) {
       super();
@@ -21374,7 +20372,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompactChannel, "type", "CompactChannel");
   var CompactChannel = _CompactChannel;
 
-  // dist/src/parser/classes/PlaylistCustomThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistCustomThumbnail.js
   var _PlaylistCustomThumbnail = class _PlaylistCustomThumbnail extends YTNode {
     constructor(data) {
       super();
@@ -21386,7 +20384,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistCustomThumbnail, "type", "PlaylistCustomThumbnail");
   var PlaylistCustomThumbnail = _PlaylistCustomThumbnail;
 
-  // dist/src/parser/classes/PlaylistVideoThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistVideoThumbnail.js
   var _PlaylistVideoThumbnail = class _PlaylistVideoThumbnail extends YTNode {
     constructor(data) {
       super();
@@ -21398,7 +20396,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistVideoThumbnail, "type", "PlaylistVideoThumbnail");
   var PlaylistVideoThumbnail = _PlaylistVideoThumbnail;
 
-  // dist/src/parser/classes/Playlist.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Playlist.js
   var _Playlist = class _Playlist extends YTNode {
     constructor(data) {
       var _a2;
@@ -21441,7 +20439,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Playlist, "type", "Playlist");
   var Playlist = _Playlist;
 
-  // dist/src/parser/classes/CompactMix.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactMix.js
   var _CompactMix = class _CompactMix extends Playlist {
     constructor(data) {
       super(data);
@@ -21451,7 +20449,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompactMix, "type", "CompactMix");
   var CompactMix = _CompactMix;
 
-  // dist/src/parser/classes/CompactMovie.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactMovie.js
   var _CompactMovie = class _CompactMovie extends YTNode {
     constructor(data) {
       var _a2;
@@ -21489,7 +20487,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompactMovie, "type", "CompactMovie");
   var CompactMovie = _CompactMovie;
 
-  // dist/src/parser/classes/CompactPlaylist.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactPlaylist.js
   var _CompactPlaylist = class _CompactPlaylist extends Playlist {
     constructor(data) {
       super(data);
@@ -21500,7 +20498,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   var CompactPlaylist = _CompactPlaylist;
   var CompactPlaylist_default = CompactPlaylist;
 
-  // dist/src/parser/classes/CompactStation.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactStation.js
   var _CompactStation = class _CompactStation extends YTNode {
     constructor(data) {
       super();
@@ -21520,9 +20518,9 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompactStation, "type", "CompactStation");
   var CompactStation = _CompactStation;
 
-  // dist/src/parser/classes/CompositeVideoPrimaryInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompositeVideoPrimaryInfo.js
   var _CompositeVideoPrimaryInfo = class _CompositeVideoPrimaryInfo extends YTNode {
-    constructor(_data23) {
+    constructor(_data24) {
       super();
     }
   };
@@ -21530,7 +20528,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompositeVideoPrimaryInfo, "type", "CompositeVideoPrimaryInfo");
   var CompositeVideoPrimaryInfo = _CompositeVideoPrimaryInfo;
 
-  // dist/src/parser/classes/ConfirmDialog.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ConfirmDialog.js
   var _ConfirmDialog = class _ConfirmDialog extends YTNode {
     constructor(data) {
       super();
@@ -21548,7 +20546,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ConfirmDialog, "type", "ConfirmDialog");
   var ConfirmDialog = _ConfirmDialog;
 
-  // dist/src/parser/classes/ContentMetadataView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ContentMetadataView.js
   var _ContentMetadataView = class _ContentMetadataView extends YTNode {
     constructor(data) {
       var _a2;
@@ -21573,7 +20571,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ContentMetadataView, "type", "ContentMetadataView");
   var ContentMetadataView = _ContentMetadataView;
 
-  // dist/src/parser/classes/ContinuationItemView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ContinuationItemView.js
   var _ContinuationItemView = class _ContinuationItemView extends YTNode {
     constructor(data) {
       super();
@@ -21587,7 +20585,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ContinuationItemView, "type", "ContinuationItemView");
   var ContinuationItemView = _ContinuationItemView;
 
-  // dist/src/parser/classes/Message.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Message.js
   var _Message = class _Message extends YTNode {
     constructor(data) {
       super();
@@ -21599,7 +20597,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Message, "type", "Message");
   var Message = _Message;
 
-  // dist/src/parser/classes/ConversationBar.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ConversationBar.js
   var _ConversationBar = class _ConversationBar extends YTNode {
     constructor(data) {
       super();
@@ -21611,7 +20609,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ConversationBar, "type", "ConversationBar");
   var ConversationBar = _ConversationBar;
 
-  // dist/src/parser/classes/CopyLink.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CopyLink.js
   var _CopyLink = class _CopyLink extends YTNode {
     constructor(data) {
       super();
@@ -21627,7 +20625,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CopyLink, "type", "CopyLink");
   var CopyLink = _CopyLink;
 
-  // dist/src/parser/classes/DropdownView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DropdownView.js
   var _DropdownView = class _DropdownView extends YTNode {
     constructor(data) {
       super();
@@ -21661,7 +20659,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DropdownView, "type", "DropdownView");
   var DropdownView = _DropdownView;
 
-  // dist/src/parser/classes/TextFieldView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TextFieldView.js
   var _TextFieldView = class _TextFieldView extends YTNode {
     constructor(data) {
       super();
@@ -21699,7 +20697,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TextFieldView, "type", "TextFieldView");
   var TextFieldView = _TextFieldView;
 
-  // dist/src/parser/classes/CreatePlaylistDialogFormView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CreatePlaylistDialogFormView.js
   var _CreatePlaylistDialogFormView = class _CreatePlaylistDialogFormView extends YTNode {
     constructor(data) {
       super();
@@ -21721,7 +20719,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CreatePlaylistDialogFormView, "type", "CreatePlaylistDialogFormView");
   var CreatePlaylistDialogFormView = _CreatePlaylistDialogFormView;
 
-  // dist/src/parser/classes/DecoratedAvatarView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DecoratedAvatarView.js
   var _DecoratedAvatarView = class _DecoratedAvatarView extends YTNode {
     constructor(data) {
       super();
@@ -21737,7 +20735,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DecoratedAvatarView, "type", "DecoratedAvatarView");
   var DecoratedAvatarView = _DecoratedAvatarView;
 
-  // dist/src/parser/classes/HeatMarker.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HeatMarker.js
   var _HeatMarker = class _HeatMarker extends YTNode {
     constructor(data) {
       super();
@@ -21753,7 +20751,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HeatMarker, "type", "HeatMarker");
   var HeatMarker = _HeatMarker;
 
-  // dist/src/parser/classes/TimedMarkerDecoration.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TimedMarkerDecoration.js
   var _TimedMarkerDecoration = class _TimedMarkerDecoration extends YTNode {
     constructor(data) {
       super();
@@ -21773,7 +20771,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TimedMarkerDecoration, "type", "TimedMarkerDecoration");
   var TimedMarkerDecoration = _TimedMarkerDecoration;
 
-  // dist/src/parser/classes/Heatmap.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Heatmap.js
   var _Heatmap = class _Heatmap extends YTNode {
     constructor(data) {
       super();
@@ -21793,7 +20791,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Heatmap, "type", "Heatmap");
   var Heatmap = _Heatmap;
 
-  // dist/src/parser/classes/MultiMarkersPlayerBar.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MultiMarkersPlayerBar.js
   var _Marker = class _Marker extends YTNode {
     constructor(data) {
       super();
@@ -21826,7 +20824,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MultiMarkersPlayerBar, "type", "MultiMarkersPlayerBar");
   var MultiMarkersPlayerBar = _MultiMarkersPlayerBar;
 
-  // dist/src/parser/classes/DecoratedPlayerBar.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DecoratedPlayerBar.js
   var _DecoratedPlayerBar = class _DecoratedPlayerBar extends YTNode {
     constructor(data) {
       super();
@@ -21840,7 +20838,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DecoratedPlayerBar, "type", "DecoratedPlayerBar");
   var DecoratedPlayerBar = _DecoratedPlayerBar;
 
-  // dist/src/parser/classes/DefaultPromoPanel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DefaultPromoPanel.js
   var _DefaultPromoPanel = class _DefaultPromoPanel extends YTNode {
     constructor(data) {
       super();
@@ -21872,7 +20870,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DefaultPromoPanel, "type", "DefaultPromoPanel");
   var DefaultPromoPanel = _DefaultPromoPanel;
 
-  // dist/src/parser/classes/DescriptionPreviewView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DescriptionPreviewView.js
   var _DescriptionPreviewView = class _DescriptionPreviewView extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f;
@@ -21910,7 +20908,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DescriptionPreviewView, "type", "DescriptionPreviewView");
   var DescriptionPreviewView = _DescriptionPreviewView;
 
-  // dist/src/parser/classes/DialogHeaderView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DialogHeaderView.js
   var _DialogHeaderView = class _DialogHeaderView extends YTNode {
     constructor(data) {
       super();
@@ -21922,7 +20920,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DialogHeaderView, "type", "DialogHeaderView");
   var DialogHeaderView = _DialogHeaderView;
 
-  // dist/src/parser/classes/PanelFooterView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PanelFooterView.js
   var _PanelFooterView = class _PanelFooterView extends YTNode {
     constructor(data) {
       super();
@@ -21938,7 +20936,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PanelFooterView, "type", "PanelFooterView");
   var PanelFooterView = _PanelFooterView;
 
-  // dist/src/parser/classes/FormFooterView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FormFooterView.js
   var _FormFooterView = class _FormFooterView extends YTNode {
     constructor(data) {
       super();
@@ -21954,7 +20952,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FormFooterView, "type", "FormFooterView");
   var FormFooterView = _FormFooterView;
 
-  // dist/src/parser/classes/DownloadListItemView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DownloadListItemView.js
   var _DownloadListItemView = class _DownloadListItemView extends YTNode {
     constructor(data) {
       super();
@@ -21968,7 +20966,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DownloadListItemView, "type", "DownloadListItemView");
   var DownloadListItemView = _DownloadListItemView;
 
-  // dist/src/parser/classes/ListView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ListView.js
   var _ListView = class _ListView extends YTNode {
     constructor(data) {
       super();
@@ -21984,7 +20982,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ListView, "type", "ListView");
   var ListView = _ListView;
 
-  // dist/src/parser/classes/DialogView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DialogView.js
   var _DialogView = class _DialogView extends YTNode {
     constructor(data) {
       super();
@@ -22000,7 +20998,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DialogView, "type", "DialogView");
   var DialogView = _DialogView;
 
-  // dist/src/parser/classes/DidYouMean.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DidYouMean.js
   var _DidYouMean = class _DidYouMean extends YTNode {
     constructor(data) {
       super();
@@ -22016,7 +21014,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DidYouMean, "type", "DidYouMean");
   var DidYouMean = _DidYouMean;
 
-  // dist/src/parser/classes/DismissableDialogContentSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DismissableDialogContentSection.js
   var _DismissableDialogContentSection = class _DismissableDialogContentSection extends YTNode {
     constructor(data) {
       super();
@@ -22030,7 +21028,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DismissableDialogContentSection, "type", "DismissableDialogContentSection");
   var DismissableDialogContentSection = _DismissableDialogContentSection;
 
-  // dist/src/parser/classes/DismissableDialog.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DismissableDialog.js
   var _DismissableDialog = class _DismissableDialog extends YTNode {
     constructor(data) {
       super();
@@ -22048,7 +21046,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DismissableDialog, "type", "DismissableDialog");
   var DismissableDialog = _DismissableDialog;
 
-  // dist/src/parser/classes/DynamicTextView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DynamicTextView.js
   var _DynamicTextView = class _DynamicTextView extends YTNode {
     constructor(data) {
       super();
@@ -22062,7 +21060,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DynamicTextView, "type", "DynamicTextView");
   var DynamicTextView = _DynamicTextView;
 
-  // dist/src/parser/classes/misc/ChildElement.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/ChildElement.js
   var _ChildElement = class _ChildElement extends YTNode {
     constructor(data) {
       var _a2;
@@ -22083,7 +21081,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChildElement, "type", "ChildElement");
   var ChildElement = _ChildElement;
 
-  // dist/src/parser/classes/Element.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Element.js
   var _Element = class _Element extends YTNode {
     constructor(data) {
       var _a2;
@@ -22104,7 +21102,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Element, "type", "Element");
   var Element = _Element;
 
-  // dist/src/parser/classes/EmergencyOnebox.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EmergencyOnebox.js
   var _EmergencyOnebox = class _EmergencyOnebox extends YTNode {
     constructor(data) {
       super();
@@ -22120,7 +21118,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EmergencyOnebox, "type", "EmergencyOnebox");
   var EmergencyOnebox = _EmergencyOnebox;
 
-  // dist/src/parser/classes/EmojiPickerCategory.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EmojiPickerCategory.js
   var _EmojiPickerCategory = class _EmojiPickerCategory extends YTNode {
     constructor(data) {
       super();
@@ -22140,7 +21138,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EmojiPickerCategory, "type", "EmojiPickerCategory");
   var EmojiPickerCategory = _EmojiPickerCategory;
 
-  // dist/src/parser/classes/EmojiPickerCategoryButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EmojiPickerCategoryButton.js
   var _EmojiPickerCategoryButton = class _EmojiPickerCategoryButton extends YTNode {
     constructor(data) {
       var _a2;
@@ -22159,7 +21157,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EmojiPickerCategoryButton, "type", "EmojiPickerCategoryButton");
   var EmojiPickerCategoryButton = _EmojiPickerCategoryButton;
 
-  // dist/src/parser/classes/EmojiPickerUpsellCategory.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EmojiPickerUpsellCategory.js
   var _EmojiPickerUpsellCategory = class _EmojiPickerUpsellCategory extends YTNode {
     constructor(data) {
       super();
@@ -22181,7 +21179,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EmojiPickerUpsellCategory, "type", "EmojiPickerUpsellCategory");
   var EmojiPickerUpsellCategory = _EmojiPickerUpsellCategory;
 
-  // dist/src/parser/classes/endpoints/AddToPlaylistServiceEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/AddToPlaylistServiceEndpoint.js
   var API_PATH2 = "playlist/get_add_to_playlist";
   var _data4;
   var _AddToPlaylistServiceEndpoint = class _AddToPlaylistServiceEndpoint extends YTNode {
@@ -22209,7 +21207,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddToPlaylistServiceEndpoint, "type", "AddToPlaylistServiceEndpoint");
   var AddToPlaylistServiceEndpoint = _AddToPlaylistServiceEndpoint;
 
-  // dist/src/parser/classes/endpoints/AddToPlaylistEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/AddToPlaylistEndpoint.js
   var _AddToPlaylistEndpoint = class _AddToPlaylistEndpoint extends AddToPlaylistServiceEndpoint {
     constructor(data) {
       super(data);
@@ -22219,7 +21217,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddToPlaylistEndpoint, "type", "AddToPlaylistEndpoint");
   var AddToPlaylistEndpoint = _AddToPlaylistEndpoint;
 
-  // dist/src/parser/classes/endpoints/BrowseEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/BrowseEndpoint.js
   var API_PATH3 = "browse";
   var _data5;
   var _BrowseEndpoint = class _BrowseEndpoint extends YTNode {
@@ -22266,7 +21264,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BrowseEndpoint, "type", "BrowseEndpoint");
   var BrowseEndpoint = _BrowseEndpoint;
 
-  // dist/src/parser/classes/endpoints/CreateCommentEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/CreateCommentEndpoint.js
   var API_PATH4 = "comment/create_comment";
   var _data6;
   var _CreateCommentEndpoint = class _CreateCommentEndpoint extends YTNode {
@@ -22306,7 +21304,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CreateCommentEndpoint, "type", "CreateCommentEndpoint");
   var CreateCommentEndpoint = _CreateCommentEndpoint;
 
-  // dist/src/parser/classes/endpoints/CreatePlaylistServiceEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/CreatePlaylistServiceEndpoint.js
   var API_PATH5 = "playlist/create";
   var _data7;
   var _CreatePlaylistServiceEndpoint = class _CreatePlaylistServiceEndpoint extends YTNode {
@@ -22340,7 +21338,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CreatePlaylistServiceEndpoint, "type", "CreatePlaylistServiceEndpoint");
   var CreatePlaylistServiceEndpoint = _CreatePlaylistServiceEndpoint;
 
-  // dist/src/parser/classes/endpoints/DeletePlaylistEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/DeletePlaylistEndpoint.js
   var API_PATH6 = "playlist/delete";
   var _data8;
   var _DeletePlaylistEndpoint = class _DeletePlaylistEndpoint extends YTNode {
@@ -22364,7 +21362,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DeletePlaylistEndpoint, "type", "DeletePlaylistEndpoint");
   var DeletePlaylistEndpoint = _DeletePlaylistEndpoint;
 
-  // dist/src/parser/classes/endpoints/FeedbackEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/FeedbackEndpoint.js
   var API_PATH7 = "feedback";
   var _data9;
   var _FeedbackEndpoint = class _FeedbackEndpoint extends YTNode {
@@ -22392,7 +21390,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FeedbackEndpoint, "type", "FeedbackEndpoint");
   var FeedbackEndpoint = _FeedbackEndpoint;
 
-  // dist/src/parser/classes/endpoints/GetAccountsListInnertubeEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/GetAccountsListInnertubeEndpoint.js
   var API_PATH8 = "account/accounts_list";
   var _data10;
   var _GetAccountsListInnertubeEndpoint = class _GetAccountsListInnertubeEndpoint extends YTNode {
@@ -22437,7 +21435,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GetAccountsListInnertubeEndpoint, "type", "GetAccountsListInnertubeEndpoint");
   var GetAccountsListInnertubeEndpoint = _GetAccountsListInnertubeEndpoint;
 
-  // dist/src/parser/classes/endpoints/HideEngagementPanelEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/HideEngagementPanelEndpoint.js
   var _HideEngagementPanelEndpoint = class _HideEngagementPanelEndpoint extends YTNode {
     constructor(data) {
       super();
@@ -22449,7 +21447,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HideEngagementPanelEndpoint, "type", "HideEngagementPanelEndpoint");
   var HideEngagementPanelEndpoint = _HideEngagementPanelEndpoint;
 
-  // dist/src/parser/classes/endpoints/LikeEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/LikeEndpoint.js
   var LIKE_API_PATH = "like/like";
   var DISLIKE_API_PATH = "like/dislike";
   var REMOVE_LIKE_API_PATH = "like/removelike";
@@ -22490,7 +21488,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LikeEndpoint, "type", "LikeEndpoint");
   var LikeEndpoint = _LikeEndpoint;
 
-  // dist/src/parser/classes/endpoints/LiveChatItemContextMenuEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/LiveChatItemContextMenuEndpoint.js
   var API_PATH9 = "live_chat/get_item_context_menu";
   var _data12;
   var _LiveChatItemContextMenuEndpoint = class _LiveChatItemContextMenuEndpoint extends YTNode {
@@ -22514,7 +21512,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatItemContextMenuEndpoint, "type", "LiveChatItemContextMenuEndpoint");
   var LiveChatItemContextMenuEndpoint = _LiveChatItemContextMenuEndpoint;
 
-  // dist/src/parser/classes/endpoints/ModifyChannelNotificationPreferenceEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ModifyChannelNotificationPreferenceEndpoint.js
   var API_PATH10 = "notification/modify_channel_preference";
   var _data13;
   var _ModifyChannelNotificationPreferenceEndpoint = class _ModifyChannelNotificationPreferenceEndpoint extends YTNode {
@@ -22540,7 +21538,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ModifyChannelNotificationPreferenceEndpoint, "type", "ModifyChannelNotificationPreferenceEndpoint");
   var ModifyChannelNotificationPreferenceEndpoint = _ModifyChannelNotificationPreferenceEndpoint;
 
-  // dist/src/parser/classes/endpoints/PerformCommentActionEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/PerformCommentActionEndpoint.js
   var API_PATH11 = "comment/perform_comment_action";
   var _data14;
   var _PerformCommentActionEndpoint = class _PerformCommentActionEndpoint extends YTNode {
@@ -22566,7 +21564,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PerformCommentActionEndpoint, "type", "PerformCommentActionEndpoint");
   var PerformCommentActionEndpoint = _PerformCommentActionEndpoint;
 
-  // dist/src/parser/classes/endpoints/PlaylistEditEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/PlaylistEditEndpoint.js
   var API_PATH12 = "browse/edit_playlist";
   var _data15;
   var _PlaylistEditEndpoint = class _PlaylistEditEndpoint extends YTNode {
@@ -22594,7 +21592,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistEditEndpoint, "type", "PlaylistEditEndpoint");
   var PlaylistEditEndpoint = _PlaylistEditEndpoint;
 
-  // dist/src/parser/classes/endpoints/WatchEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/WatchEndpoint.js
   var API_PATH13 = "player";
   var _data16;
   var _WatchEndpoint = class _WatchEndpoint extends YTNode {
@@ -22630,7 +21628,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchEndpoint, "type", "WatchEndpoint");
   var WatchEndpoint = _WatchEndpoint;
 
-  // dist/src/parser/classes/endpoints/PrefetchWatchCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/PrefetchWatchCommand.js
   var _PrefetchWatchCommand = class _PrefetchWatchCommand extends WatchEndpoint {
     constructor(data) {
       super(data);
@@ -22640,7 +21638,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PrefetchWatchCommand, "type", "PrefetchWatchCommand");
   var PrefetchWatchCommand = _PrefetchWatchCommand;
 
-  // dist/src/parser/classes/endpoints/ReelWatchEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ReelWatchEndpoint.js
   var API_PATH14 = "reel/reel_item_watch";
   var _data17;
   var _ReelWatchEndpoint = class _ReelWatchEndpoint extends YTNode {
@@ -22680,7 +21678,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReelWatchEndpoint, "type", "ReelWatchEndpoint");
   var ReelWatchEndpoint = _ReelWatchEndpoint;
 
-  // dist/src/parser/classes/endpoints/SearchEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/SearchEndpoint.js
   var API_PATH15 = "search";
   var _data18;
   var _SearchEndpoint = class _SearchEndpoint extends YTNode {
@@ -22710,7 +21708,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchEndpoint, "type", "SearchEndpoint");
   var SearchEndpoint = _SearchEndpoint;
 
-  // dist/src/parser/classes/endpoints/ShareEntityServiceEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ShareEntityServiceEndpoint.js
   var API_PATH16 = "share/get_share_panel";
   var _data19;
   var _ShareEntityServiceEndpoint = class _ShareEntityServiceEndpoint extends YTNode {
@@ -22736,7 +21734,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShareEntityServiceEndpoint, "type", "ShareEntityServiceEndpoint");
   var ShareEntityServiceEndpoint = _ShareEntityServiceEndpoint;
 
-  // dist/src/parser/classes/endpoints/ShareEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ShareEndpoint.js
   var _ShareEndpoint = class _ShareEndpoint extends ShareEntityServiceEndpoint {
     constructor(data) {
       super(data);
@@ -22746,7 +21744,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShareEndpoint, "type", "ShareEndpoint");
   var ShareEndpoint = _ShareEndpoint;
 
-  // dist/src/parser/classes/endpoints/ShareEntityEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ShareEntityEndpoint.js
   var _ShareEntityEndpoint = class _ShareEntityEndpoint extends ShareEntityServiceEndpoint {
     constructor(data) {
       super(data);
@@ -22756,21 +21754,39 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShareEntityEndpoint, "type", "ShareEntityEndpoint");
   var ShareEntityEndpoint = _ShareEntityEndpoint;
 
-  // dist/src/parser/classes/endpoints/ShowEngagementPanelEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ShowEngagementPanelEndpoint.js
+  var API_PATH17 = "get_panel";
+  var _data20;
   var _ShowEngagementPanelEndpoint = class _ShowEngagementPanelEndpoint extends YTNode {
     constructor(data) {
       super();
+      __privateAdd(this, _data20);
       __publicField(this, "panel_identifier");
       __publicField(this, "source_panel_identifier");
+      __privateSet(this, _data20, data);
       this.panel_identifier = data.panelIdentifier;
       this.source_panel_identifier = data.sourcePanelIdentifier;
     }
+    getApiPath() {
+      return API_PATH17;
+    }
+    buildRequest() {
+      var _a2, _b2, _c;
+      const request = {};
+      const panelId = __privateGet(this, _data20).panelIdentifier || ((_a2 = __privateGet(this, _data20).identifier) == null ? void 0 : _a2.tag);
+      if (panelId)
+        request.panelId = panelId;
+      if ((_b2 = __privateGet(this, _data20).globalConfiguration) == null ? void 0 : _b2.params)
+        request.params = (_c = __privateGet(this, _data20).globalConfiguration) == null ? void 0 : _c.params;
+      return request;
+    }
   };
+  _data20 = new WeakMap();
   __name(_ShowEngagementPanelEndpoint, "ShowEngagementPanelEndpoint");
   __publicField(_ShowEngagementPanelEndpoint, "type", "ShowEngagementPanelEndpoint");
   var ShowEngagementPanelEndpoint = _ShowEngagementPanelEndpoint;
 
-  // dist/src/parser/classes/endpoints/SignalServiceEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/SignalServiceEndpoint.js
   var _SignalServiceEndpoint = class _SignalServiceEndpoint extends YTNode {
     constructor(data) {
       super();
@@ -22789,42 +21805,10 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SignalServiceEndpoint, "type", "SignalServiceEndpoint");
   var SignalServiceEndpoint = _SignalServiceEndpoint;
 
-  // dist/src/parser/classes/endpoints/SubscribeEndpoint.js
-  var API_PATH17 = "subscription/subscribe";
-  var _data20;
-  var _SubscribeEndpoint = class _SubscribeEndpoint extends YTNode {
-    constructor(data) {
-      super();
-      __privateAdd(this, _data20);
-      __privateSet(this, _data20, data);
-    }
-    getApiPath() {
-      return API_PATH17;
-    }
-    buildRequest() {
-      const request = {};
-      if (__privateGet(this, _data20).channelIds)
-        request.channelIds = __privateGet(this, _data20).channelIds;
-      if (__privateGet(this, _data20).siloName)
-        request.siloName = __privateGet(this, _data20).siloName;
-      if (__privateGet(this, _data20).params)
-        request.params = __privateGet(this, _data20).params;
-      if (__privateGet(this, _data20).botguardResponse)
-        request.botguardResponse = __privateGet(this, _data20).botguardResponse;
-      if (__privateGet(this, _data20).feature)
-        request.clientFeature = __privateGet(this, _data20).feature;
-      return request;
-    }
-  };
-  _data20 = new WeakMap();
-  __name(_SubscribeEndpoint, "SubscribeEndpoint");
-  __publicField(_SubscribeEndpoint, "type", "SubscribeEndpoint");
-  var SubscribeEndpoint = _SubscribeEndpoint;
-
-  // dist/src/parser/classes/endpoints/UnsubscribeEndpoint.js
-  var API_PATH18 = "subscription/unsubscribe";
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/SubscribeEndpoint.js
+  var API_PATH18 = "subscription/subscribe";
   var _data21;
-  var _UnsubscribeEndpoint = class _UnsubscribeEndpoint extends YTNode {
+  var _SubscribeEndpoint = class _SubscribeEndpoint extends YTNode {
     constructor(data) {
       super();
       __privateAdd(this, _data21);
@@ -22841,18 +21825,22 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
         request.siloName = __privateGet(this, _data21).siloName;
       if (__privateGet(this, _data21).params)
         request.params = __privateGet(this, _data21).params;
+      if (__privateGet(this, _data21).botguardResponse)
+        request.botguardResponse = __privateGet(this, _data21).botguardResponse;
+      if (__privateGet(this, _data21).feature)
+        request.clientFeature = __privateGet(this, _data21).feature;
       return request;
     }
   };
   _data21 = new WeakMap();
-  __name(_UnsubscribeEndpoint, "UnsubscribeEndpoint");
-  __publicField(_UnsubscribeEndpoint, "type", "UnsubscribeEndpoint");
-  var UnsubscribeEndpoint = _UnsubscribeEndpoint;
+  __name(_SubscribeEndpoint, "SubscribeEndpoint");
+  __publicField(_SubscribeEndpoint, "type", "SubscribeEndpoint");
+  var SubscribeEndpoint = _SubscribeEndpoint;
 
-  // dist/src/parser/classes/endpoints/WatchNextEndpoint.js
-  var API_PATH19 = "next";
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/UnsubscribeEndpoint.js
+  var API_PATH19 = "subscription/unsubscribe";
   var _data22;
-  var _WatchNextEndpoint = class _WatchNextEndpoint extends YTNode {
+  var _UnsubscribeEndpoint = class _UnsubscribeEndpoint extends YTNode {
     constructor(data) {
       super();
       __privateAdd(this, _data22);
@@ -22863,25 +21851,53 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
     }
     buildRequest() {
       const request = {};
-      if (__privateGet(this, _data22).videoId)
-        request.videoId = __privateGet(this, _data22).videoId;
-      if (__privateGet(this, _data22).playlistId)
-        request.playlistId = __privateGet(this, _data22).playlistId;
-      if (__privateGet(this, _data22).index !== void 0 || __privateGet(this, _data22).playlistIndex !== void 0)
-        request.playlistIndex = __privateGet(this, _data22).index || __privateGet(this, _data22).playlistIndex;
-      if (__privateGet(this, _data22).playerParams || __privateGet(this, _data22).params)
-        request.params = __privateGet(this, _data22).playerParams || __privateGet(this, _data22).params;
-      request.racyCheckOk = !!__privateGet(this, _data22).racyCheckOk;
-      request.contentCheckOk = !!__privateGet(this, _data22).contentCheckOk;
+      if (__privateGet(this, _data22).channelIds)
+        request.channelIds = __privateGet(this, _data22).channelIds;
+      if (__privateGet(this, _data22).siloName)
+        request.siloName = __privateGet(this, _data22).siloName;
+      if (__privateGet(this, _data22).params)
+        request.params = __privateGet(this, _data22).params;
       return request;
     }
   };
   _data22 = new WeakMap();
+  __name(_UnsubscribeEndpoint, "UnsubscribeEndpoint");
+  __publicField(_UnsubscribeEndpoint, "type", "UnsubscribeEndpoint");
+  var UnsubscribeEndpoint = _UnsubscribeEndpoint;
+
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/WatchNextEndpoint.js
+  var API_PATH20 = "next";
+  var _data23;
+  var _WatchNextEndpoint = class _WatchNextEndpoint extends YTNode {
+    constructor(data) {
+      super();
+      __privateAdd(this, _data23);
+      __privateSet(this, _data23, data);
+    }
+    getApiPath() {
+      return API_PATH20;
+    }
+    buildRequest() {
+      const request = {};
+      if (__privateGet(this, _data23).videoId)
+        request.videoId = __privateGet(this, _data23).videoId;
+      if (__privateGet(this, _data23).playlistId)
+        request.playlistId = __privateGet(this, _data23).playlistId;
+      if (__privateGet(this, _data23).index !== void 0 || __privateGet(this, _data23).playlistIndex !== void 0)
+        request.playlistIndex = __privateGet(this, _data23).index || __privateGet(this, _data23).playlistIndex;
+      if (__privateGet(this, _data23).playerParams || __privateGet(this, _data23).params)
+        request.params = __privateGet(this, _data23).playerParams || __privateGet(this, _data23).params;
+      request.racyCheckOk = !!__privateGet(this, _data23).racyCheckOk;
+      request.contentCheckOk = !!__privateGet(this, _data23).contentCheckOk;
+      return request;
+    }
+  };
+  _data23 = new WeakMap();
   __name(_WatchNextEndpoint, "WatchNextEndpoint");
   __publicField(_WatchNextEndpoint, "type", "WatchNextEndpoint");
   var WatchNextEndpoint = _WatchNextEndpoint;
 
-  // dist/src/parser/classes/Endscreen.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Endscreen.js
   var _Endscreen = class _Endscreen extends YTNode {
     constructor(data) {
       super();
@@ -22895,7 +21911,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Endscreen, "type", "Endscreen");
   var Endscreen = _Endscreen;
 
-  // dist/src/parser/classes/EndscreenElement.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EndscreenElement.js
   var _EndscreenElement = class _EndscreenElement extends YTNode {
     constructor(data) {
       super();
@@ -22957,7 +21973,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EndscreenElement, "type", "EndscreenElement");
   var EndscreenElement = _EndscreenElement;
 
-  // dist/src/parser/classes/EndScreenPlaylist.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EndScreenPlaylist.js
   var _EndScreenPlaylist = class _EndScreenPlaylist extends YTNode {
     constructor(data) {
       super();
@@ -22979,7 +21995,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EndScreenPlaylist, "type", "EndScreenPlaylist");
   var EndScreenPlaylist = _EndScreenPlaylist;
 
-  // dist/src/parser/classes/EndScreenVideo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EndScreenVideo.js
   var _EndScreenVideo = class _EndScreenVideo extends YTNode {
     constructor(data) {
       super();
@@ -23010,7 +22026,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EndScreenVideo, "type", "EndScreenVideo");
   var EndScreenVideo = _EndScreenVideo;
 
-  // dist/src/parser/classes/ExpandableTab.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ExpandableTab.js
   var _ExpandableTab = class _ExpandableTab extends YTNode {
     constructor(data) {
       super();
@@ -23028,7 +22044,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ExpandableTab, "type", "ExpandableTab");
   var ExpandableTab = _ExpandableTab;
 
-  // dist/src/parser/classes/ExpandedShelfContents.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ExpandedShelfContents.js
   var _ExpandedShelfContents = class _ExpandedShelfContents extends YTNode {
     constructor(data) {
       super();
@@ -23044,7 +22060,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ExpandedShelfContents, "type", "ExpandedShelfContents");
   var ExpandedShelfContents = _ExpandedShelfContents;
 
-  // dist/src/parser/classes/FancyDismissibleDialog.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FancyDismissibleDialog.js
   var _FancyDismissibleDialog = class _FancyDismissibleDialog extends YTNode {
     constructor(data) {
       super();
@@ -23058,7 +22074,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FancyDismissibleDialog, "type", "FancyDismissibleDialog");
   var FancyDismissibleDialog = _FancyDismissibleDialog;
 
-  // dist/src/parser/classes/FeedFilterChipBar.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FeedFilterChipBar.js
   var _FeedFilterChipBar = class _FeedFilterChipBar extends YTNode {
     constructor(data) {
       super();
@@ -23070,7 +22086,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FeedFilterChipBar, "type", "FeedFilterChipBar");
   var FeedFilterChipBar = _FeedFilterChipBar;
 
-  // dist/src/parser/classes/FeedNudge.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FeedNudge.js
   var _FeedNudge = class _FeedNudge extends YTNode {
     constructor(data) {
       super();
@@ -23092,7 +22108,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FeedNudge, "type", "FeedNudge");
   var FeedNudge = _FeedNudge;
 
-  // dist/src/parser/classes/FeedTabbedHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FeedTabbedHeader.js
   var _FeedTabbedHeader = class _FeedTabbedHeader extends YTNode {
     constructor(data) {
       super();
@@ -23104,7 +22120,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FeedTabbedHeader, "type", "FeedTabbedHeader");
   var FeedTabbedHeader = _FeedTabbedHeader;
 
-  // dist/src/parser/classes/ToggleFormField.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ToggleFormField.js
   var _ToggleFormField = class _ToggleFormField extends YTNode {
     constructor(data) {
       super();
@@ -23124,7 +22140,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ToggleFormField, "type", "ToggleFormField");
   var ToggleFormField = _ToggleFormField;
 
-  // dist/src/parser/classes/Form.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Form.js
   var _Form = class _Form extends YTNode {
     constructor(data) {
       super();
@@ -23136,7 +22152,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Form, "type", "Form");
   var Form = _Form;
 
-  // dist/src/parser/classes/FormPopup.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FormPopup.js
   var _FormPopup = class _FormPopup extends YTNode {
     constructor(data) {
       super();
@@ -23152,7 +22168,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FormPopup, "type", "FormPopup");
   var FormPopup = _FormPopup;
 
-  // dist/src/parser/classes/GameDetails.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GameDetails.js
   var _GameDetails = class _GameDetails extends YTNode {
     constructor(data) {
       super();
@@ -23172,7 +22188,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GameDetails, "type", "GameDetails");
   var GameDetails = _GameDetails;
 
-  // dist/src/parser/classes/Grid.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Grid.js
   var _Grid = class _Grid extends YTNode {
     constructor(data) {
       var _a2, _b2, _c;
@@ -23207,7 +22223,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Grid, "type", "Grid");
   var Grid = _Grid;
 
-  // dist/src/parser/classes/GridChannel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridChannel.js
   var _GridChannel = class _GridChannel extends YTNode {
     constructor(data) {
       super();
@@ -23232,7 +22248,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridChannel, "type", "GridChannel");
   var GridChannel = _GridChannel;
 
-  // dist/src/parser/classes/GridHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridHeader.js
   var _GridHeader = class _GridHeader extends YTNode {
     constructor(data) {
       super();
@@ -23244,7 +22260,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridHeader, "type", "GridHeader");
   var GridHeader = _GridHeader;
 
-  // dist/src/parser/classes/GridMix.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridMix.js
   var _GridMix = class _GridMix extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -23273,7 +22289,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridMix, "type", "GridMix");
   var GridMix = _GridMix;
 
-  // dist/src/parser/classes/GridMovie.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridMovie.js
   var _GridMovie = class _GridMovie extends YTNode {
     constructor(data) {
       var _a2;
@@ -23301,7 +22317,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridMovie, "type", "GridMovie");
   var GridMovie = _GridMovie;
 
-  // dist/src/parser/classes/GridPlaylist.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridPlaylist.js
   var _GridPlaylist = class _GridPlaylist extends YTNode {
     constructor(data) {
       var _a2;
@@ -23313,6 +22329,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
       __publicField(this, "endpoint");
       __publicField(this, "view_playlist");
       __publicField(this, "thumbnails");
+      __publicField(this, "thumbnail_overlays");
       __publicField(this, "thumbnail_renderer");
       __publicField(this, "sidebar_thumbnails");
       __publicField(this, "video_count");
@@ -23326,6 +22343,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
       this.endpoint = new NavigationEndpoint(data.navigationEndpoint);
       this.view_playlist = new Text2(data.viewPlaylistText);
       this.thumbnails = Thumbnail.fromResponse(data.thumbnail);
+      this.thumbnail_overlays = parser_exports.parseArray(data.thumbnailOverlays);
       this.thumbnail_renderer = parser_exports.parseItem(data.thumbnailRenderer);
       this.sidebar_thumbnails = [].concat(...((_a2 = data.sidebarThumbnails) == null ? void 0 : _a2.map((thumbnail) => Thumbnail.fromResponse(thumbnail))) || []) || null;
       this.video_count = new Text2(data.thumbnailText);
@@ -23336,7 +22354,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridPlaylist, "type", "GridPlaylist");
   var GridPlaylist = _GridPlaylist;
 
-  // dist/src/parser/classes/GridShelfView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridShelfView.js
   var _GridShelfView = class _GridShelfView extends YTNode {
     constructor(data) {
       super();
@@ -23360,7 +22378,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridShelfView, "type", "GridShelfView");
   var GridShelfView = _GridShelfView;
 
-  // dist/src/parser/classes/ShowCustomThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ShowCustomThumbnail.js
   var _ShowCustomThumbnail = class _ShowCustomThumbnail extends YTNode {
     constructor(data) {
       super();
@@ -23372,7 +22390,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowCustomThumbnail, "type", "ShowCustomThumbnail");
   var ShowCustomThumbnail = _ShowCustomThumbnail;
 
-  // dist/src/parser/classes/ThumbnailOverlayBottomPanel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayBottomPanel.js
   var _ThumbnailOverlayBottomPanel = class _ThumbnailOverlayBottomPanel extends YTNode {
     constructor(data) {
       super();
@@ -23390,7 +22408,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayBottomPanel, "type", "ThumbnailOverlayBottomPanel");
   var ThumbnailOverlayBottomPanel = _ThumbnailOverlayBottomPanel;
 
-  // dist/src/parser/classes/GridShow.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridShow.js
   var _GridShow = class _GridShow extends YTNode {
     constructor(data) {
       super();
@@ -23412,7 +22430,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridShow, "type", "GridShow");
   var GridShow = _GridShow;
 
-  // dist/src/parser/classes/GridVideo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridVideo.js
   var _GridVideo = class _GridVideo extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -23469,7 +22487,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridVideo, "type", "GridVideo");
   var GridVideo = _GridVideo;
 
-  // dist/src/parser/classes/GuideEntry.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GuideEntry.js
   var _GuideEntry = class _GuideEntry extends YTNode {
     constructor(data) {
       super();
@@ -23497,7 +22515,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GuideEntry, "type", "GuideEntry");
   var GuideEntry = _GuideEntry;
 
-  // dist/src/parser/classes/GuideCollapsibleEntry.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GuideCollapsibleEntry.js
   var _GuideCollapsibleEntry = class _GuideCollapsibleEntry extends YTNode {
     constructor(data) {
       super();
@@ -23513,7 +22531,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GuideCollapsibleEntry, "type", "GuideCollapsibleEntry");
   var GuideCollapsibleEntry = _GuideCollapsibleEntry;
 
-  // dist/src/parser/classes/GuideCollapsibleSectionEntry.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GuideCollapsibleSectionEntry.js
   var _GuideCollapsibleSectionEntry = class _GuideCollapsibleSectionEntry extends YTNode {
     constructor(data) {
       super();
@@ -23531,7 +22549,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GuideCollapsibleSectionEntry, "type", "GuideCollapsibleSectionEntry");
   var GuideCollapsibleSectionEntry = _GuideCollapsibleSectionEntry;
 
-  // dist/src/parser/classes/GuideDownloadsEntry.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GuideDownloadsEntry.js
   var _GuideDownloadsEntry = class _GuideDownloadsEntry extends GuideEntry {
     constructor(data) {
       super(data.entryRenderer.guideEntryRenderer);
@@ -23543,7 +22561,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GuideDownloadsEntry, "type", "GuideDownloadsEntry");
   var GuideDownloadsEntry = _GuideDownloadsEntry;
 
-  // dist/src/parser/classes/GuideSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GuideSection.js
   var _GuideSection = class _GuideSection extends YTNode {
     constructor(data) {
       super();
@@ -23559,14 +22577,14 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GuideSection, "type", "GuideSection");
   var GuideSection = _GuideSection;
 
-  // dist/src/parser/classes/GuideSubscriptionsSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GuideSubscriptionsSection.js
   var _GuideSubscriptionsSection = class _GuideSubscriptionsSection extends GuideSection {
   };
   __name(_GuideSubscriptionsSection, "GuideSubscriptionsSection");
   __publicField(_GuideSubscriptionsSection, "type", "GuideSubscriptionsSection");
   var GuideSubscriptionsSection = _GuideSubscriptionsSection;
 
-  // dist/src/parser/classes/HashtagHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HashtagHeader.js
   var _HashtagHeader = class _HashtagHeader extends YTNode {
     constructor(data) {
       super();
@@ -23580,7 +22598,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HashtagHeader, "type", "HashtagHeader");
   var HashtagHeader = _HashtagHeader;
 
-  // dist/src/parser/classes/HashtagTile.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HashtagTile.js
   var _HashtagTile = class _HashtagTile extends YTNode {
     constructor(data) {
       super();
@@ -23604,7 +22622,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HashtagTile, "type", "HashtagTile");
   var HashtagTile = _HashtagTile;
 
-  // dist/src/parser/classes/HeroPlaylistThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HeroPlaylistThumbnail.js
   var _HeroPlaylistThumbnail = class _HeroPlaylistThumbnail extends YTNode {
     constructor(data) {
       super();
@@ -23618,7 +22636,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HeroPlaylistThumbnail, "type", "HeroPlaylistThumbnail");
   var HeroPlaylistThumbnail = _HeroPlaylistThumbnail;
 
-  // dist/src/parser/classes/HighlightsCarousel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HighlightsCarousel.js
   var _Panel = class _Panel extends YTNode {
     constructor(data) {
       super();
@@ -23669,7 +22687,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HighlightsCarousel, "type", "HighlightsCarousel");
   var HighlightsCarousel = _HighlightsCarousel;
 
-  // dist/src/parser/classes/SearchSuggestion.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchSuggestion.js
   var _SearchSuggestion = class _SearchSuggestion extends YTNode {
     constructor(data) {
       super();
@@ -23691,7 +22709,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchSuggestion, "type", "SearchSuggestion");
   var SearchSuggestion = _SearchSuggestion;
 
-  // dist/src/parser/classes/HistorySuggestion.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HistorySuggestion.js
   var _HistorySuggestion = class _HistorySuggestion extends SearchSuggestion {
     constructor(data) {
       super(data);
@@ -23701,7 +22719,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HistorySuggestion, "type", "HistorySuggestion");
   var HistorySuggestion = _HistorySuggestion;
 
-  // dist/src/parser/classes/HorizontalMovieList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HorizontalMovieList.js
   var _HorizontalMovieList = class _HorizontalMovieList extends YTNode {
     constructor(data) {
       super();
@@ -23721,7 +22739,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HorizontalMovieList, "type", "HorizontalMovieList");
   var HorizontalMovieList = _HorizontalMovieList;
 
-  // dist/src/parser/classes/IconLink.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/IconLink.js
   var _IconLink = class _IconLink extends YTNode {
     constructor(data) {
       var _a2;
@@ -23740,7 +22758,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_IconLink, "type", "IconLink");
   var IconLink = _IconLink;
 
-  // dist/src/parser/classes/ImageBannerView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ImageBannerView.js
   var _ImageBannerView = class _ImageBannerView extends YTNode {
     constructor(data) {
       super();
@@ -23754,7 +22772,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ImageBannerView, "type", "ImageBannerView");
   var ImageBannerView = _ImageBannerView;
 
-  // dist/src/parser/classes/IncludingResultsFor.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/IncludingResultsFor.js
   var _IncludingResultsFor = class _IncludingResultsFor extends YTNode {
     constructor(data) {
       super();
@@ -23776,7 +22794,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_IncludingResultsFor, "type", "IncludingResultsFor");
   var IncludingResultsFor = _IncludingResultsFor;
 
-  // dist/src/parser/classes/InfoPanelContent.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/InfoPanelContent.js
   var _InfoPanelContent = class _InfoPanelContent extends YTNode {
     constructor(data) {
       super();
@@ -23808,7 +22826,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_InfoPanelContent, "type", "InfoPanelContent");
   var InfoPanelContent = _InfoPanelContent;
 
-  // dist/src/parser/classes/InfoPanelContainer.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/InfoPanelContainer.js
   var _InfoPanelContainer = class _InfoPanelContainer extends YTNode {
     constructor(data) {
       var _a2;
@@ -23836,7 +22854,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_InfoPanelContainer, "type", "InfoPanelContainer");
   var InfoPanelContainer = _InfoPanelContainer;
 
-  // dist/src/parser/classes/InteractiveTabbedHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/InteractiveTabbedHeader.js
   var _InteractiveTabbedHeader = class _InteractiveTabbedHeader extends YTNode {
     constructor(data) {
       super();
@@ -23864,7 +22882,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_InteractiveTabbedHeader, "type", "InteractiveTabbedHeader");
   var InteractiveTabbedHeader = _InteractiveTabbedHeader;
 
-  // dist/src/parser/classes/ItemSectionHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ItemSectionHeader.js
   var _ItemSectionHeader = class _ItemSectionHeader extends YTNode {
     constructor(data) {
       super();
@@ -23876,7 +22894,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ItemSectionHeader, "type", "ItemSectionHeader");
   var ItemSectionHeader = _ItemSectionHeader;
 
-  // dist/src/parser/classes/ItemSectionTab.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ItemSectionTab.js
   var _ItemSectionTab = class _ItemSectionTab extends YTNode {
     constructor(data) {
       super();
@@ -23892,7 +22910,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ItemSectionTab, "type", "Tab");
   var ItemSectionTab = _ItemSectionTab;
 
-  // dist/src/parser/classes/ItemSectionTabbedHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ItemSectionTabbedHeader.js
   var _ItemSectionTabbedHeader = class _ItemSectionTabbedHeader extends YTNode {
     constructor(data) {
       super();
@@ -23910,7 +22928,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ItemSectionTabbedHeader, "type", "ItemSectionTabbedHeader");
   var ItemSectionTabbedHeader = _ItemSectionTabbedHeader;
 
-  // dist/src/parser/classes/SortFilterHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SortFilterHeader.js
   var _SortFilterHeader = class _SortFilterHeader extends YTNode {
     constructor(data) {
       super();
@@ -23922,7 +22940,21 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SortFilterHeader, "type", "SortFilterHeader");
   var SortFilterHeader = _SortFilterHeader;
 
-  // dist/src/parser/classes/ItemSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RelatedChipCloud.js
+  var _RelatedChipCloud = class _RelatedChipCloud extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "content");
+      __publicField(this, "show_prominent_chips");
+      this.content = parser_exports.parseItem(data.content);
+      this.show_prominent_chips = Boolean(data.showProminentChips);
+    }
+  };
+  __name(_RelatedChipCloud, "RelatedChipCloud");
+  __publicField(_RelatedChipCloud, "type", "RelatedChipCloud");
+  var RelatedChipCloud = _RelatedChipCloud;
+
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ItemSection.js
   var _ItemSection = class _ItemSection extends YTNode {
     constructor(data) {
       var _a2, _b2, _c;
@@ -23931,13 +22963,13 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
       __publicField(this, "contents");
       __publicField(this, "target_id");
       __publicField(this, "continuation");
-      this.header = parser_exports.parseItem(data.header, [CommentsHeader, ItemSectionHeader, ItemSectionTabbedHeader, SortFilterHeader, FeedFilterChipBar, ChipBarView]);
+      this.header = parser_exports.parseItem(data.header, [CommentsHeader, ItemSectionHeader, ItemSectionTabbedHeader, SortFilterHeader, FeedFilterChipBar, ChipBarView, RelatedChipCloud]);
       this.contents = parser_exports.parseArray(data.contents);
       if (data.targetId || data.sectionIdentifier) {
         this.target_id = data.targetId || data.sectionIdentifier;
       }
       if (data.continuations) {
-        this.continuation = (_c = (_b2 = (_a2 = data.continuations) == null ? void 0 : _a2.at(0)) == null ? void 0 : _b2.nextContinuationData) == null ? void 0 : _c.continuation;
+        this.continuation = (_c = (_b2 = (_a2 = data.continuations) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.nextContinuationData) == null ? void 0 : _c.continuation;
       }
     }
   };
@@ -23945,7 +22977,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ItemSection, "type", "ItemSection");
   var ItemSection = _ItemSection;
 
-  // dist/src/parser/classes/LiveChat.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChat.js
   var _LiveChat = class _LiveChat extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -23972,7 +23004,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChat, "type", "LiveChat");
   var LiveChat = _LiveChat;
 
-  // dist/src/parser/classes/livechat/items/LiveChatBannerHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBannerHeader.js
   var _LiveChatBannerHeader = class _LiveChatBannerHeader extends YTNode {
     constructor(data) {
       super();
@@ -23990,7 +23022,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatBannerHeader, "type", "LiveChatBannerHeader");
   var LiveChatBannerHeader = _LiveChatBannerHeader;
 
-  // dist/src/parser/classes/livechat/items/LiveChatBanner.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBanner.js
   var _LiveChatBanner = class _LiveChatBanner extends YTNode {
     constructor(data) {
       super();
@@ -24028,7 +23060,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatBanner, "type", "LiveChatBanner");
   var LiveChatBanner = _LiveChatBanner;
 
-  // dist/src/parser/classes/livechat/AddBannerToLiveChatCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/AddBannerToLiveChatCommand.js
   var _AddBannerToLiveChatCommand = class _AddBannerToLiveChatCommand extends YTNode {
     constructor(data) {
       super();
@@ -24040,7 +23072,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddBannerToLiveChatCommand, "type", "AddBannerToLiveChatCommand");
   var AddBannerToLiveChatCommand = _AddBannerToLiveChatCommand;
 
-  // dist/src/parser/classes/livechat/AddChatItemAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/AddChatItemAction.js
   var _AddChatItemAction = class _AddChatItemAction extends YTNode {
     constructor(data) {
       super();
@@ -24056,7 +23088,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddChatItemAction, "type", "AddChatItemAction");
   var AddChatItemAction = _AddChatItemAction;
 
-  // dist/src/parser/classes/livechat/AddLiveChatTickerItemAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/AddLiveChatTickerItemAction.js
   var _AddLiveChatTickerItemAction = class _AddLiveChatTickerItemAction extends YTNode {
     // TODO: check this assumption.
     constructor(data) {
@@ -24071,7 +23103,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddLiveChatTickerItemAction, "type", "AddLiveChatTickerItemAction");
   var AddLiveChatTickerItemAction = _AddLiveChatTickerItemAction;
 
-  // dist/src/parser/classes/livechat/DimChatItemAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/DimChatItemAction.js
   var _DimChatItemAction = class _DimChatItemAction extends YTNode {
     constructor(data) {
       super();
@@ -24083,7 +23115,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DimChatItemAction, "type", "DimChatItemAction");
   var DimChatItemAction = _DimChatItemAction;
 
-  // dist/src/parser/classes/livechat/items/BumperUserEduContentView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/BumperUserEduContentView.js
   var _BumperUserEduContentView = class _BumperUserEduContentView extends YTNode {
     constructor(data) {
       super();
@@ -24099,7 +23131,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BumperUserEduContentView, "type", "BumperUserEduContentView");
   var BumperUserEduContentView = _BumperUserEduContentView;
 
-  // dist/src/parser/classes/livechat/items/CreatorHeartView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/CreatorHeartView.js
   var _CreatorHeartView = class _CreatorHeartView extends YTNode {
     constructor(data) {
       super();
@@ -24131,7 +23163,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CreatorHeartView, "type", "CreatorHeartView");
   var CreatorHeartView = _CreatorHeartView;
 
-  // dist/src/parser/classes/livechat/items/LiveChatAutoModMessage.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatAutoModMessage.js
   var _LiveChatAutoModMessage = class _LiveChatAutoModMessage extends YTNode {
     constructor(data) {
       super();
@@ -24153,7 +23185,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatAutoModMessage, "type", "LiveChatAutoModMessage");
   var LiveChatAutoModMessage = _LiveChatAutoModMessage;
 
-  // dist/src/parser/classes/livechat/items/LiveChatBannerChatSummary.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBannerChatSummary.js
   var _LiveChatBannerChatSummary = class _LiveChatBannerChatSummary extends YTNode {
     constructor(data) {
       super();
@@ -24173,7 +23205,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatBannerChatSummary, "type", "LiveChatBannerChatSummary");
   var LiveChatBannerChatSummary = _LiveChatBannerChatSummary;
 
-  // dist/src/parser/classes/livechat/items/LiveChatBannerPoll.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBannerPoll.js
   var _LiveChatBannerPoll = class _LiveChatBannerPoll extends YTNode {
     constructor(data) {
       super();
@@ -24199,7 +23231,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatBannerPoll, "type", "LiveChatBannerPoll");
   var LiveChatBannerPoll = _LiveChatBannerPoll;
 
-  // dist/src/parser/classes/livechat/items/LiveChatBannerRedirect.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBannerRedirect.js
   var _LiveChatBannerRedirect = class _LiveChatBannerRedirect extends YTNode {
     constructor(data) {
       super();
@@ -24217,7 +23249,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatBannerRedirect, "type", "LiveChatBannerRedirect");
   var LiveChatBannerRedirect = _LiveChatBannerRedirect;
 
-  // dist/src/parser/classes/livechat/items/LiveChatItemBumperView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatItemBumperView.js
   var _LiveChatItemBumperView = class _LiveChatItemBumperView extends YTNode {
     constructor(data) {
       super();
@@ -24229,7 +23261,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatItemBumperView, "type", "LiveChatItemBumperView");
   var LiveChatItemBumperView = _LiveChatItemBumperView;
 
-  // dist/src/parser/classes/livechat/items/LiveChatMembershipItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatMembershipItem.js
   var _LiveChatMembershipItem = class _LiveChatMembershipItem extends YTNode {
     constructor(data) {
       super();
@@ -24265,7 +23297,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatMembershipItem, "type", "LiveChatMembershipItem");
   var LiveChatMembershipItem = _LiveChatMembershipItem;
 
-  // dist/src/parser/classes/livechat/items/LiveChatModeChangeMessage.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatModeChangeMessage.js
   var _LiveChatModeChangeMessage = class _LiveChatModeChangeMessage extends YTNode {
     constructor(data) {
       super();
@@ -24289,7 +23321,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatModeChangeMessage, "type", "LiveChatModeChangeMessage");
   var LiveChatModeChangeMessage = _LiveChatModeChangeMessage;
 
-  // dist/src/parser/classes/livechat/items/PdgReplyButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/PdgReplyButtonView.js
   var _PdgReplyButtonView = class _PdgReplyButtonView extends YTNode {
     constructor(data) {
       super();
@@ -24305,7 +23337,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PdgReplyButtonView, "type", "PdgReplyButtonView");
   var PdgReplyButtonView = _PdgReplyButtonView;
 
-  // dist/src/parser/classes/livechat/items/LiveChatPaidMessage.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatPaidMessage.js
   var _LiveChatPaidMessage = class _LiveChatPaidMessage extends YTNode {
     constructor(data) {
       super();
@@ -24361,7 +23393,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatPaidMessage, "type", "LiveChatPaidMessage");
   var LiveChatPaidMessage = _LiveChatPaidMessage;
 
-  // dist/src/parser/classes/livechat/items/LiveChatPaidSticker.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatPaidSticker.js
   var _LiveChatPaidSticker = class _LiveChatPaidSticker extends YTNode {
     constructor(data) {
       super();
@@ -24405,7 +23437,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatPaidSticker, "type", "LiveChatPaidSticker");
   var LiveChatPaidSticker = _LiveChatPaidSticker;
 
-  // dist/src/parser/classes/livechat/items/LiveChatPlaceholderItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatPlaceholderItem.js
   var _LiveChatPlaceholderItem = class _LiveChatPlaceholderItem extends YTNode {
     constructor(data) {
       super();
@@ -24419,7 +23451,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatPlaceholderItem, "type", "LiveChatPlaceholderItem");
   var LiveChatPlaceholderItem = _LiveChatPlaceholderItem;
 
-  // dist/src/parser/classes/livechat/items/LiveChatProductItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatProductItem.js
   var _LiveChatProductItem = class _LiveChatProductItem extends YTNode {
     constructor(data) {
       super();
@@ -24457,7 +23489,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatProductItem, "type", "LiveChatProductItem");
   var LiveChatProductItem = _LiveChatProductItem;
 
-  // dist/src/parser/classes/livechat/items/LiveChatRestrictedParticipation.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatRestrictedParticipation.js
   var _LiveChatRestrictedParticipation = class _LiveChatRestrictedParticipation extends YTNode {
     constructor(data) {
       super();
@@ -24473,7 +23505,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatRestrictedParticipation, "type", "LiveChatRestrictedParticipation");
   var LiveChatRestrictedParticipation = _LiveChatRestrictedParticipation;
 
-  // dist/src/parser/classes/LiveChatAuthorBadge.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatAuthorBadge.js
   var _LiveChatAuthorBadge = class _LiveChatAuthorBadge extends MetadataBadge {
     constructor(data) {
       super(data);
@@ -24485,7 +23517,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatAuthorBadge, "type", "LiveChatAuthorBadge");
   var LiveChatAuthorBadge = _LiveChatAuthorBadge;
 
-  // dist/src/parser/classes/livechat/items/LiveChatSponsorshipsHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatSponsorshipsHeader.js
   var _LiveChatSponsorshipsHeader = class _LiveChatSponsorshipsHeader extends YTNode {
     constructor(data) {
       super();
@@ -24509,7 +23541,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatSponsorshipsHeader, "type", "LiveChatSponsorshipsHeader");
   var LiveChatSponsorshipsHeader = _LiveChatSponsorshipsHeader;
 
-  // dist/src/parser/classes/livechat/items/LiveChatSponsorshipsGiftPurchaseAnnouncement.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatSponsorshipsGiftPurchaseAnnouncement.js
   var _LiveChatSponsorshipsGiftPurchaseAnnouncement = class _LiveChatSponsorshipsGiftPurchaseAnnouncement extends YTNode {
     constructor(data) {
       super();
@@ -24527,7 +23559,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatSponsorshipsGiftPurchaseAnnouncement, "type", "LiveChatSponsorshipsGiftPurchaseAnnouncement");
   var LiveChatSponsorshipsGiftPurchaseAnnouncement = _LiveChatSponsorshipsGiftPurchaseAnnouncement;
 
-  // dist/src/parser/classes/livechat/items/LiveChatSponsorshipsGiftRedemptionAnnouncement.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatSponsorshipsGiftRedemptionAnnouncement.js
   var _LiveChatSponsorshipsGiftRedemptionAnnouncement = class _LiveChatSponsorshipsGiftRedemptionAnnouncement extends YTNode {
     constructor(data) {
       super();
@@ -24551,7 +23583,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatSponsorshipsGiftRedemptionAnnouncement, "type", "LiveChatSponsorshipsGiftRedemptionAnnouncement");
   var LiveChatSponsorshipsGiftRedemptionAnnouncement = _LiveChatSponsorshipsGiftRedemptionAnnouncement;
 
-  // dist/src/parser/classes/livechat/items/LiveChatTextMessage.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatTextMessage.js
   var _LiveChatTextMessage = class _LiveChatTextMessage extends YTNode {
     constructor(data) {
       super();
@@ -24587,7 +23619,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatTextMessage, "type", "LiveChatTextMessage");
   var LiveChatTextMessage = _LiveChatTextMessage;
 
-  // dist/src/parser/classes/livechat/items/LiveChatTickerPaidMessageItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatTickerPaidMessageItem.js
   var _LiveChatTickerPaidMessageItem = class _LiveChatTickerPaidMessageItem extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -24624,7 +23656,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatTickerPaidMessageItem, "type", "LiveChatTickerPaidMessageItem");
   var LiveChatTickerPaidMessageItem = _LiveChatTickerPaidMessageItem;
 
-  // dist/src/parser/classes/livechat/items/LiveChatTickerPaidStickerItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatTickerPaidStickerItem.js
   var _LiveChatTickerPaidStickerItem = class _LiveChatTickerPaidStickerItem extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -24661,7 +23693,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatTickerPaidStickerItem, "type", "LiveChatTickerPaidStickerItem");
   var LiveChatTickerPaidStickerItem = _LiveChatTickerPaidStickerItem;
 
-  // dist/src/parser/classes/livechat/items/LiveChatTickerSponsorItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatTickerSponsorItem.js
   var _LiveChatTickerSponsorItem = class _LiveChatTickerSponsorItem extends YTNode {
     constructor(data) {
       super();
@@ -24679,7 +23711,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatTickerSponsorItem, "type", "LiveChatTickerSponsorItem");
   var LiveChatTickerSponsorItem = _LiveChatTickerSponsorItem;
 
-  // dist/src/parser/classes/livechat/items/LiveChatViewerEngagementMessage.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatViewerEngagementMessage.js
   var _LiveChatViewerEngagementMessage = class _LiveChatViewerEngagementMessage extends YTNode {
     constructor(data) {
       super();
@@ -24713,7 +23745,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatViewerEngagementMessage, "type", "LiveChatViewerEngagementMessage");
   var LiveChatViewerEngagementMessage = _LiveChatViewerEngagementMessage;
 
-  // dist/src/parser/classes/livechat/items/PollHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/PollHeader.js
   var _PollHeader = class _PollHeader extends YTNode {
     constructor(data) {
       super();
@@ -24733,7 +23765,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PollHeader, "type", "PollHeader");
   var PollHeader = _PollHeader;
 
-  // dist/src/parser/classes/livechat/LiveChatActionPanel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/LiveChatActionPanel.js
   var _LiveChatActionPanel = class _LiveChatActionPanel extends YTNode {
     constructor(data) {
       super();
@@ -24749,7 +23781,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatActionPanel, "type", "LiveChatActionPanel");
   var LiveChatActionPanel = _LiveChatActionPanel;
 
-  // dist/src/parser/classes/livechat/MarkChatItemAsDeletedAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/MarkChatItemAsDeletedAction.js
   var _MarkChatItemAsDeletedAction = class _MarkChatItemAsDeletedAction extends YTNode {
     constructor(data) {
       super();
@@ -24763,7 +23795,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MarkChatItemAsDeletedAction, "type", "MarkChatItemAsDeletedAction");
   var MarkChatItemAsDeletedAction = _MarkChatItemAsDeletedAction;
 
-  // dist/src/parser/classes/livechat/MarkChatItemsByAuthorAsDeletedAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/MarkChatItemsByAuthorAsDeletedAction.js
   var _MarkChatItemsByAuthorAsDeletedAction = class _MarkChatItemsByAuthorAsDeletedAction extends YTNode {
     constructor(data) {
       super();
@@ -24777,7 +23809,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MarkChatItemsByAuthorAsDeletedAction, "type", "MarkChatItemsByAuthorAsDeletedAction");
   var MarkChatItemsByAuthorAsDeletedAction = _MarkChatItemsByAuthorAsDeletedAction;
 
-  // dist/src/parser/classes/livechat/RemoveBannerForLiveChatCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/RemoveBannerForLiveChatCommand.js
   var _RemoveBannerForLiveChatCommand = class _RemoveBannerForLiveChatCommand extends YTNode {
     constructor(data) {
       super();
@@ -24789,7 +23821,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RemoveBannerForLiveChatCommand, "type", "RemoveBannerForLiveChatCommand");
   var RemoveBannerForLiveChatCommand = _RemoveBannerForLiveChatCommand;
 
-  // dist/src/parser/classes/livechat/RemoveChatItemAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/RemoveChatItemAction.js
   var _RemoveChatItemAction = class _RemoveChatItemAction extends YTNode {
     constructor(data) {
       super();
@@ -24801,7 +23833,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RemoveChatItemAction, "type", "RemoveChatItemAction");
   var RemoveChatItemAction = _RemoveChatItemAction;
 
-  // dist/src/parser/classes/livechat/RemoveChatItemByAuthorAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/RemoveChatItemByAuthorAction.js
   var _RemoveChatItemByAuthorAction = class _RemoveChatItemByAuthorAction extends YTNode {
     constructor(data) {
       super();
@@ -24813,7 +23845,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RemoveChatItemByAuthorAction, "type", "RemoveChatItemByAuthorAction");
   var RemoveChatItemByAuthorAction = _RemoveChatItemByAuthorAction;
 
-  // dist/src/parser/classes/livechat/ReplaceChatItemAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/ReplaceChatItemAction.js
   var _ReplaceChatItemAction = class _ReplaceChatItemAction extends YTNode {
     constructor(data) {
       super();
@@ -24827,7 +23859,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReplaceChatItemAction, "type", "ReplaceChatItemAction");
   var ReplaceChatItemAction = _ReplaceChatItemAction;
 
-  // dist/src/parser/classes/livechat/ReplaceLiveChatAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/ReplaceLiveChatAction.js
   var _ReplaceLiveChatAction = class _ReplaceLiveChatAction extends YTNode {
     constructor(data) {
       super();
@@ -24841,7 +23873,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReplaceLiveChatAction, "type", "ReplaceLiveChatAction");
   var ReplaceLiveChatAction = _ReplaceLiveChatAction;
 
-  // dist/src/parser/classes/livechat/ReplayChatItemAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/ReplayChatItemAction.js
   var _ReplayChatItemAction = class _ReplayChatItemAction extends YTNode {
     constructor(data) {
       var _a2;
@@ -24859,7 +23891,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReplayChatItemAction, "type", "ReplayChatItemAction");
   var ReplayChatItemAction = _ReplayChatItemAction;
 
-  // dist/src/parser/classes/livechat/ShowLiveChatActionPanelAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/ShowLiveChatActionPanelAction.js
   var _ShowLiveChatActionPanelAction = class _ShowLiveChatActionPanelAction extends YTNode {
     constructor(data) {
       super();
@@ -24871,7 +23903,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowLiveChatActionPanelAction, "type", "ShowLiveChatActionPanelAction");
   var ShowLiveChatActionPanelAction = _ShowLiveChatActionPanelAction;
 
-  // dist/src/parser/classes/livechat/ShowLiveChatDialogAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/ShowLiveChatDialogAction.js
   var _ShowLiveChatDialogAction = class _ShowLiveChatDialogAction extends YTNode {
     constructor(data) {
       super();
@@ -24883,7 +23915,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowLiveChatDialogAction, "type", "ShowLiveChatDialogAction");
   var ShowLiveChatDialogAction = _ShowLiveChatDialogAction;
 
-  // dist/src/parser/classes/livechat/ShowLiveChatTooltipCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/ShowLiveChatTooltipCommand.js
   var _ShowLiveChatTooltipCommand = class _ShowLiveChatTooltipCommand extends YTNode {
     constructor(data) {
       super();
@@ -24895,7 +23927,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowLiveChatTooltipCommand, "type", "ShowLiveChatTooltipCommand");
   var ShowLiveChatTooltipCommand = _ShowLiveChatTooltipCommand;
 
-  // dist/src/parser/classes/livechat/UpdateDateTextAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateDateTextAction.js
   var _UpdateDateTextAction = class _UpdateDateTextAction extends YTNode {
     constructor(data) {
       super();
@@ -24907,7 +23939,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateDateTextAction, "type", "UpdateDateTextAction");
   var UpdateDateTextAction = _UpdateDateTextAction;
 
-  // dist/src/parser/classes/livechat/UpdateDescriptionAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateDescriptionAction.js
   var _UpdateDescriptionAction = class _UpdateDescriptionAction extends YTNode {
     constructor(data) {
       super();
@@ -24919,7 +23951,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateDescriptionAction, "type", "UpdateDescriptionAction");
   var UpdateDescriptionAction = _UpdateDescriptionAction;
 
-  // dist/src/parser/classes/livechat/UpdateLiveChatPollAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateLiveChatPollAction.js
   var _UpdateLiveChatPollAction = class _UpdateLiveChatPollAction extends YTNode {
     constructor(data) {
       super();
@@ -24931,7 +23963,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateLiveChatPollAction, "type", "UpdateLiveChatPollAction");
   var UpdateLiveChatPollAction = _UpdateLiveChatPollAction;
 
-  // dist/src/parser/classes/livechat/UpdateTitleAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateTitleAction.js
   var _UpdateTitleAction = class _UpdateTitleAction extends YTNode {
     constructor(data) {
       super();
@@ -24943,7 +23975,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateTitleAction, "type", "UpdateTitleAction");
   var UpdateTitleAction = _UpdateTitleAction;
 
-  // dist/src/parser/classes/livechat/UpdateToggleButtonTextAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateToggleButtonTextAction.js
   var _UpdateToggleButtonTextAction = class _UpdateToggleButtonTextAction extends YTNode {
     constructor(data) {
       super();
@@ -24959,7 +23991,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateToggleButtonTextAction, "type", "UpdateToggleButtonTextAction");
   var UpdateToggleButtonTextAction = _UpdateToggleButtonTextAction;
 
-  // dist/src/parser/classes/VideoViewCount.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoViewCount.js
   var _VideoViewCount = class _VideoViewCount extends YTNode {
     constructor(data) {
       super();
@@ -24991,7 +24023,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoViewCount, "type", "VideoViewCount");
   var VideoViewCount = _VideoViewCount;
 
-  // dist/src/parser/classes/livechat/UpdateViewershipAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateViewershipAction.js
   var _UpdateViewershipAction = class _UpdateViewershipAction extends YTNode {
     constructor(data) {
       super();
@@ -25045,7 +24077,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateViewershipAction, "type", "UpdateViewershipAction");
   var UpdateViewershipAction = _UpdateViewershipAction;
 
-  // dist/src/parser/classes/LiveChatDialog.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatDialog.js
   var _LiveChatDialog = class _LiveChatDialog extends YTNode {
     constructor(data) {
       super();
@@ -25059,7 +24091,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatDialog, "type", "LiveChatDialog");
   var LiveChatDialog = _LiveChatDialog;
 
-  // dist/src/parser/classes/LiveChatHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatHeader.js
   var _LiveChatHeader = class _LiveChatHeader extends YTNode {
     constructor(data) {
       super();
@@ -25075,7 +24107,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatHeader, "type", "LiveChatHeader");
   var LiveChatHeader = _LiveChatHeader;
 
-  // dist/src/parser/classes/LiveChatItemList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatItemList.js
   var _LiveChatItemList = class _LiveChatItemList extends YTNode {
     constructor(data) {
       super();
@@ -25089,7 +24121,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatItemList, "type", "LiveChatItemList");
   var LiveChatItemList = _LiveChatItemList;
 
-  // dist/src/parser/classes/LiveChatMessageInput.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatMessageInput.js
   var _LiveChatMessageInput = class _LiveChatMessageInput extends YTNode {
     constructor(data) {
       super();
@@ -25107,7 +24139,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatMessageInput, "type", "LiveChatMessageInput");
   var LiveChatMessageInput = _LiveChatMessageInput;
 
-  // dist/src/parser/classes/LiveChatParticipant.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatParticipant.js
   var _LiveChatParticipant = class _LiveChatParticipant extends YTNode {
     constructor(data) {
       super();
@@ -25123,7 +24155,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatParticipant, "type", "LiveChatParticipant");
   var LiveChatParticipant = _LiveChatParticipant;
 
-  // dist/src/parser/classes/LiveChatParticipantsList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatParticipantsList.js
   var _LiveChatParticipantsList = class _LiveChatParticipantsList extends YTNode {
     constructor(data) {
       super();
@@ -25137,7 +24169,70 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatParticipantsList, "type", "LiveChatParticipantsList");
   var LiveChatParticipantsList = _LiveChatParticipantsList;
 
-  // dist/src/parser/classes/LockupMetadataView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveStreamOfflineSlate.js
+  var _LiveStreamOfflineSlate = class _LiveStreamOfflineSlate extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "main_text");
+      __publicField(this, "subtitle_text");
+      __publicField(this, "thumbnail");
+      __publicField(this, "action_buttons");
+      this.main_text = new Text2(data.mainText);
+      this.subtitle_text = new Text2(data.subtitleText);
+      this.thumbnail = Thumbnail.fromResponse(data.thumbnail);
+      this.action_buttons = parser_exports.parseArray(data.actionButtons, Button);
+    }
+  };
+  __name(_LiveStreamOfflineSlate, "LiveStreamOfflineSlate");
+  __publicField(_LiveStreamOfflineSlate, "type", "LiveStreamOfflineSlate");
+  var LiveStreamOfflineSlate = _LiveStreamOfflineSlate;
+
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveStreamability.js
+  var _LiveStreamability = class _LiveStreamability extends YTNode {
+    constructor(data) {
+      var _a2;
+      super();
+      __publicField(this, "video_id");
+      __publicField(this, "broadcast_id");
+      __publicField(this, "stream_transition_endpoint");
+      __publicField(this, "switch_streams_immediately");
+      __publicField(this, "display_endscreen");
+      __publicField(this, "poll_delay_ms");
+      __publicField(this, "creator_redirect");
+      __publicField(this, "transition_timing");
+      __publicField(this, "offline_slate");
+      __publicField(this, "renderer_context");
+      this.video_id = data.videoId;
+      this.broadcast_id = data.broadcastId;
+      this.transition_timing = data.transitionTiming;
+      this.offline_slate = parser_exports.parseItem(data.offlineSlate, LiveStreamOfflineSlate);
+      if ("pollDelayMs" in data) {
+        this.poll_delay_ms = data.pollDelayMs;
+      }
+      if ("switchStreamsImmediately" in data) {
+        this.switch_streams_immediately = data.switchStreamsImmediately;
+      }
+      if ("displayEndscreen" in data) {
+        this.display_endscreen = data.displayEndscreen;
+      }
+      if ("streamTransitionEndpoint" in data) {
+        this.stream_transition_endpoint = new NavigationEndpoint(data.streamTransitionEndpoint);
+      }
+      if ("creatorRedirect" in data) {
+        this.creator_redirect = {
+          hide_autoplay_toggle: (_a2 = data.creatorRedirect) == null ? void 0 : _a2.hideAutoplayToggle
+        };
+      }
+      if ("rendererContext" in data) {
+        this.renderer_context = new RendererContext(data.rendererContext);
+      }
+    }
+  };
+  __name(_LiveStreamability, "LiveStreamability");
+  __publicField(_LiveStreamability, "type", "LiveStreamability");
+  var LiveStreamability = _LiveStreamability;
+
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LockupMetadataView.js
   var _LockupMetadataView = class _LockupMetadataView extends YTNode {
     constructor(data) {
       super();
@@ -25155,7 +24250,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LockupMetadataView, "type", "LockupMetadataView");
   var LockupMetadataView = _LockupMetadataView;
 
-  // dist/src/parser/classes/LockupView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LockupView.js
   var _LockupView = class _LockupView extends YTNode {
     constructor(data) {
       super();
@@ -25175,7 +24270,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LockupView, "type", "LockupView");
   var LockupView = _LockupView;
 
-  // dist/src/parser/classes/MacroMarkersListEntity.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MacroMarkersListEntity.js
   var _MacroMarkersListEntity = class _MacroMarkersListEntity extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f;
@@ -25236,7 +24331,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MacroMarkersListEntity, "type", "MacroMarkersListEntity");
   var MacroMarkersListEntity = _MacroMarkersListEntity;
 
-  // dist/src/parser/classes/menus/MenuNavigationItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuNavigationItem.js
   var _MenuNavigationItem = class _MenuNavigationItem extends Button {
     constructor(data) {
       super(data);
@@ -25246,7 +24341,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MenuNavigationItem, "type", "MenuNavigationItem");
   var MenuNavigationItem = _MenuNavigationItem;
 
-  // dist/src/parser/classes/menus/MenuPopup.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuPopup.js
   var _MenuPopup = class _MenuPopup extends YTNode {
     constructor(data) {
       super();
@@ -25258,7 +24353,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MenuPopup, "type", "MenuPopup");
   var MenuPopup = _MenuPopup;
 
-  // dist/src/parser/classes/Notification.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Notification.js
   var _Notification = class _Notification extends YTNode {
     constructor(data) {
       super();
@@ -25286,7 +24381,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Notification, "type", "Notification");
   var Notification = _Notification;
 
-  // dist/src/parser/classes/menus/MultiPageMenuNotificationSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MultiPageMenuNotificationSection.js
   var _MultiPageMenuNotificationSection = class _MultiPageMenuNotificationSection extends YTNode {
     constructor(data) {
       super();
@@ -25306,9 +24401,9 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MultiPageMenuNotificationSection, "type", "MultiPageMenuNotificationSection");
   var MultiPageMenuNotificationSection = _MultiPageMenuNotificationSection;
 
-  // dist/src/parser/classes/menus/MusicMenuItemDivider.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MusicMenuItemDivider.js
   var _MusicMenuItemDivider = class _MusicMenuItemDivider extends YTNode {
-    constructor(_data23) {
+    constructor(_data24) {
       super();
     }
   };
@@ -25316,7 +24411,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicMenuItemDivider, "type", "MusicMenuItemDivider");
   var MusicMenuItemDivider = _MusicMenuItemDivider;
 
-  // dist/src/parser/classes/menus/MusicMultiSelectMenuItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MusicMultiSelectMenuItem.js
   var _MusicMultiSelectMenuItem = class _MusicMultiSelectMenuItem extends YTNode {
     constructor(data) {
       super();
@@ -25340,7 +24435,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicMultiSelectMenuItem, "type", "MusicMultiSelectMenuItem");
   var MusicMultiSelectMenuItem = _MusicMultiSelectMenuItem;
 
-  // dist/src/parser/classes/menus/MusicMultiSelectMenu.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MusicMultiSelectMenu.js
   var _MusicMultiSelectMenu = class _MusicMultiSelectMenu extends YTNode {
     constructor(data) {
       var _a2;
@@ -25357,7 +24452,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicMultiSelectMenu, "type", "MusicMultiSelectMenu");
   var MusicMultiSelectMenu = _MusicMultiSelectMenu;
 
-  // dist/src/parser/classes/menus/SimpleMenuHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/SimpleMenuHeader.js
   var _SimpleMenuHeader = class _SimpleMenuHeader extends YTNode {
     constructor(data) {
       super();
@@ -25371,7 +24466,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SimpleMenuHeader, "type", "SimpleMenuHeader");
   var SimpleMenuHeader = _SimpleMenuHeader;
 
-  // dist/src/parser/classes/MerchandiseItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MerchandiseItem.js
   var _MerchandiseItem = class _MerchandiseItem extends YTNode {
     constructor(data) {
       super();
@@ -25403,7 +24498,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MerchandiseItem, "type", "MerchandiseItem");
   var MerchandiseItem = _MerchandiseItem;
 
-  // dist/src/parser/classes/MetadataRow.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MetadataRow.js
   var _MetadataRow = class _MetadataRow extends YTNode {
     constructor(data) {
       super();
@@ -25417,7 +24512,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MetadataRow, "type", "MetadataRow");
   var MetadataRow = _MetadataRow;
 
-  // dist/src/parser/classes/MetadataRowContainer.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MetadataRowContainer.js
   var _MetadataRowContainer = class _MetadataRowContainer extends YTNode {
     constructor(data) {
       super();
@@ -25431,7 +24526,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MetadataRowContainer, "type", "MetadataRowContainer");
   var MetadataRowContainer = _MetadataRowContainer;
 
-  // dist/src/parser/classes/MetadataRowHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MetadataRowHeader.js
   var _MetadataRowHeader = class _MetadataRowHeader extends YTNode {
     constructor(data) {
       super();
@@ -25445,7 +24540,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MetadataRowHeader, "type", "MetadataRowHeader");
   var MetadataRowHeader = _MetadataRowHeader;
 
-  // dist/src/parser/classes/MetadataScreen.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MetadataScreen.js
   var _MetadataScreen = class _MetadataScreen extends YTNode {
     constructor(data) {
       super();
@@ -25457,7 +24552,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MetadataScreen, "type", "MetadataScreen");
   var MetadataScreen = _MetadataScreen;
 
-  // dist/src/parser/classes/MicroformatData.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MicroformatData.js
   var _MicroformatData = class _MicroformatData extends YTNode {
     constructor(data) {
       super();
@@ -25513,7 +24608,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MicroformatData, "type", "MicroformatData");
   var MicroformatData = _MicroformatData;
 
-  // dist/src/parser/classes/Mix.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Mix.js
   var _Mix = class _Mix extends Playlist {
     constructor(data) {
       super(data);
@@ -25523,7 +24618,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Mix, "type", "Mix");
   var Mix = _Mix;
 
-  // dist/src/parser/classes/ModalWithTitleAndButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ModalWithTitleAndButton.js
   var _ModalWithTitleAndButton = class _ModalWithTitleAndButton extends YTNode {
     constructor(data) {
       super();
@@ -25539,7 +24634,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ModalWithTitleAndButton, "type", "ModalWithTitleAndButton");
   var ModalWithTitleAndButton = _ModalWithTitleAndButton;
 
-  // dist/src/parser/classes/Movie.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Movie.js
   var _Movie = class _Movie extends YTNode {
     constructor(data) {
       var _a2, _b2, _c;
@@ -25582,7 +24677,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Movie, "type", "Movie");
   var Movie = _Movie;
 
-  // dist/src/parser/classes/MovingThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MovingThumbnail.js
   var _MovingThumbnail = class _MovingThumbnail extends YTNode {
     constructor(data) {
       var _a2;
@@ -25594,7 +24689,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MovingThumbnail, "type", "MovingThumbnail");
   var MovingThumbnail = _MovingThumbnail;
 
-  // dist/src/parser/classes/MusicCardShelfHeaderBasic.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicCardShelfHeaderBasic.js
   var _MusicCardShelfHeaderBasic = class _MusicCardShelfHeaderBasic extends YTNode {
     constructor(data) {
       super();
@@ -25606,7 +24701,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicCardShelfHeaderBasic, "type", "MusicCardShelfHeaderBasic");
   var MusicCardShelfHeaderBasic = _MusicCardShelfHeaderBasic;
 
-  // dist/src/parser/classes/MusicInlineBadge.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicInlineBadge.js
   var _MusicInlineBadge = class _MusicInlineBadge extends YTNode {
     constructor(data) {
       super();
@@ -25628,7 +24723,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicInlineBadge, "type", "MusicInlineBadge");
   var MusicInlineBadge = _MusicInlineBadge;
 
-  // dist/src/parser/classes/MusicPlayButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicPlayButton.js
   var _MusicPlayButton = class _MusicPlayButton extends YTNode {
     constructor(data) {
       super();
@@ -25666,7 +24761,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicPlayButton, "type", "MusicPlayButton");
   var MusicPlayButton = _MusicPlayButton;
 
-  // dist/src/parser/classes/MusicItemThumbnailOverlay.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicItemThumbnailOverlay.js
   var _MusicItemThumbnailOverlay = class _MusicItemThumbnailOverlay extends YTNode {
     constructor(data) {
       super();
@@ -25682,7 +24777,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicItemThumbnailOverlay, "type", "MusicItemThumbnailOverlay");
   var MusicItemThumbnailOverlay = _MusicItemThumbnailOverlay;
 
-  // dist/src/parser/classes/MusicThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicThumbnail.js
   var _MusicThumbnail = class _MusicThumbnail extends YTNode {
     constructor(data) {
       super();
@@ -25694,7 +24789,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicThumbnail, "type", "MusicThumbnail");
   var MusicThumbnail = _MusicThumbnail;
 
-  // dist/src/parser/classes/MusicCardShelf.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicCardShelf.js
   var _MusicCardShelf = class _MusicCardShelf extends YTNode {
     constructor(data) {
       super();
@@ -25730,7 +24825,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicCardShelf, "type", "MusicCardShelf");
   var MusicCardShelf = _MusicCardShelf;
 
-  // dist/src/parser/classes/MusicCarouselShelfBasicHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicCarouselShelfBasicHeader.js
   var _MusicCarouselShelfBasicHeader = class _MusicCarouselShelfBasicHeader extends YTNode {
     constructor(data) {
       super();
@@ -25758,7 +24853,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicCarouselShelfBasicHeader, "type", "MusicCarouselShelfBasicHeader");
   var MusicCarouselShelfBasicHeader = _MusicCarouselShelfBasicHeader;
 
-  // dist/src/parser/classes/MusicMultiRowListItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicMultiRowListItem.js
   var _MusicMultiRowListItem = class _MusicMultiRowListItem extends YTNode {
     constructor(data) {
       super();
@@ -25792,7 +24887,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicMultiRowListItem, "type", "MusicMultiRowListItem");
   var MusicMultiRowListItem = _MusicMultiRowListItem;
 
-  // dist/src/parser/classes/MusicNavigationButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicNavigationButton.js
   var _MusicNavigationButton = class _MusicNavigationButton extends YTNode {
     constructor(data) {
       super();
@@ -25806,7 +24901,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicNavigationButton, "type", "MusicNavigationButton");
   var MusicNavigationButton = _MusicNavigationButton;
 
-  // dist/src/parser/classes/MusicResponsiveListItemFixedColumn.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicResponsiveListItemFixedColumn.js
   var _MusicResponsiveListItemFixedColumn = class _MusicResponsiveListItemFixedColumn extends YTNode {
     constructor(data) {
       super();
@@ -25820,7 +24915,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicResponsiveListItemFixedColumn, "type", "musicResponsiveListItemFlexColumnRenderer");
   var MusicResponsiveListItemFixedColumn = _MusicResponsiveListItemFixedColumn;
 
-  // dist/src/parser/classes/MusicResponsiveListItemFlexColumn.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicResponsiveListItemFlexColumn.js
   var _MusicResponsiveListItemFlexColumn = class _MusicResponsiveListItemFlexColumn extends YTNode {
     constructor(data) {
       super();
@@ -25834,7 +24929,13 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicResponsiveListItemFlexColumn, "type", "MusicResponsiveListItemFlexColumn");
   var MusicResponsiveListItemFlexColumn = _MusicResponsiveListItemFlexColumn;
 
-  // dist/src/parser/classes/MusicResponsiveListItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicResponsiveListItem.js
+  var DURATION_TEXT = /^\d+(?::[0-5]\d)+$/;
+  function findDurationText(runs) {
+    var _a2;
+    return (_a2 = runs == null ? void 0 : runs.findLast((run) => DURATION_TEXT.test(run.text))) == null ? void 0 : _a2.text;
+  }
+  __name(findDurationText, "findDurationText");
   var _MusicResponsiveListItem_instances, parseOther_fn, parseVideoOrSong_fn, parseSong_fn, parseVideo_fn, parseArtist_fn, parseLibraryArtist_fn, parseNonMusicTrack_fn, parsePodcastShow_fn, parseAlbum_fn, parsePlaylist_fn;
   var _MusicResponsiveListItem = class _MusicResponsiveListItem extends YTNode {
     constructor(data) {
@@ -25871,7 +24972,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
         video_id: ((_a2 = data == null ? void 0 : data.playlistItemData) == null ? void 0 : _a2.videoId) || null,
         playlist_set_video_id: ((_b2 = data == null ? void 0 : data.playlistItemData) == null ? void 0 : _b2.playlistSetVideoId) || null
       };
-      if (Reflect.has(data, "navigationEndpoint")) {
+      if ("navigationEndpoint" in data) {
         this.endpoint = new NavigationEndpoint(data.navigationEndpoint);
       }
       let page_type = (_f = (_e = (_d = (_c = this.endpoint) == null ? void 0 : _c.payload) == null ? void 0 : _d.browseEndpointContextSupportedConfigs) == null ? void 0 : _e.browseEndpointContextMusicConfig) == null ? void 0 : _f.pageType;
@@ -25917,19 +25018,19 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
             __privateMethod(this, _MusicResponsiveListItem_instances, parseOther_fn).call(this);
           }
       }
-      if (Reflect.has(data, "index")) {
+      if ("index" in data) {
         this.index = new Text2(data.index);
       }
-      if (Reflect.has(data, "thumbnail")) {
+      if ("thumbnail" in data) {
         this.thumbnail = parser_exports.parseItem(data.thumbnail, MusicThumbnail);
       }
-      if (Reflect.has(data, "badges")) {
+      if ("badges" in data) {
         this.badges = parser_exports.parseArray(data.badges);
       }
-      if (Reflect.has(data, "menu")) {
+      if ("menu" in data) {
         this.menu = parser_exports.parseItem(data.menu, Menu);
       }
-      if (Reflect.has(data, "overlay")) {
+      if ("overlay" in data) {
         this.overlay = parser_exports.parseItem(data.overlay, MusicItemThumbnailOverlay);
       }
     }
@@ -25965,25 +25066,25 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
     }
   }, "#parseVideoOrSong");
   parseSong_fn = /* @__PURE__ */ __name(function(playlist_item_data) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m;
     this.id = playlist_item_data.video_id || ((_b2 = (_a2 = this.endpoint) == null ? void 0 : _a2.payload) == null ? void 0 : _b2.videoId);
     this.title = this.flex_columns[0].title.toString();
-    const duration_text = ((_e = (_d = (_c = this.flex_columns.at(1)) == null ? void 0 : _c.title.runs) == null ? void 0 : _d.find((run) => /^\d+$/.test(run.text.replace(/:/g, "")))) == null ? void 0 : _e.text) || ((_g = (_f = this.fixed_columns[0]) == null ? void 0 : _f.title) == null ? void 0 : _g.toString());
+    const duration_text = findDurationText((_c = this.flex_columns.at(1)) == null ? void 0 : _c.title.runs) || ((_e = (_d = this.fixed_columns[0]) == null ? void 0 : _d.title) == null ? void 0 : _e.toString());
     if (duration_text) {
       this.duration = {
         text: duration_text,
         seconds: timeToSeconds(duration_text)
       };
     }
-    const album_run = ((_i = (_h = this.flex_columns.at(1)) == null ? void 0 : _h.title.runs) == null ? void 0 : _i.find((run) => isTextRun(run) && run.endpoint && run.endpoint.payload.browseId.startsWith("MPR"))) || ((_k = (_j = this.flex_columns.at(2)) == null ? void 0 : _j.title.runs) == null ? void 0 : _k.find((run) => isTextRun(run) && run.endpoint && run.endpoint.payload.browseId.startsWith("MPR")));
+    const album_run = ((_g = (_f = this.flex_columns.at(1)) == null ? void 0 : _f.title.runs) == null ? void 0 : _g.find((run) => isTextRun(run) && run.endpoint && run.endpoint.payload.browseId.startsWith("MPR"))) || ((_i = (_h = this.flex_columns.at(2)) == null ? void 0 : _h.title.runs) == null ? void 0 : _i.find((run) => isTextRun(run) && run.endpoint && run.endpoint.payload.browseId.startsWith("MPR")));
     if (album_run && isTextRun(album_run)) {
       this.album = {
-        id: (_m = (_l = album_run.endpoint) == null ? void 0 : _l.payload) == null ? void 0 : _m.browseId,
+        id: (_k = (_j = album_run.endpoint) == null ? void 0 : _j.payload) == null ? void 0 : _k.browseId,
         name: album_run.text,
         endpoint: album_run.endpoint
       };
     }
-    const artist_runs = (_o = (_n = this.flex_columns.at(1)) == null ? void 0 : _n.title.runs) == null ? void 0 : _o.filter((run) => isTextRun(run) && run.endpoint && run.endpoint.payload.browseId.startsWith("UC"));
+    const artist_runs = (_m = (_l = this.flex_columns.at(1)) == null ? void 0 : _l.title.runs) == null ? void 0 : _m.filter((run) => isTextRun(run) && run.endpoint && run.endpoint.payload.browseId.startsWith("UC"));
     if (artist_runs) {
       this.artists = artist_runs.map((run) => {
         var _a3, _b3;
@@ -25996,7 +25097,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
     }
   }, "#parseSong");
   parseVideo_fn = /* @__PURE__ */ __name(function(playlist_item_data) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j;
+    var _a2, _b2, _c, _d, _e, _f;
     this.id = playlist_item_data.video_id;
     this.title = this.flex_columns[0].title.toString();
     this.views = (_c = (_b2 = (_a2 = this.flex_columns.at(1)) == null ? void 0 : _a2.title.runs) == null ? void 0 : _b2.find((run) => run.text.match(/(.*?) views/))) == null ? void 0 : _c.toString();
@@ -26011,7 +25112,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
         };
       });
     }
-    const duration_text = ((_g = (_f = this.flex_columns[1].title.runs) == null ? void 0 : _f.find((run) => /^\d+$/.test(run.text.replace(/:/g, "")))) == null ? void 0 : _g.text) || ((_j = (_i = (_h = this.fixed_columns[0]) == null ? void 0 : _h.title.runs) == null ? void 0 : _i.find((run) => /^\d+$/.test(run.text.replace(/:/g, "")))) == null ? void 0 : _j.text);
+    const duration_text = findDurationText(this.flex_columns[1].title.runs) || findDurationText((_f = this.fixed_columns[0]) == null ? void 0 : _f.title.runs);
     if (duration_text) {
       this.duration = {
         text: duration_text,
@@ -26075,7 +25176,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicResponsiveListItem, "type", "MusicResponsiveListItem");
   var MusicResponsiveListItem = _MusicResponsiveListItem;
 
-  // dist/src/parser/classes/MusicTwoRowItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicTwoRowItem.js
   var _MusicTwoRowItem = class _MusicTwoRowItem extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
@@ -26188,7 +25289,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicTwoRowItem, "type", "MusicTwoRowItem");
   var MusicTwoRowItem = _MusicTwoRowItem;
 
-  // dist/src/parser/classes/MusicCarouselShelf.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicCarouselShelf.js
   var _MusicCarouselShelf = class _MusicCarouselShelf extends YTNode {
     constructor(data) {
       super();
@@ -26206,7 +25307,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicCarouselShelf, "type", "MusicCarouselShelf");
   var MusicCarouselShelf = _MusicCarouselShelf;
 
-  // dist/src/parser/classes/MusicDescriptionShelf.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicDescriptionShelf.js
   var _MusicDescriptionShelf = class _MusicDescriptionShelf extends YTNode {
     constructor(data) {
       super();
@@ -26228,7 +25329,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicDescriptionShelf, "type", "MusicDescriptionShelf");
   var MusicDescriptionShelf = _MusicDescriptionShelf;
 
-  // dist/src/parser/classes/MusicDetailHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicDetailHeader.js
   var _MusicDetailHeader = class _MusicDetailHeader extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f, _g, _h, _i;
@@ -26271,7 +25372,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicDetailHeader, "type", "MusicDetailHeader");
   var MusicDetailHeader = _MusicDetailHeader;
 
-  // dist/src/parser/classes/MusicDownloadStateBadge.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicDownloadStateBadge.js
   var _MusicDownloadStateBadge = class _MusicDownloadStateBadge extends YTNode {
     constructor(data) {
       super();
@@ -26285,7 +25386,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicDownloadStateBadge, "type", "MusicDownloadStateBadge");
   var MusicDownloadStateBadge = _MusicDownloadStateBadge;
 
-  // dist/src/parser/classes/MusicEditablePlaylistDetailHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicEditablePlaylistDetailHeader.js
   var _MusicEditablePlaylistDetailHeader = class _MusicEditablePlaylistDetailHeader extends YTNode {
     constructor(data) {
       super();
@@ -26301,7 +25402,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicEditablePlaylistDetailHeader, "type", "MusicEditablePlaylistDetailHeader");
   var MusicEditablePlaylistDetailHeader = _MusicEditablePlaylistDetailHeader;
 
-  // dist/src/parser/classes/MusicElementHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicElementHeader.js
   var _MusicElementHeader = class _MusicElementHeader extends YTNode {
     constructor(data) {
       super();
@@ -26313,7 +25414,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicElementHeader, "type", "MusicElementHeader");
   var MusicElementHeader = _MusicElementHeader;
 
-  // dist/src/parser/classes/MusicHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicHeader.js
   var _MusicHeader = class _MusicHeader extends YTNode {
     constructor(data) {
       super();
@@ -26331,7 +25432,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicHeader, "type", "MusicHeader");
   var MusicHeader = _MusicHeader;
 
-  // dist/src/parser/classes/MusicImmersiveHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicImmersiveHeader.js
   var _MusicImmersiveHeader = class _MusicImmersiveHeader extends YTNode {
     constructor(data) {
       super();
@@ -26360,7 +25461,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicImmersiveHeader, "type", "MusicImmersiveHeader");
   var MusicImmersiveHeader = _MusicImmersiveHeader;
 
-  // dist/src/parser/classes/MusicLargeCardItemCarousel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicLargeCardItemCarousel.js
   var _ActionButton = class _ActionButton {
     constructor(data) {
       __publicField(this, "icon_name");
@@ -26408,7 +25509,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicLargeCardItemCarousel, "type", "MusicLargeCardItemCarousel");
   var MusicLargeCardItemCarousel = _MusicLargeCardItemCarousel;
 
-  // dist/src/parser/classes/MusicPlaylistEditHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicPlaylistEditHeader.js
   var _MusicPlaylistEditHeader = class _MusicPlaylistEditHeader extends YTNode {
     constructor(data) {
       super();
@@ -26432,7 +25533,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicPlaylistEditHeader, "type", "MusicPlaylistEditHeader");
   var MusicPlaylistEditHeader = _MusicPlaylistEditHeader;
 
-  // dist/src/parser/classes/MusicPlaylistShelf.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicPlaylistShelf.js
   var _MusicPlaylistShelf = class _MusicPlaylistShelf extends YTNode {
     constructor(data) {
       var _a2, _b2, _c;
@@ -26451,7 +25552,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicPlaylistShelf, "type", "MusicPlaylistShelf");
   var MusicPlaylistShelf = _MusicPlaylistShelf;
 
-  // dist/src/parser/classes/PlaylistPanelVideo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistPanelVideo.js
   var _PlaylistPanelVideo = class _PlaylistPanelVideo extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e;
@@ -26513,7 +25614,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistPanelVideo, "type", "PlaylistPanelVideo");
   var PlaylistPanelVideo = _PlaylistPanelVideo;
 
-  // dist/src/parser/classes/PlaylistPanelVideoWrapper.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistPanelVideoWrapper.js
   var _PlaylistPanelVideoWrapper = class _PlaylistPanelVideoWrapper extends YTNode {
     constructor(data) {
       super();
@@ -26529,7 +25630,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistPanelVideoWrapper, "type", "PlaylistPanelVideoWrapper");
   var PlaylistPanelVideoWrapper = _PlaylistPanelVideoWrapper;
 
-  // dist/src/parser/classes/PlaylistPanel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistPanel.js
   var _PlaylistPanel = class _PlaylistPanel extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f;
@@ -26558,7 +25659,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistPanel, "type", "PlaylistPanel");
   var PlaylistPanel = _PlaylistPanel;
 
-  // dist/src/parser/classes/MusicQueue.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicQueue.js
   var _MusicQueue = class _MusicQueue extends YTNode {
     constructor(data) {
       super();
@@ -26570,7 +25671,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicQueue, "type", "MusicQueue");
   var MusicQueue = _MusicQueue;
 
-  // dist/src/parser/classes/MusicResponsiveHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicResponsiveHeader.js
   var _MusicResponsiveHeader = class _MusicResponsiveHeader extends YTNode {
     constructor(data) {
       super();
@@ -26602,7 +25703,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicResponsiveHeader, "type", "MusicResponsiveHeader");
   var MusicResponsiveHeader = _MusicResponsiveHeader;
 
-  // dist/src/parser/classes/MusicShelf.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicShelf.js
   var _MusicShelf = class _MusicShelf extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d;
@@ -26637,7 +25738,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicShelf, "type", "MusicShelf");
   var MusicShelf = _MusicShelf;
 
-  // dist/src/parser/classes/MusicSideAlignedItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicSideAlignedItem.js
   var _MusicSideAlignedItem = class _MusicSideAlignedItem extends YTNode {
     constructor(data) {
       super();
@@ -26655,7 +25756,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicSideAlignedItem, "type", "MusicSideAlignedItem");
   var MusicSideAlignedItem = _MusicSideAlignedItem;
 
-  // dist/src/parser/classes/MusicSortFilterButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicSortFilterButton.js
   var _MusicSortFilterButton = class _MusicSortFilterButton extends YTNode {
     constructor(data) {
       super();
@@ -26673,7 +25774,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicSortFilterButton, "type", "MusicSortFilterButton");
   var MusicSortFilterButton = _MusicSortFilterButton;
 
-  // dist/src/parser/classes/MusicTastebuilderShelfThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicTastebuilderShelfThumbnail.js
   var _MusicTastebuilderShelfThumbnail = class _MusicTastebuilderShelfThumbnail extends YTNode {
     constructor(data) {
       super();
@@ -26685,7 +25786,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicTastebuilderShelfThumbnail, "type", "MusicTastebuilderShelfThumbnail");
   var MusicTastebuilderShelfThumbnail = _MusicTastebuilderShelfThumbnail;
 
-  // dist/src/parser/classes/MusicTastebuilderShelf.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicTastebuilderShelf.js
   var _MusicTasteBuilderShelf = class _MusicTasteBuilderShelf extends YTNode {
     constructor(data) {
       super();
@@ -26705,7 +25806,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicTasteBuilderShelf, "type", "MusicTasteBuilderShelf");
   var MusicTasteBuilderShelf = _MusicTasteBuilderShelf;
 
-  // dist/src/parser/classes/MusicVisualHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicVisualHeader.js
   var _MusicVisualHeader = class _MusicVisualHeader extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -26724,7 +25825,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicVisualHeader, "type", "MusicVisualHeader");
   var MusicVisualHeader = _MusicVisualHeader;
 
-  // dist/src/parser/classes/mweb/MobileTopbar.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/mweb/MobileTopbar.js
   var _MobileTopbar = class _MobileTopbar extends YTNode {
     constructor(data) {
       super();
@@ -26741,7 +25842,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MobileTopbar, "type", "MobileTopbar");
   var MobileTopbar = _MobileTopbar;
 
-  // dist/src/parser/classes/mweb/MultiPageMenuSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/mweb/MultiPageMenuSection.js
   var _MultiPageMenuSection = class _MultiPageMenuSection extends YTNode {
     constructor(data) {
       super();
@@ -26753,7 +25854,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MultiPageMenuSection, "type", "MultiPageMenuSection");
   var MultiPageMenuSection = _MultiPageMenuSection;
 
-  // dist/src/parser/classes/mweb/PivotBar.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/mweb/PivotBar.js
   var _PivotBar = class _PivotBar extends YTNode {
     constructor(data) {
       super();
@@ -26765,7 +25866,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PivotBar, "type", "PivotBar");
   var PivotBar = _PivotBar;
 
-  // dist/src/parser/classes/mweb/PivotBarItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/mweb/PivotBarItem.js
   var _PivotBarItem = class _PivotBarItem extends YTNode {
     constructor(data) {
       super();
@@ -26795,7 +25896,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PivotBarItem, "type", "PivotBarItem");
   var PivotBarItem = _PivotBarItem;
 
-  // dist/src/parser/classes/mweb/TopbarMenuButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/mweb/TopbarMenuButton.js
   var _TopbarMenuButton = class _TopbarMenuButton extends YTNode {
     constructor(data) {
       super();
@@ -26812,7 +25913,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TopbarMenuButton, "type", "TopbarMenuButton");
   var TopbarMenuButton = _TopbarMenuButton;
 
-  // dist/src/parser/classes/NotificationAction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/NotificationAction.js
   var _NotificationAction = class _NotificationAction extends YTNode {
     constructor(data) {
       super();
@@ -26824,7 +25925,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_NotificationAction, "type", "NotificationAction");
   var NotificationAction = _NotificationAction;
 
-  // dist/src/parser/classes/OpenOnePickAddVideoModalCommand.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/OpenOnePickAddVideoModalCommand.js
   var _OpenOnePickAddVideoModalCommand = class _OpenOnePickAddVideoModalCommand extends YTNode {
     constructor(data) {
       super();
@@ -26840,7 +25941,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_OpenOnePickAddVideoModalCommand, "type", "OpenOnePickAddVideoModalCommand");
   var OpenOnePickAddVideoModalCommand = _OpenOnePickAddVideoModalCommand;
 
-  // dist/src/parser/classes/PageHeaderView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PageHeaderView.js
   var _PageHeaderView = class _PageHeaderView extends YTNode {
     constructor(data) {
       super();
@@ -26868,7 +25969,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PageHeaderView, "type", "PageHeaderView");
   var PageHeaderView = _PageHeaderView;
 
-  // dist/src/parser/classes/PageHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PageHeader.js
   var _PageHeader = class _PageHeader extends YTNode {
     constructor(data) {
       super();
@@ -26882,7 +25983,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PageHeader, "type", "PageHeader");
   var PageHeader = _PageHeader;
 
-  // dist/src/parser/classes/PageIndicatorView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PageIndicatorView.js
   var _PageIndicatorView = class _PageIndicatorView extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -26897,7 +25998,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PageIndicatorView, "type", "PageIndicatorView");
   var PageIndicatorView = _PageIndicatorView;
 
-  // dist/src/parser/classes/PageIntroduction.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PageIntroduction.js
   var _PageIntroduction = class _PageIntroduction extends YTNode {
     constructor(data) {
       super();
@@ -26915,7 +26016,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PageIntroduction, "type", "PageIntroduction");
   var PageIntroduction = _PageIntroduction;
 
-  // dist/src/parser/classes/PivotButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PivotButton.js
   var _PivotButton = class _PivotButton extends YTNode {
     constructor(data) {
       super();
@@ -26939,7 +26040,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PivotButton, "type", "PivotButton");
   var PivotButton = _PivotButton;
 
-  // dist/src/parser/classes/PlayerAnnotationsExpanded.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerAnnotationsExpanded.js
   var _PlayerAnnotationsExpanded = class _PlayerAnnotationsExpanded extends YTNode {
     constructor(data) {
       super();
@@ -26964,7 +26065,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerAnnotationsExpanded, "type", "PlayerAnnotationsExpanded");
   var PlayerAnnotationsExpanded = _PlayerAnnotationsExpanded;
 
-  // dist/src/parser/classes/PlayerCaptchaView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerCaptchaView.js
   var _PlayerCaptchaView = class _PlayerCaptchaView extends YTNode {
     constructor(data) {
       super();
@@ -26994,7 +26095,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerCaptchaView, "type", "PlayerCaptchaView");
   var PlayerCaptchaView = _PlayerCaptchaView;
 
-  // dist/src/parser/classes/PlayerCaptionsTracklist.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerCaptionsTracklist.js
   var _PlayerCaptionsTracklist = class _PlayerCaptionsTracklist extends YTNode {
     constructor(data) {
       super();
@@ -27037,7 +26138,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerCaptionsTracklist, "type", "PlayerCaptionsTracklist");
   var PlayerCaptionsTracklist = _PlayerCaptionsTracklist;
 
-  // dist/src/parser/classes/PlayerOverflow.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerOverflow.js
   var _PlayerOverflow = class _PlayerOverflow extends YTNode {
     constructor(data) {
       super();
@@ -27051,7 +26152,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerOverflow, "type", "PlayerOverflow");
   var PlayerOverflow = _PlayerOverflow;
 
-  // dist/src/parser/classes/PlayerControlsOverlay.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerControlsOverlay.js
   var _PlayerControlsOverlay = class _PlayerControlsOverlay extends YTNode {
     constructor(data) {
       super();
@@ -27063,7 +26164,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerControlsOverlay, "type", "PlayerControlsOverlay");
   var PlayerControlsOverlay = _PlayerControlsOverlay;
 
-  // dist/src/parser/classes/PlayerErrorMessage.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerErrorMessage.js
   var _PlayerErrorMessage = class _PlayerErrorMessage extends YTNode {
     constructor(data) {
       super();
@@ -27085,7 +26186,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerErrorMessage, "type", "PlayerErrorMessage");
   var PlayerErrorMessage = _PlayerErrorMessage;
 
-  // dist/src/parser/classes/PlayerLegacyDesktopYpcOffer.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerLegacyDesktopYpcOffer.js
   var _PlayerLegacyDesktopYpcOffer = class _PlayerLegacyDesktopYpcOffer extends YTNode {
     constructor(data) {
       super();
@@ -27103,7 +26204,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerLegacyDesktopYpcOffer, "type", "PlayerLegacyDesktopYpcOffer");
   var PlayerLegacyDesktopYpcOffer = _PlayerLegacyDesktopYpcOffer;
 
-  // dist/src/parser/classes/YpcTrailer.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/YpcTrailer.js
   var _YpcTrailer = class _YpcTrailer extends YTNode {
     constructor(data) {
       super();
@@ -27117,7 +26218,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_YpcTrailer, "type", "YpcTrailer");
   var YpcTrailer = _YpcTrailer;
 
-  // dist/src/parser/classes/PlayerLegacyDesktopYpcTrailer.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerLegacyDesktopYpcTrailer.js
   var _PlayerLegacyDesktopYpcTrailer = class _PlayerLegacyDesktopYpcTrailer extends YTNode {
     constructor(data) {
       super();
@@ -27145,7 +26246,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerLegacyDesktopYpcTrailer, "type", "PlayerLegacyDesktopYpcTrailer");
   var PlayerLegacyDesktopYpcTrailer = _PlayerLegacyDesktopYpcTrailer;
 
-  // dist/src/parser/classes/PlayerLiveStoryboardSpec.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerLiveStoryboardSpec.js
   var _PlayerLiveStoryboardSpec = class _PlayerLiveStoryboardSpec extends YTNode {
     constructor(data) {
       super();
@@ -27165,7 +26266,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerLiveStoryboardSpec, "type", "PlayerLiveStoryboardSpec");
   var PlayerLiveStoryboardSpec = _PlayerLiveStoryboardSpec;
 
-  // dist/src/parser/classes/PlayerMicroformat.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerMicroformat.js
   var _PlayerMicroformat = class _PlayerMicroformat extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -27220,7 +26321,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerMicroformat, "type", "PlayerMicroformat");
   var PlayerMicroformat = _PlayerMicroformat;
 
-  // dist/src/parser/classes/PlayerOverlayAutoplay.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerOverlayAutoplay.js
   var _PlayerOverlayAutoplay = class _PlayerOverlayAutoplay extends YTNode {
     constructor(data) {
       super();
@@ -27257,7 +26358,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerOverlayAutoplay, "type", "PlayerOverlayAutoplay");
   var PlayerOverlayAutoplay = _PlayerOverlayAutoplay;
 
-  // dist/src/parser/classes/PlayerOverlayVideoDetails.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerOverlayVideoDetails.js
   var _PlayerOverlayVideoDetails = class _PlayerOverlayVideoDetails extends YTNode {
     constructor(data) {
       super();
@@ -27271,7 +26372,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerOverlayVideoDetails, "type", "PlayerOverlayVideoDetails");
   var PlayerOverlayVideoDetails = _PlayerOverlayVideoDetails;
 
-  // dist/src/parser/classes/WatchNextEndScreen.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/WatchNextEndScreen.js
   var _WatchNextEndScreen = class _WatchNextEndScreen extends YTNode {
     constructor(data) {
       super();
@@ -27285,7 +26386,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchNextEndScreen, "type", "WatchNextEndScreen");
   var WatchNextEndScreen = _WatchNextEndScreen;
 
-  // dist/src/parser/classes/PlayerOverlay.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerOverlay.js
   var _PlayerOverlay = class _PlayerOverlay extends YTNode {
     constructor(data) {
       super();
@@ -27313,7 +26414,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerOverlay, "type", "PlayerOverlay");
   var PlayerOverlay = _PlayerOverlay;
 
-  // dist/src/parser/classes/PlaylistHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistHeader.js
   var _PlaylistHeader = class _PlaylistHeader extends YTNode {
     constructor(data) {
       super();
@@ -27357,7 +26458,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistHeader, "type", "PlaylistHeader");
   var PlaylistHeader = _PlaylistHeader;
 
-  // dist/src/parser/classes/PlaylistInfoCardContent.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistInfoCardContent.js
   var _PlaylistInfoCardContent = class _PlaylistInfoCardContent extends YTNode {
     constructor(data) {
       super();
@@ -27377,7 +26478,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistInfoCardContent, "type", "PlaylistInfoCardContent");
   var PlaylistInfoCardContent = _PlaylistInfoCardContent;
 
-  // dist/src/parser/classes/PlaylistMetadata.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistMetadata.js
   var _PlaylistMetadata = class _PlaylistMetadata extends YTNode {
     constructor(data) {
       super();
@@ -27391,7 +26492,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistMetadata, "type", "PlaylistMetadata");
   var PlaylistMetadata = _PlaylistMetadata;
 
-  // dist/src/parser/classes/PlaylistSidebar.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistSidebar.js
   var _PlaylistSidebar = class _PlaylistSidebar extends YTNode {
     constructor(data) {
       super();
@@ -27407,7 +26508,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistSidebar, "type", "PlaylistSidebar");
   var PlaylistSidebar = _PlaylistSidebar;
 
-  // dist/src/parser/classes/PlaylistSidebarPrimaryInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistSidebarPrimaryInfo.js
   var _PlaylistSidebarPrimaryInfo = class _PlaylistSidebarPrimaryInfo extends YTNode {
     constructor(data) {
       super();
@@ -27429,7 +26530,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistSidebarPrimaryInfo, "type", "PlaylistSidebarPrimaryInfo");
   var PlaylistSidebarPrimaryInfo = _PlaylistSidebarPrimaryInfo;
 
-  // dist/src/parser/classes/PlaylistSidebarSecondaryInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistSidebarSecondaryInfo.js
   var _PlaylistSidebarSecondaryInfo = class _PlaylistSidebarSecondaryInfo extends YTNode {
     constructor(data) {
       super();
@@ -27443,7 +26544,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistSidebarSecondaryInfo, "type", "PlaylistSidebarSecondaryInfo");
   var PlaylistSidebarSecondaryInfo = _PlaylistSidebarSecondaryInfo;
 
-  // dist/src/parser/classes/PlaylistThumbnailOverlay.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistThumbnailOverlay.js
   var _PlaylistThumbnailOverlay = class _PlaylistThumbnailOverlay extends YTNode {
     constructor(data) {
       super();
@@ -27458,7 +26559,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistThumbnailOverlay, "type", "PlaylistThumbnailOverlay");
   var PlaylistThumbnailOverlay = _PlaylistThumbnailOverlay;
 
-  // dist/src/parser/classes/PlaylistVideo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistVideo.js
   var _PlaylistVideo = class _PlaylistVideo extends YTNode {
     constructor(data) {
       super();
@@ -27514,7 +26615,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistVideo, "type", "PlaylistVideo");
   var PlaylistVideo = _PlaylistVideo;
 
-  // dist/src/parser/classes/PlaylistVideoList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistVideoList.js
   var _PlaylistVideoList = class _PlaylistVideoList extends YTNode {
     constructor(data) {
       super();
@@ -27532,7 +26633,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistVideoList, "type", "PlaylistVideoList");
   var PlaylistVideoList = _PlaylistVideoList;
 
-  // dist/src/parser/classes/Poll.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Poll.js
   var _Poll = class _Poll extends YTNode {
     constructor(data) {
       super();
@@ -27562,7 +26663,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Poll, "type", "Poll");
   var Poll = _Poll;
 
-  // dist/src/parser/classes/Post.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Post.js
   var _Post = class _Post extends BackstagePost {
     constructor(data) {
       super(data);
@@ -27572,7 +26673,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Post, "type", "Post");
   var Post = _Post;
 
-  // dist/src/parser/classes/PostMultiImage.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PostMultiImage.js
   var _PostMultiImage = class _PostMultiImage extends YTNode {
     constructor(data) {
       super();
@@ -27584,7 +26685,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PostMultiImage, "type", "PostMultiImage");
   var PostMultiImage = _PostMultiImage;
 
-  // dist/src/parser/classes/PremiereTrailerBadge.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PremiereTrailerBadge.js
   var _PremiereTrailerBadge = class _PremiereTrailerBadge extends YTNode {
     constructor(data) {
       super();
@@ -27596,7 +26697,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PremiereTrailerBadge, "type", "PremiereTrailerBadge");
   var PremiereTrailerBadge = _PremiereTrailerBadge;
 
-  // dist/src/parser/classes/ProductListHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProductListHeader.js
   var _ProductListHeader = class _ProductListHeader extends YTNode {
     constructor(data) {
       super();
@@ -27610,7 +26711,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProductListHeader, "type", "ProductListHeader");
   var ProductListHeader = _ProductListHeader;
 
-  // dist/src/parser/classes/ProductListItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProductListItem.js
   var _ProductListItem = class _ProductListItem extends YTNode {
     constructor(data) {
       super();
@@ -27636,7 +26737,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProductListItem, "type", "ProductListItem");
   var ProductListItem = _ProductListItem;
 
-  // dist/src/parser/classes/ProfileColumn.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProfileColumn.js
   var _ProfileColumn = class _ProfileColumn extends YTNode {
     constructor(data) {
       super();
@@ -27652,7 +26753,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProfileColumn, "type", "ProfileColumn");
   var ProfileColumn = _ProfileColumn;
 
-  // dist/src/parser/classes/ProfileColumnStats.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProfileColumnStats.js
   var _ProfileColumnStats = class _ProfileColumnStats extends YTNode {
     constructor(data) {
       super();
@@ -27668,7 +26769,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProfileColumnStats, "type", "ProfileColumnStats");
   var ProfileColumnStats = _ProfileColumnStats;
 
-  // dist/src/parser/classes/ProfileColumnStatsEntry.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProfileColumnStatsEntry.js
   var _ProfileColumnStatsEntry = class _ProfileColumnStatsEntry extends YTNode {
     constructor(data) {
       super();
@@ -27682,7 +26783,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProfileColumnStatsEntry, "type", "ProfileColumnStatsEntry");
   var ProfileColumnStatsEntry = _ProfileColumnStatsEntry;
 
-  // dist/src/parser/classes/ProfileColumnUserInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProfileColumnUserInfo.js
   var _ProfileColumnUserInfo = class _ProfileColumnUserInfo extends YTNode {
     constructor(data) {
       super();
@@ -27696,7 +26797,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProfileColumnUserInfo, "type", "ProfileColumnUserInfo");
   var ProfileColumnUserInfo = _ProfileColumnUserInfo;
 
-  // dist/src/parser/classes/Quiz.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Quiz.js
   var _Quiz = class _Quiz extends YTNode {
     constructor(data) {
       super();
@@ -27713,7 +26814,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Quiz, "type", "Quiz");
   var Quiz = _Quiz;
 
-  // dist/src/parser/classes/RecognitionShelf.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RecognitionShelf.js
   var _RecognitionShelf = class _RecognitionShelf extends YTNode {
     constructor(data) {
       super();
@@ -27733,7 +26834,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RecognitionShelf, "type", "RecognitionShelf");
   var RecognitionShelf = _RecognitionShelf;
 
-  // dist/src/parser/classes/ReelItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ReelItem.js
   var _ReelItem = class _ReelItem extends YTNode {
     constructor(data) {
       super();
@@ -27763,7 +26864,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReelItem, "type", "ReelItem");
   var ReelItem = _ReelItem;
 
-  // dist/src/parser/classes/ReelPlayerHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ReelPlayerHeader.js
   var _ReelPlayerHeader = class _ReelPlayerHeader extends YTNode {
     constructor(data) {
       super();
@@ -27783,7 +26884,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReelPlayerHeader, "type", "ReelPlayerHeader");
   var ReelPlayerHeader = _ReelPlayerHeader;
 
-  // dist/src/parser/classes/ReelPlayerOverlay.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ReelPlayerOverlay.js
   var _ReelPlayerOverlay = class _ReelPlayerOverlay extends YTNode {
     constructor(data) {
       super();
@@ -27815,19 +26916,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReelPlayerOverlay, "type", "ReelPlayerOverlay");
   var ReelPlayerOverlay = _ReelPlayerOverlay;
 
-  // dist/src/parser/classes/RelatedChipCloud.js
-  var _RelatedChipCloud = class _RelatedChipCloud extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "content");
-      this.content = parser_exports.parseItem(data.content);
-    }
-  };
-  __name(_RelatedChipCloud, "RelatedChipCloud");
-  __publicField(_RelatedChipCloud, "type", "RelatedChipCloud");
-  var RelatedChipCloud = _RelatedChipCloud;
-
-  // dist/src/parser/classes/RichGrid.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichGrid.js
   var _RichGrid = class _RichGrid extends YTNode {
     constructor(data) {
       super();
@@ -27844,7 +26933,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichGrid, "type", "RichGrid");
   var RichGrid = _RichGrid;
 
-  // dist/src/parser/classes/RichItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichItem.js
   var _RichItem = class _RichItem extends YTNode {
     constructor(data) {
       super();
@@ -27856,7 +26945,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichItem, "type", "RichItem");
   var RichItem = _RichItem;
 
-  // dist/src/parser/classes/RichListHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichListHeader.js
   var _RichListHeader = class _RichListHeader extends YTNode {
     constructor(data) {
       super();
@@ -27878,7 +26967,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichListHeader, "type", "RichListHeader");
   var RichListHeader = _RichListHeader;
 
-  // dist/src/parser/classes/RichMetadata.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichMetadata.js
   var _RichMetadata = class _RichMetadata extends YTNode {
     constructor(data) {
       super();
@@ -27902,7 +26991,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichMetadata, "type", "RichMetadata");
   var RichMetadata = _RichMetadata;
 
-  // dist/src/parser/classes/RichMetadataRow.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichMetadataRow.js
   var _RichMetadataRow = class _RichMetadataRow extends YTNode {
     constructor(data) {
       super();
@@ -27914,7 +27003,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichMetadataRow, "type", "RichMetadataRow");
   var RichMetadataRow = _RichMetadataRow;
 
-  // dist/src/parser/classes/RichSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichSection.js
   var _RichSection = class _RichSection extends YTNode {
     constructor(data) {
       super();
@@ -27932,7 +27021,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichSection, "type", "RichSection");
   var RichSection = _RichSection;
 
-  // dist/src/parser/classes/RichShelf.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichShelf.js
   var _RichShelf = class _RichShelf extends YTNode {
     constructor(data) {
       super();
@@ -27974,7 +27063,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichShelf, "type", "RichShelf");
   var RichShelf = _RichShelf;
 
-  // dist/src/parser/classes/SearchFilter.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchFilter.js
   var _SearchFilter = class _SearchFilter extends YTNode {
     constructor(data) {
       super();
@@ -28000,7 +27089,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchFilter, "type", "SearchFilter");
   var SearchFilter2 = _SearchFilter;
 
-  // dist/src/parser/classes/SearchFilterGroup.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchFilterGroup.js
   var _SearchFilterGroup = class _SearchFilterGroup extends YTNode {
     constructor(data) {
       super();
@@ -28014,7 +27103,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchFilterGroup, "type", "SearchFilterGroup");
   var SearchFilterGroup = _SearchFilterGroup;
 
-  // dist/src/parser/classes/SearchFilterOptionsDialog.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchFilterOptionsDialog.js
   var _SearchFilterOptionsDialog = class _SearchFilterOptionsDialog extends YTNode {
     constructor(data) {
       super();
@@ -28028,7 +27117,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchFilterOptionsDialog, "type", "SearchFilterOptionsDialog");
   var SearchFilterOptionsDialog = _SearchFilterOptionsDialog;
 
-  // dist/src/parser/classes/SearchHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchHeader.js
   var _SearchHeader = class _SearchHeader extends YTNode {
     constructor(data) {
       super();
@@ -28042,7 +27131,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchHeader, "type", "SearchHeader");
   var SearchHeader = _SearchHeader;
 
-  // dist/src/parser/classes/SearchSubMenu.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchSubMenu.js
   var _SearchSubMenu = class _SearchSubMenu extends YTNode {
     constructor(data) {
       super();
@@ -28061,7 +27150,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchSubMenu, "type", "SearchSubMenu");
   var SearchSubMenu = _SearchSubMenu;
 
-  // dist/src/parser/classes/SearchSuggestionsSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchSuggestionsSection.js
   var _SearchSuggestionsSection = class _SearchSuggestionsSection extends YTNode {
     constructor(data) {
       super();
@@ -28073,7 +27162,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchSuggestionsSection, "type", "SearchSuggestionsSection");
   var SearchSuggestionsSection = _SearchSuggestionsSection;
 
-  // dist/src/parser/classes/UniversalWatchCard.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/UniversalWatchCard.js
   var _UniversalWatchCard = class _UniversalWatchCard extends YTNode {
     constructor(data) {
       super();
@@ -28093,7 +27182,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UniversalWatchCard, "type", "UniversalWatchCard");
   var UniversalWatchCard = _UniversalWatchCard;
 
-  // dist/src/parser/classes/SecondarySearchContainer.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SecondarySearchContainer.js
   var _SecondarySearchContainer = class _SecondarySearchContainer extends YTNode {
     constructor(data) {
       super();
@@ -28106,7 +27195,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SecondarySearchContainer, "type", "SecondarySearchContainer");
   var SecondarySearchContainer = _SecondarySearchContainer;
 
-  // dist/src/parser/classes/SegmentedLikeDislikeButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SegmentedLikeDislikeButton.js
   var _SegmentedLikeDislikeButton = class _SegmentedLikeDislikeButton extends YTNode {
     constructor(data) {
       super();
@@ -28120,7 +27209,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SegmentedLikeDislikeButton, "type", "SegmentedLikeDislikeButton");
   var SegmentedLikeDislikeButton = _SegmentedLikeDislikeButton;
 
-  // dist/src/parser/classes/SettingBoolean.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SettingBoolean.js
   var _SettingBoolean = class _SettingBoolean extends YTNode {
     constructor(data) {
       super();
@@ -28148,7 +27237,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SettingBoolean, "type", "SettingBoolean");
   var SettingBoolean = _SettingBoolean;
 
-  // dist/src/parser/classes/SettingsCheckbox.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SettingsCheckbox.js
   var _SettingsCheckbox = class _SettingsCheckbox extends YTNode {
     constructor(data) {
       super();
@@ -28168,7 +27257,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SettingsCheckbox, "type", "SettingsCheckbox");
   var SettingsCheckbox = _SettingsCheckbox;
 
-  // dist/src/parser/classes/SettingsSwitch.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SettingsSwitch.js
   var _SettingsSwitch = class _SettingsSwitch extends YTNode {
     constructor(data) {
       super();
@@ -28188,7 +27277,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SettingsSwitch, "type", "SettingsSwitch");
   var SettingsSwitch = _SettingsSwitch;
 
-  // dist/src/parser/classes/SettingsOptions.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SettingsOptions.js
   var _SettingsOptions = class _SettingsOptions extends YTNode {
     constructor(data) {
       super();
@@ -28214,7 +27303,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SettingsOptions, "type", "SettingsOptions");
   var SettingsOptions = _SettingsOptions;
 
-  // dist/src/parser/classes/SettingsSidebar.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SettingsSidebar.js
   var _SettingsSidebar = class _SettingsSidebar extends YTNode {
     constructor(data) {
       super();
@@ -28232,7 +27321,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SettingsSidebar, "type", "SettingsSidebar");
   var SettingsSidebar = _SettingsSidebar;
 
-  // dist/src/parser/classes/SharedPost.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SharedPost.js
   var _SharedPost = class _SharedPost extends YTNode {
     constructor(data) {
       super();
@@ -28260,7 +27349,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SharedPost, "type", "SharedPost");
   var SharedPost = _SharedPost;
 
-  // dist/src/parser/classes/SharePanelHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SharePanelHeader.js
   var _SharePanelHeader = class _SharePanelHeader extends YTNode {
     constructor(data) {
       super();
@@ -28272,7 +27361,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SharePanelHeader, "type", "SharePanelHeader");
   var SharePanelHeader = _SharePanelHeader;
 
-  // dist/src/parser/classes/SharePanelTitleV15.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SharePanelTitleV15.js
   var _SharePanelTitleV15 = class _SharePanelTitleV15 extends YTNode {
     constructor(data) {
       super();
@@ -28284,7 +27373,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SharePanelTitleV15, "type", "SharePanelTitleV15");
   var SharePanelTitleV15 = _SharePanelTitleV15;
 
-  // dist/src/parser/classes/ShareTarget.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ShareTarget.js
   var _ShareTarget = class _ShareTarget extends YTNode {
     constructor(data) {
       super();
@@ -28305,7 +27394,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShareTarget, "type", "ShareTarget");
   var ShareTarget = _ShareTarget;
 
-  // dist/src/parser/classes/SheetView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SheetView.js
   var _SheetView = class _SheetView extends YTNode {
     constructor(data) {
       super();
@@ -28325,7 +27414,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SheetView, "type", "SheetView");
   var SheetView = _SheetView;
 
-  // dist/src/parser/classes/Shelf.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Shelf.js
   var _Shelf = class _Shelf extends YTNode {
     constructor(data) {
       super();
@@ -28359,7 +27448,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Shelf, "type", "Shelf");
   var Shelf = _Shelf;
 
-  // dist/src/parser/classes/ShortsLockupView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ShortsLockupView.js
   var _ShortsLockupView = class _ShortsLockupView extends YTNode {
     constructor(data) {
       var _a2;
@@ -28397,7 +27486,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShortsLockupView, "type", "ShortsLockupView");
   var ShortsLockupView = _ShortsLockupView;
 
-  // dist/src/parser/classes/ShowingResultsFor.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ShowingResultsFor.js
   var _ShowingResultsFor = class _ShowingResultsFor extends YTNode {
     constructor(data) {
       super();
@@ -28419,7 +27508,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowingResultsFor, "type", "ShowingResultsFor");
   var ShowingResultsFor = _ShowingResultsFor;
 
-  // dist/src/parser/classes/SimpleCardContent.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SimpleCardContent.js
   var _SimpleCardContent = class _SimpleCardContent extends YTNode {
     constructor(data) {
       super();
@@ -28441,7 +27530,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SimpleCardContent, "type", "SimpleCardContent");
   var SimpleCardContent = _SimpleCardContent;
 
-  // dist/src/parser/classes/SimpleCardTeaser.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SimpleCardTeaser.js
   var _SimpleCardTeaser = class _SimpleCardTeaser extends YTNode {
     // @TODO: or string?
     constructor(data) {
@@ -28456,7 +27545,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SimpleCardTeaser, "type", "SimpleCardTeaser");
   var SimpleCardTeaser = _SimpleCardTeaser;
 
-  // dist/src/parser/classes/SimpleTextSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SimpleTextSection.js
   var _SimpleTextSection = class _SimpleTextSection extends YTNode {
     constructor(data) {
       super();
@@ -28470,7 +27559,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SimpleTextSection, "type", "SimpleTextSection");
   var SimpleTextSection = _SimpleTextSection;
 
-  // dist/src/parser/classes/SingleActionEmergencySupport.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SingleActionEmergencySupport.js
   var _SingleActionEmergencySupport = class _SingleActionEmergencySupport extends YTNode {
     constructor(data) {
       super();
@@ -28490,7 +27579,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SingleActionEmergencySupport, "type", "SingleActionEmergencySupport");
   var SingleActionEmergencySupport = _SingleActionEmergencySupport;
 
-  // dist/src/parser/classes/Tab.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Tab.js
   var _Tab = class _Tab extends YTNode {
     constructor(data) {
       super();
@@ -28508,7 +27597,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Tab, "type", "Tab");
   var Tab = _Tab;
 
-  // dist/src/parser/classes/SingleColumnBrowseResults.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SingleColumnBrowseResults.js
   var _SingleColumnBrowseResults = class _SingleColumnBrowseResults extends YTNode {
     constructor(data) {
       super();
@@ -28520,7 +27609,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SingleColumnBrowseResults, "type", "SingleColumnBrowseResults");
   var SingleColumnBrowseResults = _SingleColumnBrowseResults;
 
-  // dist/src/parser/classes/SingleColumnMusicWatchNextResults.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SingleColumnMusicWatchNextResults.js
   var _SingleColumnMusicWatchNextResults = class _SingleColumnMusicWatchNextResults extends YTNode {
     constructor(data) {
       super();
@@ -28532,7 +27621,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SingleColumnMusicWatchNextResults, "type", "SingleColumnMusicWatchNextResults");
   var SingleColumnMusicWatchNextResults = _SingleColumnMusicWatchNextResults;
 
-  // dist/src/parser/classes/SingleHeroImage.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SingleHeroImage.js
   var _SingleHeroImage = class _SingleHeroImage extends YTNode {
     constructor(data) {
       super();
@@ -28546,7 +27635,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SingleHeroImage, "type", "SingleHeroImage");
   var SingleHeroImage = _SingleHeroImage;
 
-  // dist/src/parser/classes/SlimOwner.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SlimOwner.js
   var _SlimOwner = class _SlimOwner extends YTNode {
     constructor(data) {
       super();
@@ -28564,7 +27653,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SlimOwner, "type", "SlimOwner");
   var SlimOwner = _SlimOwner;
 
-  // dist/src/parser/classes/SlimVideoMetadata.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SlimVideoMetadata.js
   var _SlimVideoMetadata = class _SlimVideoMetadata extends YTNode {
     constructor(data) {
       super();
@@ -28588,7 +27677,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SlimVideoMetadata, "type", "SlimVideoMetadata");
   var SlimVideoMetadata = _SlimVideoMetadata;
 
-  // dist/src/parser/classes/StartAt.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/StartAt.js
   var _StartAt = class _StartAt extends YTNode {
     constructor(data) {
       super();
@@ -28600,7 +27689,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_StartAt, "type", "StartAt");
   var StartAt = _StartAt;
 
-  // dist/src/parser/classes/Tabbed.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Tabbed.js
   var _Tabbed = class _Tabbed extends YTNode {
     constructor(data) {
       super();
@@ -28612,7 +27701,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Tabbed, "type", "Tabbed");
   var Tabbed = _Tabbed;
 
-  // dist/src/parser/classes/TabbedSearchResults.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TabbedSearchResults.js
   var _TabbedSearchResults = class _TabbedSearchResults extends YTNode {
     constructor(data) {
       super();
@@ -28624,7 +27713,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TabbedSearchResults, "type", "TabbedSearchResults");
   var TabbedSearchResults = _TabbedSearchResults;
 
-  // dist/src/parser/classes/TextHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TextHeader.js
   var _TextHeader = class _TextHeader extends YTNode {
     constructor(data) {
       super();
@@ -28638,7 +27727,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TextHeader, "type", "TextHeader");
   var TextHeader = _TextHeader;
 
-  // dist/src/parser/classes/ThirdPartyShareTargetSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThirdPartyShareTargetSection.js
   var _ThirdPartyShareTargetSection = class _ThirdPartyShareTargetSection extends YTNode {
     constructor(data) {
       super();
@@ -28650,7 +27739,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThirdPartyShareTargetSection, "type", "ThirdPartyShareTargetSection");
   var ThirdPartyShareTargetSection = _ThirdPartyShareTargetSection;
 
-  // dist/src/parser/classes/ThumbnailLandscapePortrait.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailLandscapePortrait.js
   var _ThumbnailLandscapePortrait = class _ThumbnailLandscapePortrait extends YTNode {
     constructor(data) {
       super();
@@ -28664,7 +27753,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailLandscapePortrait, "type", "ThumbnailLandscapePortrait");
   var ThumbnailLandscapePortrait = _ThumbnailLandscapePortrait;
 
-  // dist/src/parser/classes/ThumbnailOverlayAvatarStackView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayAvatarStackView.js
   var _ThumbnailOverlayAvatarStackView = class _ThumbnailOverlayAvatarStackView extends YTNode {
     constructor(data) {
       super();
@@ -28676,7 +27765,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayAvatarStackView, "type", "ThumbnailOverlayAvatarStackView");
   var ThumbnailOverlayAvatarStackView = _ThumbnailOverlayAvatarStackView;
 
-  // dist/src/parser/classes/ThumbnailOverlayEndorsement.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayEndorsement.js
   var _ThumbnailOverlayEndorsement = class _ThumbnailOverlayEndorsement extends YTNode {
     constructor(data) {
       super();
@@ -28688,7 +27777,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayEndorsement, "type", "ThumbnailOverlayEndorsement");
   var ThumbnailOverlayEndorsement = _ThumbnailOverlayEndorsement;
 
-  // dist/src/parser/classes/ThumbnailOverlayHoverText.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayHoverText.js
   var _ThumbnailOverlayHoverText = class _ThumbnailOverlayHoverText extends YTNode {
     constructor(data) {
       super();
@@ -28702,7 +27791,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayHoverText, "type", "ThumbnailOverlayHoverText");
   var ThumbnailOverlayHoverText = _ThumbnailOverlayHoverText;
 
-  // dist/src/parser/classes/ThumbnailOverlayInlineUnplayable.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayInlineUnplayable.js
   var _ThumbnailOverlayInlineUnplayable = class _ThumbnailOverlayInlineUnplayable extends YTNode {
     constructor(data) {
       super();
@@ -28716,7 +27805,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayInlineUnplayable, "type", "ThumbnailOverlayInlineUnplayable");
   var ThumbnailOverlayInlineUnplayable = _ThumbnailOverlayInlineUnplayable;
 
-  // dist/src/parser/classes/ThumbnailOverlayLoadingPreview.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayLoadingPreview.js
   var _ThumbnailOverlayLoadingPreview = class _ThumbnailOverlayLoadingPreview extends YTNode {
     constructor(data) {
       super();
@@ -28728,7 +27817,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayLoadingPreview, "type", "ThumbnailOverlayLoadingPreview");
   var ThumbnailOverlayLoadingPreview = _ThumbnailOverlayLoadingPreview;
 
-  // dist/src/parser/classes/ThumbnailOverlayNowPlaying.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayNowPlaying.js
   var _ThumbnailOverlayNowPlaying = class _ThumbnailOverlayNowPlaying extends YTNode {
     constructor(data) {
       super();
@@ -28740,7 +27829,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayNowPlaying, "type", "ThumbnailOverlayNowPlaying");
   var ThumbnailOverlayNowPlaying = _ThumbnailOverlayNowPlaying;
 
-  // dist/src/parser/classes/ThumbnailOverlayPinking.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayPinking.js
   var _ThumbnailOverlayPinking = class _ThumbnailOverlayPinking extends YTNode {
     constructor(data) {
       super();
@@ -28752,7 +27841,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayPinking, "type", "ThumbnailOverlayPinking");
   var ThumbnailOverlayPinking = _ThumbnailOverlayPinking;
 
-  // dist/src/parser/classes/ThumbnailOverlayPlaybackStatus.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayPlaybackStatus.js
   var _ThumbnailOverlayPlaybackStatus = class _ThumbnailOverlayPlaybackStatus extends YTNode {
     constructor(data) {
       super();
@@ -28764,7 +27853,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayPlaybackStatus, "type", "ThumbnailOverlayPlaybackStatus");
   var ThumbnailOverlayPlaybackStatus = _ThumbnailOverlayPlaybackStatus;
 
-  // dist/src/parser/classes/ThumbnailOverlayResumePlayback.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayResumePlayback.js
   var _ThumbnailOverlayResumePlayback = class _ThumbnailOverlayResumePlayback extends YTNode {
     constructor(data) {
       super();
@@ -28776,7 +27865,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayResumePlayback, "type", "ThumbnailOverlayResumePlayback");
   var ThumbnailOverlayResumePlayback = _ThumbnailOverlayResumePlayback;
 
-  // dist/src/parser/classes/ThumbnailOverlaySidePanel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlaySidePanel.js
   var _ThumbnailOverlaySidePanel = class _ThumbnailOverlaySidePanel extends YTNode {
     constructor(data) {
       super();
@@ -28790,7 +27879,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlaySidePanel, "type", "ThumbnailOverlaySidePanel");
   var ThumbnailOverlaySidePanel = _ThumbnailOverlaySidePanel;
 
-  // dist/src/parser/classes/ThumbnailOverlayTitleView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayTitleView.js
   var _ThumbnailOverlayTitleView = class _ThumbnailOverlayTitleView extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d;
@@ -28805,7 +27894,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayTitleView, "type", "ThumbnailOverlayTitleView");
   var ThumbnailOverlayTitleView = _ThumbnailOverlayTitleView;
 
-  // dist/src/parser/classes/ThumbnailOverlayToggleButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayToggleButton.js
   var _ThumbnailOverlayToggleButton = class _ThumbnailOverlayToggleButton extends YTNode {
     constructor(data) {
       super();
@@ -28835,7 +27924,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayToggleButton, "type", "ThumbnailOverlayToggleButton");
   var ThumbnailOverlayToggleButton = _ThumbnailOverlayToggleButton;
 
-  // dist/src/parser/classes/TicketEvent.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TicketEvent.js
   var _TicketEvent = class _TicketEvent extends YTNode {
     constructor(data) {
       super();
@@ -28871,7 +27960,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TicketEvent, "type", "TicketEvent");
   var TicketEvent = _TicketEvent;
 
-  // dist/src/parser/classes/TicketShelf.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TicketShelf.js
   var _TicketShelf = class _TicketShelf extends YTNode {
     constructor(data) {
       super();
@@ -28889,7 +27978,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TicketShelf, "type", "TicketShelf");
   var TicketShelf = _TicketShelf;
 
-  // dist/src/parser/classes/TitleAndButtonListHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TitleAndButtonListHeader.js
   var _TitleAndButtonListHeader = class _TitleAndButtonListHeader extends YTNode {
     constructor(data) {
       super();
@@ -28901,7 +27990,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TitleAndButtonListHeader, "type", "TitleAndButtonListHeader");
   var TitleAndButtonListHeader = _TitleAndButtonListHeader;
 
-  // dist/src/parser/classes/ToggleMenuServiceItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ToggleMenuServiceItem.js
   var _ToggleMenuServiceItem = class _ToggleMenuServiceItem extends YTNode {
     constructor(data) {
       super();
@@ -28923,7 +28012,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ToggleMenuServiceItem, "type", "ToggleMenuServiceItem");
   var ToggleMenuServiceItem = _ToggleMenuServiceItem;
 
-  // dist/src/parser/classes/Tooltip.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Tooltip.js
   var _Tooltip = class _Tooltip extends YTNode {
     constructor(data) {
       super();
@@ -28950,7 +28039,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Tooltip, "type", "Tooltip");
   var Tooltip = _Tooltip;
 
-  // dist/src/parser/classes/TopicChannelDetails.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TopicChannelDetails.js
   var _TopicChannelDetails = class _TopicChannelDetails extends YTNode {
     constructor(data) {
       var _a2;
@@ -28971,7 +28060,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TopicChannelDetails, "type", "TopicChannelDetails");
   var TopicChannelDetails = _TopicChannelDetails;
 
-  // dist/src/parser/classes/TwoColumnBrowseResults.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TwoColumnBrowseResults.js
   var _TwoColumnBrowseResults = class _TwoColumnBrowseResults extends YTNode {
     constructor(data) {
       super();
@@ -28985,7 +28074,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TwoColumnBrowseResults, "type", "TwoColumnBrowseResults");
   var TwoColumnBrowseResults = _TwoColumnBrowseResults;
 
-  // dist/src/parser/classes/TwoColumnSearchResults.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TwoColumnSearchResults.js
   var _TwoColumnSearchResults = class _TwoColumnSearchResults extends YTNode {
     constructor(data) {
       super();
@@ -29005,7 +28094,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TwoColumnSearchResults, "type", "TwoColumnSearchResults");
   var TwoColumnSearchResults = _TwoColumnSearchResults;
 
-  // dist/src/parser/classes/TwoColumnWatchNextResults.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TwoColumnWatchNextResults.js
   var _TwoColumnWatchNextResults_instances, parseAutoplaySet_fn;
   var _TwoColumnWatchNextResults = class _TwoColumnWatchNextResults extends YTNode {
     constructor(data) {
@@ -29060,7 +28149,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TwoColumnWatchNextResults, "type", "TwoColumnWatchNextResults");
   var TwoColumnWatchNextResults = _TwoColumnWatchNextResults;
 
-  // dist/src/parser/classes/UnifiedSharePanel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/UnifiedSharePanel.js
   var _UnifiedSharePanel = class _UnifiedSharePanel extends YTNode {
     constructor(data) {
       super();
@@ -29088,7 +28177,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UnifiedSharePanel, "type", "UnifiedSharePanel");
   var UnifiedSharePanel = _UnifiedSharePanel;
 
-  // dist/src/parser/classes/UpsellDialog.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/UpsellDialog.js
   var _UpsellDialog = class _UpsellDialog extends YTNode {
     constructor(data) {
       super();
@@ -29108,7 +28197,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpsellDialog, "type", "UpsellDialog");
   var UpsellDialog = _UpsellDialog;
 
-  // dist/src/parser/classes/VerticalList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VerticalList.js
   var _VerticalList = class _VerticalList extends YTNode {
     constructor(data) {
       super();
@@ -29129,7 +28218,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VerticalList, "type", "VerticalList");
   var VerticalList = _VerticalList;
 
-  // dist/src/parser/classes/VerticalWatchCardList.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VerticalWatchCardList.js
   var _VerticalWatchCardList = class _VerticalWatchCardList extends YTNode {
     constructor(data) {
       super();
@@ -29149,7 +28238,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VerticalWatchCardList, "type", "VerticalWatchCardList");
   var VerticalWatchCardList = _VerticalWatchCardList;
 
-  // dist/src/parser/classes/VideoInfoCardContent.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoInfoCardContent.js
   var _VideoInfoCardContent = class _VideoInfoCardContent extends YTNode {
     constructor(data) {
       super();
@@ -29171,7 +28260,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoInfoCardContent, "type", "VideoInfoCardContent");
   var VideoInfoCardContent = _VideoInfoCardContent;
 
-  // dist/src/parser/classes/VideoMetadataCarouselView.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoMetadataCarouselView.js
   var _VideoMetadataCarouselView = class _VideoMetadataCarouselView extends YTNode {
     constructor(data) {
       super();
@@ -29185,34 +28274,54 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoMetadataCarouselView, "type", "VideoMetadataCarouselView");
   var VideoMetadataCarouselView = _VideoMetadataCarouselView;
 
-  // dist/src/parser/classes/misc/SubscriptionButton.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/SubscriptionButton.js
   var _SubscriptionButton = class _SubscriptionButton {
     constructor(data) {
       __publicField(this, "text");
       __publicField(this, "subscribed");
       __publicField(this, "subscription_type");
-      this.text = new Text2(data.text);
-      this.subscribed = data.isSubscribed;
-      if ("subscriptionType" in data)
-        this.subscription_type = data.subscriptionType;
+      if ("text" in data) {
+        this.text = new Text2(data.text);
+      }
+      if ("subscribed" in data) {
+        this.subscribed = data.subscribed;
+      }
+      if ("type" in data) {
+        this.subscription_type = data.type;
+      }
     }
   };
   __name(_SubscriptionButton, "SubscriptionButton");
   __publicField(_SubscriptionButton, "type", "SubscriptionButton");
   var SubscriptionButton = _SubscriptionButton;
 
-  // dist/src/parser/classes/VideoOwner.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoOwner.js
   var _VideoOwner = class _VideoOwner extends YTNode {
     constructor(data) {
       super();
+      __publicField(this, "title");
+      __publicField(this, "attributed_title");
       __publicField(this, "subscription_button");
       __publicField(this, "subscriber_count");
+      __publicField(this, "avatar_stack");
+      __publicField(this, "endpoint");
       __publicField(this, "author");
-      if ("subscriptionButton" in data)
+      if ("title" in data) {
+        this.title = new Text2(data.title);
+      }
+      if ("attributedTitle" in data) {
+        this.attributed_title = Text2.fromAttributed(data.attributedTitle);
+      }
+      if ("subscriptionButton" in data) {
         this.subscription_button = new SubscriptionButton(data.subscriptionButton);
+      }
+      if ("navigationEndpoint" in data) {
+        this.endpoint = new NavigationEndpoint(data.navigationEndpoint);
+      }
+      this.avatar_stack = parser_exports.parseItem(data.avatarStack, AvatarStackView);
       this.subscriber_count = new Text2(data.subscriberCountText);
       this.author = new Author({
-        ...data.title,
+        ...data.title || data.attributedTitle,
         navigationEndpoint: data.navigationEndpoint
       }, data.badges, data.thumbnail);
     }
@@ -29221,7 +28330,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoOwner, "type", "VideoOwner");
   var VideoOwner = _VideoOwner;
 
-  // dist/src/parser/classes/VideoPrimaryInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoPrimaryInfo.js
   var _VideoPrimaryInfo = class _VideoPrimaryInfo extends YTNode {
     constructor(data) {
       super();
@@ -29249,7 +28358,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoPrimaryInfo, "type", "VideoPrimaryInfo");
   var VideoPrimaryInfo = _VideoPrimaryInfo;
 
-  // dist/src/parser/classes/VideoSecondaryInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoSecondaryInfo.js
   var _VideoSecondaryInfo = class _VideoSecondaryInfo extends YTNode {
     constructor(data) {
       super();
@@ -29280,7 +28389,25 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoSecondaryInfo, "type", "VideoSecondaryInfo");
   var VideoSecondaryInfo = _VideoSecondaryInfo;
 
-  // dist/src/parser/classes/WatchCardCompactVideo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoTitleHeaderView.js
+  var _VideoTitleHeaderView = class _VideoTitleHeaderView extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "video_title");
+      __publicField(this, "header_button");
+      __publicField(this, "renderer_context");
+      this.video_title = Text2.fromAttributed(data.videoTitle);
+      this.header_button = parser_exports.parseItem(data.headerButton, ButtonView);
+      if ("rendererContext" in data) {
+        this.renderer_context = new RendererContext(data.rendererContext);
+      }
+    }
+  };
+  __name(_VideoTitleHeaderView, "VideoTitleHeaderView");
+  __publicField(_VideoTitleHeaderView, "type", "VideoTitleHeaderView");
+  var VideoTitleHeaderView = _VideoTitleHeaderView;
+
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/WatchCardCompactVideo.js
   var _WatchCardCompactVideo = class _WatchCardCompactVideo extends YTNode {
     constructor(data) {
       super();
@@ -29301,7 +28428,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchCardCompactVideo, "type", "WatchCardCompactVideo");
   var WatchCardCompactVideo = _WatchCardCompactVideo;
 
-  // dist/src/parser/classes/WatchCardHeroVideo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/WatchCardHeroVideo.js
   var _WatchCardHeroVideo = class _WatchCardHeroVideo extends YTNode {
     constructor(data) {
       var _a2;
@@ -29320,7 +28447,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchCardHeroVideo, "type", "WatchCardHeroVideo");
   var WatchCardHeroVideo = _WatchCardHeroVideo;
 
-  // dist/src/parser/classes/WatchCardRichHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/WatchCardRichHeader.js
   var _WatchCardRichHeader = class _WatchCardRichHeader extends YTNode {
     constructor(data) {
       super();
@@ -29341,7 +28468,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchCardRichHeader, "type", "WatchCardRichHeader");
   var WatchCardRichHeader = _WatchCardRichHeader;
 
-  // dist/src/parser/classes/WatchCardSectionSequence.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/WatchCardSectionSequence.js
   var _WatchCardSectionSequence = class _WatchCardSectionSequence extends YTNode {
     constructor(data) {
       super();
@@ -29353,7 +28480,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchCardSectionSequence, "type", "WatchCardSectionSequence");
   var WatchCardSectionSequence = _WatchCardSectionSequence;
 
-  // dist/src/parser/classes/WatchNextTabbedResults.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/WatchNextTabbedResults.js
   var _WatchNextTabbedResults = class _WatchNextTabbedResults extends TwoColumnBrowseResults {
     constructor(data) {
       super(data);
@@ -29363,7 +28490,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchNextTabbedResults, "type", "WatchNextTabbedResults");
   var WatchNextTabbedResults = _WatchNextTabbedResults;
 
-  // dist/src/parser/classes/ytkids/AnchoredSection.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ytkids/AnchoredSection.js
   var _AnchoredSection = class _AnchoredSection extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -29387,7 +28514,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AnchoredSection, "type", "AnchoredSection");
   var AnchoredSection = _AnchoredSection;
 
-  // dist/src/parser/classes/ytkids/KidsBlocklistPickerItem.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsBlocklistPickerItem.js
   var _actions4;
   var _KidsBlocklistPickerItem = class _KidsBlocklistPickerItem extends YTNode {
     constructor(data) {
@@ -29424,7 +28551,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_KidsBlocklistPickerItem, "type", "KidsBlocklistPickerItem");
   var KidsBlocklistPickerItem = _KidsBlocklistPickerItem;
 
-  // dist/src/parser/classes/ytkids/KidsBlocklistPicker.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsBlocklistPicker.js
   var _KidsBlocklistPicker = class _KidsBlocklistPicker extends YTNode {
     constructor(data) {
       super();
@@ -29442,7 +28569,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_KidsBlocklistPicker, "type", "KidsBlocklistPicker");
   var KidsBlocklistPicker = _KidsBlocklistPicker;
 
-  // dist/src/parser/classes/ytkids/KidsCategoryTab.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsCategoryTab.js
   var _KidsCategoryTab = class _KidsCategoryTab extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -29464,7 +28591,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_KidsCategoryTab, "type", "KidsCategoryTab");
   var KidsCategoryTab = _KidsCategoryTab;
 
-  // dist/src/parser/classes/ytkids/KidsCategoriesHeader.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsCategoriesHeader.js
   var _KidsCategoriesHeader = class _KidsCategoriesHeader extends YTNode {
     constructor(data) {
       super();
@@ -29478,7 +28605,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_KidsCategoriesHeader, "type", "kidsCategoriesHeader");
   var KidsCategoriesHeader = _KidsCategoriesHeader;
 
-  // dist/src/parser/classes/ytkids/KidsHomeScreen.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsHomeScreen.js
   var _KidsHomeScreen = class _KidsHomeScreen extends YTNode {
     constructor(data) {
       super();
@@ -29490,7 +28617,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_KidsHomeScreen, "type", "kidsHomeScreen");
   var KidsHomeScreen = _KidsHomeScreen;
 
-  // dist/src/parser/generator.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/generator.js
   var generator_exports = {};
   __export(generator_exports, {
     camelToSnake: () => camelToSnake,
@@ -30274,7 +29401,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
   }
   __name(mergeKeyInfo, "mergeKeyInfo");
 
-  // dist/src/parser/continuations.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/continuations.js
   var _ItemSectionContinuation = class _ItemSectionContinuation extends YTNode {
     constructor(data) {
       var _a2, _b2, _c;
@@ -30471,7 +29598,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
   __publicField(_ContinuationCommand2, "type", "ContinuationCommand");
   var ContinuationCommand2 = _ContinuationCommand2;
 
-  // dist/protos/generated/misc/common.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/misc/common.js
   function createBaseKeyValuePair() {
     return { key: void 0, value: void 0 };
   }
@@ -30551,7 +29678,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
     }
   };
 
-  // dist/src/parser/classes/misc/Format.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/Format.js
   var _this_response_nsig_cache;
   var _Format = class _Format {
     constructor(data, this_response_nsig_cache) {
@@ -30572,7 +29699,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
       __publicField(this, "average_bitrate");
       __publicField(this, "bitrate");
       __publicField(this, "spatial_audio_type");
-      __publicField(this, "target_duration_dec");
+      __publicField(this, "target_duration_sec");
       __publicField(this, "fair_play_key_uri");
       __publicField(this, "stereo_layout");
       __publicField(this, "max_dvr_duration_sec");
@@ -30662,7 +29789,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
       if (Reflect.has(data, "maxDvrDurationSec"))
         this.max_dvr_duration_sec = data.maxDvrDurationSec;
       if (Reflect.has(data, "targetDurationSec"))
-        this.target_duration_dec = data.targetDurationSec;
+        this.target_duration_sec = data.targetDurationSec;
       this.has_audio = !!data.audioBitrate || !!data.audioQuality;
       this.has_video = !!data.qualityLabel;
       this.has_text = !!data.captionTrack;
@@ -30736,7 +29863,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
   __name(_Format, "Format");
   var Format = _Format;
 
-  // dist/src/parser/classes/misc/VideoDetails.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/VideoDetails.js
   var _VideoDetails = class _VideoDetails {
     constructor(data) {
       __publicField(this, "id");
@@ -30784,7 +29911,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
   __name(_VideoDetails, "VideoDetails");
   var VideoDetails = _VideoDetails;
 
-  // dist/src/parser/parser.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/parser.js
   var TAG2 = "Parser";
   var IGNORED_LIST = /* @__PURE__ */ new Set([
     "AdSlot",
@@ -30800,7 +29927,9 @@ ${" ".repeat((indentation + 1) * 2)}}`;
     "GuideSigninPromo",
     "AdsEngagementPanelContent",
     "MiniGameCardView",
-    "GenAiFeedbackFormView"
+    "GenAiFeedbackFormView",
+    "PlayerInterstitial",
+    "InterstitialView"
   ]);
   var RUNTIME_NODES = new Map(Object.entries(nodes_exports));
   var DYNAMIC_NODES = /* @__PURE__ */ new Map();
@@ -30903,7 +30032,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   }
   __name(getDynamicParsers, "getDynamicParsers");
   function parseResponse(data) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
     const parsed_data = {};
     _createMemo();
     const contents = parse(data.contents);
@@ -30954,7 +30083,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     }
     _clearMemo();
     _createMemo();
-    const live_chat_item_context_menu_supported_renderers = data.liveChatItemContextMenuSupportedRenderers ? parseItem(data.liveChatItemContextMenuSupportedRenderers) : null;
+    const live_chat_item_context_menu_supported_renderers = parseItem(data.liveChatItemContextMenuSupportedRenderers);
     const live_chat_item_context_menu_supported_renderers_memo = _getMemo();
     if (live_chat_item_context_menu_supported_renderers) {
       parsed_data.live_chat_item_context_menu_supported_renderers = live_chat_item_context_menu_supported_renderers;
@@ -30962,7 +30091,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     }
     _clearMemo();
     _createMemo();
-    const header = data.header ? parse(data.header) : null;
+    const header = parse(data.header);
     const header_memo = _getMemo();
     if (header) {
       parsed_data.header = header;
@@ -30970,7 +30099,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     }
     _clearMemo();
     _createMemo();
-    const sidebar = data.sidebar ? parseItem(data.sidebar) : null;
+    const sidebar = parseItem(data.sidebar);
     const sidebar_memo = _getMemo();
     if (sidebar) {
       parsed_data.sidebar = sidebar;
@@ -31035,15 +30164,18 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     if (playback_tracking) {
       parsed_data.playback_tracking = playback_tracking;
     }
-    const playability_status = data.playabilityStatus ? {
-      status: data.playabilityStatus.status,
-      reason: data.playabilityStatus.reason || "",
-      embeddable: !!data.playabilityStatus.playableInEmbed || false,
-      audio_only_playability: parseItem(data.playabilityStatus.audioOnlyPlayability, AudioOnlyPlayability),
-      error_screen: parseItem(data.playabilityStatus.errorScreen)
-    } : null;
-    if (playability_status) {
-      parsed_data.playability_status = playability_status;
+    if (data.playabilityStatus) {
+      _createMemo();
+      parsed_data.playability_status = {
+        status: data.playabilityStatus.status,
+        reason: data.playabilityStatus.reason || "",
+        embeddable: !!data.playabilityStatus.playableInEmbed,
+        audio_only_playability: parseItem(data.playabilityStatus.audioOnlyPlayability, AudioOnlyPlayability),
+        error_screen: parseItem(data.playabilityStatus.errorScreen),
+        live_streamability: parseItem(data.playabilityStatus.liveStreamability)
+      };
+      parsed_data.playability_status_memo = _getMemo();
+      _clearMemo();
     }
     if (data.streamingData) {
       const this_response_nsig_cache = /* @__PURE__ */ new Map();
@@ -31114,6 +30246,10 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     if (engagement_panels.length) {
       parsed_data.engagement_panels = engagement_panels;
     }
+    const content = parseItem(data.content);
+    if (content) {
+      parsed_data.content = content;
+    }
     if (data.bgChallenge) {
       const interpreter_url = {
         private_do_not_access_or_else_trusted_resource_url_wrapped_value: data.bgChallenge.interpreterUrl.privateDoNotAccessOrElseTrustedResourceUrlWrappedValue,
@@ -31147,6 +30283,25 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     }
     if (data.targetId) {
       parsed_data.target_id = data.targetId;
+    }
+    if ("pollDelayMs" in data) {
+      parsed_data.poll_delay_ms = data.pollDelayMs;
+    }
+    if ("stopHeartbeat" in data) {
+      parsed_data.stop_heartbeat = data.stopHeartbeat;
+    }
+    if ("heartbeatServerData" in data) {
+      parsed_data.heartbeat_server_data = data.heartbeatServerData;
+    }
+    if ("heartbeatParams" in data) {
+      parsed_data.heartbeat_params = {
+        heartbeat_token: (_q = data.heartbeatParams) == null ? void 0 : _q.heartbeatToken,
+        interval_milliseconds: (_r = data.heartbeatParams) == null ? void 0 : _r.intervalMilliseconds,
+        max_retries: (_s = data.heartbeatParams) == null ? void 0 : _s.maxRetries,
+        drm_session_id: (_t = data.heartbeatParams) == null ? void 0 : _t.drmSessionId,
+        soft_fail_on_error: (_u = data.heartbeatParams) == null ? void 0 : _u.softFailOnError,
+        heartbeat_server_data: (_v = data.heartbeatParams) == null ? void 0 : _v.heartbeatServerData
+      };
     }
     return parsed_data;
   }
@@ -31413,7 +30568,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   }
   __name(applyCommentsMutations, "applyCommentsMutations");
 
-  // dist/src/parser/youtube/index.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/index.js
   var youtube_exports = {};
   __export(youtube_exports, {
     AccountInfo: () => AccountInfo,
@@ -31437,7 +30592,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     VideoInfo: () => VideoInfo
   });
 
-  // dist/src/parser/youtube/AccountInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/AccountInfo.js
   var _page;
   var _AccountInfo = class _AccountInfo {
     constructor(response) {
@@ -31459,7 +30614,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_AccountInfo, "AccountInfo");
   var AccountInfo = _AccountInfo;
 
-  // dist/src/core/mixins/Feed.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/mixins/Feed.js
   var _page2, _actions5, _memo, _continuation2, _Feed_instances, isParsed_fn, getBodyContinuations_fn;
   var _Feed = class _Feed {
     constructor(actions, response, already_parsed = false) {
@@ -31491,15 +30646,15 @@ ${generateTypescriptClass(classname, context.key_info)}`);
      * Get all videos on a given page via memo
      */
     static getVideosFromMemo(memo) {
-      return observe(memo.getType(Video, GridVideo, ReelItem, ShortsLockupView, CompactVideo, LockupView, PlaylistVideo, PlaylistPanelVideo, WatchCardCompactVideo).filter((item) => !item.is(LockupView) || (item.content_type === "VIDEO" || item.content_type === "MOVIE" || item.content_type === "SHORT")));
+      return observe(memo.getType(Video, GridVideo, ReelItem, ShortsLockupView, CompactVideo, LockupView, PlaylistVideo, PlaylistPanelVideo, WatchCardCompactVideo).filter((item) => !item.is(LockupView) || (item.content_type === "VIDEO" || item.content_type === "MOVIE" || item.content_type === "SHORT" || item.content_type == "STATION")));
     }
     /**
      * Get all playlists on a given page via memo
      */
     static getPlaylistsFromMemo(memo) {
-      const playlists = memo.getType(Playlist, GridPlaylist);
+      const playlists = memo.getType(Playlist, GridPlaylist, GridShow);
       const lockup_views = memo.getType(LockupView).filter((lockup) => {
-        return ["PLAYLIST", "ALBUM", "PODCAST"].includes(lockup.content_type);
+        return ["PLAYLIST", "ALBUM", "PODCAST", "SHOW"].includes(lockup.content_type);
       });
       if (lockup_views.length > 0) {
         playlists.push(...lockup_views);
@@ -31623,7 +30778,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Feed, "Feed");
   var Feed = _Feed;
 
-  // dist/src/core/mixins/FilterableFeed.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/mixins/FilterableFeed.js
   var _filter_nodes;
   var _FilterableFeed = class _FilterableFeed extends Feed {
     constructor(actions, data, already_parsed = false) {
@@ -31757,7 +30912,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_FilterableFeed, "FilterableFeed");
   var FilterableFeed = _FilterableFeed;
 
-  // dist/src/core/mixins/index.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/mixins/index.js
   var mixins_exports = {};
   __export(mixins_exports, {
     Feed: () => Feed,
@@ -31766,7 +30921,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     TabbedFeed: () => TabbedFeed
   });
 
-  // dist/src/core/mixins/MediaInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/mixins/MediaInfo.js
   var _page3, _actions6, _cpn, _playback_tracking;
   var _MediaInfo = class _MediaInfo {
     constructor(data, actions, cpn) {
@@ -31948,7 +31103,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_MediaInfo, "MediaInfo");
   var MediaInfo = _MediaInfo;
 
-  // dist/src/core/mixins/TabbedFeed.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/mixins/TabbedFeed.js
   var _actions7, _tabs;
   var _TabbedFeed = class _TabbedFeed extends Feed {
     constructor(actions, data, already_parsed = false) {
@@ -32003,7 +31158,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_TabbedFeed, "TabbedFeed");
   var TabbedFeed = _TabbedFeed;
 
-  // dist/src/parser/youtube/Channel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Channel.js
   var _filter_nodes2;
   var _Channel2 = class _Channel2 extends TabbedFeed {
     constructor(actions, data, already_parsed = false) {
@@ -32227,6 +31382,10 @@ ${generateTypescriptClass(classname, context.key_info)}`);
       const tab = await this.getTabByURL("courses");
       return new _Channel2(this.actions, tab.page, true);
     }
+    async getShows() {
+      const tab = await this.getTabByURL("shows");
+      return new _Channel2(this.actions, tab.page, true);
+    }
     async getPlaylists() {
       const tab = await this.getTabByURL("playlists");
       return new _Channel2(this.actions, tab.page, true);
@@ -32295,6 +31454,9 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     }
     get has_courses() {
       return this.hasTabWithURL("courses");
+    }
+    get has_shows() {
+      return this.hasTabWithURL("shows");
     }
     get has_playlists() {
       return this.hasTabWithURL("playlists");
@@ -32392,7 +31554,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_FilteredChannelList, "FilteredChannelList");
   var FilteredChannelList = _FilteredChannelList;
 
-  // dist/src/parser/youtube/Comments.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Comments.js
   var _page4, _actions8, _continuation3;
   var _Comments = class _Comments {
     constructor(actions, data, already_parsed = false) {
@@ -32483,7 +31645,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Comments, "Comments");
   var Comments = _Comments;
 
-  // dist/src/parser/youtube/Guide.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Guide.js
   var _page5;
   var _Guide = class _Guide {
     constructor(data) {
@@ -32501,7 +31663,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Guide, "Guide");
   var Guide = _Guide;
 
-  // dist/src/parser/youtube/History.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/History.js
   var _History = class _History extends Feed {
     constructor(actions, data, already_parsed = false) {
       super(actions, data, already_parsed);
@@ -32575,7 +31737,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_History, "History");
   var History = _History;
 
-  // dist/src/parser/youtube/HomeFeed.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/HomeFeed.js
   var _HomeFeed = class _HomeFeed extends FilterableFeed {
     constructor(actions, data, already_parsed = false) {
       var _a2;
@@ -32608,7 +31770,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_HomeFeed, "HomeFeed");
   var HomeFeed = _HomeFeed;
 
-  // dist/src/parser/youtube/HashtagFeed.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/HashtagFeed.js
   var _HashtagFeed = class _HashtagFeed extends FilterableFeed {
     constructor(actions, response) {
       super(actions, response);
@@ -32636,7 +31798,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_HashtagFeed, "HashtagFeed");
   var HashtagFeed = _HashtagFeed;
 
-  // dist/src/parser/youtube/ItemMenu.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/ItemMenu.js
   var _page6, _actions9, _items;
   var _ItemMenu = class _ItemMenu {
     constructor(data, actions) {
@@ -32685,7 +31847,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_ItemMenu, "ItemMenu");
   var ItemMenu = _ItemMenu;
 
-  // dist/src/parser/youtube/Playlist.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Playlist.js
   var _Playlist_instances, getStat_fn;
   var _Playlist2 = class _Playlist2 extends Feed {
     constructor(actions, data, already_parsed = false) {
@@ -32725,6 +31887,19 @@ ${generateTypescriptClass(classname, context.key_info)}`);
       this.endpoint = primary_info == null ? void 0 : primary_info.endpoint;
       this.messages = this.memo.getType(Message);
     }
+    async getCollaborators() {
+      var _a2, _b2, _c, _d;
+      if (!this.actions.session.logged_in)
+        throw new Error("You must be signed in to perform this operation.");
+      const avatar_stack_view = (_a2 = this.memo.getType(AvatarStackView)) == null ? void 0 : _a2.find((item) => item.renderer_context.command_context);
+      const endpoint = (_b2 = avatar_stack_view == null ? void 0 : avatar_stack_view.renderer_context.command_context) == null ? void 0 : _b2.on_tap;
+      if (!endpoint)
+        throw new InnertubeError("AvatarStackView on_tap endpoint not found");
+      if ((_c = endpoint.command) == null ? void 0 : _c.is(ShowEngagementPanelEndpoint)) {
+        return await endpoint.call(this.actions, { parse: true });
+      }
+      throw new InnertubeError(`Unexpected endpoint type. Expected ShowEngagementPanelEndpoint, got ${(_d = endpoint.command) == null ? void 0 : _d.type}`);
+    }
     get items() {
       return observe(this.videos.as(LockupView, PlaylistVideo, ReelItem, ShortsLockupView).filter((video) => video.style !== "PLAYLIST_VIDEO_RENDERER_STYLE_RECOMMENDED_VIDEO"));
     }
@@ -32760,7 +31935,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Playlist2, "Playlist");
   var Playlist2 = _Playlist2;
 
-  // dist/src/parser/youtube/Library.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Library.js
   var _Library_instances, getAll_fn;
   var _Library = class _Library extends Feed {
     constructor(actions, data) {
@@ -32822,7 +31997,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Library, "Library");
   var Library = _Library;
 
-  // dist/src/parser/youtube/SmoothedQueue.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/SmoothedQueue.js
   function flattenQueue(queue) {
     const nodes = [];
     for (const group of queue) {
@@ -32956,7 +32131,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_SmoothedQueue, "SmoothedQueue");
   var SmoothedQueue = _SmoothedQueue;
 
-  // dist/src/parser/youtube/LiveChat.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/LiveChat.js
   var _actions10, _video_id, _channel_id, _continuation4, _mcontinuation, _retry_count, _LiveChat_instances, pollLivechat_fn, emitSmoothedActions_fn, pollMetadata_fn, wait_fn;
   var _LiveChat2 = class _LiveChat2 extends EventEmitterLike {
     constructor(video_info) {
@@ -32995,12 +32170,6 @@ ${generateTypescriptClass(classname, context.key_info)}`);
           __privateMethod(this, _LiveChat_instances, pollLivechat_fn).call(this);
         }
       };
-    }
-    on(type, listener) {
-      super.on(type, listener);
-    }
-    once(type, listener) {
-      super.once(type, listener);
     }
     start() {
       if (!this.running) {
@@ -33166,7 +32335,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_LiveChat2, "LiveChat");
   var LiveChat2 = _LiveChat2;
 
-  // dist/src/parser/youtube/NotificationsMenu.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/NotificationsMenu.js
   var _page7, _actions11;
   var _NotificationsMenu = class _NotificationsMenu {
     constructor(actions, response) {
@@ -33198,7 +32367,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_NotificationsMenu, "NotificationsMenu");
   var NotificationsMenu = _NotificationsMenu;
 
-  // dist/src/parser/youtube/Search.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Search.js
   var _Search = class _Search extends Feed {
     constructor(actions, data, already_parsed = false) {
       var _a2, _b2, _c, _d, _e, _f;
@@ -33284,7 +32453,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Search, "Search");
   var Search = _Search;
 
-  // dist/src/parser/youtube/Settings.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Settings.js
   var _page8, _actions12;
   var _Settings = class _Settings {
     constructor(actions, response) {
@@ -33390,7 +32559,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Settings, "Settings");
   var Settings = _Settings;
 
-  // dist/src/parser/youtube/VideoInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/VideoInfo.js
   var _watch_next_continuation;
   var _VideoInfo = class _VideoInfo extends MediaInfo {
     constructor(data, actions, cpn) {
@@ -33759,7 +32928,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_VideoInfo, "VideoInfo");
   var VideoInfo = _VideoInfo;
 
-  // dist/src/parser/youtube/TranscriptInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/TranscriptInfo.js
   var _page9, _actions13;
   var _TranscriptInfo = class _TranscriptInfo {
     constructor(actions, response) {
@@ -33811,7 +32980,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_TranscriptInfo, "TranscriptInfo");
   var TranscriptInfo = _TranscriptInfo;
 
-  // dist/src/parser/ytmusic/index.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/index.js
   var ytmusic_exports = {};
   __export(ytmusic_exports, {
     Album: () => Album,
@@ -33826,7 +32995,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     TrackInfo: () => TrackInfo_default
   });
 
-  // dist/src/parser/ytmusic/Album.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Album.js
   var _page10;
   var _Album = class _Album {
     constructor(response) {
@@ -33854,7 +33023,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Album, "Album");
   var Album = _Album;
 
-  // dist/src/parser/ytmusic/Artist.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Artist.js
   var _page11, _actions14;
   var _Artist = class _Artist {
     constructor(response, actions) {
@@ -33895,7 +33064,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Artist, "Artist");
   var Artist = _Artist;
 
-  // dist/src/parser/ytmusic/Explore.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Explore.js
   var _page12;
   var _Explore = class _Explore {
     constructor(response) {
@@ -33921,7 +33090,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Explore, "Explore");
   var Explore = _Explore;
 
-  // dist/src/parser/ytmusic/HomeFeed.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/HomeFeed.js
   var _page13, _actions15, _continuation5;
   var _HomeFeed2 = class _HomeFeed2 {
     constructor(response, actions) {
@@ -33995,7 +33164,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_HomeFeed2, "HomeFeed");
   var HomeFeed2 = _HomeFeed2;
 
-  // dist/src/parser/ytmusic/Library.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Library.js
   var _page14, _actions16, _continuation6;
   var _Library2 = class _Library2 {
     constructor(response, actions) {
@@ -34136,7 +33305,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_LibraryContinuation, "LibraryContinuation");
   var LibraryContinuation = _LibraryContinuation;
 
-  // dist/src/parser/ytmusic/Playlist.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Playlist.js
   var _page16, _actions18, _continuation8, _last_fetched_suggestions, _suggestions_continuation, _Playlist_instances2, fetchSuggestions_fn;
   var _Playlist3 = class _Playlist3 {
     constructor(response, actions) {
@@ -34266,7 +33435,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Playlist3, "Playlist");
   var Playlist3 = _Playlist3;
 
-  // dist/src/parser/ytmusic/Recap.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Recap.js
   var _page17, _actions19;
   var _Recap = class _Recap {
     constructor(response, actions) {
@@ -34305,7 +33474,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Recap, "Recap");
   var Recap = _Recap;
 
-  // dist/src/parser/ytmusic/Search.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Search.js
   var _page18, _actions20, _continuation9;
   var _Search2 = class _Search2 {
     constructor(response, actions, is_filtered) {
@@ -34460,7 +33629,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_SearchContinuation, "SearchContinuation");
   var SearchContinuation = _SearchContinuation;
 
-  // dist/src/parser/ytmusic/TrackInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/TrackInfo.js
   var _TrackInfo = class _TrackInfo extends MediaInfo {
     constructor(data, actions, cpn) {
       var _a2, _b2, _c;
@@ -34572,7 +33741,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   var TrackInfo = _TrackInfo;
   var TrackInfo_default = TrackInfo;
 
-  // dist/src/parser/ytkids/index.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytkids/index.js
   var ytkids_exports = {};
   __export(ytkids_exports, {
     Channel: () => Channel3,
@@ -34581,7 +33750,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     VideoInfo: () => VideoInfo2
   });
 
-  // dist/src/parser/ytkids/Channel.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytkids/Channel.js
   var _Channel3 = class _Channel3 extends Feed {
     constructor(actions, data, already_parsed = false) {
       var _a2, _b2;
@@ -34614,7 +33783,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Channel3, "Channel");
   var Channel3 = _Channel3;
 
-  // dist/src/parser/ytkids/HomeFeed.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytkids/HomeFeed.js
   var _HomeFeed3 = class _HomeFeed3 extends Feed {
     constructor(actions, data, already_parsed = false) {
       var _a2, _b2;
@@ -34651,7 +33820,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_HomeFeed3, "HomeFeed");
   var HomeFeed3 = _HomeFeed3;
 
-  // dist/src/parser/ytkids/Search.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytkids/Search.js
   var _Search3 = class _Search3 extends Feed {
     constructor(actions, data) {
       super(actions, data);
@@ -34667,7 +33836,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Search3, "Search");
   var Search3 = _Search3;
 
-  // dist/src/parser/ytkids/VideoInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytkids/VideoInfo.js
   var _VideoInfo2 = class _VideoInfo2 extends MediaInfo {
     constructor(data, actions, cpn) {
       var _a2, _b2, _c, _d, _e;
@@ -34691,13 +33860,13 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_VideoInfo2, "VideoInfo");
   var VideoInfo2 = _VideoInfo2;
 
-  // dist/src/parser/ytshorts/index.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytshorts/index.js
   var ytshorts_exports = {};
   __export(ytshorts_exports, {
     ShortFormVideoInfo: () => ShortFormVideoInfo
   });
 
-  // dist/src/parser/ytshorts/ShortFormVideoInfo.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytshorts/ShortFormVideoInfo.js
   var _watch_next_continuation2;
   var _ShortFormVideoInfo = class _ShortFormVideoInfo extends MediaInfo {
     constructor(data, actions, cpn, reel_watch_sequence_response) {
@@ -34739,7 +33908,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_ShortFormVideoInfo, "ShortFormVideoInfo");
   var ShortFormVideoInfo = _ShortFormVideoInfo;
 
-  // dist/src/parser/classes/misc/Author.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/Author.js
   var _Author = class _Author {
     constructor(item, badges, thumbs, id) {
       __publicField(this, "id");
@@ -34755,7 +33924,14 @@ ${generateTypescriptClass(classname, context.key_info)}`);
       __publicField(this, "is_verified");
       __publicField(this, "is_verified_artist");
       var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k;
-      const nav_text = new Text2(item);
+      let nav_text;
+      if (item) {
+        if ("content" in item) {
+          nav_text = Text2.fromAttributed(item);
+        } else {
+          nav_text = new Text2(item);
+        }
+      }
       this.id = id || ((_d = (_c = (_b2 = (_a2 = nav_text == null ? void 0 : nav_text.runs) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.endpoint) == null ? void 0 : _c.payload) == null ? void 0 : _d.browseId) || ((_f = (_e = nav_text == null ? void 0 : nav_text.endpoint) == null ? void 0 : _e.payload) == null ? void 0 : _f.browseId) || (badges == null ? void 0 : badges.channelId);
       this.name = (nav_text == null ? void 0 : nav_text.text) || "N/A";
       this.thumbnails = thumbs ? Thumbnail.fromResponse(thumbs) : [];
@@ -34798,11 +33974,24 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     get best_thumbnail() {
       return this.thumbnails[0];
     }
+    get collaborators() {
+      var _a2, _b2, _c, _d;
+      if (((_b2 = (_a2 = this.endpoint) == null ? void 0 : _a2.command) == null ? void 0 : _b2.is(ShowDialogCommand)) && ((_c = this.endpoint.command.inline_content) == null ? void 0 : _c.is(DialogView))) {
+        const dialog = this.endpoint.command.inline_content;
+        if ((_d = dialog.custom_content) == null ? void 0 : _d.is(ListView)) {
+          return dialog.custom_content.items.as(ListItemView).filter((item) => {
+            var _a3, _b3, _c2, _d2;
+            return ((_d2 = (_c2 = (_b3 = (_a3 = item.renderer_context) == null ? void 0 : _a3.command_context) == null ? void 0 : _b3.on_tap) == null ? void 0 : _c2.metadata) == null ? void 0 : _d2.page_type) === "WEB_PAGE_TYPE_CHANNEL";
+          });
+        }
+      }
+      return [];
+    }
   };
   __name(_Author, "Author");
   var Author = _Author;
 
-  // dist/src/utils/user-agents.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/user-agents.js
   var user_agents_default = {
     "desktop": [
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0",
@@ -34862,7 +34051,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     ]
   };
 
-  // dist/src/utils/Utils.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/Utils.js
   var TAG_2 = "Utils";
   var shim;
   var _Platform = class _Platform {
@@ -35047,8 +34236,12 @@ ${headers_serialized}
 ${body_contents}`);
     return Platform.shim.fetch(input, init);
   }, "debugFetch");
-  function u8ToBase64(u82) {
-    return btoa(String.fromCharCode.apply(null, Array.from(u82)));
+  function u8ToBase64(u82, base64url = false) {
+    const result = btoa(String.fromCharCode(...u82));
+    if (base64url) {
+      return result.replace(/\+/g, "-").replace(/\//g, "_");
+    }
+    return result;
   }
   __name(u8ToBase64, "u8ToBase64");
   function base64ToU8(base64) {
@@ -35098,7 +34291,7 @@ return process("${n || ""}", "${sp || ""}", "${s || ""}");`;
   }
   __name(getNsigProcessorFn, "getNsigProcessorFn");
 
-  // dist/src/platform/polyfills/web-crypto.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/platform/polyfills/web-crypto.js
   async function sha1Hash(str) {
     const byteToHex = [
       "00",
@@ -35370,13 +34563,13 @@ return process("${n || ""}", "${sp || ""}", "${s || ""}");`;
   }
   __name(sha1Hash, "sha1Hash");
 
-  // dist/src/platform/jsruntime/default.js
-  function evaluate(_data23, _env) {
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/platform/jsruntime/default.js
+  function evaluate(_data24, _env) {
     throw new Error("To decipher URLs, you must provide your own JavaScript evaluator. See https://ytjs.dev/guide/getting-started.html#providing-a-custom-javascript-interpreter for more details.");
   }
   __name(evaluate, "evaluate");
 
-  // dist/src/core/Actions.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/Actions.js
   var _Actions_instances, isBrowse_fn, needsLogin_fn;
   var _Actions = class _Actions {
     constructor(session) {
@@ -35487,7 +34680,7 @@ return process("${n || ""}", "${sp || ""}", "${s || ""}");`;
   __name(_Actions, "Actions");
   var Actions = _Actions;
 
-  // dist/src/core/OAuth2.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/OAuth2.js
   var TAG3 = "OAuth2";
   var _session2, _OAuth2_instances, loadFromCache_fn, http_get;
   var _OAuth2 = class _OAuth2 {
@@ -35715,7 +34908,7 @@ return process("${n || ""}", "${sp || ""}", "${s || ""}");`;
   __name(_OAuth2, "OAuth2");
   var OAuth2 = _OAuth2;
 
-  // dist/src/core/Player.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/Player.js
   var TAG4 = "Player";
   var _Player = class _Player {
     constructor(player_id, signature_timestamp, data) {
@@ -35918,7 +35111,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_Player, "Player");
   var Player = _Player;
 
-  // dist/src/core/Session.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/Session.js
   var ClientType = {
     WEB: "WEB",
     MWEB: "MWEB",
@@ -35927,6 +35120,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     IOS: "iOS",
     ANDROID: "ANDROID",
     ANDROID_VR: "ANDROID_VR",
+    VISIONOS: "VISIONOS",
     ANDROID_MUSIC: "ANDROID_MUSIC",
     ANDROID_CREATOR: "ANDROID_CREATOR",
     TV: "TVHTML5",
@@ -35968,12 +35162,6 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
       this.oauth = new OAuth2(this);
       this.logged_in = !!cookie;
       this.user_agent = context.client.userAgent;
-    }
-    on(type, listener) {
-      super.on(type, listener);
-    }
-    once(type, listener) {
-      super.once(type, listener);
     }
     static async create(options = {}) {
       const { context, api_key, api_version, account_index, config_data } = await _Session.getSessionData(options.lang, options.location, options.account_index, options.visitor_data, options.user_agent, options.enable_safety_mode, options.generate_session_locally, options.fail_fast, options.device_category, options.client_type, options.timezone, options.fetch, options.on_behalf_of_user, options.cache, options.enable_session_cache, options.po_token, options.retrieve_innertube_config);
@@ -36193,8 +35381,8 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
       throw new SessionError(`Failed to retrieve session data: ${res.status}`);
     const text = await res.text();
     if (!text.startsWith(")]}'"))
-      throw new SessionError("Invalid JSPB response");
-    const data = JSON.parse(text.replace(/^\)\]\}'/, ""));
+      throw new SessionError("Incorrect JSPB formatting");
+    const data = JSON.parse(text.substring(5));
     const ytcfg = data[0][2];
     const api_version = CLIENTS.WEB.API_VERSION;
     const [[device_info], api_key] = ytcfg;
@@ -36282,7 +35470,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_Session, "Session");
   var Session = _Session;
 
-  // dist/src/core/clients/index.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/clients/index.js
   var clients_exports = {};
   __export(clients_exports, {
     Kids: () => Kids,
@@ -36290,7 +35478,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     Studio: () => Studio
   });
 
-  // dist/src/core/clients/Kids.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/clients/Kids.js
   var _session3;
   var _Kids = class _Kids {
     constructor(session) {
@@ -36383,7 +35571,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_Kids, "Kids");
   var Kids = _Kids;
 
-  // dist/src/core/clients/Music.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/clients/Music.js
   var _session4, _actions22, _Music_instances, fetchInfoFromVideoId_fn, fetchInfoFromEndpoint_fn;
   var _Music = class _Music {
     constructor(session) {
@@ -36614,7 +35802,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_Music, "Music");
   var Music = _Music;
 
-  // dist/protos/generated/youtube/api/pfiinnertube/capability_info.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/capability_info.js
   function createBaseCapabilityInfo() {
     return { profile: void 0, supportedCapabilities: [], disabledCapabilities: [], snapshot: void 0 };
   }
@@ -36734,7 +35922,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     }
   };
 
-  // dist/protos/generated/youtube/api/pfiinnertube/client_info.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/client_info.js
   function createBaseClientInfo() {
     return {
       hl: void 0,
@@ -39009,7 +38197,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   }
   __name(longToNumber, "longToNumber");
 
-  // dist/protos/generated/youtube/api/pfiinnertube/attestation_response_data.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/attestation_response_data.js
   function createBaseAttestationResponseData() {
     return {
       challenge: void 0,
@@ -39157,7 +38345,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   }
   __name(longToNumber2, "longToNumber");
 
-  // dist/protos/generated/youtube/api/pfiinnertube/request_info.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/request_info.js
   function createBaseRequestInfo() {
     return {
       thirdPartyDigest: void 0,
@@ -39495,7 +38683,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     }
   };
 
-  // dist/protos/generated/youtube/api/pfiinnertube/third_party_info.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/third_party_info.js
   function createBaseThirdPartyInfo() {
     return {
       developerKey: void 0,
@@ -39642,7 +38830,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     }
   };
 
-  // dist/protos/generated/youtube/api/pfiinnertube/user_info.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/user_info.js
   function createBaseUserInfo() {
     return {
       onBehalfOfUser: void 0,
@@ -39864,7 +39052,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     }
   };
 
-  // dist/protos/generated/youtube/api/pfiinnertube/innertube_context.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/innertube_context.js
   function createBaseInnerTubeContext() {
     return {
       client: void 0,
@@ -40216,7 +39404,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     }
   };
 
-  // dist/protos/generated/youtube/api/pfiinnertube/metadata_update_request.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/metadata_update_request.js
   function createBaseMetadataUpdateRequest() {
     return {
       context: void 0,
@@ -40894,7 +40082,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   }
   __name(longToNumber3, "longToNumber");
 
-  // dist/src/core/clients/Studio.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/clients/Studio.js
   var _session5, _Studio_instances, getInitialUploadData_fn, uploadVideo_fn, setVideoMetadata_fn;
   var _Studio = class _Studio {
     constructor(session) {
@@ -41095,7 +40283,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_Studio, "Studio");
   var Studio = _Studio;
 
-  // dist/src/core/managers/index.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/managers/index.js
   var managers_exports = {};
   __export(managers_exports, {
     AccountManager: () => AccountManager,
@@ -41103,7 +40291,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     PlaylistManager: () => PlaylistManager
   });
 
-  // dist/src/core/managers/AccountManager.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/managers/AccountManager.js
   var _actions23;
   var _AccountManager = class _AccountManager {
     constructor(actions) {
@@ -41142,7 +40330,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_AccountManager, "AccountManager");
   var AccountManager = _AccountManager;
 
-  // dist/src/core/managers/PlaylistManager.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/managers/PlaylistManager.js
   var _actions24, _PlaylistManager_instances, getPlaylist_fn;
   var _PlaylistManager = class _PlaylistManager {
     constructor(actions) {
@@ -41383,7 +40571,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_PlaylistManager, "PlaylistManager");
   var PlaylistManager = _PlaylistManager;
 
-  // dist/src/core/managers/InteractionManager.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/managers/InteractionManager.js
   var _actions25;
   var _InteractionManager = class _InteractionManager {
     constructor(actions) {
@@ -41548,7 +40736,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_InteractionManager, "InteractionManager");
   var InteractionManager = _InteractionManager;
 
-  // dist/src/Innertube.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/Innertube.js
   var _session6;
   var _Innertube = class _Innertube {
     constructor(session) {
@@ -41856,7 +41044,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
           type: 1
         }
       });
-      const params = encodeURIComponent(u8ToBase64(writer.finish()));
+      const params = encodeURIComponent(u8ToBase64(writer.finish(), true));
       const browse_endpoint = new NavigationEndpoint({ browseEndpoint: { browseId: "FEhashtag", params } });
       const response = await browse_endpoint.call(__privateGet(this, _session6).actions);
       return new HashtagFeed(this.actions, response);
@@ -42017,10 +41205,10 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_Innertube, "Innertube");
   var Innertube = _Innertube;
 
-  // dist/src/platform/lib.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/platform/lib.js
   var lib_default = Innertube;
 
-  // dist/src/platform/web.js
+  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/platform/web.js
   var CACHE_TAG = "Cache";
   var _persistent_directory, _persistent, _Cache_instances, getBrowserDB_fn;
   var _Cache = class _Cache {
