@@ -125,7 +125,9 @@ en carpetas. Biblioteca: fijadas → carpetas → resto; buscando, lista plana. 
 carpetas desplegables (colapsada, lista plana de portadas).
 
 **Descubrir.** Ruta `/discover`, accesos en Inicio (accesos rápidos, ahora 2×2 en móvil y 4 en PC)
-y en Búsqueda. Fuente sin IA: radio de un artista **relacionado** con tus más escuchados, quitando
+y en Búsqueda. Fuente sin IA, **mitad y mitad** (decidido tras las pruebas: solo radio daba casi todo
+desconocido): las 2 canciones más populares de hasta 3 artistas **parecidos** a tus más escuchados
+(reconocible, un salto) intercaladas con la radio de uno de ellos (descubrimiento, dos saltos), quitando
 lo ya escuchado, lo que ya está en "Me gusta", a los propios artistas semilla y con máximo 2 por
 artista; sin historial, top global. `PreviewPlayer` es un motor propio (sin crossfade): **no toca
 la cola, el historial ni las estadísticas**. Pausa el reproductor principal al sonar y se calla si
