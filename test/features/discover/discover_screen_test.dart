@@ -61,6 +61,7 @@ void main() {
           syncoraPlayerControllerProvider.overrideWith((ref) => controller),
           deezerApiProvider.overrideWithValue(_ChartApi()),
           previewEngineFactoryProvider.overrideWithValue(FakeAudioEngine.new),
+          previewFileCacheFactoryProvider.overrideWithValue(null),
         ],
         child: MaterialApp.router(
           routerConfig: GoRouter(routes: [

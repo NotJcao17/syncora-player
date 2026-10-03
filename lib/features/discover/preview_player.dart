@@ -17,11 +17,18 @@ class PreviewPlayer {
   PreviewPlayer({
     required AudioEngine Function() engineFactory,
     Future<String?> Function(int trackId)? refreshUrl,
+    Future<String?> Function(int trackId, String url)? fetchLocal,
   })  : _engineFactory = engineFactory,
-        _refreshUrl = refreshUrl;
+        _refreshUrl = refreshUrl,
+        _fetchLocal = fetchLocal;
 
   final AudioEngine Function() _engineFactory;
   final Future<String?> Function(int trackId)? _refreshUrl;
+
+  /// Si está, la preview se descarga a un archivo y se reproduce local (ver
+  /// `PreviewFileCache`, solo Windows). Si no consigue el archivo, cae al
+  /// streaming de siempre.
+  final Future<String?> Function(int trackId, String url)? _fetchLocal;
 
   AudioEngine? _engine;
   final StreamController<AudioEngineState> _state = StreamController.broadcast();
@@ -61,6 +68,32 @@ class PreviewPlayer {
     final generation = ++_generation;
     _currentTrackId = trackId;
     final engine = _ensureEngine();
+
+    final fetchLocal = _fetchLocal;
+    if (fetchLocal != null) {
+      var path = await fetchLocal(trackId, previewUrl);
+      if (path == null && generation == _generation && !_disposed) {
+        // Lo más común: la URL firmada caducó. Una sola vez con la fresca.
+        final fresh = await _refreshUrl?.call(trackId);
+        if (fresh != null && fresh.isNotEmpty) {
+          previewUrl = fresh;
+          path = await fetchLocal(trackId, fresh);
+        }
+      }
+      if (generation != _generation || _disposed) return false;
+      if (path != null) {
+        _retriedTrackId = trackId;
+        try {
+          await engine.setLocalSource(path);
+          if (generation != _generation || _disposed) return false;
+          await engine.play();
+          return true;
+        } catch (_) {
+          // Archivo ilegible: se intenta en streaming.
+        }
+      }
+    }
+
     try {
       await engine.setUrl(previewUrl);
     } catch (_) {

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,7 @@ import '../player/audio_engine/audio_engine_factory.dart';
 import '../player/audio_engine/audio_engine_state.dart';
 import '../player/player_providers.dart';
 import 'discover_engine.dart';
+import 'preview_file_cache.dart';
 import 'preview_player.dart';
 
 @immutable
@@ -69,6 +71,7 @@ class DiscoverState {
 /// (`autoDispose`): al salir se detiene la preview y se suelta el motor.
 class DiscoverFeed extends Notifier<DiscoverState> {
   late PreviewPlayer _player;
+  PreviewFileCache? _files;
   DiscoverSource? _source;
   final Set<int> _shown = {};
   StreamSubscription<AudioEngineState>? _stateSub;
@@ -81,9 +84,12 @@ class DiscoverFeed extends Notifier<DiscoverState> {
   @override
   DiscoverState build() {
     final api = ref.read(deezerApiProvider);
+    final files = ref.read(previewFileCacheFactoryProvider)?.call();
+    _files = files;
     _player = PreviewPlayer(
       engineFactory: ref.read(previewEngineFactoryProvider),
       refreshUrl: (id) async => (await api.getTrack(id)).previewUrl,
+      fetchLocal: files?.fetch,
     );
     _stateSub = _player.stateStream.listen((s) {
       if (!_active) return;
@@ -103,6 +109,7 @@ class DiscoverFeed extends Notifier<DiscoverState> {
       _stateSub?.cancel();
       _completionSub?.cancel();
       _player.dispose();
+      _files?.clear();
     });
 
     Future.microtask(_init);
@@ -171,7 +178,25 @@ class DiscoverFeed extends Notifier<DiscoverState> {
     final controller = ref.read(syncoraPlayerControllerProvider);
     if (controller.state.engine.playing) await controller.pause();
     state = state.copyWith(position: Duration.zero, duration: const Duration(seconds: 30));
+    _prefetchAround();
     await _player.play(track.id, preview);
+  }
+
+  /// Con previews en archivo (Windows): deja listas las 2 siguientes para que
+  /// pasar de tarjeta sea instantáneo, y borra las que ya quedaron lejos.
+  void _prefetchAround() {
+    final files = _files;
+    if (files == null) return;
+    final i = state.index;
+    final tracks = state.tracks;
+    final keep = <int>{};
+    for (var k = i - 1; k <= i + 2; k++) {
+      if (k < 0 || k >= tracks.length) continue;
+      keep.add(tracks[k].id);
+      final url = tracks[k].previewUrl;
+      if (k > i && url != null) unawaited(files.fetch(tracks[k].id, url));
+    }
+    unawaited(files.prune(keep));
   }
 
   /// Llamado al cambiar de tarjeta (deslizando o con los botones).
@@ -206,3 +231,11 @@ final discoverFeedProvider = NotifierProvider.autoDispose<DiscoverFeed, Discover
 
 /// Cómo se crea el motor de las previews. Sobreescribible en tests.
 final previewEngineFactoryProvider = Provider<AudioEngine Function()>((ref) => createPreviewAudioEngine);
+
+/// Previews descargadas a archivo: solo en Windows, donde abrirlas en
+/// streaming con libmpv tardaba de 3 a 10+ s (ver `PreviewFileCache`). En
+/// Android `null`: ExoPlayer ya hace streaming rápido.
+final previewFileCacheFactoryProvider = Provider<PreviewFileCache Function()?>((ref) {
+  if (kIsWeb || !Platform.isWindows) return null;
+  return PreviewFileCache.new;
+});

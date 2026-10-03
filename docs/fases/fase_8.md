@@ -174,3 +174,7 @@ gratis por 7 días de inactividad. Usa los secretos `SUPABASE_URL` y `SUPABASE_A
   Playlist con IA (con tres botones sueltos el título se cortaba en móvil); frases de Descubrir más cortas;
   la fila de acciones de Descubrir se reparte en partes iguales (se desbordaba en móviles angostos); el primer
   lote de Descubrir es más chico para empezar a sonar antes.
+- **H-8-8:** en PC las previews tardaban 3–4 s y a veces más de 10. Medido: bajar una preview entera
+  (~480 KB) tarda 0.1–0.4 s; lo lento era abrirla en streaming con libmpv. En Windows ahora se descargan
+  a archivos temporales (`PreviewFileCache`) y se pre-descargan las 2 siguientes tarjetas; se borran al
+  alejarse y al salir de Descubrir. En Android no cambió nada (ExoPlayer ya era rápido).
