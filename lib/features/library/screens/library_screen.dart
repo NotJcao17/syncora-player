@@ -225,6 +225,91 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     );
   }
 
+  /// Menú del "+" de Biblioteca: playlist, carpeta o playlist con IA.
+  /// Diálogo centrado en PC y hoja inferior en móvil.
+  void _showCreateMenu(BuildContext context, bool canEdit, bool isConnected, bool isLocalMode) {
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
+
+    Widget option(BuildContext ctx, IconData icon, String title, String subtitle, bool enabled, VoidCallback onTap) {
+      final color = enabled ? AppTheme.primary : AppTheme.muted;
+      return ListTile(
+        enabled: enabled,
+        leading: Icon(icon, color: color),
+        title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+        subtitle: Text(subtitle, style: const TextStyle(color: AppTheme.secondary, fontSize: 12)),
+        onTap: () {
+          Navigator.pop(ctx);
+          onTap();
+        },
+      );
+    }
+
+    Widget content(BuildContext ctx) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            option(
+              ctx,
+              AppIcons.broken(SolarIcons.MusicLibrary),
+              'Playlist',
+              canEdit ? 'Una lista vacía para llenar a tu gusto' : 'Sin conexión',
+              canEdit,
+              () => _showCreatePlaylistDialog(context, canEdit),
+            ),
+            option(
+              ctx,
+              AppIcons.broken(SolarIcons.AddFolder),
+              'Carpeta',
+              canEdit ? 'Para agrupar tus playlists' : 'Sin conexión',
+              canEdit,
+              () async {
+                final id = await createFolderInteractive(context, ref);
+                if (id != null && mounted) {
+                  setState(() {
+                    _selectedFilter = 'Playlists';
+                    _openFolderId = id;
+                  });
+                }
+              },
+            ),
+            if (!isLocalMode)
+              option(
+                ctx,
+                AppIcons.broken(SolarIcons.StarsMinimalistic),
+                'Playlist con IA',
+                isConnected ? 'Descríbela y la IA la arma' : 'Sin conexión',
+                isConnected,
+                () => showAiCreatePlaylistSheet(context, ref),
+              ),
+          ],
+        );
+
+    if (isDesktop) {
+      showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: AppTheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFF2A2A2A)),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: content(ctx)),
+          ),
+        ),
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: AppTheme.surface,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (ctx) => SafeArea(
+          child: Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: content(ctx)),
+        ),
+      );
+    }
+  }
+
   /// Envuelve una tarjeta/fila de biblioteca con sus gestos de menú
   /// contextual (ronda 3 bis).
   ///
@@ -954,52 +1039,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                             },
                           ),
                         ),
-                        if (!isLocalMode)
-                          Tooltip(
-                            message: isConnected ? 'Crear playlist con IA' : 'Sin conexión',
-                            child: IconButton(
-                              icon: Icon(
-                                AppIcons.broken(SolarIcons.StarsMinimalistic),
-                                color: isConnected ? AppTheme.primary : AppTheme.muted,
-                                size: 20,
-                              ),
-                              onPressed: isConnected
-                                  ? () => showAiCreatePlaylistSheet(context, ref)
-                                  : () {
-                                      AppToast.show(context, message: 'Sin conexión. Las funciones de IA necesitan internet.');
-                                    },
-                            ),
-                          ),
+                        // Fase 8 (pruebas): un solo "+" con las tres formas de
+                        // crear. Con tres botones sueltos el título se cortaba
+                        // en "Bibl..." en móvil.
                         Tooltip(
-                          message: canEdit ? 'Nueva carpeta' : 'Sin conexión',
+                          message: 'Crear',
                           child: IconButton(
-                            icon: Icon(
-                              AppIcons.broken(SolarIcons.AddFolder),
-                              color: canEdit ? AppTheme.primary : AppTheme.muted,
-                              size: 21,
-                            ),
-                            onPressed: canEdit
-                                ? () async {
-                                    final id = await createFolderInteractive(context, ref);
-                                    if (id != null && mounted) {
-                                      setState(() {
-                                        _selectedFilter = 'Playlists';
-                                        _openFolderId = id;
-                                      });
-                                    }
-                                  }
-                                : () => AppToast.show(context, message: 'Sin conexión. No se pueden crear carpetas offline.'),
-                          ),
-                        ),
-                        Tooltip(
-                          message: canEdit ? 'Crear playlist' : 'Sin conexión',
-                          child: IconButton(
-                            icon: Icon(
-                              AppIcons.broken(SolarIcons.AddCircle),
-                              color: canEdit ? AppTheme.primary : AppTheme.muted,
-                              size: 22,
-                            ),
-                            onPressed: () => _showCreatePlaylistDialog(context, canEdit),
+                            icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
+                            onPressed: () => _showCreateMenu(context, canEdit, isConnected, isLocalMode),
                           ),
                         ),
                       ],

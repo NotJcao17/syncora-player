@@ -45,9 +45,11 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     final key = event.logicalKey;
-    if (key == LogicalKeyboardKey.arrowDown || key == LogicalKeyboardKey.arrowRight) {
+    if (key == LogicalKeyboardKey.arrowDown ||
+        key == LogicalKeyboardKey.arrowRight) {
       _feed.next();
-    } else if (key == LogicalKeyboardKey.arrowUp || key == LogicalKeyboardKey.arrowLeft) {
+    } else if (key == LogicalKeyboardKey.arrowUp ||
+        key == LogicalKeyboardKey.arrowLeft) {
       _feed.previous();
     } else if (key == LogicalKeyboardKey.space) {
       _feed.togglePlay();
@@ -67,7 +69,11 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     // tarjeta visible lo sigue.
     ref.listen<int>(discoverFeedProvider.select((s) => s.index), (prev, next) {
       if (_page.hasClients && (_page.page?.round() ?? 0) != next) {
-        _page.animateToPage(next, duration: const Duration(milliseconds: 220), curve: Curves.easeOutCubic);
+        _page.animateToPage(
+          next,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+        );
       }
     });
 
@@ -98,12 +104,16 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
         scrollDirection: Axis.vertical,
         // En PC la rueda del ratón no encaja bien con un PageView: se pasa
         // con botones y teclado.
-        physics: isDesktop ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
+        physics: isDesktop
+            ? const NeverScrollableScrollPhysics()
+            : const PageScrollPhysics(),
         itemCount: state.tracks.length + extra,
         onPageChanged: _feed.setIndex,
         itemBuilder: (ctx, i) {
           if (i >= state.tracks.length) {
-            return state.exhausted ? const _EmptyFeed(endOfFeed: true) : const _CardSkeleton();
+            return state.exhausted
+                ? const _EmptyFeed(endOfFeed: true)
+                : const _CardSkeleton();
           }
           return _DiscoverCard(
             track: state.tracks[i],
@@ -124,13 +134,21 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(isDesktop ? 24 : 8, isDesktop ? 16 : 8, isDesktop ? 24 : 16, 4),
+              padding: EdgeInsets.fromLTRB(
+                isDesktop ? 24 : 8,
+                isDesktop ? 16 : 8,
+                isDesktop ? 24 : 16,
+                4,
+              ),
               child: Row(
                 children: [
                   if (context.canPop())
                     IconButton(
                       tooltip: 'Atrás',
-                      icon: Icon(AppIcons.broken(SolarIcons.AltArrowLeft), color: AppTheme.primary),
+                      icon: Icon(
+                        AppIcons.broken(SolarIcons.AltArrowLeft),
+                        color: AppTheme.primary,
+                      ),
                       onPressed: () => context.pop(),
                     ),
                   const SizedBox(width: 4),
@@ -148,10 +166,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                           ),
                         ),
                         Text(
-                          'Escucha 30 segundos y quédate con lo que te guste',
+                          'Canciones nuevas en 30 segundos',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: AppTheme.secondary, fontSize: 12),
+                          style: TextStyle(
+                            color: AppTheme.secondary,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -159,13 +180,21 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   if (isDesktop && state.tracks.isNotEmpty) ...[
                     IconButton(
                       tooltip: 'Anterior (↑)',
-                      icon: Icon(AppIcons.broken(SolarIcons.AltArrowUp), color: AppTheme.primary),
+                      icon: Icon(
+                        AppIcons.broken(SolarIcons.AltArrowUp),
+                        color: AppTheme.primary,
+                      ),
                       onPressed: state.index > 0 ? _feed.previous : null,
                     ),
                     IconButton(
                       tooltip: 'Siguiente (↓)',
-                      icon: Icon(AppIcons.broken(SolarIcons.AltArrowDown), color: AppTheme.primary),
-                      onPressed: state.index < state.tracks.length - 1 ? _feed.next : null,
+                      icon: Icon(
+                        AppIcons.broken(SolarIcons.AltArrowDown),
+                        color: AppTheme.primary,
+                      ),
+                      onPressed: state.index < state.tracks.length - 1
+                          ? _feed.next
+                          : null,
                     ),
                   ],
                 ],
@@ -199,7 +228,9 @@ class _DiscoverCard extends ConsumerWidget {
       context,
       message: result.remoteFailed
           ? 'No se pudo guardar. Revisa tu conexión.'
-          : (result.isLiked ? 'Agregada a Tus me gusta' : 'Quitada de Tus me gusta'),
+          : (result.isLiked
+                ? 'Agregada a Tus me gusta'
+                : 'Quitada de Tus me gusta'),
     );
   }
 
@@ -210,19 +241,31 @@ class _DiscoverCard extends ConsumerWidget {
     // La canción completa y, detrás, el resto del feed: así se puede seguir
     // escuchando lo descubierto sin volver a esta pantalla.
     final from = state.tracks.indexWhere((t) => t.id == track.id);
-    final queue = state.tracks.skip(from < 0 ? 0 : from).map((t) => t.toSyncoraTrack()).toList();
-    await ref.read(syncoraPlayerControllerProvider).setQueue(queue, activeContextId: 'discover');
+    final queue = state.tracks
+        .skip(from < 0 ? 0 : from)
+        .map((t) => t.toSyncoraTrack())
+        .toList();
+    await ref
+        .read(syncoraPlayerControllerProvider)
+        .setQueue(queue, activeContextId: 'discover');
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isLiked = ref.watch(likedTrackIdsProvider.select((s) => s.value?.contains(track.id) ?? false));
-    final playing = isCurrent && ref.watch(discoverFeedProvider.select((s) => s.playing));
+    final isLiked = ref.watch(
+      likedTrackIdsProvider.select((s) => s.value?.contains(track.id) ?? false),
+    );
+    final playing =
+        isCurrent && ref.watch(discoverFeedProvider.select((s) => s.playing));
     final progress = isCurrent
-        ? ref.watch(discoverFeedProvider.select((s) {
-            final total = s.duration.inMilliseconds > 0 ? s.duration.inMilliseconds : 30000;
-            return (s.position.inMilliseconds / total).clamp(0.0, 1.0);
-          }))
+        ? ref.watch(
+            discoverFeedProvider.select((s) {
+              final total = s.duration.inMilliseconds > 0
+                  ? s.duration.inMilliseconds
+                  : 30000;
+              return (s.position.inMilliseconds / total).clamp(0.0, 1.0);
+            }),
+          )
         : 0.0;
 
     return LayoutBuilder(
@@ -239,7 +282,9 @@ class _DiscoverCard extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   GestureDetector(
-                    onTap: isCurrent ? ref.read(discoverFeedProvider.notifier).togglePlay : null,
+                    onTap: isCurrent
+                        ? ref.read(discoverFeedProvider.notifier).togglePlay
+                        : null,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
@@ -252,16 +297,16 @@ class _DiscoverCard extends ConsumerWidget {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(16),
-                            child: CachedNetworkImage(
-                              cacheManager: AppImageCache.instance,
-                              imageUrl: track.coverUrl,
-                              memCacheWidth: 600,
-                              fit: BoxFit.cover,
-                              errorWidget: (_, _, _) => Container(
-                                color: AppTheme.surfaceHover,
-                                child: Icon(AppIcons.broken(SolarIcons.MusicNotes), color: AppTheme.muted, size: 48),
-                              ),
-                            ),
+                            child: track.coverUrl.isEmpty
+                                ? const _CoverPlaceholder()
+                                : CachedNetworkImage(
+                                    cacheManager: AppImageCache.instance,
+                                    imageUrl: track.coverUrl,
+                                    memCacheWidth: 600,
+                                    fit: BoxFit.cover,
+                                    errorWidget: (_, _, _) =>
+                                        const _CoverPlaceholder(),
+                                  ),
                           ),
                         ),
                         AnimatedOpacity(
@@ -275,7 +320,11 @@ class _DiscoverCard extends ConsumerWidget {
                               shape: BoxShape.circle,
                               boxShadow: AppTheme.glowShadow,
                             ),
-                            child: Icon(AppIcons.bold(SolarIcons.Play), color: AppTheme.background, size: 28),
+                            child: Icon(
+                              AppIcons.bold(SolarIcons.Play),
+                              color: AppTheme.background,
+                              size: 28,
+                            ),
                           ),
                         ),
                       ],
@@ -290,7 +339,9 @@ class _DiscoverCard extends ConsumerWidget {
                         value: progress,
                         minHeight: 3,
                         backgroundColor: AppTheme.surfaceActive,
-                        valueColor: const AlwaysStoppedAnimation(AppTheme.primary),
+                        valueColor: const AlwaysStoppedAnimation(
+                          AppTheme.primary,
+                        ),
                       ),
                     ),
                   ),
@@ -310,14 +361,23 @@ class _DiscoverCard extends ConsumerWidget {
                   const SizedBox(height: 4),
                   InkWell(
                     borderRadius: BorderRadius.circular(6),
-                    onTap: track.artistId > 0 ? () => context.push('/artist/${track.artistId}') : null,
+                    onTap: track.artistId > 0
+                        ? () => context.push('/artist/${track.artistId}')
+                        : null,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       child: Text(
                         track.artistName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppTheme.secondary, fontSize: 15, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          color: AppTheme.secondary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -326,27 +386,39 @@ class _DiscoverCard extends ConsumerWidget {
                       track.albumTitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppTheme.muted, fontSize: 12),
+                      style: const TextStyle(
+                        color: AppTheme.muted,
+                        fontSize: 12,
+                      ),
                     ),
                   const SizedBox(height: 20),
+                  // Cada botón ocupa una cuarta parte: en móviles angostos la
+                  // fila se desbordaba con anchos naturales.
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _ActionButton(
-                        icon: isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
+                        icon: isLiked
+                            ? AppIcons.bold(SolarIcons.Heart)
+                            : AppIcons.broken(SolarIcons.Heart),
                         label: isLiked ? 'Te gusta' : 'Me gusta',
                         onTap: () => _like(context, ref),
                       ),
                       _ActionButton(
                         icon: AppIcons.broken(SolarIcons.AddSquare),
                         label: 'A playlist',
-                        onTap: () => TrackContextMenu.showAddToPlaylistDialog(context, ref, track.toSyncoraTrack()),
+                        onTap: () => TrackContextMenu.showAddToPlaylistDialog(
+                          context,
+                          ref,
+                          track.toSyncoraTrack(),
+                        ),
                       ),
                       _ActionButton(
                         icon: AppIcons.broken(SolarIcons.ListArrowDown),
                         label: 'A la cola',
                         onTap: () {
-                          ref.read(syncoraPlayerControllerProvider).addToQueue(track.toSyncoraTrack());
+                          ref
+                              .read(syncoraPlayerControllerProvider)
+                              .addToQueue(track.toSyncoraTrack());
                           AppToast.show(context, message: 'Agregada a la cola');
                         },
                       ),
@@ -359,8 +431,15 @@ class _DiscoverCard extends ConsumerWidget {
                   ),
                   if (!isDesktop && isCurrent && remaining > 0) ...[
                     const SizedBox(height: 18),
-                    Icon(AppIcons.broken(SolarIcons.AltArrowUp), color: AppTheme.muted, size: 18),
-                    const Text('Desliza para la siguiente', style: TextStyle(color: AppTheme.muted, fontSize: 11)),
+                    Icon(
+                      AppIcons.broken(SolarIcons.AltArrowUp),
+                      color: AppTheme.muted,
+                      size: 18,
+                    ),
+                    const Text(
+                      'Desliza para la siguiente',
+                      style: TextStyle(color: AppTheme.muted, fontSize: 11),
+                    ),
                   ],
                 ],
               ),
@@ -373,7 +452,11 @@ class _DiscoverCard extends ConsumerWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-  const _ActionButton({required this.icon, required this.label, required this.onTap});
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
@@ -381,20 +464,31 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 64, minHeight: 56),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: AppTheme.primary, size: 24),
-              const SizedBox(height: 4),
-              Text(label, style: const TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.w600)),
-            ],
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: AppTheme.primary, size: 24),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.secondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -409,7 +503,9 @@ class _CardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final size = (c.maxWidth - 48).clamp(160.0, 400.0).clamp(160.0, c.maxHeight * 0.52);
+        final size = (c.maxWidth - 48)
+            .clamp(160.0, 400.0)
+            .clamp(160.0, c.maxHeight * 0.52);
         return Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -440,11 +536,19 @@ class _EmptyFeed extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(AppIcons.broken(SolarIcons.CompassBig), color: AppTheme.secondary, size: 56),
+            Icon(
+              AppIcons.broken(SolarIcons.CompassBig),
+              color: AppTheme.secondary,
+              size: 56,
+            ),
             const SizedBox(height: 16),
             Text(
               endOfFeed ? 'Eso es todo por ahora' : 'Nada nuevo que mostrar',
-              style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(
+                color: AppTheme.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -454,6 +558,22 @@ class _EmptyFeed extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CoverPlaceholder extends StatelessWidget {
+  const _CoverPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppTheme.surfaceHover,
+      child: Icon(
+        AppIcons.broken(SolarIcons.MusicNotes),
+        color: AppTheme.muted,
+        size: 48,
       ),
     );
   }

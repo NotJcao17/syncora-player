@@ -545,7 +545,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Previews de 30 s de artistas parecidos a los tuyos',
+                          'Canciones nuevas en 30 segundos',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(color: AppTheme.secondary, fontSize: 12),

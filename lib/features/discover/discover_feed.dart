@@ -82,7 +82,7 @@ class DiscoverFeed extends Notifier<DiscoverState> {
   DiscoverState build() {
     final api = ref.read(deezerApiProvider);
     _player = PreviewPlayer(
-      engineFactory: createPreviewAudioEngine,
+      engineFactory: ref.read(previewEngineFactoryProvider),
       refreshUrl: (id) async => (await api.getTrack(id)).previewUrl,
     );
     _stateSub = _player.stateStream.listen((s) {
@@ -135,8 +135,14 @@ class DiscoverFeed extends Notifier<DiscoverState> {
     if (source == null || state.loadingMore || state.exhausted) return;
     state = state.copyWith(loadingMore: true);
     try {
-      final liked = await ref.read(likedTrackIdsProvider.future).catchError((_) => <int>{});
-      final batch = await source.nextBatch(exclude: {..._shown, ...liked});
+      // Consulta directa y no `ref.read(likedTrackIdsProvider.future)`: con
+      // Riverpod 3 un provider que nadie escucha queda en pausa y ese future no
+      // completa nunca. En PC pasaba (nadie más lo escuchaba en ese momento) y
+      // Descubrir se quedaba cargando para siempre.
+      final liked = await ref.read(playlistDaoProvider).watchLikedTrackIds().first;
+      // El primer lote es más chico para que empiece a sonar antes (suele
+      // bastar una sola radio); los siguientes se piden por delante.
+      final batch = await source.nextBatch(exclude: {..._shown, ...liked}, minSize: initial ? 4 : 8);
       if (!_active) return;
       _shown.addAll(batch.map((t) => t.id));
       state = state.copyWith(
@@ -197,3 +203,6 @@ class DiscoverFeed extends Notifier<DiscoverState> {
 }
 
 final discoverFeedProvider = NotifierProvider.autoDispose<DiscoverFeed, DiscoverState>(DiscoverFeed.new);
+
+/// Cómo se crea el motor de las previews. Sobreescribible en tests.
+final previewEngineFactoryProvider = Provider<AudioEngine Function()>((ref) => createPreviewAudioEngine);

@@ -163,3 +163,12 @@ gratis por 7 días de inactividad. Usa los secretos `SUPABASE_URL` y `SUPABASE_A
 - **H-8-6:** la barra lateral de PC hacía `ref.watch` dentro del builder de un `StreamBuilder`. Con
   un provider que emite solo (las carpetas) Riverpod leía una suscripción cerrada (lo destapó el
   smoke test). Los `watch` pasaron al nivel del `Consumer`.
+- **H-8-7:** Descubrir se quedaba cargando para siempre en PC. Con Riverpod 3, `ref.read(provider.future)`
+  sobre un provider que **nadie está escuchando** lo deja en pausa y el future nunca completa. En móvil
+  funcionaba por casualidad (algo en pantalla escuchaba "Me gusta"). Se cambió por una consulta directa
+  al DAO. **Regla:** no usar `ref.read(x.future)` para datos que se necesitan sí o sí; leer de la fuente o
+  usar `ref.watch`/`listen`. Hay un test de widget de Descubrir en tamaño móvil y escritorio como regresión.
+- **Ajustes tras las pruebas en dispositivo (2026-10-03):** el "+" de Biblioteca agrupa Playlist, Carpeta y
+  Playlist con IA (con tres botones sueltos el título se cortaba en móvil); frases de Descubrir más cortas;
+  la fila de acciones de Descubrir se reparte en partes iguales (se desbordaba en móviles angostos); el primer
+  lote de Descubrir es más chico para empezar a sonar antes.
