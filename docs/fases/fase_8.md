@@ -137,10 +137,18 @@ el principal se reanuda. Las URLs de preview caducan: se pide la fresca y se rei
 1. ~~Subir la llave de firma a GitHub y lanzar la primera publicación~~ — **hecho el 2026-10-03**:
    secreto `ENGINE_SIGNING_KEY` cargado y motor `202610030222` publicado en `engine-channel`
    (firma y SHA-256 verificados descargándolo desde la URL que usa la app). Falta solo guardar una
-   copia de `engine/signing_key.pem` en un gestor de contraseñas.
-2. **Aplicar la migración 20** (`supabase db push`). Sin ella la app funciona, pero con cuenta no
-   se pueden crear carpetas (el sync simplemente no las toca).
+   copia de `engine/signing_key.pem` en un gestor de contraseñas (hecho).
+2. ~~Aplicar la migración 20~~ — **hecho el 2026-10-03** (`supabase db push --linked`).
 3. Pruebas en dispositivo de la Fase 8 (`docs/matriz_de_pruebas.md`).
+
+### Keep-alive (`.github/workflows/keepalive.yml`)
+
+Cada 3 días, sin commits: (1) vuelve a habilitar por la API los workflows programados (incluido él
+mismo), porque GitHub los desactiva en repos públicos tras 60 días sin actividad y el bot solo
+commitea cuando `youtubei.js` saca versión; (2) hace una lectura mínima con la llave `anon` a
+`app_config` (lectura pública, sin datos de usuarios) para que Supabase no pause el proyecto
+gratis por 7 días de inactividad. Usa los secretos `SUPABASE_URL` y `SUPABASE_ANON_KEY`
+(públicos por diseño, ya cargados). Verificado: corrida exitosa y los 3 workflows en `active`.
 
 ## 7. Hallazgos verificados
 
