@@ -29,6 +29,7 @@ import 'playlist_picker_dialog.dart';
 import 'swipe_action_tile.dart';
 import '../../features/library/services/like_track_service.dart';
 import 'track_cover_image.dart';
+import '../limits/app_limits.dart';
 
 /// Menú contextual de 3 puntos/click derecho de una pista -- extraído de
 /// `_TrackTileState` (que delega en esta clase) para que otros lugares de
@@ -261,6 +262,10 @@ class TrackContextMenu {
         return;
       }
       final result = await toggleTrackLike(ref, track);
+      if (result.limitReached) {
+        if (context.mounted) AppToast.show(context, message: AppLimits.playlistFullMessage);
+        return;
+      }
       if (context.mounted && result.remoteFailed) {
         AppToast.show(context, message: 'La playlist ya no existe en la nube');
       }
@@ -424,6 +429,12 @@ class TrackContextMenu {
     );
     if (pl == null || !context.mounted) return;
 
+    // Ronda 5: límite de 10 000 canciones por playlist.
+    if (AppLimits.roomFor(await dao.countTracks(pl.id)) <= 0) {
+      if (context.mounted) AppToast.show(context, message: AppLimits.playlistFullMessage);
+      return;
+    }
+
     final existingTracks = await dao.getTracksOrdered(pl.id);
     final isDuplicate = existingTracks.any((t) =>
         t.trackId == trackIdInt ||
@@ -522,7 +533,13 @@ class TrackContextMenu {
           'genre': track.genre,
           if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
         });
-      } catch (_) {
+      } catch (e) {
+        // El servidor rechazó por el límite de canciones: la playlist existe,
+        // no hay que tratarla como borrada en la nube.
+        if (AppLimits.isTrackLimitError(e)) {
+          if (context.mounted) AppToast.show(context, message: AppLimits.playlistFullMessage);
+          return;
+        }
         if (context.mounted) {
           AppToast.show(context, message: 'La playlist ya no existe en la nube');
         }

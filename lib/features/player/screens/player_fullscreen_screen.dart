@@ -22,6 +22,7 @@ import '../syncora_player_controller.dart';
 import '../widgets/lyrics_sheet.dart';
 import '../widgets/queue_view.dart';
 import '../widgets/sleep_timer_sheet.dart';
+import '../../../core/limits/app_limits.dart';
 
 /// Reproductor Fullscreen Inmersivo con soporte para Karaoke sincronizado y Me Gusta persistente.
 class PlayerFullscreenScreen extends ConsumerStatefulWidget {
@@ -88,6 +89,10 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     final result = await toggleTrackLike(ref, track);
 
     if (mounted) {
+      if (result.limitReached) {
+        AppToast.show(context, message: AppLimits.playlistFullMessage);
+        return;
+      }
       if (result.remoteFailed) {
         AppToast.show(context, message: 'La playlist ya no existe en la nube');
       }

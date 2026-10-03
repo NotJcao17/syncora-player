@@ -49,6 +49,7 @@ import '../services/folder_service.dart';
 import '../services/playlist_pin_service.dart';
 import '../widgets/edit_playlist_dialog.dart';
 import '../widgets/folder_widgets.dart';
+import '../../../core/limits/app_limits.dart';
 
 enum PlaylistSortColumn { original, title, album, date, duration }
 enum PlaylistSortDirection { asc, desc, none }
@@ -496,13 +497,20 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final targetIds = targetTracks.map((t) => t.trackId).toSet();
     final targetTitles = targetTracks.map((t) => '${t.title.toLowerCase()}_${t.artistName.toLowerCase()}').toSet();
 
-    final tracksToAdd = currentTracks.where((t) {
+    final notDuplicated = currentTracks.where((t) {
       final isDupId = targetIds.contains(t.trackId);
       final isDupTitle = targetTitles.contains('${t.title.toLowerCase()}_${t.artistName.toLowerCase()}');
       return !isDupId && !isDupTitle;
     }).toList();
 
-    final skipped = currentTracks.length - tracksToAdd.length;
+    final skipped = currentTracks.length - notDuplicated.length;
+    // Ronda 5: lo que no cabe en el límite de 10 000 se queda fuera.
+    final room = AppLimits.roomFor(targetTracks.length);
+    if (room <= 0 && notDuplicated.isNotEmpty) {
+      if (context.mounted) AppToast.show(context, message: AppLimits.playlistFullMessage);
+      return;
+    }
+    final tracksToAdd = notDuplicated.take(room).toList();
 
     if (tracksToAdd.isEmpty) {
       if (context.mounted) {
@@ -1488,6 +1496,10 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                             : IconButton(
                                                                 icon: Icon(AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 22),
                                                                 onPressed: () async {
+                                                                  if (AppLimits.roomFor(tracks.length) <= 0) {
+                                                                    AppToast.show(context, message: AppLimits.playlistFullMessage);
+                                                                    return;
+                                                                  }
                                                                   final ok = await _executeRemoteMutation(() async {
                                                                     String? remoteId = playlist.remoteId;
                                                                     final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
@@ -2214,6 +2226,10 @@ class _DeezerRecommendationsSectionState extends ConsumerState<_DeezerRecommenda
     final dao = ref.read(playlistDaoProvider);
     final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
     final durationMs = track.duration?.inMilliseconds ?? 0;
+    if (AppLimits.roomFor(widget.existingTracks.length) <= 0) {
+      AppToast.show(context, message: AppLimits.playlistFullMessage);
+      return;
+    }
 
     if (widget.playlist.remoteId != null) {
       try {

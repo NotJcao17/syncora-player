@@ -16,6 +16,7 @@ import '../../../data/supabase/supabase_history_repository.dart';
 import '../../../data/supabase/supabase_playlist_repository.dart';
 import '../../player/player_models.dart';
 import 'import_track_matcher.dart';
+import '../../../core/limits/app_limits.dart';
 
 class RawImportTrack {
   final String title;
@@ -436,7 +437,10 @@ class PlaylistImportExportService {
     required SupabasePlaylistRepository supabaseRepo,
   }) async {
     if (matchedTracks.isEmpty) return;
-    final existingCount = (await dao.getTracksOrdered(playlistId)).length;
+    final existingCount = await dao.countTracks(playlistId);
+    // Ronda 5: lo que no cabe en el límite de 10 000 se queda fuera.
+    matchedTracks = matchedTracks.take(AppLimits.roomFor(existingCount)).toList();
+    if (matchedTracks.isEmpty) return;
     final contributors = await _resolveContributorsAll(deezerApi, matchedTracks);
     await dao.appendTracksBatch(playlistId, _companions(playlistId, matchedTracks, contributors));
 

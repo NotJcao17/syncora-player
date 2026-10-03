@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/limits/app_limits.dart';
 
 class SupabasePlaylistRepository {
   bool get _isTestEnv => Platform.environment.containsKey('FLUTTER_TEST');
@@ -55,8 +56,8 @@ class SupabasePlaylistRepository {
 
     final response = await client.from('playlists').insert({
       'user_id': userId,
-      'title': title,
-      'description': description,
+      'title': AppLimits.clampTitle(title),
+      'description': AppLimits.clampDescription(description),
       'cover_url': ?coverUrl,
       'is_public': isPublic,
       'is_liked': isLiked,
@@ -131,11 +132,11 @@ class SupabasePlaylistRepository {
     final updates = <String, dynamic>{
       'updated_at': DateTime.now().toIso8601String(),
     };
-    if (title != null) updates['title'] = title;
+    if (title != null) updates['title'] = AppLimits.clampTitle(title);
     if (clearDescription) {
       updates['description'] = null;
     } else if (description != null) {
-      updates['description'] = description;
+      updates['description'] = AppLimits.clampDescription(description);
     }
     if (clearCoverUrl) {
       updates['cover_url'] = null;

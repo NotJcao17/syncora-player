@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import '../syncora_database.dart';
+import '../../../core/limits/app_limits.dart';
 
 part 'playlist_dao.g.dart';
 
@@ -126,8 +127,10 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     return into(playlists).insert(
       PlaylistsCompanion.insert(
         folderId: Value(folderId),
-        title: title,
-        description: Value(description),
+        // Ronda 5: los nombres que llegan de fuera (archivo importado, IA,
+        // copia de una playlist de Deezer) también respetan el límite.
+        title: AppLimits.clampTitle(title),
+        description: Value(AppLimits.clampDescription(description)),
         coverUrl: Value(coverUrl),
         remoteId: Value(remoteId),
         isPublic: Value(isPublic),
@@ -183,8 +186,20 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     });
   }
 
-  Future<bool> updatePlaylist(Playlist playlist) =>
-      update(playlists).replace(playlist);
+  Future<bool> updatePlaylist(Playlist playlist) => update(playlists).replace(playlist.copyWith(
+        title: AppLimits.clampTitle(playlist.title),
+        description: Value(AppLimits.clampDescription(playlist.description)),
+      ));
+
+  /// Cuántas canciones tiene la playlist (ronda 5, límite de 10 000).
+  Future<int> countTracks(int playlistId) async {
+    final count = playlistTracks.id.count();
+    final row = await (selectOnly(playlistTracks)
+          ..addColumns([count])
+          ..where(playlistTracks.playlistId.equals(playlistId)))
+        .getSingle();
+    return row.read(count) ?? 0;
+  }
 
   Future<int> deletePlaylist(int id) =>
       (delete(playlists)..where((t) => t.id.equals(id))).go();

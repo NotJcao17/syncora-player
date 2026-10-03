@@ -9,6 +9,7 @@ import '../../../data/local_db/database_provider.dart';
 import '../../../data/supabase/supabase_playlist_repository.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../player/player_models.dart';
+import '../../../core/limits/app_limits.dart';
 
 /// Resultado de alternar el "me gusta" de una pista.
 class LikeToggleResult {
@@ -19,7 +20,11 @@ class LikeToggleResult {
   /// falló (normalmente porque ya no existe en la nube).
   final bool remoteFailed;
 
-  const LikeToggleResult({required this.isLiked, this.remoteFailed = false});
+  /// Ronda 5: "Tus me gusta" ya tiene el máximo de 10 000 canciones y no se
+  /// tocó nada.
+  final bool limitReached;
+
+  const LikeToggleResult({required this.isLiked, this.remoteFailed = false, this.limitReached = false});
 }
 
 /// Alterna "Tus me gusta" para [track], en local **y** en Supabase.
@@ -54,6 +59,13 @@ Future<LikeToggleResult> toggleTrackLikeWith({
   required SyncoraTrack track,
 }) async {
   final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
+
+  // Ronda 5: dar "me gusta" (no quitarlo) respeta el límite de 10 000.
+  if (!await dao.isTrackLiked(trackIdInt) &&
+      AppLimits.roomFor(await dao.countTracks((await dao.getLikedPlaylist()).id)) <= 0) {
+    return const LikeToggleResult(isLiked: false, limitReached: true);
+  }
+
   final contributors = await resolveTrackContributors(deezerApi, track);
 
   final isLiked = await dao.toggleLikeTrack(

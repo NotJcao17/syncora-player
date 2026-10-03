@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/player/player_providers.dart';
 import '../layout/bottom_chrome_metrics.dart';
 import '../theme/app_icons.dart';
+import '../theme/app_theme.dart';
 
 
 /// Pop-up flotante suave al estilo Spotify Desktop / Móvil.

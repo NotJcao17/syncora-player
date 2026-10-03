@@ -19,6 +19,7 @@ import '../../library/import_export/playlist_import_export_service.dart';
 import '../ai_queue/ai_create_queue_sheet.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
+import '../../../core/limits/app_limits.dart';
 
 /// Vista compartida de la cola dual de reproducción (Fase 7.A,
 /// `docs/plan_fase_7.md` D-1/D-2/D-3): dos secciones visualmente
@@ -334,6 +335,8 @@ class _QueueViewState extends ConsumerState<QueueView> {
         content: TextField(
           controller: nameController,
           autofocus: true,
+          maxLength: AppLimits.playlistTitleMax,
+          buildCounter: AppLimits.quietCounter,
           style: const TextStyle(color: AppTheme.primary),
           decoration: const InputDecoration(
             labelText: 'Nombre de la playlist',

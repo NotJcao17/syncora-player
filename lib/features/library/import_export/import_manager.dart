@@ -18,6 +18,7 @@ import '../../../data/sync/sync_locks.dart';
 import '../../auth/local_mode_provider.dart';
 import '../../player/player_models.dart';
 import 'playlist_import_export_service.dart';
+import '../../../core/limits/app_limits.dart';
 
 /// Importación de playlists en segundo plano (ronda 4, H-R4-11).
 ///
@@ -311,7 +312,8 @@ class ImportManager extends Notifier<List<ImportJob>> {
       title: title,
       playlistId: playlistId,
       remotePlaylistId: remoteId,
-      rawTracks: List.unmodifiable(rawTracks),
+      // Ronda 5: una playlist admite como mucho 10 000 canciones.
+      rawTracks: List.unmodifiable(rawTracks.take(AppLimits.playlistTracksMax)),
       nextIndex: 0,
       matchedCount: 0,
       unmatched: const [],
@@ -441,8 +443,10 @@ class ImportManager extends Notifier<List<ImportJob>> {
     final deezerApi = ref.read(deezerApiProvider);
 
     final existing = (await dao.getTracksOrdered(job.playlistId)).map((t) => t.trackId).toSet();
+    final room = AppLimits.roomFor(existing.length);
     final fresh = <DeezerTrack>[];
     for (final t in matched) {
+      if (fresh.length >= room) break; // ronda 5: límite de 10 000
       if (existing.add(t.id)) fresh.add(t);
     }
     if (fresh.isEmpty) return true;

@@ -14,6 +14,7 @@ import '../../../data/local_db/syncora_database.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../../auth/local_mode_provider.dart';
 import '../services/playlist_cover_service.dart';
+import '../../../core/limits/app_limits.dart';
 
 Future<void> showEditPlaylistDialog(BuildContext context, Playlist playlist) {
   return showDialog<void>(
@@ -171,9 +172,14 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _textField(_titleController, 'Nombre de la playlist'),
+              _textField(_titleController, 'Nombre de la playlist', maxLength: AppLimits.playlistTitleMax),
               const SizedBox(height: 12),
-              _textField(_descController, 'Descripción (opcional)', maxLines: 2),
+              _textField(
+                _descController,
+                'Descripción (opcional)',
+                maxLines: 2,
+                maxLength: AppLimits.playlistDescriptionMax,
+              ),
               const SizedBox(height: 16),
               const Text('Personalizar portada',
                   style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
@@ -322,10 +328,12 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
     );
   }
 
-  Widget _textField(TextEditingController controller, String label, {int maxLines = 1}) {
+  Widget _textField(TextEditingController controller, String label, {int maxLines = 1, int? maxLength}) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
+      maxLength: maxLength,
+      buildCounter: AppLimits.quietCounter,
       style: const TextStyle(color: AppTheme.primary),
       decoration: InputDecoration(
         labelText: label,

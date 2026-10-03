@@ -14,6 +14,7 @@ import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/services/ai_assistant_service.dart';
 import '../../../data/supabase/supabase_providers.dart';
 import '../import_export/playlist_import_export_service.dart';
+import '../../../core/limits/app_limits.dart';
 
 /// Fase 7.F.1 -- "Crear playlist con IA". Entrada desde el botón con ícono
 /// `StarsMinimalistic` en Biblioteca (D-14), junto a "crear playlist".
@@ -896,6 +897,8 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
             children: [
               TextField(
                 controller: _nameController,
+                maxLength: AppLimits.playlistTitleMax,
+                buildCounter: AppLimits.quietCounter,
                 style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 16),
                 decoration: _fieldDecoration('Nombre de la playlist'),
               ),
@@ -903,6 +906,8 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
               TextField(
                 controller: _descController,
                 maxLines: 2,
+                maxLength: AppLimits.playlistDescriptionMax,
+                buildCounter: AppLimits.quietCounter,
                 style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
                 decoration: _fieldDecoration('Descripción (opcional)'),
               ),

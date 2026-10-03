@@ -17,6 +17,7 @@ import '../../data/models/deezer/deezer_track.dart';
 import '../library/services/like_track_service.dart';
 import '../player/player_providers.dart';
 import 'discover_feed.dart';
+import '../../core/limits/app_limits.dart';
 
 /// Descubrir (Fase 8.F): una canción por tarjeta, sonando 30 s sola.
 ///
@@ -226,7 +227,9 @@ class _DiscoverCard extends ConsumerWidget {
     if (!context.mounted) return;
     AppToast.show(
       context,
-      message: result.remoteFailed
+      message: result.limitReached
+          ? AppLimits.playlistFullMessage
+          : result.remoteFailed
           ? 'No se pudo guardar. Revisa tu conexión.'
           : (result.isLiked
                 ? 'Agregada a Tus me gusta'

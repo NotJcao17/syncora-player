@@ -3,6 +3,7 @@ import 'package:drift/drift.dart' show Value;
 import '../../data/local_db/daos/playlist_dao.dart';
 import '../../data/supabase/supabase_playlist_repository.dart';
 import '../player/player_models.dart';
+import '../../core/limits/app_limits.dart';
 
 /// Congela una lista de pistas como playlist propia del usuario.
 ///
@@ -53,7 +54,7 @@ Future<int> saveTracksAsPlaylist({
 
   final remotePayload = <Map<String, dynamic>>[];
 
-  for (final track in tracks) {
+  for (final track in tracks.take(AppLimits.playlistTracksMax)) {
     final contributorsJson =
         track.artists.length > 1 ? SyncoraArtistRef.encodeList(track.artists) : null;
 

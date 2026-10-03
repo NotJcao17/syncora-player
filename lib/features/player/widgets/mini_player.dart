@@ -19,6 +19,7 @@ import '../sleep_timer.dart';
 import '../syncora_player_controller.dart';
 import 'queue_view.dart';
 import 'sleep_timer_sheet.dart';
+import '../../../core/limits/app_limits.dart';
 
 /// Mini-reproductor siempre visible si hay una pista activa (Diseño pixel-perfect de image2.png / index.html mockup).
 class MiniPlayer extends ConsumerWidget {
@@ -490,6 +491,10 @@ class _MiniPlayerHeartButtonState extends ConsumerState<_MiniPlayerHeartButton> 
                 // a Supabase y el siguiente sync lo podaba. Ver
                 // `toggleTrackLike`.
                 final result = await toggleTrackLike(ref, widget.currentTrack);
+                if (result.limitReached) {
+                  if (context.mounted) AppToast.show(context, message: AppLimits.playlistFullMessage);
+                  return;
+                }
 
                 if (context.mounted && result.remoteFailed) {
                   AppToast.show(context, message: 'La playlist ya no existe en la nube');

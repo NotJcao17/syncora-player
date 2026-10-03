@@ -34,6 +34,7 @@ import '../services/folder_service.dart';
 import '../library_folders.dart';
 import '../widgets/folder_widgets.dart';
 import '../../../core/cache/app_image_cache.dart';
+import '../../../core/limits/app_limits.dart';
 
 /// Pantalla de Biblioteca conectada a Drift local, Supabase y servicio de Import/Export.
 class LibraryScreen extends ConsumerStatefulWidget {
@@ -165,6 +166,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           children: [
             TextField(
               controller: titleController,
+              maxLength: AppLimits.playlistTitleMax,
+              buildCounter: AppLimits.quietCounter,
               autofocus: true,
               style: const TextStyle(color: AppTheme.primary),
               decoration: const InputDecoration(
@@ -177,6 +180,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: descController,
+              maxLength: AppLimits.playlistDescriptionMax,
+              buildCounter: AppLimits.quietCounter,
               style: const TextStyle(color: AppTheme.primary),
               decoration: const InputDecoration(
                 labelText: 'Descripción (opcional)',
@@ -814,6 +819,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           children: [
             TextField(
               controller: titleController,
+              maxLength: AppLimits.playlistTitleMax,
+              buildCounter: AppLimits.quietCounter,
               style: const TextStyle(color: AppTheme.primary),
               decoration: const InputDecoration(
                 labelText: 'Nombre',
@@ -825,6 +832,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: descController,
+              maxLength: AppLimits.playlistDescriptionMax,
+              buildCounter: AppLimits.quietCounter,
               style: const TextStyle(color: AppTheme.primary),
               decoration: const InputDecoration(
                 labelText: 'Descripción',
@@ -920,9 +929,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           rawTracks: rawTracks,
         );
     if (!context.mounted) return;
+    final overLimit = rawTracks.length > AppLimits.playlistTracksMax;
     AppToast.show(
       context,
-      message: 'Importando ${rawTracks.length} canciones en segundo plano. Puedes seguir usando la app.',
+      message: overLimit
+          ? 'El archivo tiene ${rawTracks.length} canciones; se importan las primeras 10 000 (el máximo por playlist).'
+          : 'Importando ${rawTracks.length} canciones en segundo plano. Puedes seguir usando la app.',
     );
     context.push('/playlist/$playlistId');
   }
