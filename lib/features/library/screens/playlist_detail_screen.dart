@@ -994,9 +994,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
               final playlistContextId = 'playlist_${playlist.id}';
               final isCurrentContext = ref.watch(playerStateProvider.select((s) => s.activeContextId == playlistContextId));
-              final isBuffering = ref.watch(playerStateProvider.select((s) =>
-                  s.engine.processingState == AudioProcessingState.loading ||
-                  s.engine.processingState == AudioProcessingState.buffering));
+              final isBuffering = ref.watch(playerStateProvider.select((s) => s.isLoading));
               final showPauseHeader = isCurrentContext && (isPlaying || isBuffering);
 
               return Container(

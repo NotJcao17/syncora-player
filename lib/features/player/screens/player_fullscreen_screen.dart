@@ -15,7 +15,6 @@ import '../../auth/local_mode_provider.dart';
 import '../../library/services/like_track_service.dart';
 import '../../../core/widgets/track_cover_image.dart';
 import '../../../data/local_db/database_provider.dart';
-import '../audio_engine/audio_engine_state.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
 import '../syncora_player_controller.dart';
@@ -53,6 +52,16 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     if (track != null) {
       _extractPalette(track);
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _precacheUpNext(ref.read(playerStateProvider).upNext?.coverUrl);
+    });
+  }
+
+  /// Ronda 5: la portada de la pista siguiente ya decodificada, para que al
+  /// terminar la canción no aparezca el hueco mientras carga.
+  void _precacheUpNext(String? coverUrl) {
+    if (coverUrl == null || coverUrl.isEmpty) return;
+    TrackCoverImage.precache(context, coverUrl: coverUrl, preferredSize: 1000, memCacheWidth: 1000);
   }
 
   Future<void> _extractPalette(SyncoraTrack track) async {
@@ -109,14 +118,15 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
       if (next == null || previous?.id == next.id) return;
       _extractPalette(next);
     });
+    ref.listen<String?>(playerStateProvider.select((s) => s.upNext?.coverUrl), (previous, next) {
+      if (next != previous) _precacheUpNext(next);
+    });
 
     final currentTrack = ref.watch(currentTrackProvider);
     final isPlaying = ref.watch(isPlayingProvider);
     final isShuffle = ref.watch(playerStateProvider.select((s) => s.isShuffle));
     final repeatMode = ref.watch(playerStateProvider.select((s) => s.repeatMode));
-    final isLoading = ref.watch(playerStateProvider.select((s) =>
-        s.engine.processingState == AudioProcessingState.loading ||
-        s.engine.processingState == AudioProcessingState.buffering));
+    final isLoading = ref.watch(playerStateProvider.select((s) => s.isLoading));
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final canEdit = ref.watch(canEditProvider);
     // Ronda 4 (H-R4-4): "me gusta" reactivo sobre Drift. Antes se consultaba

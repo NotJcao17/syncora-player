@@ -21,7 +21,6 @@ import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/sync/sync_service.dart';
 import '../../auth/local_mode_provider.dart';
 import '../../download/widgets/download_header_button.dart';
-import '../../player/audio_engine/audio_engine_state.dart';
 import '../../player/radio/radio_service.dart';
 
 import '../../player/player_providers.dart';
@@ -200,9 +199,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
 
     final albumContextId = 'album_${album.id}';
     final isCurrentContext = ref.watch(playerStateProvider.select((s) => s.activeContextId == albumContextId));
-    final isBuffering = ref.watch(playerStateProvider.select((s) =>
-        s.engine.processingState == AudioProcessingState.loading ||
-        s.engine.processingState == AudioProcessingState.buffering));
+    final isBuffering = ref.watch(playerStateProvider.select((s) => s.isLoading));
     final showPauseHeader = isCurrentContext && (isPlaying || isBuffering);
 
     final dominantGradientColor = _dominantColor?.withValues(alpha: 0.35) ?? AppTheme.surfaceHover.withValues(alpha: 0.3);

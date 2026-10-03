@@ -68,10 +68,47 @@ class ExtractionServiceReal implements ExtractionService {
       durationSeconds: durationSeconds,
       quality: quality,
     );
-    await _engine.ensureEngine();
-    final result = await _isolate.request(request);
-    return _engine.process(request, result);
+
+    if (priority != ExtractionPriority.streaming) {
+      await _engine.ensureEngine();
+      final result = await _isolate.request(request);
+      return _engine.process(request, result);
+    }
+
+    // Ronda 5 (H-R5-2): una sola extracción de streaming en el isolate a la
+    // vez, y como mucho una esperando. El isolate procesa en orden, así que
+    // al pulsar "siguiente" tres veces seguidas se esperaban las tres
+    // extracciones; ahora la que espera se reemplaza por la más nueva y la
+    // reemplazada vuelve como `cancelled` (el reproductor ya la ignora: es
+    // de una pista que dejó atrás).
+    if (_streamingBusy) {
+      _streamingWaiter?.complete(false);
+      final waiter = Completer<bool>();
+      _streamingWaiter = waiter;
+      final proceed = await waiter.future;
+      if (!proceed) {
+        return ExtractionFailure(
+          requestId: requestId,
+          error: ExtractionError.cancelled,
+          message: 'Reemplazada por una petición más nueva.',
+        );
+      }
+    }
+    _streamingBusy = true;
+    try {
+      await _engine.ensureEngine();
+      final result = await _isolate.request(request);
+      return _engine.process(request, result);
+    } finally {
+      _streamingBusy = false;
+      final next = _streamingWaiter;
+      _streamingWaiter = null;
+      next?.complete(true);
+    }
   }
+
+  bool _streamingBusy = false;
+  Completer<bool>? _streamingWaiter;
 
   @override
   void resetEngine() {

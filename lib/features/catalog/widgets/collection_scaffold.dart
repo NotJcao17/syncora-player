@@ -11,7 +11,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/cover_palette.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../download/widgets/download_header_button.dart';
-import '../../player/audio_engine/audio_engine_state.dart';
 import '../../player/player_models.dart';
 import '../../player/player_providers.dart';
 import '../../player/radio/radio_service.dart';
@@ -126,9 +125,7 @@ class _CollectionScaffoldState extends ConsumerState<CollectionScaffold> {
 
     final isCurrentContext =
         ref.watch(playerStateProvider.select((s) => s.activeContextId == widget.contextId));
-    final isBuffering = ref.watch(playerStateProvider.select((s) =>
-        s.engine.processingState == AudioProcessingState.loading ||
-        s.engine.processingState == AudioProcessingState.buffering));
+    final isBuffering = ref.watch(playerStateProvider.select((s) => s.isLoading));
     final showPause = isCurrentContext && (isPlaying || isBuffering);
 
     final gradientColor =

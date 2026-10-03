@@ -603,18 +603,26 @@ void main() {
       expect(controller.state.engine.playing, isTrue);
     });
 
-    test('11. Dos llamadas concurrentes a skipToNext() no avanzan dos veces en paralelo (P1.8: guard real)',
+    test('11. Dos "siguiente" seguidos avanzan dos pistas sin esperar la carga (ronda 5, H-R5-2)',
         () async {
       await controller.setQueue(testTracks, autoplay: true); // current=track1, autoQueue=[track2,track3]
 
-      final first = controller.skipToNext(); // dispara la transición (sin await todavía)
-      final second = controller.skipToNext(); // debe verse bloqueada de inmediato por el guard
-
-      await first;
+      // La extracción de track2 queda retenida: el segundo toque llega con la
+      // primera carga todavía en curso, como en el teléfono.
+      final held = extractionService.holdResolution('track2');
+      final first = controller.skipToNext();
+      final second = controller.skipToNext();
       await second;
+      held.complete(const ExtractionSuccess(requestId: 'late', streamUrl: 'https://example.com/late.mp3', headers: {}));
+      await first;
+      await pumpEventQueue();
 
-      expect(controller.state.currentTrack?.id, 'track2',
-          reason: 'solo UN avance debe haber ocurrido, no dos (llegar a track3 indicaría que el guard no bloqueó nada)');
+      expect(controller.state.currentTrack?.id, 'track3',
+          reason: 'cada toque cuenta: el guard ya no se sostiene durante la carga');
+      expect(engine.lastUrl, 'https://example.com/audio_track3.mp3',
+          reason: 'la carga vieja de track2 se descarta al resolver tarde');
+      expect(controller.state.notice, isNull, reason: 'una carga descartada no es un error que mostrar');
+      expect(controller.state.isPreparing, isFalse);
     });
   });
 
@@ -1938,8 +1946,13 @@ void main() {
     // hace falta que el segundo tap llegue MIENTRAS el contador de la
     // cascada del primero ya es != 0, para que el reset de más sea
     // observable.
-    test('7.C.3: un segundo tap en "Reintentar" mientras la cascada del primero sigue en vuelo NO '
-        'debe borrar el progreso real de fallos ya acumulado', () async {
+    // Ronda 5 (H-R5-2): el guard de "siguiente" ya no se sostiene durante la
+    // carga, así que un segundo toque mientras la cascada del primero sigue
+    // en vuelo es una intervención nueva del usuario: avanza desde la pista
+    // pendiente, la carga vieja se descarta al resolver y el contador vuelve
+    // a empezar (lo pidió el usuario, no la cascada).
+    test('7.C.3 + H-R5-2: un segundo tap en "Reintentar" con la cascada en vuelo avanza y descarta '
+        'la carga vieja', () async {
       final chain = [
         const SyncoraTrack(id: 'bad1', title: 'Bad 1'),
         const SyncoraTrack(id: 'bad2', title: 'Bad 2'),
@@ -1953,20 +1966,12 @@ void main() {
       await controller.setQueue(chain, autoplay: true);
       expect(controller.state.currentTrack?.id, 'bad3'); // guard activo tras bad1/bad2/bad3
 
-      // Retiene la resolución de 'badB' para poder inyectar el segundo tap
-      // justo en medio de la cascada nueva que dispara el primer
-      // "Reintentar" — después de que badA ya falló (contador real=1) pero
-      // antes de que badB resuelva.
       final heldB = extractionService.holdResolution('badB');
-      final firstResume = controller.resumeAfterCascadeGuard(); // resetea a 0 -> badA falla (contador=1) -> badB pendiente
+      final firstResume = controller.resumeAfterCascadeGuard(); // badA falla -> badB pendiente
       await pumpEventQueue();
+      expect(controller.state.currentTrack?.id, 'badB');
 
-      // Segundo tap mientras badB sigue pendiente: el guard _isTransitioning
-      // de skipToNext() lo descarta correctamente (no dispara una extracción
-      // de más), pero el bug original reseteaba el contador ANTES de llegar
-      // a ese guard, borrando el "1" real que badA ya había acumulado.
-      await controller.resumeAfterCascadeGuard();
-
+      await controller.resumeAfterCascadeGuard(); // badC falla -> good suena
       heldB.complete(const ExtractionFailure(
         requestId: 'req_badB',
         error: ExtractionError.notFound,
@@ -1975,19 +1980,10 @@ void main() {
       await firstResume;
       await pumpEventQueue();
 
-      // Con el fix: badA(1) + badB(2) + badC(3) alcanza el umbral EN badC ->
-      // el guard se dispara de nuevo ahí, nunca llega a "good".
-      // Con el bug: el reset de más del segundo tap deja badA(1) -> [borrado
-      // a 0 por el segundo tap] -> badB(1) + badC(2) -> el guard NO se
-      // dispara y la cadena sigue hasta "good".
-      expect(controller.state.currentTrack?.id, 'badC',
-          reason: 'debe detenerse en badC (3er fallo real de esta cascada nueva: badA+badB+badC), '
-              'no seguir de largo hasta "good" por culpa de un reset de más');
-      expect(controller.state.engine.playing, isFalse);
-      expect(controller.state.notice?.kind, PlayerNoticeKind.cascadeGuard);
-      expect(extractionService.extractCount, 6,
-          reason: 'bad1+bad2+bad3+badA+badB+badC = 6; el segundo tap no debe haber disparado una '
-              'séptima llamada a extractUrl (fue descartado por el guard)');
+      expect(controller.state.currentTrack?.id, 'good',
+          reason: 'el fallo tardío de badB es de una pista que el usuario ya dejó atrás: no cuenta ni salta');
+      expect(controller.state.engine.playing, isTrue);
+      expect(extractionService.extractCount, 7);
     });
 
     // Revisión de código (bug real, corregido): el test original intercalaba
@@ -2267,7 +2263,25 @@ void main() {
       return controller;
     }
 
-    test('setting > 0 + pista actual y siguiente descargadas -> usa crossfadeToLocalSource, no stop+load+play',
+    test('ronda 5 (H-R5-1): "siguiente" manual con todo descargado -> cambio inmediato, sin crossfade',
+        () async {
+      final t1 = const SyncoraTrack(id: 't1', title: 'Uno');
+      final t2 = const SyncoraTrack(id: 't2', title: 'Dos');
+      await seedDownloaded(t1);
+      await seedDownloaded(t2);
+
+      final controller = buildController(const Duration(seconds: 4));
+      addTearDown(controller.dispose);
+
+      await controller.setQueue([t1, t2], autoplay: true);
+      await controller.skipToNext();
+
+      expect(controller.state.currentTrack?.id, 't2');
+      expect(engine.crossfadeCallCount, 0);
+      expect(engine.lastLocalSourcePath, '/fake/t2.mp3');
+    });
+
+    test('fin natural + pista actual y siguiente descargadas -> usa crossfadeToLocalSource, no stop+load+play',
         () async {
       final t1 = const SyncoraTrack(id: 't1', title: 'Uno');
       final t2 = const SyncoraTrack(id: 't2', title: 'Dos');
@@ -2282,7 +2296,11 @@ void main() {
       expect(engine.crossfadeCallCount, 0);
       final stopsAfterFirstTrack = engine.stopCallCount;
 
-      await controller.skipToNext();
+      // Fin natural de la pista (la posición llega al final).
+      engine.emitState(engine.currentState.copyWith(position: const Duration(seconds: 180)));
+      await pumpEventQueue();
+      engine.triggerCompletion();
+      await pumpEventQueue();
 
       expect(controller.state.currentTrack?.id, 't2');
       expect(engine.crossfadeCallCount, 1);

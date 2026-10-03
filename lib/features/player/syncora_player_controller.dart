@@ -84,6 +84,24 @@ class SyncoraPlayerState {
   /// [PlayerNotice.id] contra el de la emisión anterior (ver `app_shell.dart`).
   final PlayerNotice? notice;
 
+  /// Ronda 5 (H-R5-3): el controlador está arrancando una pista (búsqueda,
+  /// match y extracción incluidos). En esa ventana el motor está parado
+  /// (`idle`), así que sin este campo la UI mostraba "play" durante los
+  /// segundos más largos de la carga.
+  final bool isPreparing;
+
+  /// ¿Hay que mostrar el indicador de carga? Cubre la preparación previa al
+  /// motor y la carga/bufferizado del propio motor.
+  bool get isLoading =>
+      isPreparing ||
+      engine.processingState == AudioProcessingState.loading ||
+      engine.processingState == AudioProcessingState.buffering;
+
+  /// La pista que sonaría al avanzar (la manual tiene prioridad, D-2).
+  SyncoraTrack? get upNext => manualQueue.isNotEmpty
+      ? manualQueue.first
+      : (autoQueue.isNotEmpty ? autoQueue.first : null);
+
   const SyncoraPlayerState({
     this.currentTrack,
     this.currentOrigin,
@@ -100,6 +118,7 @@ class SyncoraPlayerState {
     this.lastErrorMessage,
     this.unavailableTrackIds = const {},
     this.notice,
+    this.isPreparing = false,
   });
 
   static const SyncoraPlayerState initial = SyncoraPlayerState();
@@ -124,6 +143,7 @@ class SyncoraPlayerState {
     bool clearError = false,
     Set<String>? unavailableTrackIds,
     PlayerNotice? notice,
+    bool? isPreparing,
   }) {
     return SyncoraPlayerState(
       currentTrack: clearCurrentTrack ? null : (currentTrack ?? this.currentTrack),
@@ -142,6 +162,7 @@ class SyncoraPlayerState {
           clearError ? null : (lastErrorMessage ?? this.lastErrorMessage),
       unavailableTrackIds: unavailableTrackIds ?? this.unavailableTrackIds,
       notice: notice ?? this.notice,
+      isPreparing: isPreparing ?? this.isPreparing,
     );
   }
 }
@@ -628,15 +649,24 @@ class SyncoraPlayerController extends ChangeNotifier {
     // usuario — no debe arrastrar un conteo de fallos lógicos viejo.
     _resetLogicalFailureStreak();
     try {
-      await _playFromQueueInternal(origin, index);
+      // H-R5-2: el guard cubre la mutación de la cola, no la carga.
+      if (!_moveToQueueIndex(origin, index)) return;
     } finally {
       _isTransitioning = false;
     }
+    await playCurrent();
   }
 
   Future<void> _playFromQueueInternal(QueueOrigin origin, int index) async {
+    if (!_moveToQueueIndex(origin, index)) return;
+    await playCurrent();
+  }
+
+  /// Parte síncrona de [playFromQueue]: deja [index] de [origin] como pista
+  /// actual. Devuelve `false` si el índice no existe.
+  bool _moveToQueueIndex(QueueOrigin origin, int index) {
     final sourceQueue = origin == QueueOrigin.manual ? _state.manualQueue : _state.autoQueue;
-    if (index < 0 || index >= sourceQueue.length) return;
+    if (index < 0 || index >= sourceQueue.length) return false;
 
     _restoredPositionSeconds = null;
     _restoredPositionTrackId = null;
@@ -655,7 +685,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     );
     _notify();
     _saveSession();
-    await playCurrent();
+    return true;
   }
 
   Future<void> play() async {
@@ -704,10 +734,18 @@ class SyncoraPlayerController extends ChangeNotifier {
     _saveSession();
   }
 
-  /// Entrada pública (tap del usuario / botón del SO). Participa del guard
-  /// [_isTransitioning] real (P1.8): un segundo tap mientras la transición
-  /// anterior sigue en curso se ignora en vez de correr en paralelo.
-  Future<void> skipToNext() async {
+  /// Entrada pública (tap del usuario / botón del SO).
+  ///
+  /// El guard [_isTransitioning] (P1.8) cubre solo la **mutación de la
+  /// cola**, que es síncrona. Ronda 5 (H-R5-2): antes se sostenía durante
+  /// toda la carga (2-3 s de extracción) y el segundo "siguiente" se
+  /// perdía. La carga de una pista que el usuario ya dejó atrás se descarta
+  /// sola por [_playGeneration], así que no hace falta esperarla.
+  Future<void> skipToNext() => _skipToNext(natural: false);
+
+  /// [natural]: la pista anterior terminó sola (único caso en el que se
+  /// permite cruzar con crossfade, H-R5-1).
+  Future<void> _skipToNext({required bool natural}) async {
     if (_isTransitioning) return;
     _isTransitioning = true;
     // 7.C.3: un skip manual del usuario (botón "siguiente", o el llamador
@@ -717,10 +755,26 @@ class SyncoraPlayerController extends ChangeNotifier {
     // interna nunca pasa por este método público (ver docstring de
     // _advanceAndPlay), así que resetear acá nunca pisa un conteo en curso.
     _resetLogicalFailureStreak();
+    var released = false;
     try {
-      await _advanceAndPlay();
-    } finally {
+      final advanced = _advance();
+      if (!advanced) {
+        // Fin de ambas colas: Autoplay hace red antes de mutar la cola, así
+        // que ese camino sí se queda dentro del guard.
+        final handledAutoplay = await _tryAutoplay();
+        if (!handledAutoplay) {
+          await _engine.pause();
+          _saveSession();
+        }
+        return;
+      }
+      _notify();
+      _saveSession();
       _isTransitioning = false;
+      released = true;
+      await playCurrent(allowCrossfade: natural);
+    } finally {
+      if (!released) _isTransitioning = false;
     }
   }
 
@@ -871,6 +925,8 @@ class SyncoraPlayerController extends ChangeNotifier {
       }
       _notify();
       _saveSession();
+      // H-R5-2: igual que en [skipToNext], el guard cubre solo la cola.
+      _isTransitioning = false;
       await playCurrent();
     } finally {
       _isTransitioning = false;
@@ -2223,31 +2279,41 @@ bool get _isTestEnv {
   /// quedó en `_radioTriggerThreshold` pistas o menos y, si es así, se
   /// dispara `_maybeFetchRadio()` SIN esperarlo: nunca debe bloquear la
   /// reproducción en curso.
-  Future<void> playCurrent() async {
+  ///
+  /// [allowCrossfade] solo lo pasa el avance natural (fin de pista). Ronda 5
+  /// (H-R5-1): el crossfade es para cuando la música fluye sola; con
+  /// "siguiente", "anterior" o al elegir otra canción el cambio es inmediato.
+  Future<void> playCurrent({bool allowCrossfade = false}) async {
     final track = _state.currentTrack;
     if (track == null) return;
 
     try {
-      await _playCurrentInternal(track);
+      await _playCurrentInternal(track, allowCrossfade: allowCrossfade);
     } finally {
       _maybeFetchRadio();
     }
   }
 
-  Future<void> _playCurrentInternal(SyncoraTrack track) async {
+  Future<void> _playCurrentInternal(SyncoraTrack track, {bool allowCrossfade = false}) async {
     final myGeneration = ++_playGeneration;
     // H-R3-2: la ventana se abre ANTES del `stop()` del motor, que es
     // exactamente el punto donde se emitía `idle` y `audio_service` soltaba
     // el foreground service. Ver [_preparingPlaybackGeneration].
     _preparingPlaybackGeneration = myGeneration;
+    // H-R5-3: la UI también ve la ventana (spinner desde el primer momento).
+    if (!_state.isPreparing) {
+      _state = _state.copyWith(isPreparing: true);
+      _notify();
+    }
     try {
-      await _playCurrentGuarded(track, myGeneration);
+      await _playCurrentGuarded(track, myGeneration, allowCrossfade: allowCrossfade);
     } finally {
       // Solo cierra la ventana quien la abrió: una llamada reentrante
       // (reintento de extracción, cascada de auto-skip) tiene una
       // generación más nueva y es ella la que manda ahora.
       if (_preparingPlaybackGeneration == myGeneration) {
         _preparingPlaybackGeneration = null;
+        _state = _state.copyWith(isPreparing: false);
         // Republica el estado ya sin la ventana abierta. Sin esto, un fallo
         // de carga (`_failPlaybackLoad`, que notifica DENTRO del try) dejaba
         // al adaptador del SO con el último `idle` traducido a `loading`, y
@@ -2357,7 +2423,7 @@ bool get _isTestEnv {
         .timeout(_engineLoadTimeout);
   }
 
-  Future<void> _playCurrentGuarded(SyncoraTrack track, int myGeneration) async {
+  Future<void> _playCurrentGuarded(SyncoraTrack track, int myGeneration, {bool allowCrossfade = false}) async {
     _beginListenTracking(track);
 
     bool isStale() => myGeneration != _playGeneration;
@@ -2400,7 +2466,8 @@ bool get _isTestEnv {
     // Fase 7.D (crossfade): las 4 condiciones para cruzar (ver docstring de
     // `_maybeCrossfadeProactively`). Si no se cumplen, se detiene el motor
     // previo con micro fade-out para evitar clics/pops.
-    final useCrossfade = crossfadeDuration > Duration.zero &&
+    final useCrossfade = allowCrossfade &&
+        crossfadeDuration > Duration.zero &&
         newTrackIsLocal &&
         previousPlaybackWasLocal &&
         wasEnginePlaying;
@@ -2448,6 +2515,9 @@ bool get _isTestEnv {
           await _engine.play();
         }
       } catch (e) {
+        // H-R5-2: el usuario ya pasó a otra pista y esa carga interrumpió
+        // esta; no es un fallo que mostrar.
+        if (isStale()) return;
         // Mismo motivo que en el camino de streaming: sin esto el estado se
         // quedaba en `loading` y el spinner no se apagaba nunca.
         _failPlaybackLoad(track, e);
@@ -2524,6 +2594,7 @@ bool get _isTestEnv {
           _log('[Play] Comando play() entregado al motor.');
           _saveSession();
         } catch (e) {
+          if (isStale()) return; // H-R5-2
           _failPlaybackLoad(track, e);
         }
         break;
@@ -2883,7 +2954,7 @@ bool get _isTestEnv {
       await _engine.play();
       return;
     }
-    await skipToNext();
+    await _skipToNext(natural: true);
   }
 
   void _notify() {

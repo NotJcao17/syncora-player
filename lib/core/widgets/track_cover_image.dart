@@ -47,6 +47,29 @@ class TrackCoverImage extends StatefulWidget {
     this.preferredSize,
   });
 
+  /// Deja la portada decodificada en la caché de memoria antes de mostrarla
+  /// (ronda 5): el reproductor a pantalla completa precarga la de la pista
+  /// siguiente para no enseñar el hueco al cambiar de canción. El proveedor
+  /// se arma igual que el de `CachedNetworkImage` (mismo `ResizeImage` sobre
+  /// el mismo `CachedNetworkImageProvider`) para que el widget lo encuentre.
+  static Future<void> precache(
+    BuildContext context, {
+    required String coverUrl,
+    int? preferredSize,
+    int? memCacheWidth,
+  }) async {
+    if (coverUrl.isEmpty) return;
+    final url = preferredSize != null ? DeezerImage.atSize(coverUrl, preferredSize) : coverUrl;
+    final provider = ResizeImage.resizeIfNeeded(
+      memCacheWidth,
+      null,
+      CachedNetworkImageProvider(url, cacheManager: AppImageCache.instance),
+    );
+    try {
+      await precacheImage(provider, context, onError: (_, _) {});
+    } catch (_) {}
+  }
+
   @override
   State<TrackCoverImage> createState() => _TrackCoverImageState();
 }

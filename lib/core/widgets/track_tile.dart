@@ -697,8 +697,12 @@ class _TrackTileState extends ConsumerState<TrackTile> {
 
     final isAudioPlaying = ref.watch(isPlayingProvider);
     final isActiveTrack = widget.isPlaying;
-    final isPlayingActive = isActiveTrack && isAudioPlaying;
-    final isPausedActive = isActiveTrack && !isAudioPlaying;
+    // Ronda 5 (H-R5-3): solo la fila activa escucha la carga, así el resto
+    // no se reconstruye cada vez que empieza o termina una.
+    final isLoadingActive =
+        isActiveTrack && ref.watch(playerStateProvider.select((s) => s.isLoading));
+    final isPlayingActive = isActiveTrack && isAudioPlaying && !isLoadingActive;
+    final isPausedActive = isActiveTrack && !isAudioPlaying && !isLoadingActive;
 
     final isConnectedAsync = ref.watch(isConnectedProvider);
     final isConnected = isConnectedAsync.value ?? true;
@@ -799,6 +803,8 @@ class _TrackTileState extends ConsumerState<TrackTile> {
         AppToast.show(context, message: message);
         return;
       }
+      // Tocar la pista que se está cargando no debe volver a lanzarla.
+      if (isLoadingActive) return;
       if (isPlayingActive) {
         ref.read(syncoraPlayerControllerProvider.notifier).pause();
       } else if (isPausedActive) {
@@ -820,7 +826,9 @@ class _TrackTileState extends ConsumerState<TrackTile> {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
-              child: isPlayingActive
+              child: isLoadingActive
+                  ? const _RowLoadingIndicator(color: activeColor)
+                  : isPlayingActive
                   ? (_isHovered
                       ? Icon(
                           AppIcons.bold(SolarIcons.Pause),
@@ -904,7 +912,9 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                           child: SizedBox(
                             width: 48,
                             child: Center(
-                              child: isPlayingActive
+                              child: isLoadingActive
+                                  ? const _RowLoadingIndicator(color: activeColor)
+                                  : isPlayingActive
                                   ? (_isHovered
                                       ? Icon(
                                           AppIcons.bold(SolarIcons.Pause),
@@ -1599,3 +1609,18 @@ class _HoverableTextState extends State<_HoverableText> {
   }
 }
 
+/// Spinner chico de la fila activa mientras su pista se prepara (ronda 5).
+class _RowLoadingIndicator extends StatelessWidget {
+  const _RowLoadingIndicator({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 16,
+      height: 16,
+      child: CircularProgressIndicator(strokeWidth: 2, color: color),
+    );
+  }
+}

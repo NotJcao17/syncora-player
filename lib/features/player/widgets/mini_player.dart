@@ -13,7 +13,6 @@ import '../../../core/widgets/track_cover_image.dart';
 import '../../../core/widgets/track_tile.dart' show TrackContextMenu;
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
-import '../audio_engine/audio_engine_state.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
 import '../sleep_timer.dart';
@@ -30,9 +29,7 @@ class MiniPlayer extends ConsumerWidget {
     final currentTrack = ref.watch(currentTrackProvider);
     final isPlaying = ref.watch(isPlayingProvider);
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
-    final isLoading = ref.watch(playerStateProvider.select((s) =>
-        s.engine.processingState == AudioProcessingState.loading ||
-        s.engine.processingState == AudioProcessingState.buffering));
+    final isLoading = ref.watch(playerStateProvider.select((s) => s.isLoading));
     final isShuffle = ref.watch(playerStateProvider.select((s) => s.isShuffle));
     final repeatMode = ref.watch(playerStateProvider.select((s) => s.repeatMode));
 
