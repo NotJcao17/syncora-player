@@ -519,6 +519,47 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
         ),
         const SizedBox(height: 16),
+        // Fase 8.F: entrada a Descubrir, antes de los géneros.
+        Material(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              FocusManager.instance.primaryFocus?.unfocus();
+              context.push('/discover');
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Icon(AppIcons.broken(SolarIcons.CompassBig), color: AppTheme.primary, size: 26),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Descubrir',
+                          style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 15),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Previews de 30 s de artistas parecidos a los tuyos',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: AppTheme.secondary, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(AppIcons.broken(SolarIcons.AltArrowRight), color: AppTheme.secondary, size: 18),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         genresAsync.when(
           loading: () => GridView.builder(
             shrinkWrap: true,

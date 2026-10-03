@@ -59,3 +59,8 @@ AudioEngine createAudioEngine({
 }
 
 Duration _zeroDuration() => Duration.zero;
+
+/// Motor suelto para las previews de 30 s de Descubrir (Fase 8.F): el de la
+/// plataforma, sin el envoltorio de crossfade (una preview nunca hace
+/// crossfade) y completamente separado del reproductor principal.
+AudioEngine createPreviewAudioEngine() => _createRawEngine();

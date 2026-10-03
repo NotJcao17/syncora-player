@@ -12,6 +12,7 @@ import '../../features/catalog/screens/artist_radio_screen.dart';
 import '../../features/catalog/screens/deezer_playlist_screen.dart';
 import '../../features/catalog/screens/genre_screen.dart';
 import '../../features/catalog/screens/mix_screen.dart';
+import '../../features/discover/discover_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 
 import '../../features/library/screens/album_detail_screen.dart';
@@ -243,6 +244,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 child: ArtistRadioScreen(artistId: id),
               );
             },
+          ),
+          // Fase 8.F: feed de previews de 30 s.
+          GoRoute(
+            path: '/discover',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const DiscoverScreen(),
+            ),
           ),
           GoRoute(
             path: '/genre/:id',

@@ -241,6 +241,13 @@ class HomeScreen extends ConsumerWidget {
         gradient: null,
         route: '/stats',
       ),
+      // Fase 8.F: previews de 30 s de artistas parecidos a los tuyos.
+      (
+        title: 'Descubrir',
+        icon: AppIcons.broken(SolarIcons.CompassBig),
+        gradient: null,
+        route: '/discover',
+      ),
     ];
 
     return SliverPadding(
@@ -248,7 +255,7 @@ class HomeScreen extends ConsumerWidget {
       sliver: SliverToBoxAdapter(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final crossCount = constraints.maxWidth > 700 ? 3 : 1;
+            final crossCount = constraints.maxWidth > 700 ? 4 : 2;
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
