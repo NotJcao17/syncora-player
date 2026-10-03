@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:drift/drift.dart' hide Column;
@@ -25,6 +26,7 @@ import '../../../core/widgets/playlist_picker_dialog.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/apis/deezer_provider.dart';
+import '../../../data/local_db/daos/playlist_dao.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_track.dart';
@@ -67,6 +69,30 @@ class PlaylistDetailScreen extends ConsumerStatefulWidget {
 class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   List<PlaylistTrack>? _memoTracks;
   List<_TrackPair> _memoPairs = const [];
+
+  /// Ronda 5: lista que se está mapeando en segundo plano (playlists grandes).
+  List<PlaylistTrack>? _mappingTracks;
+
+  /// Ronda 5: listas derivadas memorizadas. Esta pantalla se reconstruye por
+  /// muchas cosas (paleta, carga, importación); ordenar, filtrar y volver a
+  /// recorrer cientos de filas en cada una costaba frames.
+  List<_TrackPair>? _derivedFrom;
+  String _derivedKey = '';
+  List<_TrackPair> _sortedPairs = const [];
+  List<_TrackPair> _visiblePairs = const [];
+  List<SyncoraTrack> _sortedSyncora = const [];
+  List<SyncoraTrack> _rawSyncora = const [];
+
+  /// Ronda 5: los streams de Drift se crean una vez por playlist, no en cada
+  /// `build`. Creados en `build`, cada rebuild re-suscribía los dos
+  /// `StreamBuilder`.
+  Stream<Playlist?>? _playlistStream;
+  int? _tracksStreamFor;
+  Stream<List<PlaylistTrack>>? _tracksStream;
+
+  static const int _backgroundMappingThreshold = 300;
+
+  final ScrollController _listScrollController = ScrollController();
 
   Playlist? _playlist;
   bool _isLoadingHeader = true;
@@ -123,6 +149,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
   @override
   void dispose() {
+    _listScrollController.dispose();
     _addSongsController.dispose();
     _trackFilterController.dispose();
     super.dispose();
@@ -887,13 +914,70 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant PlaylistDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.playlistId != widget.playlistId) {
+      _playlistStream = null;
+      _tracksStream = null;
+      _tracksStreamFor = null;
+    }
+  }
+
+  Stream<List<PlaylistTrack>> _tracksStreamOf(PlaylistDao dao, int playlistId) {
+    if (_tracksStream == null || _tracksStreamFor != playlistId) {
+      _tracksStreamFor = playlistId;
+      _tracksStream = dao.watchTracksOrdered(playlistId);
+    }
+    return _tracksStream!;
+  }
+
+  /// Pares (fila de Drift, pista del reproductor) de [tracks], memorizados.
+  /// Las playlists grandes se mapean en un isolate: el `jsonDecode` de
+  /// colaboradores por fila en el hilo de la UI era lo que trababa los
+  /// primeros segundos al abrir una de cientos de canciones.
+  List<_TrackPair> _pairsFor(List<PlaylistTrack> tracks) {
+    if (identical(tracks, _memoTracks)) return _memoPairs;
+    if (tracks.length < _backgroundMappingThreshold) {
+      _memoTracks = tracks;
+      _mappingTracks = null;
+      return _memoPairs = [for (final t in tracks) _TrackPair(playlistTrack: t, syncoraTrack: _toSyncoraTrack(t))];
+    }
+    if (!identical(tracks, _mappingTracks)) {
+      _mappingTracks = tracks;
+      _mapTracksInBackground(tracks).then((mapped) {
+        if (!mounted || !identical(_mappingTracks, tracks)) return;
+        setState(() {
+          _mappingTracks = null;
+          _memoTracks = tracks;
+          _memoPairs = [
+            for (var i = 0; i < tracks.length; i++) _TrackPair(playlistTrack: tracks[i], syncoraTrack: mapped[i]),
+          ];
+        });
+      });
+    }
+    // Mientras tanto se sigue mostrando lo anterior (vacío la primera vez).
+    return _memoPairs;
+  }
+
+  /// Ordena, filtra y extrae las listas que usa la pantalla solo cuando
+  /// cambian las pistas, el orden o el filtro.
+  void _updateDerived(List<_TrackPair> rawPairs) {
+    final key = '${_sortColumn.name}|${_sortDirection.name}|$_trackFilterQuery';
+    if (identical(rawPairs, _derivedFrom) && key == _derivedKey) return;
+    _derivedFrom = rawPairs;
+    _derivedKey = key;
+    _sortedPairs = _sortTrackPairs(rawPairs);
+    _sortedSyncora = [for (final p in _sortedPairs) p.syncoraTrack];
+    _visiblePairs = _applyTrackFilter(_sortedPairs);
+    _rawSyncora = [for (final p in rawPairs) p.syncoraTrack];
+  }
+
+  @override
   Widget build(BuildContext context) {
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
-    final currentTrack = ref.watch(currentTrackProvider);
-    final isPlaying = ref.watch(isPlayingProvider);
     final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     final playlistDao = ref.watch(playlistDaoProvider);
-    final playlistStream = widget.playlistId == 'liked'
+    final playlistStream = _playlistStream ??= widget.playlistId == 'liked'
         ? playlistDao.watchLikedPlaylist()
         : playlistDao.watchPlaylistById(int.tryParse(widget.playlistId) ?? 0);
 
@@ -936,52 +1020,20 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
         return Scaffold(
           backgroundColor: AppTheme.background,
           body: StreamBuilder<List<PlaylistTrack>>(
-            stream: playlistDao.watchTracksOrdered(playlist.id),
+            stream: _tracksStreamOf(playlistDao, playlist.id),
             builder: (ctx, snapshot) {
               final tracks = snapshot.data ?? [];
-              // Ronda 4 (H-R4-7): memorizado por identidad de la lista que
-              // emite Drift. Esta pantalla se reconstruye con cada cambio de
-              // play/pausa/buffering, y rehacer el mapeo (con un `jsonDecode`
-              // de colaboradores por fila) en una playlist de 1000 canciones
-              // costaba frames en cada una de esas transiciones.
-              final rawPairs = identical(tracks, _memoTracks)
-                  ? _memoPairs
-                  : (_memoPairs = tracks.map((t) {
-                var parsedArtists = SyncoraArtistRef.decodeList(t.contributorsJson);
-                if (parsedArtists.isEmpty && t.artistName.contains(', ')) {
-                  final names = t.artistName.split(', ');
-                  parsedArtists = [
-                    for (int i = 0; i < names.length; i++)
-                      SyncoraArtistRef(id: i == 0 ? t.artistId : 0, name: names[i].trim()),
-                  ];
-                } else if (parsedArtists.isEmpty && (t.artistId != 0 || t.artistName.isNotEmpty)) {
-                  parsedArtists = [SyncoraArtistRef(id: t.artistId, name: t.artistName)];
-                }
-
-                final syncora = SyncoraTrack(
-                  id: t.trackId.toString(),
-                  title: t.title,
-                  artist: t.artistName,
-                  artists: parsedArtists,
-                  artistId: t.artistId,
-                  album: t.albumName,
-                  albumId: t.albumId,
-                  duration: Duration(milliseconds: t.durationMs),
-                  artUri: t.coverUrl.isNotEmpty ? Uri.tryParse(t.coverUrl) : null,
-                );
-                return _TrackPair(playlistTrack: t, syncoraTrack: syncora);
-              }).toList());
-              _memoTracks = tracks;
-
-              final sortedPairs = _sortTrackPairs(rawPairs);
-              final sortedSyncoraTracks = sortedPairs.map((p) => p.syncoraTrack).toList();
+              final rawPairs = _pairsFor(tracks);
+              final isMapping = _mappingTracks != null && identical(_mappingTracks, tracks);
+              _updateDerived(rawPairs);
+              final sortedPairs = _sortedPairs;
+              final sortedSyncoraTracks = _sortedSyncora;
               // D4: el filtro afecta a lo que se PINTA, no a lo que se
               // reproduce. Tocar una canción filtrada sigue encolando la
               // playlist completa (`sortedSyncoraTracks`), que es lo que
               // espera cualquiera: filtrar es buscar, no recortar la cola.
-              final visiblePairs = _applyTrackFilter(sortedPairs);
-
-              final rawSyncoraTracks = rawPairs.map((p) => p.syncoraTrack).toList();
+              final visiblePairs = _visiblePairs;
+              final rawSyncoraTracks = _rawSyncora;
 
               final coverForPalette = (playlist.coverUrl != null && playlist.coverUrl!.isNotEmpty)
                   ? playlist.coverUrl!
@@ -992,9 +1044,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               final dominantGradientColor = _resolveDominantColor(playlist, rawSyncoraTracks).withValues(alpha: 0.35);
 
               final playlistContextId = 'playlist_${playlist.id}';
-              final isCurrentContext = ref.watch(playerStateProvider.select((s) => s.activeContextId == playlistContextId));
-              final isBuffering = ref.watch(playerStateProvider.select((s) => s.isLoading));
-              final showPauseHeader = isCurrentContext && (isPlaying || isBuffering);
 
               return Container(
                 decoration: BoxDecoration(
@@ -1018,7 +1067,14 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             await ref.read(syncServiceProvider).syncPlaylistDetail(playlist.remoteId!, force: true);
                           }
                         },
-                        child: CustomScrollView(
+                        // Ronda 5: barra arrastrable para bajar rápido en
+                        // playlists largas en móvil (en escritorio ya hay
+                        // barra de desplazamiento por defecto).
+                        child: _FastScrollbar(
+                          controller: _listScrollController,
+                          enabled: !isDesktop && tracks.length > 40,
+                          child: CustomScrollView(
+                          controller: _listScrollController,
                           physics: const AlwaysScrollableScrollPhysics(),
                           slivers: [
                             SliverPadding(
@@ -1047,7 +1103,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             child: PlaylistCoverWidget(
                                               coverUrl: playlist.coverUrl,
                                               playlistId: playlist.id,
-                                              tracks: rawSyncoraTracks,
+                                              tracks: tracks,
                                               isLiked: isLiked,
                                               isGenerated: playlist.isGenerated,
                                               borderRadius: BorderRadius.circular(16),
@@ -1107,7 +1163,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                               child: PlaylistCoverWidget(
                                                 coverUrl: playlist.coverUrl,
                                                 playlistId: playlist.id,
-                                                tracks: rawSyncoraTracks,
+                                                tracks: tracks,
                                                 isLiked: isLiked,
                                                 isGenerated: playlist.isGenerated,
                                                 borderRadius: BorderRadius.circular(20),
@@ -1149,7 +1205,14 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                         mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
                                         children: [
                                           if (sortedSyncoraTracks.isNotEmpty) ...[
-                                            _HeaderPlayButton(
+                                            // Ronda 5: solo este botón escucha
+                                            // play/pausa/carga, no la pantalla.
+                                            Consumer(builder: (context, ref, _) {
+                                            final isCurrentContext = ref.watch(playerStateProvider.select((s) => s.activeContextId == playlistContextId));
+                                            final isPlaying = ref.watch(isPlayingProvider);
+                                            final isBuffering = ref.watch(playerStateProvider.select((s) => s.isLoading));
+                                            final showPauseHeader = isCurrentContext && (isPlaying || isBuffering);
+                                            return _HeaderPlayButton(
                                               isPlaying: showPauseHeader,
                                               isLoading: isCurrentContext && isBuffering,
                                               onPressed: () {
@@ -1171,7 +1234,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                   playlistDao.touchLastPlayed(playlist.id);
                                                 }
                                               },
-                                            ),
+                                            );
+                                            }),
                                             const SizedBox(width: 8),
                                             DownloadHeaderButton(
                                               title: playlist.title,
@@ -1607,6 +1671,13 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                   padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12),
                                 ),
                               ),
+                              if (isMapping && visiblePairs.isEmpty)
+                                const SliverToBoxAdapter(
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 32),
+                                    child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+                                  ),
+                                ),
                               if (_showTrackFilter && visiblePairs.isEmpty && sortedPairs.isNotEmpty)
                                 SliverPadding(
                                   padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 12, vertical: 24),
@@ -1627,8 +1698,12 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                     final pair = visiblePairs[i];
                                     final track = pair.syncoraTrack;
                                     final playlistTrack = pair.playlistTrack;
-                                    final isPlayingTrack = currentTrack?.id == track.id;
 
+                                    // Ronda 5: cada fila escucha solo si es
+                                    // la que suena; cambiar de canción ya no
+                                    // reconstruye la pantalla entera.
+                                    return Consumer(builder: (context, ref, _) {
+                                    final isPlayingTrack = ref.watch(currentTrackProvider.select((t) => t?.id == track.id));
                                     return TrackTile(
                                       track: track,
                                       // Ronda 3 (D5): sin numeración en móvil.
@@ -1680,6 +1755,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             },
                                       onAddToQueue: () => controller.addToQueue(track),
                                     );
+                                    });
                                   },
                                 ),
                               ),
@@ -1709,6 +1785,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                               child: SizedBox(height: 40),
                             ),
                           ],
+                        ),
                         ),
                       ),
                     ),
@@ -1824,6 +1901,68 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       child: child,
     );
   }
+}
+
+/// Barra de desplazamiento arrastrable para listas largas en móvil (ronda 5).
+///
+/// Aparece al desplazarse y se puede agarrar para saltar a cualquier punto.
+/// La zona táctil del pulgar llega a 48 dp aunque se dibuje fino.
+class _FastScrollbar extends StatelessWidget {
+  const _FastScrollbar({required this.controller, required this.enabled, required this.child});
+
+  final ScrollController controller;
+  final bool enabled;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled) return child;
+    return RawScrollbar(
+      controller: controller,
+      interactive: true,
+      thickness: 6,
+      radius: const Radius.circular(3),
+      minThumbLength: 56,
+      thumbColor: AppTheme.primary.withValues(alpha: 0.55),
+      crossAxisMargin: 3,
+      padding: EdgeInsets.only(top: MediaQuery.viewPaddingOf(context).top + 64, bottom: 16),
+      fadeDuration: const Duration(milliseconds: 250),
+      timeToFade: const Duration(milliseconds: 1200),
+      child: child,
+    );
+  }
+}
+
+/// Mapea [tracks] en un isolate. De nivel superior a propósito: un closure
+/// creado dentro de un método del `State` arrastraría el `State` (con sus
+/// referencias a Riverpod y al árbol de widgets) y el envío al isolate
+/// fallaría.
+Future<List<SyncoraTrack>> _mapTracksInBackground(List<PlaylistTrack> tracks) =>
+    Isolate.run(() => [for (final t in tracks) _toSyncoraTrack(t)]);
+
+/// Fila de Drift -> pista del reproductor. Función de nivel superior para
+/// poder correr en un isolate (ronda 5).
+SyncoraTrack _toSyncoraTrack(PlaylistTrack t) {
+  var parsedArtists = SyncoraArtistRef.decodeList(t.contributorsJson);
+  if (parsedArtists.isEmpty && t.artistName.contains(', ')) {
+    final names = t.artistName.split(', ');
+    parsedArtists = [
+      for (int i = 0; i < names.length; i++) SyncoraArtistRef(id: i == 0 ? t.artistId : 0, name: names[i].trim()),
+    ];
+  } else if (parsedArtists.isEmpty && (t.artistId != 0 || t.artistName.isNotEmpty)) {
+    parsedArtists = [SyncoraArtistRef(id: t.artistId, name: t.artistName)];
+  }
+  return SyncoraTrack(
+    id: t.trackId.toString(),
+    title: t.title,
+    artist: t.artistName,
+    artists: parsedArtists,
+    artistId: t.artistId,
+    album: t.albumName,
+    albumId: t.albumId,
+    duration: Duration(milliseconds: t.durationMs),
+    artUri: t.coverUrl.isNotEmpty ? Uri.tryParse(t.coverUrl) : null,
+  );
 }
 
 class _TrackPair {

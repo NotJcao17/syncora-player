@@ -677,6 +677,12 @@ class TrackTile extends ConsumerStatefulWidget {
 
 class _TrackTileState extends ConsumerState<TrackTile> {
   bool _isHovered = false;
+  bool _tapStartedWhileScrolling = false;
+
+  bool _isListScrolling() {
+    final position = Scrollable.maybeOf(context)?.position;
+    return position != null && position.isScrollingNotifier.value;
+  }
 
   String _formatDuration(Duration duration) {
     final minutes = duration.inMinutes;
@@ -877,7 +883,19 @@ class _TrackTileState extends ConsumerState<TrackTile> {
               ? (details) => _showContextMenu(details.globalPosition)
               : null,
           child: InkWell(
-            onTap: isMobile ? triggerPlay : null,
+            // Ronda 5: el toque que frena una lista en movimiento no es un
+            // "reproducir". Se decide al bajar el dedo, que es cuando la lista
+            // todavía se mueve (al soltar ya está quieta).
+            onTapDown: isMobile ? (_) => _tapStartedWhileScrolling = _isListScrolling() : null,
+            onTap: isMobile
+                ? () {
+                    if (_tapStartedWhileScrolling) {
+                      _tapStartedWhileScrolling = false;
+                      return;
+                    }
+                    triggerPlay();
+                  }
+                : null,
             onDoubleTap: isDesktop ? triggerPlay : null,
             onLongPress: widget.enableLongPressMenu
                 ? () {

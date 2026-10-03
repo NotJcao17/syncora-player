@@ -138,5 +138,35 @@ void main() {
       final tracks = await playlistDao.getTracksOrdered(playlistId);
       expect(tracks.first.contributorsJson, isNull);
     });
-  });
+  
+    test('ronda 5: watchPlaylistSummaries cuenta y elige 4 portadas de álbumes distintos', () async {
+      final a = await playlistDao.createPlaylist(title: 'A');
+      final b = await playlistDao.createPlaylist(title: 'B');
+      await playlistDao.createPlaylist(title: 'Vacía');
+      // 6 pistas en A: dos del mismo álbum al principio y una sin portada.
+      final albums = [1, 1, 2, 3, 0, 4];
+      for (var i = 0; i < albums.length; i++) {
+        await playlistDao.addTrackToPlaylist(
+          playlistId: a,
+          trackId: 200 + i,
+          artistId: 1,
+          albumId: albums[i],
+          title: 'T$i',
+          artistName: 'X',
+          albumName: 'Al',
+          coverUrl: i == 4 ? '' : 'c$i',
+          durationMs: 1000,
+        );
+      }
+      await playlistDao.addTrackToPlaylist(
+        playlistId: b, trackId: 300, artistId: 1, albumId: 9, title: 'U', artistName: 'Y',
+        albumName: 'Al', coverUrl: 'cb', durationMs: 1000,
+      );
+
+      final summaries = await playlistDao.watchPlaylistSummaries().first;
+      expect(summaries[a]?.trackCount, 6);
+      expect(summaries[a]?.covers, ['c0', 'c2', 'c3', 'c5']);
+      expect(summaries[b], const PlaylistSummary(trackCount: 1, covers: ['cb']));
+    });
+});
 }

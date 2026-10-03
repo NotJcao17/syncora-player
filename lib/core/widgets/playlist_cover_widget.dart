@@ -154,22 +154,13 @@ class PlaylistCoverWidget extends ConsumerWidget {
     }
     // 4. Si se pasó playlistId -> consultar pistas de la DB y construir grid 2x2
     else if (playlistId != null) {
-      final dao = ref.watch(playlistDaoProvider);
-      return StreamBuilder<List<PlaylistTrack>>(
-        stream: dao.watchTracksOrdered(playlistId!),
-        builder: (context, snapshot) {
-          final dbTracks = snapshot.data ?? [];
-          final childWidget = _buildGridOrFallback(dbTracks);
-          return ClipRRect(
-            borderRadius: effectiveRadius,
-            child: SizedBox(
-              width: width,
-              height: height,
-              child: childWidget,
-            ),
-          );
-        },
-      );
+      // Ronda 5: del resumen compartido (4 portadas ya elegidas en SQLite),
+      // no de un stream con todas las canciones de la playlist.
+      // `select` sobre el resumen (que compara por valor), no sobre la lista:
+      // así otra playlist que cambia no reconstruye esta portada.
+      final covers = ref.watch(playlistSummariesProvider.select((s) => s.value?[playlistId!]))?.covers ??
+          const <String>[];
+      content = _buildCoverGrid(covers);
     }
     // 5. Fallback por defecto
     else {
@@ -201,7 +192,10 @@ class PlaylistCoverWidget extends ConsumerWidget {
         if (distinctCovers.length == 4) break;
       }
     }
+    return _buildCoverGrid(distinctCovers);
+  }
 
+  Widget _buildCoverGrid(List<String> distinctCovers) {
     if (distinctCovers.length >= 4) {
       return Column(
         children: [

@@ -3,6 +3,31 @@ import '../syncora_database.dart';
 
 part 'playlist_dao.g.dart';
 
+/// Lo poco que necesitan las tarjetas y filas de una playlist (ronda 5):
+/// cuántas canciones tiene y hasta 4 portadas de álbumes distintos.
+class PlaylistSummary {
+  const PlaylistSummary({required this.trackCount, required this.covers});
+
+  static const empty = PlaylistSummary(trackCount: 0, covers: []);
+
+  final int trackCount;
+  final List<String> covers;
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! PlaylistSummary || other.trackCount != trackCount || other.covers.length != covers.length) {
+      return false;
+    }
+    for (var i = 0; i < covers.length; i++) {
+      if (other.covers[i] != covers[i]) return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode => Object.hash(trackCount, Object.hashAll(covers));
+}
+
 @DriftAccessor(tables: [Playlists, PlaylistTracks])
 class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMixin {
   PlaylistDao(super.db);
@@ -170,6 +195,46 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
             ..where((t) => t.playlistId.equals(playlistId))
             ..orderBy([(t) => OrderingTerm(expression: t.orderIndex, mode: OrderingMode.asc)]))
           .get();
+
+  /// Resumen de **todas** las playlists en una sola consulta (ronda 5).
+  ///
+  /// Antes cada portada 2x2 y cada contador de Biblioteca, Inicio y la barra
+  /// lateral abría su propio `watchTracksOrdered`, que trae (y copia del
+  /// isolate de la base de datos al de la UI) **todas** las filas de la
+  /// playlist solo para contar o para elegir 4 portadas. Con varias playlists
+  /// de cientos de canciones, cada visita a Biblioteca o Inicio cargaba miles
+  /// de filas. Aquí bajan como mucho 40 por playlist (de sobra para encontrar 4
+  /// álbumes distintos) más el total, calculado en SQLite.
+  Stream<Map<int, PlaylistSummary>> watchPlaylistSummaries() {
+    return customSelect(
+      'SELECT playlist_id, album_id, cover_url, cnt FROM ('
+      '  SELECT playlist_id, album_id, cover_url,'
+      '    ROW_NUMBER() OVER (PARTITION BY playlist_id ORDER BY order_index, id) AS rn,'
+      '    COUNT(*) OVER (PARTITION BY playlist_id) AS cnt'
+      '  FROM playlist_tracks'
+      ') WHERE rn <= 40 ORDER BY playlist_id, rn',
+      readsFrom: {playlistTracks},
+    ).watch().map((rows) {
+      final counts = <int, int>{};
+      final covers = <int, List<String>>{};
+      final seen = <int, Set<Object>>{};
+      for (final r in rows) {
+        final id = r.read<int>('playlist_id');
+        counts[id] = r.read<int>('cnt');
+        final list = covers.putIfAbsent(id, () => <String>[]);
+        if (list.length >= 4) continue;
+        final cover = r.read<String>('cover_url');
+        if (cover.isEmpty) continue;
+        final albumId = r.read<int>('album_id');
+        final key = albumId != 0 ? albumId : cover;
+        if (seen.putIfAbsent(id, () => <Object>{}).add(key)) list.add(cover);
+      }
+      return {
+        for (final e in counts.entries)
+          e.key: PlaylistSummary(trackCount: e.value, covers: List.unmodifiable(covers[e.key] ?? const <String>[])),
+      };
+    });
+  }
 
   Stream<List<PlaylistTrack>> watchTracksOrdered(int playlistId) =>
       (select(playlistTracks)

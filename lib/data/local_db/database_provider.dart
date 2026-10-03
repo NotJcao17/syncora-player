@@ -38,6 +38,12 @@ final statsMetadataCacheDaoProvider = Provider<StatsMetadataCacheDao>((ref) {
 });
 
 
+/// Resumen (conteo + portadas) de todas las playlists, un solo stream para
+/// toda la app (ronda 5). Cada tarjeta se suscribe con `select` a la suya.
+final playlistSummariesProvider = StreamProvider<Map<int, PlaylistSummary>>((ref) {
+  return ref.watch(playlistDaoProvider).watchPlaylistSummaries();
+});
+
 /// Ids de pista en "Tus me gusta", reactivo (ronda 4). Un solo stream para
 /// toda la app: cada widget se suscribe con `select` a su propia pista.
 final likedTrackIdsProvider = StreamProvider<Set<int>>((ref) {

@@ -520,10 +520,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       onTap: () => context.push('/playlist/${playlist.id}'),
       onMenu: () => _showPlaylistOptionsMenu(context, playlist, canEdit, isLocalMode),
       isPinned: playlist.isPinned,
-      subtitle: StreamBuilder<List<PlaylistTrack>>(
-        stream: playlistDao.watchTracksOrdered(playlist.id),
-        builder: (ctx, snap) {
-          final count = snap.data?.length ?? 0;
+      // Ronda 5: el conteo sale del resumen compartido, no de un stream con
+      // todas las canciones de la playlist.
+      subtitle: Consumer(
+        builder: (ctx, ref, _) {
+          final count = ref.watch(playlistSummariesProvider.select((s) => s.value?[playlist.id]?.trackCount ?? 0));
           return _subtitleText(count == 1 ? '1 canción' : '$count canciones');
         },
       ),
@@ -559,10 +560,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       onMenu: () => _showPlaylistOptionsMenu(context, playlist, canEdit, isLocalMode),
       isPinned: playlist.isPinned,
       trailing: trailing,
-      subtitle: StreamBuilder<List<PlaylistTrack>>(
-        stream: playlistDao.watchTracksOrdered(playlist.id),
-        builder: (ctx, snap) {
-          final count = snap.data?.length ?? 0;
+      subtitle: Consumer(
+        builder: (ctx, ref, _) {
+          final count = ref.watch(playlistSummariesProvider.select((s) => s.value?[playlist.id]?.trackCount ?? 0));
           final countStr = count == 1 ? '1 canción' : '$count canciones';
           final base = playlist.isLiked ? 'Playlist especial' : countStr;
           return _subtitleText(suffix == null ? base : '$base • $suffix');

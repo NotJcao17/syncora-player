@@ -439,8 +439,12 @@ class _MiniPlayerHeartButtonState extends ConsumerState<_MiniPlayerHeartButton> 
 
   @override
   Widget build(BuildContext context) {
-    final dao = ref.watch(playlistDaoProvider);
     final trackIdInt = int.tryParse(widget.currentTrack.id) ?? widget.currentTrack.id.hashCode.abs();
+    // Ronda 5: el stream compartido de ids de "Tus me gusta" y no todas sus
+    // filas (miles en una biblioteca importada) en cada rebuild. Los `watch`
+    // van aquí, en el build del widget, y no dentro del builder de abajo.
+    final isLiked = ref.watch(likedTrackIdsProvider.select((s) => s.value?.contains(trackIdInt) ?? false));
+    final canEdit = ref.watch(canEditProvider);
 
     return FutureBuilder<Playlist>(
       future: _likedPlaylistFuture,
@@ -461,14 +465,8 @@ class _MiniPlayerHeartButtonState extends ConsumerState<_MiniPlayerHeartButton> 
           );
         }
 
-        final likedPlaylist = snapshot.data!;
-        final canEdit = ref.watch(canEditProvider);
-        return StreamBuilder<List<PlaylistTrack>>(
-          stream: dao.watchTracksOrdered(likedPlaylist.id),
-          builder: (context, tracksSnapshot) {
-            final tracks = tracksSnapshot.data ?? [];
-            final isLiked = tracks.any((t) => t.trackId == trackIdInt);
-
+        return Builder(
+          builder: (context) {
             return IconButton(
               icon: Icon(
                 isLiked ? AppIcons.bold(SolarIcons.Heart) : AppIcons.broken(SolarIcons.Heart),
