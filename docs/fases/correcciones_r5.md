@@ -134,7 +134,8 @@ Sesión del 2026-10-03. Plan, diagnóstico, decisiones y estado. Cada bundle cer
 
 ## Pendiente
 
-- Aplicar la migración `20250001000021_content_limits.sql` en Supabase.
+- ~~Aplicar la migración 21~~: aplicada el 2026-10-03 con `supabase db push` (verificado: el
+  trigger `playlist_tracks_limit` y los dos `CHECK` existen en la base remota).
 - Pruebas en dispositivo (Android y Windows) de todo lo de arriba, en especial: portadas en móvil
   (si vuelven a fallar, mandar las líneas `[Covers]` de la consola), Android Auto y la sensación de
   los gestos.

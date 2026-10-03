@@ -63,8 +63,8 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 
 ### Estado actual (última actualización: 2026-10-03)
 
-**Quinta ronda de correcciones: implementada y pusheada; faltan las pruebas en dispositivo y
-aplicar la migración 21.** Detalle en `docs/fases/correcciones_r5.md` — **leerlo antes de tocar el
+**Quinta ronda de correcciones: implementada y pusheada; migración 21 aplicada; faltan las
+pruebas en dispositivo.** Detalle en `docs/fases/correcciones_r5.md` — **leerlo antes de tocar el
 avance de pistas o el crossfade del controlador, la cola ("Mejorar cola" / "Crear con IA"),
 portadas, letras, `SwipeActionTile`, la pantalla de playlist, límites o Android Auto**. Lo que no
 conviene revertir: el crossfade es solo para el fin natural de una pista; "siguiente" no espera a
