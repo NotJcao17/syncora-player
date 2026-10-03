@@ -1,7 +1,7 @@
 # Plan de la Fase 8
 
 **Fecha:** 2026-10-02
-**Estado:** plan propuesto, pendiente de decisiones del usuario (ver §6).
+**Estado:** implementado (2026-10-02). Resumen y pasos manuales: `docs/fases/fase_8.md`.
 
 Fuente del alcance: `Documento_Maestro.md` §11. Antes de planear se revisó cada punto contra el
 código real, no solo contra el documento.
@@ -176,74 +176,74 @@ bundle: `flutter analyze` limpio + un `flutter test` completo antes de comitear.
 
 ### 8.A — Robustez del motor y mensajes (sin OTA todavía)
 
-- [ ] `ExtractionIsolate`: escuchar `onExit`/`onError`; si el isolate muere, completar los
+- [x] `ExtractionIsolate`: escuchar `onExit`/`onError`; si el isolate muere, completar los
       pendientes con error de red y volver a lanzarlo en la siguiente petición.
-- [ ] El isolate informa al arrancar si el motor cargó (`EngineReady` / `EngineLoadFailed`) en vez
+- [x] El isolate informa al arrancar si el motor cargó (`EngineReady` / `EngineLoadFailed`) en vez
       de solo escribir un log.
-- [ ] `EngineHealthMonitor` (lógica pura, testeable): decide "motor roto" con fallos seguidos en
+- [x] `EngineHealthMonitor` (lógica pura, testeable): decide "motor roto" con fallos seguidos en
       pistas **distintas**, sin éxitos, con internet; distingue errores de código del motor.
-- [ ] Con el motor roto: pausa con un aviso propio (*"El motor de YouTube dejó de funcionar.
+- [x] Con el motor roto: pausa con un aviso propio (*"El motor de YouTube dejó de funcionar.
       Buscando una actualización…"*), **sin** marcar las pistas como no disponibles, y sin seguir
       saltando.
-- [ ] Configuración → sección "Motor de reproducción": versión activa, origen (de fábrica / OTA),
+- [x] Configuración → sección "Motor de reproducción": versión activa, origen (de fábrica / OTA),
       última comprobación, botón "Buscar actualización".
 
 ### 8.B — Empaquetado del motor (refactor sin cambio de comportamiento)
 
-- [ ] Carpeta `engine/`: `src/polyfills.js` y `src/glue.js` (sacados **tal cual** de los strings de
+- [x] Carpeta `engine/`: `src/polyfills.js` y `src/glue.js` (sacados **tal cual** de los strings de
       Dart), `vendor/youtubei.bundle.js` (el mismo archivo de hoy, sin recompilar), `build.mjs`.
-- [ ] El pegamento expone `globalThis.SYNCORA_ENGINE = {api, build, clients}`; Dart lee de ahí la
+- [x] El pegamento expone `globalThis.SYNCORA_ENGINE = {api, build, clients}`; Dart lee de ahí la
       jerarquía de clientes (con la de hoy como respaldo).
-- [ ] `build.mjs` genera `assets/js/syncora_engine.js` + `assets/js/syncora_engine.json` (build,
+- [x] `build.mjs` genera `assets/js/syncora_engine.js` + `assets/js/syncora_engine.json` (build,
       api, sha256). `JsBundleLoader` carga ese archivo completo.
-- [ ] Comprobación en CI/local: el motor generado se evalúa en un QuickJS real
+- [x] Comprobación en CI/local: el motor generado se evalúa en un QuickJS real
       (`quickjs-emscripten`) y expone el contrato.
-- [ ] Script para actualizar `youtubei.js` a propósito (`npm run update-lib`), nunca automático.
+- [x] Script para actualizar `youtubei.js` a propósito (`npm run update-lib`), nunca automático.
 
 ### 8.C — Cliente OTA en la app
 
-- [ ] `EngineManifest` + verificación Ed25519 (paquete `cryptography`, Dart puro).
-- [ ] `EngineUpdateService`: comprobación normal y de emergencia, descarga, gzip, SHA-256,
+- [x] `EngineManifest` + verificación Ed25519 (paquete `cryptography`, Dart puro).
+- [x] `EngineUpdateService`: comprobación normal y de emergencia, descarga, gzip, SHA-256,
       instalación atómica, lista negra, revocación.
-- [ ] `EngineBundleStore`: elige qué motor arrancar (descargado compatible y más nuevo, o el de
+- [x] `EngineBundleStore`: elige qué motor arrancar (descargado compatible y más nuevo, o el de
       fábrica) y registra el resultado de la prueba de carga.
-- [ ] Recarga en caliente del isolate solo en emergencia y sin extracciones en curso.
-- [ ] Tests: firma válida/alterada, `engineApi` incompatible, versión menor, revocación, corte a
+- [x] Recarga en caliente del isolate solo en emergencia y sin extracciones en curso.
+- [x] Tests: firma válida/alterada, `engineApi` incompatible, versión menor, revocación, corte a
       mitad de descarga, fallo de carga → reversión.
 
 ### 8.D — Pipeline de publicación
 
-- [ ] `tool/engine/keygen.mjs`: genera el par de llaves; escribe la privada en un archivo ignorado
+- [x] `tool/engine/keygen.mjs`: genera el par de llaves; escribe la privada en un archivo ignorado
       por Git y la pública directamente en el código Dart.
-- [ ] `tool/engine/sign.mjs`: arma y firma el manifiesto.
-- [ ] `.github/workflows/publish-engine.yml` con tres disparadores: programado cada 6 h (versión
+- [x] `tool/engine/sign.mjs`: arma y firma el manifiesto.
+- [x] `.github/workflows/publish-engine.yml` con tres disparadores: programado cada 6 h (versión
       nueva de `youtubei.js` en npm, tras 24 h de cuarentena), push a `master` que toque `engine/`,
       y manual (con la opción "aplicar a todos"). Construye, prueba en QuickJS, firma y sube a la
       release `engine-channel`; borra los motores viejos para no pasar de 1000 archivos.
-- [ ] Pasos manuales para ti, **una sola vez** (documentados): correr `keygen` y pegar la llave
+- [x] Pasos manuales para ti, **una sola vez** (documentados): correr `keygen` y pegar la llave
       privada como secreto `ENGINE_SIGNING_KEY` en GitHub. Después no hay pasos manuales.
 
 ### 8.E — Carpetas para playlists
 
-- [ ] Migración 20: tabla `folders` (RLS solo dueño) y `playlists.folder_id` (`ON DELETE SET NULL`:
+- [x] Migración 20: tabla `folders` (RLS solo dueño) y `playlists.folder_id` (`ON DELETE SET NULL`:
       borrar una carpeta nunca borra sus playlists).
-- [ ] Drift v13: tabla `Folders` y `Playlists.folderId`.
-- [ ] Sync de carpetas antes que el de playlists; toda escritura por un servicio que persiste en
+- [x] Drift v13: tabla `Folders` y `Playlists.folderId`.
+- [x] Sync de carpetas antes que el de playlists; toda escritura por un servicio que persiste en
       ambos lados (Pitfall #28). En modo local, solo Drift.
-- [ ] Biblioteca: carpetas como elementos de la lista, vista de carpeta, crear/renombrar/borrar,
+- [x] Biblioteca: carpetas como elementos de la lista, vista de carpeta, crear/renombrar/borrar,
       "Mover a carpeta" en el menú de 3 puntos. Diálogos centrados en PC, hojas en móvil.
-- [ ] "Tus me gusta" y "On Repeat" no entran en carpetas.
+- [x] "Tus me gusta" y "On Repeat" no entran en carpetas.
 
 ### 8.F — Previews de Deezer (30 s)
 
-- [ ] `PreviewPlayer`: motor de audio propio (no toca la cola ni el historial ni las
-      estadísticas), pausa la reproducción principal mientras suena y la puede reanudar al terminar.
+- [x] `PreviewPlayer`: motor de audio propio (no toca la cola ni el historial ni las
+      estadísticas) y pausa la reproducción principal mientras suena (no la reanuda sola al salir: se reanuda con play, como cualquier pausa).
       Pide `/track/{id}` justo antes de sonar, porque las URLs de preview caducan.
-- [ ] UI según la decisión de §6.
+- [x] UI según la decisión de §6: feed "Descubrir" (`/discover`), con accesos en Inicio y Búsqueda.
 
 ### 8.G — Cierre
 
-- [ ] `docs/fases/fase_8.md`, §11 del Documento Maestro corregido, filas nuevas en
+- [x] `docs/fases/fase_8.md`, §11 del Documento Maestro corregido, filas nuevas en
       `docs/matriz_de_pruebas.md`, estado en `CLAUDE.md`.
 
 ---

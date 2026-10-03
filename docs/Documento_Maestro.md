@@ -118,7 +118,7 @@ Para que el reproductor no se rompa si YouTube cambia sus firmas, se usará un e
         *   **Jerarquía validada en Fase 1 (lección aprendida):** la lista teórica original (`tv` / `android_vr` / `tv_downgraded`) **quedó obsoleta** cuando YouTube endureció las políticas de firma/PoToken en `/player` para esos clientes en pistas protegidas (VEVO, música oficial). En la práctica, el cliente **`ANDROID`** (≠ `ANDROID_MUSIC`) resultó ser el único que entrega URLs directas pre-firmadas (`c=ANDROID`) que reproducen el 100% del catálogo, incluido VEVO. Por eso la jerarquía actual en producción es **`['ANDROID', 'ANDROID_VR', 'WEB']`** (definida en `extraction_isolate.dart`). `android_vr`/`tv` se conservan como fallback de respaldo. ⚠️ YouTube rota estas políticas con frecuencia: si `ANDROID` deja de funcionar, este es el primer lugar a revisar.
     *   **Optimización de Sesión:** Mantener el contexto de sesión de Innertube (visitorData, PoToken si aplica) vivo y reutilizado dentro del isolate en vez de reinicializar por cada canción. El PoToken se mina una vez y se reutiliza.
     *   **Riesgo del Puente:** El puente `dartFetch` en Dart debe manejar perfectamente redirecciones, cookies/sesión persistente y decodificación gzip/br para evitar fallos silenciosos entre Dart y JS.
-    *   **Validación OTA (Seguridad):** El bundle JS se firmará en CI (Ed25519). La app validará la firma contra una llave pública local antes de ejecutarlo en QuickJS, previniendo ejecución de código remoto (RCE) si el bucket de Supabase es comprometido.
+    *   **Validación OTA (Seguridad):** El bundle JS se firmará en CI (Ed25519). La app validará la firma contra una llave pública local antes de ejecutarlo en QuickJS, previniendo ejecución de código remoto (RCE) si el servidor de descarga es comprometido. ✅ **Implementado en la Fase 8** con GitHub Releases en vez de Supabase Storage (sin límite de ancho de banda y sin compartir el egress del que viven sync e IA): ver `docs/fases/fase_8.md`.
 2.  **Secundario (Solo Windows):** Binario de `yt-dlp` invocado como proceso externo, autoactualizable consultando `api.github.com/repos/yt-dlp/yt-dlp/releases/latest`. Descargará el `SHA2-256SUMS` oficial para validar la integridad del `.exe` antes de reemplazarlo (prevención de ataque de cadena de suministro). Red de seguridad independiente y barata.
 3.  **Terciario / Emergencia (Ambas plataformas):** Lista de instancias públicas de Piped (no self-host) con health-check y rotación automática. Estrictamente de uso exclusivo si los métodos Client-Side fallan masivamente (para darle tiempo al desarrollador de subir un parche OTA sin que la app muera por completo).
 
@@ -126,19 +126,18 @@ Para que el reproductor no se rompa si YouTube cambia sus firmas, se usará un e
 
 #### Análisis de Impacto de Cambios de YouTube y Matriz de Responsabilidades
 
-> ⚠️ **Nota de estado (post-Fase 1):** La columna "¿Se soluciona con OTA?" describe el
-> **objetivo final** de la arquitectura, que se cumple **una vez implementado el
-> mecanismo OTA real** (firma Ed25519 + bucket de Supabase + validación en runtime —
-> pendiente en la fase de Mantenimiento). Mientras tanto, el bundle JS viaja como asset
-> bundled en el APK, por lo que *actualizar el bundle* equivale hoy a recompilar y
-> republishear la app. Las filas marcadas OTA son válidas como **capacidad de diseño**.
+> ✅ **Nota de estado (Fase 8):** el OTA real ya existe (firma Ed25519, GitHub Releases,
+> validación y reversión en la app; `docs/fases/fase_8.md`). El motor completo —polyfills,
+> `youtubei.js`, pegamento y jerarquía de clientes— viaja en el paquete OTA, así que la fila de
+> PoToken ya no requiere recompilar para cambiar la jerarquía. Siguen requiriendo APK/EXE nuevo
+> las filas marcadas "No" (cambios del lado de Dart).
 
 | Evento de YouTube | ¿Se soluciona con actualización OTA de `youtubei.js`? | ¿Requiere cambios en el código de Flutter/Dart? |
 | :--- | :---: | :---: |
 | **Cambios en algoritmos de firma (`n-sig` / decipher)** | **SÍ (100%)** — Sin actualizar APK (objetivo OTA) | No requiere cambios en la app |
-| **Nuevas restricciones PoToken (BotGuard)** | **SÍ (Mayoría)** — Actualizando el bundle JS | **SÍ (hoy)** — La jerarquía de clientes (`['ANDROID','ANDROID_VR','WEB']`) vive actualmente *hardcoded en Dart* (`extraction_isolate.dart`), así que ajustarla requiere recompilar el APK. **Mejora pendiente:** mover la jerarquía de clientes a un config dentro del bundle JS para que sea actualizable por OTA cuando el mecanismo de firma+bucket exista. |
+| **Nuevas restricciones PoToken (BotGuard)** | **SÍ (Mayoría)** — Actualizando el bundle JS | No — desde la Fase 8 la jerarquía de clientes vive en `engine/engine.config.json` y viaja dentro del motor (`SYNCORA_ENGINE.clients`). |
 | **Formato de Manifiestos (DASH / HLS)** | **SÍ (Extracción)** | Configurar el player nativo para recibir la URL del manifiesto |
-| **Nuevas Web APIs usadas por la librería JS** | No | **SÍ** — Añadir el polyfill faltante en `JsBundleLoader` |
+| **Nuevas Web APIs usadas por la librería JS** | **SÍ** — los polyfills viajan en el motor (`engine/src/polyfills.js`) | No, salvo que la API necesite un puente nuevo en Dart |
 | **Políticas de Red / Headers en ExoPlayer (Android)** | No | **SÍ** — Ajustar la inyección de headers en `AudioSource.uri` o manifest nativo |
 
 ### Diseño de Datos (Supabase + Drift)
@@ -338,7 +337,7 @@ llene.
         *   Las mutaciones sugeridas por la IA (ej. borrar canciones) **siempre pasan por el RLS-vía-JWT** del usuario, sin importar si usa llave propia o la compartida.
         *   La llave nunca toca la base de datos ni logs de Supabase; solo transita en memoria de la Edge Function y sale hacia Gemini.
         *   ⚠️ Consecuencia: en modo BYOK el límite de Rate Limit interno (punto 1) se omite o eleva, ya que el usuario paga su propio consumo.
-*   **Mantenimiento (GitHub Actions):** Flujo CI/CD para compilar el bundle de `youtubei.js` + polyfills en cada parche, subirlo a Supabase Storage, y forzar la actualización OTA.
+*   **Mantenimiento (GitHub Actions):** Flujo CI/CD que compila `youtubei.js` + polyfills + pegamento, lo prueba en QuickJS, lo firma y lo publica en GitHub Releases (`publish-engine.yml`, cada 6 h si hay versión nueva en npm con 24 h de cuarentena, en cada push que toque `engine/` y a mano). Las apps lo guardan y solo lo activan si su motor falla. ✅ Fase 8.
 *   **✅ Cleartext Traffic en Android (resuelto en Fase 2):** `network_security_config.xml` tiene `<base-config cleartextTrafficPermitted="false"/>` global y `cleartextTrafficPermitted="true"` limitado únicamente a `127.0.0.1` y `localhost` (proxy interno de `just_audio`).
 
 ---
@@ -482,39 +481,18 @@ El diseño debe verse intencional y humano. Se evitarán estas "señales delator
 
 ---
 
-## 11. Fase 8 (pendiente de planear)
+## 11. Fase 8 (implementada)
 
-> La Fase 7 cerró el plan de implementación tal como estaba definido hasta el punto anterior de
-> este documento. Al revisar `Documento_Maestro.md` completo contra el código real (no solo contra
-> checklists de fases) salieron a la luz algunas funciones que quedaron descritas en §2/§8 desde el
-> diseño original pero **nunca se implementaron** — se habían perdido de vista precisamente porque
-> nunca fueron un checkbox en ningún plan de fase.
->
-> **Esta sección es solo una lista de alcance, todavía no un plan.** Falta decidir metodología de
-> ejecución (¿una fase monolítica o varias sub-fases independientes?, ¿orden?, ¿qué amerita revisión
-> independiente según el criterio de riesgo ya usado en Fase 7?) antes de empezar a implementar
-> cualquiera de estos puntos. Se planeará después de terminar las pruebas manuales y correcciones de
-> la Fase 7.
+> ✅ **Implementada el 2026-10-02.** Plan y decisiones: `docs/plan_fase_8.md`; resumen de lo
+> construido, reglas que no conviene revertir y pasos manuales: `docs/fases/fase_8.md`.
 
-### Alcance de la Fase 8
-
-- **Sistema OTA completo para el motor de extracción.** Hoy `youtubei.bundle.js` viaja únicamente
-  como asset local empaquetado en la app (`lib/core/extraction/js_bundle_loader.dart` lo carga con
-  `rootBundle.loadString`, sin ninguna descarga remota) — actualizarlo requiere recompilar y
-  republicar la app, exactamente lo que el diseño original (§3, "Arquitectura de Extracción")
-  buscaba evitar. Falta construir: el bucket de Supabase Storage, la firma Ed25519 del bundle en CI
-  y su validación en runtime antes de ejecutarlo en QuickJS, el pipeline de GitHub Actions que
-  compila/firma/sube el bundle en cada parche, y mover la jerarquía de clientes de fallback (hoy
-  hardcodeada en `extraction_isolate.dart`) a config remota actualizable por OTA (deuda anotada
-  desde `docs/fases/fase_1.md`).
-- **Carpetas para playlists.** §2.1.3 ("Ordenar por carpetas") y §8 (tabla `folders`) las describen,
-  pero la tabla `folders` nunca se creó en ninguna migración y no hay ningún código de carpetas en
-  `lib`. Hoy solo existe "fijar" (`isPinned`), no organización jerárquica.
-- **Búsqueda por género**, integrada en las tarjetas de la pantalla del buscador. §2.4 la menciona;
-  no existe ningún filtro ni endpoint de búsqueda por género hoy.
-- **Descubrimiento musical vía previews de Deezer (30s).** El campo `previewUrl` ya se parsea y se
-  guarda en el modelo de cada track (viene directo del JSON de Deezer), pero no se reproduce en
-  ningún lado de la UI — falta el mecanismo de reproducción de preview en sí.
-- **Lanzamientos nuevos de artistas escuchados**, personalizados. Lo que existe hoy
-  (`DeezerApi.getNewReleases()`) es el chart global de Deezer (`/chart/0/albums`), no una lista
-  filtrada a los artistas que el usuario realmente escucha.
+- **Sistema OTA del motor de extracción** — hecho: motor completo empaquetado fuera de Dart
+  (`engine/`), firma Ed25519, GitHub Releases, publicación automática desde npm, activación solo
+  cuando el motor actual falla, reversión y revocación. Incluye el manejo de fallos de
+  `youtubei.js` (aviso de "motor roto", sin marcar canciones como no disponibles).
+- **Carpetas para playlists** — hecho, un solo nivel (migración 20, Drift v13).
+- **Búsqueda por género** — ya existía antes de la Fase 8 (rediseño de Inicio y Explorar: las 27
+  tarjetas de `/genre` en Búsqueda abren cada género).
+- **Descubrimiento vía previews de Deezer (30 s)** — hecho como feed "Descubrir" (`/discover`).
+- **Lanzamientos nuevos de artistas escuchados** — ya existía antes de la Fase 8
+  (`newReleasesFromArtistsProvider`, "Novedades de tus artistas" en Inicio).

@@ -61,6 +61,18 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-10-02)
+
+**Fase 8: implementada y pusheada.** OTA del motor de extracción, manejo de fallos del motor,
+carpetas de playlists y feed "Descubrir". Detalle en `docs/fases/fase_8.md` — **leerlo antes de
+tocar `lib/core/extraction/`, `engine/`, los workflows de `.github/`, carpetas o Descubrir**. Lo
+que no conviene revertir: el motor completo (polyfills + youtubei.js + pegamento + clientes) vive
+en `engine/` y se genera con `npm run build`, nunca como strings de Dart; **un motor que funciona
+no se cambia solo** (lo descargado se activa solo si el activo falla, salvo "aplicar a todos"); el
+activo persistido solo cambia con una extracción real exitosa; el de fábrica gana si es igual o más
+nuevo; y la prueba en vivo desde GitHub sale "inconclusa" casi siempre (YouTube bloquea IPs de
+datacenter). Pendientes manuales: subir `ENGINE_SIGNING_KEY` a GitHub y aplicar la migración 20.
+
 ### Estado actual (última actualización: 2026-10-01)
 
 **Portadas propias de playlists y foto de perfil: cerrada, desplegada y probada (R2 + Worker +
