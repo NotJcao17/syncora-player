@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_js/flutter_js.dart';
 
 import 'dart_fetch_bridge.dart';
-import 'js_bundle_loader.dart';
+import 'engine/engine_bundle.dart';
 import 'models/extraction_request.dart';
 import 'models/extraction_result.dart';
 import 'retry_policy.dart';
@@ -30,6 +30,28 @@ class ExtractionLogMessage {
   ExtractionLogMessage(this.message);
 }
 
+/// Resultado de evaluar un motor en QuickJS (Fase 8.A).
+///
+/// Antes, si el motor no compilaba, el isolate solo escribía un log y cada
+/// extracción posterior fallaba con un `extractVideo is not defined` que la
+/// app trataba como "canción no disponible". Ahora el isolate lo informa al
+/// arrancar y el `EngineManager` puede volver a otro motor.
+class EngineLoadReport {
+  final bool ok;
+  final String? error;
+  final int? build;
+  final String? youtubei;
+  final List<String> clients;
+
+  const EngineLoadReport({
+    required this.ok,
+    this.error,
+    this.build,
+    this.youtubei,
+    this.clients = kDefaultEngineClients,
+  });
+}
+
 final Map<String, Completer<Map<String, dynamic>>> _jsExtractCompleters = {};
 final Map<String, Completer<Map<String, dynamic>>> _jsSearchCompleters = {};
 final Map<String, String> _resolvedMatchCache = {};
@@ -41,17 +63,23 @@ class ExtractionIsolate {
   SendPort? _isolateSendPort;
   final Map<String, Completer<ExtractionResult>> _pendingRequests = {};
   ReceivePort? _mainReceivePort;
-  Completer<void>? _spawnCompleter;
+  ReceivePort? _exitPort;
+  Completer<EngineLoadReport>? _spawnCompleter;
+  Completer<void>? _reloading;
   final StreamController<String> _logController = StreamController<String>.broadcast();
 
   Stream<String> get onLogMessage => _logController.stream;
   bool get isInitialized => _isolateSendPort != null;
+  bool get hasPendingRequests => _pendingRequests.isNotEmpty;
 
-  Future<void> spawn() async {
-    if (isInitialized) return;
-    if (_spawnCompleter != null) return _spawnCompleter!.future;
+  /// Arranca el isolate con [bundle] y espera a que QuickJS lo evalúe.
+  /// Si ya está arrancado (o arrancando), devuelve ese mismo arranque.
+  Future<EngineLoadReport> spawn(EngineBundle bundle) async {
+    final inFlight = _spawnCompleter;
+    if (inFlight != null) return inFlight.future;
 
-    _spawnCompleter = Completer<void>();
+    final completer = Completer<EngineLoadReport>();
+    _spawnCompleter = completer;
 
     final token = RootIsolateToken.instance;
     if (token == null) {
@@ -59,59 +87,129 @@ class ExtractionIsolate {
       throw StateError('RootIsolateToken no está disponible.');
     }
 
-    final jsBundle = await JsBundleLoader.loadCompleteBundle();
-    _mainReceivePort = ReceivePort();
+    final receivePort = ReceivePort();
+    final exitPort = ReceivePort();
+    _mainReceivePort = receivePort;
+    _exitPort = exitPort;
 
-    _mainReceivePort!.listen((message) {
+    receivePort.listen((message) {
       if (message is SendPort) {
         _isolateSendPort = message;
-        if (!(_spawnCompleter?.isCompleted ?? true)) {
-          _spawnCompleter?.complete();
-        }
+      } else if (message is EngineLoadReport) {
+        if (!completer.isCompleted) completer.complete(message);
       } else if (message is ExtractionResult) {
-        final completer = _pendingRequests.remove(message.requestId);
-        completer?.complete(message);
+        final pending = _pendingRequests.remove(message.requestId);
+        pending?.complete(message);
       } else if (message is ExtractionLogMessage) {
         _logController.add(message.message);
       }
     });
 
-    _isolate = await Isolate.spawn(
-      _isolateEntryPoint,
-      _IsolateInitMessage(
-        token: token,
-        mainSendPort: _mainReceivePort!.sendPort,
-        jsBundle: jsBundle,
-      ),
-    );
+    // H-8-3: si el isolate muere (excepción no capturada), antes nadie se
+    // enteraba y las peticiones pendientes no se completaban nunca: la
+    // canción se quedaba "cargando" para siempre. Ahora se completan con
+    // error de red (el reproductor reintenta 1 vez) y la siguiente petición
+    // vuelve a arrancar el motor.
+    exitPort.listen((_) {
+      if (!identical(_exitPort, exitPort)) return; // muerte esperada (reload/dispose)
+      _logController.add('[IsolateJS] El isolate de extracción terminó inesperadamente.');
+      _teardown();
+      if (!completer.isCompleted) {
+        completer.complete(const EngineLoadReport(ok: false, error: 'El isolate terminó al arrancar'));
+      }
+    });
 
-    return _spawnCompleter!.future;
+    try {
+      _isolate = await Isolate.spawn(
+        _isolateEntryPoint,
+        _IsolateInitMessage(
+          token: token,
+          mainSendPort: receivePort.sendPort,
+          jsBundle: bundle.code,
+        ),
+        onExit: exitPort.sendPort,
+      );
+    } catch (e) {
+      _teardown();
+      rethrow;
+    }
+
+    final report = await completer.future;
+    if (identical(_spawnCompleter, completer)) _spawnCompleter = null;
+    return report;
   }
 
   Future<ExtractionResult> request(ExtractionRequest request) async {
-    if (_isolateSendPort == null) {
-      await spawn();
+    final reloading = _reloading;
+    if (reloading != null) await reloading.future;
+    final port = _isolateSendPort;
+    if (port == null) {
+      return ExtractionFailure(
+        requestId: request.requestId,
+        error: ExtractionError.networkError,
+        message: 'El motor de extracción no está disponible.',
+      );
     }
 
     final completer = Completer<ExtractionResult>();
     _pendingRequests[request.requestId] = completer;
-
-    _isolateSendPort!.send(request);
-
+    port.send(request);
     return completer.future;
+  }
+
+  /// Cambia el motor en caliente (Fase 8.C, solo en emergencias): espera a
+  /// que no haya extracciones en curso (máx. [drainTimeout]), mata el isolate
+  /// y arranca otro con [bundle]. Las peticiones que lleguen mientras tanto
+  /// esperan al motor nuevo.
+  Future<EngineLoadReport> reload(
+    EngineBundle bundle, {
+    Duration drainTimeout = const Duration(seconds: 30),
+  }) async {
+    final gate = Completer<void>();
+    _reloading = gate;
+    try {
+      final deadline = DateTime.now().add(drainTimeout);
+      while (_pendingRequests.isNotEmpty && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+      _teardown();
+      return await spawn(bundle);
+    } finally {
+      _reloading = null;
+      gate.complete();
+    }
   }
 
   void resetEngine() {
     _isolateSendPort?.send('RESET_ENGINE');
   }
 
-  void dispose() {
-    _logController.close();
+  /// Mata el isolate actual y completa con error lo que quedara pendiente.
+  void _teardown() {
+    _exitPort?.close();
+    _exitPort = null;
     _mainReceivePort?.close();
+    _mainReceivePort = null;
     _isolate?.kill(priority: Isolate.immediate);
     _isolate = null;
     _isolateSendPort = null;
     _spawnCompleter = null;
+    final orphaned = Map.of(_pendingRequests);
+    _pendingRequests.clear();
+    for (final entry in orphaned.entries) {
+      if (!entry.value.isCompleted) {
+        entry.value.complete(ExtractionFailure(
+          requestId: entry.key,
+          error: ExtractionError.networkError,
+          message: 'El motor de extracción se reinició.',
+        ));
+      }
+    }
+  }
+
+  void dispose() {
+    _teardown();
+    _logController.close();
   }
 
   /// Punto de entrada del Isolate secundario
@@ -137,6 +235,7 @@ class ExtractionIsolate {
 
     JavascriptRuntime? jsRuntime;
     Timer? pendingJobTimer;
+    var loadReport = const EngineLoadReport(ok: false, error: 'El motor no cargó');
 
     try {
       jsRuntime = getJavascriptRuntime(xhr: false);
@@ -255,27 +354,49 @@ class ExtractionIsolate {
         jsRuntime?.executePendingJob();
       });
 
-      // Evaluar bundle de polyfills + youtubei.js
-      sendLog('[IsolateJS] Cargando bundle QuickJS...');
+      // Evaluar el motor (polyfills + youtubei.js + pegamento) y comprobar
+      // que expone el contrato (Fase 8.A).
+      sendLog('[IsolateJS] Cargando motor en QuickJS...');
       final bundleRes = jsRuntime.evaluate(initMessage.jsBundle);
       if (bundleRes.isError) {
-        sendLog('[IsolateJS ERROR CRÍTICO] Falló compilación del bundle JS: ${bundleRes.stringResult}');
+        loadReport = EngineLoadReport(ok: false, error: 'El motor no compila: ${bundleRes.stringResult}');
       } else {
-        sendLog('[IsolateJS] Bundle QuickJS cargado con éxito.');
+        loadReport = _readEngineContract(jsRuntime);
       }
     } catch (e) {
-      sendLog('[IsolateJS] Error al inicializar QuickJS: $e');
+      loadReport = EngineLoadReport(ok: false, error: 'Error al inicializar QuickJS: $e');
     }
+
+    if (loadReport.ok) {
+      sendLog('[IsolateJS] Motor ${loadReport.build} cargado (youtubei.js ${loadReport.youtubei}, '
+          'clientes ${loadReport.clients.join(", ")}).');
+    } else {
+      sendLog('[IsolateJS ERROR CRÍTICO] ${loadReport.error}');
+    }
+    initMessage.mainSendPort.send(loadReport);
 
     // Escuchar peticiones enviadas desde el Main Isolate
     await for (final message in childReceivePort) {
       if (message is ExtractionRequest) {
-        final result = await _processExtraction(
-          request: message,
-          jsRuntime: jsRuntime,
-          retryPolicy: retryPolicy,
-          sendLog: sendLog,
-        );
+        final ExtractionResult result;
+        if (!loadReport.ok) {
+          // Sin motor no hay nada que intentar: fallar rápido y marcado como
+          // problema del motor, nunca como "canción no disponible".
+          result = ExtractionFailure(
+            requestId: message.requestId,
+            error: ExtractionError.unknownError,
+            message: 'El motor no cargó: ${loadReport.error}',
+            suspectEngine: true,
+          );
+        } else {
+          result = await _processExtraction(
+            request: message,
+            jsRuntime: jsRuntime,
+            retryPolicy: retryPolicy,
+            sendLog: sendLog,
+            clients: loadReport.clients,
+          );
+        }
         initMessage.mainSendPort.send(result);
       } else if (message == 'RESET_ENGINE') {
         sendLog('[IsolateJS] Reiniciando motor JS...');
@@ -292,6 +413,7 @@ class ExtractionIsolate {
     required JavascriptRuntime? jsRuntime,
     required RetryPolicy retryPolicy,
     required void Function(String) sendLog,
+    List<String> clients = kDefaultEngineClients,
   }) async {
     final videoId = request.videoId.trim();
 
@@ -329,6 +451,7 @@ class ExtractionIsolate {
           jsRuntime: jsRuntime,
           retryPolicy: retryPolicy,
           sendLog: sendLog,
+          clients: clients,
         );
       }
 
@@ -414,6 +537,10 @@ class ExtractionIsolate {
         // sesión por un problema de red (visto al arrancar la app en Android,
         // con DNS todavía sin resolver).
         var answeredSearches = 0;
+        // Fase 8.A: errores que devolvió el propio JS de búsqueda (el parser
+        // reventó con YouTube contestando). Los de red se descartan: no dicen
+        // nada del motor.
+        final searchErrors = <String>[];
 
         for (final attempt in attempts) {
           final query = attempt.$1;
@@ -421,13 +548,18 @@ class ExtractionIsolate {
           final mode = attempt.$3;
           final sourceLabel = mode == 'music' ? 'YouTube Music' : 'cliente $client';
           sendLog('[IsolateJS] Buscando match para "$query" en $sourceLabel...');
-          final candidates = await _trySearchWithClient(
+          final outcome = await _trySearchWithClient(
             query: query,
             client: client,
             mode: mode,
             jsRuntime: jsRuntime,
             sendLog: sendLog,
           );
+          final candidates = outcome.results;
+          final searchError = outcome.jsError;
+          if (searchError != null && _isSuspectEngineError(searchError)) {
+            searchErrors.add(searchError);
+          }
           if (candidates != null) answeredSearches++;
           if (candidates == null || candidates.isEmpty) {
             sendLog('[IsolateJS] Búsqueda sin candidatos en $sourceLabel.');
@@ -509,6 +641,7 @@ class ExtractionIsolate {
         // escribe tras una extracción realmente exitosa — antes se escribía
         // apenas se elegía el candidato y nunca se invalidaba, así que un
         // match equivocado quedaba fijado el resto de la sesión.
+        ExtractionFailure? lastCandidateFailure;
         for (final candidate in topCandidates) {
           sendLog('[IsolateJS] Probando candidato ${candidate.videoId} (score ${candidate.score})...');
           final resolvedRequest = ExtractionRequest(
@@ -525,6 +658,7 @@ class ExtractionIsolate {
             jsRuntime: jsRuntime,
             retryPolicy: retryPolicy,
             sendLog: sendLog,
+            clients: clients,
           );
           if (result is ExtractionSuccess) {
             _resolvedMatchCache[videoId] = candidate.videoId;
@@ -535,7 +669,32 @@ class ExtractionIsolate {
             // no tiene sentido seguir probando otros candidatos ahora mismo.
             return result;
           }
+          if (result is ExtractionFailure) lastCandidateFailure = result;
           sendLog('[IsolateJS] Candidato ${candidate.videoId} no disponible, probando el siguiente...');
+        }
+
+        // Había candidatos pero ninguno se pudo extraer, y por algo que apunta
+        // al motor (no a vídeos privados o borrados).
+        if (lastCandidateFailure != null && lastCandidateFailure.suspectEngine) {
+          sendLog('[IsolateJS] Ningún candidato de "$videoId" se pudo extraer (posible fallo del motor).');
+          return ExtractionFailure(
+            requestId: request.requestId,
+            error: ExtractionError.notFound,
+            message: lastCandidateFailure.message,
+            suspectEngine: true,
+          );
+        }
+
+        if (topCandidates.isEmpty && answeredSearches == 0 && searchErrors.isNotEmpty) {
+          // YouTube contestó pero el JS de búsqueda no supo leer la respuesta:
+          // es el motor, no la red ni la canción.
+          sendLog('[IsolateJS] Todas las búsquedas fallaron dentro del motor: ${searchErrors.first}');
+          return ExtractionFailure(
+            requestId: request.requestId,
+            error: ExtractionError.unknownError,
+            message: 'La búsqueda de YouTube falló: ${searchErrors.first}',
+            suspectEngine: true,
+          );
         }
 
         if (topCandidates.isEmpty && answeredSearches == 0) {
@@ -566,7 +725,6 @@ class ExtractionIsolate {
       );
     }
 
-    final clients = ['ANDROID', 'ANDROID_VR', 'WEB'];
     String lastJsError = '';
 
     for (final client in clients) {
@@ -619,6 +777,7 @@ class ExtractionIsolate {
           jsRuntime: jsRuntime,
           retryPolicy: retryPolicy,
           sendLog: sendLog,
+          clients: clients,
         );
       }
       sendLog('[IsolateJS] Guard 403: Pausando reproductor. No se pudo extraer la URL.');
@@ -630,7 +789,57 @@ class ExtractionIsolate {
       requestId: request.requestId,
       error: errorType,
       message: 'No se pudo extraer la URL con clientes ($clients). Detalle: $lastJsError',
+      // Fase 8.A: YouTube contestó en todos los clientes y aun así no hubo
+      // URL, y no por un vídeo privado/borrado: apunta al motor.
+      suspectEngine: (errorType == ExtractionError.notFound || errorType == ExtractionError.unknownError) &&
+          _isSuspectEngineError(lastJsError),
     );
+  }
+
+  /// Lee `SYNCORA_ENGINE` y comprueba que el motor expone el contrato que
+  /// espera este isolate (`kSupportedEngineApi`).
+  static EngineLoadReport _readEngineContract(JavascriptRuntime js) {
+    final res = js.evaluate('JSON.stringify({'
+        'extract: typeof globalThis.extractVideo === "function",'
+        'search: typeof globalThis.searchVideos === "function",'
+        'info: globalThis.SYNCORA_ENGINE || null})');
+    if (res.isError) {
+      return EngineLoadReport(ok: false, error: 'No se pudo leer el contrato: ${res.stringResult}');
+    }
+    try {
+      final data = jsonDecode(res.stringResult) as Map<String, dynamic>;
+      if (data['extract'] != true || data['search'] != true) {
+        return const EngineLoadReport(ok: false, error: 'El motor no expone extractVideo/searchVideos');
+      }
+      final info = data['info'] is Map ? Map<String, dynamic>.from(data['info'] as Map) : null;
+      final api = (info?['api'] as num?)?.toInt();
+      if (info != null && api != kSupportedEngineApi) {
+        return EngineLoadReport(ok: false, error: 'Motor de api $api, esta app entiende la $kSupportedEngineApi');
+      }
+      final rawClients = info?['clients'];
+      final clients = rawClients is List && rawClients.isNotEmpty
+          ? rawClients.map((c) => c.toString()).toList()
+          : kDefaultEngineClients;
+      return EngineLoadReport(
+        ok: true,
+        build: (info?['build'] as num?)?.toInt(),
+        youtubei: info?['youtubei'] as String?,
+        clients: clients,
+      );
+    } catch (e) {
+      return EngineLoadReport(ok: false, error: 'Contrato ilegible: $e');
+    }
+  }
+
+  /// ¿Este error apunta al motor? No si es de red/403 (lo cubre el guard de
+  /// reintentos) ni si es un vídeo concreto que ya no existe o es privado.
+  static bool _isSuspectEngineError(String errorText) {
+    final type = _classifyExtractionError(errorText);
+    if (type == ExtractionError.networkError || type == ExtractionError.rateLimited) return false;
+    final e = errorText.toLowerCase();
+    if (e.contains('dioexception') || e.contains('connection')) return false;
+    const contentMarkers = ['private video', 'video unavailable', 'no longer available'];
+    return !contentMarkers.any(e.contains);
   }
 
   /// Clasifica el texto de error devuelto por QuickJS en un [ExtractionError].
@@ -723,14 +932,16 @@ class ExtractionIsolate {
     }
   }
 
-  static Future<List<Map<String, dynamic>>?> _trySearchWithClient({
+  /// `results` es `null` si la búsqueda no obtuvo respuesta utilizable;
+  /// `jsError` trae el error que devolvió el propio JS, si lo hubo.
+  static Future<({List<Map<String, dynamic>>? results, String? jsError})> _trySearchWithClient({
     required String query,
     required String client,
     required JavascriptRuntime? jsRuntime,
     required void Function(String) sendLog,
     String mode = 'video',
   }) async {
-    if (jsRuntime == null) return null;
+    if (jsRuntime == null) return (results: null, jsError: 'El motor no cargó');
 
     final jsRequestId = 'js_search_${DateTime.now().microsecondsSinceEpoch}_${client}_$mode';
     final completer = Completer<Map<String, dynamic>>();
@@ -746,7 +957,7 @@ class ExtractionIsolate {
     if (evalRes.isError) {
       sendLog('[IsolateJS ERROR AL EJECUTAR SEARCHVIDEOS] ${evalRes.stringResult}');
       _jsSearchCompleters.remove(jsRequestId);
-      return null;
+      return (results: null, jsError: 'Error sintáctico en searchVideos: ${evalRes.stringResult}');
     }
 
     jsRuntime.executePendingJob();
@@ -754,16 +965,17 @@ class ExtractionIsolate {
     try {
       final res = await completer.future.timeout(const Duration(seconds: 20));
       if (res.containsKey('results') && res['results'] is List) {
-        return (res['results'] as List).cast<Map<String, dynamic>>();
+        return (results: (res['results'] as List).cast<Map<String, dynamic>>(), jsError: null);
       }
       if (res.containsKey('error')) {
         sendLog('[IsolateJS] searchVideos $client/$mode devolvió error: ${res['error']}');
+        return (results: null, jsError: res['error'].toString());
       }
-      return null;
+      return (results: null, jsError: null);
     } catch (e) {
       _jsSearchCompleters.remove(jsRequestId);
       sendLog('[IsolateJS] Timeout en searchVideos para $client/$mode');
-      return null;
+      return (results: null, jsError: null);
     }
   }
 }

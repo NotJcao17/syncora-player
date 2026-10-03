@@ -1,0 +1,64 @@
+# Canario del motor (Fase 8): una vez al día prueba el motor PUBLICADO contra
+# YouTube. Si falla con YouTube contestando, el workflow falla y GitHub te
+# avisa por correo: es la señal de que hace falta un arreglo que youtubei.js
+# no trae (la lista de clientes, el User-Agent…) y hay que commitearlo.
+#
+# Ojo: los servidores de GitHub son IPs de datacenter y YouTube suele
+# bloquearlas. En ese caso el resultado es "inconcluso" y NO falla (no dice
+# nada del motor). Es una red extra, no la única: la app avisa sola cuando su
+# motor se rompe.
+
+name: Canario del motor
+
+on:
+  schedule:
+    - cron: '41 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engine
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Motor publicado
+        id: engine
+        run: |
+          mkdir -p canary
+          if gh release download engine-channel -p engine-manifest.json -D canary --repo "$GITHUB_REPOSITORY"; then
+            FILE=$(node -e "
+              const m = require('./canary/engine-manifest.json');
+              const p = JSON.parse(Buffer.from(m.payload, 'base64').toString());
+              const e = p.engines.filter((x) => x.api === 1).sort((a, b) => b.build - a.build)[0];
+              console.log(e.file);
+            ")
+            gh release download engine-channel -p "$FILE" -D canary --repo "$GITHUB_REPOSITORY"
+            gunzip -c "canary/$FILE" > canary/engine.js
+            echo "Probando el motor publicado ($FILE)." >> "$GITHUB_STEP_SUMMARY"
+          else
+            node scripts/build.mjs --out canary/engine.js
+            echo "Sin release todavía: se prueba el motor del repo." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Prueba en vivo
+        run: |
+          set +e
+          node test/live.mjs canary/engine.js
+          code=$?
+          case $code in
+            0) echo "✅ Funciona." >> "$GITHUB_STEP_SUMMARY"; exit 0 ;;
+            2) echo "Inconcluso: YouTube bloqueó la IP de GitHub." >> "$GITHUB_STEP_SUMMARY"; exit 0 ;;
+            *) echo "❌ El motor publicado no extrae con YouTube contestando." >> "$GITHUB_STEP_SUMMARY"; exit 1 ;;
+          esac

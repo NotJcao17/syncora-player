@@ -251,6 +251,19 @@ enum PlayerNoticeKind {
   /// —escribiendo solo en Drift, que el sync después poda (Pitfall #28)— es
   /// no ejecutarla y avisar por acá.
   blockedOffline,
+
+  /// Fase 8.A: el motor de extracción se rompió (YouTube cambió algo). El
+  /// reproductor quedó en pausa sin saltar pistas y sin marcarlas como no
+  /// disponibles; el `EngineManager` está buscando un motor que funcione.
+  engineBroken,
+
+  /// Fase 8.A: otro motor (normalmente uno bajado por OTA) volvió a extraer;
+  /// la pista que estaba en pausa se reintenta sola.
+  engineRecovered,
+
+  /// Fase 8.A: se probaron todos los motores disponibles y ninguno funciona.
+  /// Falta que se publique un arreglo; la app lo seguirá buscando.
+  engineNoFix,
 }
 
 /// Aviso puntual del reproductor para la UI (Fase 7.C + H-6). Cada instancia

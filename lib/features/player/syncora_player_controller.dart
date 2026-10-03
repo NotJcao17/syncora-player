@@ -3,6 +3,7 @@ import 'dart:developer' as dev;
 
 import 'package:flutter/widgets.dart';
 
+import '../../core/extraction/engine/engine_manager.dart' show EngineEvent;
 import '../../core/extraction/extraction_service.dart';
 import '../../core/extraction/models/extraction_request.dart';
 import '../../core/extraction/models/extraction_result.dart';
@@ -176,7 +177,11 @@ class SyncoraPlayerController extends ChangeNotifier {
     // Solo para tests: acorta el techo de espera de carga del motor
     // ([_engineLoadTimeout]) para no tener que esperar 30 s reales.
     Duration? engineLoadTimeout,
-  })  : _engineLoadTimeout = engineLoadTimeout ?? defaultEngineLoadTimeout,
+    // Fase 8.A: avisos del motor de extracción (recuperado / sin arreglo).
+    // `null` en tests y web, donde no hay motor real.
+    Stream<EngineEvent>? engineEvents,
+  })  : _engineEvents = engineEvents, // ignore: prefer_initializing_formals
+        _engineLoadTimeout = engineLoadTimeout ?? defaultEngineLoadTimeout,
         _engine = engine, // ignore: prefer_initializing_formals
         _extractionService = extractionService, // ignore: prefer_initializing_formals
         _deezerApi = deezerApi, // ignore: prefer_initializing_formals
@@ -191,6 +196,13 @@ class SyncoraPlayerController extends ChangeNotifier {
 
   final AudioEngine _engine;
   final ExtractionService _extractionService;
+  final Stream<EngineEvent>? _engineEvents;
+  StreamSubscription<EngineEvent>? _engineEventSub;
+
+  /// Pista que quedó en pausa porque el motor de extracción se rompió (Fase
+  /// 8.A). Cuando el `EngineManager` avisa que otro motor funciona, se
+  /// reintenta sola — siempre que siga siendo la pista actual.
+  String? _awaitingEngineRecoveryTrackId;
   final DeezerApi? _deezerApi;
   final DownloadedTrackDao? _downloadedTrackDao;
   final ListeningHistoryDao? _listeningHistoryDao;
@@ -337,6 +349,16 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// resetear ahí nunca pisa un conteo en curso.
   int _consecutiveLogicalFailures = 0;
 
+  /// Pistas marcadas "no disponibles" durante la racha actual de fallos
+  /// lógicos. Si la racha resulta ser un motor roto (Fase 8.A), se les quita
+  /// la marca: no era culpa de ellas.
+  final List<String> _logicalFailureStreakTrackIds = [];
+
+  void _resetLogicalFailureStreak() {
+    _consecutiveLogicalFailures = 0;
+    _logicalFailureStreakTrackIds.clear();
+  }
+
   /// Punto único de "reproducción lograda" (7.C.3, revisión de código: bug
   /// real corregido). `_playCurrentInternal` tiene DOS caminos de éxito —
   /// extracción online (`ExtractionSuccess`) y descarga local (que retorna
@@ -349,7 +371,7 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// bad3 con solo 3 fallos, ninguno consecutivo de verdad). Factorizado
   /// para que ambos caminos de éxito llamen al mismo punto.
   void _onPlaybackStartedSuccessfully() {
-    _consecutiveLogicalFailures = 0;
+    _resetLogicalFailureStreak();
   }
 
   /// Contador monotónico de [PlayerNotice] (Fase 7.C + H-6): cada aviso
@@ -491,6 +513,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     _engineSub = _engine.stateStream.listen(_onEngineState);
     _completionSub = _engine.completionStream.listen((_) => _onComplete());
     _engineLogSub = _engine.logStream.listen(_log);
+    _engineEventSub = _engineEvents?.listen(_onEngineEvent);
     _restoreSession();
   }
 
@@ -517,7 +540,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     // 7.C.3: setQueue() es una intervención del usuario (nuevo contexto de
     // escucha) — no debe arrastrar un conteo de fallos lógicos de la sesión
     // de escucha anterior (ver docstring de `_consecutiveLogicalFailures`).
-    _consecutiveLogicalFailures = 0;
+    _resetLogicalFailureStreak();
     // Cada llamada a setQueue() es una sesión de contexto nueva (Fase 7.B,
     // revisión: bug #1) — incrementa en AMBAS ramas (tracks.isEmpty incluida)
     // para que un lote de radio en vuelo, originado antes de este cambio de
@@ -603,7 +626,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     _isTransitioning = true;
     // 7.C.3: elegir una pista de la cola a mano es una intervención del
     // usuario — no debe arrastrar un conteo de fallos lógicos viejo.
-    _consecutiveLogicalFailures = 0;
+    _resetLogicalFailureStreak();
     try {
       await _playFromQueueInternal(origin, index);
     } finally {
@@ -693,7 +716,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     // fallos lógicos de una cadena de auto-skip anterior — la cascada
     // interna nunca pasa por este método público (ver docstring de
     // _advanceAndPlay), así que resetear acá nunca pisa un conteo en curso.
-    _consecutiveLogicalFailures = 0;
+    _resetLogicalFailureStreak();
     try {
       await _advanceAndPlay();
     } finally {
@@ -826,7 +849,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     // aviso/marcado gris debe seguir aplicando igual, eso no cambia), pero
     // no debe arrastrar el conteo de una cadena de auto-skip previa hacia
     // "siguiente".
-    _consecutiveLogicalFailures = 0;
+    _resetLogicalFailureStreak();
     try {
       final now = DateTime.now();
       final isDoubleTap = _lastPrevTapTime != null && now.difference(_lastPrevTapTime!) < const Duration(milliseconds: 1500);
@@ -2523,8 +2546,14 @@ bool get _isTestEnv {
       return;
     }
 
+    if (error == ExtractionError.engineBroken) {
+      await _handleEngineBroken(track, message);
+      return;
+    }
+
     if (error == ExtractionError.notFound || error == ExtractionError.unknownError) {
       _consecutiveLogicalFailures++;
+      _logicalFailureStreakTrackIds.add(track.id);
       // 7.C.2 (D-21): marcado de sesión, nunca persistido — nueva instancia
       // de Set, nunca mutación in-place (mismo patrón que las colas).
       final updatedUnavailable = Set<String>.from(_state.unavailableTrackIds)..add(track.id);
@@ -2594,6 +2623,66 @@ bool get _isTestEnv {
     );
     _notify();
     _saveSession();
+  }
+
+  /// Fase 8.A: el motor de extracción está roto, no la canción. Se pausa sin
+  /// saltar (saltar solo vaciaría la cola marcando todo como no disponible) y
+  /// se les quita la marca a las pistas de la racha que llevó hasta aquí. El
+  /// `EngineManager` ya está buscando un motor que funcione; si lo encuentra,
+  /// [_onEngineEvent] reintenta esta misma pista.
+  Future<void> _handleEngineBroken(SyncoraTrack track, String? message) async {
+    _log('[Play] Motor de extracción roto: pausa sin auto-skip ($message).');
+    await _engine.pause();
+    final restored = Set<String>.from(_state.unavailableTrackIds)
+      ..removeAll(_logicalFailureStreakTrackIds)
+      ..remove(track.id);
+    _resetLogicalFailureStreak();
+    _awaitingEngineRecoveryTrackId = track.id;
+    _state = _state.copyWith(
+      // `idle` con pista actual: el siguiente play() rehace la extracción.
+      engine: _state.engine.copyWith(
+        processingState: AudioProcessingState.idle,
+        playing: false,
+      ),
+      lastError: ExtractionError.engineBroken,
+      lastErrorMessage: message,
+      unavailableTrackIds: Set.unmodifiable(restored),
+      notice: _nextNotice(
+        kind: PlayerNoticeKind.engineBroken,
+        message: 'YouTube cambió algo y el motor dejó de funcionar. Buscando un arreglo…',
+      ),
+    );
+    _notify();
+    _saveSession();
+  }
+
+  void _onEngineEvent(EngineEvent event) {
+    if (_disposed) return;
+    final waiting = _awaitingEngineRecoveryTrackId;
+    if (waiting == null) return;
+    switch (event) {
+      case EngineEvent.recovered:
+        _awaitingEngineRecoveryTrackId = null;
+        _state = _state.copyWith(
+          notice: _nextNotice(
+            kind: PlayerNoticeKind.engineRecovered,
+            message: 'Motor actualizado. Volviendo a reproducir…',
+          ),
+        );
+        _notify();
+        if (_state.currentTrack?.id == waiting && !_state.engine.playing) {
+          playCurrent();
+        }
+      case EngineEvent.noFix:
+        _state = _state.copyWith(
+          notice: _nextNotice(
+            kind: PlayerNoticeKind.engineNoFix,
+            message: 'Todavía no hay un arreglo publicado. Tus descargas siguen sonando; '
+                'la app lo volverá a buscar sola.',
+          ),
+        );
+        _notify();
+    }
   }
 
   void _onEngineState(AudioEngineState engineState) {
@@ -2839,6 +2928,7 @@ bool get _isTestEnv {
     _engineSub?.cancel();
     _completionSub?.cancel();
     _engineLogSub?.cancel();
+    _engineEventSub?.cancel();
     _logController.close();
     _engine.dispose();
     super.dispose();

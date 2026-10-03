@@ -305,6 +305,23 @@ class _AppShellState extends ConsumerState<AppShell> {
           // deshabilitar, así que el aviso llega por acá.
           AppToast.show(context, message: notice.message);
           break;
+        case PlayerNoticeKind.engineBroken:
+        case PlayerNoticeKind.engineRecovered:
+          // Fase 8.A: motor de extracción roto / recuperado. El detalle (qué
+          // motor, cuándo se buscó) vive en Configuración → Motor.
+          AppToast.show(context, message: notice.message, duration: const Duration(seconds: 6));
+          break;
+        case PlayerNoticeKind.engineNoFix:
+          AppToast.show(
+            context,
+            message: notice.message,
+            actionLabel: 'Reintentar',
+            onAction: () {
+              ref.read(syncoraPlayerControllerProvider.notifier).play();
+            },
+            duration: const Duration(seconds: 8),
+          );
+          break;
       }
     });
 

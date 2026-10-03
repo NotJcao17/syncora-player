@@ -1,0 +1,171 @@
+# Publica el motor de extracción por OTA (Fase 8). Detalle en docs/fases/fase_8.md.
+#
+# Tres formas de dispararse:
+#  - Programado cada 6 h: si youtubei.js sacó versión nueva en npm (y ya pasó
+#    la cuarentena de 24 h), la compila, la prueba, la firma y la publica.
+#  - Push a master que toque el motor (engine/src, engine/vendor, config).
+#  - A mano (Actions → "Publicar motor" → Run workflow), con la opción de
+#    aplicarlo a todos en el siguiente arranque o de revocar versiones.
+#
+# Las apps solo ACTIVAN un motor nuevo cuando el suyo falla (salvo "aplicar a
+# todos"). Publicar aquí no cambia nada en una app que funciona.
+
+name: Publicar motor
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  push:
+    branches: [master]
+    paths:
+      - 'engine/src/**'
+      - 'engine/vendor/youtubei.bundle.js'
+      - 'engine/vendor/youtubei.version'
+      - 'engine/engine.config.json'
+  workflow_dispatch:
+    inputs:
+      apply_to_all:
+        description: 'Aplicar a todos en el próximo arranque (aunque su motor funcione)'
+        type: boolean
+        default: false
+      revoke:
+        description: 'Builds a revocar, separados por coma (opcional)'
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: engine-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engine
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Dependencias
+        run: npm ci --no-audit --no-fund
+
+      - name: ¿Hay youtubei.js nuevo?
+        id: upstream
+        if: github.event_name == 'schedule'
+        run: node scripts/check-upstream.mjs
+
+      - name: Nada que publicar
+        if: github.event_name == 'schedule' && steps.upstream.outputs.action != 'update'
+        run: echo "Sin cambios (${{ steps.upstream.outputs.reason }})." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Compilar youtubei.js ${{ steps.upstream.outputs.version }}
+        id: lib
+        if: github.event_name != 'schedule' || steps.upstream.outputs.action == 'update'
+        run: |
+          if [ "${{ steps.upstream.outputs.action }}" = "update" ]; then
+            node scripts/update-lib.mjs "${{ steps.upstream.outputs.version }}"
+          fi
+          echo "go=true" >> "$GITHUB_OUTPUT"
+
+      - name: Armar motor
+        id: build
+        if: steps.lib.outputs.go == 'true'
+        run: |
+          BUILD=$(date -u +%Y%m%d%H%M)
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+          ENGINE_BUILD=$BUILD node scripts/build.mjs --out dist/engine.js
+
+      - name: Prueba obligatoria (QuickJS real + contrato)
+        id: gate
+        if: steps.lib.outputs.go == 'true'
+        run: node test/check.mjs dist/engine.js
+
+      - name: Prueba en vivo contra YouTube (informativa)
+        if: steps.lib.outputs.go == 'true'
+        run: |
+          set +e
+          node test/live.mjs dist/engine.js
+          code=$?
+          case $code in
+            0) echo "Prueba en vivo: funciona." >> "$GITHUB_STEP_SUMMARY" ;;
+            2) echo "Prueba en vivo: inconclusa (YouTube bloquea las IPs de GitHub)." >> "$GITHUB_STEP_SUMMARY" ;;
+            *) echo "⚠️ Prueba en vivo: falló. Se publica igual: las apps solo lo usan si el suyo falla y revierten si este no sirve." >> "$GITHUB_STEP_SUMMARY" ;;
+          esac
+          exit 0
+
+      - name: Manifiesto anterior
+        if: steps.lib.outputs.go == 'true'
+        run: |
+          mkdir -p prev
+          gh release download engine-channel -p engine-manifest.json -D prev --repo "$GITHUB_REPOSITORY" || true
+
+      - name: Firmar
+        if: steps.lib.outputs.go == 'true'
+        env:
+          ENGINE_SIGNING_KEY: ${{ secrets.ENGINE_SIGNING_KEY }}
+        run: |
+          if [ -z "$ENGINE_SIGNING_KEY" ]; then
+            echo "::error::Falta el secreto ENGINE_SIGNING_KEY (ver docs/fases/fase_8.md)."
+            exit 1
+          fi
+          ROLLOUT=on_failure
+          if [ "${{ inputs.apply_to_all }}" = "true" ]; then ROLLOUT=next_launch; fi
+          node scripts/sign.mjs --engine dist/engine.js --out dist \
+            --previous prev/engine-manifest.json --rollout "$ROLLOUT" --revoke "${{ inputs.revoke }}"
+
+      - name: Publicar en la release engine-channel
+        if: steps.lib.outputs.go == 'true'
+        run: |
+          if ! gh release view engine-channel --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create engine-channel --repo "$GITHUB_REPOSITORY" --prerelease \
+              --title "Motor de extracción (OTA)" \
+              --notes "Canal OTA del motor de extracción de Syncora. Lo mantiene el workflow publish-engine.yml; no es una versión de la app."
+          fi
+          # Primero el motor y después el manifiesto que lo anuncia: nunca hay
+          # un manifiesto apuntando a un archivo que todavía no existe.
+          gh release upload engine-channel "dist/engine-${{ steps.build.outputs.build }}.js.gz" --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload engine-channel dist/engine-manifest.json --repo "$GITHUB_REPOSITORY" --clobber
+          echo "Publicado motor ${{ steps.build.outputs.build }}." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Borrar motores viejos (se conservan 10)
+        if: steps.lib.outputs.go == 'true'
+        run: |
+          gh release view engine-channel --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' \
+            | grep -E '^engine-[0-9]+\.js\.gz$' | sort -r | tail -n +11 \
+            | while read -r name; do gh release delete-asset engine-channel "$name" --repo "$GITHUB_REPOSITORY" -y; done
+
+      - name: Guardar youtubei.js nuevo en el repo
+        if: steps.upstream.outputs.action == 'update'
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add engine/vendor/youtubei.bundle.js engine/vendor/youtubei.version
+          git commit -m "chore(motor): youtubei.js ${{ steps.upstream.outputs.version }}"
+          git push
+
+      # Si una versión nueva de youtubei.js no pasa la prueba obligatoria, se
+      # anota para no reintentarla cada 6 h y el workflow falla: GitHub te
+      # avisa por correo una sola vez. Las apps siguen con el motor de antes.
+      - name: Anotar versión rechazada
+        if: >-
+          failure() && steps.upstream.outputs.action == 'update' &&
+          (steps.lib.outcome == 'failure' || steps.build.outcome == 'failure' || steps.gate.outcome == 'failure')
+        working-directory: .
+        run: |
+          git checkout -- engine/vendor || true
+          echo "${{ steps.upstream.outputs.version }}" >> engine/vendor/rejected-versions.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add engine/vendor/rejected-versions.txt
+          git commit -m "chore(motor): youtubei.js ${{ steps.upstream.outputs.version }} no pasa las pruebas"
+          git push

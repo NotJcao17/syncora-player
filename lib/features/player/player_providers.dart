@@ -89,6 +89,7 @@ final syncoraPlayerControllerProvider =
     isConnectedGetter: () => ref.read(isConnectedProvider).value ?? true,
     radioEnabledGetter: () => ref.read(radioEnabledProvider),
     crossfadeDurationGetter: () => ref.read(crossfadeDurationProvider),
+    engineEvents: ref.watch(engineManagerProvider)?.events,
     onListenRecorded: () {
       // Sube la escucha apenas se graba: antes solo se subía en
       // `syncOnStartup()` o al refrescar Estadísticas, por eso lo escuchado en

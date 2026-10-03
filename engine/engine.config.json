@@ -1,0 +1,4 @@
+{
+  "api": 1,
+  "clients": ["ANDROID", "ANDROID_VR", "WEB"]
+}

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'engine/engine_manager.dart';
 import 'models/extraction_request.dart';
 import 'models/extraction_result.dart';
 import 'extraction_isolate.dart';
@@ -21,15 +22,22 @@ abstract class ExtractionService {
 }
 
 class ExtractionServiceReal implements ExtractionService {
+  ExtractionServiceReal() {
+    _engine = EngineManager(isolate: _isolate);
+  }
+
   final ExtractionIsolate _isolate = ExtractionIsolate();
+  late final EngineManager _engine;
   int _requestIdCounter = 0;
+
+  /// Estado del motor y OTA (Fase 8). Fuera de la interfaz a propósito: los
+  /// dobles de test de [ExtractionService] no tienen motor.
+  EngineManager get engineManager => _engine;
 
   @override
   Stream<String> get onLogMessage => _isolate.onLogMessage;
 
-  Future<void> initialize() async {
-    await _isolate.spawn();
-  }
+  Future<void> initialize() => _engine.ensureEngine();
 
   @override
   Future<ExtractionResult> extractUrl(
@@ -60,7 +68,9 @@ class ExtractionServiceReal implements ExtractionService {
       durationSeconds: durationSeconds,
       quality: quality,
     );
-    return _isolate.request(request);
+    await _engine.ensureEngine();
+    final result = await _isolate.request(request);
+    return _engine.process(request, result);
   }
 
   @override
@@ -70,6 +80,7 @@ class ExtractionServiceReal implements ExtractionService {
 
   @override
   void dispose() {
+    _engine.dispose();
     _isolate.dispose();
   }
 }

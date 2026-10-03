@@ -85,6 +85,10 @@ dependencies:
   # Ya venía como transitiva (supabase_flutter); directa para los ajustes
   # de Configuración (`core/settings/app_settings_store.dart`).
   shared_preferences: ^2.5.5
+  # Fase 8 (OTA del motor): verificar la firma Ed25519 del manifiesto (Dart
+  # puro) y el SHA-256 de cada motor descargado. Ver docs/fases/fase_8.md.
+  cryptography: ^2.9.0
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:
@@ -134,7 +138,9 @@ flutter:
 
   assets:
     - .env
-    - assets/js/youtubei.bundle.js
+    # Motor de fábrica (generado por engine/scripts/build.mjs, no editar a mano).
+    - assets/js/syncora_engine.js
+    - assets/js/syncora_engine.json
     - assets/icon/
 
 

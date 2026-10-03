@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:syncora_player/core/extraction/engine/engine_manager.dart' show EngineEvent;
 import 'package:syncora_player/core/extraction/extraction_service.dart';
 import 'package:syncora_player/core/extraction/models/extraction_request.dart';
 import 'package:syncora_player/core/extraction/models/extraction_result.dart';
@@ -219,6 +220,8 @@ class TestableExtractionService implements ExtractionService {
   // `forcedError`, que aplica a TODOS los ids) — usado para probar cascadas
   // de auto-skip de varios pasos sin que la pista "buena" también falle.
   final Set<String> notFoundIds = {};
+  // Fase 8.A: ids para los que el motor de extracción "está roto".
+  final Set<String> engineBrokenIds = {};
 
   // Permite retener la resolución de un videoId concreto hasta que el test
   // la complete a mano — reproduce a voluntad la carrera de "extracción
@@ -253,6 +256,15 @@ class TestableExtractionService implements ExtractionService {
         requestId: 'req_$extractCount',
         error: forcedError!,
         message: 'Forced error $forcedError',
+      );
+    }
+
+    if (engineBrokenIds.contains(videoId)) {
+      return ExtractionFailure(
+        requestId: 'req_$extractCount',
+        error: ExtractionError.engineBroken,
+        message: 'Streaming data not available',
+        suspectEngine: true,
       );
     }
 
@@ -3120,6 +3132,68 @@ void main() {
       expect(extraction.extractCount, 2, reason: 'el reintento usa una extraccion fresca');
       expect(controller.state.engine.processingState, AudioProcessingState.ready);
       controller.dispose();
+    });
+  });
+
+  group('Fase 8.A: motor de extracción roto', () {
+    test('pausa sin saltar, quita la marca a la racha y se reanuda sola al recuperarse', () async {
+      final engine = FakeAudioEngine();
+      final extraction = TestableExtractionService();
+      final events = StreamController<EngineEvent>.broadcast();
+      final controller = SyncoraPlayerController(
+        engine: engine,
+        extractionService: extraction,
+        engineEvents: events.stream,
+      )..init();
+      addTearDown(() {
+        controller.dispose();
+        events.close();
+      });
+
+      extraction.notFoundIds.add('bad1');
+      extraction.engineBrokenIds.add('t2');
+      await controller.setQueue(const [
+        SyncoraTrack(id: 'bad1', title: 'B1'),
+        SyncoraTrack(id: 't2', title: 'T2'),
+        SyncoraTrack(id: 't3', title: 'T3'),
+      ], autoplay: true);
+
+      expect(controller.state.currentTrack?.id, 't2', reason: 'no sigue saltando con el motor roto');
+      expect(controller.state.notice?.kind, PlayerNoticeKind.engineBroken);
+      expect(engine.pauseCallCount, 1);
+      expect(controller.state.unavailableTrackIds, isEmpty,
+          reason: 'bad1 falló por el motor, no por la canción: se le quita la marca');
+
+      extraction.engineBrokenIds.clear();
+      final before = extraction.extractCount;
+      events.add(EngineEvent.recovered);
+      await pumpEventQueue();
+
+      expect(controller.state.notice?.kind, PlayerNoticeKind.engineRecovered);
+      expect(extraction.extractCount, before + 1, reason: 'reintenta la misma pista sola');
+      expect(controller.state.currentTrack?.id, 't2');
+    });
+
+    test('sin arreglo avisa una vez y no reintenta', () async {
+      final extraction = TestableExtractionService()..engineBrokenIds.add('t1');
+      final events = StreamController<EngineEvent>.broadcast();
+      final controller = SyncoraPlayerController(
+        engine: FakeAudioEngine(),
+        extractionService: extraction,
+        engineEvents: events.stream,
+      )..init();
+      addTearDown(() {
+        controller.dispose();
+        events.close();
+      });
+
+      await controller.setQueue(const [SyncoraTrack(id: 't1', title: 'T1')], autoplay: true);
+      final before = extraction.extractCount;
+      events.add(EngineEvent.noFix);
+      await pumpEventQueue();
+
+      expect(controller.state.notice?.kind, PlayerNoticeKind.engineNoFix);
+      expect(extraction.extractCount, before);
     });
   });
 }

@@ -53,3 +53,8 @@ supabase/.temp/
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Motor OTA: dependencias, salidas temporales y la llave privada de firma
+/engine/node_modules/
+/engine/dist/
+/engine/*.pem

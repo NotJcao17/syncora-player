@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/cache/storage_usage.dart';
+import '../../../core/extraction/extraction_provider.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_toast.dart';
@@ -21,6 +22,7 @@ import '../../player/player_providers.dart';
 import '../../player/widgets/sleep_timer_sheet.dart';
 import '../../profile/widgets/avatar_selector_sheet.dart';
 import '../widgets/delete_account_flow.dart';
+import '../widgets/engine_status_section.dart';
 
 
 /// Pantalla de Configuración (SettingsScreen)
@@ -53,6 +55,7 @@ class SettingsScreen extends ConsumerWidget {
     // local" cuando aplica (D-24 -- el modo local es un estado de sesión,
     // no de red, así que se decide con este flag, no con `isConnected`).
     final isLocalMode = ref.watch(localModeProvider);
+    final engineManager = ref.watch(engineManagerProvider);
     final seed = ref.watch(avatarInfoProvider).seed;
     final String userEmail = currentUser?.email ?? 'usuario@syncora.com';
 
@@ -393,6 +396,15 @@ class SettingsScreen extends ConsumerWidget {
             _buildSectionHeader('INTELIGENCIA ARTIFICIAL'),
             const SizedBox(height: 8),
             _buildCard(child: const _AiByokSection()),
+          ],
+
+          // Fase 8: motor de extracción y su OTA. Oculto en web/tests, donde
+          // no hay motor real.
+          if (engineManager != null) ...[
+            const SizedBox(height: 24),
+            _buildSectionHeader('MOTOR DE REPRODUCCIÓN'),
+            const SizedBox(height: 8),
+            _buildCard(child: EngineStatusSection(manager: engineManager)),
           ],
 
           const SizedBox(height: 24),

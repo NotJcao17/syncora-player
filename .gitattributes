@@ -1,0 +1,6 @@
+# Motor de extraccion (Fase 8): bytes exactos, su SHA-256 vive en la ficha .json
+assets/js/syncora_engine.js -text
+assets/js/syncora_engine.json -text
+engine/vendor/youtubei.bundle.js -text
+*.js.gz binary
+test/fixtures/engine/** -text

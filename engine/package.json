@@ -1,0 +1,17 @@
+{
+  "name": "syncora-engine",
+  "private": true,
+  "description": "Motor de extraccion de Syncora (youtubei.js + polyfills + pegamento) y su pipeline OTA. Ver engine/README.md.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node test/check.mjs",
+    "live": "node test/live.mjs",
+    "update-lib": "node scripts/update-lib.mjs",
+    "keygen": "node scripts/keygen.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "quickjs-emscripten": "0.32.0"
+  }
+}
