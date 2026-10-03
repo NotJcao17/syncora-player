@@ -7,6 +7,9 @@ import '../../library/services/like_track_service.dart';
 import '../player_models.dart';
 import '../syncora_player_controller.dart';
 import '../audio_engine/audio_engine_state.dart' as engine_state;
+import '../../../data/local_db/daos/downloaded_track_dao.dart';
+import '../../../data/local_db/playlist_track_mapper.dart';
+import '../../../data/local_db/syncora_database.dart';
 
 /// Adaptador de Android para conectar [SyncoraPlayerController] con [audio_service].
 ///
@@ -16,6 +19,7 @@ import '../audio_engine/audio_engine_state.dart' as engine_state;
 class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
   SyncoraPlayerController _controller;
   PlaylistDao? _playlistDao;
+  DownloadedTrackDao? _downloadedTrackDao;
   SupabasePlaylistRepository? _supabaseRepo;
   DeezerApi? _deezerApi;
 
@@ -78,7 +82,9 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     SupabasePlaylistRepository? supabaseRepo,
     DeezerApi? deezerApi,
     bool Function()? canEditGetter,
+    DownloadedTrackDao? downloadedTrackDao,
   })  : _playlistDao = playlistDao, // ignore: prefer_initializing_formals
+        _downloadedTrackDao = downloadedTrackDao, // ignore: prefer_initializing_formals
         _supabaseRepo = supabaseRepo, // ignore: prefer_initializing_formals
         _deezerApi = deezerApi, // ignore: prefer_initializing_formals
         _canEditGetter = canEditGetter { // ignore: prefer_initializing_formals
@@ -93,8 +99,10 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     SupabasePlaylistRepository? supabaseRepo,
     DeezerApi? deezerApi,
     bool Function()? canEditGetter,
+    DownloadedTrackDao? downloadedTrackDao,
   }) {
     if (playlistDao != null) _playlistDao = playlistDao;
+    if (downloadedTrackDao != null) _downloadedTrackDao = downloadedTrackDao;
     if (supabaseRepo != null) _supabaseRepo = supabaseRepo;
     if (deezerApi != null) _deezerApi = deezerApi;
     if (canEditGetter != null) _canEditGetter = canEditGetter;
@@ -401,6 +409,135 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     final resolved = _resolveCombinedIndex(index);
     if (resolved == null) return;
     await _controller.playFromQueue(resolved.$1, resolved.$2);
+  }
+
+  // ----------------------------------------------------------------------
+  // Android Auto (ronda 5): árbol de navegación del `MediaBrowserService`
+  // ----------------------------------------------------------------------
+  //
+  // Raíz -> "Tus me gusta", "Escuchado recientemente", "Tus playlists",
+  // "Descargas". Las playlists se abren para ver sus canciones; tocar una
+  // canción pone su playlist entera en cola desde ahí, igual que en la app.
+  // Todo sale de Drift (funciona sin conexión salvo la búsqueda por voz).
+
+  static const _liked = 'auto:liked';
+  static const _recent = 'auto:recent';
+  static const _playlists = 'auto:playlists';
+  static const _downloads = 'auto:downloads';
+
+  List<SyncoraTrack> _lastSearch = const [];
+
+  MediaItem _folder(String id, String title, {String? subtitle, Uri? art}) =>
+      MediaItem(id: id, title: title, displaySubtitle: subtitle, playable: false, artUri: art);
+
+  Uri? _coverOf(Playlist p) {
+    final url = p.coverUrl;
+    if (url == null || !url.startsWith('http')) return null;
+    return Uri.tryParse(url);
+  }
+
+  @override
+  Future<List<MediaItem>> getChildren(String parentMediaId, [Map<String, dynamic>? options]) async {
+    final dao = _playlistDao;
+    if (dao == null) return const [];
+    try {
+      switch (parentMediaId) {
+        case AudioService.browsableRootId:
+          return [
+            _folder(_liked, 'Tus me gusta'),
+            _folder(_recent, 'Escuchado recientemente'),
+            _folder(_playlists, 'Tus playlists'),
+            if (_downloadedTrackDao != null) _folder(_downloads, 'Descargas'),
+          ];
+        case _recent:
+          final all = await dao.getAllPlaylists();
+          final recent = all.where((p) => p.lastPlayedAt != null).toList()
+            ..sort((a, b) => b.lastPlayedAt!.compareTo(a.lastPlayedAt!));
+          return [
+            for (final p in recent.take(20)) _folder('auto:playlist:${p.id}', p.title, art: _coverOf(p)),
+          ];
+        case _playlists:
+          final all = await dao.getAllPlaylists();
+          return [
+            for (final p in all.where((p) => !p.isLiked)) _folder('auto:playlist:${p.id}', p.title, art: _coverOf(p)),
+          ];
+        case _liked:
+          final liked = await dao.getLikedPlaylist();
+          return _trackItems('auto:playlist:${liked.id}', await _playlistTracks(liked.id));
+        case _downloads:
+          return _trackItems(_downloads, await _downloadedTracks());
+      }
+      if (parentMediaId.startsWith('auto:playlist:')) {
+        final id = int.tryParse(parentMediaId.substring('auto:playlist:'.length));
+        if (id == null) return const [];
+        return _trackItems(parentMediaId, await _playlistTracks(id));
+      }
+    } catch (_) {}
+    return const [];
+  }
+
+  Future<List<SyncoraTrack>> _playlistTracks(int playlistId) async {
+    final rows = await _playlistDao!.getTracksOrdered(playlistId);
+    return [for (final r in rows) playlistTrackToSyncora(r)];
+  }
+
+  Future<List<SyncoraTrack>> _downloadedTracks() async {
+    final rows = await _downloadedTrackDao?.getAllDownloaded() ?? const <DownloadedTrack>[];
+    return [for (final r in rows) downloadedTrackToSyncora(r)];
+  }
+
+  /// Canciones de una colección; el id lleva la colección y la posición para
+  /// poder armar la cola al tocarla (`<colección>|<índice>`).
+  List<MediaItem> _trackItems(String collectionId, List<SyncoraTrack> tracks) => [
+        for (var i = 0; i < tracks.length; i++)
+          _toMediaItem(tracks[i]).copyWith(id: '$collectionId|$i', playable: true),
+      ];
+
+  @override
+  Future<void> playFromMediaId(String mediaId, [Map<String, dynamic>? extras]) async {
+    final sep = mediaId.lastIndexOf('|');
+    if (sep < 0) return;
+    final collection = mediaId.substring(0, sep);
+    final index = int.tryParse(mediaId.substring(sep + 1)) ?? 0;
+    List<SyncoraTrack> tracks;
+    String? contextId;
+    if (collection == 'auto:search') {
+      tracks = _lastSearch;
+    } else if (collection == _downloads) {
+      tracks = await _downloadedTracks();
+      contextId = 'downloads';
+    } else if (collection.startsWith('auto:playlist:')) {
+      final id = int.tryParse(collection.substring('auto:playlist:'.length));
+      if (id == null) return;
+      tracks = await _playlistTracks(id);
+      contextId = 'playlist_$id';
+      unawaited(_playlistDao?.touchLastPlayed(id));
+    } else {
+      return;
+    }
+    if (tracks.isEmpty) return;
+    await _controller.setQueue(tracks, startIndex: index.clamp(0, tracks.length - 1), activeContextId: contextId);
+  }
+
+  @override
+  Future<List<MediaItem>> search(String query, [Map<String, dynamic>? extras]) async {
+    final api = _deezerApi;
+    if (api == null || query.trim().isEmpty) return const [];
+    try {
+      final result = await api.search(query, type: DeezerSearchType.track, enrich: false);
+      _lastSearch = [for (final t in result.tracks.take(30)) t.toSyncoraTrack()];
+      return _trackItems('auto:search', _lastSearch);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// "Ok Google, pon X en Syncora": busca y reproduce el mejor resultado.
+  @override
+  Future<void> playFromSearch(String query, [Map<String, dynamic>? extras]) async {
+    final items = await search(query, extras);
+    if (items.isEmpty) return;
+    await _controller.setQueue(_lastSearch, startIndex: 0);
   }
 
   @override

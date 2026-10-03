@@ -58,9 +58,9 @@ class CreditsScreen extends StatelessWidget {
       'https://supabase.com',
     ),
     (
-      'Plus Jakarta Sans',
-      'Tipografía, por Tokotype. SIL Open Font License 1.1, vía Google Fonts.',
-      'https://fonts.google.com/specimen/Plus+Jakarta+Sans',
+      'Inter',
+      'Tipografía, por Rasmus Andersson. SIL Open Font License 1.1, vía Google Fonts.',
+      'https://fonts.google.com/specimen/Inter',
     ),
     (
       'Flutter y su ecosistema',

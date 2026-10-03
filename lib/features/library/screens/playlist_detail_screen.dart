@@ -50,6 +50,7 @@ import '../services/playlist_pin_service.dart';
 import '../widgets/edit_playlist_dialog.dart';
 import '../widgets/folder_widgets.dart';
 import '../../../core/limits/app_limits.dart';
+import '../../../data/local_db/playlist_track_mapper.dart';
 
 enum PlaylistSortColumn { original, title, album, date, duration }
 enum PlaylistSortDirection { asc, desc, none }
@@ -948,7 +949,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     if (tracks.length < _backgroundMappingThreshold) {
       _memoTracks = tracks;
       _mappingTracks = null;
-      return _memoPairs = [for (final t in tracks) _TrackPair(playlistTrack: t, syncoraTrack: _toSyncoraTrack(t))];
+      return _memoPairs = [for (final t in tracks) _TrackPair(playlistTrack: t, syncoraTrack: playlistTrackToSyncora(t))];
     }
     if (!identical(tracks, _mappingTracks)) {
       _mappingTracks = tracks;
@@ -1950,32 +1951,7 @@ class _FastScrollbar extends StatelessWidget {
 /// referencias a Riverpod y al árbol de widgets) y el envío al isolate
 /// fallaría.
 Future<List<SyncoraTrack>> _mapTracksInBackground(List<PlaylistTrack> tracks) =>
-    Isolate.run(() => [for (final t in tracks) _toSyncoraTrack(t)]);
-
-/// Fila de Drift -> pista del reproductor. Función de nivel superior para
-/// poder correr en un isolate (ronda 5).
-SyncoraTrack _toSyncoraTrack(PlaylistTrack t) {
-  var parsedArtists = SyncoraArtistRef.decodeList(t.contributorsJson);
-  if (parsedArtists.isEmpty && t.artistName.contains(', ')) {
-    final names = t.artistName.split(', ');
-    parsedArtists = [
-      for (int i = 0; i < names.length; i++) SyncoraArtistRef(id: i == 0 ? t.artistId : 0, name: names[i].trim()),
-    ];
-  } else if (parsedArtists.isEmpty && (t.artistId != 0 || t.artistName.isNotEmpty)) {
-    parsedArtists = [SyncoraArtistRef(id: t.artistId, name: t.artistName)];
-  }
-  return SyncoraTrack(
-    id: t.trackId.toString(),
-    title: t.title,
-    artist: t.artistName,
-    artists: parsedArtists,
-    artistId: t.artistId,
-    album: t.albumName,
-    albumId: t.albumId,
-    duration: Duration(milliseconds: t.durationMs),
-    artUri: t.coverUrl.isNotEmpty ? Uri.tryParse(t.coverUrl) : null,
-  );
-}
+    Isolate.run(() => [for (final t in tracks) playlistTrackToSyncora(t)]);
 
 class _TrackPair {
   final PlaylistTrack playlistTrack;

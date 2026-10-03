@@ -81,7 +81,7 @@ sostenido en planes gratuitos (ver §4.5). El tope se puede subir en cualquier m
 
 *   Funciones IA (Gemini): Generar playlist por prompt de texto, generar cola de reproducción por prompt de texto, modificar playlist (ej. "quita las de este artista").
     *   **Crear playlist con IA** (Biblioteca): texto libre + panel de parámetros opcional (cantidad, máx. por artista, género/mood, familiaridad↔descubrimiento, nicho↔popular, "basado en una playlist mía") + iteración post-generación. La edición manual de la lista previa es local y gratuita; solo "afinar con IA" gasta una petición.
-    *   **Crear cola con IA** (pantalla de Cola): toggles de cola nueva vs. basada en la actual, e intercalar vs. añadir como cola manual. **Absorbe el Smart Shuffle.**
+    *   **Crear cola con IA** (pantalla de Cola): texto libre + "tener en cuenta lo que estoy escuchando" + cantidad; el resultado entra en la **cola manual**. *(Ronda 5, 2026-10-03: se quitó el modo "intercalar"; ese caso lo cubre ahora "Mejorar cola", sin IA — ver abajo.)*
     *   **Modificar playlist con IA** (menú de 3 puntos): modo *quitar* (schema restringido a IDs ya existentes en la playlist — no puede inventar qué borrar) y modo *agregar*.
     *   **Selector "basado en esta playlist" restringido a playlists propias**, nunca públicas/compartidas de terceros: evita que texto controlado por otro usuario entre al contexto de una IA que actúa con **tus** permisos.
 *   **Búsqueda por fragmento de letra (IA):** Enviar el fragmento a Gemini protegido contra inyecciones de prompt para que identifique la canción y devuelva las coincidencias más probables en formato estructurado JSON. La app luego las busca en Deezer y las muestra como resultados normales. Entrada: un botón más junto a "Popular" y "Búsqueda profunda" en el buscador.
@@ -89,7 +89,7 @@ sostenido en planes gratuitos (ver §4.5). El tope se puede subir en cualquier m
 *   **Crossfade** (transición suave entre canciones, exclusivamente en tracks locales/cacheados — ver Pitfall #17):
     *   **Windows (`media_kit`):** Investigar instancias duales de `media_kit` con fade-in/fade-out paralelo usando el control de volumen de cada instancia.
     *   **Android (`just_audio`):** `just_audio` soporta crossfade nativo usando dos `AudioPlayer` simultáneos; diseñar un `CrossfadeAudioHandler` que administre ambas instancias y el fade cruzado. Ambas plataformas deben quedar cubiertas en la Fase 7.
-*   ~~Smart Shuffle (aleatorio con sugerencias).~~ → **Absorbido** como el toggle "intercalar con la cola automática" dentro de *Crear cola con IA* (ver `plan_fase_7.md`, decisión D-9). Se descartó como función separada porque un disparo automático y recurrente quemaría el presupuesto de RPD de Gemini; como acción explícita del usuario no hay ese riesgo.
+*   ~~Smart Shuffle (aleatorio con sugerencias).~~ → Primero absorbido en *Crear cola con IA* (D-9). **Ronda 5 (2026-10-03):** es la acción **"Mejorar cola"**, sin IA: pide recomendaciones a la radio de Deezer (las mismas semillas ponderadas de la cola infinita) y las intercala en la cola automática, una cada 3 canciones, marcadas como recomendadas. No gasta Gemini, funciona sin cuenta y nunca toca la cola manual. Detalle en `docs/fases/correcciones_r5.md`.
 *   Búsqueda por género.
 *   Descubrimiento musical vía previews de Deezer (30s).
 *   Compartir playlists (solo lectura).

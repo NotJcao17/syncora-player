@@ -61,6 +61,20 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-10-03)
+
+**Quinta ronda de correcciones: implementada y pusheada; faltan las pruebas en dispositivo y
+aplicar la migración 21.** Detalle en `docs/fases/correcciones_r5.md` — **leerlo antes de tocar el
+avance de pistas o el crossfade del controlador, la cola ("Mejorar cola" / "Crear con IA"),
+portadas, letras, `SwipeActionTile`, la pantalla de playlist, límites o Android Auto**. Lo que no
+conviene revertir: el crossfade es solo para el fin natural de una pista; "siguiente" no espera a
+la carga (el guard cubre solo la mutación de la cola y las extracciones de streaming se reemplazan
+entre sí); lo que se pide a la IA va a la cola manual y "Mejorar cola" (radio de Deezer, sin IA) es
+la que intercala; las portadas de descargas no se borran por cantidad; conteos y portadas 2x2 de
+playlists salen de `playlistSummariesProvider`, nunca de un `watchTracksOrdered` por tarjeta; y los
+streams de Drift no se crean dentro de `build`. Hallazgo externo: Deezer `/artist/{id}/top` devolvía
+vacío el 2026-10-03; "Populares" y "Esto es {artista}" se arman con la discografía.
+
 ### Estado actual (última actualización: 2026-10-02)
 
 **Fase 8: implementada y pusheada.** OTA del motor de extracción, manejo de fallos del motor,

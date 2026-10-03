@@ -24,6 +24,7 @@ import 'os_controls/windows_media_controls.dart';
 import 'player_models.dart';
 import 'radio/radio_service.dart';
 import 'syncora_player_controller.dart';
+import '../../data/local_db/daos/downloaded_track_dao.dart';
 
 /// Toggle de Configuración para radio/cola infinita (Fase 7.B, D-10):
 /// activada por defecto. Persistido por dispositivo (`AppSettingsStore`).
@@ -123,6 +124,7 @@ final syncoraPlayerControllerProvider =
         supabasePlaylistRepo,
         deezerApi,
         () => ref.read(canEditProvider),
+        downloadedTrackDao,
       );
     } catch (e) {
       debugPrint('AndroidAudioService no disponible en este entorno: $e');
@@ -164,6 +166,7 @@ void _initAndroidAudioService(
   SupabasePlaylistRepository? supabaseRepo,
   DeezerApi? deezerApi,
   bool Function()? canEditGetter,
+  DownloadedTrackDao? downloadedTrackDao,
 ]) {
   final currentHandler = _globalAndroidAudioHandler;
   if (currentHandler != null) {
@@ -174,6 +177,7 @@ void _initAndroidAudioService(
         supabaseRepo: supabaseRepo,
         deezerApi: deezerApi,
         canEditGetter: canEditGetter,
+        downloadedTrackDao: downloadedTrackDao,
       );
     }
     return;
@@ -185,8 +189,16 @@ void _initAndroidAudioService(
       supabaseRepo: supabaseRepo,
       deezerApi: deezerApi,
       canEditGetter: canEditGetter,
+      downloadedTrackDao: downloadedTrackDao,
     ),
     config: const AudioServiceConfig(
+      // Ronda 5 (Android Auto): las carpetas como cuadrícula y las canciones
+      // como lista.
+      androidBrowsableRootExtras: {
+        'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2,
+        'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1,
+        'android.media.browse.SEARCH_SUPPORTED': true,
+      },
       androidNotificationChannelId: 'com.syncora.player',
       androidNotificationChannelName: 'Syncora Player',
       // `androidNotificationOngoing` pasa a `false` porque `audio_service`
