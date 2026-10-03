@@ -63,8 +63,12 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
   bool _paramsExpanded = false;
   int? _countPreset;
   int? _selectedReferencePlaylistId;
+  /// Ronda 5: un solo eje en vez de dos sliders. "Conocidas ↔ Descubrimiento"
+  /// y "Nicho ↔ Popular" pedían casi lo mismo al modelo (los dos extremos
+  /// "conocidas" y "popular" son "éxitos"). Se manda solo `familiarity`
+  /// (0 = éxitos, 1 = por descubrir); el servidor sigue aceptando
+  /// `popularity`, pero ya no viaja.
   double _familiarity = 0.5;
-  double _popularity = 0.5;
   String? _formError;
   bool _refinePanelOpen = false;
 
@@ -127,8 +131,7 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
       _genreController.text.trim().isNotEmpty ||
       _moodController.text.trim().isNotEmpty ||
       _selectedReferencePlaylistId != null ||
-      _familiarity != 0.5 ||
-      _popularity != 0.5;
+      _familiarity != 0.5;
 
   int _clampInt(int value, int min, int max) => value < min ? min : (value > max ? max : value);
 
@@ -232,8 +235,7 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
     final mood = _moodController.text.trim();
     if (genre.isNotEmpty) params['genre'] = genre;
     if (mood.isNotEmpty) params['mood'] = mood;
-    params['familiarity'] = _familiarity;
-    params['popularity'] = _popularity;
+    if (_familiarity != 0.5) params['familiarity'] = _familiarity;
     return params;
   }
 
@@ -788,17 +790,7 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
             decoration: _fieldDecoration('Mood / estado de ánimo (opcional)'),
           ),
           const SizedBox(height: 16),
-          _buildSlider(
-            label: 'Conocidas ←→ Descubrimiento',
-            value: _familiarity,
-            onChanged: (v) => setState(() => _familiarity = v),
-          ),
-          const SizedBox(height: 8),
-          _buildSlider(
-            label: 'Nicho ←→ Popular',
-            value: _popularity,
-            onChanged: (v) => setState(() => _popularity = v),
-          ),
+          _buildFamiliarityChoice(),
           const SizedBox(height: 16),
           const Text('Basada en una playlist mía (opcional)', style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
@@ -819,18 +811,40 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
     );
   }
 
-  Widget _buildSlider({required String label, required double value, required ValueChanged<double> onChanged}) {
+  Widget _buildFamiliarityChoice() {
+    const options = [(0.0, 'Éxitos'), (0.5, 'Mezcla'), (1.0, 'Por descubrir')];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600)),
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            activeTrackColor: AppTheme.primary,
-            thumbColor: AppTheme.primary,
-            inactiveTrackColor: AppTheme.surfaceActive,
-          ),
-          child: Slider(value: value, onChanged: onChanged),
+        const Text(
+          '¿Canciones conocidas o nuevas para ti?',
+          style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            for (var i = 0; i < options.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              Expanded(
+                child: ChoiceChip(
+                  label: SizedBox(width: double.infinity, child: Text(options[i].$2, textAlign: TextAlign.center)),
+                  selected: _familiarity == options[i].$1,
+                  onSelected: (_) => setState(() => _familiarity = options[i].$1),
+                  selectedColor: AppTheme.primary,
+                  backgroundColor: AppTheme.surfaceHover,
+                  labelStyle: TextStyle(
+                    color: _familiarity == options[i].$1 ? AppTheme.background : AppTheme.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                  showCheckmark: false,
+                  shape: StadiumBorder(
+                    side: BorderSide(color: _familiarity == options[i].$1 ? AppTheme.primary : AppTheme.surfaceHover),
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ],
     );
