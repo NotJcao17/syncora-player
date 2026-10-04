@@ -185,6 +185,28 @@ Sesión del 2026-10-03. Plan, diagnóstico, decisiones y estado. Cada bundle cer
 - **Wrapped compartido como rectángulo:** se pinta la tarjeta un frame sin esquinas redondeadas y se
   captura así, sin margen ni esquinas transparentes.
 
+## Cuarta tanda
+
+- **H-R5-21. El arreglo de H-R5-20 cambió un cover por otro (versión rock de 3:35).** En YouTube Music
+  el autor es quien interpreta; "Midnight City (M83)" de Charlie Parra del Riego se daba por
+  "artista confirmado" porque el título nombra a M83, y además todo resultado de YouTube Music se
+  llevaba el bono de fuente oficial (+120). Ahora, en YouTube Music, solo confirma el autor (si viene
+  vacío se evalúa como antes); el bono de fuente oficial exige que el autor sea el artista; y una
+  duración absurda (más de 60 s y más del 25 % de diferencia) descarta incluso al artista (un video
+  suyo de 33 minutos no es la canción). Si todas las búsquedas fallan, como último recurso se prueban
+  los candidatos que el filtro dejó fuera (lo que se hacía antes). **Verificado contra datos reales:**
+  80 canciones (chart general, rock y rap) con los candidatos que devuelve hoy YouTube Music: 79
+  eligen exactamente lo mismo que antes y 1 mejora ("Una Lady Como Tú" dejaba de elegir otro
+  artista). Para "Midnight City", sin el master (pide iniciar sesión) gana el video oficial de M83.
+- **Álbumes del buscador sin desplazamiento en PC:** nunca usaron `HorizontalScroller` (el arreglo
+  anterior fue en Inicio). Ahora sí.
+- **Corte brusco al cambiar de pista:** ver Pitfall #31. La bajada de 80 ms pasó a ser la transición
+  de todos los cambios manuales al reservar el crossfade al fin natural; ahora es una sola función
+  (`smoothFadeOut`, ~220 ms en 8 pasos con curva) para los tres motores.
+- **Carga colgada 15 s al poner una playlist:** sin logs del momento. Lo más probable es una URL de
+  YouTube lenta (al reintentar funcionó). No se añade un reintento por tiempo agotado: §2.1 de
+  `correcciones_qa_post_fase_7.md` lo prohíbe porque una carga agotada sigue viva en el motor.
+
 ## Pendiente
 
 - ~~Aplicar la migración 21~~: aplicada el 2026-10-03 con `supabase db push` (verificado: el

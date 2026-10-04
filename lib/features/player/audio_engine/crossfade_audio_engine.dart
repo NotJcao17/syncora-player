@@ -289,13 +289,7 @@ class CrossfadeAudioEngine implements AudioEngine {
     final curVol = _canonicalVolume;
     if (curVol <= 0.0) return;
     try {
-      final step = curVol / 3.0;
-      await _active.setVolume((curVol - step).clamp(0.0, 1.0));
-      await Future.delayed(const Duration(milliseconds: 30));
-      await _active.setVolume((curVol - 2 * step).clamp(0.0, 1.0));
-      await Future.delayed(const Duration(milliseconds: 30));
-      await _active.setVolume(0.0);
-      await Future.delayed(const Duration(milliseconds: 20));
+      await smoothFadeOut(_active.setVolume, curVol);
       await _active.stop();
       // Restaura inmediatamente el volumen canónico en el motor activo ya detenido
       await _active.setVolume(_canonicalVolume);

@@ -228,13 +228,24 @@ class YtSearchMatcher {
   /// con que UNO de los colaboradores aparezca. También cubre canales VEVO
   /// donde el nombre va pegado sin espacios ("taylorswiftvevo").
   static bool _artistConfirmed(String artistField, String normAuthor, String normTitle) {
-    if (artistField.trim().isEmpty) return false;
-    final normAuthorNoSpace = normAuthor.replaceAll(' ', '');
+    if (_authorIsArtist(artistField, normAuthor)) return true;
     for (final rawName in artistField.split(',')) {
       final normName = norm(rawName);
       if (normName.isEmpty) continue;
-      if (normAuthorNoSpace.contains(normName.replaceAll(' ', ''))) return true;
       if (_containsPhrase(normTitle, normName)) return true;
+    }
+    return false;
+  }
+
+  /// El canal/autor ES el artista (o su canal VEVO / "- Topic").
+  static bool _authorIsArtist(String artistField, String normAuthor) {
+    if (artistField.trim().isEmpty) return false;
+    final normAuthorNoSpace = normAuthor.replaceAll(' ', '');
+    if (normAuthorNoSpace.isEmpty) return false;
+    for (final rawName in artistField.split(',')) {
+      final normName = norm(rawName).replaceAll(' ', '');
+      if (normName.isEmpty) continue;
+      if (normAuthorNoSpace.contains(normName)) return true;
     }
     return false;
   }
@@ -269,7 +280,18 @@ class YtSearchMatcher {
       final titleOverlap = _titleOverlap(title, normTitle);
       if (titleOverlap < (relaxed ? _relaxedTitleOverlapPct : _minTitleOverlapPct)) continue;
 
-      final artistConfirmed = _artistConfirmed(artist, normAuthor, normTitle);
+      // Ronda 5: en YouTube Music el autor es quien INTERPRETA la canción.
+      // Un resultado de otro autor es un cover aunque el título nombre al
+      // artista original ("Midnight City (M83)" de Charlie Parra del Riego,
+      // una versión rock de 3:35): ahí el título no confirma nada.
+      // Si YouTube Music no trae autor (pasa), no hay nada que lo contradiga
+      // y se evalúa como antes.
+      final fromYtMusic = (raw['source'] as String?) == 'ytmusic';
+      final authorUnknown = normAuthor.isEmpty;
+      final authorIsArtist = _authorIsArtist(artist, normAuthor);
+      final artistConfirmed = fromYtMusic && !authorUnknown
+          ? authorIsArtist
+          : _artistConfirmed(artist, normAuthor, normTitle);
 
       int score = (titleOverlap * 0.6).round();
 
@@ -308,6 +330,13 @@ class YtSearchMatcher {
       // si ambas se conocen y difieren demasiado, es otra canción (C13).
       if (relaxed && durationWildlyOff) continue;
       if (!relaxed && !durationOk && !artistConfirmed) continue;
+      // Ronda 5: ni con el artista confirmado se acepta una duración absurda
+      // (más de 60 s y más del 25 % de diferencia): es un mix, un álbum
+      // entero o un video de 33 minutos del artista, no la canción.
+      if (durationSec != null && durationSec > 0 && candidateDuration != null && candidateDuration > 0) {
+        final diff = (candidateDuration - durationSec).abs();
+        if (diff > 60 && diff > durationSec * 0.25) continue;
+      }
 
       // 2. Términos indeseados — DESCALIFICAN el candidato de plano, no
       // restan puntos. Un simple -80 puede quedar absorbido por duración
@@ -342,9 +371,14 @@ class YtSearchMatcher {
       // búsqueda de canciones de YouTube Music (`source: 'ytmusic'`) cuenta
       // igual: ese catálogo son masters oficiales por construcción, y ahí el
       // autor llega como nombre de artista, sin el sufijo "- Topic".
-      final fromYtMusic = (raw['source'] as String?) == 'ytmusic';
-      final authoritative = fromYtMusic ||
-          _normGoodChannelTerms.any((good) => _containsPhrase(normAuthor, good));
+      //
+      // Ronda 5: el bono solo aplica si el autor es el artista. Ser de YouTube
+      // Music o de un canal "- Topic" garantiza que es un master, pero no de
+      // QUIÉN: con el bono para cualquiera, el master de un cover le ganaba al
+      // video oficial del artista cuando el master original no se podía
+      // reproducir.
+      final authoritative = (authorIsArtist || (fromYtMusic && authorUnknown)) &&
+          (fromYtMusic || _normGoodChannelTerms.any((good) => _containsPhrase(normAuthor, good)));
       if (authoritative) score += channelAuthorityBonus;
 
       // 4. Coincidencia de artista confirmada (ver arriba).

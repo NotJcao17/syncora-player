@@ -123,13 +123,7 @@ class JustAudioEngine implements AudioEngine {
     final curVol = _state.volume;
     if (curVol <= 0.0) return;
     try {
-      final step = curVol / 3.0;
-      await _player.setVolume((curVol - step).clamp(0.0, 1.0));
-      await Future.delayed(const Duration(milliseconds: 30));
-      await _player.setVolume((curVol - 2 * step).clamp(0.0, 1.0));
-      await Future.delayed(const Duration(milliseconds: 30));
-      await _player.setVolume(0.0);
-      await Future.delayed(const Duration(milliseconds: 20));
+      await smoothFadeOut(_player.setVolume, curVol);
       await _player.stop();
       // Restaura el volumen del motor nativo a nivel canónico tras detenerse
       await _player.setVolume(curVol.clamp(0.0, 1.0));

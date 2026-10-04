@@ -995,4 +995,39 @@ void main() {
     final top = YtSearchMatcher.pickTopCandidates(candidates, artist: 'M83', title: 'Midnight City', durationSec: 254);
     expect(top.map((c) => c.videoId), ['K8v_DaCcORQ']);
   });
+
+  group('ronda 5: covers de otro autor en YouTube Music', () {
+    final midnightCity = [
+      {'videoId': 'K8v_DaCcORQ', 'title': 'Midnight City', 'author': 'M83', 'durationSec': 244, 'source': 'ytmusic'},
+      {'videoId': 'uBww4fSpdVA', 'title': 'Midnight City (Official Midnight City Anthem) (feat. Mc Reign)',
+        'author': 'Madnezz', 'durationSec': 251, 'source': 'ytmusic'},
+      {'videoId': 'GyTS8HtlEh8', 'title': 'Midnight City (M83)', 'author': 'Charlie Parra del Riego',
+        'durationSec': 215, 'source': 'ytmusic'},
+      {'videoId': 'dX3k_QDnzHE', 'title': "M83 'Midnight City' Official video", 'author': 'M83', 'durationSec': 244},
+    ];
+
+    test('el título que nombra al artista no confirma un resultado de YouTube Music de otro autor', () {
+      final top = YtSearchMatcher.pickTopCandidates(midnightCity, artist: 'M83', title: 'Midnight City', durationSec: 244);
+      final cover = top.where((c) => c.videoId == 'GyTS8HtlEh8');
+      expect(cover, isEmpty, reason: 'versión rock de otro autor y 29 s más corta: ni siquiera es candidata');
+      expect(top.first.videoId, 'K8v_DaCcORQ');
+    });
+
+    test('sin el master, el video oficial del artista le gana a los masters de otros autores', () {
+      final withoutMaster = midnightCity.where((c) => c['videoId'] != 'K8v_DaCcORQ').toList();
+      final top = YtSearchMatcher.pickTopCandidates(withoutMaster, artist: 'M83', title: 'Midnight City', durationSec: 244);
+      expect(top.first.videoId, 'dX3k_QDnzHE');
+      expect(top.first.artistConfirmed, isTrue);
+    });
+
+    test('un resultado de YouTube Music sin autor se sigue evaluando como antes', () {
+      final top = YtSearchMatcher.pickTopCandidates([
+        {'videoId': 'AQ69W-1Jb0M', 'title': 'La Bachata', 'author': '', 'durationSec': 165, 'source': 'ytmusic'},
+        {'videoId': 'sBLM_LzfCz4', 'title': 'La Bachata - Mix', 'author': 'Manuel Turizo', 'durationSec': 2000,
+          'source': 'ytmusic'},
+      ], artist: 'Manuel Turizo', title: 'La Bachata', durationSec: 162);
+      expect(top.map((c) => c.videoId), ['AQ69W-1Jb0M'],
+          reason: 'un video de 33 minutos del artista no es la canción de 2:42');
+    });
+  });
 }

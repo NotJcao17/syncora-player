@@ -139,3 +139,27 @@ abstract class AudioEngine {
 
   void dispose();
 }
+
+/// Bajada de volumen antes de cortar una pista (cambio manual, parar).
+///
+/// Ronda 5: antes cada motor hacía su propia bajada de 80 ms en 3 escalones
+/// (el "micro fade-out" que sustituyó al corte seco con chasquido). Con el
+/// crossfade reservado al fin natural de la pista, esa bajada pasó a ser la
+/// transición de todos los "siguiente"/"anterior", y en 80 ms se oía como un
+/// corte. Ahora son ~220 ms en 8 pasos con curva cuadrática: casi
+/// imperceptible como espera y sin sonar brusco. Una sola implementación para
+/// los tres motores, para que no vuelvan a divergir.
+Future<void> smoothFadeOut(
+  Future<void> Function(double volume) setVolume,
+  double from, {
+  Duration duration = const Duration(milliseconds: 220),
+  int steps = 8,
+}) async {
+  if (from <= 0) return;
+  final stepDelay = Duration(microseconds: duration.inMicroseconds ~/ steps);
+  for (var i = 1; i <= steps; i++) {
+    final remaining = 1 - i / steps;
+    await setVolume((from * remaining * remaining).clamp(0.0, 1.0));
+    await Future<void>.delayed(stepDelay);
+  }
+}

@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/horizontal_scroller.dart';
 import '../../../core/widgets/playlist_card.dart';
 import '../../../core/widgets/skeleton_box.dart';
 import '../../../core/widgets/track_tile.dart';
@@ -849,13 +850,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 12),
-        SizedBox(
+        // Ronda 5: con `HorizontalScroller` (arrastre con ratón + flechas),
+        // igual que los carruseles de Inicio. Con un `ListView` horizontal a
+        // secas, en PC solo se veían los primeros cuatro álbumes y medio.
+        HorizontalScroller(
           height: 200,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: albums.length,
-            separatorBuilder: (ctx, index) => const SizedBox(width: 16),
-            itemBuilder: (ctx, i) {
+          itemCount: albums.length,
+          separatorWidth: 16,
+          itemBuilder: (ctx, i) {
               final album = albums[i];
               return SizedBox(
                 width: isDesktop ? 180 : 140,
@@ -872,7 +874,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               );
             },
-          ),
         ),
       ],
     );

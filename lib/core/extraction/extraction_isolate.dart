@@ -696,7 +696,42 @@ class ExtractionIsolate {
           sendLog('[IsolateJS] Candidato ${candidate.videoId} no disponible, probando el siguiente...');
         }
         // Ninguno se pudo extraer: siguiente búsqueda, si queda alguna.
-        if (round.isEmpty || nextAttempt >= attempts.length) break;
+        if (round.isEmpty || nextAttempt >= attempts.length) {
+          // Último recurso, ya sin búsquedas: los candidatos aceptados que el
+          // filtro de "solo artista confirmado" dejó fuera (lo que se probaba
+          // antes de la ronda 5). Mejor eso que saltar una canción de nicho
+          // cuyo canal no se llama como el artista.
+          final leftovers = [
+            for (final c in topCandidates)
+              if (!failedIds.contains(c.videoId)) c,
+          ];
+          for (final candidate in leftovers) {
+            sendLog('[IsolateJS] Último recurso: candidato ${candidate.videoId} (score ${candidate.score})...');
+            final result = await _processExtraction(
+              request: ExtractionRequest(
+                videoId: candidate.videoId,
+                requestId: request.requestId,
+                priority: request.priority,
+                trackTitle: request.trackTitle,
+                trackArtist: request.trackArtist,
+                durationSeconds: request.durationSeconds,
+                quality: request.quality,
+              ),
+              jsRuntime: jsRuntime,
+              retryPolicy: retryPolicy,
+              sendLog: sendLog,
+              clients: clients,
+            );
+            if (result is ExtractionSuccess) {
+              _resolvedMatchCache[videoId] = candidate.videoId;
+              return result;
+            }
+            if (result is ExtractionFailure && result.error != ExtractionError.notFound) return result;
+            if (result is ExtractionFailure) lastCandidateFailure = result;
+            failedIds.add(candidate.videoId);
+          }
+          break;
+        }
         sendLog('[IsolateJS] Ningún candidato se pudo extraer; se sigue con la siguiente búsqueda.');
         topCandidates = const [];
         await searchUntilCandidates();

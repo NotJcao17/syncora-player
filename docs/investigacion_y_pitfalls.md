@@ -210,3 +210,25 @@ Este documento recopila las trampas técnicas más comunes y destructivas al des
 *   **La Regla:** cuando la operación local es "por fila" y la remota es "por
     valor", no son equivalentes. Tras un borrado remoto por valor hay que reponer
     explícitamente lo que debía sobrevivir.
+
+## 31. El "corte brusco" al cambiar de pista vuelve cada vez que se toca el camino de transición
+
+*   **Historia:** se "arregló" tres veces. 1) `1b3f0c3`: el cambio de pista hacía `stop()` en seco y
+    se oía un chasquido; se añadió `microFadeOut` (80 ms en 3 escalones). 2) `6104a89`: ese fade
+    dejaba el volumen nativo en 0 y la pista siguiente arrancaba en silencio; se restaura el volumen
+    tras el `stop()`. 3) Ronda 5 (`a13f125`): el crossfade pasó a ser solo para el fin natural de una
+    pista, así que con crossfade activado **todos** los "siguiente"/"anterior" entre canciones
+    descargadas, que antes cruzaban, pasaron al `microFadeOut` de 80 ms. En 80 ms se oye como un corte.
+*   **La causa de fondo:** la suavidad de la transición manual dependía de *qué camino* tomara el
+    cambio (crossfade, micro fade o `stop()` directo), y cada cambio en ese reparto movía casos de
+    uno a otro sin que nadie volviera a escuchar el resultado. Ningún test puede oírlo.
+*   **La regla:**
+    - Todo cambio de pista iniciado por el usuario pasa por `_microFadeOut()` antes de `stop()` (o
+      por el crossfade, que solo aplica al fin natural). Un `_engine.stop()` sin fade solo está
+      permitido cuando el motor ya está en silencio (tras un fallo de carga o un salto offline).
+    - La bajada vive en **una sola** función, `smoothFadeOut` (`audio_engine_state.dart`): ~220 ms en
+      8 pasos con curva cuadrática, usada por los tres motores. No volver a escribir bajadas propias
+      por motor.
+    - Cualquier cambio en `_playCurrentGuarded`, `microFadeOut` o el crossfade se prueba **de oído**
+      en Android y Windows, con crossfade apagado y encendido, con canciones descargadas y por
+      streaming, antes de darlo por bueno.
