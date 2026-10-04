@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -90,6 +91,38 @@ La Gozadera (feat. Marc Anthony),Gente De Zona;Marc Anthony''';
 
       final gossip = result.firstWhere((t) => t.title.startsWith('GOSSIP'));
       expect(gossip.artist, equals('Måneskin;Tom Morello'));
+    });
+
+    test('TuneMyMusic (Amazon): BOM, etiquetas [Explicit]/[Clean] y filas de álbum', () {
+      const content = '﻿Track name,Artist name,Album,Playlist name,Type,ISRC,Amazon - id\n'
+          '"Payphone [feat. Wiz Khalifa] [Explicit]","Maroon 5","Oldies But Goodies [Explicit]","Library Songs","Favorite","USUM71203347","B08ZQ1F2T4"\n'
+          '"Maps","Maroon 5","V (Deluxe) [Clean]","Library Songs","Favorite","USUM71407116","B00XMYEWQY"\n'
+          '"The Dark Side of the Moon [Explicit]","Pink Floyd","The Dark Side of the Moon [Explicit]","Library Albums","Album","","B019HKJTCI"';
+
+      final result = service.parseFileContent(content);
+      expect(result.length, 2);
+      expect(result[0].title, 'Payphone [feat. Wiz Khalifa]');
+      expect(result[0].artist, 'Maroon 5');
+      expect(result[0].album, 'Oldies But Goodies');
+      expect(result[0].isrc, 'USUM71203347');
+      expect(result[0].playlistName, 'Library Songs');
+      expect(result[1].album, 'V (Deluxe)');
+    });
+
+    test('TuneMyMusic con varias playlists: se reparten por "Playlist name"', () {
+      const content = '﻿Track name,Artist name,Album,Playlist name,Type,ISRC,Spotify - id\n'
+          '"GRAN VÍA","Quevedo","BUENAS NOCHES","test 2","Playlist","ES03H2400005","2kQ1OvmMzs1xdlH020aJJh"\n'
+          '"Loser","Tame Impala","Deadbeat","otra","Playlist","USQX92504224","7bxaFZ1O3cHkgLKMsdC3xR"\n'
+          '"Primadonna","MARINA","Electra Heart (Deluxe)","test 2","Playlist","GBFFS1200009","4sOX1nhpKwFWPvoMMExi3q"';
+
+      final groups = PlaylistImportExportService.groupByPlaylist(service.parseFileContent(content));
+      expect(groups.map((g) => g.name), ['test 2', 'otra']);
+      expect(groups.first.tracks.map((t) => t.title), ['GRAN VÍA', 'Primadonna']);
+    });
+
+    test('decodeFileBytes: UTF-8 con acentos y respaldo Latin-1', () {
+      expect(PlaylistImportExportService.decodeFileBytes(utf8.encode('GRAN VÍA')), 'GRAN VÍA');
+      expect(PlaylistImportExportService.decodeFileBytes(latin1.encode('Canción')), 'Canción');
     });
 
     test('Export to CSV string format', () {

@@ -375,6 +375,21 @@ class DeezerApi {
     });
   }
 
+  /// Pista por ISRC (`/track/isrc:{isrc}`), o `null` si Deezer no la tiene:
+  /// responde 200 con `{"error": {"code": 800}}`. Ojo: puede devolver la
+  /// entrada de una recopilación (ver `docs/fuentes_youtube_y_matching.md`),
+  /// por eso la importación solo la usa como último recurso.
+  Future<DeezerTrack?> getTrackByIsrc(String isrc) async {
+    final code = isrc.trim().toUpperCase();
+    if (!RegExp(r'^[A-Z0-9]{12}$').hasMatch(code)) return null;
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/track/isrc:$code');
+      final data = Map<String, dynamic>.from(response.data as Map);
+      if (data['error'] != null) return null;
+      return DeezerTrack.fromJson(data);
+    });
+  }
+
   /// Lanza [DeezerNotFoundException] si Deezer retiró el álbum: responde 200
   /// con `{"error": {"code": 800, ...}}` en vez de un 404, y parsearlo como
   /// álbum daba "Álbum Sin Título" sin canciones ni portada.

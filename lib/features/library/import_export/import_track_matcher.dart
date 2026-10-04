@@ -46,6 +46,28 @@ class ImportTrackMatcher {
   static const double _minTitleSimilarity = 0.5;
 
   Future<DeezerTrack?> match(RawImportTrack raw) async {
+    final found = await _matchBySearch(raw);
+    if (found != null) return found;
+    return _matchByIsrc(raw);
+  }
+
+  /// Último recurso cuando la búsqueda no encontró nada: el ISRC que traen
+  /// Exportify y TuneMyMusic. No va primero porque Deezer a veces cuelga la
+  /// grabación de una recopilación y la búsqueda prefiere el álbum del
+  /// archivo. Sí exige que el título se parezca, por si el ISRC viene mal.
+  Future<DeezerTrack?> _matchByIsrc(RawImportTrack raw) async {
+    final isrc = raw.isrc;
+    if (isrc == null || isrc.isEmpty) return null;
+    try {
+      final track = await _api.getTrackByIsrc(isrc);
+      if (track == null) return null;
+      return scoreCandidate(track, raw, requireArtist: false) == null ? null : track;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<DeezerTrack?> _matchBySearch(RawImportTrack raw) async {
     final artists = artistKeys(raw.artist);
     final primary = primaryArtistName(raw.artist);
     final title = raw.title.trim();

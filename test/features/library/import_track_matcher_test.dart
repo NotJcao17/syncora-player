@@ -28,6 +28,14 @@ class _FakeApi extends DeezerApi {
   final Map<int, List<DeezerAlbum>> discographies = {};
   final Map<int, List<DeezerTrack>> tops = {};
   final List<DeezerArtist> artistSearch = [];
+  final Map<String, DeezerTrack> byIsrc = {};
+  int isrcCalls = 0;
+
+  @override
+  Future<DeezerTrack?> getTrackByIsrc(String isrc) async {
+    isrcCalls++;
+    return byIsrc[isrc];
+  }
 
   @override
   Future<DeezerSearchResult> search(String query, {DeezerSearchType type = DeezerSearchType.all, bool enrich = true}) async {
@@ -130,6 +138,27 @@ void main() {
     final m = await matcher.match(const RawImportTrack(
       title: '¿Con Quién Se Queda El Perro?', artist: 'Jesse & Joy', album: '¿Con Quién Se Queda El Perro?', durationMs: 188306));
     expect(m?.id, 30);
+  });
+
+  test('sin resultados en la búsqueda, el ISRC del archivo resuelve la canción', () async {
+    api.byIsrc['ES5700400713'] = _t(40, 'Lucha De Gigantes', 'Nacha Pop', 'Más Números, Otras Letras', 240);
+    final m = await matcher.match(const RawImportTrack(
+      title: 'Lucha De Gigantes', artist: 'Nacha Pop', album: 'El Momento', isrc: 'ES5700400713'));
+    expect(m?.id, 40);
+  });
+
+  test('el ISRC no se consulta si la búsqueda ya encontró la canción', () async {
+    api.trackSearch['Tame Impala Loser'] = [_t(50, 'Loser', 'Tame Impala', 'Deadbeat', 200)];
+    final m = await matcher.match(const RawImportTrack(
+      title: 'Loser', artist: 'Tame Impala', album: 'Deadbeat', isrc: 'USQX92504224'));
+    expect(m?.id, 50);
+    expect(api.isrcCalls, 0);
+  });
+
+  test('un ISRC que apunta a otra canción se descarta', () async {
+    api.byIsrc['USQX92504224'] = _t(60, 'Otra Cosa Distinta', 'Alguien', 'X', 200);
+    final m = await matcher.match(const RawImportTrack(title: 'Loser', artist: 'Tame Impala', isrc: 'USQX92504224'));
+    expect(m, isNull);
   });
 
   test('normaliza el formato de Spotify ("feat." y " - Remix") contra el de Deezer', () {

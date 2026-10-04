@@ -897,15 +897,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     if (result == null || result.files.isEmpty) return;
 
     final file = result.files.first;
-    String content = '';
-
-    if (file.bytes != null) {
-      content = String.fromCharCodes(file.bytes!);
-    } else if (file.path != null) {
-      content = await File(file.path!).readAsString();
-    }
-
-    if (content.isEmpty) return;
+    final bytes = file.bytes ?? (file.path != null ? await File(file.path!).readAsBytes() : null);
+    if (bytes == null || bytes.isEmpty) return;
+    final content = PlaylistImportExportService.decodeFileBytes(bytes);
 
     final deezerApi = ref.read(deezerApiProvider);
     final service = PlaylistImportExportService(deezerApi);
@@ -918,17 +912,34 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       return;
     }
 
-    final playlistTitle = 'Importada: ${file.name.replaceAll(RegExp(r'\.(csv|txt)$'), '')}';
+    final fileTitle = 'Importada: ${file.name.replaceAll(RegExp(r'\.(csv|txt)$'), '')}';
     final playlistDescription = 'Importada desde ${file.name}';
+
+    // TuneMyMusic puede exportar varias playlists en un mismo archivo
+    // (columna "Playlist name"): cada una se importa como playlist propia,
+    // con su nombre original.
+    final groups = PlaylistImportExportService.groupByPlaylist(rawTracks);
 
     // Ronda 4 (H-R4-11): la importación corre en segundo plano, se reanuda
     // si la app se cierra y se puede cancelar desde su tarjeta de progreso.
-    final playlistId = await ref.read(importManagerProvider.notifier).startImport(
-          title: playlistTitle,
-          description: playlistDescription,
-          rawTracks: rawTracks,
-        );
+    final importer = ref.read(importManagerProvider.notifier);
+    int? lastPlaylistId;
+    for (final group in groups) {
+      final name = group.name?.trim() ?? '';
+      lastPlaylistId = await importer.startImport(
+        title: name.isEmpty ? fileTitle : AppLimits.clampTitle(name),
+        description: playlistDescription,
+        rawTracks: group.tracks,
+      );
+    }
     if (!context.mounted) return;
+    if (groups.length > 1) {
+      AppToast.show(
+        context,
+        message: 'Importando ${groups.length} playlists (${rawTracks.length} canciones) en segundo plano.',
+      );
+      return;
+    }
     final overLimit = rawTracks.length > AppLimits.playlistTracksMax;
     AppToast.show(
       context,
@@ -936,7 +947,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           ? 'El archivo tiene ${rawTracks.length} canciones; se importan las primeras 10 000 (el máximo por playlist).'
           : 'Importando ${rawTracks.length} canciones en segundo plano. Puedes seguir usando la app.',
     );
-    context.push('/playlist/$playlistId');
+    context.push('/playlist/$lastPlaylistId');
   }
 
   @override
@@ -1156,6 +1167,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: PopupMenuButton<LibrarySort>(
+                      useRootNavigator: true,
                       initialValue: sort,
                       color: AppTheme.surface,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

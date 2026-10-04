@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:csv/csv.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
@@ -25,12 +26,17 @@ class RawImportTrack {
   final String? isrc;
   final int? durationMs;
 
+  /// Playlist de origen, si el archivo trae varias (columna "Playlist name"
+  /// de TuneMyMusic). Solo sirve para repartir las filas al importar.
+  final String? playlistName;
+
   const RawImportTrack({
     required this.title,
     required this.artist,
     this.album,
     this.isrc,
     this.durationMs,
+    this.playlistName,
   });
 
   @override
@@ -144,9 +150,47 @@ class PlaylistImportExportService {
     return null;
   }
 
+  /// Etiquetas de Amazon Music en títulos y álbumes ("Maps [Clean]",
+  /// "Oldies But Goodies [Explicit]"). Deezer no las usa y estorban tanto a
+  /// la búsqueda como a la comparación de álbumes.
+  static final _contentTag = RegExp(r'\s*[\[\(](explicit|clean)(\s+version)?[\]\)]', caseSensitive: false);
+
+  static String _stripContentTags(String s) => s.replaceAll(_contentTag, '').trim();
+
+  /// Texto de un archivo importado. UTF-8 (lo que escriben Exportify y
+  /// TuneMyMusic); si no lo es, Latin-1, que es lo que suele salir de Excel en
+  /// Windows. Antes se usaba `String.fromCharCodes`, que rompía los acentos
+  /// de cualquier UTF-8 ("GRAN VÃA").
+  static String decodeFileBytes(List<int> bytes) {
+    try {
+      return utf8.decode(bytes);
+    } on FormatException {
+      return latin1.decode(bytes);
+    }
+  }
+
+  /// Filas repartidas por [RawImportTrack.playlistName], en el orden en que
+  /// aparece cada playlist. Un archivo sin esa columna da un solo grupo con
+  /// nombre `null`.
+  static List<({String? name, List<RawImportTrack> tracks})> groupByPlaylist(List<RawImportTrack> tracks) {
+    final groups = <String?, List<RawImportTrack>>{};
+    for (final t in tracks) {
+      (groups[t.playlistName] ??= []).add(t);
+    }
+    return [for (final e in groups.entries) (name: e.key, tracks: e.value)];
+  }
+
   /// Parse CSV or TXT file contents into a list of RawImportTrack objects
+  ///
+  /// Formatos verificados: Exportify (Spotify) y TuneMyMusic (Spotify, Amazon
+  /// Music, Apple Music y YouTube Music exportan las mismas columnas: "Track
+  /// name", "Artist name", "Album", "Playlist name", "Type", "ISRC").
   List<RawImportTrack> parseFileContent(String fileContent) {
     final List<RawImportTrack> results = [];
+    // BOM de UTF-8: TuneMyMusic y Exportify lo escriben. Pegado al primer
+    // encabezado, "Track name" no se reconocía y todas las filas quedaban
+    // como "Desconocida".
+    if (fileContent.startsWith('﻿')) fileContent = fileContent.substring(1);
     final lines = fileContent.split(RegExp(r'\r?\n')).where((l) => l.trim().isNotEmpty).toList();
     if (lines.isEmpty) return results;
 
@@ -169,11 +213,24 @@ class PlaylistImportExportService {
           int albumIdx = -1;
           int isrcIdx = -1;
           int durationIdx = -1;
+          int playlistIdx = -1;
+          int typeIdx = -1;
 
           for (int i = 0; i < firstRowStr.length; i++) {
             final col = firstRowStr[i];
-            if (titleIdx == -1 && (col == 'name' || col == 'title' || col == 'track name' || col == 'song')) {
+            if (titleIdx == -1 &&
+                (col == 'name' ||
+                    col == 'title' ||
+                    col == 'track name' ||
+                    col == 'track title' ||
+                    col == 'track' ||
+                    col == 'song' ||
+                    col == 'song name')) {
               titleIdx = i;
+            } else if (playlistIdx == -1 && (col == 'playlist name' || col == 'playlist')) {
+              playlistIdx = i;
+            } else if (typeIdx == -1 && col == 'type') {
+              typeIdx = i;
             } else if (artistIdx == -1 && col.contains('artist')) {
               artistIdx = i;
             } else if (albumIdx == -1 && col.contains('album')) {
@@ -207,14 +264,23 @@ class PlaylistImportExportService {
             final durationStr =
                 (durationIdx >= 0 && durationIdx < row.length) ? row[durationIdx].toString().trim() : '';
             final durationMs = int.tryParse(durationStr);
+            String cell(int idx) => (idx >= 0 && idx < row.length) ? row[idx].toString().trim() : '';
 
-            if (titleStr.isNotEmpty || artistStr.isNotEmpty) {
+            // TuneMyMusic mezcla en la biblioteca álbumes y artistas
+            // guardados ("Type" = Album/Artist): no son canciones.
+            final type = cell(typeIdx).toLowerCase();
+            if (type == 'album' || type == 'artist') continue;
+
+            final title = _stripContentTags(titleStr);
+            final playlistName = cell(playlistIdx);
+            if (title.isNotEmpty || artistStr.isNotEmpty) {
               results.add(RawImportTrack(
-                title: titleStr.isEmpty ? 'Desconocida' : titleStr,
+                title: title.isEmpty ? 'Desconocida' : title,
                 artist: artistStr,
-                album: albumStr,
-                isrc: isrcStr,
+                album: albumStr == null ? null : _stripContentTags(albumStr),
+                isrc: (isrcStr == null || isrcStr.isEmpty) ? null : isrcStr,
                 durationMs: durationMs,
+                playlistName: playlistName.isEmpty ? null : playlistName,
               ));
             }
           }
