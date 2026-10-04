@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -71,7 +72,7 @@ class CustomImageService {
 
   /// Abre el selector de imágenes del sistema. `null` si el usuario cancela.
   Future<Uint8List?> pickImage() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
+    final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: kIsWeb);
     final file = result?.files.singleOrNull;
     if (file == null) return null;
     if (file.size > maxSourceBytes) {
@@ -82,9 +83,23 @@ class CustomImageService {
     return bytes;
   }
 
-  /// [processImage] en un isolate: una foto de 12 MP tarda un par de segundos
-  /// en decodificarse en Dart puro y no debe congelar la interfaz.
+  /// Recorte cuadrado y JPEG listo para guardar o subir.
+  ///
+  /// Ronda 6: decodificar la foto entera con el paquete `image` (aunque fuera
+  /// en un isolate) congelaba la app en Android hasta el "no responde". Una
+  /// foto de 12 MP son ~50 MB por copia y el proceso hace varias; los isolates
+  /// de `compute` comparten el recolector de basura con el principal, que en
+  /// Android (Flutter 3.29+) es el mismo hilo que recibe los toques. Ahora la
+  /// decodifica el códec nativo del motor, ya reducida al tamaño final, y en
+  /// Dart solo se codifica el JPEG pequeño. [processImage] queda de respaldo
+  /// para formatos que el motor no lea.
   Future<Uint8List> prepare(Uint8List source, CustomImageKind kind) async {
+    try {
+      final square = await _decodeSquare(source, kind.size);
+      return await compute(_encodeJpeg, square);
+    } catch (_) {
+      // Formato que el códec del motor no lee: camino anterior.
+    }
     try {
       return await compute(_processInIsolate, (source, kind.size));
     } on CustomImageException {
@@ -95,6 +110,62 @@ class CustomImageService {
   }
 
   static Uint8List _processInIsolate((Uint8List, int) args) => processImage(args.$1, args.$2);
+
+  /// Decodifica con el motor (reduce mientras decodifica y aplica la
+  /// orientación del EXIF) y devuelve el recorte cuadrado centrado de lado
+  /// `min(size, lado corto)` en RGBA, sobre el fondo de la app.
+  static Future<({Uint8List rgba, int side})> _decodeSquare(Uint8List source, int size) async {
+    final buffer = await ui.ImmutableBuffer.fromUint8List(source);
+    // Solo el ancho: el códec conserva la proporción, así que da igual si la
+    // foto viene girada por EXIF.
+    final codec = await ui.instantiateImageCodecWithSize(buffer, getTargetSize: (w, h) {
+      final shortest = min(w, h);
+      return shortest <= size ? const ui.TargetImageSize() : ui.TargetImageSize(width: (w * size / shortest).ceil());
+    });
+    final ui.Image image;
+    try {
+      image = (await codec.getNextFrame()).image;
+    } finally {
+      codec.dispose();
+    }
+    try {
+      final side = min(image.width, image.height);
+      final target = min(size, side);
+      final recorder = ui.PictureRecorder();
+      ui.Canvas(recorder)
+        ..drawColor(const ui.Color(_backgroundArgb), ui.BlendMode.src)
+        ..drawImageRect(
+          image,
+          ui.Rect.fromLTWH((image.width - side) / 2, (image.height - side) / 2, side.toDouble(), side.toDouble()),
+          ui.Rect.fromLTWH(0, 0, target.toDouble(), target.toDouble()),
+          ui.Paint()..filterQuality = ui.FilterQuality.high,
+        );
+      final picture = recorder.endRecording();
+      final out = await picture.toImage(target, target);
+      picture.dispose();
+      try {
+        final data = await out.toByteData(format: ui.ImageByteFormat.rawRgba);
+        if (data == null) throw const CustomImageException('No se pudo procesar la imagen.');
+        return (rgba: data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes), side: target);
+      } finally {
+        out.dispose();
+      }
+    } finally {
+      image.dispose();
+    }
+  }
+
+  /// JPEG calidad 85 de un RGBA ya pequeño. Sin EXIF: el bitmap no lo tiene.
+  static Uint8List _encodeJpeg(({Uint8List rgba, int side}) args) {
+    final image = img.Image.fromBytes(
+      width: args.side,
+      height: args.side,
+      bytes: args.rgba.buffer,
+      bytesOffset: args.rgba.offsetInBytes,
+      numChannels: 4,
+    );
+    return img.encodeJpg(image, quality: 85);
+  }
 
   /// Recorte cuadrado centrado, lado [size] (sin ampliar las pequeñas), JPEG
   /// calidad 85 y **sin EXIF**: se descartan ubicación GPS, cámara, fecha, etc.
