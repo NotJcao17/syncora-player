@@ -164,6 +164,27 @@ Sesión del 2026-10-03. Plan, diagnóstico, decisiones y estado. Cada bundle cer
 - README: sin "skip silence" (el motor lo soporta pero ningún ajuste lo activa) y con los formatos
   de importación reales (CSV de TuneMyMusic, Soundiiz o Exportify, o líneas `Artista - Título`).
 
+## Tercera tanda
+
+- **H-R5-19. Sin reproductor en la notificación ni en la pantalla de bloqueo (solo release).** Causa
+  confirmada en el teléfono con `adb logcat`: `IllegalArgumentException: You must specify an icon
+  resource id to build a CustomAction`. El reductor de recursos de las compilaciones release eliminaba
+  `ic_heart`, `ic_heart_outline`, `ic_shuffle` e `ic_shuffle_off`, porque solo se nombran desde Dart y
+  `audio_service` los busca con `getIdentifier` (verificado con `aapt2 dump resources` sobre el APK).
+  Sin ícono, Android rechazaba la notificación. `res/raw/keep.xml` los conserva; verificado
+  instalando el APK release: ya no hay excepción y la sesión publica los dos botones con ícono. En
+  debug no se reduce nada, por eso ahí funcionaba. Nota: la compilación release necesita
+  `--no-tree-shake-icons` (los íconos Solar se construyen con `IconData` no constante).
+- **H-R5-20. "Midnight City" sonaba como un cover.** El master de YouTube Music (K8v_DaCcORQ) pide
+  iniciar sesión con todos los clientes; el reproductor probaba el siguiente candidato de esa misma
+  búsqueda aunque fuera de otro artista ("Midnight City (Originally Performed by M83)" de "Top 40
+  Hits"). Dos arreglos: "originally performed", "made famous", "in the style" y "as performed by"
+  descalifican como "cover"; y si el mejor candidato confirma al artista solo se prueban los que
+  también lo confirman, y si todos fallan se sigue con la siguiente búsqueda (videos de YouTube, donde
+  está el video oficial de M83, que sí se extrae).
+- **Wrapped compartido como rectángulo:** se pinta la tarjeta un frame sin esquinas redondeadas y se
+  captura así, sin margen ni esquinas transparentes.
+
 ## Pendiente
 
 - ~~Aplicar la migración 21~~: aplicada el 2026-10-03 con `supabase db push` (verificado: el

@@ -980,4 +980,19 @@ void main() {
       expect(top5.map((c) => c.videoId), isNot(contains('topPickC')));
     });
   });
+
+  test('ronda 5: un cover "Originally Performed by" no le gana al master aunque su duración sea exacta', () {
+    final candidates = [
+      {'videoId': 'K8v_DaCcORQ', 'title': 'Midnight City', 'author': 'M83', 'durationSec': 244, 'source': 'ytmusic'},
+      {
+        'videoId': 'DXkA94j07Wg',
+        'title': 'Midnight City (Originally Performed by M83)',
+        'author': 'Top 40 Hits',
+        'durationSec': 255,
+        'source': 'ytmusic',
+      },
+    ];
+    final top = YtSearchMatcher.pickTopCandidates(candidates, artist: 'M83', title: 'Midnight City', durationSec: 254);
+    expect(top.map((c) => c.videoId), ['K8v_DaCcORQ']);
+  });
 }

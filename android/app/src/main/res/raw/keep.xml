@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ronda 5: el reductor de recursos de las compilaciones release eliminaba
+     estos drawables porque solo se nombran desde Dart (audio_service los busca
+     por nombre con getIdentifier). Sin ellos, el botón propio de la
+     notificación sale sin ícono, Android rechaza la notificación con
+     "You must specify an icon resource id to build a CustomAction" y
+     desaparece el reproductor de la notificación y de la pantalla de bloqueo. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_heart,@drawable/ic_heart_outline,@drawable/ic_shuffle,@drawable/ic_shuffle_off,@drawable/ic_launcher_monochrome" />

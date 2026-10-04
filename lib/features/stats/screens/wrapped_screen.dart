@@ -48,6 +48,10 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
   int _cardCount = 1;
   bool _isBusy = false;
 
+  /// Ronda 5: mientras se exporta, la tarjeta visible se pinta sin esquinas
+  /// redondeadas (un frame) para que la imagen sea un rectángulo completo.
+  bool _exportingSquare = false;
+
   GlobalKey _keyFor(int i) => _cardKeys.putIfAbsent(i, () => GlobalKey());
 
   bool get _isDesktopPlatform =>
@@ -97,63 +101,41 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
   /// arreglaron** y el diagnóstico resultó equivocado, pero se mantienen: son
   /// baratas y correctas de por sí (capturar sin un frame en vuelo es lo
   /// razonable, y las sombras no se veían sobre el fondo oscuro).
-  /// Fondo opaco de la imagen exportada (el mismo de la pantalla).
-  static const Color _exportBackground = Color(0xFF07080C);
-
   Future<File?> _renderCard() async {
     final boundary =
         _keyFor(_index).currentContext?.findRenderObject() as RenderRepaintBoundary?;
     if (boundary == null) return null;
 
-    // Que no haya nada pintándose cuando se pida la captura.
-    await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return null;
-
-    final logicalWidth = boundary.size.width;
-    final ratio = logicalWidth <= 0
-        ? 2.0
-        : (_exportTargetWidth / logicalWidth).clamp(1.0, 3.0);
-
-    // `toImage` devuelve una `ui.Image` respaldada por memoria NATIVA, que el
-    // recolector de Dart no libera: hay que cerrarla a mano.
-    //
-    // **El orden importa.** La versión anterior hacía `return
-    // _writeTempPng(..., byteData.buffer.asUint8List())` dentro de un `try`
-    // con `image.dispose()` en el `finally`. Dos problemas encadenados:
-    // `asUint8List()` devuelve una VISTA sobre el búfer, no una copia, y el
-    // `finally` se ejecuta al salir del bloque, sin esperar a que la
-    // escritura del archivo termine. Es decir, se podía liberar la memoria
-    // mientras todavía se estaba leyendo de ella — un uso después de liberar,
-    // que revienta en código nativo sin dejar rastro en la consola de Dart.
-    // (No era la causa del cuelgue de escritorio, pero sí un fallo real que
-    // afectaba igual a móvil.)
-    //
-    // Ahora: se copian los bytes, se cierra la imagen, y solo entonces se
-    // escribe el archivo.
-    final card = await boundary.toImage(pixelRatio: ratio.toDouble());
-    // Ronda 5 (2.ª tanda): la tarjeta tiene esquinas redondeadas, así que el
-    // PNG traía las esquinas TRANSPARENTES, e Instagram (y otras apps) las
-    // rellenan de negro. Se pinta sobre un lienzo opaco con un margen del
-    // color de fondo de la pantalla: las esquinas quedan intencionales y la
-    // imagen no tiene ni un píxel transparente.
+    // Ronda 5: la imagen compartida es un rectángulo. Con las esquinas
+    // redondeadas de la pantalla el PNG traía las esquinas transparentes y en
+    // una historia de Instagram se veían negras (y con un margen alrededor,
+    // un borde). Se pinta la tarjeta un frame sin redondeo y se captura así.
+    setState(() => _exportingSquare = true);
     final ui.Image image;
     try {
-      final pad = (card.width * 0.05).round();
-      final width = card.width + pad * 2;
-      final height = card.height + pad * 2;
-      final recorder = ui.PictureRecorder();
-      final canvas = Canvas(recorder);
-      canvas.drawRect(
-        Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()),
-        Paint()..color = _exportBackground,
-      );
-      canvas.drawImage(card, Offset(pad.toDouble(), pad.toDouble()), Paint());
-      final picture = recorder.endRecording();
-      image = await picture.toImage(width, height);
-      picture.dispose();
+      // Que no haya nada pintándose cuando se pida la captura.
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return null;
+
+      final logicalWidth = boundary.size.width;
+      final ratio = logicalWidth <= 0
+          ? 2.0
+          : (_exportTargetWidth / logicalWidth).clamp(1.0, 3.0);
+
+      // `toImage` devuelve una `ui.Image` respaldada por memoria NATIVA, que
+      // el recolector de Dart no libera: hay que cerrarla a mano (ver abajo).
+      image = await boundary.toImage(pixelRatio: ratio.toDouble());
     } finally {
-      card.dispose();
+      if (mounted) setState(() => _exportingSquare = false);
     }
+
+    // **El orden importa.** La versión anterior hacía `return
+    // _writeTempPng(..., byteData.buffer.asUint8List())` dentro de un `try`
+    // con `image.dispose()` en el `finally`: `asUint8List()` devuelve una
+    // VISTA sobre el búfer y el `finally` no espera a que termine la
+    // escritura, así que se podía liberar la memoria mientras todavía se leía
+    // de ella. Ahora se copian los bytes, se cierra la imagen y solo entonces
+    // se escribe el archivo.
     Uint8List bytes;
     try {
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -401,7 +383,10 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
                           aspectRatio: 9 / 16,
                           child: RepaintBoundary(
                             key: _keyFor(i),
-                            child: WrappedCard(data: cards[i]),
+                            child: WrappedCard(
+                              data: cards[i],
+                              radius: _exportingSquare && i == _index ? 0 : 24,
+                            ),
                           ),
                         ),
                       ),
@@ -639,7 +624,10 @@ List<WrappedCardData> buildWrappedCards({
 class WrappedCard extends StatelessWidget {
   final WrappedCardData data;
 
-  const WrappedCard({super.key, required this.data});
+  /// Radio de las esquinas. 0 al exportar la imagen (ronda 5).
+  final double radius;
+
+  const WrappedCard({super.key, required this.data, this.radius = 24});
 
   @override
   Widget build(BuildContext context) {
@@ -650,14 +638,14 @@ class WrappedCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: data.colors,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(radius),
         // Sin `boxShadow`: un desenfoque dentro de un `RepaintBoundary` que
         // luego se rasteriza con `toImage` es lo que cuelga el hilo de
         // rasterizado en Windows/Impeller. Sobre fondo casi negro la sombra
         // tampoco se veía.
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(radius),
         child: Stack(
           children: [
             const Positioned(top: -70, right: -60, child: _Blob(size: 240, alpha: 0.14)),

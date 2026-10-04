@@ -542,7 +542,16 @@ class ExtractionIsolate {
         // nada del motor.
         final searchErrors = <String>[];
 
-        for (final attempt in attempts) {
+        // Ronda 5: videos que ya fallaron al extraerse (p. ej. el master de
+        // YouTube Music que pide iniciar sesión) y siguiente búsqueda por
+        // correr. Si todos los candidatos de una búsqueda fallan, se sigue con
+        // la siguiente en vez de rendirse o de caer a uno de otro artista.
+        final failedIds = <String>{};
+        var nextAttempt = 0;
+
+        Future<void> searchUntilCandidates() async {
+        while (nextAttempt < attempts.length) {
+          final attempt = attempts[nextAttempt++];
           final query = attempt.$1;
           final client = attempt.$2;
           final mode = attempt.$3;
@@ -585,12 +594,12 @@ class ExtractionIsolate {
           if (bearsArtist && batch.isNotEmpty) artistBatches.add(batch);
 
           topCandidates = YtSearchMatcher.pickTopCandidates(
-            pool.values.toList(),
+            pool.values.where((c) => !failedIds.contains(c['videoId'])).toList(),
             artist: rawArtist,
             title: rawTitle,
             durationSec: request.durationSeconds,
           );
-          if (topCandidates.isNotEmpty) break;
+          if (topCandidates.isNotEmpty) return;
           sendLog(
             '[IsolateJS] Ningún candidato superó el umbral de scoring (${pool.length} acumulados).',
           );
@@ -607,6 +616,9 @@ class ExtractionIsolate {
             );
           }
         }
+        }
+
+        await searchUntilCandidates();
 
         // C12: último recurso antes de rendirse. Sin esto, un tema de nicho
         // cuyo upload no confirma ni duración ni artista terminaba en
@@ -642,7 +654,17 @@ class ExtractionIsolate {
         // apenas se elegía el candidato y nunca se invalidaba, así que un
         // match equivocado quedaba fijado el resto de la sesión.
         ExtractionFailure? lastCandidateFailure;
-        for (final candidate in topCandidates) {
+        while (true) {
+        // Ronda 5: si el mejor candidato confirma al artista, solo se prueban
+        // los que también lo confirman. Antes, si el master fallaba, se
+        // probaba el siguiente de la lista aunque fuera de otro artista, y
+        // así sonaba un cover ("Midnight City" de "Top 40 Hits").
+        final anyConfirmed = topCandidates.any((c) => c.artistConfirmed);
+        final round = [
+          for (final c in topCandidates)
+            if (!failedIds.contains(c.videoId) && (!anyConfirmed || c.artistConfirmed)) c,
+        ];
+        for (final candidate in round) {
           sendLog('[IsolateJS] Probando candidato ${candidate.videoId} (score ${candidate.score})...');
           final resolvedRequest = ExtractionRequest(
             videoId: candidate.videoId,
@@ -670,7 +692,15 @@ class ExtractionIsolate {
             return result;
           }
           if (result is ExtractionFailure) lastCandidateFailure = result;
+          failedIds.add(candidate.videoId);
           sendLog('[IsolateJS] Candidato ${candidate.videoId} no disponible, probando el siguiente...');
+        }
+        // Ninguno se pudo extraer: siguiente búsqueda, si queda alguna.
+        if (round.isEmpty || nextAttempt >= attempts.length) break;
+        sendLog('[IsolateJS] Ningún candidato se pudo extraer; se sigue con la siguiente búsqueda.');
+        topCandidates = const [];
+        await searchUntilCandidates();
+        if (topCandidates.isEmpty) break;
         }
 
         // Había candidatos pero ninguno se pudo extraer, y por algo que apunta

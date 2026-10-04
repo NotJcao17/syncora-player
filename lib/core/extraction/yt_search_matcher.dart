@@ -51,6 +51,14 @@ class YtSearchMatcher {
     '1 hour',
     'tribute',
     'tributo',
+    // Ronda 5: covers de los canales de "éxitos" que ponen el nombre del
+    // artista original en el título para posicionarse ("Midnight City
+    // (Originally Performed by M83)" de "Top 40 Hits"). Con la duración casi
+    // exacta le ganaban al master real.
+    'originally performed',
+    'made famous',
+    'as performed by',
+    'in the style',
     // Uploads que son la base sin voz. No siempre lo dicen en el título
     // (ver el caso "Ladders"), pero cuando lo dicen hay que descartarlos.
     'backing track',
