@@ -187,6 +187,22 @@ flutter run -d windows      # or: flutter run -d <android-device-id>
 
 Without a Supabase project the app still works in no-account mode.
 
+### Release builds
+
+Release builds **must** pass `--no-tree-shake-icons`:
+
+```bash
+flutter build apk --release --no-tree-shake-icons
+flutter build windows --release --no-tree-shake-icons
+```
+
+The Solar icons are built at runtime with `IconData(codePoint, fontFamily: ...)` (see
+`lib/core/theme/app_icons.dart`), which Flutter's icon tree shaker cannot analyse, so without the
+flag the build stops with *"Avoid non-constant invocations of IconData"*. Release builds also shrink
+Android resources: drawables that are only referenced by name from Dart (the notification's like and
+shuffle icons) are kept by `android/app/src/main/res/raw/keep.xml`; a new one must be added there or
+the notification disappears in release only. See Pitfall #32 in `docs/investigacion_y_pitfalls.md`.
+
 ### Tests
 
 ```bash

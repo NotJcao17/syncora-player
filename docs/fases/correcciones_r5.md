@@ -207,6 +207,13 @@ Sesión del 2026-10-03. Plan, diagnóstico, decisiones y estado. Cada bundle cer
   YouTube lenta (al reintentar funcionó). No se añade un reintento por tiempo agotado: §2.1 de
   `correcciones_qa_post_fase_7.md` lo prohíbe porque una carga agotada sigue viva en el motor.
 
+- **Medición de cuántos masters piden iniciar sesión:** 80 canciones (chart general, rock y rap) con el
+  motor real: 78 masters de YouTube Music se extraen, 1 pide iniciar sesión ("Brillas" de León
+  Larregui, igual que "Midnight City"; su respaldo en videos de YouTube sí se extrae) y 1 no tiene
+  master del artista en YouTube Music. Es decir, ~1 de cada 80.
+- **Compilación release:** documentada en README, `CLAUDE.md` y Pitfall #32
+  (`--no-tree-shake-icons` y `keep.xml`).
+
 ## Pendiente
 
 - ~~Aplicar la migración 21~~: aplicada el 2026-10-03 con `supabase db push` (verificado: el

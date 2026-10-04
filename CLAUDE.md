@@ -12,6 +12,16 @@ de verdad de arquitectura, stack, metodología de trabajo y reglas del proyecto.
   operaciones destructivas o de reescritura de historia (`push --force`, `reset --hard`, etc.), que
   siempre requieren confirmación explícita del usuario en el momento, como en cualquier repo.
 
+## Compilar release (obligatorio leer antes de generar un APK/EXE)
+
+- Siempre `flutter build apk --release --no-tree-shake-icons` (y `flutter build windows --release
+  --no-tree-shake-icons`). Sin la bandera la compilación falla: los íconos Solar se construyen con
+  `IconData` no constante (`app_icons.dart`).
+- Un drawable de Android que solo se nombre desde Dart (íconos de la notificación) tiene que estar en
+  `android/app/src/main/res/raw/keep.xml`; si no, el reductor de recursos lo borra en release y la
+  notificación y el reproductor de la pantalla de bloqueo desaparecen **solo en release**. Detalle en
+  el Pitfall #32 de `docs/investigacion_y_pitfalls.md`.
+
 ## Metodología de ejecución de la Fase 7 (orquestador + subagentes)
 
 Mientras se ejecute `docs/plan_fase_7.md`, esta metodología aplica y **sobrevive a cualquier

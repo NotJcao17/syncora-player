@@ -232,3 +232,24 @@ Este documento recopila las trampas técnicas más comunes y destructivas al des
     - Cualquier cambio en `_playCurrentGuarded`, `microFadeOut` o el crossfade se prueba **de oído**
       en Android y Windows, con crossfade apagado y encendido, con canciones descargadas y por
       streaming, antes de darlo por bueno.
+
+## 32. Lo que solo falla en las compilaciones release
+
+*   **Íconos (la compilación ni termina):** `flutter build apk --release` se detiene con *"Avoid
+    non-constant invocations of IconData or try to build again with --no-tree-shake-icons"*. Los
+    íconos Solar se arman en tiempo de ejecución (`AppIcons.broken/bold/outline` crean `IconData` con
+    el `codePoint` de cada ícono), y el recortador de fuentes de íconos de Flutter solo entiende
+    `IconData` constantes. **Regla:** compilar siempre con `--no-tree-shake-icons` (APK y EXE). El
+    costo es que las fuentes Solar viajan completas (unos cientos de KB).
+*   **Recursos de Android (la app compila, pero algo desaparece):** en release, R8 elimina los
+    recursos que no ve usados. Los drawables que solo se nombran desde Dart como texto
+    (`'drawable/ic_heart'`, que `audio_service` busca con `getIdentifier`) parecen sin uso y se borran.
+    Ronda 5: así desaparecieron los íconos de "me gusta" y "aleatorio", Android rechazó la notificación
+    (*"You must specify an icon resource id to build a CustomAction"*) y se fue el reproductor de la
+    notificación y de la pantalla de bloqueo, **solo en release** (en debug no se reduce nada).
+    **Regla:** todo drawable referido por nombre desde Dart va en
+    `android/app/src/main/res/raw/keep.xml`. Para comprobarlo:
+    `aapt2 dump resources app-release.apk | findstr ic_heart`.
+*   **Cómo detectarlo:** probar en release antes de dar por buena cualquier cosa que toque la
+    notificación, recursos nativos o íconos; `flutter run` (debug) no lo muestra.
+
