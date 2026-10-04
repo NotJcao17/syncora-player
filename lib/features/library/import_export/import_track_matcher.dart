@@ -67,6 +67,34 @@ class ImportTrackMatcher {
     }
   }
 
+  /// Misma grabación según la duración (la misma grabación dura lo mismo en
+  /// cualquier lanzamiento, ±2 s). Sin duración no se puede saber: se acepta.
+  static bool _sameRecording(DeezerTrack a, DeezerTrack b) =>
+      a.durationSec <= 0 || b.durationSec <= 0 || (a.durationSec - b.durationSec).abs() <= 2;
+
+  /// Resultado de la búsqueda sin el álbum del archivo, comprobado contra el
+  /// ISRC. Ronda 6: "Payphone [feat. Wiz Khalifa]" de Amazon (álbum de
+  /// recopilación que Deezer no tiene) se importaba como la versión sin Wiz
+  /// Khalifa de otra recopilación, la única que devuelve la búsqueda. Si el
+  /// ISRC dice que es otra grabación, se busca esa grabación en el top del
+  /// artista (que sí trae la de *Overexposed*) y, si no está, se usa la del
+  /// ISRC tal cual.
+  Future<DeezerTrack> _checkedAgainstIsrc(DeezerTrack found, RawImportTrack raw) async {
+    final recording = await _matchByIsrc(raw);
+    if (recording == null || _sameRecording(found, recording)) return found;
+    final top = found.artistId != 0 ? await _artistTop(found.artistId) : const <DeezerTrack>[];
+    final sameRecording = top.where((t) => _sameRecording(t, recording)).toList();
+    return _best(sameRecording, raw)?.track ?? recording;
+  }
+
+  Future<List<DeezerTrack>> _artistTop(int id) => _artistTops.putIfAbsent(id, () async {
+        try {
+          return await _api.getArtistTopTracksExpanded(id, limit: 100);
+        } catch (_) {
+          return const <DeezerTrack>[];
+        }
+      });
+
   Future<DeezerTrack?> _matchBySearch(RawImportTrack raw) async {
     final artists = artistKeys(raw.artist);
     final primary = primaryArtistName(raw.artist);
@@ -114,20 +142,12 @@ class ImportTrackMatcher {
       }
     }
 
-    if (fromSearch != null) return fromSearch.track;
+    if (fromSearch != null) return _checkedAgainstIsrc(fromSearch.track, raw);
 
     // El artista no aparece en la búsqueda de canciones: su top.
     artistId ??= await _artistIdFor(primary, albums);
     if (artistId == null) return null;
-    final id = artistId;
-    final top = await _artistTops.putIfAbsent(id, () async {
-      try {
-        return await _api.getArtistTopTracksExpanded(id, limit: 100);
-      } catch (_) {
-        return const <DeezerTrack>[];
-      }
-    });
-    return _best(top, raw)?.track;
+    return _best(await _artistTop(artistId), raw)?.track;
   }
 
   Future<List<DeezerTrack>> _safeSearch(String query, DeezerSearchType type) async {

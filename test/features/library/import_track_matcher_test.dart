@@ -155,6 +155,25 @@ void main() {
     expect(api.isrcCalls, 0);
   });
 
+  test('sin el álbum del archivo, el ISRC evita quedarse con otra grabación del mismo título', () async {
+    // Caso real (Amazon vía TuneMyMusic): Deezer solo devuelve la versión sin
+    // Wiz Khalifa de una recopilación; el ISRC es el de Overexposed.
+    api.trackSearch['Maroon 5 Payphone'] = [_t(1, 'Payphone', 'Maroon 5', 'Sing Along Bangers', 222, artistId: 1188)];
+    api.byIsrc['USUM71203347'] = _t(2, 'Payphone (Explicit Version)', 'Maroon 5', '100 Tubes RTL2', 231, artistId: 1188);
+    api.tops[1188] = [_t(3, 'Payphone', 'Maroon 5', 'Overexposed (Deluxe)', 231, artistId: 1188)];
+    final m = await matcher.match(const RawImportTrack(
+      title: 'Payphone [feat. Wiz Khalifa]', artist: 'Maroon 5', album: 'Oldies But Goodies', isrc: 'USUM71203347'));
+    expect(m?.id, 3);
+  });
+
+  test('si el ISRC confirma la grabación, se queda la de la búsqueda', () async {
+    api.trackSearch['Quevedo GRAN VÍA'] = [_t(70, 'GRAN VÍA', 'Quevedo', 'BUENAS NOCHES (Deluxe)', 180)];
+    api.byIsrc['ES03H2400005'] = _t(71, 'GRAN VÍA', 'Quevedo', 'Recopilación', 181);
+    final m = await matcher.match(const RawImportTrack(
+      title: 'GRAN VÍA', artist: 'Quevedo', album: 'Otro Álbum', isrc: 'ES03H2400005'));
+    expect(m?.id, 70);
+  });
+
   test('un ISRC que apunta a otra canción se descarta', () async {
     api.byIsrc['USQX92504224'] = _t(60, 'Otra Cosa Distinta', 'Alguien', 'X', 200);
     final m = await matcher.match(const RawImportTrack(title: 'Loser', artist: 'Tame Impala', isrc: 'USQX92504224'));

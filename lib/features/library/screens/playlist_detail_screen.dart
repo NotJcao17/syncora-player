@@ -901,6 +901,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     } else {
       showModalBottomSheet(
         context: context,
+        useSafeArea: true,
         // isScrollControlled permite que el sheet crezca más allá de la mitad de pantalla
         // (default de showModalBottomSheet) y que el contenido pueda scrollear en vez de
         // desbordar cuando la lista de opciones no entra completa.

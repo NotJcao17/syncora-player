@@ -72,6 +72,7 @@ class AppBottomSheet extends StatefulWidget {
 
     return showModalBottomSheet<T>(
       context: context,
+      useSafeArea: true,
       isScrollControlled: true,
       enableDrag: enableDrag,
       backgroundColor: Colors.transparent,
@@ -220,11 +221,14 @@ class _KeyboardInset extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTop = ModalRoute.of(context)?.isCurrent ?? true;
-    if (!isTop) {
-      // Ronda 5 (H-R5-7): además de no moverse, la hoja de debajo deja de
-      // ver el teclado (cada asa de la cola leía `MediaQuery`).
-      return KeyboardInsetFreeze(child: child);
-    }
-    return Padding(padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom), child: child);
+    // Ronda 5 (H-R5-7): además de no moverse, la hoja de debajo deja de ver
+    // el teclado (cada asa de la cola leía `MediaQuery`). Ronda 6: misma
+    // estructura en los dos casos; alternar entre `Padding` y
+    // `KeyboardInsetFreeze` recreaba todo el contenido de la hoja (y perdía
+    // su estado) cada vez que algo se abría encima.
+    return Padding(
+      padding: EdgeInsets.only(bottom: isTop ? MediaQuery.viewInsetsOf(context).bottom : 0),
+      child: KeyboardInsetFreeze(child: child),
+    );
   }
 }

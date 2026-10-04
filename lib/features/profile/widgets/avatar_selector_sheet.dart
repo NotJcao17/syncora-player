@@ -87,6 +87,7 @@ class AvatarSelectorSheet extends ConsumerStatefulWidget {
 
     return showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AvatarSelectorSheet(

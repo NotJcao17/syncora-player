@@ -306,6 +306,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     } else {
       showModalBottomSheet(
         context: context,
+        useSafeArea: true,
         backgroundColor: AppTheme.surface,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
         builder: (ctx) => SafeArea(
@@ -788,6 +789,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     } else {
       showModalBottomSheet(
         context: context,
+        useSafeArea: true,
         backgroundColor: AppTheme.surface,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),

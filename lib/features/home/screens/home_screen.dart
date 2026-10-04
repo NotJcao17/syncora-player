@@ -273,9 +273,8 @@ class HomeScreen extends ConsumerWidget {
               itemCount: items.length,
               itemBuilder: (ctx, i) {
                 final item = items[i];
-                return InkWell(
+                return _QuickAccessTile(
                   onTap: () => context.push(item.route),
-                  borderRadius: BorderRadius.circular(8),
                   child: Container(
                     decoration: BoxDecoration(
                       color: AppTheme.surface,
@@ -700,6 +699,7 @@ Future<void> showCountryTopsPicker(BuildContext context, List<DeezerPlaylist> pl
 
   return showModalBottomSheet(
     context: context,
+    useSafeArea: true,
     backgroundColor: AppTheme.background,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
@@ -710,6 +710,60 @@ Future<void> showCountryTopsPicker(BuildContext context, List<DeezerPlaylist> pl
       child: _CountryTopsList(playlists: playlists),
     ),
   );
+}
+
+/// Tarjeta de acceso rápido con un resaltado sin animación.
+///
+/// Ronda 6: con `InkWell`, la onda se quedaba a medias al volver de
+/// "Descubrir". Las rutas son `NoTransitionPage`, así que Inicio queda tapado
+/// en el mismo frame del toque y Flutter congela sus animaciones mientras no
+/// se ve; la onda terminaba al regresar. Un cambio de color instantáneo no
+/// tiene animación que congelar.
+class _QuickAccessTile extends StatefulWidget {
+  final VoidCallback onTap;
+  final Widget child;
+
+  const _QuickAccessTile({required this.onTap, required this.child});
+
+  @override
+  State<_QuickAccessTile> createState() => _QuickAccessTileState();
+}
+
+class _QuickAccessTileState extends State<_QuickAccessTile> {
+  bool _pressed = false;
+  bool _hovered = false;
+
+  void _setPressed(bool value) {
+    if (_pressed != value) setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final overlay = _pressed
+        ? Colors.white.withValues(alpha: 0.08)
+        : _hovered
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.transparent;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => _setPressed(true),
+        onTapCancel: () => _setPressed(false),
+        onTap: () {
+          _setPressed(false);
+          widget.onTap();
+        },
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(color: overlay, borderRadius: BorderRadius.circular(8)),
+          child: widget.child,
+        ),
+      ),
+    );
+  }
 }
 
 class _CountryTopsList extends StatefulWidget {

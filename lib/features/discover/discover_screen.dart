@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/cache/app_image_cache.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/deezer_image.dart';
 import '../../core/utils/connectivity_service.dart';
 import '../../core/widgets/app_toast.dart';
 import '../../core/widgets/error_state.dart';
@@ -276,6 +277,12 @@ class _DiscoverCard extends ConsumerWidget {
         final coverSize = (constraints.maxWidth - 48)
             .clamp(160.0, isDesktop ? 400.0 : 420.0)
             .clamp(160.0, constraints.maxHeight * 0.52);
+        // Ronda 6: los modelos guardan la portada de 250 px, que estirada a
+        // ~340 dp (unos 1000 px reales en un teléfono 3x) se veía borrosa.
+        // Solo se ve una tarjeta a la vez, así que se pide la resolución que
+        // ocupa: 500 px o 1000 px (la misma URL que el reproductor a pantalla
+        // completa, que así la encuentra ya en caché).
+        final coverPx = coverSize * MediaQuery.devicePixelRatioOf(context) > 500 ? 1000 : 500;
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 460),
@@ -304,8 +311,8 @@ class _DiscoverCard extends ConsumerWidget {
                                 ? const _CoverPlaceholder()
                                 : CachedNetworkImage(
                                     cacheManager: AppImageCache.instance,
-                                    imageUrl: track.coverUrl,
-                                    memCacheWidth: 600,
+                                    imageUrl: DeezerImage.atSize(track.coverUrl, coverPx),
+                                    memCacheWidth: coverPx,
                                     fit: BoxFit.cover,
                                     errorWidget: (_, _, _) =>
                                         const _CoverPlaceholder(),

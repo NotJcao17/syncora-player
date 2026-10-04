@@ -119,6 +119,7 @@ Future<T?> _showMenu<T>(BuildContext context, Widget Function(BuildContext ctx) 
   }
   return showModalBottomSheet<T>(
     context: context,
+    useSafeArea: true,
     backgroundColor: AppTheme.surface,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),

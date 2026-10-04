@@ -119,6 +119,7 @@ Future<SyncoraArtistRef?> _pickArtist(BuildContext context, List<SyncoraArtistRe
   }
   return showModalBottomSheet<SyncoraArtistRef>(
     context: context,
+    useSafeArea: true,
     backgroundColor: AppTheme.surface,
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
     builder: (ctx) => SafeArea(

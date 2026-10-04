@@ -110,6 +110,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
   void _showLyricsSheet(BuildContext context, SyncoraTrack track) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       // Ronda 5 (2.ª tanda): la hoja sigue a la pista que suena. Con la
