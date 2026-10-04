@@ -27,6 +27,39 @@ Bugs reportados tras la ronda 5, importación de CSV de TuneMyMusic y limpieza d
      pero la URL ya no responde: el PC la muestra desde su caché y el móvil, sin caché, cae al
      DiceBear. Ver "Reparar URLs de r2.dev" abajo.
 
+## Segunda tanda (pruebas en dispositivo)
+
+- **H-R6-5 — "Syncora Player no responde" al cambiar la foto en Android.** `am_anr` en el logcat:
+  hilo principal bloqueado >5 s unos segundos después de volver del selector. La foto se
+  decodificaba entera con el paquete `image` (12 MP ≈ 50 MB por copia, varias copias). Aunque fuera
+  en `compute`, los isolates comparten el recolector de basura con el principal, y desde Flutter
+  3.29 el isolate principal corre en el hilo de la plataforma de Android, el que recibe los toques;
+  con el teléfono corto de memoria las pausas daban el ANR. Ahora decodifica el códec nativo del
+  motor, ya reducido al tamaño final (`instantiateImageCodecWithSize`), y Dart solo codifica el JPEG
+  pequeño. Verificado en test con el motor real que respeta la orientación EXIF. `processImage`
+  queda de respaldo para formatos que el motor no lea. El selector ya no pide los bytes por el
+  canal (`withData` solo en web).
+- **H-R6-6 — Misma trampa de H-R6-1 en `_KeyboardInset`** (`app_bottom_sheet.dart`): alternaba
+  entre `KeyboardInsetFreeze` y `Padding`, así que el contenido de una hoja se recreaba cada vez que
+  algo se abría encima. Ahora la estructura es fija.
+- **H-R6-7 — Hojas pegadas a la cámara y la hora.** Las hojas abiertas desde pantallas del shell
+  viven en el navegador del shell (encima del mini reproductor), pero su alto máximo es un % de la
+  pantalla completa: las altas llegaban hasta la barra de estado. `useSafeArea: true` en todas las
+  `showModalBottomSheet` (ya lo tenía la de Búsqueda desde la ronda 3 bis).
+- **H-R6-8 — Payphone importado como otra grabación.** Verificado contra Deezer: la búsqueda
+  "Maroon 5 Payphone" solo devuelve el de la recopilación "Sing Along Bangers" (ISRC
+  `USUM71203844`, 3:42, sin Wiz Khalifa); el del CSV (`USUM71203347`) es el de *Overexposed* (3:51,
+  con Wiz Khalifa), que no sale en la búsqueda pero sí en `/artist/1188/top`. Cuando el resultado no
+  coincide con el álbum del archivo y hay ISRC, se compara la grabación por duración (±2 s); si es
+  otra, se busca la del ISRC en el top del artista y, si no está, se usa la que da el ISRC.
+- **H-R6-9 — Onda del toque congelada al volver de "Descubrir".** Las rutas son
+  `NoTransitionPage`: Inicio queda tapado en el mismo frame y Flutter congela sus animaciones
+  (`TickerMode`), así que la onda terminaba al regresar. Las tarjetas de acceso rápido usan ahora un
+  resaltado sin animación.
+- **Portadas de Descubrir en baja resolución:** no era a propósito; usaban los 250 px que guardan
+  los modelos estirados a ~340 dp. Ahora piden 500 o 1000 px según la densidad (una sola tarjeta
+  visible a la vez; 1000 px es la misma URL que el reproductor a pantalla completa).
+
 ## Importación de CSV
 
 TuneMyMusic exporta igual para Spotify, Amazon Music, Apple Music y YouTube Music: `Track name`,
