@@ -97,6 +97,9 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
   /// arreglaron** y el diagnóstico resultó equivocado, pero se mantienen: son
   /// baratas y correctas de por sí (capturar sin un frame en vuelo es lo
   /// razonable, y las sombras no se veían sobre el fondo oscuro).
+  /// Fondo opaco de la imagen exportada (el mismo de la pantalla).
+  static const Color _exportBackground = Color(0xFF07080C);
+
   Future<File?> _renderCard() async {
     final boundary =
         _keyFor(_index).currentContext?.findRenderObject() as RenderRepaintBoundary?;
@@ -127,7 +130,30 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen> {
     //
     // Ahora: se copian los bytes, se cierra la imagen, y solo entonces se
     // escribe el archivo.
-    final image = await boundary.toImage(pixelRatio: ratio.toDouble());
+    final card = await boundary.toImage(pixelRatio: ratio.toDouble());
+    // Ronda 5 (2.ª tanda): la tarjeta tiene esquinas redondeadas, así que el
+    // PNG traía las esquinas TRANSPARENTES, e Instagram (y otras apps) las
+    // rellenan de negro. Se pinta sobre un lienzo opaco con un margen del
+    // color de fondo de la pantalla: las esquinas quedan intencionales y la
+    // imagen no tiene ni un píxel transparente.
+    final ui.Image image;
+    try {
+      final pad = (card.width * 0.05).round();
+      final width = card.width + pad * 2;
+      final height = card.height + pad * 2;
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()),
+        Paint()..color = _exportBackground,
+      );
+      canvas.drawImage(card, Offset(pad.toDouble(), pad.toDouble()), Paint());
+      final picture = recorder.endRecording();
+      image = await picture.toImage(width, height);
+      picture.dispose();
+    } finally {
+      card.dispose();
+    }
     Uint8List bytes;
     try {
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -570,7 +596,10 @@ List<WrappedCardData> buildWrappedCards({
   return [
     WrappedCardData(
       eyebrow: 'Tu resumen · ${period.label}',
-      colors: const [Color(0xFF6D28D9), Color(0xFF2563EB)],
+      // Ronda 5 (2.ª tanda): tonos propios en vez de los degradados azul y
+      // morado de siempre. Brasa para el resumen, pino para artistas y ámbar
+      // para canciones; todos oscuros abajo para que el texto blanco se lea.
+      colors: const [Color(0xFFD9480F), Color(0xFF5A1A12)],
       layout: WrappedLayout.summary,
       heroImageUrl: hero,
       // Artista nº 1 al centro y las dos portadas más escuchadas detrás.
@@ -593,14 +622,14 @@ List<WrappedCardData> buildWrappedCards({
     if (artistItems.isNotEmpty)
       WrappedCardData(
         eyebrow: 'Tus artistas · ${period.label}',
-        colors: const [Color(0xFF0EA5E9), Color(0xFF1E3A8A)],
+        colors: const [Color(0xFF0F8B7E), Color(0xFF0A3533)],
         layout: WrappedLayout.artistShowcase,
         artists: artistItems,
       ),
     if (trackItems.isNotEmpty)
       WrappedCardData(
         eyebrow: 'Tus canciones · ${period.label}',
-        colors: const [Color(0xFFDB2777), Color(0xFF6D28D9)],
+        colors: const [Color(0xFFB45309), Color(0xFF3B1E08)],
         layout: WrappedLayout.trackShowcase,
         tracks: trackItems,
       ),

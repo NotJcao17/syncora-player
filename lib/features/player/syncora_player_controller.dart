@@ -1565,8 +1565,18 @@ bool get _isTestEnv {
     // las primeras se caen de él y `regenerated` volvía a salir no vacío aun
     // estando de lleno en la radio: el botón reponía playlist en vez de pedir
     // sugerencias nuevas, que es lo que se espera a esa altura.
+    //
+    // Ronda 5: "no está en el contexto" no basta. Una recomendación de
+    // "Mejorar cola", una canción pedida a la IA o cualquier cosa de la cola
+    // manual tampoco están en el contexto, y con eso el botón tiraba la
+    // playlist y dejaba solo radio. Radio es solo lo que vino de la cola
+    // automática sin ser una recomendación intercalada.
     final current = _state.currentTrack;
-    final playingRadio = current != null && !context.any((t) => t.id == current.id);
+    final playingRadio = current != null &&
+        _state.currentOrigin != QueueOrigin.manual &&
+        !current.isSuggested &&
+        !current.isAiGenerated &&
+        !context.any((t) => t.id == current.id);
 
     if (playingRadio || regenerated.isEmpty) {
       final radioEnabled = _radioEnabledGetter?.call() ?? true;

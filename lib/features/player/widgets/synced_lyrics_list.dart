@@ -87,22 +87,30 @@ class _SyncedLyricsListState extends ConsumerState<SyncedLyricsList> {
     return active;
   }
 
-  void _scrollTo(int index, {Duration duration = const Duration(milliseconds: 320)}) {
+  void _scrollTo(int index, {Duration duration = const Duration(milliseconds: 320), int attempt = 0}) {
     if (index < 0 || !_controller.hasClients) return;
     final ctx = _keys[index]?.currentContext;
     if (ctx != null) {
       Scrollable.ensureVisible(ctx, alignment: 0.5, duration: duration, curve: Curves.easeOutCubic);
       return;
     }
-    // La línea no está construida (lejos del viewport): estimación por alto
-    // medio y, ya construida, el `ensureVisible` del siguiente cambio afina.
+    // La línea no está construida (lejos de la pantalla, típico al pulsar
+    // "Sincronizar"). Ronda 5 (2.ª tanda): antes se animaba hasta una
+    // estimación y ahí se quedaba, unas líneas abajo del centro en PC y hasta
+    // fuera de la pantalla en móvil (las líneas largas ocupan más de lo que
+    // suponía la estimación). Ahora se salta a la estimación, con el alto medio
+    // real de la lista, y en el frame siguiente, con la línea ya construida, se
+    // centra con su posición exacta.
     final position = _controller.position;
-    final estimate = index * (widget.fontSize * 1.4 + widget.lineSpacing * 2) - position.viewportDimension / 2;
-    _controller.animateTo(
-      estimate.clamp(0.0, position.maxScrollExtent),
-      duration: duration,
-      curve: Curves.easeOutCubic,
-    );
+    final verticalPadding = widget.listPadding.vertical;
+    final contentExtent = position.maxScrollExtent + position.viewportDimension - verticalPadding;
+    final avgExtent = widget.lines.isEmpty ? 0.0 : contentExtent / widget.lines.length;
+    final estimate = widget.listPadding.top + index * avgExtent - position.viewportDimension / 2;
+    _controller.jumpTo(estimate.clamp(0.0, position.maxScrollExtent));
+    if (attempt >= 2) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _scrollTo(index, duration: duration, attempt: attempt + 1);
+    });
   }
 
   /// ¿La línea que suena quedó cerca del centro tras desplazarse a mano?

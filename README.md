@@ -39,7 +39,7 @@ The core philosophy: **privacy-first, open source, polished design, zero cost to
 ### Listening
 - 🎵 **Stream** any song in the Deezer catalog, no account needed.
 - 📥 **Downloads** for offline playback, with selectable quality, per song, album or playlist.
-- 🔀 Normal, shuffle and repeat (all / one), **gapless** playback and **skip silence**.
+- 🔀 Normal, shuffle and repeat (all / one), with **gapless** playback.
 - 🌊 **Crossfade** (off / 2 / 4 / 6 s) between downloaded songs when one ends naturally.
 - 📜 **Synced lyrics** (LRCLib) that follow the song; scroll freely and tap *Sync* to jump back.
 - 🔁 **Dual queue**: a manual queue ("Play next" / "Add to queue", always first) on top of an
@@ -51,11 +51,13 @@ The core philosophy: **privacy-first, open source, polished design, zero cost to
   **Android Auto**, and Windows media controls (SMTC).
 
 ### Library
-- 📚 Playlists and saved albums, **pinning**, **folders** (one level), sorting, list or grid view.
+- 📚 Playlists and saved albums, **pinning**, **folders**, sorting, list or grid view.
 - ❤️ "Your likes" and "On Repeat" (refreshed every week from what you play the most).
 - 🖼️ Custom playlist covers (image, color or gradient) and profile photo.
-- 🗂️ **Import** playlists from Spotify / Apple Music (CSV or text from TuneMyMusic, Soundiiz…):
-  runs in the background, survives closing the app, and matches the original artist and album.
+- 🗂️ **Import** playlists from a CSV or text file: a TuneMyMusic or Soundiiz export (so Spotify,
+  Apple Music, Amazon Music, YouTube Music, Tidal… anything those tools can read), an Exportify
+  export of Spotify, or plain `Artist - Title` lines. Runs in the background, survives closing the
+  app, and matches the original artist and album.
 - 📤 **Export** any playlist to CSV.
 - Limits: playlist names up to 100 characters, descriptions up to 300, 10 000 songs per playlist.
 

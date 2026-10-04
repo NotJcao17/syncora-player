@@ -656,6 +656,35 @@ void main() {
           reason: 'no recomienda lo que ya está en la cola, el contexto o suena ahora');
     });
 
+    test('regenerar con una recomendación sonando rehace la cola desde la playlist, no desde la radio',
+        () async {
+      final radio = FakeRadioService(nextBatch: [
+        for (var i = 0; i < 3; i++) SyncoraTrack(id: 'rec$i', title: 'Rec $i', artist: 'R'),
+      ]);
+      final controller = SyncoraPlayerController(
+        engine: FakeAudioEngine(),
+        extractionService: TestableExtractionService(),
+        radioService: radio,
+        radioEnabledGetter: () => true,
+      );
+      controller.init();
+      addTearDown(controller.dispose);
+
+      final tracks = [for (var i = 0; i < 10; i++) SyncoraTrack(id: 't$i', title: 'T$i', artistId: 1)];
+      await controller.setQueue(tracks, autoplay: false);
+      await controller.improveQueueWithRecommendations();
+      // Avanzar hasta la primera recomendación (t1, t2, t3, rec0).
+      for (var i = 0; i < 4; i++) {
+        await controller.skipToNext();
+      }
+      expect(controller.state.currentTrack?.id, 'rec0');
+
+      expect(controller.regenerateAutoQueue(), isTrue);
+      final ids = controller.state.autoQueue.map((t) => t.id).toList();
+      expect(ids, containsAll(['t4', 't5', 't9']), reason: 'debe volver a la playlist, no a solo radio');
+      expect(ids.any((id) => id.startsWith('rec')), isFalse);
+    });
+
     test('sin radio disponible no hace nada', () async {
       final controller = SyncoraPlayerController(
         engine: FakeAudioEngine(),

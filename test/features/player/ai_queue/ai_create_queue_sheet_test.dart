@@ -327,7 +327,7 @@ void main() {
     expect(controller.state.manualQueue, isEmpty);
   });
 
-  testWidgets('con algo sonando: manda el contexto y deja el resultado en la cola manual (ronda 5)',
+  testWidgets('con "parecido a lo que escucho": manda el contexto y deja el resultado en la cola manual',
       (tester) async {
     growViewport(tester);
     final controller = buildController();
@@ -357,12 +357,15 @@ void main() {
     await tester.tap(find.text('Crear con IA'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'más movido');
+    // Ronda 5 (2.ª tanda): el interruptor empieza apagado; se elige a propósito.
+    await tester.tap(find.text('Parecido a lo que estoy escuchando'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Crear cola'));
     await tester.pumpAndSettle();
 
     expect(sentBody?['interleave'], false);
     final contextTracks = sentBody?['contextTracks'] as List?;
-    expect(contextTracks, isNotNull, reason: 'con algo sonando, el interruptor de contexto empieza activado');
+    expect(contextTracks, isNotNull, reason: 'con el interruptor encendido viaja lo que suena');
     expect(contextTracks!.isNotEmpty, isTrue);
 
     await tester.tap(find.text('Agregar a la cola'));

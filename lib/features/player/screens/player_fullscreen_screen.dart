@@ -112,7 +112,13 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => LyricsSheet(track: track),
+      // Ronda 5 (2.ª tanda): la hoja sigue a la pista que suena. Con la
+      // pista fija del momento de abrirla, al pasar a la siguiente canción se
+      // seguían mostrando las letras de la anterior (en PC la vista de letras
+      // ya observaba la pista actual).
+      builder: (ctx) => Consumer(
+        builder: (ctx, ref, _) => LyricsSheet(track: ref.watch(currentTrackProvider) ?? track),
+      ),
     );
   }
 

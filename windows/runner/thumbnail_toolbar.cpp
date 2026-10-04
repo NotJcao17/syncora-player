@@ -25,19 +25,56 @@ constexpr UINT kBtnPlayPause = 2;
 constexpr UINT kBtnNext = 3;
 constexpr UINT kBtnLike = 4;
 
-// Glifos de "Segoe MDL2 Assets", la fuente de iconos que Windows ya trae: usarla
-// evita agregar assets .ico al repo y da el mismo trazo que el resto del shell.
-constexpr wchar_t kGlyphPrevious = 0xE892;
-constexpr wchar_t kGlyphPlay = 0xE768;
-constexpr wchar_t kGlyphPause = 0xE769;
-constexpr wchar_t kGlyphNext = 0xE893;
-constexpr wchar_t kGlyphHeart = 0xEB51;
-constexpr wchar_t kGlyphHeartFilled = 0xEB52;
+// Ronda 5: los iconos son los Solar de la app (las mismas fuentes que usa
+// Flutter, cargadas en privado desde flutter_assets), no los de "Segoe MDL2
+// Assets", que se veian cuadrados y ajenos al resto de la interfaz. Si las
+// fuentes no se pudieran cargar, se cae a los de Windows.
+struct Glyph {
+  wchar_t solar;
+  const wchar_t* solar_family;
+  wchar_t fallback;
+};
+
+constexpr wchar_t kSolarBold[] = L"SolarBold";
+constexpr wchar_t kSolarBroken[] = L"SolarBroken";
+constexpr wchar_t kSegoeMdl2[] = L"Segoe MDL2 Assets";
+
+// Mismos codigos que `SolarIcons.SkipPrevious/Play/Pause/SkipNext/Heart`.
+constexpr Glyph kGlyphPrevious = {0xE49F, kSolarBold, 0xE892};
+constexpr Glyph kGlyphPlay = {0xE485, kSolarBold, 0xE768};
+constexpr Glyph kGlyphPause = {0xE480, kSolarBold, 0xE769};
+constexpr Glyph kGlyphNext = {0xE49E, kSolarBold, 0xE893};
+constexpr Glyph kGlyphHeart = {0xE240, kSolarBroken, 0xEB51};
+constexpr Glyph kGlyphHeartFilled = {0xE240, kSolarBold, 0xEB52};
+
+bool g_solar_loaded = false;
+
+// Registra las fuentes Solar solo para este proceso (FR_PRIVATE): no se
+// instalan en el sistema ni las ve ninguna otra app.
+void LoadSolarFonts() {
+  static bool attempted = false;
+  if (attempted) {
+    return;
+  }
+  attempted = true;
+  wchar_t exe_path[MAX_PATH];
+  DWORD len = GetModuleFileNameW(nullptr, exe_path, MAX_PATH);
+  if (len == 0 || len == MAX_PATH) {
+    return;
+  }
+  std::wstring dir(exe_path, len);
+  dir = dir.substr(0, dir.find_last_of(L"\\/") + 1);
+  const std::wstring fonts =
+      dir + L"data\\flutter_assets\\packages\\flutty_solar_icons\\assets\\fonts\\";
+  const int bold = AddFontResourceExW((fonts + L"SolarBold.ttf").c_str(), FR_PRIVATE, nullptr);
+  const int broken = AddFontResourceExW((fonts + L"SolarBroken.ttf").c_str(), FR_PRIVATE, nullptr);
+  g_solar_loaded = bold > 0 && broken > 0;
+}
 
 // Dibuja un glifo blanco sobre fondo negro y deriva el canal alfa del brillo
 // resultante. GDI no escribe alfa al pintar texto, asi que sin este paso el
 // icono saldria como un cuadro negro opaco.
-HICON CreateGlyphIcon(wchar_t glyph) {
+HICON CreateGlyphIcon(wchar_t glyph, const wchar_t* family) {
   HDC screen_dc = GetDC(nullptr);
   HDC dc = CreateCompatibleDC(screen_dc);
   ReleaseDC(nullptr, screen_dc);
@@ -64,7 +101,7 @@ HICON CreateGlyphIcon(wchar_t glyph) {
   HFONT font = CreateFontW(kIconSize, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
                            DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
                            CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
-                           DEFAULT_PITCH | FF_DONTCARE, L"Segoe MDL2 Assets");
+                           DEFAULT_PITCH | FF_DONTCARE, family);
 
   HGDIOBJ old_bitmap = SelectObject(dc, color);
   HGDIOBJ old_font = SelectObject(dc, font);
@@ -101,8 +138,9 @@ HICON CreateGlyphIcon(wchar_t glyph) {
   return icon;
 }
 
-void AppendGlyph(HIMAGELIST list, wchar_t glyph) {
-  HICON icon = CreateGlyphIcon(glyph);
+void AppendGlyph(HIMAGELIST list, const Glyph& glyph) {
+  HICON icon = g_solar_loaded ? CreateGlyphIcon(glyph.solar, glyph.solar_family)
+                              : CreateGlyphIcon(glyph.fallback, kSegoeMdl2);
   if (icon) {
     ImageList_AddIcon(list, icon);
     DestroyIcon(icon);
@@ -208,6 +246,7 @@ void ThumbnailToolbar::AddButtons() {
     if (!image_list_) {
       return;
     }
+    LoadSolarFonts();
     AppendGlyph(image_list_, kGlyphPrevious);
     AppendGlyph(image_list_, kGlyphPlay);
     AppendGlyph(image_list_, kGlyphPause);

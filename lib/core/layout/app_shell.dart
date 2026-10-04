@@ -903,14 +903,28 @@ class _WindowCaptionButtonState extends State<_WindowCaptionButton> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: widget.onPressed,
-        child: Container(
+        // Ronda 5: resaltado redondeado y separado del borde, como el resto de
+        // botones de la app, en vez del bloque cuadrado de Windows. La zona de
+        // clic sigue siendo toda la celda (46 px de ancho, alto completo).
+        child: SizedBox(
           width: 46,
-          color: _isHovered ? widget.hoverColor : Colors.transparent,
-          child: Icon(
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              width: 36,
+              height: 30,
+              decoration: BoxDecoration(
+                color: _isHovered ? widget.hoverColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
             widget.icon,
             size: 19,
             color: AppTheme.primary,
+          ),
+            ),
           ),
         ),
       ),

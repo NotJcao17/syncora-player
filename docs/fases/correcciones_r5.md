@@ -132,6 +132,38 @@ Sesión del 2026-10-03. Plan, diagnóstico, decisiones y estado. Cada bundle cer
   repite en `--release` o `--profile`, hace falta el `adb logcat` de ese momento (buscar
   `lowmemorykiller`, `Fatal signal` o `ANR`).
 
+## Segunda tanda (tras la primera prueba en dispositivo)
+
+- **H-R5-13. "Regenerar cola" dejaba solo radio tras "Mejorar cola".** Decidía "estoy en la radio"
+  con solo ver que la pista actual no estaba en la playlist. Una recomendación intercalada, una
+  canción pedida a la IA o cualquier cosa de la cola manual cumplen eso, así que vaciaba la cola y
+  pedía radio. Ahora radio es solo lo que viene de la cola automática sin ser una recomendación.
+- **H-R5-14. "Crear con IA" devolvía menos de lo pedido** (10 → 5, 25 → 18). Además de lo que Deezer
+  no encuentra, se descartan las que ya están en la cola o en la playlist que suena, y había una
+  sola ronda de relleno que tampoco le decía a la IA qué había descartado. Ahora hasta 3 rondas, cada
+  una con todo lo ya sugerido como contexto. El interruptor pasa a "Parecido a lo que estoy
+  escuchando", **apagado por defecto**, y manda solo la canción actual y las 40 siguientes (antes la
+  cola entera, hasta 1500).
+- **H-R5-15. "Sincronizar" dejaba la línea fuera del centro.** Con la línea sin construir se animaba
+  hasta una estimación y ahí se quedaba. Ahora salta a la estimación (con el alto medio real de la
+  lista) y en el frame siguiente centra la línea ya construida.
+- **H-R5-16. Letras de la canción anterior en móvil.** La hoja recibía la pista fija del momento de
+  abrirla; ahora sigue a la pista actual (en PC la vista ya lo hacía).
+- **H-R5-17. Los "íconos de hover" de Windows eran los de la barra de tareas**, no los tooltips:
+  `thumbnail_toolbar.cpp` dibujaba glifos de "Segoe MDL2 Assets". Ahora dibuja los Solar de la app
+  (las fuentes de `flutter_assets`, cargadas solo para el proceso con `AddFontResourceEx`); si no se
+  pudieran cargar, vuelve a los de Windows. También se redondeó el resaltado de los botones de la
+  ventana (minimizar, maximizar, cerrar).
+- **H-R5-18. Wrapped con esquinas negras en Instagram.** El PNG tenía las esquinas transparentes
+  (tarjeta redondeada). Ahora se pinta sobre un lienzo opaco con margen del color de fondo. Paletas
+  nuevas: brasa (resumen), pino (artistas) y ámbar (canciones), en vez de azul y morado.
+- **Pantalla de bloqueo en Android (sin reproducir aquí, sin dispositivo conectado).** Lo único que
+  esta ronda cambió en el servicio de audio fue Android Auto. Se quitó el único valor no entero de
+  los hints de navegación y ahora un fallo de `AudioService.init` deja rastro en consola
+  (`[AudioService] ...`). Si sigue sin aparecer, hace falta esa línea o el `adb logcat`.
+- README: sin "skip silence" (el motor lo soporta pero ningún ajuste lo activa) y con los formatos
+  de importación reales (CSV de TuneMyMusic, Soundiiz o Exportify, o líneas `Artista - Título`).
+
 ## Pendiente
 
 - ~~Aplicar la migración 21~~: aplicada el 2026-10-03 con `supabase db push` (verificado: el

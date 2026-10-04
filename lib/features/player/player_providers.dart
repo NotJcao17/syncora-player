@@ -197,7 +197,6 @@ void _initAndroidAudioService(
       androidBrowsableRootExtras: {
         'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2,
         'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1,
-        'android.media.browse.SEARCH_SUPPORTED': true,
       },
       androidNotificationChannelId: 'com.syncora.player',
       androidNotificationChannelName: 'Syncora Player',
@@ -226,6 +225,11 @@ void _initAndroidAudioService(
     ),
   ).then((handler) {
     _globalAndroidAudioHandler = handler;
+    debugPrint('[AudioService] Servicio de audio listo (notificación y pantalla de bloqueo).');
+  }).catchError((Object e, StackTrace st) {
+    // Sin servicio no hay notificación ni reproductor en la pantalla de
+    // bloqueo; antes este fallo no dejaba ningún rastro.
+    debugPrint('[AudioService] No se pudo iniciar el servicio de audio: $e. $st');
   });
 }
 

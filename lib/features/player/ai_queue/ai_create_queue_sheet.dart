@@ -78,8 +78,11 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
   void initState() {
     super.initState();
     _count = _kDefaultCount;
-    // Con algo sonando, "más movido" o "parecido" tienen de qué partir.
-    _basedOnCurrent = ref.read(currentTrackProvider) != null;
+    // Ronda 5 (2.ª tanda): apagado por defecto. Encendido, la IA mezcla tu
+    // pedido con lo que suena; si escuchas algo muy distinto a lo que pides
+    // ("para relajarme" con metal sonando) el resultado puede salir raro, así
+    // que es algo que se elige a propósito.
+    _basedOnCurrent = false;
     _step = _Step.form;
   }
 
@@ -94,39 +97,23 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
 
   int _clampInt(int value, int min, int max) => value < min ? min : (value > max ? max : value);
 
+  /// "Lo que estoy escuchando" (ronda 5, 2.ª tanda): la canción actual, lo
+  /// que pediste a mano y las siguientes 40 de la cola, como mucho 50. Antes
+  /// viajaba la cola entera (hasta 1500 canciones de una playlist grande): la
+  /// referencia se diluía en todo el contexto y costaba más tokens.
   List<Map<String, dynamic>> _buildQueueContext() {
     final state = ref.read(syncoraPlayerControllerProvider.notifier).state;
     final seen = <String>{};
     final tracks = <SyncoraTrack>[];
     void add(SyncoraTrack t) {
-      if (seen.add(t.id)) tracks.add(t);
+      if (tracks.length < 50 && seen.add(t.id)) tracks.add(t);
     }
 
     final current = state.currentTrack;
     if (current != null) add(current);
-    for (final t in state.manualQueue) {
-      add(t);
-    }
-    for (final t in state.autoQueue) {
-      add(t);
-    }
-
-    const absurdThreshold = 3000;
-    const sampledCap = 1500;
-    var effective = tracks;
-    if (tracks.length > absurdThreshold) {
-      final freq = <String, int>{};
-      for (final t in tracks) {
-        freq[t.artist] = (freq[t.artist] ?? 0) + 1;
-      }
-      final rest = current != null ? tracks.skip(1).toList() : tracks;
-      final sorted = List<SyncoraTrack>.from(rest)
-        ..sort((a, b) => (freq[b.artist] ?? 0).compareTo(freq[a.artist] ?? 0));
-      final budget = current != null ? sampledCap - 1 : sampledCap;
-      effective = [?current, ...sorted.take(budget)];
-    }
-
-    return effective.map((t) => {'id': t.id, 'title': t.title, 'artist': t.artist}).toList();
+    state.manualQueue.forEach(add);
+    state.autoQueue.take(40).forEach(add);
+    return tracks.map((t) => {'id': t.id, 'title': t.title, 'artist': t.artist}).toList();
   }
 
   Future<void> _submit() async {
@@ -277,11 +264,18 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
 
     if (!mounted) return;
 
-    // Ronda 4: fuera lo que ya está en la cola/playlist y las repetidas, y
-    // una ronda de relleno si con eso quedaron menos de las pedidas.
+    // Ronda 4: fuera lo que ya está en la cola/playlist y las repetidas.
+    // Ronda 5 (2.ª tanda): hasta 3 rondas de relleno. Con una sola, pedir 10
+    // daba 5 y pedir 25 daba 18: además de las que Deezer no encuentra, se
+    // descartan las que ya están en tu cola o en la playlist que suena (la IA
+    // no las conoce si no le pasas contexto, y sugiere justo las conocidas).
+    // Cada ronda le dice todo lo ya sugerido para que no lo repita.
     final (ids, keys) = _alreadyQueued();
     var fresh = _withoutRepeats(matched, ids, keys);
-    if (fresh.length < _count) {
+    final suggestedSoFar = <Map<String, dynamic>>[
+      for (final r in rawTracks) {'title': r.title, 'artist': r.artist},
+    ];
+    for (var round = 0; round < 3 && fresh.length < _count; round++) {
       final missing = _count - fresh.length;
       setState(() => _matchCurrentName = 'Completando: faltan $missing canciones');
       try {
@@ -289,14 +283,13 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
               prompt: prompt,
               // Lo ya sugerido viaja como contexto: el prompt del servidor
               // pide no repetir nada del contexto.
-              contextTracks: [
-                ...?contextTracks,
-                for (final t in fresh) {'title': t.title, 'artist': t.artistName},
-              ],
+              contextTracks: [...?contextTracks, ...suggestedSoFar],
               interleave: false,
-              count: _clampInt((missing * 1.6).round() + 2, 1, _kHardCountCap),
+              count: _clampInt(missing * 2 + 3, 1, _kHardCountCap),
             );
         final extraRaw = PlaylistImportExportService.parseTrackSuggestions(extra['tracks']);
+        if (extraRaw.isEmpty) break;
+        suggestedSoFar.addAll([for (final r in extraRaw) {'title': r.title, 'artist': r.artist}]);
         final extraMatched = <DeezerTrack>[];
         await for (final _ in service.processImport(
           rawTracks: extraRaw,
@@ -307,7 +300,7 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
         }
         fresh = [...fresh, ..._withoutRepeats(extraMatched, ids, keys)];
       } catch (_) {
-        // Sin relleno: se muestra lo que hay.
+        break; // Sin más relleno: se muestra lo que hay.
       }
       if (!mounted) return;
     }
@@ -422,8 +415,12 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
           dense: true,
           activeTrackColor: AppTheme.accent,
           title: const Text(
-            'Tener en cuenta lo que estoy escuchando',
+            'Parecido a lo que estoy escuchando',
             style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+          subtitle: const Text(
+            'Usa la canción actual y las siguientes de tu cola como referencia. Tu texto siempre manda.',
+            style: TextStyle(color: AppTheme.secondary, fontSize: 11.5),
           ),
         ),
         const SizedBox(height: 8),

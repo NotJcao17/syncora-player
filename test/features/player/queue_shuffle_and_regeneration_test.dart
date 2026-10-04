@@ -252,10 +252,11 @@ void main() {
       // boton repusiera playlist en vez de pedir sugerencias nuevas.
       final c = _controller();
       await c.setQueue(_playlist(80), startIndex: 0, autoplay: false);
-      // Se fuerza el estado "suena una pista que NO es del contexto", que es
-      // exactamente como se ve estar escuchando radio.
-      c.playNext(const SyncoraTrack(id: 'radio-9', title: 'Radio 9'));
-      await c.skipToNext();
+      // Se fuerza el estado "suena una pista de la cola automática que NO es
+      // del contexto", que es exactamente como se ve estar escuchando radio.
+      // (Ronda 5: una pista de la cola manual ya no cuenta como radio.)
+      c.interleaveIntoAutoQueue(const [SyncoraTrack(id: 'radio-9', title: 'Radio 9')], stride: 1);
+      await c.playFromQueue(QueueOrigin.auto, 1);
       expect(c.state.currentTrack?.id, 'radio-9');
 
       final ok = c.regenerateAutoQueue();
