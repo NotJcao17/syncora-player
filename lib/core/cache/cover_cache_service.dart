@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -66,36 +65,6 @@ class CoverCacheService {
     } catch (_) {}
   }
 
-  Future<ImageProvider> getCover(String coverUrl, {int? trackId}) async {
-    if (coverUrl.isEmpty || kIsWeb) {
-      return const AssetImage('assets/icon/icon.png');
-    }
-
-    if (trackId != null) {
-      final coverDir = await _getCoverDir();
-      final localFile = File('$coverDir/$trackId.jpg');
-      if (localFile.existsSync()) {
-        return FileImage(localFile);
-      }
-    }
-
-    final index = await _loadIndex();
-    if (index.containsKey(coverUrl)) {
-      final entry = index[coverUrl] as Map<String, dynamic>;
-      final path = entry['localPath'] as String?;
-      if (path != null) {
-        final file = File(path);
-        if (file.existsSync()) {
-          entry['lastAccess'] = DateTime.now().millisecondsSinceEpoch;
-          await _saveIndex(index);
-          return FileImage(file);
-        }
-      }
-    }
-
-    return NetworkImage(coverUrl);
-  }
-
   Future<String> downloadAndCacheCover(String coverUrl, int trackId) async {
     if (coverUrl.isEmpty || kIsWeb) return '';
     
@@ -139,43 +108,6 @@ class CoverCacheService {
     final isPng = bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47;
     final isWebp = bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46;
     return isJpeg || isPng || isWebp;
-  }
-
-  Future<void> pruneOrphanCovers({Set<int>? activeTrackIds}) async {
-    if (kIsWeb) return;
-    final coverDir = await _getCoverDir();
-    final dir = Directory(coverDir);
-    if (!dir.existsSync()) return;
-
-    final index = await _loadIndex();
-    final indexKeysToRemove = <String>[];
-
-    for (final entity in dir.listSync()) {
-      if (entity is File && entity.path.endsWith('.jpg')) {
-        final fileName = entity.path.split(Platform.pathSeparator).last;
-        final trackIdStr = fileName.replaceAll('.jpg', '');
-        final trackId = int.tryParse(trackIdStr);
-
-        if (activeTrackIds != null && trackId != null && !activeTrackIds.contains(trackId)) {
-          try {
-            entity.deleteSync();
-          } catch (_) {}
-        }
-      }
-    }
-
-    for (final entry in index.entries) {
-      final path = entry.value['localPath'] as String?;
-      if (path == null || !File(path).existsSync()) {
-        indexKeysToRemove.add(entry.key);
-      }
-    }
-
-    for (final key in indexKeysToRemove) {
-      index.remove(key);
-    }
-
-    await _saveIndex(index);
   }
 
   /// Tamaño en disco de las portadas de las pistas descargadas.

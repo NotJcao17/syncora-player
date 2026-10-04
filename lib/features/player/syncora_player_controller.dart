@@ -63,7 +63,6 @@ class SyncoraPlayerState {
   final String? activeContextId;
 
   bool get isShuffle => shuffle;
-  bool get isSkipSilence => skipSilence;
 
   /// Último error de extracción relevante (403 / red / not found). Lo usa la UI
   /// para mostrar un mensaje (Pitfalls #11 y #14: pausa inmediata, no bucle).
@@ -1229,12 +1228,6 @@ bool get _isTestEnv {
     final canonicalIds = canonical.map((t) => t.id).toSet();
     final extras = current.where((t) => !canonicalIds.contains(t.id)).toList();
     return [...canonical, ...extras];
-  }
-
-  Future<void> setSkipSilence(bool enabled) async {
-    await _engine.setSkipSilenceEnabled(enabled);
-    _state = _state.copyWith(skipSilence: enabled);
-    _notify();
   }
 
   Future<void> setSpeed(double speed) => _engine.setSpeed(speed);

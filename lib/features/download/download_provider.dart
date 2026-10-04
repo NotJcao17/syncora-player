@@ -17,11 +17,6 @@ final downloadWifiOnlyProvider = NotifierProvider<BoolSettingNotifier, bool>(
   () => BoolSettingNotifier(AppSettingsStore.downloadWifiOnlyKey, true),
 );
 
-final watchDownloadedTrackProvider = StreamProvider.family<DownloadedTrack?, int>((ref, trackId) {
-  final dao = ref.watch(downloadedTrackDaoProvider);
-  return dao.watchByTrackId(trackId);
-});
-
 /// Estado de descarga de todas las pistas en un único stream (ronda 3 bis).
 /// Lo consume `TrackTile` con `select`, de modo que una fila solo se
 /// reconstruye cuando cambia SU estado. Ver `watchDownloadStates`.

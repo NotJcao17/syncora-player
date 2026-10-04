@@ -13,7 +13,6 @@ abstract final class AppLimits {
   static const int playlistTitleMax = 100;
   static const int playlistDescriptionMax = 300;
   static const int playlistTracksMax = 10000;
-  static const int folderNameMax = 100;
 
   /// Mensaje cuando una playlist ya no admite más canciones.
   static const String playlistFullMessage = 'La playlist llegó al máximo de 10 000 canciones';

@@ -7,7 +7,6 @@ class AppTheme {
 
   // Color Palette (calcada de docs/mockups/js/tailwind-config.js)
   static const Color background = Color(0xFF181C27);
-  static const Color bgDark = Color(0xFF121212);
   static const Color surface = Color(0xFF1E2633);
   static const Color surfaceHover = Color(0xFF252E3D);
   static const Color surfaceActive = Color(0xFF2C3647);

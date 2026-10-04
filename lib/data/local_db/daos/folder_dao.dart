@@ -24,9 +24,6 @@ class FolderDao extends DatabaseAccessor<SyncoraDatabase> with _$FolderDaoMixin 
   Future<Folder?> getFolderById(int id) =>
       (select(folders)..where((f) => f.id.equals(id))).getSingleOrNull();
 
-  Stream<Folder?> watchFolder(int id) =>
-      (select(folders)..where((f) => f.id.equals(id))).watchSingleOrNull();
-
   Future<Folder?> getFolderByRemoteId(String remoteId) =>
       (select(folders)..where((f) => f.remoteId.equals(remoteId))).getSingleOrNull();
 

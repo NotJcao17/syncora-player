@@ -108,12 +108,4 @@ class DownloadedTrackDao extends DatabaseAccessor<SyncoraDatabase> with _$Downlo
     await delete(downloadedTracks).go();
   }
 
-  Future<int> getTotalSizeBytes() async {
-    final allDownloaded = await getAllDownloaded();
-    int total = 0;
-    for (final t in allDownloaded) {
-      total += t.fileSizeBytes;
-    }
-    return total;
-  }
 }

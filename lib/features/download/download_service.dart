@@ -129,28 +129,6 @@ class DownloadService {
     return dir.path;
   }
 
-  Future<int> getDownloadedTracksCount() async {
-    final list = await _dao.getAll();
-    int count = 0;
-    for (final track in list) {
-      if (track.downloadState == 2) {
-        count++;
-      }
-    }
-    return count;
-  }
-
-  Future<int> countDownloaded(List<int> trackIds) async {
-    int count = 0;
-    for (final id in trackIds) {
-      final downloaded = await _dao.getByTrackId(id);
-      if (downloaded != null && downloaded.downloadState == 2) {
-        count++;
-      }
-    }
-    return count;
-  }
-
   /// Descargas en curso por `trackId` (ronda 4, H-R4-10).
   final Map<int, Future<bool>> _inFlight = {};
 

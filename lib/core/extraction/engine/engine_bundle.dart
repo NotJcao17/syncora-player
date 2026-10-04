@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 
@@ -82,6 +80,3 @@ class EngineBundle {
 /// SHA-256 en hex de los bytes UTF-8 de un motor — lo mismo que calcula
 /// `engine/scripts/build.mjs`.
 String engineSha256(List<int> bytes) => sha256.convert(bytes).toString();
-
-/// Atajo para el caso de tener el motor como texto.
-String engineSha256OfCode(String code) => engineSha256(utf8.encode(code));

@@ -46,16 +46,6 @@ enum StatsPeriod {
         StatsPeriod.allTime => 'Todo',
       };
 
-  /// Nombre largo, para títulos y tarjetas del Wrapped.
-  String get longLabel => switch (this) {
-        StatsPeriod.week => 'los últimos 7 días',
-        StatsPeriod.month => 'los últimos 30 días',
-        StatsPeriod.quarter => 'los últimos 3 meses',
-        StatsPeriod.halfYear => 'los últimos 6 meses',
-        StatsPeriod.year => 'los últimos 12 meses',
-        StatsPeriod.allTime => 'todo tu historial',
-      };
-
   /// Días que abarca la ventana, o `null` para "todo".
   int? get days => switch (this) {
         StatsPeriod.week => 7,

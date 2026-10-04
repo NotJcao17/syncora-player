@@ -431,16 +431,6 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     });
   }
 
-  // Search inside playlist
-  Future<List<PlaylistTrack>> searchTracksInPlaylist(int playlistId, String query) {
-    final q = '%${query.toLowerCase()}%';
-    return (select(playlistTracks)
-          ..where((t) =>
-              t.playlistId.equals(playlistId) &
-              (t.title.lower().like(q) | t.artistName.lower().like(q))))
-        .get();
-  }
-
   /// Una fila de ejemplo por cada `trackId` pedido, mirando en TODAS las
   /// playlists locales.
   ///
@@ -455,18 +445,6 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     final out = <int, PlaylistTrack>{};
     for (final row in rows) {
       out.putIfAbsent(row.trackId, () => row);
-    }
-    return out;
-  }
-
-  /// Una fila de ejemplo por cada `artistId` pedido, para recuperar el nombre
-  /// del artista sin gastar una llamada a `/artist/{id}`.
-  Future<Map<int, PlaylistTrack>> findTracksByArtistIds(Set<int> artistIds) async {
-    if (artistIds.isEmpty) return {};
-    final rows = await (select(playlistTracks)..where((t) => t.artistId.isIn(artistIds))).get();
-    final out = <int, PlaylistTrack>{};
-    for (final row in rows) {
-      out.putIfAbsent(row.artistId, () => row);
     }
     return out;
   }

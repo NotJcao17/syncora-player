@@ -120,7 +120,4 @@ class DartFetchBridge {
     }
   }
 
-  void clearSession() {
-    _cookies.clear();
-  }
 }

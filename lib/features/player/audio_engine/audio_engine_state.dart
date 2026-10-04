@@ -14,10 +14,6 @@ enum AudioProcessingState {
   error,
 }
 
-/// Modos de repetición (Pitfall #7 — el gapless entre canciones lo resuelve
-/// ExoPlayer/libmpv nativamente; esto solo controla el comportamiento de cola).
-enum RepeatMode { off, one, all }
-
 /// Snapshot inmutable del estado de reproducción en un instante.
 class AudioEngineState {
   final AudioProcessingState processingState;

@@ -232,28 +232,4 @@ class SupabasePlaylistRepository {
         .inFilter('track_id', trackIds);
   }
 
-  Future<void> reorderTracks(
-    String playlistId,
-    List<String> trackIdsInOrder,
-  ) async {
-    final client = _client;
-    if (client == null) return;
-    for (int i = 0; i < trackIdsInOrder.length; i++) {
-      final tid = trackIdsInOrder[i];
-      final parsedTrackId = int.tryParse(tid);
-      if (parsedTrackId != null) {
-        await client
-            .from('playlist_tracks')
-            .update({'order_index': i})
-            .eq('playlist_id', playlistId)
-            .eq('track_id', parsedTrackId);
-      } else {
-        await client
-            .from('playlist_tracks')
-            .update({'order_index': i})
-            .eq('playlist_id', playlistId)
-            .eq('id', tid);
-      }
-    }
-  }
 }

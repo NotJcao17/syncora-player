@@ -70,7 +70,6 @@ class ExtractionIsolate {
 
   Stream<String> get onLogMessage => _logController.stream;
   bool get isInitialized => _isolateSendPort != null;
-  bool get hasPendingRequests => _pendingRequests.isNotEmpty;
 
   /// Arranca el isolate con [bundle] y espera a que QuickJS lo evalúe.
   /// Si ya está arrancado (o arrancando), devuelve ese mismo arranque.

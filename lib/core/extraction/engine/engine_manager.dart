@@ -231,9 +231,6 @@ class EngineManager {
     }
   }
 
-  /// Pistas de la racha que declaró el motor roto (no son culpables).
-  List<String> get brokenStreakKeys => _monitor.streakKeys;
-
   // ---------------------------------------------------------------------------
   // Recuperación
   // ---------------------------------------------------------------------------
