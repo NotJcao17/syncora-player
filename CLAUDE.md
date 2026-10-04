@@ -71,6 +71,15 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-10-04)
+
+**Sexta ronda de correcciones: implementada; faltan pruebas en dispositivo.** Detalle en
+`docs/fases/correcciones_r6.md`. Lo que no conviene revertir: `KeyboardInsetFreeze` devuelve
+**siempre** un `MediaQuery` (cambiar la estructura del árbol al abrir una ruta reconstruía el shell
+entero y rompía el menú de perfil de PC); los menús contextuales del contenido van al navegador
+raíz; la importación quita el BOM y reparte por `Playlist name` (TuneMyMusic), y el ISRC es solo
+último recurso.
+
 ### Estado actual (última actualización: 2026-10-03)
 
 **Quinta ronda de correcciones: implementada y pusheada; migración 21 aplicada; faltan las
