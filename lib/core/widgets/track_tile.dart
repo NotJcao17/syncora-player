@@ -61,12 +61,17 @@ class TrackContextMenu {
     // `OverlayState` (distinto del parámetro `context`) -- el `mounted`
     // check de arriba no lo cubre a él directamente, pero vive mientras
     // viva el árbol de overlays de la app, así que es seguro usarlo aquí.
+    // Overlay y navegador raíz: con el `Navigator` del shell (el del área
+    // central) la barrera del menú solo cubría esa zona, y un clic en la
+    // barra lateral o en el reproductor no lo cerraba. Además la posición es
+    // global, que es la que corresponde al overlay de toda la ventana.
     // ignore: use_build_context_synchronously
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    final overlay = Overlay.of(context, rootOverlay: true).context.findRenderObject() as RenderBox?;
     final overlaySize = overlay?.size ?? MediaQuery.sizeOf(context);
 
     final selected = await showMenu<String>(
       context: context,
+      useRootNavigator: true,
       position: RelativeRect.fromRect(
         Rect.fromLTWH(position.dx, position.dy, 0, 0),
         Offset.zero & overlaySize,
@@ -1367,6 +1372,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
 
         if (isDesktop) {
           return PopupMenuButton<String>(
+            useRootNavigator: true,
             icon: Icon(AppIcons.broken(SolarIcons.MenuDots), size: 18, color: AppTheme.secondary),
             color: const Color(0xFF1E1E1E),
             elevation: 10,

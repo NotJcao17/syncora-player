@@ -168,6 +168,9 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
       content: SizedBox(
         width: 440,
         child: SingleChildScrollView(
+          // La etiqueta flotante del primer campo sube por encima de su borde:
+          // sin este margen el scroll la recortaba ("Nombre de la playlist").
+          padding: const EdgeInsets.only(top: 10),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,8 +194,6 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
                 leading: _optionIcon(AppIcons.broken(SolarIcons.Widget)),
                 title: const Text('Cuadrícula 2x2 automática',
                     style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w600)),
-                subtitle: const Text('Muestra las carátulas de las canciones',
-                    style: TextStyle(color: AppTheme.secondary, fontSize: 11)),
                 trailing: (_pendingImage == null && (_selectedCover == null || _selectedCover!.isEmpty))
                     ? Icon(AppIcons.bold(SolarIcons.CheckCircle), color: AppTheme.primary, size: 20)
                     : null,
@@ -262,8 +263,6 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
       );
     }
 
-    final subtitle = _isCloud ? 'Se sube a tu cuenta al guardar' : 'Se guarda en este dispositivo';
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -279,16 +278,9 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _hasImageSelected ? 'Cambiar imagen' : 'Subir imagen',
-                      style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: const TextStyle(color: AppTheme.secondary, fontSize: 11)),
-                  ],
+                child: Text(
+                  _hasImageSelected ? 'Cambiar imagen' : 'Subir imagen',
+                  style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w600),
                 ),
               ),
               if (_isProcessing)

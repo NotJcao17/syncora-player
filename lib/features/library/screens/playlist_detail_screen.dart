@@ -1363,6 +1363,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                           // Ordenamiento en Móvil
                                           if (!isDesktop && sortedSyncoraTracks.isNotEmpty) ...[
                                             PopupMenuButton<PlaylistSortColumn>(
+                                              useRootNavigator: true,
                                               icon: Icon(AppIcons.broken(SolarIcons.SortVertical), color: AppTheme.secondary, size: 22),
                                               tooltip: 'Ordenar canciones',
                                               color: const Color(0xFF1E1E1E),
