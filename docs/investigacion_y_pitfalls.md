@@ -253,3 +253,37 @@ Este documento recopila las trampas técnicas más comunes y destructivas al des
 *   **Cómo detectarlo:** probar en release antes de dar por buena cualquier cosa que toque la
     notificación, recursos nativos o íconos; `flutter run` (debug) no lo muestra.
 
+
+## 33. Cambiar la estructura del árbol según la ruta de arriba recrea todo el subárbol
+
+*   **Síntoma (ronda 6):** en PC el menú del avatar salía en la esquina superior izquierda y "Mi
+    cuenta" no hacía nada; las hojas perdían su estado al abrir algo encima.
+*   **Causa:** `KeyboardInsetFreeze` y `_KeyboardInset` devolvían `child` tal cual cuando su ruta
+    estaba arriba y lo envolvían en otro widget cuando no. Al abrirse un menú o diálogo cambiaba el
+    tipo del padre, y Flutter desmontaba y recreaba **todo** lo de abajo (el shell entero). El
+    `PopupMenuButton` perdía su ancla y descartaba la selección por `!mounted`.
+*   **Regla:** un widget que reacciona a `ModalRoute.isCurrentOf` (o a cualquier condición) cambia
+    **datos**, nunca la estructura: siempre el mismo `MediaQuery`/`Padding`, con valores distintos.
+
+## 34. `GoRouterState.of` se cuelga desde una hoja del shell (go_router 17.5)
+
+*   **Síntoma (ronda 6):** "Syncora Player no responde" al cambiar la foto de perfil en Android; la
+    foto sí se guardaba.
+*   **Causa:** `AppToast` llamaba a `GoRouterState.of(context)` con el contexto de una hoja abierta
+    en el navegador de un `ShellRoute`. La función sube al `Navigator`, la página del shell no tiene
+    estado asociado y `Navigator.maybeOf` devuelve el mismo navegador: bucle infinito síncrono.
+*   **Regla:** `GoRouterState.of` solo dentro del `builder` de una ruta. Para saber la ubicación
+    actual desde cualquier otro lado: `GoRouter.maybeOf(context)?.state.matchedLocation`.
+
+## 35. Diagnosticar un ANR de Android ("no responde") en release
+
+*   Desde Flutter 3.29 el isolate principal de Dart corre en el hilo principal de Android: cualquier
+    trabajo síncrono largo de Dart (o un bucle) es un ANR, no solo un tirón.
+*   **Volcado de hilos:** `adb shell dumpsys dropbox --print data_app_anr`. Buscar el hilo `"main"`:
+    `state=R` = estaba ejecutando (no esperando ni en el recolector).
+*   **Simbolizar los marcos de `libapp.so`:** la `libapp.so` de
+    `build/app/generated/jniLibs/copyJniLibsflutterBuildRelease/arm64-v8a/` conserva los símbolos.
+    Comprobar que la BuildId coincide con la del volcado (`llvm-readelf -n`) y pasar los `pc` a
+    `llvm-symbolizer --obj=<libapp.so> --functions=short` (NDK en
+    `C:\Android\ndk\<versión>\toolchains\llvm\prebuilt\*\bin`). Así se encontró el #34 en minutos,
+    después de una primera hipótesis equivocada (la decodificación de la imagen).

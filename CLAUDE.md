@@ -73,12 +73,14 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 
 ### Estado actual (última actualización: 2026-10-04)
 
-**Sexta ronda de correcciones: implementada; faltan pruebas en dispositivo.** Detalle en
+**Sexta ronda de correcciones: cerrada, pruebas en dispositivo pasadas.** Detalle en
 `docs/fases/correcciones_r6.md`. Lo que no conviene revertir: `KeyboardInsetFreeze` devuelve
 **siempre** un `MediaQuery` (cambiar la estructura del árbol al abrir una ruta reconstruía el shell
 entero y rompía el menú de perfil de PC); los menús contextuales del contenido van al navegador
 raíz; la importación quita el BOM y reparte por `Playlist name` (TuneMyMusic), y el ISRC es solo
-último recurso.
+último recurso (o para comprobar la grabación cuando el álbum del archivo no aparece). Nunca
+`GoRouterState.of` fuera del `builder` de una ruta: desde una hoja del shell se cuelga (Pitfall #34;
+cómo diagnosticar un ANR en release, Pitfall #35).
 
 ### Estado actual (última actualización: 2026-10-03)
 
