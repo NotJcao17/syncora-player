@@ -108,15 +108,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               mainAxisSize: MainAxisSize.min,
               children: const [
                 Text(
-                  'Importa tus playlists desde Spotify con Exportify:',
+                  'Trae tus playlists en un archivo CSV:',
                   style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 SizedBox(height: 10),
                 Text(
-                  '1. Abre tu navegador e ingresa a exportify.net\n'
-                  '2. Inicia sesión con tu cuenta de Spotify.\n'
-                  '3. Haz clic en "Export" junto a la playlist que deseas para descargar el archivo CSV.\n'
-                  '4. Presiona el botón "Seleccionar archivo CSV" aquí abajo para cargar tus canciones en Syncora.',
+                  '• Spotify: exportify.net → "Export" en la playlist.\n'
+                  '• Apple Music, Amazon Music, YouTube Music o Spotify: tunemymusic.com → '
+                  'elige el servicio y como destino "Archivo".\n'
+                  '\nLuego toca "Seleccionar archivo CSV". Si el archivo trae varias playlists, '
+                  'se crea una por cada una.',
                   style: TextStyle(color: AppTheme.secondary, fontSize: 13, height: 1.45),
                 ),
               ],
