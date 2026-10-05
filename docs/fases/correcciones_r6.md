@@ -39,6 +39,18 @@ Bugs reportados tras la ronda 5, importación de CSV de TuneMyMusic y limpieza d
   pequeño. Verificado en test con el motor real que respeta la orientación EXIF. `processImage`
   queda de respaldo para formatos que el motor no lea. El selector ya no pide los bytes por el
   canal (`withData` solo en web).
+- **H-R6-10 — La causa real del ANR de H-R6-5 (tercera tanda).** El arreglo de arriba no lo
+  resolvió. El volcado del ANR (`adb shell dumpsys dropbox --print data_app_anr`), simbolizado con
+  la `libapp.so` de la build (`llvm-symbolizer` del NDK; la BuildId coincide y conserva los
+  símbolos), mostró el hilo principal **ejecutando** Dart, no en el recolector de basura:
+  `_uploadPhoto` → `AppToast.show` → `GoRouterState.of` → `ModalRoute.of`, en bucle.
+  `GoRouterState.of` (go_router 17.5) entra en un bucle infinito desde una hoja abierta en el
+  navegador de un `ShellRoute`: sube al `Navigator`, la página del shell no tiene estado asociado y
+  `Navigator.maybeOf` devuelve el mismo navegador. La subida y el guardado ya habían terminado, por
+  eso la foto sí cambiaba. `AppToast` usa ahora `GoRouter.maybeOf(context)?.state`; test de
+  regresión en `test/core/widgets/app_toast_test.dart` (con el código anterior se cuelga). La
+  decodificación nativa de H-R6-5 se queda: no era la causa, pero baja mucho la memoria. **No usar
+  `GoRouterState.of` fuera del `builder` de una ruta.**
 - **H-R6-6 — Misma trampa de H-R6-1 en `_KeyboardInset`** (`app_bottom_sheet.dart`): alternaba
   entre `KeyboardInsetFreeze` y `Padding`, así que el contenido de una hoja se recreaba cada vez que
   algo se abría encima. Ahora la estructura es fija.
