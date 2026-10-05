@@ -71,6 +71,13 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-10-05)
+
+**Agregado mensual de estadísticas (H-S12): migración 22 escrita y verificada contra la base real
+(transacción deshecha); falta aplicarla con `supabase db push`.** La poda de 90 días encogía los
+meses ya agregados; ahora solo se escriben meses que siguen completos dentro de la retención.
+Detalle en `docs/fases/rediseno_estadisticas.md`. Sin aplicar, el daño empieza el 2026-11-28.
+
 ### Estado actual (última actualización: 2026-10-04)
 
 **Sexta ronda de correcciones: cerrada, pruebas en dispositivo pasadas.** Detalle en

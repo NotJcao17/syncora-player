@@ -127,6 +127,55 @@ estaban aplicadas.** No era esto.
 Nada guardaba minutos por día/semana, así que no había de dónde sacar un
 gráfico. **Fix:** el RPC la devuelve ya agrupada.
 
+### H-S12 · La poda de 90 días encogía los meses ya agregados
+
+Encontrado el 2026-10-05, antes de que dañara datos reales. La migración 17
+agrupaba **todas** las filas que quedaban en `listening_history` por usuario y
+mes, hacía upsert de cada mes y después podaba lo de más de 90 días. Cuando el
+corte empieza a comerse un mes, cada corrida diaria lo recalculaba solo con
+las filas restantes y **sobrescribía** el agregado completo con uno más chico;
+al podarse su último día, el mes se quedaba con los datos de ese día. Todo mes
+de más de ~90 días habría terminado muy por debajo de lo real en 6 meses, 12
+meses y "Todo". El historial de producción empieza el 2026-08-30: el primer
+mes dañado habría sido agosto, a partir del 2026-11-28.
+
+**Fix (migración 22):** solo se escriben los meses cuyo primer instante sigue
+dentro de la retención (`month_start >= now() - 90 días`). Mientras se cumple
+no se ha podado ni una fila suya, así que la última escritura de cada mes es
+la del último día en que estaba completo; luego queda congelado. El upsert y
+la poda usan el **mismo** corte, así que lo que se borra en una corrida
+pertenece a meses que esa corrida ya no escribe y el orden deja de importar.
+Saltarse días de cron no pierde nada: un mes se sigue escribiendo en cualquier
+corrida entre su cierre y `month_start + 90 días` (~59 días de margen).
+
+**Descartado: "nunca disminuir `total_ms`" en el `ON CONFLICT`.** Es una
+heurística sobre un indicador, no la condición real. Bloquearía correcciones
+legítimas a la baja (la limpieza de agosto de abajo fue una), y durante la
+poda de un mes una fila que llega tarde puede empujar el total parcial por
+encima del guardado y colar tops e histograma de un mes a medias. El corte por
+mes completo además evita recalcular a diario meses que ya no cambian.
+
+**Verificado contra la base real** (2026-10-05, corte 2026-07-07): un solo
+bloque `DO` que crea un usuario desechable, siembra filas sintéticas (julio
+con una fila ya fuera de la retención y otra dentro, y el cambio de septiembre
+a octubre) y el agregado "completo" de julio. Corre la función actual dos
+veces, luego reemplaza la función con el texto literal de la migración 22 y la
+corre dos veces más, y termina con `RAISE EXCEPTION` para que todo se deshaga.
+Así no queda nada aunque la API ejecutara sentencias por separado.
+
+| Mes | Función de la 17 | Función de la 22 |
+|---|---|---|
+| Julio (podado a medias) | 120 000 ms / 1 reproducción (**bug**) | 720 000 ms / 2 (intacto) |
+| Septiembre (último minuto) | 200 000 / 1 | 200 000 / 1 |
+| Octubre (primeros minutos) | 400 000 / 2, top 2002 ×2 | igual |
+
+En ambos casos se podó la fila vieja, y los agregados de los usuarios reales no
+cambiaron con la función nueva. Comprobado después: ningún usuario ni fila de
+prueba quedó, y producción seguía con la función de la 17.
+
+Límite conocido (igual que antes): una fila que sincroniza tarde un mes que ya
+salió de la ventana se poda sin agregarse.
+
 ## Arquitectura resultante
 
 ### Por qué un RPC y no bajar filas (plan free)
