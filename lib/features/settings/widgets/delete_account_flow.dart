@@ -7,8 +7,7 @@ import '../../../core/images/custom_image_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/widgets/app_toast.dart';
-import '../../../data/local_db/database_provider.dart';
-import '../../auth/services/local_library_wipe.dart';
+import '../../auth/services/account_data_owner.dart';
 
 /// Palabra que hay que escribir para habilitar el borrado.
 const _confirmWord = 'ELIMINAR';
@@ -41,9 +40,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
     ),
   );
 
-  final dao = ref.read(playlistDaoProvider);
-  final savedAlbumDao = ref.read(savedAlbumDaoProvider);
-  final historyDao = ref.read(listeningHistoryDaoProvider);
+  final dataGuard = ref.read(accountDataGuardProvider);
   final router = GoRouter.of(context);
   final rootNavigator = Navigator.of(context, rootNavigator: true);
   final images = ref.read(customImageServiceProvider);
@@ -71,13 +68,10 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
     AppToast.show(context, message: 'Tu cuenta y tus datos en la nube se eliminaron.');
   }
 
-  try {
-    await wipeLocalLibrary(dao: dao, savedAlbumDao: savedAlbumDao, historyDao: historyDao);
-    await images.deleteAllLocal();
-  } catch (_) {
-    // La cuenta ya no existe: lo local que no se pudo borrar queda sin
-    // `remoteId` útil, un estado ya soportado.
-  }
+  // Biblioteca, carpetas, historial, imágenes propias, cola del reproductor
+  // y búsquedas recientes. Lo que no se pudo borrar queda sin `remoteId`
+  // útil (un estado ya soportado) y se vuelve a intentar si entra otra cuenta.
+  await dataGuard.wipeNow();
   try {
     await Supabase.instance.client.auth.signOut();
   } catch (_) {

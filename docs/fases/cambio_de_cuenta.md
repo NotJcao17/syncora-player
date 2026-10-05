@@ -1,0 +1,64 @@
+# Cambio de cuenta: datos locales de la cuenta anterior
+
+Leer antes de tocar el cierre de sesión, el inicio de sesión, el modo sin cuenta o
+`lib/features/auth/services/account_data_owner.dart`.
+
+## El bug (2026-10-05)
+
+Al cerrar sesión y entrar con otra cuenta, Inicio ("Porque escuchaste a…", "Novedades
+de tus artistas"), "On Repeat" y la canción en curso seguían siendo de la cuenta
+anterior. Las playlists sí desaparecían porque el sync poda las que tienen `remoteId`.
+
+Dos causas, una por plataforma:
+
+1. **Cerrar sesión solo cerraba la sesión de Supabase.** El historial, On Repeat (solo
+   local, el sync nunca la poda), las carpetas, la sesión del reproductor y las
+   búsquedas recientes se quedaban en el dispositivo. `flutter clean` no ayuda: la base
+   vive en `Documentos`, no en `build/`.
+2. **Android restauraba la copia de seguridad al reinstalar.** El manifiesto no
+   desactivaba la copia automática de Google; desinstalar y reinstalar devolvía la base
+   y la sesión viejas. Verificado: `adb shell dumpsys backup` listaba
+   `com.syncora.syncora_player` entre las restauraciones.
+
+No hubo fuga a la nube: la cuenta nueva tenía 0 escuchas (las filas viejas ya estaban
+marcadas como subidas).
+
+## El arreglo
+
+**Dueño de los datos locales** (`account.local_data_owner` en `shared_preferences`): el
+id de la cuenta, o `local` en modo sin cuenta.
+
+| Momento | Qué pasa |
+|---|---|
+| Cerrar sesión (Configuración o menú de PC) | Para el reproductor, sube el historial pendiente (máx. 8 s), cierra sesión y borra lo local. **El dueño se conserva**: si un sync en vuelo escribe algo después, se limpia cuando entre otra cuenta. |
+| Entrar con **otra** cuenta | Borra lo local **antes** del sync y de navegar (al revés, el sync podría insertar las playlists nuevas y el borrado llevárselas). |
+| Entrar con **la misma** cuenta | No borra nada: la app sigue sirviendo sin conexión. |
+| "Usar sin cuenta" con datos de una cuenta | Los borra. |
+| Arranque con sesión de otra cuenta (p. ej. login con Google que abre la app en frío por deep link) | `main.dart` borra antes de `runApp`, sin reproductor ni providers vivos. |
+| Sin dueño anotado (instalaciones anteriores) | Se adopta sin borrar: no hay forma de saber de quién son. |
+| Modo local → cuenta (`auth_screen.dart`) | Sin cambios: migra o descarta como antes y después anota la cuenta como dueña. Si la app se cerró a mitad de esa migración, el arranque adopta lo que quedó en vez de borrarlo. |
+
+Qué se borra (`wipeAccountDataAtRest` + `AccountDataGuard.wipeNow`): playlists y sus
+pistas ("Tus me gusta" queda vacía), **carpetas** (antes `wipeLocalLibrary` no las
+tocaba, tampoco al eliminar la cuenta), álbumes guardados, historial, imágenes propias,
+foto del modo local, búsquedas recientes y la cola del reproductor
+(`resetForAccountChange`). **Las descargas no**: son del dispositivo.
+
+Android: `allowBackup="false"` y `data_extraction_rules.xml`, que excluye todo de la
+copia en la nube y de la transferencia entre teléfonos (en Android 12+ esa
+transferencia no respeta `allowBackup`). Reinstalar ahora es empezar de cero: la
+biblioteca vuelve con el sync, las descargas no.
+
+## Portada de On Repeat en "Escuchado recientemente"
+
+`RecentlyPlayedItem` pasaba `isLiked` pero no `isGenerated`, así que On Repeat salía con
+la cuadrícula de 4 portadas en vez del degradado con el ícono de repetir que usa en la
+barra lateral y en Biblioteca.
+
+## Verificado
+
+- `test/features/auth/account_data_owner_test.dart`: la regla del dueño y el borrado
+  (incluido que las descargas sobreviven).
+- Windows release: con el dueño apuntando a la cuenta vieja, el arranque borró On Repeat,
+  "Porque escuchaste a Charli xcx" y la canción en curso, y dejó solo las playlists de la
+  cuenta nueva.

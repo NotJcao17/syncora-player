@@ -43,6 +43,10 @@ class FolderDao extends DatabaseAccessor<SyncoraDatabase> with _$FolderDaoMixin 
         await (delete(folders)..where((f) => f.id.equals(id))).go();
       });
 
+  /// Solo para borrar la biblioteca local entera (`wipeLocalLibrary`): las
+  /// playlists que colgaban de estas carpetas se borran ahí mismo.
+  Future<int> deleteAll() => delete(folders).go();
+
   Future<void> setPlaylistFolder(int playlistId, int? folderId) =>
       (update(playlists)..where((p) => p.id.equals(playlistId)))
           .write(PlaylistsCompanion(folderId: Value(folderId)));

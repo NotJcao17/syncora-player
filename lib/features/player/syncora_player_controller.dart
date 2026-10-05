@@ -1178,6 +1178,31 @@ bool get _isTestEnv {
     _saveSession();
   }
 
+  /// Cambio de cuenta (cerrar sesión o entrar con otra): la pista actual,
+  /// las dos colas y el historial de "anterior" eran de la cuenta que se va,
+  /// así que se vacía todo — la cola manual también, a diferencia de
+  /// [setQueue] con lista vacía. Repetir y aleatorio se conservan porque son
+  /// preferencias del dispositivo, igual que en ese camino.
+  ///
+  /// Cierra antes la escucha en curso y espera a que su duración quede en
+  /// Drift, para que el cierre de sesión pueda subirla todavía.
+  Future<void> resetForAccountChange() async {
+    _resetLogicalFailureStreak();
+    _contextGeneration++;
+    _finalizeListenEntry();
+    _listenTrackedTrack = null;
+    await _pendingListenFinalize;
+    await _microFadeOut();
+    await _engine.stop();
+    _state = SyncoraPlayerState.initial.copyWith(
+      skipSilence: _state.skipSilence,
+      repeatMode: _state.repeatMode,
+      shuffle: _state.shuffle,
+    );
+    _notify();
+    _saveSession();
+  }
+
   void setShuffle(bool enabled) {
     final reordered = _reorderAutoQueueForShuffle(enabled);
     _state = _state.copyWith(shuffle: enabled, autoQueue: List.unmodifiable(reordered));
@@ -1870,15 +1895,22 @@ bool get _isTestEnv {
     _listenFlushedMs = 0;
     if (entryId == null || dao == null) return;
     final total = base + _listenAccumulated.inMilliseconds;
-    unawaited(() async {
+    final write = () async {
       try {
         await dao.updateListenedDuration(entryId, total);
         _onListenRecorded?.call();
       } catch (e) {
         _log('[Listen] Error ajustando la duración escuchada: $e');
       }
-    }());
+    }();
+    _pendingListenFinalize = write;
+    unawaited(write);
   }
+
+  /// Última escritura de [_finalizeListenEntry], para quien necesite que la
+  /// duración real ya esté en Drift antes de seguir (el cierre de sesión sube
+  /// el historial justo después de parar el reproductor).
+  Future<void>? _pendingListenFinalize;
 
   /// Suma al acumulado el avance natural de posición reportado por el motor
   /// y dispara el registro en cuanto se cruza el umbral D-16 (≥50% de la

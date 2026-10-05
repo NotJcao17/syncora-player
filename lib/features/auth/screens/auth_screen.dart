@@ -19,6 +19,7 @@ import '../../library/import_export/playlist_import_export_service.dart';
 import '../../library/services/folder_service.dart';
 import '../auth_provider.dart';
 import '../local_mode_provider.dart';
+import '../services/account_data_owner.dart';
 import '../services/account_limit_error.dart';
 import '../services/local_library_wipe.dart';
 import '../services/auth_deep_link_errors.dart';
@@ -98,6 +99,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           // adentro de `_handleLocalDataOnLogin`, así que NO hay que navegar
           // a `/` (nos quedamos en `/auth`, todavía en modo local).
           var shouldNavigate = true;
+          // Capturado antes de cualquier `await`, por el mismo motivo que
+          // `localMode` más abajo.
+          final dataGuard = ref.read(accountDataGuardProvider);
+          final userId = session.user.id;
           if (ref.read(localModeProvider)) {
             // El notifier es global y sobrevive a esta pantalla; se captura
             // ANTES de cualquier `await` porque `ref` no se puede tocar una
@@ -134,7 +139,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               try {
                 await localMode.disable();
               } catch (_) {}
+              // Lo que quedó en el dispositivo ya es de esta cuenta: o se
+              // subió (cuenta nueva) o se descartó (cuenta existente).
+              await dataGuard.setOwner(userId);
             }
+          } else {
+            // Cambio de cuenta: si lo local era de otra, se borra ANTES del
+            // sync y de navegar. Al revés, el sync podría insertar las
+            // playlists de esta cuenta y el borrado llevárselas.
+            await dataGuard.claimFor(userId);
           }
           if (mounted && shouldNavigate) {
             // Bug real (pruebas manuales): tras iniciar sesión, Inicio/
@@ -200,6 +213,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   /// el estado; el `go('/')` explícito es solo para no depender del timing
   /// exacto de esa reconstrucción.
   Future<void> _useWithoutAccount() async {
+    // Si quedaron datos de una cuenta (sesión vencida sin "Cerrar sesión"),
+    // el modo sin cuenta no debe heredarlos.
+    await ref.read(accountDataGuardProvider).claimFor(localModeDataOwner);
+    if (!mounted) return;
     await ref.read(localModeProvider.notifier).enable();
     if (mounted) ref.read(appRouterProvider).go('/');
   }
@@ -433,6 +450,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final dao = ref.read(playlistDaoProvider);
     final savedAlbumDao = ref.read(savedAlbumDaoProvider);
     final historyDao = ref.read(listeningHistoryDaoProvider);
+    final folderDao = ref.read(folderDaoProvider);
     final images = ref.read(customImageServiceProvider);
     final localStorage = ref.read(localModeStorageProvider);
     if (mounted) {
@@ -442,7 +460,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       });
     }
     try {
-      await wipeLocalLibrary(dao: dao, savedAlbumDao: savedAlbumDao, historyDao: historyDao);
+      await wipeLocalLibrary(
+        dao: dao,
+        savedAlbumDao: savedAlbumDao,
+        historyDao: historyDao,
+        folderDao: folderDao,
+      );
       // Portadas propias y foto de perfil del modo local.
       await images.deleteAllLocal();
       await localStorage.setAvatarImagePath(null);

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sin copia de seguridad ni transferencia entre dispositivos (Android 12+).
+
+  Bug real (2026-10-05): desinstalar y reinstalar devolvía la base local, la
+  sesión y la cola de la cuenta anterior, porque Android restauraba su copia
+  automática. La nube es la fuente de la verdad: al reinstalar, la biblioteca
+  vuelve con el sync. `allowBackup="false"` ya apaga la copia en la nube; esto
+  apaga además la transferencia directa de un teléfono a otro, que en
+  Android 12+ no respeta esa bandera.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+    </device-transfer>
+</data-extraction-rules>

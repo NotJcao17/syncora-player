@@ -140,6 +140,10 @@ class RecentlyPlayedItem {
   /// cuadrícula generada con las primeras pistas.
   final bool isLiked;
 
+  /// "On Repeat" (generada por la app) también: degradado + ícono de repetir,
+  /// como en la barra lateral y en Biblioteca.
+  final bool isGenerated;
+
   final DateTime playedAt;
 
   const RecentlyPlayedItem({
@@ -150,6 +154,7 @@ class RecentlyPlayedItem {
     required this.playedAt,
     this.localPlaylistId,
     this.isLiked = false,
+    this.isGenerated = false,
   });
 }
 
@@ -178,6 +183,7 @@ final recentlyPlayedProvider = FutureProvider<List<RecentlyPlayedItem>>((ref) as
       playedAt: playedAt,
       localPlaylistId: playlist.id,
       isLiked: playlist.isLiked,
+      isGenerated: playlist.isGenerated,
     ));
   }
 

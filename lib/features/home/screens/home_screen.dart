@@ -348,6 +348,7 @@ class HomeScreen extends ConsumerWidget {
             // genérica en vez de con su degradado y su corazón, que es como se
             // ve en Biblioteca y en el resto de la app.
             isLiked: item.isLiked,
+            isGenerated: item.isGenerated,
             onTap: () => context.push(item.route),
           );
         },

@@ -78,6 +78,17 @@ aplicada el 2026-10-05 (cron diario intacto).** La poda de 90 días encogía los
 meses ya agregados; ahora solo se escriben meses que siguen completos dentro de la retención.
 Detalle en `docs/fases/rediseno_estadisticas.md`.
 
+### Estado actual (última actualización: 2026-10-05)
+
+**Cambio de cuenta: los datos locales ya no pasan de una cuenta a otra.** Detalle en
+`docs/fases/cambio_de_cuenta.md` — **leerlo antes de tocar cerrar sesión, iniciar sesión,
+el modo sin cuenta o `account_data_owner.dart`**. Lo que no conviene revertir: el dueño de
+los datos locales se conserva al cerrar sesión (limpia escrituras tardías si entra otra
+cuenta); el borrado al entrar con otra cuenta va **antes** del sync; las descargas nunca se
+borran; y Android no hace copia de seguridad ni transferencia de datos de la app
+(`allowBackup="false"` + `data_extraction_rules.xml`), porque reinstalar restauraba la
+cuenta vieja.
+
 ### Estado actual (última actualización: 2026-10-04)
 
 **Sexta ronda de correcciones: cerrada, pruebas en dispositivo pasadas.** Detalle en

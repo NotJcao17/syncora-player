@@ -13,11 +13,17 @@ import 'package:window_manager/window_manager.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'app.dart';
 import 'core/cache/cover_cache_service.dart';
+import 'core/images/custom_image_service.dart';
 import 'core/settings/app_settings_store.dart';
 import 'core/theme/app_theme.dart';
+import 'data/local_db/database_provider.dart';
+import 'data/local_db/syncora_database.dart';
 import 'features/auth/local_mode_provider.dart';
+import 'features/auth/services/account_data_owner.dart';
 import 'features/auth/services/auth_deep_link_errors.dart';
 import 'features/auth/services/local_mode_storage.dart';
+import 'features/player/session/player_session_storage.dart';
+import 'features/search/search_history_storage.dart';
 
 Future<void> _handleAuthDeepLink(Uri rawUri) async {
   final rawString = rawUri.toString().trim();
@@ -90,6 +96,46 @@ Future<void> _handleAuthDeepLink(Uri rawUri) async {
       }
     }
   }
+}
+
+/// Devuelve la base que tuvo que abrir para borrar, para que la app reuse esa
+/// misma instancia en vez de abrir una segunda sobre el mismo archivo.
+///
+/// [interruptedLocalMigration]: la app se cerró a mitad de subir el modo
+/// local a una cuenta nueva (ver la autocorrección de más abajo). Lo que
+/// quedó en el dispositivo es de esa cuenta aunque el dueño anotado siga
+/// siendo el modo local: se adopta sin borrar, como antes de este cambio.
+Future<SyncoraDatabase?> _reconcileLocalDataOwner(
+  AppSettingsStore settings, {
+  required LocalModeStorage localModeStorage,
+  required bool isLocalMode,
+  required bool interruptedLocalMigration,
+}) async {
+  SyncoraDatabase? database;
+  try {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final current = userId ?? (isLocalMode ? localModeDataOwner : null);
+    if (current == null) return null;
+
+    final stored = settings.getString(localDataOwnerKey);
+    final wipe = shouldWipeLocalData(storedOwner: stored, newOwner: current) &&
+        !(interruptedLocalMigration && stored == localModeDataOwner);
+    if (wipe) {
+      database = SyncoraDatabase();
+      await wipeAccountDataAtRest(
+        db: database,
+        images: CustomImageService(),
+        localModeStorage: localModeStorage,
+        searchHistory: SecureSearchHistoryStorage(),
+        clearPlayerSession: () => PlayerSessionStorage().clear(),
+      );
+    }
+    if (stored != current) await settings.setString(localDataOwnerKey, current);
+  } catch (_) {
+    // Best-effort: si el borrado falla a medias, el dueño no cambia y se
+    // reintenta en el próximo arranque.
+  }
+  return database;
 }
 
 void main() async {
@@ -218,6 +264,7 @@ void main() async {
   try {
     initialLocalMode = await localModeStorage.getIsLocalMode();
   } catch (_) {}
+  bool interruptedLocalMigration = false;
 
   // Hallazgo de la revisión independiente de 7.I: si la app se cerró (o
   // crasheó) a mitad de `_migrateLocalLibrary` (`auth_screen.dart`), el
@@ -239,6 +286,7 @@ void main() async {
     try {
       if (Supabase.instance.client.auth.currentUser != null) {
         initialLocalMode = false;
+        interruptedLocalMigration = true;
         await localModeStorage.setLocalMode(false);
       }
     } catch (_) {}
@@ -253,9 +301,26 @@ void main() async {
     settingsStore = AppSettingsStore.inMemory();
   }
 
+  // Cambio de cuenta que no pasó por la pantalla de inicio de sesión (p. ej.
+  // un login con Google en Android que abre la app en frío por deep link):
+  // si los datos locales son de otra cuenta, se borran aquí, antes de que
+  // Inicio, el reproductor o el sync lleguen a leerlos. Ver
+  // `account_data_owner.dart`.
+  final database = await _reconcileLocalDataOwner(
+    settingsStore,
+    localModeStorage: localModeStorage,
+    isLocalMode: initialLocalMode,
+    interruptedLocalMigration: interruptedLocalMigration,
+  );
+
   runApp(
     ProviderScope(
       overrides: [
+        if (database != null)
+          syncoraDatabaseProvider.overrideWith((ref) {
+            ref.onDispose(database.close);
+            return database;
+          }),
         appSettingsStoreProvider.overrideWithValue(settingsStore),
         localModeStorageProvider.overrideWithValue(localModeStorage),
         localModeProvider.overrideWith(() => LocalModeNotifier(initialLocalMode)),

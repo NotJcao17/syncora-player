@@ -226,6 +226,21 @@ class PlayerSessionStorage {
     }
   }
 
+  /// Borra la sesión guardada (cambio de cuenta, ver `account_data_owner.dart`):
+  /// la pista y las colas de una cuenta no deben restaurarse en otra. Solo se
+  /// usa antes de que exista el controlador; con el controlador vivo, su
+  /// reinicio ya guarda una sesión vacía por este mismo camino.
+  Future<void> clear() async {
+    _pending = null;
+    await _writeLoop;
+    try {
+      final file = await _getFile();
+      if (await file.exists()) await file.delete();
+    } catch (e) {
+      debugPrint('[PlayerSessionStorage] Error borrando sesión: $e');
+    }
+  }
+
   Future<PlayerSessionData?> loadSession() async {
     try {
       final file = await _getFile();

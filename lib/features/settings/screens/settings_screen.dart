@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/cache/storage_usage.dart';
@@ -15,6 +14,7 @@ import '../../../data/local_db/syncora_database.dart';
 import '../../../data/services/ai_key_storage.dart';
 import '../../auth/auth_provider.dart';
 import '../../auth/local_mode_provider.dart';
+import '../../auth/services/account_data_owner.dart';
 import '../../profile/widgets/user_avatar.dart';
 
 import '../../download/download_provider.dart';
@@ -165,12 +165,9 @@ class SettingsScreen extends ConsumerWidget {
           _buildCard(
             child: InkWell(
               onTap: () async {
-                try {
-                  await Supabase.instance.client.auth.signOut();
-                } catch (_) {}
-                if (context.mounted) {
-                  context.go('/auth');
-                }
+                final router = GoRouter.of(context);
+                await ref.read(accountDataGuardProvider).signOut();
+                router.go('/auth');
               },
               borderRadius: BorderRadius.circular(8),
               child: Padding(

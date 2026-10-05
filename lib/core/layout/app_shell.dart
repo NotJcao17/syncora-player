@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../navigation/app_router.dart';
 import '../theme/app_icons.dart';
 import 'package:window_manager/window_manager.dart';
@@ -18,6 +17,7 @@ import '../../data/local_db/syncora_database.dart';
 import '../../data/sync/sync_service.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../features/auth/local_mode_provider.dart';
+import '../../features/auth/services/account_data_owner.dart';
 import '../../features/profile/widgets/user_avatar.dart';
 import '../../features/download/download_provider.dart';
 import '../../features/stats/genre_backfill_service.dart';
@@ -803,10 +803,9 @@ class _CustomTitleBar extends ConsumerWidget {
                 if (value == 'settings') {
                   context.push('/settings');
                 } else if (value == 'logout') {
-                  try {
-                    await Supabase.instance.client.auth.signOut();
-                  } catch (_) {}
-                  if (context.mounted) context.go('/auth');
+                  final router = GoRouter.of(context);
+                  await ref.read(accountDataGuardProvider).signOut();
+                  router.go('/auth');
                 }
               },
               itemBuilder: (ctx) => [
