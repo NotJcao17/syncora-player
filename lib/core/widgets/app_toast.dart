@@ -43,8 +43,16 @@ abstract class AppToast {
       // media pantalla. Ahora lo declara el propio subárbol.
       bool hasChrome = BottomChromeScope.hasChromeAt(context);
       if (hasChrome) {
+        // Ronda 6 (H-R6-10): `GoRouter.maybeOf(...).state` y no
+        // `GoRouterState.of(context)`. Desde una hoja modal abierta en el
+        // navegador del shell, `GoRouterState.of` (go_router 17.5) entra en
+        // un bucle infinito: sube al `Navigator`, la página del shell no tiene
+        // estado asociado y `Navigator.maybeOf` devuelve el mismo navegador.
+        // Congelaba la app ("no responde") al avisar "Foto de perfil
+        // actualizada". Aquí solo importa la ubicación actual, que el router
+        // ya conoce.
         try {
-          final location = GoRouterState.of(context).matchedLocation;
+          final location = GoRouter.maybeOf(context)?.state.matchedLocation;
           if (location == '/player' || location == '/auth') hasChrome = false;
         } catch (_) {}
       }
