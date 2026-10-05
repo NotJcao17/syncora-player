@@ -73,10 +73,10 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 
 ### Estado actual (última actualización: 2026-10-05)
 
-**Agregado mensual de estadísticas (H-S12): migración 22 escrita y verificada contra la base real
-(transacción deshecha); falta aplicarla con `supabase db push`.** La poda de 90 días encogía los
+**Agregado mensual de estadísticas (H-S12): migración 22 verificada contra la base real y
+aplicada el 2026-10-05 (cron diario intacto).** La poda de 90 días encogía los
 meses ya agregados; ahora solo se escriben meses que siguen completos dentro de la retención.
-Detalle en `docs/fases/rediseno_estadisticas.md`. Sin aplicar, el daño empieza el 2026-11-28.
+Detalle en `docs/fases/rediseno_estadisticas.md`.
 
 ### Estado actual (última actualización: 2026-10-04)
 
