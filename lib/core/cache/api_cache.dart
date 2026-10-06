@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import '../storage/app_storage.dart';
 
 /// Caché persistente con TTL para respuestas del catálogo de Deezer.
 ///
@@ -58,7 +58,7 @@ class ApiCache {
     if (_isTestEnv && _explicitDirectory == null) return Future.value(null);
     return _directoryFuture ??= () async {
       try {
-        final dir = _explicitDirectory ?? Directory(p.join((await getApplicationDocumentsDirectory()).path, 'api_cache'));
+        final dir = _explicitDirectory ?? Directory(p.join((await appDataDirectory()).path, 'api_cache'));
         if (!await dir.exists()) await dir.create(recursive: true);
         _directory = dir;
         return dir;

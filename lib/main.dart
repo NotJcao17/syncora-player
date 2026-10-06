@@ -15,6 +15,7 @@ import 'app.dart';
 import 'core/cache/cover_cache_service.dart';
 import 'core/images/custom_image_service.dart';
 import 'core/settings/app_settings_store.dart';
+import 'core/storage/legacy_documents_migration.dart';
 import 'core/theme/app_theme.dart';
 import 'data/local_db/database_provider.dart';
 import 'data/local_db/syncora_database.dart';
@@ -245,6 +246,10 @@ void main() async {
       await windowManager.focus();
     });
   }
+
+  // Windows: los datos vivían en Documentos; se mudan a la carpeta de la app
+  // antes de que nada abra la base o lea una portada (ver app_storage.dart).
+  await migrateWindowsDataOutOfDocuments();
 
   // Resuelve el directorio de portadas una sola vez para que la UI pueda
   // preguntar de forma síncrona si una pista descargada ya tiene portada en

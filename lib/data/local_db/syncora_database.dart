@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 import 'daos/playlist_dao.dart';
@@ -11,6 +10,7 @@ import 'daos/listening_history_dao.dart';
 import 'daos/downloaded_track_dao.dart';
 import 'daos/folder_dao.dart';
 import 'daos/stats_metadata_cache_dao.dart';
+import '../../core/storage/app_storage.dart';
 
 part 'syncora_database.g.dart';
 
@@ -307,7 +307,7 @@ QueryExecutor _openConnection() {
   }
 
   return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
+    final dbFolder = await appDataDirectory();
     final file = File(p.join(dbFolder.path, 'syncora_local.sqlite'));
     
     // Pitfall #5: NativeDatabase.createInBackground for non-blocking I/O

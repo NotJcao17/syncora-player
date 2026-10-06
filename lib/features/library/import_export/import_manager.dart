@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/utils/contributor_resolver.dart';
@@ -19,6 +18,7 @@ import '../../auth/local_mode_provider.dart';
 import '../../player/player_models.dart';
 import 'playlist_import_export_service.dart';
 import '../../../core/limits/app_limits.dart';
+import '../../../core/storage/app_storage.dart';
 
 /// Importación de playlists en segundo plano (ronda 4, H-R4-11).
 ///
@@ -156,7 +156,7 @@ class ImportJobStore {
 
   Future<Directory?> _dir() async {
     if (kIsWeb) return null;
-    final base = await getApplicationDocumentsDirectory();
+    final base = await appDataDirectory();
     final dir = Directory('${base.path}/syncora/imports');
     if (!dir.existsSync()) dir.createSync(recursive: true);
     return dir;

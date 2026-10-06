@@ -87,6 +87,11 @@ Detalle en `docs/fases/rediseno_estadisticas.md`.
 
 ### Estado actual (última actualización: 2026-10-05)
 
+**Datos de Windows fuera de Documentos:** todo va a `appDataDirectory()`
+(`%LOCALAPPDATA%\com.syncora\Syncora Player`); nunca volver a usar
+`getApplicationDocumentsDirectory()` para datos de la app. Detalle al final de
+`docs/fases/cambio_de_cuenta.md`.
+
 **Cambio de cuenta: los datos locales ya no pasan de una cuenta a otra.** Detalle en
 `docs/fases/cambio_de_cuenta.md` — **leerlo antes de tocar cerrar sesión, iniciar sesión,
 el modo sin cuenta o `account_data_owner.dart`**. Lo que no conviene revertir: el dueño de

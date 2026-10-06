@@ -4,10 +4,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import 'daos/playlist_dao.dart';
 import 'database_provider.dart';
+import '../../core/storage/app_storage.dart';
 
 /// Limpieza **de una sola vez** de los duplicados que dejaron las versiones
 /// anteriores de la app.
@@ -37,7 +37,7 @@ class DuplicateRepair {
 
   Future<File?> _markerFile() async {
     try {
-      final dir = _explicitDirectory ?? await getApplicationDocumentsDirectory();
+      final dir = _explicitDirectory ?? await appDataDirectory();
       return File(p.join(dir.path, 'repair_state.json'));
     } catch (_) {
       return null;

@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
+import '../storage/app_storage.dart';
 
 class CoverCacheService {
   bool get _isTestEnv => Platform.environment.containsKey('FLUTTER_TEST');
 
   /// Ruta del directorio de portadas, memorizada tras la primera resolución.
-  /// `getApplicationDocumentsDirectory()` es async, así que sin este caché no
+  /// `appDataDirectory()` es async, así que sin este caché no
   /// hay forma de que un `build()` sincrónico sepa si una portada descargada
   /// existe en disco (ver [localCoverFileSync]).
   static String? _cachedCoverDir;
@@ -17,7 +17,7 @@ class CoverCacheService {
     if (kIsWeb) return '';
     final cached = _cachedCoverDir;
     if (cached != null) return cached;
-    final base = (await getApplicationDocumentsDirectory()).path;
+    final base = (await appDataDirectory()).path;
     final dir = Directory('$base/syncora/covers');
     if (!dir.existsSync()) {
       dir.createSync(recursive: true);

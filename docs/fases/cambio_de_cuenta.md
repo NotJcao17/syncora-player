@@ -62,3 +62,26 @@ barra lateral y en Biblioteca.
 - Windows release: con el dueño apuntando a la cuenta vieja, el arranque borró On Repeat,
   "Porque escuchaste a Charli xcx" y la canción en curso, y dejó solo las playlists de la
   cuenta nueva.
+
+## Datos fuera de Documentos en Windows (2026-10-06)
+
+Hasta aquí la app guardaba la base (`syncora_local.sqlite`), `api_cache`, `repair_state.json` y
+`syncora/` (portadas, descargas, importaciones, imágenes propias) en la carpeta **Documentos** del
+usuario. Se veía como basura suelta y la compartían el build de desarrollo y el instalado (parte
+de por qué se colaron datos de una cuenta a otra en el PC).
+
+Ahora todo sale de `appDataDirectory()` (`lib/core/storage/app_storage.dart`):
+
+- **Windows:** `%LOCALAPPDATA%\com.syncora\Syncora Player`. Local y no Roaming porque las
+  descargas pesan. Limpiar `%temp%` no lo toca (es `AppData\Local\Temp`, otra carpeta).
+- **Android:** sin cambios, la carpeta de documentos de la app (ya es privada).
+
+Al primer arranque en Windows, `migrateWindowsDataOutOfDocuments()` (en `main.dart`, antes de que
+nada abra la base) mueve lo que encuentre en Documentos sin pisar nada que ya exista, y reescribe
+las rutas **absolutas** guardadas: descargas y sus portadas y portadas propias en la base, los JSON
+de `syncora/` (índice de portadas, importaciones) y la foto del modo local. Deja el marcador
+`.migrated-from-documents` para no repetirlo. Verificado en el PC de desarrollo: Documentos quedó
+limpio y la app abrió con la biblioteca, On Repeat y la sesión intactas.
+
+Lo que ya vivía en `getApplicationSupportDirectory` (Roaming: sesión del reproductor, motor,
+ajustes) no se movió.

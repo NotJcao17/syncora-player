@@ -7,11 +7,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../cache/app_image_cache.dart';
 import '../utils/local_image_path.dart';
+import '../storage/app_storage.dart';
 
 /// Qué se está subiendo. Define el tamaño final de la imagen.
 enum CustomImageKind {
@@ -216,7 +216,7 @@ class CustomImageService {
   Future<Directory> _localDir() async {
     final cached = _cachedDir;
     if (cached != null) return Directory(cached);
-    final base = (await getApplicationDocumentsDirectory()).path;
+    final base = (await appDataDirectory()).path;
     final dir = Directory(p.join(base, 'syncora', 'custom_images'));
     if (!dir.existsSync()) dir.createSync(recursive: true);
     _cachedDir = dir.path;

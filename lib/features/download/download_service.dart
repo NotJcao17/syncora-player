@@ -4,7 +4,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../core/cache/cover_cache_service.dart';
 import '../../core/extraction/extraction_service.dart';
@@ -20,6 +19,7 @@ import '../../data/local_db/syncora_database.dart';
 import '../player/player_models.dart';
 import 'models/download_quality.dart';
 import 'services/download_quality_storage.dart';
+import '../../core/storage/app_storage.dart';
 
 
 class DownloadException implements Exception {
@@ -121,7 +121,7 @@ class DownloadService {
 
   Future<String> _getAudioDir() async {
     if (kIsWeb) return '';
-    final base = (await getApplicationDocumentsDirectory()).path;
+    final base = (await appDataDirectory()).path;
     final dir = Directory('$base/syncora/downloads');
     if (!dir.existsSync()) {
       dir.createSync(recursive: true);
