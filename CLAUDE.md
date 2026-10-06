@@ -22,6 +22,13 @@ de verdad de arquitectura, stack, metodología de trabajo y reglas del proyecto.
   notificación y el reproductor de la pantalla de bloqueo desaparecen **solo en release**. Detalle en
   el Pitfall #32 de `docs/investigacion_y_pitfalls.md`.
 
+## Lanzar una versión nueva
+
+Solo cuando el usuario pida **lanzar o publicar una versión** de la app: seguir
+`docs/lanzar_version.md` (subir `version:` en `pubspec.yaml`, push, `installer/build_release.ps1`,
+probar y `gh release create`). Los releases de la app nunca van como pre-release: la web descarga
+siempre de `releases/latest`.
+
 ## Metodología de ejecución de la Fase 7 (orquestador + subagentes)
 
 Mientras se ejecute `docs/plan_fase_7.md`, esta metodología aplica y **sobrevive a cualquier
