@@ -6,6 +6,8 @@ import 'sync_locks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../features/auth/services/remote_account_check.dart';
+
 import '../local_db/daos/folder_dao.dart';
 import '../local_db/daos/listening_history_dao.dart';
 import '../local_db/daos/playlist_dao.dart';
@@ -42,7 +44,9 @@ class SyncService {
     required SyncCacheManager cacheManager,
     FolderDao? folderDao,
     SupabaseFolderRepository? folderRepo,
-  })  : _folderDao = folderDao,
+    Future<bool> Function()? accountGate,
+  })  : _accountGate = accountGate,
+        _folderDao = folderDao,
         _folderRepo = folderRepo,
         _playlistRepo = playlistRepo,
         _albumRepo = albumRepo,
@@ -53,6 +57,23 @@ class SyncService {
         _cacheManager = cacheManager;
 
   bool get _isTestEnv => Platform.environment.containsKey('FLUTTER_TEST');
+
+  /// Ronda 7: antes de bajar o podar nada, ¿la cuenta sigue existiendo en el
+  /// servidor? Si se eliminó desde otro dispositivo, la nube responde "no
+  /// tienes nada" y el sync vaciaba la biblioteca local sin avisar. `false`
+  /// cancela el sync (y el gate ya arrancó el cierre de sesión). `null` en
+  /// tests: ver `accountGateProvider`.
+  final Future<bool> Function()? _accountGate;
+
+  Future<bool> _accountStillValid() async {
+    final gate = _accountGate;
+    if (gate == null) return true;
+    try {
+      return await gate();
+    } catch (_) {
+      return true;
+    }
+  }
 
   /// Corridas en vuelo, por operación.
   ///
@@ -109,6 +130,7 @@ class SyncService {
     }
 
     return _runExclusive('library', () async {
+      if (!await _accountStillValid()) return;
       try {
         await _syncPlaylistsAndTracks();
         await _syncSavedAlbumsInternal();
@@ -125,6 +147,7 @@ class SyncService {
       return;
     }
     if (SyncLocks.isLocked(playlistRemoteId)) return;
+    if (!await _accountStillValid()) return;
 
     try {
       final remotePlaylists = await _playlistRepo.fetchUserPlaylists();
@@ -188,6 +211,7 @@ class SyncService {
     }
 
     return _runExclusive('saved_albums', () async {
+      if (!await _accountStillValid()) return;
       try {
         await _syncSavedAlbumsInternal();
         _cacheManager.markSynced('saved_albums');
@@ -199,6 +223,7 @@ class SyncService {
 
   Future<void> syncListeningHistory() async {
     return _runExclusive('listening_history', () async {
+      if (!await _accountStillValid()) return;
       try {
         await _syncListeningHistoryInternal();
       } catch (_) {
@@ -584,5 +609,6 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     cacheManager: ref.watch(syncCacheManagerProvider),
     folderDao: ref.watch(folderDaoProvider),
     folderRepo: ref.watch(supabaseFolderRepositoryProvider),
+    accountGate: ref.watch(accountGateProvider),
   );
 });

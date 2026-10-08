@@ -39,6 +39,10 @@ Versiones de recopilación en el buscador, "Crear cola con IA" fuera de tema y b
   resuelve la versión, las canciones que podrían cambiar (`CanonicalVersionResolver.pendingIds`)
   se pintan con la portada en gris (`TrackTile.coverPending`), como si aún cargara.
 
+- **H-R7-6. Cuenta eliminada desde otro dispositivo.** El otro dispositivo quedaba hasta 1 h con
+  una sesión "zombi" (el sync le vaciaba la biblioteca sin avisar) y luego se cerraba la sesión sin
+  explicación. Detalle y reglas en `docs/fases/cambio_de_cuenta.md`, sección final.
+
 ## Descartado
 
 - **Gemini Flash para la letra** (se probó y se quitó antes de desplegar, decisión del usuario):

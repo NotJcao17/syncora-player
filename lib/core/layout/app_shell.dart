@@ -18,6 +18,7 @@ import '../../data/sync/sync_service.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../features/auth/local_mode_provider.dart';
 import '../../features/auth/services/account_data_owner.dart';
+import '../../features/auth/services/remote_account_check.dart';
 import '../../features/profile/widgets/user_avatar.dart';
 import '../../features/download/download_provider.dart';
 import '../../features/stats/genre_backfill_service.dart';
@@ -65,9 +66,23 @@ class _AppShellState extends ConsumerState<AppShell> {
   /// Carpetas desplegadas en la barra lateral (Fase 8.E). Solo de la sesión.
   final Set<int> _expandedSidebarFolders = {};
 
+  /// Ronda 7: al volver a la app se comprueba que la cuenta siga existiendo
+  /// (pudo eliminarse desde otro dispositivo). Como mucho una petición de
+  /// Auth cada 5 minutos (`RemoteAccountChecker.okTtl`).
+  AppLifecycleListener? _lifecycle;
+
+  void _checkAccountOnResume() {
+    if (ref.read(localModeProvider)) return;
+    if (!(ref.read(isConnectedProvider).value ?? true)) return;
+    if (ref.read(currentUserProvider) == null) return;
+    final gate = ref.read(accountGateProvider);
+    if (gate != null) unawaited(gate());
+  }
+
   @override
   void initState() {
     super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _checkAccountOnResume);
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.addHandler(_handleDesktopKeyEvent);
     }
@@ -159,6 +174,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   void dispose() {
+    _lifecycle?.dispose();
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.removeHandler(_handleDesktopKeyEvent);
     }

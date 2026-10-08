@@ -85,3 +85,40 @@ limpio y la app abrió con la biblioteca, On Repeat y la sesión intactas.
 
 Lo que ya vivía en `getApplicationSupportDirectory` (Roaming: sesión del reproductor, motor,
 ajustes) no se movió.
+
+## Cuenta eliminada desde otro dispositivo (2026-10-08, ronda 7)
+
+**Antes:** al eliminar la cuenta en el PC, el celular seguía con sesión hasta que vencía su token de
+acceso (1 h por defecto: la API solo comprueba la firma). En ese tiempo la nube le respondía "no
+tienes nada" (RLS sobre un usuario que ya no existe), el sync vaciaba sus playlists y álbumes sin
+avisar y cada escritura fallaba. Al vencer el token, la renovación se rechazaba y Supabase cerraba
+la sesión sin ninguna explicación (verificado en gotrue 2.27.2: `_doRefresh` emite `signedOut`
+con `SignOutReason.sessionExpired`).
+
+**Ahora** (`lib/features/auth/services/remote_account_check.dart`):
+
+- Antes de cada sync que baja o poda (`syncLibrary`, `syncPlaylistDetail`, `syncSavedAlbums`,
+  `syncListeningHistory`) y al volver a la app, `auth.getUser()`. Como mucho una petición de Auth
+  cada 5 minutos por cuenta; si el token venció, se renueva antes.
+- **Solo** 403 + `user_not_found` cuenta como eliminada (es lo que devuelve el servidor de Auth,
+  `maybeLoadUserOrSession`, que busca el usuario antes que la sesión). Entonces: se cancela el
+  sync, se para el reproductor, se cierra la sesión (local) y se borra lo local como al eliminarla
+  aquí (las descargas se quedan). El dueño anotado sigue siendo la cuenta borrada.
+- 403 + `session_not_found` (sesión cerrada en el servidor): solo se cierra la sesión; los datos
+  se quedan con su dueño, como con una sesión vencida.
+- **Todo lo demás** (sin red, 5xx, token vencido, error sin código) es "no se sabe": el sync sigue
+  como siempre y no se borra nada.
+- **Si la sesión desaparece o cambia de cuenta mientras se comprueba, el sync no corre**
+  (hallazgo P1 de la revisión independiente): sin sesión, los repositorios devuelven listas vacías
+  y el sync podaba la biblioteca. Pasaba de forma determinista con una cuenta eliminada y el token
+  vencido, porque la propia comprobación dispara la renovación que cierra la sesión.
+- No actúa si la sesión ya es de otra cuenta, ni mientras este dispositivo elimina su propia
+  cuenta (`AccountDataGuard.deletingAccountHere`, entre la RPC y el cierre de sesión).
+- La pantalla de inicio explica por qué se cerró la sesión (`pendingAuthNotice`): "Tu cuenta se
+  eliminó desde otro dispositivo…" o, si Supabase la cerró solo, "Tu sesión se cerró. Vuelve a
+  iniciar sesión." Cerrar sesión a mano no muestra nada. El aviso caduca a los 10 minutos, para
+  no aparecer días después si el usuario siguió sin cuenta.
+
+**Límite:** si el celular arranca con el token ya vencido, la renovación falla antes de poder
+preguntar nada: sale el aviso genérico y lo local se queda con el dueño borrado, que se limpia en
+cuanto entra cualquier cuenta o se usa sin cuenta (regla de siempre).

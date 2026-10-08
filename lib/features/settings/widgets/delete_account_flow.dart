@@ -51,9 +51,13 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
     await images.deleteAllRemote();
   } catch (_) {}
 
+  // Entre la RPC y el cierre de sesión, un sync en vuelo vería que la cuenta
+  // ya no existe: que no lo trate como "eliminada desde otro dispositivo".
+  dataGuard.deletingAccountHere = true;
   try {
     await Supabase.instance.client.rpc('delete_my_account');
   } catch (e) {
+    dataGuard.deletingAccountHere = false;
     rootNavigator.pop();
     if (context.mounted) {
       AppToast.show(context, message: 'No se pudo eliminar la cuenta. Intenta de nuevo más tarde.');
@@ -77,6 +81,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
   } catch (_) {
     // El usuario ya no existe en el servidor; la sesión local se descarta igual.
   }
+  dataGuard.deletingAccountHere = false;
   router.go('/auth');
 }
 

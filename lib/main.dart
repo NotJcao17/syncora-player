@@ -23,6 +23,7 @@ import 'features/auth/local_mode_provider.dart';
 import 'features/auth/services/account_data_owner.dart';
 import 'features/auth/services/auth_deep_link_errors.dart';
 import 'features/auth/services/local_mode_storage.dart';
+import 'features/auth/services/remote_account_check.dart';
 import 'features/player/session/player_session_storage.dart';
 import 'features/search/search_history_storage.dart';
 
@@ -200,6 +201,16 @@ void main() async {
       authFlowType: AuthFlowType.pkce,
     ),
   );
+
+  // Ronda 7: si Supabase cierra la sesión solo (la renovación del token se
+  // rechazó: sesión revocada o cuenta eliminada desde otro dispositivo), la
+  // pantalla de inicio lo explica en vez de aparecer sin más. El stream es
+  // un `ReplaySubject`: también llega el cierre que ocurre al arrancar.
+  Supabase.instance.client.auth.onAuthStateChange.listen((state) {
+    if (state.event == AuthChangeEvent.signedOut && state.signOutReason == SignOutReason.sessionExpired) {
+      setPendingAuthNotice(sessionClosedNotice, keepExisting: true);
+    }
+  }, onError: (_) {});
 
   // AppLinks listener para Deep Links / OAuth redirect callbacks
   final appLinks = AppLinks();

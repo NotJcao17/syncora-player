@@ -17,6 +17,7 @@ import '../../search/search_history_storage.dart';
 import '../local_mode_provider.dart';
 import 'local_library_wipe.dart';
 import 'local_mode_storage.dart';
+import 'remote_account_check.dart';
 
 /// De quién son los datos locales: el id de la cuenta, o [localModeDataOwner]
 /// en modo sin cuenta. Vive en `shared_preferences` (`AppSettingsStore`).
@@ -115,6 +116,57 @@ class AccountDataGuard {
       await Supabase.instance.client.auth.signOut();
     } catch (_) {}
     await wipeNow(playerAlreadyReset: true);
+  }
+
+  /// `true` mientras este dispositivo elimina su propia cuenta
+  /// (`delete_account_flow.dart`): entre la RPC y el cierre de sesión, un sync
+  /// vería `user_not_found` y no debe avisar "desde otro dispositivo".
+  bool deletingAccountHere = false;
+
+  Future<void>? _remoteGone;
+
+  /// La cuenta se eliminó en otro dispositivo (el servidor respondió
+  /// `user_not_found`, ver `remote_account_check.dart`): lo mismo que al
+  /// eliminarla aquí, sin la RPC. Cierra sesión y borra lo local (las
+  /// descargas se quedan). El dueño anotado sigue siendo la cuenta borrada,
+  /// así que si algo se escapa del borrado se limpia cuando entre otra.
+  ///
+  /// [userId] es la cuenta que el servidor dijo que no existe: si para
+  /// entonces la sesión es de otra, no se toca nada.
+  Future<void> handleAccountDeletedElsewhere(String userId) =>
+      _onRemoteSessionGone(userId, wipe: true, notice: accountDeletedElsewhereNotice);
+
+  /// La sesión se cerró en el servidor (`session_not_found`), pero la cuenta
+  /// existe: solo se cierra la sesión. Los datos se quedan con su dueño, como
+  /// cuando Supabase cierra una sesión vencida: si vuelve la misma cuenta,
+  /// siguen ahí; si entra otra, se borran.
+  Future<void> handleSessionRevoked(String userId) =>
+      _onRemoteSessionGone(userId, wipe: false, notice: sessionClosedNotice);
+
+  Future<void> _onRemoteSessionGone(String userId, {required bool wipe, required String notice}) {
+    final inFlight = _remoteGone;
+    if (inFlight != null) return inFlight;
+    final future = _closeSessionFor(userId, wipe: wipe, notice: notice);
+    _remoteGone = future;
+    future.whenComplete(() {
+      _remoteGone = null;
+    });
+    return future;
+  }
+
+  Future<void> _closeSessionFor(String userId, {required bool wipe, required String notice}) async {
+    if (deletingAccountHere) return;
+    final auth = Supabase.instance.client.auth;
+    if (auth.currentUser?.id != userId) return;
+    // El aviso antes del cierre de sesión: la pantalla de inicio lo lee al
+    // montarse, y se monta en cuanto la sesión desaparece.
+    setPendingAuthNotice(notice);
+    if (wipe) await _resetPlayerIfAlive();
+    try {
+      // Alcance local: el servidor ya no tiene sesión que cerrar.
+      await auth.signOut();
+    } catch (_) {}
+    if (wipe) await wipeNow(playerAlreadyReset: true);
   }
 
   /// Borrado completo, con el reproductor vivo y la UI montada.

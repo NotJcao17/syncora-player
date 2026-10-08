@@ -85,6 +85,32 @@ void main() {
       expect(local, isNull);
     });
 
+    test('ronda 7: si la cuenta ya no existe (gate en false), el sync no poda nada', () async {
+      final mockRepo = MockSupabasePlaylistRepository();
+      mockRepo.userPlaylists = []; // Lo que responde la nube para una cuenta borrada.
+      var gateCalls = 0;
+      final gated = SyncService(
+        playlistRepo: mockRepo,
+        albumRepo: SupabaseAlbumRepository(),
+        historyRepo: SupabaseHistoryRepository(),
+        playlistDao: db.playlistDao,
+        savedAlbumDao: db.savedAlbumDao,
+        listeningHistoryDao: db.listeningHistoryDao,
+        cacheManager: cacheManager,
+        accountGate: () async {
+          gateCalls++;
+          return false;
+        },
+      );
+      final localId = await db.playlistDao.createPlaylist(title: 'Sigue aquí', remoteId: 'remote_keep_1');
+
+      await gated.syncPlaylistDetail('remote_keep_1', force: true);
+      await gated.syncLibrary(force: true);
+
+      expect(await db.playlistDao.getPlaylistById(localId), isNotNull);
+      expect(gateCalls, 2);
+    });
+
     test('syncPlaylistDetail prunes local tracks not present in remote playlist', () async {
       final mockRepo = MockSupabasePlaylistRepository();
       mockRepo.userPlaylists = [

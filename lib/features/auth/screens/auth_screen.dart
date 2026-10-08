@@ -25,6 +25,7 @@ import '../services/local_library_wipe.dart';
 import '../services/auth_deep_link_errors.dart';
 import '../services/desktop_auth_service.dart';
 import '../services/new_account_heuristic.dart';
+import '../services/remote_account_check.dart';
 
 /// Pantalla de Autenticación para Syncora Player.
 class AuthScreen extends ConsumerStatefulWidget {
@@ -69,9 +70,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   // arrancar cada intento nuevo para no arrastrar el de un intento previo.
   bool? _isSignUpAttempt;
 
+  /// Ronda 7: la sesión se cerró sin que el usuario lo pidiera (cuenta
+  /// eliminada en otro dispositivo, sesión revocada o vencida): se explica
+  /// aquí una sola vez.
+  void _showPendingNotice() {
+    if (!mounted || pendingAuthNotice.value == null) return;
+    final notice = takePendingAuthNotice();
+    if (notice != null) setState(() => _errorMessage = notice);
+  }
+
   @override
   void initState() {
     super.initState();
+    // Directo, sin `setState`: dentro de `initState` todavía no se puede.
+    _errorMessage = takePendingAuthNotice();
+    pendingAuthNotice.addListener(_showPendingNotice);
     if (!_isTestEnvironment()) {
       final session = Supabase.instance.client.auth.currentSession;
       if (session != null) {
@@ -196,6 +209,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   @override
   void dispose() {
+    pendingAuthNotice.removeListener(_showPendingNotice);
     _authSubscription?.cancel();
     _deepLinkErrorSubscription?.cancel();
     _emailController.dispose();
