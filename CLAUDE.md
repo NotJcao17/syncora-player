@@ -80,7 +80,7 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 
 ### Estado actual (última actualización: 2026-10-08)
 
-**Séptima ronda de correcciones: implementada; falta desplegar `ai-assistant` y probar.** Detalle en
+**Séptima ronda de correcciones: implementada y `ai-assistant` desplegada; faltan las pruebas en dispositivo.** Detalle en
 `docs/fases/correcciones_r7.md` — **leerlo antes de tocar las versiones de Deezer
 (`CanonicalVersionResolver`), "Crear cola con IA" o la búsqueda por letra**. Lo que no conviene
 revertir: la búsqueda de Google de Gemini no existe en el plan gratuito (no volver a activarla);

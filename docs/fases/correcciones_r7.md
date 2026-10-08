@@ -44,5 +44,5 @@ Versiones de recopilación en el buscador, "Crear cola con IA" fuera de tema y b
 ## Despliegue
 
 La Edge Function `ai-assistant` cambió (prompts, esquema de cola, `excludeTracks`, sin
-búsqueda de Google). Es compatible con la app anterior. Desplegar con
-`supabase functions deploy ai-assistant` (el agente no tuvo permiso para hacerlo).
+búsqueda de Google). Es compatible con la app anterior. Desplegada por el agente el 2026-10-08
+y verificada (lo publicado coincide con el repo).
