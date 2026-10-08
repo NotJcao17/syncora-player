@@ -86,7 +86,8 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 revertir: la búsqueda de Google de Gemini no existe en el plan gratuito (no volver a activarla);
 lo ya sugerido va en `excludeTracks`, nunca en `contextTracks`; y la versión de una recopilación
 solo se cambia si aparece el mismo ISRC en la discografía del artista; y la búsqueda por letra va
-por YouTube Music (`MusicSearchRequest` del isolate), no por IA.
+por YouTube Music (`MusicSearchRequest` del isolate), no por IA. Migración 23 (`account_exists`)
+aplicada: detecta la cuenta eliminada desde otro dispositivo (`docs/fases/cambio_de_cuenta.md`).
 
 ### Estado actual (última actualización: 2026-10-05)
 

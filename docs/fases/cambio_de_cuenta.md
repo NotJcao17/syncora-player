@@ -119,6 +119,29 @@ con `SignOutReason.sessionExpired`).
   iniciar sesión." Cerrar sesión a mano no muestra nada. El aviso caduca a los 10 minutos, para
   no aparecer días después si el usuario siguió sin cuenta.
 
-**Límite:** si el celular arranca con el token ya vencido, la renovación falla antes de poder
-preguntar nada: sale el aviso genérico y lo local se queda con el dueño borrado, que se limpia en
-cuanto entra cualquier cuenta o se usa sin cuenta (regla de siempre).
+**Cuando Supabase cierra la sesión solo** (migración 23, `account_exists`). Es el caso **común**,
+no el raro: en Android `supabase_flutter` deja de renovar el token en cuanto la app pasa a segundo
+plano, así que si el celular no usó la app en la última hora el token está vencido y la renovación
+(rechazada, porque los tokens se borraron con la cuenta) cierra la sesión antes de poder preguntar
+a `/user`. Ese error es el mismo que el de una sesión cerrada en el servidor, así que no sirve para
+distinguir. Entonces `serverSignOutWatcherProvider` (creado en `SyncoraApp`; el stream de gotrue es
+un `ReplaySubject` y también entrega el cierre del arranque) llama a
+`AccountDataGuard.handleSessionEndedByServer`, que pregunta a la RPC `account_exists` (sin sesión,
+llave anon) por el dueño de los datos locales:
+
+- `false` → borra lo local (las descargas no) y avisa "Tu cuenta se eliminó desde otro
+  dispositivo…".
+- `true`, sin red o cualquier duda → solo el aviso genérico; no se borra nada.
+- Si mientras se pregunta alguien entra o cambia el dueño, no toca nada (ya lo hizo `claimFor`).
+
+La RPC solo responde sí/no para un UUID concreto (122 bits aleatorios: no se puede adivinar ni
+enumerar) y no devuelve ningún dato de la cuenta. Verificada en vivo sin sesión: `false` para un
+UUID inexistente y error de tipo para una entrada que no es UUID.
+
+**Un token vencido no afecta al usuario** (verificado en `supabase` 2.16.1 / gotrue 2.27.2): cada
+petición a Supabase renueva el token antes de salir si venció (`_getAccessToken` →
+`getSession()`), también en segundo plano; el token de renovación no caduca (salvo límites de
+sesión, que son del plan Pro y no están activos). La reproducción no depende de Supabase (audio de
+YouTube, metadatos de Deezer): el único efecto de un fallo de red ahí es que el historial o un "Me
+gusta" se suben más tarde. Solo se vuelve a pedir inicio de sesión si el token de renovación deja
+de existir: cuenta eliminada o sesión cerrada en el servidor.

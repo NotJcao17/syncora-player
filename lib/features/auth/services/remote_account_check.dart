@@ -152,6 +152,21 @@ final accountGateProvider = Provider<Future<bool> Function()?>((ref) {
   };
 });
 
+/// Escucha los cierres de sesión que hace Supabase solo (renovación del token
+/// rechazada: `SignOutReason.sessionExpired`) y le pasa cada uno a
+/// [AccountDataGuard.handleSessionEndedByServer]. Se crea en la raíz de la
+/// app (`SyncoraApp`). El stream de gotrue es un `ReplaySubject`, así que
+/// también llega el cierre que ocurrió al arrancar, antes de `runApp`.
+final serverSignOutWatcherProvider = Provider<void>((ref) {
+  if (kIsWeb || Platform.environment.containsKey('FLUTTER_TEST')) return;
+  final subscription = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
+    if (state.event == AuthChangeEvent.signedOut && state.signOutReason == SignOutReason.sessionExpired) {
+      unawaited(ref.read(accountDataGuardProvider).handleSessionEndedByServer());
+    }
+  }, onError: (_) {});
+  ref.onDispose(subscription.cancel);
+});
+
 /// Aviso para la pantalla de inicio de sesión cuando la sesión se cerró sin
 /// que el usuario lo pidiera. Se lee y se limpia al mostrarlo
 /// ([takePendingAuthNotice]).

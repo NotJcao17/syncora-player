@@ -51,6 +51,20 @@ const String localModeDataOwner = 'local';
 bool shouldWipeLocalData({required String? storedOwner, required String newOwner}) =>
     storedOwner != null && storedOwner != newOwner;
 
+/// Tras un cierre de sesión que hizo Supabase solo: ¿se borran los datos
+/// locales? Solo si el servidor dijo **explícitamente** que la cuenta dueña
+/// ya no existe ([accountExists] `false`; `null` es "no se pudo saber") y
+/// nadie entró ni cambió el dueño mientras se preguntaba (en ese caso ya se
+/// encargó `claimFor`).
+bool shouldWipeAfterServerSignOut({
+  required bool? accountExists,
+  required bool signedInAgain,
+  required bool ownerChanged,
+}) =>
+    accountExists == false && !signedInAgain && !ownerChanged;
+
+final _uuidPattern = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+
 /// Borra lo que pertenece a una cuenta y no necesita el reproductor vivo:
 /// biblioteca, carpetas, historial, imágenes propias, foto del modo local y
 /// búsquedas recientes. Se usa también al arrancar, antes de `runApp`.
@@ -167,6 +181,59 @@ class AccountDataGuard {
       await auth.signOut();
     } catch (_) {}
     if (wipe) await wipeNow(playerAlreadyReset: true);
+  }
+
+  Future<void>? _serverSignOut;
+
+  /// Supabase cerró la sesión solo: la renovación del token se rechazó (ver
+  /// `serverSignOutWatcherProvider`). Pasa con una cuenta eliminada desde
+  /// otro dispositivo si este no usó la app en la última hora, porque con la
+  /// app cerrada o en segundo plano no renueva el token, y ya no queda
+  /// ninguno con el que preguntar a `/user`. Se pregunta a la RPC
+  /// `account_exists` (sin sesión) por el dueño de los datos locales.
+  Future<void> handleSessionEndedByServer() {
+    final inFlight = _serverSignOut;
+    if (inFlight != null) return inFlight;
+    final future = _afterServerSignOut();
+    _serverSignOut = future;
+    future.whenComplete(() {
+      _serverSignOut = null;
+    });
+    return future;
+  }
+
+  Future<void> _afterServerSignOut() async {
+    final accountId = owner;
+    if (deletingAccountHere || accountId == null || !_uuidPattern.hasMatch(accountId)) {
+      setPendingAuthNotice(sessionClosedNotice, keepExisting: true);
+      return;
+    }
+    final exists = await _accountExists(accountId);
+    final wipe = shouldWipeAfterServerSignOut(
+      accountExists: exists,
+      signedInAgain: Supabase.instance.client.auth.currentUser != null,
+      ownerChanged: owner != accountId,
+    );
+    if (!wipe) {
+      setPendingAuthNotice(sessionClosedNotice, keepExisting: true);
+      return;
+    }
+    setPendingAuthNotice(accountDeletedElsewhereNotice);
+    await _resetPlayerIfAlive();
+    await wipeNow(playerAlreadyReset: true);
+  }
+
+  /// `true`/`false` según el servidor; `null` si no se pudo saber (sin red,
+  /// migración sin aplicar, respuesta inesperada): entonces no se borra nada.
+  Future<bool?> _accountExists(String accountId) async {
+    try {
+      final result = await Supabase.instance.client
+          .rpc('account_exists', params: {'account_id': accountId})
+          .timeout(const Duration(seconds: 10));
+      return result is bool ? result : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Borrado completo, con el reproductor vivo y la UI montada.

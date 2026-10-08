@@ -31,6 +31,20 @@ void main() {
     });
   });
 
+  group('shouldWipeAfterServerSignOut (ronda 7: cuenta eliminada en otro dispositivo)', () {
+    test('solo borra si el servidor dijo explícitamente que la cuenta no existe', () {
+      expect(shouldWipeAfterServerSignOut(accountExists: false, signedInAgain: false, ownerChanged: false), isTrue);
+      expect(shouldWipeAfterServerSignOut(accountExists: true, signedInAgain: false, ownerChanged: false), isFalse);
+      expect(shouldWipeAfterServerSignOut(accountExists: null, signedInAgain: false, ownerChanged: false), isFalse,
+          reason: 'sin red o sin respuesta no se borra nada');
+    });
+
+    test('si alguien entró o cambió el dueño mientras se preguntaba, no toca nada', () {
+      expect(shouldWipeAfterServerSignOut(accountExists: false, signedInAgain: true, ownerChanged: false), isFalse);
+      expect(shouldWipeAfterServerSignOut(accountExists: false, signedInAgain: false, ownerChanged: true), isFalse);
+    });
+  });
+
   group('wipeAccountDataAtRest', () {
     late SyncoraDatabase db;
 
