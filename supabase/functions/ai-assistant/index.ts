@@ -26,7 +26,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { isAiAction } from "./actions.ts";
 import { CORS_HEADERS, errorResponse, jsonResponse } from "./errors.ts";
-import { callGemini, GEMINI_LYRICS_MODEL } from "./gemini.ts";
+import { callGemini } from "./gemini.ts";
 import { countDirectiveFor, systemPromptFor } from "./prompts.ts";
 import { checkRateLimit, recordRequest, type RateLimitDb } from "./rate_limit.ts";
 import { buildUserDataBlock, mapGeminiError, sanitizeIdsToRemove } from "./response_helpers.ts";
@@ -155,22 +155,15 @@ async function handleRequest(req: Request): Promise<Response> {
   const input = buildInteractionInput(systemPrompt, buildUserDataBlock(parsed));
 
   let output: unknown;
+  // 2026-10-08: `lyric_search` ya no intenta la búsqueda de Google primero:
+  // no está disponible en el plan gratuito de Gemini (página de precios,
+  // columna Free Tier: "Not available"), así que fallaba siempre y solo
+  // sumaba latencia. Va con el mismo modelo que todo lo demás; el cliente
+  // comprueba los candidatos contra la letra real (LRCLib). Se descartó usar
+  // Flash solo para esta acción: Google no publica su límite gratuito y
+  // podía agotar la llave compartida (docs/fases/correcciones_r7.md).
   try {
-    if (action === "lyric_search") {
-      // 2026-10-08: la letra va con Flash (ver `GEMINI_LYRICS_MODEL`). Ante
-      // CUALQUIER fallo de ese intento (cuota del día de Flash, modelo no
-      // disponible, respuesta ilegible) se repite con el Lite de siempre: la
-      // función nunca queda peor que antes. Si la llave en sí está agotada,
-      // el segundo intento falla igual y se informa como siempre.
-      try {
-        output = await callGemini({ apiKey, input, schema, model: GEMINI_LYRICS_MODEL });
-        if (!validateAiOutput(action, output)) throw new Error("salida sin el formato esperado");
-      } catch (_) {
-        output = await callGemini({ apiKey, input, schema });
-      }
-    } else {
-      output = await callGemini({ apiKey, input, schema });
-    }
+    output = await callGemini({ apiKey, input, schema });
   } catch (error) {
     return mapGeminiError(error, usingSharedKey);
   }

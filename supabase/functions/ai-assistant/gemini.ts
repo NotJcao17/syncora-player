@@ -25,20 +25,8 @@
 // referencia a través de este módulo.
 export const GEMINI_MODEL = "gemini-3.5-flash-lite";
 
-/**
- * Modelo para `lyric_search` (2026-10-08). El Lite casi no reconoce letras de
- * memoria y la búsqueda de Google (grounding) **no está disponible en el plan
- * gratuito** de Gemini (ai.google.dev/gemini-api/docs/pricing: "Not
- * available" en la columna Free Tier), así que el intento con búsqueda
- * fallaba siempre y caía al Lite sin ella. Flash recuerda muchas más letras;
- * si falla (cuota del día, modelo no disponible), index.ts repite con
- * [GEMINI_MODEL].
- */
-export const GEMINI_LYRICS_MODEL = "gemini-3.8-flash";
-
-function generateContentUrl(model: string): string {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-}
+const GEMINI_GENERATE_CONTENT_URL =
+  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 export class GeminiHttpError extends Error {
   readonly status: number;
@@ -56,8 +44,6 @@ export interface CallGeminiParams {
   apiKey: string;
   input: string;
   schema: unknown;
-  /** Por defecto [GEMINI_MODEL]. */
-  model?: string;
 }
 
 /**
@@ -69,8 +55,8 @@ export interface CallGeminiParams {
  * y si la llave era BYOK o compartida, a qué `AiErrorCode` mapearlo (ver
  * index.ts).
  */
-export async function callGemini({ apiKey, input, schema, model = GEMINI_MODEL }: CallGeminiParams): Promise<unknown> {
-  const response = await fetch(generateContentUrl(model), {
+export async function callGemini({ apiKey, input, schema }: CallGeminiParams): Promise<unknown> {
+  const response = await fetch(GEMINI_GENERATE_CONTENT_URL, {
     method: "POST",
     headers: {
       "x-goog-api-key": apiKey,

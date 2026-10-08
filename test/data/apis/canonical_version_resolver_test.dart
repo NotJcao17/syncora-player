@@ -96,10 +96,27 @@ void main() {
     expect(discographyCalls, 0);
   });
 
-  test('busca primero en los lanzamientos del año del ISRC, álbumes antes que EP', () {
+  test('busca primero en los lanzamientos del año del ISRC, álbumes antes que EP, sin discos en vivo', () {
     final ordered = CanonicalVersionResolver.orderCandidateAlbums(discography, 'USSM10600677', excludeAlbumId: 0);
-    expect(ordered.take(3).map((a) => a.id), [1422754, 763994091, 763994911]);
+    expect(ordered.take(2).map((a) => a.id), [763994091, 763994911]);
+    expect(ordered.map((a) => a.id), isNot(contains(1422754)), reason: 'MTV Unplugged es en vivo');
     expect(ordered.last.id, 1048886412);
+  });
+
+  test('un sencillo del propio artista (álbum = canción) no gasta peticiones', () async {
+    final cover = DeezerTrack(
+      id: 4010409521,
+      title: 'Waka Waka',
+      artistName: 'Bongo Cat',
+      artistId: 77,
+      albumTitle: 'Waka Waka',
+      albumId: 978792581,
+      coverUrl: '',
+      durationSec: 135,
+      isrc: 'QZN882419024',
+    );
+    expect(identical(await resolver.resolve(cover), cover), isTrue);
+    expect(discographyCalls, 0);
   });
 
   test('resolveTop reemplaza en su sitio y quita el duplicado que aparece más abajo', () async {

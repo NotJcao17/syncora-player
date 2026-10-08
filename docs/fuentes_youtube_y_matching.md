@@ -223,7 +223,10 @@ camino barato que esta sección no vio:
   otro. Cubre también los "Varios Artistas" que no son el 5080 (p. ej.
   `108420982`, el de "Party Hits: Summer Edition") y la colaboración en el disco
   de otro artista ("La Tortura" en el de Alejandro Sanz).
-- **Corrección:** como mucho 4 tracklists de esa discografía, primero los del
+- **Filtros de costo:** no se revisa la pista cuyo álbum se llama como la canción
+  (sencillo propio, como casi todos los covers) ni se buscan discos en vivo.
+  Medido: 1 a 10 peticiones extra por búsqueda en vez de 5 a 15.
+- **Corrección:** como mucho 3 tracklists de esa discografía, primero los del
   año del ISRC, y solo se cambia si aparece **el mismo ISRC**. "Hips Don't Lie"
   pasa de "Filtr presents R&B Party" a *Oral Fixation, Vol. 2* en 3 peticiones.
 - **Dónde se aplica:** a los 8 primeros resultados del buscador en su segunda

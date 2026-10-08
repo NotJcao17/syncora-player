@@ -23,6 +23,13 @@ import '../models/deezer/deezer_track.dart';
 /// sí trae ISRC), primero los del año del ISRC, y solo se cambia la pista si
 /// aparece **el mismo ISRC**. Si no aparece (p. ej. "Waka Waka" en inglés,
 /// que en Deezer solo está en recopilaciones), se queda la original.
+///
+/// **Filtros de costo** (medidos en vivo el 2026-10-08: sin ellos, 5 a 15
+/// peticiones extra por búsqueda; con ellos, 1 a 10 y las mismas
+/// correcciones): no se revisa una pista cuyo álbum se llama como la canción
+/// (un sencillo propio: así son casi todos los covers de otros artistas, y
+/// cada artista distinto costaba una discografía), ni se buscan en discos en
+/// vivo, que nunca comparten ISRC con la grabación de estudio.
 class CanonicalVersionResolver {
   CanonicalVersionResolver({required this.artistAlbums, required this.albumTracks});
 
@@ -32,7 +39,7 @@ class CanonicalVersionResolver {
   /// Tracklist con ISRC (`/album/{id}/tracks`).
   final Future<List<DeezerTrack>> Function(int albumId) albumTracks;
 
-  static const int maxAlbumLookups = 4;
+  static const int maxAlbumLookups = 3;
 
   final _discographies = _BoundedCache<int, Future<List<DeezerAlbum>>>(60);
   final _tracklists = _BoundedCache<int, Future<List<DeezerTrack>>>(150);
@@ -70,6 +77,7 @@ class CanonicalVersionResolver {
   Future<DeezerTrack> _resolve(DeezerTrack track) async {
     final isrc = normalizeIsrc(track.isrc);
     if (isrc == null || track.artistId == 0 || track.albumId == 0) return track;
+    if (isOwnSingle(track)) return track;
 
     final albums = await _discographies.putIfAbsent(track.artistId, () => artistAlbums(track.artistId));
     if (albums.isEmpty || albums.any((a) => a.id == track.albumId)) return track;
@@ -110,6 +118,23 @@ class CanonicalVersionResolver {
     );
   }
 
+  /// ¿El álbum se llama igual que la canción? Es un sencillo del propio
+  /// artista: no hace falta mirar su discografía.
+  static bool isOwnSingle(DeezerTrack track) {
+    final album = _plain(track.albumTitle);
+    return album.isNotEmpty && album == _plain(track.title);
+  }
+
+  /// Sin paréntesis/corchetes, acentos ni puntuación.
+  static String _plain(String s) {
+    var out = s.toLowerCase().replaceAll(RegExp(r'[\(\[][^\)\]]*[\)\]]'), ' ');
+    const accents = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n'};
+    accents.forEach((k, v) => out = out.replaceAll(k, v));
+    return out.replaceAll(RegExp(r"['’]"), '').replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+  }
+
+  static final _liveAlbum = RegExp(r'\b(live|en vivo|unplugged|in concert|tour)\b', caseSensitive: false);
+
   /// ISRC en mayúsculas, o `null` si no tiene la forma de uno (12 caracteres).
   static String? normalizeIsrc(String? raw) {
     final code = raw?.trim().toUpperCase() ?? '';
@@ -123,7 +148,7 @@ class CanonicalVersionResolver {
     return yy >= 40 ? 1900 + yy : 2000 + yy;
   }
 
-  /// Orden de búsqueda en la discografía: primero los lanzamientos cercanos
+  /// Orden de búsqueda en la discografía (sin discos en vivo): primero los lanzamientos cercanos
   /// al año del ISRC (un año antes a dos después), después álbum > EP >
   /// sencillo, y a igualdad el más antiguo (el lanzamiento original antes
   /// que una reedición).
@@ -142,7 +167,7 @@ class CanonicalVersionResolver {
           _ => 0,
         };
 
-    final list = albums.where((a) => a.id != excludeAlbumId).toList()
+    final list = albums.where((a) => a.id != excludeAlbumId && !_liveAlbum.hasMatch(a.title)).toList()
       ..sort((a, b) {
         final w = windowRank(a).compareTo(windowRank(b));
         if (w != 0) return w;
