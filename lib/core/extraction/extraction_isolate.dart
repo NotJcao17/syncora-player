@@ -52,6 +52,26 @@ class EngineLoadReport {
   });
 }
 
+/// Búsqueda de canciones en YouTube Music por texto libre (2026-10-08, la
+/// "búsqueda por letra"): YouTube Music indexa las letras, y con un fragmento
+/// devuelve la canción en el primer lugar casi siempre (medido: 12 de 13
+/// fragmentos). Usa el `searchVideos(..., 'music')` que el motor ya expone,
+/// así que no cambia el motor OTA.
+class MusicSearchRequest {
+  final String requestId;
+  final String query;
+  const MusicSearchRequest({required this.requestId, required this.query});
+}
+
+/// Filas `{videoId, title, author, durationSec}` de YouTube Music, o
+/// [error] si la búsqueda no obtuvo respuesta.
+class MusicSearchResponse {
+  final String requestId;
+  final List<Map<String, dynamic>> results;
+  final String? error;
+  const MusicSearchResponse({required this.requestId, this.results = const [], this.error});
+}
+
 final Map<String, Completer<Map<String, dynamic>>> _jsExtractCompleters = {};
 final Map<String, Completer<Map<String, dynamic>>> _jsSearchCompleters = {};
 final Map<String, String> _resolvedMatchCache = {};
@@ -62,6 +82,7 @@ class ExtractionIsolate {
   Isolate? _isolate;
   SendPort? _isolateSendPort;
   final Map<String, Completer<ExtractionResult>> _pendingRequests = {};
+  final Map<String, Completer<MusicSearchResponse>> _pendingSearches = {};
   ReceivePort? _mainReceivePort;
   ReceivePort? _exitPort;
   Completer<EngineLoadReport>? _spawnCompleter;
@@ -99,6 +120,8 @@ class ExtractionIsolate {
       } else if (message is ExtractionResult) {
         final pending = _pendingRequests.remove(message.requestId);
         pending?.complete(message);
+      } else if (message is MusicSearchResponse) {
+        _pendingSearches.remove(message.requestId)?.complete(message);
       } else if (message is ExtractionLogMessage) {
         _logController.add(message.message);
       }
@@ -156,6 +179,21 @@ class ExtractionIsolate {
     return completer.future;
   }
 
+  /// Busca [query] en el catálogo de canciones de YouTube Music. El isolate
+  /// atiende un mensaje a la vez, así que espera a la extracción en curso.
+  Future<MusicSearchResponse> searchMusic(String requestId, String query) async {
+    final reloading = _reloading;
+    if (reloading != null) await reloading.future;
+    final port = _isolateSendPort;
+    if (port == null) {
+      return MusicSearchResponse(requestId: requestId, error: 'El motor de extracción no está disponible.');
+    }
+    final completer = Completer<MusicSearchResponse>();
+    _pendingSearches[requestId] = completer;
+    port.send(MusicSearchRequest(requestId: requestId, query: query));
+    return completer.future;
+  }
+
   /// Cambia el motor en caliente (Fase 8.C, solo en emergencias): espera a
   /// que no haya extracciones en curso (máx. [drainTimeout]), mata el isolate
   /// y arranca otro con [bundle]. Las peticiones que lleguen mientras tanto
@@ -193,6 +231,13 @@ class ExtractionIsolate {
     _isolate = null;
     _isolateSendPort = null;
     _spawnCompleter = null;
+    final orphanedSearches = Map.of(_pendingSearches);
+    _pendingSearches.clear();
+    for (final entry in orphanedSearches.entries) {
+      if (!entry.value.isCompleted) {
+        entry.value.complete(MusicSearchResponse(requestId: entry.key, error: 'El motor de extracción se reinició.'));
+      }
+    }
     final orphaned = Map.of(_pendingRequests);
     _pendingRequests.clear();
     for (final entry in orphaned.entries) {
@@ -397,6 +442,27 @@ class ExtractionIsolate {
           );
         }
         initMessage.mainSendPort.send(result);
+      } else if (message is MusicSearchRequest) {
+        if (!loadReport.ok) {
+          initMessage.mainSendPort.send(MusicSearchResponse(
+            requestId: message.requestId,
+            error: 'El motor no cargó: ${loadReport.error}',
+          ));
+          continue;
+        }
+        final outcome = await _trySearchWithClient(
+          query: message.query,
+          client: 'WEB',
+          jsRuntime: jsRuntime,
+          sendLog: sendLog,
+          mode: 'music',
+        );
+        final results = outcome.results;
+        initMessage.mainSendPort.send(MusicSearchResponse(
+          requestId: message.requestId,
+          results: [for (final r in results ?? const <Map<String, dynamic>>[]) Map<String, dynamic>.from(r)],
+          error: results == null ? (outcome.jsError ?? 'YouTube Music no respondió') : null,
+        ));
       } else if (message == 'RESET_ENGINE') {
         sendLog('[IsolateJS] Reiniciando motor JS...');
         pendingJobTimer?.cancel();

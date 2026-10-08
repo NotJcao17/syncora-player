@@ -25,6 +25,20 @@ Versiones de recopilación en el buscador, "Crear cola con IA" fuera de tema y b
   candidatos y el cliente los comprueba contra la letra real de LRCLib (`LyricMatch`, por pares de palabras): los que
   coinciden van primero bajo "La letra coincide". Botón "Buscar otra" sin cerrar la hoja.
 
+- **H-R7-4. La búsqueda por letra con IA no servía ni con 5 candidatos** (prueba del usuario:
+  ~2 aciertos de 10 con Gemini Lite). **YouTube Music indexa las letras**: medido con el motor
+  real (`engine/test/harness.mjs`, `searchVideos(..., 'music')`) sobre 13 fragmentos en español e
+  inglés, de estribillo y de verso: **12 aciertos en el primer lugar y 13 de 13 en los 3
+  primeros**. La búsqueda por letra ya no usa IA: el isolate de extracción acepta un mensaje
+  nuevo, `MusicSearchRequest`, que reusa la búsqueda de canciones que el motor ya expone (**el
+  motor OTA no cambia**); las filas se cuadran con Deezer con `ImportTrackMatcher` y se confirman
+  con LRCLib. Sin IA funciona también **sin cuenta** (el botón ya no se oculta en modo local). La
+  acción `lyric_search` de la Edge Function queda sin uso por esta app; se conserva para versiones
+  anteriores.
+- **H-R7-5. El cambio de portada en el buscador parecía una corrección.** Mientras la segunda fase
+  resuelve la versión, las canciones que podrían cambiar (`CanonicalVersionResolver.pendingIds`)
+  se pintan con la portada en gris (`TrackTile.coverPending`), como si aún cargara.
+
 ## Descartado
 
 - **Gemini Flash para la letra** (se probó y se quitó antes de desplegar, decisión del usuario):

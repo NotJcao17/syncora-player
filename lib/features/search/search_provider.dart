@@ -16,6 +16,11 @@ class SearchState {
   // rareza — el usuario lo apaga cuando busca algo de nicho a propósito.
   final bool popularOnly;
 
+  /// Canciones cuya versión todavía se está resolviendo (segunda fase): se
+  /// pintan con la portada en gris hasta saber si son de una recopilación
+  /// (ronda 7, `CanonicalVersionResolver`).
+  final Set<int> pendingVersionIds;
+
   const SearchState({
     this.query = '',
     this.searchType = DeezerSearchType.all,
@@ -23,6 +28,7 @@ class SearchState {
     this.result = const DeezerSearchResult(),
     this.errorMessage,
     this.popularOnly = true,
+    this.pendingVersionIds = const {},
   });
 
   SearchState copyWith({
@@ -33,6 +39,7 @@ class SearchState {
     String? errorMessage,
     bool clearError = false,
     bool? popularOnly,
+    Set<int>? pendingVersionIds,
   }) {
     return SearchState(
       query: query ?? this.query,
@@ -41,6 +48,7 @@ class SearchState {
       result: result ?? this.result,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       popularOnly: popularOnly ?? this.popularOnly,
+      pendingVersionIds: pendingVersionIds ?? this.pendingVersionIds,
     );
   }
 }
@@ -113,13 +121,17 @@ class SearchNotifier extends Notifier<SearchState> {
         isLoading: false,
         result: res,
         clearError: true,
+        pendingVersionIds: deezerApi.canonicalResolver.pendingIds(res.tracks),
       );
       try {
         final enriched = await deezerApi.enrichSearchResult(res, query, type: type);
         if (state.query.trim() != query || state.searchType != type) return;
-        state = state.copyWith(result: enriched);
+        state = state.copyWith(result: enriched, pendingVersionIds: const {});
       } catch (_) {
         // Sin colaboradores: los resultados ya están en pantalla.
+        if (state.query.trim() == query && state.searchType == type) {
+          state = state.copyWith(pendingVersionIds: const {});
+        }
       }
     } catch (e) {
       if (state.query.trim() != query) return;

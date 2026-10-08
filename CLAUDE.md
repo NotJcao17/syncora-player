@@ -85,7 +85,8 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 (`CanonicalVersionResolver`), "Crear cola con IA" o la búsqueda por letra**. Lo que no conviene
 revertir: la búsqueda de Google de Gemini no existe en el plan gratuito (no volver a activarla);
 lo ya sugerido va en `excludeTracks`, nunca en `contextTracks`; y la versión de una recopilación
-solo se cambia si aparece el mismo ISRC en la discografía del artista.
+solo se cambia si aparece el mismo ISRC en la discografía del artista; y la búsqueda por letra va
+por YouTube Music (`MusicSearchRequest` del isolate), no por IA.
 
 ### Estado actual (última actualización: 2026-10-05)
 

@@ -110,6 +110,16 @@ class ExtractionServiceReal implements ExtractionService {
   bool _streamingBusy = false;
   Completer<bool>? _streamingWaiter;
 
+  /// Búsqueda de canciones en YouTube Music (la usa la búsqueda por letra).
+  /// Fuera de la interfaz, como [engineManager]: los dobles de test de
+  /// [ExtractionService] no tienen motor; la UI la pide por
+  /// `ytMusicSearchProvider`, que los tests sustituyen.
+  Future<MusicSearchResponse> searchMusic(String query) async {
+    await _engine.ensureEngine();
+    final requestId = 'music_${++_requestIdCounter}_${DateTime.now().millisecondsSinceEpoch}';
+    return _isolate.searchMusic(requestId, query);
+  }
+
   @override
   void resetEngine() {
     _isolate.resetEngine();

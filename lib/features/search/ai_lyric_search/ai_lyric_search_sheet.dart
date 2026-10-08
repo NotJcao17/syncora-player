@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/extraction/extraction_provider.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/connectivity_service.dart';
@@ -11,37 +12,48 @@ import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/apis/lrclib_provider.dart';
 import '../../../data/models/deezer/deezer_track.dart';
-import '../../../data/services/ai_assistant_service.dart';
 import '../../library/import_export/playlist_import_export_service.dart';
 import '../../player/player_providers.dart';
 import 'lyric_match.dart';
 
-/// Fase 7.F.4 -- "Buscar canción por fragmento de letra". Entrada desde el
-/// botón junto a "Popular" / "Búsqueda Profunda" en `search_screen.dart`.
-void showAiLyricSearchSheet(BuildContext context, WidgetRef ref) {
+/// "Buscar canción por fragmento de letra". Entrada desde el botón junto a
+/// "Popular" / "Búsqueda Profunda" en `search_screen.dart`.
+///
+/// Ronda 7 (2026-10-08): ya no usa IA. Gemini Lite reconocía unas 2 de cada
+/// 10 letras; la búsqueda de canciones de YouTube Music indexa las letras y
+/// acertó 12 de 13 fragmentos en el primer lugar (13 de 13 en los 3
+/// primeros). Los resultados se cuadran con Deezer con el mismo matcher de
+/// la importación y se confirman contra la letra real de LRCLib. Sin IA,
+/// funciona también sin cuenta.
+void showLyricSearchSheet(BuildContext context, WidgetRef ref) {
   final isConnected = ref.read(isConnectedProvider).value ?? true;
   if (!isConnected) {
-    AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+    AppToast.show(context, message: 'Sin conexión. La búsqueda por letra necesita internet.');
     return;
   }
   AppBottomSheet.show(
     context: context,
     title: 'Buscar por letra',
     maxHeightFactor: 0.9,
-    child: const _AiLyricSearchFlow(),
+    child: const _LyricSearchFlow(),
   );
 }
 
-enum _Step { form, callingAi, matching, results }
+enum _Step { form, searching, matching, results }
 
-class _AiLyricSearchFlow extends ConsumerStatefulWidget {
-  const _AiLyricSearchFlow();
+/// Canciones de YouTube Music que se intentan cuadrar con Deezer. La buena
+/// sale casi siempre primera; el resto son alternativas (otra canción con la
+/// misma frase, una versión).
+const int _kMaxCandidates = 6;
+
+class _LyricSearchFlow extends ConsumerStatefulWidget {
+  const _LyricSearchFlow();
 
   @override
-  ConsumerState<_AiLyricSearchFlow> createState() => _AiLyricSearchFlowState();
+  ConsumerState<_LyricSearchFlow> createState() => _LyricSearchFlowState();
 }
 
-class _AiLyricSearchFlowState extends ConsumerState<_AiLyricSearchFlow> {
+class _LyricSearchFlowState extends ConsumerState<_LyricSearchFlow> {
   final _lyricController = TextEditingController();
 
   _Step _step = _Step.form;
@@ -68,7 +80,7 @@ class _AiLyricSearchFlowState extends ConsumerState<_AiLyricSearchFlow> {
     if (_isSubmitting) return;
     final isConnected = ref.read(isConnectedProvider).value ?? true;
     if (!isConnected) {
-      AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
+      AppToast.show(context, message: 'Sin conexión. La búsqueda por letra necesita internet.');
       return;
     }
 
@@ -80,32 +92,38 @@ class _AiLyricSearchFlowState extends ConsumerState<_AiLyricSearchFlow> {
     setState(() {
       _formError = null;
       _isSubmitting = true;
-      _step = _Step.callingAi;
+      _step = _Step.searching;
     });
 
-    final service = ref.read(aiAssistantServiceProvider);
-    Map<String, dynamic> result;
-    try {
-      result = await service.lyricSearch(lyricFragment: fragment);
-    } on AiAssistantException catch (e) {
+    void backToForm(String message) {
       if (!mounted) return;
       setState(() {
         _step = _Step.form;
         _isSubmitting = false;
       });
-      AppToast.show(context, message: e.message);
-      return;
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _step = _Step.form;
-        _isSubmitting = false;
-      });
-      AppToast.show(context, message: 'No se pudo contactar al asistente de IA. Revisa tu conexión e intenta de nuevo.');
+      AppToast.show(context, message: message);
+    }
+
+    final search = ref.read(ytMusicSearchProvider);
+    if (search == null) {
+      backToForm('La búsqueda por letra no está disponible en esta plataforma.');
       return;
     }
 
-    final rawTracks = PlaylistImportExportService.parseTrackSuggestions(result['songs']);
+    final List<Map<String, dynamic>> rows;
+    try {
+      final response = await search(fragment);
+      if (response.error != null && response.results.isEmpty) {
+        backToForm('No se pudo buscar en YouTube Music. Revisa tu conexión e intenta de nuevo.');
+        return;
+      }
+      rows = response.results;
+    } catch (_) {
+      backToForm('No se pudo buscar en YouTube Music. Revisa tu conexión e intenta de nuevo.');
+      return;
+    }
+
+    final rawTracks = rawTracksFromMusicRows(rows).take(_kMaxCandidates).toList();
     if (rawTracks.isEmpty) {
       if (!mounted) return;
       setState(() {
@@ -202,8 +220,8 @@ class _AiLyricSearchFlowState extends ConsumerState<_AiLyricSearchFlow> {
     switch (_step) {
       case _Step.form:
         return _buildForm();
-      case _Step.callingAi:
-        return const AiGeneratingIndicator(label: 'Buscando coincidencias...');
+      case _Step.searching:
+        return const AiGeneratingIndicator(label: 'Buscando la letra en YouTube Music...');
       case _Step.matching:
         return AiMatchingProgress(current: _matchCurrent, total: _matchTotal, currentTrackName: _matchCurrentName);
       case _Step.results:
@@ -260,8 +278,8 @@ class _AiLyricSearchFlowState extends ConsumerState<_AiLyricSearchFlow> {
               flex: 2,
               child: ElevatedButton.icon(
                 onPressed: _isSubmitting ? null : _submit,
-                icon: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), size: 18),
-                label: const Text('Buscar con IA', style: TextStyle(fontWeight: FontWeight.bold)),
+                icon: Icon(AppIcons.broken(SolarIcons.Magnifer), size: 18),
+                label: const Text('Buscar', style: TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   foregroundColor: AppTheme.background,
@@ -392,4 +410,25 @@ class _AiLyricSearchFlowState extends ConsumerState<_AiLyricSearchFlow> {
       ),
     );
   }
+}
+
+/// Filas de YouTube Music (`{title, author, durationSec}`) como filas para el
+/// matcher de Deezer, sin repetidas (la misma canción sale a veces dos veces:
+/// el audio y el videoclip). Pública para tests.
+List<RawImportTrack> rawTracksFromMusicRows(List<Map<String, dynamic>> rows) {
+  final seen = <String>{};
+  final out = <RawImportTrack>[];
+  for (final row in rows) {
+    final title = (row['title'] as String? ?? '').trim();
+    final artist = (row['author'] as String? ?? '').trim();
+    if (title.isEmpty || artist.isEmpty) continue;
+    if (!seen.add('${title.toLowerCase()}|${artist.toLowerCase()}')) continue;
+    final seconds = row['durationSec'];
+    out.add(RawImportTrack(
+      title: title,
+      artist: artist,
+      durationMs: seconds is num && seconds > 0 ? (seconds * 1000).round() : null,
+    ));
+  }
+  return out;
 }

@@ -675,6 +675,12 @@ class TrackTile extends ConsumerStatefulWidget {
   /// la vista de una playlist propia, donde todas las filas lo estarían.
   final bool showLibraryBadge;
 
+  /// Portada en gris (como mientras carga) en vez de la del álbum (ronda 7):
+  /// el buscador la usa mientras averigua si la pista es la versión de una
+  /// recopilación, para que no se vea la portada equivocada y luego el
+  /// cambio.
+  final bool coverPending;
+
   const TrackTile({
     super.key,
     required this.track,
@@ -692,6 +698,7 @@ class TrackTile extends ConsumerStatefulWidget {
     this.enableLongPressMenu = true,
     this.enableSwipeToQueue = true,
     this.showLibraryBadge = true,
+    this.coverPending = false,
   });
 
   @override
@@ -780,7 +787,9 @@ class _TrackTileState extends ConsumerState<TrackTile> {
       child: SizedBox(
         width: 48,
         height: 48,
-        child: widget.track.coverUrl.isNotEmpty
+        child: widget.coverPending
+            ? _buildPlaceholder()
+            : widget.track.coverUrl.isNotEmpty
             ? (widget.track.coverUrl.startsWith('file:') ||
                     widget.track.coverUrl.startsWith('/') ||
                     widget.track.coverUrl.contains(':\\')

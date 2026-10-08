@@ -45,11 +45,30 @@ class CanonicalVersionResolver {
   final _tracklists = _BoundedCache<int, Future<List<DeezerTrack>>>(150);
   final _resolved = _BoundedCache<int, Future<DeezerTrack>>(400);
 
+  /// Pistas ya resueltas (la de entrada y la resultante): su versión es
+  /// definitiva y el buscador no tiene que esperar por ellas.
+  final _settled = _BoundedCache<int, bool>(800);
+
+  /// ¿Puede cambiar [track] al resolverla? `false` si no hay nada que
+  /// revisar o ya se resolvió antes (sin pedir nada a Deezer).
+  bool mayChange(DeezerTrack track) {
+    if (_settled.containsKey(track.id)) return false;
+    if (normalizeIsrc(track.isrc) == null || track.artistId == 0 || track.albumId == 0) return false;
+    return !isOwnSingle(track);
+  }
+
+  /// Ids de los primeros [limit] de [tracks] que [resolveTop] podría cambiar.
+  Set<int> pendingIds(List<DeezerTrack> tracks, {int limit = 8}) =>
+      {for (final t in tracks.take(limit)) if (mayChange(t)) t.id};
+
   /// La versión del artista de [track], o [track] tal cual. Nunca lanza.
   Future<DeezerTrack> resolve(DeezerTrack track) {
     return _resolved.putIfAbsent(track.id, () async {
       try {
-        return await _resolve(track);
+        final result = await _resolve(track);
+        _settled.putIfAbsent(track.id, () => true);
+        _settled.putIfAbsent(result.id, () => true);
+        return result;
       } catch (_) {
         // Un fallo de red no se recuerda: la próxima vez se reintenta.
         _resolved.remove(track.id);
@@ -196,4 +215,6 @@ class _BoundedCache<K, V> {
   }
 
   void remove(K key) => _map.remove(key);
+
+  bool containsKey(K key) => _map.containsKey(key);
 }

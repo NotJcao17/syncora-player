@@ -18,7 +18,6 @@ import '../../../data/models/deezer/deezer_album.dart';
 import '../../../data/models/deezer/deezer_playlist.dart';
 import '../../../data/models/deezer/deezer_artist.dart';
 import '../../../data/models/deezer/deezer_track.dart';
-import '../../auth/local_mode_provider.dart';
 import '../../library/import_export/import_track_matcher.dart';
 import '../../library/import_export/playlist_import_export_service.dart' show RawImportTrack;
 import '../../player/player_providers.dart';
@@ -162,7 +161,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     // 7.I: la búsqueda por letra necesita el JWT del usuario -- se oculta
     // sin cuenta (D-24), no solo se deshabilita.
-    final isLocalMode = ref.watch(localModeProvider);
 
     return SafeArea(
       child: Column(
@@ -238,46 +236,43 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             ),
                           ),
                         ),
-                        if (!isLocalMode) ...[
-                          const SizedBox(width: 8),
-                          // Fase 7.F.4: buscar canción por fragmento de letra
-                          // con IA -- mismo estilo compacto que el toggle
-                          // "Popular" de al lado (D-14: ícono `StarsMinimalistic`
-                          // consistente en los 4 puntos de entrada de IA).
-                          Tooltip(
-                            message: 'Buscar por letra con IA',
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () {
-                                FocusManager.instance.primaryFocus?.unfocus();
-                                final isConnected = ref.read(isConnectedProvider).value ?? true;
-                                if (!isConnected) {
-                                  AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
-                                  return;
-                                }
-                                showAiLyricSearchSheet(context, ref);
-                              },
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: AppTheme.secondary.withValues(alpha: 0.4),
-                                    width: 1.2,
-                                  ),
+                        const SizedBox(width: 8),
+                        // Buscar canción por fragmento de letra. Desde la
+                        // ronda 7 va por YouTube Music, no por IA: funciona
+                        // también sin cuenta.
+                        Tooltip(
+                          message: 'Buscar por letra',
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              FocusManager.instance.primaryFocus?.unfocus();
+                              final isConnected = ref.read(isConnectedProvider).value ?? true;
+                              if (!isConnected) {
+                                AppToast.show(context, message: 'Sin conexión. La búsqueda por letra necesita internet.');
+                                return;
+                              }
+                              showLyricSearchSheet(context, ref);
+                            },
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppTheme.secondary.withValues(alpha: 0.4),
+                                  width: 1.2,
                                 ),
-                                child: Icon(
-                                  AppIcons.broken(SolarIcons.StarsMinimalistic),
-                                  size: 18,
-                                  color: AppTheme.secondary,
-                                ),
+                              ),
+                              child: Icon(
+                                AppIcons.broken(SolarIcons.AlignLeft),
+                                size: 18,
+                                color: AppTheme.secondary,
                               ),
                             ),
                           ),
-                        ],
+                        ),
                         const SizedBox(width: 8),
                         // Botón para Búsqueda Profunda (Fase D): exacta artista+título
                         // (D3) y colaboraciones entre 2 artistas (D1) — para cuando el
@@ -803,6 +798,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final currentTrack = ref.watch(currentTrackProvider);
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final syncoraTracks = tracks.map((t) => t.toSyncoraTrack()).toList();
+    final pendingVersionIds = ref.watch(searchProvider.select((s) => s.pendingVersionIds));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -823,6 +819,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             return TrackTile(
               track: track,
               isPlaying: isPlaying,
+              coverPending: pendingVersionIds.contains(tracks[i].id),
               onTap: () {
                 FocusManager.instance.primaryFocus?.unfocus();
                 final q = _searchController.text.trim();

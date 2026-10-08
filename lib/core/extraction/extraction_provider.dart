@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'engine/engine_manager.dart';
+import 'extraction_isolate.dart';
 import 'extraction_service.dart';
 
 bool get _isTestEnv {
@@ -33,4 +34,11 @@ final extractionServiceProvider = Provider<ExtractionService>((ref) {
 final engineManagerProvider = Provider<EngineManager?>((ref) {
   final service = ref.watch(extractionServiceProvider);
   return service is ExtractionServiceReal ? service.engineManager : null;
+});
+
+/// Búsqueda de canciones en YouTube Music por texto libre (la usa la
+/// búsqueda por letra). `null` en web y en tests, donde no hay motor real.
+final ytMusicSearchProvider = Provider<Future<MusicSearchResponse> Function(String query)?>((ref) {
+  final service = ref.watch(extractionServiceProvider);
+  return service is ExtractionServiceReal ? service.searchMusic : null;
 });

@@ -142,6 +142,15 @@ void main() {
     expect((await flaky.resolve(compilation)).id, 3389132901);
   });
 
+  test('mayChange: deja de marcarla en cuanto se resolvió', () async {
+    final compilation = _t(88897841, "Hips Don't Lie", albumId: 8985885, isrc: 'USSM10600677');
+    expect(resolver.pendingIds([compilation]), {88897841});
+    final resolved = await resolver.resolve(compilation);
+    expect(resolver.mayChange(compilation), isFalse);
+    expect(resolver.mayChange(resolved), isFalse);
+    expect(resolver.mayChange(_t(5, 'X', albumId: 99)), isFalse, reason: 'sin ISRC');
+  });
+
   test('isrcYear lee el año de registro', () {
     expect(CanonicalVersionResolver.isrcYear('USSM10600677'), 2006);
     expect(CanonicalVersionResolver.isrcYear('GBAYE8500001'), 1985);
