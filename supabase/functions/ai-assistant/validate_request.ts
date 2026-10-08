@@ -18,8 +18,17 @@ export interface ParsedAiRequest {
   count?: number;
   interleave?: boolean;
   contextTracks: ContextTrack[];
+  /**
+   * Solo `create_queue`: canciones que no hay que repetir (lo ya sugerido en
+   * rondas anteriores de relleno). Va aparte de `contextTracks` porque este
+   * significa "lo que estoy escuchando", y mezclar ambos le pedía al modelo
+   * continuar con lo ya sugerido en vez de con el pedido.
+   */
+  excludeTracks?: ContextTrack[];
   params: Record<string, unknown>;
 }
+
+const MAX_EXCLUDE_ITEMS = 300;
 
 // Tope duro por acción para el parámetro opcional "cantidad" que el panel de
 // la Fase 7.F podrá mandar (D-5): el cliente pide ~30% de más y recorta tras
@@ -111,12 +120,13 @@ export function parseAndValidateRequest(action: AiAction, body: unknown): Parsed
 
     case "create_queue": {
       const contextTracks = parseContextTracks(record.contextTracks, false);
+      const excludeTracks = parseContextTracks(record.excludeTracks, false).slice(0, MAX_EXCLUDE_ITEMS);
       if (!prompt && contextTracks.length === 0 && Object.keys(params).length === 0) {
         throw new ValidationError(
           "Escribe una descripción o basa la cola en una playlist/cola actual",
         );
       }
-      return { action, prompt, count, interleave, contextTracks, params };
+      return { action, prompt, count, interleave, contextTracks, excludeTracks, params };
     }
 
     case "modify_playlist_add": {

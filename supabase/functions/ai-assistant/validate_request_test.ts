@@ -90,3 +90,12 @@ Deno.test("contextTracks: se descarta cualquier entrada sin title o artist", () 
   });
   assertEquals(result.contextTracks.length, 1);
 });
+
+Deno.test("create_queue: excludeTracks viaja aparte de contextTracks", () => {
+  const result = parseAndValidateRequest("create_queue", {
+    prompt: "rock de los 2000",
+    excludeTracks: [{ title: "A", artist: "B" }, { title: "sin artista" }],
+  });
+  assertEquals(result.contextTracks.length, 0);
+  assertEquals(result.excludeTracks?.length, 1);
+});

@@ -25,8 +25,20 @@
 // referencia a través de este módulo.
 export const GEMINI_MODEL = "gemini-3.5-flash-lite";
 
-const GEMINI_GENERATE_CONTENT_URL =
-  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+/**
+ * Modelo para `lyric_search` (2026-10-08). El Lite casi no reconoce letras de
+ * memoria y la búsqueda de Google (grounding) **no está disponible en el plan
+ * gratuito** de Gemini (ai.google.dev/gemini-api/docs/pricing: "Not
+ * available" en la columna Free Tier), así que el intento con búsqueda
+ * fallaba siempre y caía al Lite sin ella. Flash recuerda muchas más letras;
+ * si falla (cuota del día, modelo no disponible), index.ts repite con
+ * [GEMINI_MODEL].
+ */
+export const GEMINI_LYRICS_MODEL = "gemini-3.8-flash";
+
+function generateContentUrl(model: string): string {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+}
 
 export class GeminiHttpError extends Error {
   readonly status: number;
@@ -44,13 +56,8 @@ export interface CallGeminiParams {
   apiKey: string;
   input: string;
   schema: unknown;
-  /**
-   * Ronda 4: activa la herramienta de búsqueda de Google (grounding). Solo la
-   * usa `lyric_search`, donde el modelo por sí solo no reconoce fragmentos
-   * cortos de letra. Combinarla con salida estructurada solo está soportado en
-   * algunos modelos: el llamador debe reintentar sin ella si falla.
-   */
-  useGoogleSearch?: boolean;
+  /** Por defecto [GEMINI_MODEL]. */
+  model?: string;
 }
 
 /**
@@ -62,8 +69,8 @@ export interface CallGeminiParams {
  * y si la llave era BYOK o compartida, a qué `AiErrorCode` mapearlo (ver
  * index.ts).
  */
-export async function callGemini({ apiKey, input, schema, useGoogleSearch = false }: CallGeminiParams): Promise<unknown> {
-  const response = await fetch(GEMINI_GENERATE_CONTENT_URL, {
+export async function callGemini({ apiKey, input, schema, model = GEMINI_MODEL }: CallGeminiParams): Promise<unknown> {
+  const response = await fetch(generateContentUrl(model), {
     method: "POST",
     headers: {
       "x-goog-api-key": apiKey,
@@ -71,7 +78,6 @@ export async function callGemini({ apiKey, input, schema, useGoogleSearch = fals
     },
     body: JSON.stringify({
       contents: [{ parts: [{ text: input }] }],
-      ...(useGoogleSearch ? { tools: [{ google_search: {} }] } : {}),
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: schema,
@@ -98,8 +104,8 @@ export async function callGemini({ apiKey, input, schema, useGoogleSearch = fals
   const firstCandidate = Array.isArray(candidates) ? (candidates[0] as Record<string, unknown> | undefined) : undefined;
   const content = firstCandidate?.content as Record<string, unknown> | undefined;
   const parts = content?.parts;
-  // Con grounding la respuesta puede venir repartida en varias partes de
-  // texto: se unen todas en vez de leer solo la primera.
+  // La respuesta puede venir repartida en varias partes de texto (p. ej. con
+  // modelos que razonan): se unen todas en vez de leer solo la primera.
   const outputText = Array.isArray(parts)
     ? parts
       .map((p) => (p as Record<string, unknown> | undefined)?.text)

@@ -23,6 +23,9 @@ export function buildUserDataBlock(parsed: ParsedAiRequest): Record<string, unkn
       t.id !== undefined ? { id: t.id, title: t.title, artist: t.artist } : { title: t.title, artist: t.artist },
     );
   }
+  if (parsed.excludeTracks && parsed.excludeTracks.length > 0) {
+    block.excludeTracks = parsed.excludeTracks.map((t) => ({ title: t.title, artist: t.artist }));
+  }
   return block;
 }
 

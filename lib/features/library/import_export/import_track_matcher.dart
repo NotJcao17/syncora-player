@@ -105,7 +105,7 @@ class ImportTrackMatcher {
     // el título, evitando al menos karaokes y covers.
     if (artists.isEmpty) {
       final res = await _safeSearch(cleanQueryTitle(title), DeezerSearchType.track);
-      return _best(res, raw, requireArtist: false)?.track;
+      return _canonical(_best(res, raw, requireArtist: false)?.track, raw);
     }
 
     final trackResults = await _safeSearch('$primary ${cleanQueryTitle(title)}', DeezerSearchType.track);
@@ -142,12 +142,21 @@ class ImportTrackMatcher {
       }
     }
 
-    if (fromSearch != null) return _checkedAgainstIsrc(fromSearch.track, raw);
+    if (fromSearch != null) return _canonical(await _checkedAgainstIsrc(fromSearch.track, raw), raw);
 
     // El artista no aparece en la búsqueda de canciones: su top.
     artistId ??= await _artistIdFor(primary, albums);
     if (artistId == null) return null;
-    return _best(await _artistTop(artistId), raw)?.track;
+    return _canonical(_best(await _artistTop(artistId), raw)?.track, raw);
+  }
+
+  /// Sin álbum en la fila (las sugerencias de la IA, TXT o CSV sin esa
+  /// columna), la búsqueda suele dar la versión de una recopilación ("Hips
+  /// Don't Lie" de "R&B Party"): se cambia por la misma grabación en un
+  /// lanzamiento del artista. Con álbum, manda el del archivo.
+  Future<DeezerTrack?> _canonical(DeezerTrack? found, RawImportTrack raw) async {
+    if (found == null || (raw.album?.trim().isNotEmpty ?? false)) return found;
+    return _api.canonicalResolver.resolve(found);
   }
 
   Future<List<DeezerTrack>> _safeSearch(String query, DeezerSearchType type) async {

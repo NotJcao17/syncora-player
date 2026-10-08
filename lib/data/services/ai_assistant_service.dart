@@ -179,16 +179,20 @@ class AiAssistantService {
     });
   }
 
+  /// [contextTracks] es lo que está sonando (solo gustos, el pedido manda);
+  /// [excludeTracks], lo que no hay que repetir (lo ya sugerido en rondas de
+  /// relleno). Van separados: mandar lo ya sugerido como contexto le pedía al
+  /// modelo continuar con eso en vez de con el pedido.
   Future<Map<String, dynamic>> createQueue({
     String? prompt,
     List<Map<String, dynamic>>? contextTracks,
-    bool? interleave,
+    List<Map<String, dynamic>>? excludeTracks,
     int? count,
   }) {
     return invoke(AiAction.createQueue, {
       'prompt': ?prompt,
       'contextTracks': ?contextTracks,
-      'interleave': ?interleave,
+      'excludeTracks': ?excludeTracks,
       'count': ?count,
     });
   }

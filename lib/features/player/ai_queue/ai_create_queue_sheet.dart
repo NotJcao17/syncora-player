@@ -165,7 +165,6 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
       result = await service.createQueue(
         prompt: prompt,
         contextTracks: contextTracks,
-        interleave: false,
         count: count,
       );
     } on AiAssistantException catch (e) {
@@ -281,10 +280,11 @@ class _AiCreateQueueFlowState extends ConsumerState<_AiCreateQueueFlow> {
       try {
         final extra = await ref.read(aiAssistantServiceProvider).createQueue(
               prompt: prompt,
-              // Lo ya sugerido viaja como contexto: el prompt del servidor
-              // pide no repetir nada del contexto.
-              contextTracks: [...?contextTracks, ...suggestedSoFar],
-              interleave: false,
+              contextTracks: contextTracks,
+              // Lo ya sugerido va como "no repetir", no como contexto: el
+              // contexto es "lo que estoy escuchando" y el modelo seguía la
+              // línea de lo ya sugerido en vez de la del pedido.
+              excludeTracks: suggestedSoFar,
               count: _clampInt(missing * 2 + 3, 1, _kHardCountCap),
             );
         final extraRaw = PlaylistImportExportService.parseTrackSuggestions(extra['tracks']);

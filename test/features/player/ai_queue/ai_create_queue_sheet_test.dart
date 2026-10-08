@@ -141,7 +141,7 @@ class _FakeDeezerApi extends DeezerApi {
 
 /// Construye un [AiAssistantService] cuyo `invoke` devuelve directamente
 /// [result], sin pasar por `Supabase.instance` ni por la red. [onInvoke]
-/// permite capturar el body enviado (para verificar `interleave`/
+/// permite capturar el body enviado (para verificar
 /// `contextTracks`/`count`).
 AiAssistantService _fakeQueueAiService(
   Map<String, dynamic> result, {
@@ -315,7 +315,7 @@ void main() {
 
     expect(find.text('Agregar a la cola'), findsOneWidget);
     expect(find.text('Song A'), findsOneWidget);
-    expect(sentBody?['interleave'], false);
+    expect(sentBody?['interleave'], isNull);
     expect(sentBody?['contextTracks'], isNull);
 
     await tester.tap(find.text('Agregar a la cola'));
@@ -363,7 +363,7 @@ void main() {
     await tester.tap(find.text('Crear cola'));
     await tester.pumpAndSettle();
 
-    expect(sentBody?['interleave'], false);
+    expect(sentBody?['interleave'], isNull);
     final contextTracks = sentBody?['contextTracks'] as List?;
     expect(contextTracks, isNotNull, reason: 'con el interruptor encendido viaja lo que suena');
     expect(contextTracks!.isNotEmpty, isTrue);

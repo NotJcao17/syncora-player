@@ -212,10 +212,29 @@ Corregirlo de verdad exigiría, por cada pista: una petición para saber si su
 álbum es una recopilación, y varias más para localizar el álbum original del
 artista que contiene esa grabación. Contra una API con un límite de 50
 peticiones cada 5 segundos por IP (Pitfall #4), y para cambiar una miniatura.
-**Decisión: no se implementa**; queda documentado para que no se vuelva a
-investigar desde cero. Si alguna vez se hace, el detector correcto es
-`album.artist.id == 5080` (el "Varios Artistas" canónico de Deezer), nunca
-`record_type`.
+~~**Decisión: no se implementa**~~ — **revisada el 2026-10-08, ahora sí se
+implementa** (`lib/data/apis/canonical_version_resolver.dart`), porque había un
+camino barato que esta sección no vio:
+
+- **`/search` sí trae el `isrc`** de cada pista, y `/album/{id}/tracks` también
+  (`/album/{id}` no).
+- **Detector sin pedir el álbum:** si el `album.id` de la pista no está en
+  `/artist/{id}/albums` (una petición por artista, en caché), el álbum es de
+  otro. Cubre también los "Varios Artistas" que no son el 5080 (p. ej.
+  `108420982`, el de "Party Hits: Summer Edition") y la colaboración en el disco
+  de otro artista ("La Tortura" en el de Alejandro Sanz).
+- **Corrección:** como mucho 4 tracklists de esa discografía, primero los del
+  año del ISRC, y solo se cambia si aparece **el mismo ISRC**. "Hips Don't Lie"
+  pasa de "Filtr presents R&B Party" a *Oral Fixation, Vol. 2* en 3 peticiones.
+- **Dónde se aplica:** a los 8 primeros resultados del buscador en su segunda
+  fase (la que ya completaba colaboradores, así que la primera pintada no
+  espera) y en `ImportTrackMatcher` cuando la fila no trae álbum (sugerencias
+  de la IA, búsqueda por letra, TXT/CSV sin esa columna). Con álbum en el
+  archivo manda el del archivo.
+- **Límite conocido:** si la grabación solo existe en recopilaciones, se queda
+  como está. "Waka Waka (This Time for Africa)" en inglés solo está en Deezer
+  en "Party Hits" y en el álbum oficial del Mundial (ambos de Varios Artistas,
+  con ISRC distintos); el sencillo de Shakira es la versión en español.
 
 ---
 

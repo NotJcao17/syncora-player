@@ -9,10 +9,12 @@ import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_provider.dart';
+import '../../../data/apis/lrclib_provider.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/services/ai_assistant_service.dart';
 import '../../library/import_export/playlist_import_export_service.dart';
 import '../../player/player_providers.dart';
+import 'lyric_match.dart';
 
 /// Fase 7.F.4 -- "Buscar canción por fragmento de letra". Entrada desde el
 /// botón junto a "Popular" / "Búsqueda Profunda" en `search_screen.dart`.
@@ -51,6 +53,10 @@ class _AiLyricSearchFlowState extends ConsumerState<_AiLyricSearchFlow> {
   String _matchCurrentName = '';
 
   List<DeezerTrack> _results = const [];
+
+  /// Ids de [_results] cuya letra real (LRCLib) contiene el fragmento. Van
+  /// primero, bajo "La letra coincide".
+  Set<int> _confirmedIds = const {};
 
   @override
   void dispose() {
@@ -110,10 +116,10 @@ class _AiLyricSearchFlowState extends ConsumerState<_AiLyricSearchFlow> {
       return;
     }
 
-    await _matchAndSettle(rawTracks);
+    await _matchAndSettle(rawTracks, fragment);
   }
 
-  Future<void> _matchAndSettle(List<RawImportTrack> rawTracks) async {
+  Future<void> _matchAndSettle(List<RawImportTrack> rawTracks, String fragment) async {
     if (!mounted) return;
     final deezerApi = ref.read(deezerApiProvider);
     final service = PlaylistImportExportService(deezerApi);
@@ -146,11 +152,49 @@ class _AiLyricSearchFlowState extends ConsumerState<_AiLyricSearchFlow> {
     }
 
     if (!mounted) return;
+
+    // La misma canción puede salir dos veces (la IA la repite con otro
+    // título, o dos sugerencias acaban en la misma versión del artista).
+    final seen = <int>{};
+    final unique = [for (final t in matched) if (seen.add(t.id)) t];
+
+    setState(() => _matchCurrentName = 'Comprobando la letra de cada canción...');
+    final confirmed = await _confirmWithLyrics(unique, fragment);
+
+    if (!mounted) return;
     setState(() {
-      _results = matched;
+      // Estable: dentro de cada grupo se respeta el orden de la IA.
+      _results = [
+        ...unique.where((t) => confirmed.contains(t.id)),
+        ...unique.where((t) => !confirmed.contains(t.id)),
+      ];
+      _confirmedIds = confirmed;
       _step = _Step.results;
       _isSubmitting = false;
     });
+  }
+
+  /// Busca la letra de cada candidato en LRCLib (en paralelo, la misma caché
+  /// que usa el reproductor) y devuelve los que contienen el fragmento. Si
+  /// LRCLib no tiene la letra o no responde, el candidato simplemente no se
+  /// confirma: nunca se descarta por eso.
+  Future<Set<int>> _confirmWithLyrics(List<DeezerTrack> tracks, String fragment) async {
+    final lrclib = ref.read(lrcLibApiProvider);
+    final results = await Future.wait(tracks.map((t) async {
+      try {
+        final lyrics = await lrclib.getLyrics(
+          cacheKey: t.id.toString(),
+          trackTitle: t.title,
+          artistName: t.contributorsList.isNotEmpty ? t.contributorsList.first.name : t.artistName,
+          durationSec: t.durationSec,
+        );
+        final text = lyrics?.plainLyrics ?? lyrics?.syncedLyrics ?? '';
+        return LyricMatch.isConfirmed(fragment, text) ? t.id : null;
+      } catch (_) {
+        return null;
+      }
+    }));
+    return {for (final id in results) ?id};
   }
 
   @override
@@ -234,24 +278,42 @@ class _AiLyricSearchFlowState extends ConsumerState<_AiLyricSearchFlow> {
 
   Widget _buildResults() {
     if (_results.isEmpty) {
-      return const SizedBox(
-        height: 220,
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              'No identificamos ninguna canción con ese fragmento. Prueba con otro trozo de la letra.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.secondary, fontSize: 13),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(
+            height: 180,
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  'No identificamos ninguna canción con ese fragmento. Prueba con otro trozo de la letra.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppTheme.secondary, fontSize: 13),
+                ),
+              ),
             ),
           ),
-        ),
+          _searchAgainButton(),
+        ],
       );
     }
 
     final syncoraTracks = _results.map((t) => t.toSyncoraTrack()).toList();
     final currentTrack = ref.watch(currentTrackProvider);
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
+    final confirmedCount = _results.where((t) => _confirmedIds.contains(t.id)).length;
+
+    Widget tile(int i) {
+      final track = syncoraTracks[i];
+      return TrackTile(
+        track: track,
+        isPlaying: currentTrack?.id == track.id,
+        onTap: () => controller.setQueue(syncoraTracks, startIndex: i),
+        onAddToQueue: () => controller.addToQueue(track),
+      );
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -266,23 +328,68 @@ class _AiLyricSearchFlowState extends ConsumerState<_AiLyricSearchFlow> {
         ),
         const Divider(color: AppTheme.surfaceHover, height: 1),
         Flexible(
-          child: ListView.builder(
+          child: ListView(
             shrinkWrap: true,
             padding: const EdgeInsets.symmetric(vertical: 4),
-            itemCount: syncoraTracks.length,
-            itemBuilder: (context, i) {
-              final track = syncoraTracks[i];
-              return TrackTile(
-                track: track,
-                isPlaying: currentTrack?.id == track.id,
-                onTap: () => controller.setQueue(syncoraTracks, startIndex: i),
-                onAddToQueue: () => controller.addToQueue(track),
-              );
-            },
+            children: [
+              if (confirmedCount > 0) ...[
+                _sectionLabel('La letra coincide', highlighted: true),
+                for (var i = 0; i < confirmedCount; i++) tile(i),
+              ],
+              if (confirmedCount < syncoraTracks.length) ...[
+                if (confirmedCount > 0) _sectionLabel('Otras posibilidades'),
+                for (var i = confirmedCount; i < syncoraTracks.length; i++) tile(i),
+              ],
+            ],
           ),
         ),
-        const SizedBox(height: 12),
+        _searchAgainButton(),
       ],
+    );
+  }
+
+  Widget _sectionLabel(String text, {bool highlighted = false}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
+      child: Row(
+        children: [
+          if (highlighted) ...[
+            Icon(AppIcons.bold(SolarIcons.CheckCircle), size: 14, color: AppTheme.accent),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            text,
+            style: TextStyle(
+              color: highlighted ? AppTheme.primary : AppTheme.secondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Vuelve al formulario con el fragmento escrito, para corregirlo o
+  /// probar con otro trozo sin cerrar la hoja.
+  Widget _searchAgainButton() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      child: OutlinedButton.icon(
+        onPressed: () => setState(() {
+          _step = _Step.form;
+          _results = const [];
+          _confirmedIds = const {};
+        }),
+        icon: Icon(AppIcons.broken(SolarIcons.Magnifer), size: 18),
+        label: const Text('Buscar otra'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppTheme.primary,
+          side: const BorderSide(color: AppTheme.surfaceHover),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
     );
   }
 }

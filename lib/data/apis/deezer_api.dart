@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../features/search/search_ranking.dart';
+import 'canonical_version_resolver.dart';
 import '../models/deezer/deezer_album.dart';
 import '../models/deezer/deezer_artist.dart';
 import '../models/deezer/deezer_genre.dart';
@@ -242,7 +243,7 @@ class DeezerApi {
         // vez entre los primeros resultados (mismo título base + artista) — es
         // justo ahí donde el usuario no puede distinguir una colaboración de una
         // versión solista, porque /search no trae `contributors`.
-        tracks = await _enrichAmbiguousTitles(tracks);
+        tracks = await _enrichAmbiguousTitles(await canonicalResolver.resolveTop(tracks));
 
         final result = DeezerSearchResult(
           tracks: tracks,
@@ -293,7 +294,11 @@ class DeezerApi {
     final cacheKey = '${type.name}:${query.trim()}';
     final cached = _searchCache.get(cacheKey);
     if (cached != null) return cached;
-    final tracks = await _enrichAmbiguousTitles(raw.tracks);
+    // Primero la versión del propio artista (la de una recopilación cambia
+    // de portada y álbum, ver `CanonicalVersionResolver`), después los
+    // colaboradores de lo que quedó.
+    final canonical = await canonicalResolver.resolveTop(raw.tracks);
+    final tracks = await _enrichAmbiguousTitles(canonical);
     final result = DeezerSearchResult(tracks: tracks, artists: raw.artists, albums: raw.albums);
     _searchCache.put(cacheKey, result);
     return result;
@@ -387,6 +392,29 @@ class DeezerApi {
       final data = Map<String, dynamic>.from(response.data as Map);
       if (data['error'] != null) return null;
       return DeezerTrack.fromJson(data);
+    });
+  }
+
+  /// Versión del propio artista en vez de la de una recopilación (ver
+  /// [CanonicalVersionResolver]). Una instancia por API para compartir cachés
+  /// entre el buscador y el matcher de importación/IA.
+  late final CanonicalVersionResolver canonicalResolver = CanonicalVersionResolver(
+    artistAlbums: (id) => getArtistAlbums(id),
+    albumTracks: getAlbumTrackList,
+  );
+
+  /// Tracklist de un álbum con ISRC (`/album/{id}/tracks`; `/album/{id}` no
+  /// lo trae). Los items no traen el objeto `album`: quien los usa lo
+  /// completa.
+  Future<List<DeezerTrack>> getAlbumTrackList(int id) async {
+    return _rateLimiter.run(() async {
+      final response = await _dio.get('/album/$id/tracks', queryParameters: {'limit': 300});
+      final data = response.data;
+      if (data is! Map || data['data'] is! List) return const <DeezerTrack>[];
+      return [
+        for (final item in data['data'] as List)
+          if (item is Map) DeezerTrack.fromJson(Map<String, dynamic>.from(item)),
+      ];
     });
   }
 

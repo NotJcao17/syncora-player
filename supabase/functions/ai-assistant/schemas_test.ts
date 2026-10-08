@@ -22,10 +22,14 @@ Deno.test("buildResponseSchema: create_playlist exige playlistName, description 
   assertEquals(schema.required, ["playlistName", "description", "tracks"]);
 });
 
-Deno.test("buildResponseSchema: create_queue y modify_playlist_add comparten la misma forma {tracks}", () => {
+Deno.test("buildResponseSchema: create_queue pide theme antes de tracks", () => {
   const queueSchema = buildResponseSchema("create_queue");
+  assertEquals(queueSchema.required, ["theme", "tracks"]);
+  assertEquals(Object.keys(queueSchema.properties ?? {}), ["theme", "tracks"]);
+});
+
+Deno.test("buildResponseSchema: modify_playlist_add solo exige tracks", () => {
   const addSchema = buildResponseSchema("modify_playlist_add");
-  assertEquals(queueSchema.required, ["tracks"]);
   assertEquals(addSchema.required, ["tracks"]);
 });
 

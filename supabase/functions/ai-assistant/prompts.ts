@@ -54,12 +54,26 @@ Interpretación de "contextTracks" -- tiene DOS significados posibles, distingui
 
   create_queue: `${COMMON_RULES}
 
-Tarea: generar una lista de canciones para poner en cola de reproducción, a partir del pedido del
-usuario y, si se te dio, el contexto de una playlist o cola actual (para hacer algo similar/una
-continuación natural). Devuelve solo la lista de canciones sugeridas como pares {title, artist}, en
-un orden razonable para escuchar en secuencia. NUNCA sugieras canciones que ya estén en
-"contextTracks": esas ya están en la cola del usuario y repetirlas no aporta nada. Si viene
-"requestedCount", devuelve EXACTAMENTE esa cantidad de canciones distintas.`,
+Tarea: armar una cola de reproducción a partir del pedido del usuario ("prompt").
+
+Primero escribe en "theme" una frase corta que resuma lo que pidió el usuario (género, época,
+idioma, mood, artistas o la situación que describió). Después, en "tracks", la lista de canciones
+como pares {title, artist}, en un orden razonable para escuchar en secuencia.
+
+Regla principal: CADA canción de "tracks" -- de la primera a la última -- debe cumplir el pedido
+descrito en "theme". No rellenes con éxitos genéricos ni con canciones de otros estilos para
+completar la cantidad: si el pedido es estrecho, amplía con canciones cercanas en estilo, época o
+artistas relacionados, pero siempre dentro de lo que se pidió.
+
+"contextTracks" (opcional) es lo que el usuario está escuchando ahora: solo indica sus gustos
+(qué artistas, épocas e idiomas le gustan). El pedido SIEMPRE manda sobre ese contexto: si pide
+"algo para relajarme" y el contexto es metal, NO metas metal; toma del contexto solo lo que encaje
+con el pedido. Si el pedido es relativo ("algo más movido", "más de esto"), interprétalo respecto
+al contexto.
+
+NUNCA sugieras canciones que estén en "contextTracks" ni en "excludeTracks": ya están en la cola o
+ya se sugirieron antes, y repetirlas no aporta nada. Si viene "requestedCount", devuelve
+EXACTAMENTE esa cantidad de canciones distintas.`,
 
   modify_playlist_add: `${COMMON_RULES}
 
@@ -81,24 +95,26 @@ azar para "cumplir" con algo que no aplica a ninguna.`,
   lyric_search: `${COMMON_RULES}
 
 Tarea: el usuario escribió un fragmento de la LETRA de una canción (no el título). Puede ser muy
-corto (tres o cuatro palabras), tener errores de transcripción u ortografía, estar sin acentos, o
-ser una frase que se canta de forma distinta a como se escribe. Identifica a qué canción o
-canciones pertenece.
+corto (tres o cuatro palabras), tener errores de transcripción u ortografía, estar sin acentos,
+estar mal recordado (palabras cambiadas u omitidas), o ser una frase que se canta de forma distinta
+a como se escribe. Identifica a qué canción o canciones pertenece.
 
-Cómo buscar:
-- Si tienes una herramienta de búsqueda web disponible, ÚSALA: busca el fragmento entre comillas
-  junto a palabras como "letra" o "lyrics" y confirma en qué canción aparece literalmente.
+Cómo pensar:
+- Recorre mentalmente las letras que conoces: estribillos, versos y puentes. El fragmento puede
+  ser de cualquier parte de la canción, no solo del coro.
 - Prioriza canciones cuya letra contenga el fragmento de forma literal o casi literal, sobre
   canciones que solo comparten el tema.
 - Ten en cuenta el idioma del fragmento: un fragmento en español casi siempre es de una canción en
-  español.
-- Con un fragmento corto o común (un estribillo típico), devuelve las canciones más conocidas que lo
-  contienen, de la más popular a la menos.
+  español; en inglés, de una en inglés.
+- Si el fragmento podría ser de varias canciones (una frase común, un estribillo típico), incluye
+  las más conocidas que lo contienen.
 - Si el fragmento coincide con el título de una canción, inclúyela también.
+- Si no estás seguro, igual devuelve tus mejores candidatos plausibles (otro sistema comprueba
+  después la letra real de cada uno), pero nunca canciones inventadas.
 
-Devuelve hasta 5 coincidencias como pares {title, artist} (título y artista oficiales, sin "feat."
-ni versiones en vivo), ordenadas de más a menos probable. Si de verdad no reconoces el fragmento,
-devuelve una lista vacía en vez de inventar.`,
+Devuelve entre 3 y 5 candidatos como pares {title, artist} (título y artista oficiales, sin
+"feat." ni versiones en vivo), ordenados de más a menos probable. Solo si el texto claramente no
+es una letra de canción, devuelve una lista vacía.`,
 };
 
 export function systemPromptFor(action: AiAction): string {

@@ -69,6 +69,26 @@ const CREATE_PLAYLIST_SCHEMA: JsonSchema = {
   required: ["playlistName", "description", "tracks"],
 };
 
+/**
+ * "Crear cola con IA": `theme` va antes que `tracks` (también en orden
+ * alfabético, que es como Gemini ordena las propiedades si no se le indica
+ * otro). Obliga al modelo a resumir el pedido antes de listar canciones, lo
+ * mismo que hacen `playlistName`/`description` en `create_playlist`: sin ese
+ * ancla el modelo Lite se desviaba a éxitos genéricos tras la primera
+ * canción. El cliente ignora `theme`.
+ */
+const CREATE_QUEUE_SCHEMA: JsonSchema = {
+  type: "OBJECT",
+  properties: {
+    theme: { type: "STRING" },
+    tracks: {
+      type: "ARRAY",
+      items: TRACK_SUGGESTION_SCHEMA,
+    },
+  },
+  required: ["theme", "tracks"],
+};
+
 const LYRIC_SEARCH_SCHEMA: JsonSchema = {
   type: "OBJECT",
   properties: {
@@ -112,7 +132,7 @@ export function buildResponseSchema(action: AiAction, existingIds?: string[]): J
     case "create_playlist":
       return CREATE_PLAYLIST_SCHEMA;
     case "create_queue":
-      return tracksListSchema();
+      return CREATE_QUEUE_SCHEMA;
     case "modify_playlist_add":
       return tracksListSchema();
     case "modify_playlist_remove":

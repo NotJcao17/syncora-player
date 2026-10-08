@@ -78,6 +78,15 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-10-08)
+
+**Séptima ronda de correcciones: implementada; falta desplegar `ai-assistant` y probar.** Detalle en
+`docs/fases/correcciones_r7.md` — **leerlo antes de tocar las versiones de Deezer
+(`CanonicalVersionResolver`), "Crear cola con IA" o la búsqueda por letra**. Lo que no conviene
+revertir: la búsqueda de Google de Gemini no existe en el plan gratuito (no volver a activarla);
+lo ya sugerido va en `excludeTracks`, nunca en `contextTracks`; y la versión de una recopilación
+solo se cambia si aparece el mismo ISRC en la discografía del artista.
+
 ### Estado actual (última actualización: 2026-10-05)
 
 **Agregado mensual de estadísticas (H-S12): migración 22 verificada contra la base real y

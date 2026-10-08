@@ -13,6 +13,12 @@ class DeezerTrack {
   final List<SyncoraArtistRef> contributorsList;
   final int? rank;
 
+  /// ISRC de la grabación. Lo traen `/search`, `/track/{id}` y
+  /// `/album/{id}/tracks` (no `/album/{id}`). Sirve para encontrar la misma
+  /// grabación en el álbum original del artista cuando Deezer devuelve la de
+  /// una recopilación (ver `CanonicalVersionResolver`).
+  final String? isrc;
+
   const DeezerTrack({
     required this.id,
     required this.title,
@@ -25,6 +31,7 @@ class DeezerTrack {
     this.previewUrl,
     this.contributorsList = const [],
     this.rank,
+    this.isrc,
   });
 
   factory DeezerTrack.fromJson(Map<String, dynamic> json) {
@@ -92,6 +99,7 @@ class DeezerTrack {
       previewUrl: json['preview'] as String?,
       contributorsList: contributorsList,
       rank: json['rank'] as int?,
+      isrc: json['isrc'] as String?,
     );
   }
 
@@ -106,6 +114,7 @@ class DeezerTrack {
         'duration': durationSec,
         'preview': previewUrl,
         'rank': rank,
+        'isrc': isrc,
       };
 
   /// Devuelve una copia con `contributorsList` (y `artistName` derivado de esa
@@ -126,6 +135,7 @@ class DeezerTrack {
       previewUrl: previewUrl,
       contributorsList: contributors,
       rank: rank,
+      isrc: isrc,
     );
   }
 
