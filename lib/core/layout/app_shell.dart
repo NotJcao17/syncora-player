@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../navigation/shared_playlist_links.dart';
 import '../navigation/app_router.dart';
 import '../theme/app_icons.dart';
 import 'package:window_manager/window_manager.dart';
@@ -79,10 +80,21 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (gate != null) unawaited(gate());
   }
 
+  void _openPendingSharedPlaylist() {
+    final id = pendingSharedPlaylist.value;
+    if (id == null || !mounted) return;
+    pendingSharedPlaylist.value = null;
+    context.push('/shared-playlist/$id');
+  }
+
   @override
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(onResume: _checkAccountOnResume);
+    // Enlace de playlist compartida (ver `shared_playlist_links.dart`): el
+    // que llegó antes de que existiera el shell y los que lleguen después.
+    pendingSharedPlaylist.addListener(_openPendingSharedPlaylist);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openPendingSharedPlaylist());
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.addHandler(_handleDesktopKeyEvent);
     }
@@ -174,6 +186,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   void dispose() {
+    pendingSharedPlaylist.removeListener(_openPendingSharedPlaylist);
     _lifecycle?.dispose();
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.removeHandler(_handleDesktopKeyEvent);

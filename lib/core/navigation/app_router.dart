@@ -17,6 +17,7 @@ import '../../features/home/screens/home_screen.dart';
 
 import '../../features/library/screens/album_detail_screen.dart';
 import '../../features/library/screens/library_screen.dart';
+import '../../features/library/screens/shared_playlist_screen.dart';
 import '../../features/library/screens/playlist_detail_screen.dart';
 import '../../features/player/screens/player_fullscreen_screen.dart';
 import '../../features/search/screens/artist_detail_screen.dart';
@@ -227,6 +228,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return NoTransitionPage(
                 key: state.pageKey,
                 child: DeezerPlaylistScreen(playlistId: id),
+              );
+            },
+          ),
+          // Playlist que otro usuario compartió por enlace (web ->
+          // `syncoraplayer://playlist/<id>`). Si ya está en la biblioteca, la
+          // pantalla salta a `/playlist/<id local>`.
+          GoRoute(
+            path: '/shared-playlist/:id',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: SharedPlaylistScreen(remoteId: id),
               );
             },
           ),

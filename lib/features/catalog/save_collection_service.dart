@@ -12,6 +12,11 @@ import '../../core/limits/app_limits.dart';
 /// antes de implementar: Syncora **no "sigue"** playlists remotas. Guardar es
 /// copiar, y la copia ya no cambia nunca sola.
 ///
+/// Excepción: una playlist **de otro usuario de Syncora** compartida por
+/// enlace sí se puede guardar sin copiar (`followed_playlists`, solo lectura,
+/// ver `docs/fases/lanzamiento_v1.md`). Es estable y vive en nuestra base; lo
+/// de abajo sigue valiendo para todo lo que viene de Deezer.
+///
 /// Motivos, por si alguien lo reconsidera más adelante:
 ///
 /// - Una radio de Deezer (`/radio/{id}/tracks`, `/artist/{id}/radio`) devuelve

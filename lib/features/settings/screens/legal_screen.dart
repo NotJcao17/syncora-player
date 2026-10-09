@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
@@ -11,7 +12,7 @@ import '../../../core/theme/app_theme.dart';
 class LegalScreen extends StatelessWidget {
   const LegalScreen({super.key});
 
-  static const _lastUpdated = '29 de septiembre de 2026';
+  static const _lastUpdated = '9 de octubre de 2026';
 
   static const _sections = <(String, List<String>)>[
     (
@@ -19,9 +20,10 @@ class LegalScreen extends StatelessWidget {
       [
         'Syncora es un proyecto personal, gratuito y sin fines de lucro. No tiene publicidad, no vende datos y no '
             'incluye herramientas de analítica ni de rastreo.',
-        'Syncora no aloja música. Los datos de canciones, álbumes y artistas vienen del catálogo público de Deezer, '
-            'y el audio se obtiene de YouTube en el momento de reproducir o descargar. Syncora no está afiliado a '
-            'Deezer, YouTube ni Google.',
+        'Syncora no aloja, no posee y no distribuye música ni ningún otro contenido protegido por derechos de '
+            'autor. Funciona como un cliente: los datos de canciones, álbumes y artistas vienen del catálogo público '
+            'de Deezer, las letras de LRCLib y el audio se obtiene de YouTube desde tu dispositivo, en el momento de '
+            'reproducir o descargar. Syncora no está afiliado a Deezer, YouTube ni Google.',
       ],
     ),
     (
@@ -49,6 +51,10 @@ class LegalScreen extends StatelessWidget {
             'un resumen mensual: minutos totales y tus canciones, artistas y géneros más escuchados.',
         'Cada usuario solo puede leer y modificar sus propios datos. Una playlist solo la ven otras personas si tú '
             'la compartes.',
+        'Compartir una playlist la vuelve pública: cualquiera con el enlace puede ver su nombre, descripción, '
+            'portada y canciones en syncoraplayer.app, y otros usuarios de Syncora pueden guardarla en su biblioteca '
+            'para escucharla (sin poder modificarla). No se muestra tu nombre ni tu correo. Puedes dejar de '
+            'compartirla cuando quieras desde su menú.',
         'En modo local (sin cuenta) nada de esto sale de tu dispositivo.',
       ],
     ),
@@ -56,7 +62,8 @@ class LegalScreen extends StatelessWidget {
       'Servicios externos',
       [
         'Deezer: búsquedas y datos del catálogo. Las consultas salen directamente de tu dispositivo.',
-        'YouTube: el audio de cada canción, también directamente desde tu dispositivo.',
+        'YouTube y YouTube Music: el audio de cada canción y la búsqueda por fragmento de letra, también '
+            'directamente desde tu dispositivo.',
         'LRCLib: las letras. Se envía el título, el artista y la duración de la canción.',
         'DiceBear: genera tu avatar si no subes una foto. Solo recibe una semilla, que no incluye tu nombre ni tu '
             'correo.',
@@ -65,9 +72,7 @@ class LegalScreen extends StatelessWidget {
         'Google: inicio de sesión, si eliges entrar con Google.',
         'Gemini (Google): solo si usas una función de IA. Se envía lo que escribes y, según la función, las '
             'canciones de la playlist o de la cola sobre las que trabaja. La petición pasa por el servidor de '
-            'Syncora, que no guarda su contenido: solo cuenta cuántas peticiones haces, para el límite de uso. '
-            'En la búsqueda por letra, Gemini puede buscar el fragmento que escribiste en la Búsqueda de Google '
-            'para identificar la canción.',
+            'Syncora, que no guarda su contenido: solo cuenta cuántas peticiones haces, para el límite de uso.',
         'Cada servicio tiene sus propias condiciones y políticas de privacidad.',
       ],
     ),
@@ -82,14 +87,25 @@ class LegalScreen extends StatelessWidget {
     (
       'Aviso legal',
       [
+        'Todas las canciones, grabaciones, portadas, letras y marcas pertenecen a sus respectivos titulares y '
+            'están protegidas por las leyes de derechos de autor. Syncora no fomenta ni respalda la infracción de '
+            'derechos de autor: las descargas son para escuchar sin conexión dentro de la app, para uso personal y '
+            'no comercial.',
+        'Eres el único responsable de que tu uso de Syncora cumpla con las leyes de tu país, las normas de '
+            'derechos de autor y los términos de servicio de las plataformas de las que se obtiene el contenido.',
         'Syncora se ofrece tal cual, sin garantías de ningún tipo. Algunas funciones dependen de servicios de '
-            'terceros que pueden cambiar o dejar de funcionar en cualquier momento.',
-        'Eres responsable de usar la app de acuerdo con las leyes de tu país y las condiciones de los servicios '
-            'de los que obtiene el contenido.',
+            'terceros que pueden cambiar o dejar de funcionar en cualquier momento. Sus desarrolladores no se hacen '
+            'responsables del uso indebido de la app.',
         'También eres responsable de las imágenes que subes: no subas imágenes que no tengas derecho a usar ni '
             'contenido ofensivo, sobre todo en playlists que compartes.',
       ],
     ),
+  ];
+
+  static const _links = <(String, String)>[
+    ('Aviso de privacidad', 'https://syncoraplayer.app/privacidad/'),
+    ('Términos y aviso legal', 'https://syncoraplayer.app/terminos/'),
+    ('contacto@syncoraplayer.app', 'mailto:contacto@syncoraplayer.app'),
   ];
 
   @override
@@ -150,6 +166,24 @@ class LegalScreen extends StatelessWidget {
                   ),
                 ],
               ],
+              const SizedBox(height: 28),
+              const Text(
+                'Versión completa y contacto',
+                style: TextStyle(
+                  color: AppTheme.primary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 6),
+              for (final (label, url) in _links)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(label, style: const TextStyle(color: AppTheme.primary, fontSize: 14)),
+                  trailing: Icon(AppIcons.broken(SolarIcons.ArrowRightUp), color: AppTheme.secondary, size: 18),
+                  onTap: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+                ),
               const SizedBox(height: 40),
             ],
           ),

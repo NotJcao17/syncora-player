@@ -44,8 +44,11 @@ class FolderService {
   }
 
   /// ¿Esta playlist puede ir dentro de una carpeta? "Tus me gusta" y
-  /// "On Repeat" no: las mantiene la app y viven siempre en la raíz.
-  static bool canBeFoldered(Playlist playlist) => !playlist.isLiked && !playlist.isGenerated;
+  /// "On Repeat" no: las mantiene la app y viven siempre en la raíz. Tampoco
+  /// una guardada de otro usuario: la carpeta vive en la fila remota, que es
+  /// de su dueño.
+  static bool canBeFoldered(Playlist playlist) =>
+      !playlist.isLiked && !playlist.isGenerated && !playlist.isFollowed;
 
   Future<Folder?> folderById(int id) => _folderDao.getFolderById(id);
 

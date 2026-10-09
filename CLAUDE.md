@@ -78,6 +78,18 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-10-09)
+
+**Preparación del lanzamiento 1.0.** Detalle en `docs/fases/lanzamiento_v1.md` — **leerlo antes de
+tocar compartir playlists, `followed_playlists`, los deep links `syncoraplayer://playlist`, el aviso
+legal o la firma del APK**. Web en `https://syncoraplayer.app` (privacidad, términos, vista de
+playlist compartida) y marca de Google verificada. Lo que no conviene revertir: compartir vuelve
+pública la playlist (con confirmación); una playlist guardada de otro usuario (`isFollowed`) es de
+solo lectura en todas partes y el sync de las propias la ignora; la migración 24 cierra un agujero
+de RLS en `playlist_tracks` (cualquiera podía meter canciones en playlists ajenas); y el APK se firma
+con `android/app/syncora-release.jks` + `android/key.properties` (fuera de git, con respaldo): sin
+ellos el release falla en vez de firmarse con la llave de debug.
+
 ### Estado actual (última actualización: 2026-10-08)
 
 **Séptima ronda de correcciones: implementada y `ai-assistant` desplegada; faltan las pruebas en dispositivo.** Detalle en

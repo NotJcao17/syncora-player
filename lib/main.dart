@@ -21,6 +21,7 @@ import 'data/local_db/database_provider.dart';
 import 'data/local_db/syncora_database.dart';
 import 'features/auth/local_mode_provider.dart';
 import 'features/auth/services/account_data_owner.dart';
+import 'core/navigation/shared_playlist_links.dart';
 import 'features/auth/services/auth_deep_link_errors.dart';
 import 'features/auth/services/local_mode_storage.dart';
 import 'features/player/session/player_session_storage.dart';
@@ -38,6 +39,13 @@ Future<void> _handleAuthDeepLink(Uri rawUri) async {
     if (parsed != null) {
       targetUri = parsed;
     }
+  }
+
+  // Playlist compartida desde la web: no es un callback de OAuth.
+  final sharedPlaylistId = sharedPlaylistIdFromUri(targetUri);
+  if (sharedPlaylistId != null) {
+    pendingSharedPlaylist.value = sharedPlaylistId;
+    return;
   }
 
   // Fase 7.H.5 (hallazgo de la revisión independiente): si el callback de

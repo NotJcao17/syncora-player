@@ -15,6 +15,16 @@ Releases para que la gente la descargue.
   release de la app como pre-release**: los botones de la web dejarían de encontrarlo.
 - Requisitos que publica la web: Android 7.0 o superior (`minSdk` 24) y Windows 10 u 11 de 64 bits.
 
+## Llave de firma de Android
+
+El APK se firma con `android/app/syncora-release.jks` usando las contraseñas de
+`android/key.properties`. **Ninguno de los dos está en git** y sin ellos no se puede publicar una
+versión que se instale encima de las anteriores: Android rechaza un APK firmado con otra llave, y
+la única salida para el usuario sería desinstalar y perder sus descargas.
+
+- Hay respaldo de los dos archivos fuera del repo. En una PC nueva se copian a esas mismas rutas.
+- Si falta `key.properties`, el build de release falla a propósito (no vuelve a la llave de debug).
+
 ## Número de versión
 
 Vive en una sola línea de `pubspec.yaml`: `version: 1.2.3+7`.

@@ -17,7 +17,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/cover_palette.dart';
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/utils/contributor_resolver.dart';
-import '../../../core/utils/share_link_builder.dart';
+import '../widgets/playlist_share_menu_items.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_cover_widget.dart';
@@ -660,42 +660,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     }
   }
 
-  /// Mismo flujo que el menú de la biblioteca: si la playlist todavía no
-  /// existe en Supabase hay que crearla ahí antes de poder marcarla pública,
-  /// porque la visibilidad vive del lado del servidor (RLS).
-  Future<void> _togglePublic(Playlist playlist) async {
-    final newPublic = !playlist.isPublic;
-    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-    final dao = ref.read(playlistDaoProvider);
-    String? remoteId = playlist.remoteId;
-    if (remoteId == null) {
-      try {
-        final res = await supabaseRepo.createPlaylist(
-          title: playlist.title,
-          description: playlist.description,
-          isPublic: newPublic,
-          isLiked: playlist.isLiked,
-        );
-        remoteId = res['id']?.toString();
-      } catch (_) {}
-    } else {
-      try {
-        await supabaseRepo.updatePlaylist(remoteId, isPublic: newPublic);
-      } catch (_) {}
-    }
-    await dao.updatePlaylist(playlist.copyWith(
-      isPublic: newPublic,
-      remoteId: Value(remoteId),
-    ));
-    if (!mounted) return;
-    AppToast.show(
-      context,
-      message: newPublic ? 'Playlist marcada como pública' : 'Playlist marcada como privada',
-    );
-  }
-
   Widget _buildPlaylistOptionsContent(BuildContext ctx, Playlist playlist, List<PlaylistTrack> tracks) {
-    final isLocalMode = ref.read(localModeProvider);
     // Online-First (D-24): editar, publicar, deduplicar, copiar a otra
     // playlist y borrar escriben en Supabase. Sin conexión esas acciones
     // escribían solo en Drift y el sync las revertía; peor todavía, el
@@ -771,33 +736,15 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             },
           ),
         ],
-        if (!isLocalMode) ...[
-          ListTile(
-            leading: Icon(
-              AppIcons.broken(playlist.isPublic ? SolarIcons.Lock : SolarIcons.Global),
-              color: editColor,
-            ),
-            title: Text(
-              playlist.isPublic ? 'Hacer privada' : 'Hacer pública',
-              style: TextStyle(color: editColor, fontWeight: FontWeight.w600),
-            ),
-            enabled: canEdit,
-            subtitle: canEdit ? null : const Text('Sin conexión', style: TextStyle(color: AppTheme.muted, fontSize: 12)),
-            onTap: () async {
-              Navigator.pop(ctx);
-              await _togglePublic(playlist);
-            },
-          ),
-          ListTile(
-            leading: Icon(AppIcons.broken(SolarIcons.LinkMinimalistic), color: AppTheme.primary),
-            title: const Text('Copiar enlace', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-            onTap: () {
-              Navigator.pop(ctx);
-              Clipboard.setData(ClipboardData(text: ShareLinkBuilder.playlist('${playlist.remoteId ?? playlist.id}')));
-              AppToast.show(context, message: 'Enlace copiado al portapapeles');
-            },
-          ),
-        ],
+        ...playlistShareMenuItems(
+          menuContext: ctx,
+          context: context,
+          ref: ref,
+          playlist: playlist,
+          onUnfollowed: () {
+            if (mounted && context.canPop()) context.pop();
+          },
+        ),
         if (tracks.isNotEmpty)
           ListTile(
             leading: Icon(AppIcons.broken(SolarIcons.AddFolder), color: editColor),
@@ -1124,9 +1071,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                const Text(
-                                                  'PLAYLIST',
-                                                  style: TextStyle(
+                                                Text(
+                                                  playlist.isFollowed ? 'PLAYLIST GUARDADA · SOLO LECTURA' : 'PLAYLIST',
+                                                  style: const TextStyle(
                                                     color: AppTheme.secondary,
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.w900,
@@ -1199,7 +1146,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                           ),
                                           const SizedBox(height: 10),
                                           Text(
-                                            '${tracks.length} canciones',
+                                            playlist.isFollowed
+                                                ? 'Guardada · solo lectura · ${tracks.length} canciones'
+                                                : '${tracks.length} canciones',
                                             textAlign: TextAlign.center,
                                             style: const TextStyle(color: AppTheme.secondary, fontSize: 13),
                                           ),

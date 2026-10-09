@@ -74,6 +74,7 @@ Playlist _pl(int id, {bool pinned = false, int? folderId, bool liked = false}) =
       createdAt: DateTime(2026),
       updatedAt: DateTime(2026),
       isGenerated: false,
+      isFollowed: false,
       folderId: folderId,
     );
 

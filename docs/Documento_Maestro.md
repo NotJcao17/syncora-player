@@ -92,7 +92,9 @@ sostenido en planes gratuitos (ver §4.5). El tope se puede subir en cualquier m
 *   ~~Smart Shuffle (aleatorio con sugerencias).~~ → Primero absorbido en *Crear cola con IA* (D-9). **Ronda 5 (2026-10-03):** es la acción **"Mejorar cola"**, sin IA: pide recomendaciones a la radio de Deezer (las mismas semillas ponderadas de la cola infinita) y las intercala en la cola automática, una cada 3 canciones, marcadas como recomendadas. No gasta Gemini, funciona sin cuenta y nunca toca la cola manual. Detalle en `docs/fases/correcciones_r5.md`.
 *   Búsqueda por género.
 *   Descubrimiento musical vía previews de Deezer (30s).
-*   Compartir playlists (solo lectura).
+*   Compartir playlists (solo lectura). *(Lanzamiento 1.0, 2026-10-09: compartir la vuelve pública y copia
+    `syncoraplayer.app/playlist/<id>`; la web la muestra y otro usuario puede guardarla en su biblioteca
+    como solo lectura, tabla `followed_playlists`. Ver `docs/fases/lanzamiento_v1.md`.)*
 
 ---
 

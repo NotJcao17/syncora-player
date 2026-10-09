@@ -133,6 +133,11 @@ class SyncService {
       if (!await _accountStillValid()) return;
       try {
         await _syncPlaylistsAndTracks();
+        try {
+          await _syncFollowedPlaylists();
+        } catch (_) {
+          // Que una guardada falle no frena el resto de la biblioteca.
+        }
         await _syncSavedAlbumsInternal();
         _cacheManager.markSynced('library');
       } catch (_) {
@@ -148,6 +153,19 @@ class SyncService {
     }
     if (SyncLocks.isLocked(playlistRemoteId)) return;
     if (!await _accountStillValid()) return;
+
+    // Una playlist guardada de otro usuario no está entre las propias: el
+    // camino de abajo la tomaría por borrada y la quitaría de la biblioteca.
+    final existingLocal = await _playlistDao.getPlaylistByRemoteId(playlistRemoteId);
+    if (existingLocal != null && existingLocal.isFollowed) {
+      try {
+        await pullFollowedPlaylist(playlistRemoteId);
+        _cacheManager.markSynced(cacheKey);
+      } catch (_) {
+        // Sin red: se queda la copia local.
+      }
+      return;
+    }
 
     try {
       final remotePlaylists = await _playlistRepo.fetchUserPlaylists();
@@ -329,7 +347,11 @@ class SyncService {
       remotePlaylists.removeWhere((p) => p['is_liked'] == true && p['id']?.toString() != officialId);
     }
 
-    final localPlaylists = await _playlistDao.getAllPlaylists();
+    // Las guardadas de otros usuarios tienen su propio sync
+    // (`_syncFollowedPlaylists`): aquí no deben emparejarse por título con una
+    // remota propia ni podarse por no estar entre las propias.
+    final localPlaylists =
+        (await _playlistDao.getAllPlaylists()).where((p) => !p.isFollowed).toList();
     final remoteIdsSet = <String>{};
 
     for (final remote in remotePlaylists) {
@@ -464,6 +486,150 @@ class SyncService {
         }
       }
     }
+  }
+
+  /// Escrituras de playlists guardadas, de una en una.
+  ///
+  /// El sync de la biblioteca y el botón "Guardar" de una playlist compartida
+  /// pueden coincidir; sin esto ambos verían que la copia local no existe y
+  /// crearían dos (el mismo bug de duplicados que resolvió `_runExclusive`).
+  Future<void> _followedTail = Future.value();
+
+  Future<T> _withFollowedLock<T>(Future<T> Function() action) {
+    final run = _followedTail.then((_) => action());
+    _followedTail = run.then((_) {}, onError: (_) {});
+    return run;
+  }
+
+  /// Guardadas con `pullFollowedPlaylist` mientras corre un
+  /// `_syncFollowedPlaylists`: no estaban en la lista que este leyó al
+  /// empezar, y sin esto su poda las quitaría justo después de guardarlas.
+  final Set<String> _pulledDuringFollowedSync = {};
+
+  /// PostgREST lleva los ids en la URL: con cientos de UUIDs se pasaría del
+  /// largo que aceptan los proxies.
+  static const int _followedChunkSize = 100;
+
+  /// Playlists compartidas que el usuario guardó (`followed_playlists`).
+  ///
+  /// La nube manda: se crean las que falten, se actualizan desde la original y
+  /// se quitan las que ya no se pueden leer (se dejaron de guardar en otro
+  /// dispositivo, o el dueño las borró o las hizo privadas). Si algo falla a
+  /// medio camino no se poda nada.
+  Future<void> _syncFollowedPlaylists() async {
+    _pulledDuringFollowedSync.clear();
+    final List<String> followedIds;
+    try {
+      followedIds = await _playlistRepo.fetchFollowedPlaylistIds();
+    } catch (_) {
+      // Sin red o sin la migración 24: no se toca nada.
+      return;
+    }
+
+    final readable = <Map<String, dynamic>>[];
+    try {
+      for (var i = 0; i < followedIds.length; i += _followedChunkSize) {
+        readable.addAll(await _playlistRepo.fetchPublicPlaylists(
+          followedIds.skip(i).take(_followedChunkSize).toList(),
+        ));
+      }
+    } catch (_) {
+      // Lista incompleta: podar con ella quitaría playlists que siguen ahí.
+      return;
+    }
+
+    final readableIds = <String>{};
+    for (final remote in readable) {
+      readableIds.add(remote['id'].toString());
+      await _withFollowedLock(() => _upsertFollowedPlaylist(remote));
+    }
+
+    await _withFollowedLock(() async {
+      for (final local in await _playlistDao.getAllPlaylists()) {
+        if (local.isFollowed &&
+            !readableIds.contains(local.remoteId) &&
+            !_pulledDuringFollowedSync.contains(local.remoteId)) {
+          await _playlistDao.deletePlaylist(local.id);
+        }
+      }
+    });
+  }
+
+  /// Baja o actualiza una playlist guardada a partir de la original.
+  ///
+  /// Devuelve el id local, o `null` si la original ya no es pública (en ese
+  /// caso la copia local se quita). Lanza si no hay red.
+  Future<int?> pullFollowedPlaylist(String remoteId) {
+    return _withFollowedLock(() async {
+      final remote = await _playlistRepo.fetchPublicPlaylist(remoteId);
+      if (remote == null) {
+        final local = await _playlistDao.getPlaylistByRemoteId(remoteId);
+        if (local != null && local.isFollowed) await _playlistDao.deletePlaylist(local.id);
+        return null;
+      }
+      _pulledDuringFollowedSync.add(remoteId);
+      return _upsertFollowedPlaylist(remote);
+    });
+  }
+
+  /// Llamar solo dentro de [_withFollowedLock].
+  Future<int> _upsertFollowedPlaylist(Map<String, dynamic> remote) async {
+    final remoteId = remote['id'].toString();
+    final title = remote['title'] as String? ?? 'Playlist';
+    final description = remote['description'] as String?;
+    final coverUrl = remote['cover_url'] as String?;
+
+    final existing = await _playlistDao.getPlaylistByRemoteId(remoteId);
+    // Una playlist propia con ese id no se toca nunca desde aquí.
+    if (existing != null && !existing.isFollowed) return existing.id;
+
+    final int localId;
+    if (existing == null) {
+      localId = await _playlistDao.createPlaylist(
+        title: title,
+        description: description,
+        coverUrl: coverUrl,
+        remoteId: remoteId,
+        isPublic: true,
+        isFollowed: true,
+      );
+    } else {
+      localId = existing.id;
+      if (existing.title != title || existing.description != description || existing.coverUrl != coverUrl) {
+        await _playlistDao.updatePlaylist(existing.copyWith(
+          title: title,
+          description: Value(description),
+          coverUrl: Value(coverUrl),
+        ));
+      }
+    }
+
+    final remoteTracks = _dedupeRemoteTracks(await _playlistRepo.fetchPlaylistTracks(remoteId));
+    final localTracks = await _playlistDao.getTracksOrdered(localId);
+    final sameOrder = localTracks.length == remoteTracks.length &&
+        Iterable.generate(localTracks.length)
+            .every((i) => localTracks[i].trackId == (remoteTracks[i]['track_id'] as num).toInt());
+    // A diferencia de las propias, aquí se respeta el orden de la original:
+    // si cambia algo, se reemplaza la lista entera.
+    if (!sameOrder) {
+      await _playlistDao.replaceTracks(localId, [
+        for (final t in remoteTracks)
+          PlaylistTracksCompanion.insert(
+            playlistId: localId,
+            trackId: (t['track_id'] as num).toInt(),
+            artistId: (t['artist_id'] as num?)?.toInt() ?? 0,
+            albumId: (t['album_id'] as num?)?.toInt() ?? 0,
+            title: t['title'] as String? ?? '',
+            artistName: t['artist_name'] as String? ?? '',
+            albumName: t['album_name'] as String? ?? '',
+            coverUrl: t['cover_url'] as String? ?? '',
+            durationMs: (t['duration_ms'] as num?)?.toInt() ?? 0,
+            genre: Value(t['genre'] as String?),
+            contributorsJson: Value(t['contributors_json'] as String?),
+          ),
+      ]);
+    }
+    return localId;
   }
 
   Future<void> _syncSavedAlbumsInternal() async {

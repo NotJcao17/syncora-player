@@ -430,6 +430,123 @@ void main() {
       });
     });
   });
+
+  group('Playlists guardadas de otros usuarios', () {
+    late SyncoraDatabase db;
+    late MockSupabasePlaylistRepository repo;
+    late SyncService sync;
+
+    Map<String, dynamic> track(int id) => {'track_id': id, 'title': 'T$id', 'artist_name': 'A'};
+
+    setUp(() {
+      db = SyncoraDatabase(NativeDatabase.memory());
+      repo = MockSupabasePlaylistRepository();
+      sync = SyncService(
+        playlistRepo: repo,
+        albumRepo: SupabaseAlbumRepository(),
+        historyRepo: SupabaseHistoryRepository(),
+        playlistDao: db.playlistDao,
+        savedAlbumDao: db.savedAlbumDao,
+        listeningHistoryDao: db.listeningHistoryDao,
+        cacheManager: SyncCacheManager(),
+      );
+    });
+
+    tearDown(() async => db.close());
+
+    Future<List<Playlist>> followedLocal() async =>
+        (await db.playlistDao.getAllPlaylists()).where((p) => p.isFollowed).toList();
+
+    test('el sync baja la guardada como solo lectura y respeta el orden de la original', () async {
+      repo.followedIds = ['shared-1'];
+      repo.publicPlaylists['shared-1'] = {'id': 'shared-1', 'title': 'De un amigo', 'cover_url': 'gradient:2'};
+      repo.playlistTracksMap['shared-1'] = [track(30), track(10), track(20)];
+
+      await sync.syncLibrary(force: true);
+
+      final followed = await followedLocal();
+      expect(followed, hasLength(1));
+      expect(followed.single.remoteId, 'shared-1');
+      expect(followed.single.title, 'De un amigo');
+      expect(followed.single.coverUrl, 'gradient:2');
+      final tracks = await db.playlistDao.getTracksOrdered(followed.single.id);
+      expect(tracks.map((t) => t.trackId), [30, 10, 20]);
+    });
+
+    test('el sync de las propias no poda la guardada ni la adopta por título', () async {
+      repo.followedIds = ['shared-1'];
+      repo.publicPlaylists['shared-1'] = {'id': 'shared-1', 'title': 'Mismo nombre'};
+      await sync.syncLibrary(force: true);
+
+      // Ahora el usuario tiene una propia con el mismo nombre en la nube.
+      repo.userPlaylists = [
+        {'id': 'own-1', 'title': 'Mismo nombre'},
+      ];
+      await sync.syncLibrary(force: true);
+
+      final all = await db.playlistDao.getAllPlaylists();
+      final followed = all.where((p) => p.isFollowed).toList();
+      final own = all.where((p) => p.remoteId == 'own-1').toList();
+      expect(followed.single.remoteId, 'shared-1');
+      expect(own.single.isFollowed, isFalse);
+    });
+
+    test('se quita cuando el dueño la deja de compartir o ya no está guardada', () async {
+      repo.followedIds = ['shared-1', 'shared-2'];
+      repo.publicPlaylists['shared-1'] = {'id': 'shared-1', 'title': 'Uno'};
+      repo.publicPlaylists['shared-2'] = {'id': 'shared-2', 'title': 'Dos'};
+      await sync.syncLibrary(force: true);
+      expect(await followedLocal(), hasLength(2));
+
+      repo.publicPlaylists.remove('shared-1'); // privada o borrada
+      repo.followedIds = ['shared-1', 'shared-2'];
+      await sync.syncLibrary(force: true);
+
+      expect((await followedLocal()).map((p) => p.remoteId), ['shared-2']);
+    });
+
+    test('sin red para leer las guardadas no se poda nada', () async {
+      repo.followedIds = ['shared-1'];
+      repo.publicPlaylists['shared-1'] = {'id': 'shared-1', 'title': 'Uno'};
+      await sync.syncLibrary(force: true);
+
+      repo.failFollowedFetch = true;
+      await sync.syncLibrary(force: true);
+
+      expect(await followedLocal(), hasLength(1));
+    });
+
+    test('abrir una guardada no la borra por no estar entre las propias', () async {
+      repo.followedIds = ['shared-1'];
+      repo.publicPlaylists['shared-1'] = {'id': 'shared-1', 'title': 'Uno'};
+      repo.playlistTracksMap['shared-1'] = [track(1)];
+      await sync.syncLibrary(force: true);
+
+      repo.playlistTracksMap['shared-1'] = [track(2), track(1)];
+      await sync.syncPlaylistDetail('shared-1', force: true);
+
+      final followed = await followedLocal();
+      expect(followed, hasLength(1));
+      final tracks = await db.playlistDao.getTracksOrdered(followed.single.id);
+      expect(tracks.map((t) => t.trackId), [2, 1]);
+
+      // Y si el dueño la hizo privada, al abrirla desaparece.
+      repo.publicPlaylists.clear();
+      await sync.syncPlaylistDetail('shared-1', force: true);
+      expect(await followedLocal(), isEmpty);
+    });
+
+    test('guardar dos veces a la vez no duplica la playlist', () async {
+      repo.publicPlaylists['shared-1'] = {'id': 'shared-1', 'title': 'Uno'};
+      repo.fetchDelay = const Duration(milliseconds: 20);
+      final ids = await Future.wait([
+        sync.pullFollowedPlaylist('shared-1'),
+        sync.pullFollowedPlaylist('shared-1'),
+      ]);
+      expect(ids[0], ids[1]);
+      expect(await followedLocal(), hasLength(1));
+    });
+  });
 }
 
 class MockSupabasePlaylistRepository extends SupabasePlaylistRepository {
@@ -464,6 +581,28 @@ class MockSupabasePlaylistRepository extends SupabasePlaylistRepository {
   @override
   Future<void> deletePlaylist(String id) async {
     deletedPlaylistIds.add(id);
+  }
+
+  // Playlists compartidas que el usuario guardó (`followed_playlists`).
+  List<String> followedIds = [];
+  /// Playlists públicas de otros usuarios, por id.
+  Map<String, Map<String, dynamic>> publicPlaylists = {};
+  bool failFollowedFetch = false;
+
+  @override
+  Future<List<String>> fetchFollowedPlaylistIds() async {
+    if (failFollowedFetch) throw Exception('sin red');
+    return followedIds;
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchPublicPlaylists(List<String> ids) async =>
+      [for (final id in ids) ?publicPlaylists[id]];
+
+  @override
+  Future<Map<String, dynamic>?> fetchPublicPlaylist(String playlistId) async {
+    if (fetchDelay > Duration.zero) await Future<void>.delayed(fetchDelay);
+    return publicPlaylists[playlistId];
   }
 }
 

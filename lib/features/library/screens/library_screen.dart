@@ -3,14 +3,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/connectivity_service.dart';
-import '../../../core/utils/share_link_builder.dart';
+import '../widgets/playlist_share_menu_items.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/playlist_cover_widget.dart';
 import '../../../data/apis/deezer_provider.dart';
@@ -532,7 +531,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       subtitle: Consumer(
         builder: (ctx, ref, _) {
           final count = ref.watch(playlistSummariesProvider.select((s) => s.value?[playlist.id]?.trackCount ?? 0));
-          return _subtitleText(count == 1 ? '1 canción' : '$count canciones');
+          final countStr = count == 1 ? '1 canción' : '$count canciones';
+          return _subtitleText(playlist.isFollowed ? 'Guardada • $countStr' : countStr);
         },
       ),
     );
@@ -571,7 +571,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         builder: (ctx, ref, _) {
           final count = ref.watch(playlistSummariesProvider.select((s) => s.value?[playlist.id]?.trackCount ?? 0));
           final countStr = count == 1 ? '1 canción' : '$count canciones';
-          final base = playlist.isLiked ? 'Playlist especial' : countStr;
+          final base = playlist.isLiked
+              ? 'Playlist especial'
+              : (playlist.isFollowed ? 'Guardada • $countStr' : countStr);
           return _subtitleText(suffix == null ? base : '$base • $suffix');
         },
       ),
@@ -635,6 +637,17 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     if (playlist.isLiked) {
       return Column(mainAxisSize: MainAxisSize.min, children: [_buildPinTile(ctx, playlist, canEdit)]);
     }
+    // Guardada de otro usuario: solo lectura. Fijarla es local (ver
+    // `togglePlaylistPin`), así que no depende de la conexión.
+    if (playlist.isFollowed) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildPinTile(ctx, playlist, true),
+          ...playlistShareMenuItems(menuContext: ctx, context: context, ref: ref, playlist: playlist),
+        ],
+      );
+    }
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -661,59 +674,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             _showEditPlaylistDialog(context, playlist);
           },
         ),
-        if (!isLocalMode) ...[
-          ListTile(
-            leading: Icon(
-              AppIcons.broken(playlist.isPublic ? SolarIcons.Lock : SolarIcons.Global),
-              color: canEdit ? AppTheme.primary : AppTheme.muted,
-            ),
-            title: Text(
-              playlist.isPublic ? 'Hacer privada' : 'Hacer pública',
-              style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted),
-            ),
-            enabled: canEdit,
-            onTap: () async {
-              Navigator.pop(ctx);
-              final newPublic = !playlist.isPublic;
-              final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-              final dao = ref.read(playlistDaoProvider);
-              String? remoteId = playlist.remoteId;
-              if (remoteId == null) {
-                try {
-                  final supabaseRes = await supabaseRepo.createPlaylist(
-                    title: playlist.title,
-                    description: playlist.description,
-                    isPublic: newPublic,
-                    isLiked: playlist.isLiked,
-                  );
-                  remoteId = supabaseRes['id']?.toString();
-                } catch (_) {}
-              } else {
-                try {
-                  await supabaseRepo.updatePlaylist(remoteId, isPublic: newPublic);
-                } catch (_) {}
-              }
-              await dao.updatePlaylist(playlist.copyWith(
-                isPublic: newPublic,
-                remoteId: Value(remoteId),
-              ));
-              if (mounted) {
-                AppToast.show(
-                  context,
-                  message: newPublic ? 'Playlist marcada como pública' : 'Playlist marcada como privada',
-                );
-              }
-            },
-          ),
-          ListTile(
-            leading: Icon(AppIcons.broken(SolarIcons.LinkMinimalistic), color: AppTheme.primary),
-            title: const Text('Copiar enlace', style: TextStyle(color: AppTheme.primary)),
-            onTap: () {
-              Navigator.pop(ctx);
-              Clipboard.setData(ClipboardData(text: ShareLinkBuilder.playlist('${playlist.remoteId ?? playlist.id}')));
-              AppToast.show(context, message: 'Enlace copiado al portapapeles');
-            },
-          ),
+        ...playlistShareMenuItems(menuContext: ctx, context: context, ref: ref, playlist: playlist),
+        if (!isLocalMode)
           ListTile(
             leading: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: canEdit ? AppTheme.primary : AppTheme.muted),
             title: Text('Modificar con IA', style: TextStyle(color: canEdit ? AppTheme.primary : AppTheme.muted)),
@@ -723,7 +685,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               showAiModifyPlaylistSheet(context, ref, playlist);
             },
           ),
-        ],
         ListTile(
           leading: Icon(AppIcons.broken(SolarIcons.TrashBinMinimalistic), color: canEdit ? Colors.redAccent : AppTheme.muted),
           title: Text('Eliminar playlist', style: TextStyle(color: canEdit ? Colors.redAccent : AppTheme.muted)),

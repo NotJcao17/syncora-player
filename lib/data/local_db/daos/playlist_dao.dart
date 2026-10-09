@@ -123,10 +123,12 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     bool isGenerated = false,
     bool isPinned = false,
     int? folderId,
+    bool isFollowed = false,
   }) async {
     return into(playlists).insert(
       PlaylistsCompanion.insert(
         folderId: Value(folderId),
+        isFollowed: Value(isFollowed),
         // Ronda 5: los nombres que llegan de fuera (archivo importado, IA,
         // copia de una playlist de Deezer) también respetan el límite.
         title: AppLimits.clampTitle(title),

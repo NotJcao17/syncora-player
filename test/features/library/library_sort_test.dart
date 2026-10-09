@@ -14,6 +14,7 @@ Playlist _pl(int id, String title, {bool pinned = false, bool liked = false, Dat
     updatedAt: DateTime(2026, 1, id),
     lastPlayedAt: played,
     isGenerated: false,
+    isFollowed: false,
   );
 }
 

@@ -9,13 +9,15 @@ import '../../../data/supabase/supabase_providers.dart';
 /// Escribe primero en Supabase y solo después en Drift (Pitfall #28): si la
 /// nube no acepta el cambio, el siguiente sync lo revertiría, así que no se
 /// finge un éxito local. "On Repeat" nunca sube a la nube (se deriva del
-/// historial del dispositivo), así que para ella el cambio es solo local.
+/// historial del dispositivo), así que para ella el cambio es solo local. Lo
+/// mismo con una playlist guardada de otro usuario: la fila remota es de su
+/// dueño, y fijarla es una preferencia de quien la guardó.
 ///
 /// Devuelve `false` si la escritura remota falló.
 Future<bool> togglePlaylistPin(WidgetRef ref, Playlist playlist) async {
   final pinned = !playlist.isPinned;
   final remoteId = playlist.remoteId;
-  if (remoteId != null && !playlist.isGenerated) {
+  if (remoteId != null && !playlist.isGenerated && !playlist.isFollowed) {
     try {
       await ref.read(supabasePlaylistRepositoryProvider).updatePlaylist(remoteId, isPinned: pinned);
     } catch (_) {

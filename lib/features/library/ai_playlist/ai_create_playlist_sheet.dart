@@ -851,13 +851,14 @@ class _AiCreatePlaylistFlowState extends ConsumerState<_AiCreatePlaylistFlow> {
   }
 
   Widget _buildReferencePlaylistPicker() {
-    // D-11: solo playlists propias -- Drift local solo contiene las
-    // playlists del usuario actual (caché por dispositivo/cuenta), así que
-    // esta lista nunca puede incluir playlists públicas de terceros.
+    // D-11: solo playlists propias. Drift guarda también las playlists
+    // compartidas que el usuario guardó (`isFollowed`): su texto lo escribió
+    // otra persona y no debe entrar al contexto de una IA que actúa con los
+    // permisos de este usuario, así que se filtran aquí.
     return StreamBuilder<List<Playlist>>(
       stream: _referencePlaylistsStream,
       builder: (context, snapshot) {
-        final playlists = snapshot.data ?? const [];
+        final playlists = (snapshot.data ?? const <Playlist>[]).where((p) => !p.isFollowed).toList();
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(color: AppTheme.surfaceHover, borderRadius: BorderRadius.circular(12)),

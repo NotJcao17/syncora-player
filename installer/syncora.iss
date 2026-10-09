@@ -60,5 +60,14 @@ Source: "{#BuildDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs c
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
+[Registry]
+; Esquema syncoraplayer:// (enlaces de playlists compartidas desde la web).
+; Instalacion por usuario, asi que va en HKCU; se borra al desinstalar.
+; Si la app ya esta abierta, el runner de Windows (main.cpp) le reenvia el enlace.
+Root: HKCU; Subkey: "Software\Classes\syncoraplayer"; ValueType: string; ValueName: ""; ValueData: "URL:Syncora Player"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\syncoraplayer"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\syncoraplayer\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"
+Root: HKCU; Subkey: "Software\Classes\syncoraplayer\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent

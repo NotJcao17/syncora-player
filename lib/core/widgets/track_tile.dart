@@ -9,7 +9,6 @@ import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../utils/connectivity_service.dart';
 import '../utils/contributor_resolver.dart';
-import '../utils/share_link_builder.dart';
 import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../features/library/playlist_permissions.dart';
@@ -231,11 +230,6 @@ class TrackContextMenu {
           }
         }
       }
-    } else if (value == 'share') {
-      await Clipboard.setData(ClipboardData(text: ShareLinkBuilder.track('$trackIdInt')));
-      if (context.mounted) {
-        AppToast.show(context, message: 'Enlace copiado al portapapeles');
-      }
     } else if (value == 'remove') {
       // Quitar una pista de una playlist escribe en Supabase; sin conexión
       // solo llegaría a Drift y el sync la repondría (Pitfall #28).
@@ -374,11 +368,6 @@ class TrackContextMenu {
             icon: AppIcons.broken(SolarIcons.CloudDownload),
             label: 'Descargar',
             onTap: () => select('download'),
-          ),
-          _OptionItem(
-            icon: AppIcons.broken(SolarIcons.Share),
-            label: 'Compartir',
-            onTap: () => select('share'),
           ),
           if ((track.artistId ?? 0) != 0)
             _OptionItem(

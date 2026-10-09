@@ -29,6 +29,73 @@ class SupabasePlaylistRepository {
     return List<Map<String, dynamic>>.from(response);
   }
 
+  /// Una playlist pública de cualquier usuario (enlace compartido), o `null`
+  /// si no existe o su dueño no la comparte. Lanza si no hay red: así quien
+  /// llama distingue "ya no está disponible" de "no se pudo preguntar".
+  Future<Map<String, dynamic>?> fetchPublicPlaylist(String playlistId) async {
+    final client = _client;
+    if (client == null) return null;
+    final response = await client
+        .from('playlists')
+        .select('id, user_id, title, description, cover_url, is_public')
+        .eq('id', playlistId)
+        .eq('is_public', true)
+        .maybeSingle();
+    return response;
+  }
+
+  /// Ids de las playlists ajenas que el usuario guardó (`followed_playlists`).
+  Future<List<String>> fetchFollowedPlaylistIds() async {
+    final client = _client;
+    if (client == null) return [];
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return [];
+    final response = await client
+        .from('followed_playlists')
+        .select('playlist_id')
+        .eq('user_id', userId)
+        .order('followed_at', ascending: true);
+    return [for (final row in response) row['playlist_id'].toString()];
+  }
+
+  /// Las playlists de [ids] que siguen siendo públicas. Las que su dueño hizo
+  /// privadas o borró simplemente no vienen.
+  Future<List<Map<String, dynamic>>> fetchPublicPlaylists(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    final client = _client;
+    if (client == null) return [];
+    final response = await client
+        .from('playlists')
+        .select('id, user_id, title, description, cover_url, is_public')
+        .inFilter('id', ids)
+        .eq('is_public', true);
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<void> followPlaylist(String playlistId) async {
+    final client = _client;
+    if (client == null) return;
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return;
+    await client.from('followed_playlists').upsert(
+      {'user_id': userId, 'playlist_id': playlistId},
+      onConflict: 'user_id,playlist_id',
+      ignoreDuplicates: true,
+    );
+  }
+
+  Future<void> unfollowPlaylist(String playlistId) async {
+    final client = _client;
+    if (client == null) return;
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return;
+    await client
+        .from('followed_playlists')
+        .delete()
+        .eq('user_id', userId)
+        .eq('playlist_id', playlistId);
+  }
+
   Future<List<Map<String, dynamic>>> fetchPlaylistTracks(String playlistId) async {
     final client = _client;
     if (client == null) return [];

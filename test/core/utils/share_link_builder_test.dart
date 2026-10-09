@@ -3,16 +3,12 @@ import 'package:syncora_player/core/utils/share_link_builder.dart';
 
 void main() {
   group('ShareLinkBuilder', () {
-    test('builds a track URL', () {
-      expect(ShareLinkBuilder.track('123'), 'https://syncora.netlify.app/track/123');
-    });
-
-    test('builds a playlist URL', () {
-      expect(ShareLinkBuilder.playlist('42'), 'https://syncora.netlify.app/playlist/42');
-    });
-
-    test('builds an album URL', () {
-      expect(ShareLinkBuilder.album('987'), 'https://syncora.netlify.app/album/987');
+    // La web (syncora-web) sirve `/playlist/<id>` con la vista de solo lectura.
+    test('apunta a la vista de playlist de la web', () {
+      expect(
+        ShareLinkBuilder.playlist('3f2504e0-4f89-11d3-9a0c-0305e82c3301'),
+        'https://syncoraplayer.app/playlist/3f2504e0-4f89-11d3-9a0c-0305e82c3301',
+      );
     });
 
     // Un esquema propio no lo convierten en enlace WhatsApp/notas/correo: llega

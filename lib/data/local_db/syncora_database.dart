@@ -65,6 +65,13 @@ class Playlists extends Table {
   /// mano `FolderDao.deleteFolder`. "Tus me gusta" y "On Repeat" nunca llevan
   /// carpeta.
   IntColumn get folderId => integer().nullable()();
+
+  /// Playlist compartida por otro usuario que este guardó en su biblioteca
+  /// (`followed_playlists` en Supabase). `remoteId` es el id de la original.
+  ///
+  /// Solo lectura: no se edita, no recibe canciones, no va a carpetas y el
+  /// sync la actualiza desde la original (ver `SyncService._syncFollowedPlaylists`).
+  BoolColumn get isFollowed => boolean().withDefault(const Constant(false))();
 }
 
 /// Carpetas de playlists (Fase 8.E). Un solo nivel: contienen playlists,
@@ -214,7 +221,7 @@ class SyncoraDatabase extends _$SyncoraDatabase {
   SyncoraDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration {
@@ -278,6 +285,10 @@ class SyncoraDatabase extends _$SyncoraDatabase {
           // Fase 8.E: carpetas de playlists.
           await m.createTable(folders);
           await m.addColumn(playlists, playlists.folderId);
+        }
+        if (from < 14) {
+          // Playlists compartidas que el usuario guardó (solo lectura).
+          await m.addColumn(playlists, playlists.isFollowed);
         }
       },
     );

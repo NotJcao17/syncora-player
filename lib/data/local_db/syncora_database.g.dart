@@ -193,6 +193,21 @@ class $PlaylistsTable extends Playlists
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _isFollowedMeta = const VerificationMeta(
+    'isFollowed',
+  );
+  @override
+  late final GeneratedColumn<bool> isFollowed = GeneratedColumn<bool>(
+    'is_followed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_followed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -210,6 +225,7 @@ class $PlaylistsTable extends Playlists
     sourceRef,
     isGenerated,
     folderId,
+    isFollowed,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -321,6 +337,12 @@ class $PlaylistsTable extends Playlists
         folderId.isAcceptableOrUnknown(data['folder_id']!, _folderIdMeta),
       );
     }
+    if (data.containsKey('is_followed')) {
+      context.handle(
+        _isFollowedMeta,
+        isFollowed.isAcceptableOrUnknown(data['is_followed']!, _isFollowedMeta),
+      );
+    }
     return context;
   }
 
@@ -390,6 +412,10 @@ class $PlaylistsTable extends Playlists
         DriftSqlType.int,
         data['${effectivePrefix}folder_id'],
       ),
+      isFollowed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_followed'],
+      )!,
     );
   }
 
@@ -449,6 +475,13 @@ class Playlist extends DataClass implements Insertable<Playlist> {
   /// mano `FolderDao.deleteFolder`. "Tus me gusta" y "On Repeat" nunca llevan
   /// carpeta.
   final int? folderId;
+
+  /// Playlist compartida por otro usuario que este guardó en su biblioteca
+  /// (`followed_playlists` en Supabase). `remoteId` es el id de la original.
+  ///
+  /// Solo lectura: no se edita, no recibe canciones, no va a carpetas y el
+  /// sync la actualiza desde la original (ver `SyncService._syncFollowedPlaylists`).
+  final bool isFollowed;
   const Playlist({
     required this.id,
     this.remoteId,
@@ -465,6 +498,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     this.sourceRef,
     required this.isGenerated,
     this.folderId,
+    required this.isFollowed,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -496,6 +530,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     if (!nullToAbsent || folderId != null) {
       map['folder_id'] = Variable<int>(folderId);
     }
+    map['is_followed'] = Variable<bool>(isFollowed);
     return map;
   }
 
@@ -528,6 +563,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       folderId: folderId == null && nullToAbsent
           ? const Value.absent()
           : Value(folderId),
+      isFollowed: Value(isFollowed),
     );
   }
 
@@ -552,6 +588,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       sourceRef: serializer.fromJson<String?>(json['sourceRef']),
       isGenerated: serializer.fromJson<bool>(json['isGenerated']),
       folderId: serializer.fromJson<int?>(json['folderId']),
+      isFollowed: serializer.fromJson<bool>(json['isFollowed']),
     );
   }
   @override
@@ -573,6 +610,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
       'sourceRef': serializer.toJson<String?>(sourceRef),
       'isGenerated': serializer.toJson<bool>(isGenerated),
       'folderId': serializer.toJson<int?>(folderId),
+      'isFollowed': serializer.toJson<bool>(isFollowed),
     };
   }
 
@@ -592,6 +630,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     Value<String?> sourceRef = const Value.absent(),
     bool? isGenerated,
     Value<int?> folderId = const Value.absent(),
+    bool? isFollowed,
   }) => Playlist(
     id: id ?? this.id,
     remoteId: remoteId.present ? remoteId.value : this.remoteId,
@@ -608,6 +647,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     sourceRef: sourceRef.present ? sourceRef.value : this.sourceRef,
     isGenerated: isGenerated ?? this.isGenerated,
     folderId: folderId.present ? folderId.value : this.folderId,
+    isFollowed: isFollowed ?? this.isFollowed,
   );
   Playlist copyWithCompanion(PlaylistsCompanion data) {
     return Playlist(
@@ -634,6 +674,9 @@ class Playlist extends DataClass implements Insertable<Playlist> {
           ? data.isGenerated.value
           : this.isGenerated,
       folderId: data.folderId.present ? data.folderId.value : this.folderId,
+      isFollowed: data.isFollowed.present
+          ? data.isFollowed.value
+          : this.isFollowed,
     );
   }
 
@@ -654,7 +697,8 @@ class Playlist extends DataClass implements Insertable<Playlist> {
           ..write('lastPlayedAt: $lastPlayedAt, ')
           ..write('sourceRef: $sourceRef, ')
           ..write('isGenerated: $isGenerated, ')
-          ..write('folderId: $folderId')
+          ..write('folderId: $folderId, ')
+          ..write('isFollowed: $isFollowed')
           ..write(')'))
         .toString();
   }
@@ -676,6 +720,7 @@ class Playlist extends DataClass implements Insertable<Playlist> {
     sourceRef,
     isGenerated,
     folderId,
+    isFollowed,
   );
   @override
   bool operator ==(Object other) =>
@@ -695,7 +740,8 @@ class Playlist extends DataClass implements Insertable<Playlist> {
           other.lastPlayedAt == this.lastPlayedAt &&
           other.sourceRef == this.sourceRef &&
           other.isGenerated == this.isGenerated &&
-          other.folderId == this.folderId);
+          other.folderId == this.folderId &&
+          other.isFollowed == this.isFollowed);
 }
 
 class PlaylistsCompanion extends UpdateCompanion<Playlist> {
@@ -714,6 +760,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
   final Value<String?> sourceRef;
   final Value<bool> isGenerated;
   final Value<int?> folderId;
+  final Value<bool> isFollowed;
   const PlaylistsCompanion({
     this.id = const Value.absent(),
     this.remoteId = const Value.absent(),
@@ -730,6 +777,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     this.sourceRef = const Value.absent(),
     this.isGenerated = const Value.absent(),
     this.folderId = const Value.absent(),
+    this.isFollowed = const Value.absent(),
   });
   PlaylistsCompanion.insert({
     this.id = const Value.absent(),
@@ -747,6 +795,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     this.sourceRef = const Value.absent(),
     this.isGenerated = const Value.absent(),
     this.folderId = const Value.absent(),
+    this.isFollowed = const Value.absent(),
   }) : title = Value(title);
   static Insertable<Playlist> custom({
     Expression<int>? id,
@@ -764,6 +813,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     Expression<String>? sourceRef,
     Expression<bool>? isGenerated,
     Expression<int>? folderId,
+    Expression<bool>? isFollowed,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -781,6 +831,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
       if (sourceRef != null) 'source_ref': sourceRef,
       if (isGenerated != null) 'is_generated': isGenerated,
       if (folderId != null) 'folder_id': folderId,
+      if (isFollowed != null) 'is_followed': isFollowed,
     });
   }
 
@@ -800,6 +851,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     Value<String?>? sourceRef,
     Value<bool>? isGenerated,
     Value<int?>? folderId,
+    Value<bool>? isFollowed,
   }) {
     return PlaylistsCompanion(
       id: id ?? this.id,
@@ -817,6 +869,7 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
       sourceRef: sourceRef ?? this.sourceRef,
       isGenerated: isGenerated ?? this.isGenerated,
       folderId: folderId ?? this.folderId,
+      isFollowed: isFollowed ?? this.isFollowed,
     );
   }
 
@@ -868,6 +921,9 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
     if (folderId.present) {
       map['folder_id'] = Variable<int>(folderId.value);
     }
+    if (isFollowed.present) {
+      map['is_followed'] = Variable<bool>(isFollowed.value);
+    }
     return map;
   }
 
@@ -888,7 +944,8 @@ class PlaylistsCompanion extends UpdateCompanion<Playlist> {
           ..write('lastPlayedAt: $lastPlayedAt, ')
           ..write('sourceRef: $sourceRef, ')
           ..write('isGenerated: $isGenerated, ')
-          ..write('folderId: $folderId')
+          ..write('folderId: $folderId, ')
+          ..write('isFollowed: $isFollowed')
           ..write(')'))
         .toString();
   }
@@ -4747,6 +4804,7 @@ typedef $$PlaylistsTableCreateCompanionBuilder =
       Value<String?> sourceRef,
       Value<bool> isGenerated,
       Value<int?> folderId,
+      Value<bool> isFollowed,
     });
 typedef $$PlaylistsTableUpdateCompanionBuilder =
     PlaylistsCompanion Function({
@@ -4765,6 +4823,7 @@ typedef $$PlaylistsTableUpdateCompanionBuilder =
       Value<String?> sourceRef,
       Value<bool> isGenerated,
       Value<int?> folderId,
+      Value<bool> isFollowed,
     });
 
 final class $$PlaylistsTableReferences
@@ -4872,6 +4931,11 @@ class $$PlaylistsTableFilterComposer
 
   ColumnFilters<int> get folderId => $composableBuilder(
     column: $table.folderId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isFollowed => $composableBuilder(
+    column: $table.isFollowed,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4984,6 +5048,11 @@ class $$PlaylistsTableOrderingComposer
     column: $table.folderId,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isFollowed => $composableBuilder(
+    column: $table.isFollowed,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PlaylistsTableAnnotationComposer
@@ -5047,6 +5116,11 @@ class $$PlaylistsTableAnnotationComposer
 
   GeneratedColumn<int> get folderId =>
       $composableBuilder(column: $table.folderId, builder: (column) => column);
+
+  GeneratedColumn<bool> get isFollowed => $composableBuilder(
+    column: $table.isFollowed,
+    builder: (column) => column,
+  );
 
   Expression<T> playlistTracksRefs<T extends Object>(
     Expression<T> Function($$PlaylistTracksTableAnnotationComposer a) f,
@@ -5117,6 +5191,7 @@ class $$PlaylistsTableTableManager
                 Value<String?> sourceRef = const Value.absent(),
                 Value<bool> isGenerated = const Value.absent(),
                 Value<int?> folderId = const Value.absent(),
+                Value<bool> isFollowed = const Value.absent(),
               }) => PlaylistsCompanion(
                 id: id,
                 remoteId: remoteId,
@@ -5133,6 +5208,7 @@ class $$PlaylistsTableTableManager
                 sourceRef: sourceRef,
                 isGenerated: isGenerated,
                 folderId: folderId,
+                isFollowed: isFollowed,
               ),
           createCompanionCallback:
               ({
@@ -5151,6 +5227,7 @@ class $$PlaylistsTableTableManager
                 Value<String?> sourceRef = const Value.absent(),
                 Value<bool> isGenerated = const Value.absent(),
                 Value<int?> folderId = const Value.absent(),
+                Value<bool> isFollowed = const Value.absent(),
               }) => PlaylistsCompanion.insert(
                 id: id,
                 remoteId: remoteId,
@@ -5167,6 +5244,7 @@ class $$PlaylistsTableTableManager
                 sourceRef: sourceRef,
                 isGenerated: isGenerated,
                 folderId: folderId,
+                isFollowed: isFollowed,
               ),
           withReferenceMapper: (p0) => p0
               .map(

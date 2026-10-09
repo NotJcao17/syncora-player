@@ -43,14 +43,13 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="syncoraplayer" android:host="login-callback" />
             </intent-filter>
-            <!-- Enlaces compartidos (ShareLinkBuilder): syncoraplayer://playlist/123 -->
+            <!-- Playlists compartidas: el botón "Abrir en la app" de
+                 syncoraplayer.app/playlist/<id> abre syncoraplayer://playlist/<id>. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="syncoraplayer" android:host="playlist" />
-                <data android:scheme="syncoraplayer" android:host="album" />
-                <data android:scheme="syncoraplayer" android:host="track" />
             </intent-filter>
         </activity>
         <!-- Service de audio_service para reproducción en segundo plano y lockscreen -->
