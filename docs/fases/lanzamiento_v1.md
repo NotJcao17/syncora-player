@@ -69,6 +69,20 @@ desinstalar). Si la app ya está abierta, `windows/runner/main.cpp` reenvía el 
 `WM_COPYDATA` a `app_links`. Un build de `flutter run` no registra el esquema: probar con el
 instalado.
 
+### Fallos de la primera prueba en dispositivo (2026-10-09)
+
+- **Android: "no routes for location: syncoraplayer://playlist/..."**. Con el deep linking de
+  Flutter activo (por defecto), Android le pasaba el enlace crudo a GoRouter además de a
+  `app_links`. El manifiesto lo desactiva (`flutter_deeplinking_enabled = false`) y el `redirect`
+  manda a Inicio cualquier `syncoraplayer://` que llegue de todos modos.
+- **Windows con la app ya abierta no navegaba**: `main.cpp` reenviaba el enlace con `dwData = 0`, y
+  `app_links` solo acepta `APPLINK_MSG_ID` (`WM_USER + 2`); lo ignoraba sin error.
+- **Guardar una copia y compartirla a la vez desordenaba las canciones**: compartir sin `remoteId`
+  disparaba un `syncLibrary`, que encontraba la remota recién creada y vacía, adoptaba la local por
+  el título y le podaba las pistas que aún no subían. Ahora `saveTracksAsPlaylist` y
+  `createPlaylistWithMatchedTracks` bloquean la remota con `SyncLocks` mientras se llenan (como la
+  importación), y compartir ya no dispara un sync.
+
 ## Aviso legal
 
 `legal_screen.dart`: descargo de contenido (Syncora no aloja ni distribuye; uso personal y no

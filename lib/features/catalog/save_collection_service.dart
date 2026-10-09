@@ -4,6 +4,7 @@ import '../../data/local_db/daos/playlist_dao.dart';
 import '../../data/supabase/supabase_playlist_repository.dart';
 import '../player/player_models.dart';
 import '../../core/limits/app_limits.dart';
+import '../../data/sync/sync_locks.dart';
 
 /// Congela una lista de pistas como playlist propia del usuario.
 ///
@@ -57,6 +58,32 @@ Future<int> saveTracksAsPlaylist({
     remotePlaylistId = created['id']?.toString();
   } catch (_) {}
 
+  // Mientras se llena, el sync no la toca. Bug real (2026-10-09): un sync a
+  // mitad de camino encontraba la remota recién creada y sin pistas, adoptaba
+  // la local por el título y le borraba las canciones que aún no subían;
+  // después se volvían a agregar en otro orden.
+  final lockedRemoteId = remotePlaylistId;
+  if (lockedRemoteId != null) SyncLocks.lock(lockedRemoteId);
+  try {
+    return await _fillSavedPlaylist(
+      playlistId: playlistId,
+      remotePlaylistId: remotePlaylistId,
+      tracks: tracks,
+      dao: dao,
+      supabaseRepo: supabaseRepo,
+    );
+  } finally {
+    if (lockedRemoteId != null) SyncLocks.unlock(lockedRemoteId);
+  }
+}
+
+Future<int> _fillSavedPlaylist({
+  required int playlistId,
+  required String? remotePlaylistId,
+  required List<SyncoraTrack> tracks,
+  required PlaylistDao dao,
+  required SupabasePlaylistRepository supabaseRepo,
+}) async {
   final remotePayload = <Map<String, dynamic>>[];
 
   for (final track in tracks.take(AppLimits.playlistTracksMax)) {

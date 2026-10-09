@@ -139,6 +139,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     refreshListenable: refreshListenable,
     redirect: (context, state) {
+      // Red de seguridad: los enlaces `syncoraplayer://` los maneja app_links
+      // (`main.dart`) y el manifiesto de Android ya no se los pasa al router.
+      // Si alguno llegara aquí, a Inicio en vez de la página de error.
+      if (state.uri.scheme == 'syncoraplayer') return '/';
       if (isTestEnv) {
         return null;
       }

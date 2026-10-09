@@ -42,7 +42,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
       if (!uri_arg.empty()) {
         COPYDATASTRUCT cds;
-        cds.dwData = 0; // app_links expects dwData = 0
+        // app_links solo acepta este id (APPLINK_MSG_ID = WM_USER + 2 en
+        // app_links_plugin.h); con 0 ignoraba el enlace en silencio y la
+        // ventana abierta no navegaba a la playlist compartida.
+        cds.dwData = WM_USER + 2;
         cds.cbData = static_cast<DWORD>(uri_arg.length() + 1);
         cds.lpData = const_cast<char*>(uri_arg.c_str());
         ::SendMessage(existing_hwnd, WM_COPYDATA, 0, reinterpret_cast<LPARAM>(&cds));

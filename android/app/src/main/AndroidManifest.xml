@@ -29,6 +29,13 @@
                  the Android process has started. This theme is visible to the user
                  while the Flutter UI initializes. After that, this theme continues
                  to determine the Window background behind the Flutter UI. -->
+            <!-- Los enlaces (playlists compartidas, callback de OAuth) los maneja
+                 app_links en main.dart. Con el manejo de Flutter activo, Android
+                 además le pasaba el enlace crudo a GoRouter, que mostraba
+                 "no routes for location: syncoraplayer://playlist/...". -->
+            <meta-data
+              android:name="flutter_deeplinking_enabled"
+              android:value="false" />
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"

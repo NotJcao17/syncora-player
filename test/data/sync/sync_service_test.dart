@@ -5,6 +5,9 @@ import 'package:syncora_player/data/supabase/supabase_album_repository.dart';
 import 'package:syncora_player/data/supabase/supabase_history_repository.dart';
 import 'package:syncora_player/data/supabase/supabase_playlist_repository.dart';
 import 'package:syncora_player/data/sync/sync_cache_manager.dart';
+import 'package:syncora_player/data/sync/sync_locks.dart';
+import 'package:syncora_player/features/catalog/save_collection_service.dart';
+import 'package:syncora_player/features/player/player_models.dart';
 import 'package:syncora_player/data/sync/sync_service.dart';
 
 void main() {
@@ -431,6 +434,60 @@ void main() {
     });
   });
 
+  test('2026-10-09: un sync a mitad de guardar una copia no le poda las canciones', () async {
+    final db = SyncoraDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final repo = MockSupabasePlaylistRepository();
+    final sync = SyncService(
+      playlistRepo: repo,
+      albumRepo: SupabaseAlbumRepository(),
+      historyRepo: SupabaseHistoryRepository(),
+      playlistDao: db.playlistDao,
+      savedAlbumDao: db.savedAlbumDao,
+      listeningHistoryDao: db.listeningHistoryDao,
+      cacheManager: SyncCacheManager(),
+    );
+
+    // Estado a mitad de `saveTracksAsPlaylist`: la remota ya existe y está
+    // vacía, la local tiene canciones y todavía no tiene `remoteId`.
+    final localId = await db.playlistDao.createPlaylist(title: 'Copia');
+    for (final id in [1, 2, 3]) {
+      await db.playlistDao.addTrackToPlaylist(
+        playlistId: localId, trackId: id, artistId: 0, albumId: 0,
+        title: 'T$id', artistName: 'A', albumName: '', coverUrl: '', durationMs: 0,
+      );
+    }
+    repo.userPlaylists = [
+      {'id': 'remote-copy', 'title': 'Copia'},
+    ];
+    SyncLocks.lock('remote-copy');
+    addTearDown(() => SyncLocks.unlock('remote-copy'));
+
+    await sync.syncLibrary(force: true);
+
+    final local = await db.playlistDao.getPlaylistById(localId);
+    expect(local!.remoteId, isNull, reason: 'no se adopta mientras se guarda');
+    final tracks = await db.playlistDao.getTracksOrdered(localId);
+    expect(tracks.map((t) => t.trackId), [1, 2, 3]);
+  });
+
+  test('guardar una copia bloquea la remota para el sync mientras sube', () async {
+    final db = SyncoraDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final repo = MockSupabasePlaylistRepository()..createdId = 'remote-new';
+
+    final id = await saveTracksAsPlaylist(
+      title: 'Copia',
+      tracks: const [SyncoraTrack(id: '7', title: 'T7', artist: 'A')],
+      dao: db.playlistDao,
+      supabaseRepo: repo,
+    );
+
+    expect(repo.lockedWhileUploading, [true]);
+    expect(SyncLocks.isLocked('remote-new'), isFalse, reason: 'se libera al terminar');
+    expect((await db.playlistDao.getPlaylistById(id))!.remoteId, 'remote-new');
+  });
+
   group('Playlists guardadas de otros usuarios', () {
     late SyncoraDatabase db;
     late MockSupabasePlaylistRepository repo;
@@ -598,6 +655,27 @@ class MockSupabasePlaylistRepository extends SupabasePlaylistRepository {
   @override
   Future<List<Map<String, dynamic>>> fetchPublicPlaylists(List<String> ids) async =>
       [for (final id in ids) ?publicPlaylists[id]];
+
+  /// Id que devuelve `createPlaylist`; `null` = sin nube (como el real en tests).
+  String? createdId;
+  /// ¿Estaba bloqueada para el sync la playlist cuando se subieron sus pistas?
+  final List<bool> lockedWhileUploading = [];
+
+  @override
+  Future<Map<String, dynamic>> createPlaylist({
+    required String title,
+    String? description,
+    String? coverUrl,
+    bool isPublic = false,
+    bool isLiked = false,
+    bool isPinned = false,
+  }) async =>
+      createdId == null ? {} : {'id': createdId};
+
+  @override
+  Future<void> addTracksToPlaylist(String playlistId, List<Map<String, dynamic>> tracksData) async {
+    lockedWhileUploading.add(SyncLocks.isLocked(playlistId));
+  }
 
   @override
   Future<Map<String, dynamic>?> fetchPublicPlaylist(String playlistId) async {

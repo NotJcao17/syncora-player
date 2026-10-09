@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/utils/local_image_path.dart';
 import '../../../core/utils/contributor_resolver.dart';
+import '../../../data/sync/sync_locks.dart';
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/local_db/daos/listening_history_dao.dart';
 import '../../../data/local_db/daos/playlist_dao.dart';
@@ -407,29 +408,38 @@ class PlaylistImportExportService {
       remotePlaylistId = created['id']?.toString();
     } catch (_) {}
 
-    // Ronda 4: colaboradores en paralelo (el `RateLimiter` de Deezer ya
-    // acota el ritmo) y una sola inserción en lote, en vez de una petición y
-    // una escritura por pista en serie. Guardar 100 canciones de la IA pasa
-    // de ~1 min a unos segundos.
-    final contributors = await _resolveContributorsAll(deezerApi, matchedTracks);
-    await dao.appendTracksBatch(playlistId, _companions(playlistId, matchedTracks, contributors));
-    final remoteTracksPayload =
-        remotePlaylistId == null ? const <Map<String, dynamic>>[] : _remotePayload(matchedTracks, contributors, 0);
+    // Mientras se llena, el sync no la toca (mismo bug que
+    // `saveTracksAsPlaylist`: un sync a mitad de camino adoptaba la local por
+    // el título y le podaba las pistas que aún no subían).
+    final lockedRemoteId = remotePlaylistId;
+    if (lockedRemoteId != null) SyncLocks.lock(lockedRemoteId);
+    try {
+      // Ronda 4: colaboradores en paralelo (el `RateLimiter` de Deezer ya
+      // acota el ritmo) y una sola inserción en lote, en vez de una petición y
+      // una escritura por pista en serie. Guardar 100 canciones de la IA pasa
+      // de ~1 min a unos segundos.
+      final contributors = await _resolveContributorsAll(deezerApi, matchedTracks);
+      await dao.appendTracksBatch(playlistId, _companions(playlistId, matchedTracks, contributors));
+      final remoteTracksPayload =
+          remotePlaylistId == null ? const <Map<String, dynamic>>[] : _remotePayload(matchedTracks, contributors, 0);
 
-    if (remotePlaylistId != null && remoteTracksPayload.isNotEmpty) {
-      try {
-        await supabaseRepo.addTracksToPlaylist(remotePlaylistId, remoteTracksPayload);
-        final localPlaylist = await dao.getPlaylistById(playlistId);
-        if (localPlaylist != null) {
-          await dao.updatePlaylist(localPlaylist.copyWith(remoteId: Value(remotePlaylistId)));
+      if (remotePlaylistId != null && remoteTracksPayload.isNotEmpty) {
+        try {
+          await supabaseRepo.addTracksToPlaylist(remotePlaylistId, remoteTracksPayload);
+          final localPlaylist = await dao.getPlaylistById(playlistId);
+          if (localPlaylist != null) {
+            await dao.updatePlaylist(localPlaylist.copyWith(remoteId: Value(remotePlaylistId)));
+          }
+        } catch (_) {
+          // Si la subida falla, la playlist se queda sin remoteId -- estado
+          // local-only seguro, ninguna sync la toca.
         }
-      } catch (_) {
-        // Si la subida falla, la playlist se queda sin remoteId -- estado
-        // local-only seguro, ninguna sync la toca.
       }
-    }
 
-    return playlistId;
+      return playlistId;
+    } finally {
+      if (lockedRemoteId != null) SyncLocks.unlock(lockedRemoteId);
+    }
   }
 
   static Future<List<List<SyncoraArtistRef>>> _resolveContributorsAll(

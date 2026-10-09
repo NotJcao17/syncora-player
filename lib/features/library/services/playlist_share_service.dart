@@ -44,9 +44,9 @@ Future<void> sharePlaylistLink(BuildContext context, WidgetRef ref, Playlist pla
     return;
   }
   if (remoteId == null) {
-    // Se creó sin red y todavía no sube: el sync la sube y el enlace funcionará.
-    ref.read(syncServiceProvider).syncLibrary(force: true);
-    AppToast.show(context, message: 'Esta playlist todavía no está en la nube. Inténtalo en un momento.');
+    // Se está terminando de guardar (o se creó sin red). No se dispara un
+    // sync desde aquí: uno a mitad de un guardado le podaba las canciones.
+    AppToast.show(context, message: 'La playlist todavía se está guardando en la nube. Inténtalo en un momento.');
     return;
   }
 
