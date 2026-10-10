@@ -315,6 +315,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         MarqueeText(
+                                          animate: isPlaying,
                                           text: currentTrack.title,
                                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                                 fontWeight: FontWeight.w800,
@@ -335,6 +336,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                           behavior: HitTestBehavior.opaque,
                                           onTap: () => _openArtist(context, currentTrack),
                                           child: MarqueeText(
+                                            animate: isPlaying,
                                             text: currentTrack.artist,
                                             style: const TextStyle(
                                               color: AppTheme.secondary,

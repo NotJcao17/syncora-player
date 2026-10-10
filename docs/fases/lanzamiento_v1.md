@@ -142,3 +142,22 @@ compila: perderla obligaba a todos a desinstalar (y perder descargas) para actua
   diálogo de confirmación).
 - Configuración mostraba "v1.0.0" escrito a mano en la 1.0.1. Ahora lee la versión del binario
   (`package_info_plus`); entra en la siguiente versión publicada.
+
+## Pendiente para la 1.0.2: CPU en reposo (2026-10-10)
+
+Con la app en reposo en Windows el proceso se quedaba en 5-6 % de CPU (Spotify baja casi a 0).
+Dos causas encontradas leyendo el código (sin perfilar):
+
+- **`extraction_isolate.dart`**: un `Timer.periodic` de 50 ms llamaba a `executePendingJob()` de
+  QuickJS para siempre, 20 despertares por segundo sin ninguna extracción en curso. Ahora el bombeo
+  (`withJobPump`) solo corre mientras se atiende una petición; fuera de ella no hace falta porque las
+  respuestas de `dartFetch` y los `setTimeout` ya llaman a `executePendingJob` al llegar (tras un
+  `RESET_ENGINE` el código anterior ya cancelaba el temporizador para siempre y el motor seguía
+  funcionando así).
+- **`MarqueeText`**: los títulos largos se desplazaban sin parar, también en pausa, y mientras hay
+  una animación Flutter redibuja a 60 fps. Ahora solo se mueve mientras suena (`animate: isPlaying`),
+  da 3 vueltas y se queda quieto con "…", y no se mueve con la app oculta o minimizada.
+
+**Falta probarlo en dispositivo** (el motor no corre bajo `flutter test`): que la extracción y la
+búsqueda por letra sigan funcionando, y comparar la CPU en reposo antes y después.
+

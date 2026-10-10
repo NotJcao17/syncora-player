@@ -103,6 +103,7 @@ class MiniPlayer extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   MarqueeText(
+                    animate: isPlaying,
                     text: currentTrack.title,
                     style: const TextStyle(
                       color: AppTheme.background,
@@ -113,6 +114,7 @@ class MiniPlayer extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   MarqueeText(
+                    animate: isPlaying,
                     text: currentTrack.artist,
                     style: TextStyle(
                       color: AppTheme.background.withValues(alpha: 0.7),
@@ -716,6 +718,7 @@ class _DesktopTrackInfoState extends ConsumerState<_DesktopTrackInfo> {
     }
 
     return MarqueeText(
+      animate: ref.watch(isPlayingProvider),
       text: widget.currentTrack.artist,
       style: style,
     );

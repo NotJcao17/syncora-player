@@ -393,15 +393,11 @@ class ExtractionIsolate {
         }
       });
 
-      // Asegurar que el microtask queue se procese constantemente
-      pendingJobTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
-        jsRuntime?.executePendingJob();
-      });
-
       // Evaluar el motor (polyfills + youtubei.js + pegamento) y comprobar
       // que expone el contrato (Fase 8.A).
       sendLog('[IsolateJS] Cargando motor en QuickJS...');
       final bundleRes = jsRuntime.evaluate(initMessage.jsBundle);
+      jsRuntime.executePendingJob();
       if (bundleRes.isError) {
         loadReport = EngineLoadReport(ok: false, error: 'El motor no compila: ${bundleRes.stringResult}');
       } else {
@@ -419,6 +415,26 @@ class ExtractionIsolate {
     }
     initMessage.mainSendPort.send(loadReport);
 
+    // Bombeo de la cola de trabajos de QuickJS (promesas), **solo mientras se
+    // atiende una petición**. Antes era un `Timer.periodic` de 50 ms que no se
+    // apagaba nunca: 20 despertares por segundo con la app en reposo, buena
+    // parte del 5-6 % de CPU que se veía en Windows. Fuera de una petición no
+    // hace falta: las respuestas de `dartFetch` y los `setTimeout` ya llaman
+    // a `executePendingJob` al llegar. Las peticiones se atienden de una en
+    // una (`await for`), así que no hay solapamiento que cuidar.
+    Future<T> withJobPump<T>(Future<T> Function() work) async {
+      pendingJobTimer ??= Timer.periodic(const Duration(milliseconds: 50), (_) {
+        jsRuntime?.executePendingJob();
+      });
+      try {
+        return await work();
+      } finally {
+        pendingJobTimer?.cancel();
+        pendingJobTimer = null;
+        jsRuntime?.executePendingJob();
+      }
+    }
+
     // Escuchar peticiones enviadas desde el Main Isolate
     await for (final message in childReceivePort) {
       if (message is ExtractionRequest) {
@@ -433,13 +449,13 @@ class ExtractionIsolate {
             suspectEngine: true,
           );
         } else {
-          result = await _processExtraction(
-            request: message,
-            jsRuntime: jsRuntime,
-            retryPolicy: retryPolicy,
-            sendLog: sendLog,
-            clients: loadReport.clients,
-          );
+          result = await withJobPump(() => _processExtraction(
+                request: message,
+                jsRuntime: jsRuntime,
+                retryPolicy: retryPolicy,
+                sendLog: sendLog,
+                clients: loadReport.clients,
+              ));
         }
         initMessage.mainSendPort.send(result);
       } else if (message is MusicSearchRequest) {
@@ -450,13 +466,13 @@ class ExtractionIsolate {
           ));
           continue;
         }
-        final outcome = await _trySearchWithClient(
-          query: message.query,
-          client: 'WEB',
-          jsRuntime: jsRuntime,
-          sendLog: sendLog,
-          mode: 'music',
-        );
+        final outcome = await withJobPump(() => _trySearchWithClient(
+              query: message.query,
+              client: 'WEB',
+              jsRuntime: jsRuntime,
+              sendLog: sendLog,
+              mode: 'music',
+            ));
         final results = outcome.results;
         initMessage.mainSendPort.send(MusicSearchResponse(
           requestId: message.requestId,
@@ -465,8 +481,8 @@ class ExtractionIsolate {
         ));
       } else if (message == 'RESET_ENGINE') {
         sendLog('[IsolateJS] Reiniciando motor JS...');
-        pendingJobTimer?.cancel();
         jsRuntime?.evaluate('globalThis.resetJsEngine();');
+        jsRuntime?.executePendingJob();
         retryPolicy.reset('');
         sendLog('[IsolateJS] Motor JS reiniciado.');
       }
