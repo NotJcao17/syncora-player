@@ -77,6 +77,10 @@ instalado.
   manda a Inicio cualquier `syncoraplayer://` que llegue de todos modos.
 - **Windows con la app ya abierta no navegaba**: `main.cpp` reenviaba el enlace con `dwData = 0`, y
   `app_links` solo acepta `APPLINK_MSG_ID` (`WM_USER + 2`); lo ignoraba sin error.
+- **Windows: abrir un enlace con la app maximizada la dejaba en tamaño normal.** `main.cpp` hacía
+  `ShowWindow(SW_SHOW)` sobre la ventana existente. Ahora solo la restaura si está minimizada (a
+  maximizada si lo estaba, `WPF_RESTORETOMAXIMIZED`) y si no, solo la trae al frente. Verificado
+  con un script que maximiza/minimiza la ventana y lanza una segunda instancia con el enlace.
 - **Guardar una copia y compartirla a la vez desordenaba las canciones**: compartir sin `remoteId`
   disparaba un `syncLibrary`, que encontraba la remota recién creada y vacía, adoptaba la local por
   el título y le podaba las pistas que aún no subían. Ahora `saveTracksAsPlaylist` y

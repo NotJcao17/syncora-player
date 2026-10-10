@@ -20,10 +20,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     // Another instance is running! Find its HWND window handle
     HWND existing_hwnd = ::FindWindow(L"FLUTTER_RUNNER_WIN32_WINDOW", NULL);
     if (existing_hwnd != NULL) {
+      // Solo se toca el tamaño si estaba minimizada, y entonces vuelve a como
+      // estaba (maximizada o no). Un ShowWindow(SW_SHOW) sobre la ventana
+      // maximizada la dejaba en tamaño normal al abrir un enlace compartido.
       if (::IsIconic(existing_hwnd)) {
-        ::ShowWindow(existing_hwnd, SW_RESTORE);
-      } else {
-        ::ShowWindow(existing_hwnd, SW_SHOW);
+        WINDOWPLACEMENT placement = {sizeof(WINDOWPLACEMENT)};
+        ::GetWindowPlacement(existing_hwnd, &placement);
+        ::ShowWindow(existing_hwnd, (placement.flags & WPF_RESTORETOMAXIMIZED)
+                                        ? SW_SHOWMAXIMIZED
+                                        : SW_RESTORE);
       }
       ::SetForegroundWindow(existing_hwnd);
 
