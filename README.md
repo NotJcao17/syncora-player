@@ -1,17 +1,33 @@
 <div align="center">
 
-# 🎵 Syncora Player
+<img src="docs/screenshots/logo.png" width="96" alt="Syncora Player logo">
 
-**A free, open-source music player for Windows and Android.**
+# Syncora Player
 
-*Stream public audio. Own your library. No ads, no subscriptions.*
+**A free, open-source music player for Android and Windows.**
 
+*No ads, no subscriptions, no account required.*
+
+<a href="https://github.com/NotJcao17/syncora-player/releases/latest/download/Syncora.apk"><img src="https://img.shields.io/badge/Download-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download for Android"></a>
+<a href="https://github.com/NotJcao17/syncora-player/releases/latest/download/SyncoraSetup.exe"><img src="https://img.shields.io/badge/Download-Windows-0078D4?style=for-the-badge&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0yIDJoOS41djkuNUgyek0xMi41IDJIMjJ2OS41aC05LjV6TTIgMTIuNWg5LjVWMjJIMnpNMTIuNSAxMi41SDIyVjIyaC05LjV6Ii8%2BPC9zdmc%2B" alt="Download for Windows"></a>
+<a href="https://syncoraplayer.app"><img src="https://img.shields.io/badge/Website-syncoraplayer.app-6366F1?style=for-the-badge" alt="Website: syncoraplayer.app"></a>
+
+<sub>Android 7.0 or newer · Windows 10/11 (64-bit) · <a href="https://github.com/NotJcao17/syncora-player/releases">All releases</a></sub>
+
+<br><br>
+
+[![Latest release](https://img.shields.io/github/v/release/NotJcao17/syncora-player?label=release&color=6366F1)](https://github.com/NotJcao17/syncora-player/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/NotJcao17/syncora-player/total?color=6366F1)](https://github.com/NotJcao17/syncora-player/releases)
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows-brightgreen)](https://syncoraplayer.app)
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
-[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white)](https://dart.dev)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows-brightgreen)](https://flutter.dev)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 
-> **Download**: *(coming soon)*
+<br>
+
+<img src="docs/screenshots/reproductor.webp" width="200" alt="Now playing">&nbsp;
+<img src="docs/screenshots/inicio.webp" width="200" alt="Home">&nbsp;
+<img src="docs/screenshots/ia-resultado.webp" width="200" alt="Playlist created with AI">&nbsp;
+<img src="docs/screenshots/wrapped-resumen.webp" width="200" alt="Wrapped summary card">
 
 </div>
 
@@ -30,7 +46,38 @@ The core philosophy: **privacy-first, open source, polished design, zero cost to
 > infrastructure. Streaming, downloads and the fully offline **no-account mode are unlimited** for
 > everyone. Cloud accounts (sync across devices and the AI features) are capped at the **first 250
 > signups** to stay inside the free database tier; the cap can be raised at any time without a
-> redeploy. Details in [Documento_Maestro.md §4.5](docs/Documento_Maestro.md#45-límite-de-cuentas-y-modo-sin-cuenta-decisión-de-producto).
+> redeploy.
+
+---
+
+## 📸 Screenshots
+
+<div align="center">
+
+<img src="docs/screenshots/playlist.webp" width="200" alt="A downloaded playlist">&nbsp;
+<img src="docs/screenshots/cola.webp" width="200" alt="Queue with Improve queue">&nbsp;
+<img src="docs/screenshots/descubrir.webp" width="200" alt="Discover: 30-second previews">&nbsp;
+<img src="docs/screenshots/estadisticas.webp" width="200" alt="Listening stats">
+
+<br><br>
+
+<img src="docs/screenshots/windows.webp" width="820" alt="Syncora Player on Windows">
+
+<sub>Screenshots use a demo account with sample data.</sub>
+
+</div>
+
+---
+
+## 📥 Install
+
+| Platform | Download | Notes |
+| :--- | :--- | :--- |
+| **Android** 7.0+ | [`Syncora.apk`](https://github.com/NotJcao17/syncora-player/releases/latest/download/Syncora.apk) | Allow installing apps from unknown sources when Android asks. |
+| **Windows** 10/11 (64-bit) | [`SyncoraSetup.exe`](https://github.com/NotJcao17/syncora-player/releases/latest/download/SyncoraSetup.exe) | If SmartScreen warns, choose *More info → Run anyway* (the installer is not code-signed). |
+
+Updates install over the previous version and keep your library. Privacy notice and terms:
+[syncoraplayer.app](https://syncoraplayer.app).
 
 ---
 
@@ -163,7 +210,7 @@ syncora-player/
 ├── cloudflare/image-worker/    # Worker that serves custom covers and photos from R2
 ├── .github/workflows/          # Engine publishing, canary and keep-alive jobs
 ├── test/                       # Unit and widget tests
-└── docs/                       # Master document, pitfalls, per-phase notes, manual test matrix
+└── docs/                       # Architecture notes, pitfalls, per-phase notes, manual test matrix
 ```
 
 ---
@@ -172,7 +219,7 @@ syncora-player/
 
 ### Prerequisites
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) 3.x
-- Android device or emulator (API 21+) **or** Windows 10+
+- Android device or emulator (API 24+ / Android 7.0) **or** Windows 10+
 - Node.js 20+ only if you want to rebuild the extraction engine
 
 ### Setup
@@ -230,16 +277,20 @@ enable developer mode, turn on **Unknown sources**, and connect to a car or to t
 
 ## ⚖️ Legal Disclaimer
 
-**Syncora Player** is developed by **Juan Carlos Orozco Nieto** for educational, personal, and
-research purposes only.
+Syncora Player and its contributors **do not host, own, or distribute** any copyrighted audio
+content. The app is a client: catalog metadata comes from the public Deezer API, lyrics from
+LRCLib, and audio is resolved from public sources on each user's own device at playback or download
+time. All songs, recordings, artwork, lyrics and trademarks remain the property of their respective
+owners and are protected by applicable copyright laws.
 
-- Syncora Player **does not host, store, upload, or distribute** any audio or video files or
-  copyrighted material.
-- All media streaming requests are performed client-side by the end-user using public web
-  protocols.
-- The author and contributors are **not responsible** for how end-users choose to use this
-  application, nor for any potential violations of third-party terms of service or copyright laws
-  caused by individual usage.
+Downloads are meant for offline listening inside the app, for personal, non-commercial use. Users
+are solely responsible for ensuring that their use of the app complies with local laws, copyright
+regulations, and the terms of service of the respective content providers. The developers do not
+encourage or endorse copyright infringement and assume no liability for misuse of the software.
+
+Full terms (Spanish): [syncoraplayer.app/terminos](https://syncoraplayer.app/terminos/) ·
+Privacy notice: [syncoraplayer.app/privacidad](https://syncoraplayer.app/privacidad/) ·
+Contact: contacto@syncoraplayer.app
 
 ---
 
