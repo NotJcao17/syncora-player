@@ -90,6 +90,7 @@ dependencies:
   # puro) y el SHA-256 de cada motor descargado. Ver docs/fases/fase_8.md.
   cryptography: ^2.9.0
   crypto: ^3.0.7
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:

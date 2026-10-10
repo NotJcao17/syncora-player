@@ -40,7 +40,10 @@ Al subir la mayor se reinician la menor y el parche a 0; al subir la menor se re
 El build nunca se reinicia.
 
 El instalador de Windows lee la versión de esta misma línea (`installer/build_release.ps1` se la
-pasa a Inno Setup), así que no se escribe en ningún otro lado.
+pasa a Inno Setup), así que no se escribe en ningún otro lado. Configuración también la muestra
+sola: la lee del binario con `package_info_plus` (`appVersionProvider` en `settings_screen.dart`).
+**Nunca escribir el número a mano en la app**: hasta la 1.0.1 estaba fijo en Configuración y esa
+versión siguió diciendo "v1.0.0".
 
 ## Pasos
 

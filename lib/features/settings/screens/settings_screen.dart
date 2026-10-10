@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -413,16 +414,22 @@ class SettingsScreen extends ConsumerWidget {
               children: [
                 Icon(AppIcons.broken(SolarIcons.InfoCircle), color: AppTheme.primary, size: 22),
                 const SizedBox(width: 16),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // La versión sale del propio binario (`version:` de
+                      // pubspec.yaml al compilar). Antes estaba escrita a mano y
+                      // la 1.0.1 siguió diciendo v1.0.0.
                       Text(
-                        'Syncora Player v1.0.0',
-                        style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 15),
+                        switch (ref.watch(appVersionProvider).value) {
+                          final v? => 'Syncora Player v$v',
+                          null => 'Syncora Player',
+                        },
+                        style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 15),
                       ),
-                      SizedBox(height: 2),
-                      Text(
+                      const SizedBox(height: 2),
+                      const Text(
                         '100% Gratuito, Privado y Resiliente',
                         style: TextStyle(color: AppTheme.secondary, fontSize: 13),
                       ),
@@ -1024,3 +1031,9 @@ class _AiByokSectionState extends ConsumerState<_AiByokSection> {
     );
   }
 }
+
+/// Versión de la app instalada (p. ej. `1.0.1`), leída del binario.
+final appVersionProvider = FutureProvider<String>((ref) async {
+  final info = await PackageInfo.fromPlatform();
+  return info.version;
+});

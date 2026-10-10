@@ -88,7 +88,8 @@ pública la playlist (con confirmación); una playlist guardada de otro usuario 
 solo lectura en todas partes y el sync de las propias la ignora; la migración 24 cierra un agujero
 de RLS en `playlist_tracks` (cualquiera podía meter canciones en playlists ajenas); y el APK se firma
 con `android/app/syncora-release.jks` + `android/key.properties` (fuera de git, con respaldo): sin
-ellos el release falla en vez de firmarse con la llave de debug.
+ellos el release falla en vez de firmarse con la llave de debug. La versión que muestra Configuración
+sale del binario (`package_info_plus`): nunca escribirla a mano (la 1.0.1 salió diciendo v1.0.0).
 
 ### Estado actual (última actualización: 2026-10-08)
 

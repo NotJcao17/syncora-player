@@ -140,4 +140,5 @@ compila: perderla obligaba a todos a desinstalar (y perder descargas) para actua
   guardados. El historial de escucha se baja con un tope deliberado de 1000 (solo inserta, no poda).
 - "Compartir enlace" ya no muestra el subtítulo "Se volverá pública" (la advertencia sigue en el
   diálogo de confirmación).
-
+- Configuración mostraba "v1.0.0" escrito a mano en la 1.0.1. Ahora lee la versión del binario
+  (`package_info_plus`); entra en la siguiente versión publicada.
