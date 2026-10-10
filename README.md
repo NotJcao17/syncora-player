@@ -23,10 +23,10 @@
 
 <br>
 
-<img src="docs/screenshots/reproductor.webp" height="440" alt="Now playing">&nbsp;
-<img src="docs/screenshots/inicio.webp" height="440" alt="Home">&nbsp;
-<img src="docs/screenshots/ia-resultado.webp" height="440" alt="Playlist created with AI">&nbsp;
-<img src="docs/screenshots/wrapped-resumen.webp" height="440" alt="Wrapped summary card">
+<img src="docs/screenshots/reproductor.webp" height="400" alt="Now playing">&nbsp;
+<img src="docs/screenshots/inicio.webp" height="400" alt="Home">&nbsp;
+<img src="docs/screenshots/ia-resultado.webp" height="400" alt="Playlist created with AI">&nbsp;
+<img src="docs/screenshots/wrapped-resumen.webp" height="400" alt="Wrapped summary card">
 
 </div>
 
@@ -53,10 +53,10 @@ The core philosophy: **privacy-first, open source, polished design, zero cost to
 
 <div align="center">
 
-<img src="docs/screenshots/playlist.webp" height="440" alt="A downloaded playlist">&nbsp;
-<img src="docs/screenshots/cola.webp" height="440" alt="Queue with Improve queue">&nbsp;
-<img src="docs/screenshots/descubrir.webp" height="440" alt="Discover: 30-second previews">&nbsp;
-<img src="docs/screenshots/estadisticas.webp" height="440" alt="Listening stats">
+<img src="docs/screenshots/playlist.webp" height="400" alt="A downloaded playlist">&nbsp;
+<img src="docs/screenshots/cola.webp" height="400" alt="Queue with Improve queue">&nbsp;
+<img src="docs/screenshots/descubrir.webp" height="400" alt="Discover: 30-second previews">&nbsp;
+<img src="docs/screenshots/estadisticas.webp" height="400" alt="Listening stats">
 
 <br><br>
 
