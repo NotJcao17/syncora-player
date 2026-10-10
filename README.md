@@ -16,7 +16,7 @@
 
 
 [![Latest release](https://img.shields.io/github/v/release/NotJcao17/syncora-player?label=release&color=6366F1)](https://github.com/NotJcao17/syncora-player/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/NotJcao17/syncora-player/latest/total?label=downloads&color=6366F1)](https://github.com/NotJcao17/syncora-player/releases)
+[![Downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fsyncoraplayer.app%2Fapi%2Fdownloads)](https://github.com/NotJcao17/syncora-player/releases)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows-brightgreen)](https://syncoraplayer.app)
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
