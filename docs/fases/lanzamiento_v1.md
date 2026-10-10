@@ -158,6 +158,14 @@ Dos causas encontradas leyendo el código (sin perfilar):
   una animación Flutter redibuja a 60 fps. Ahora solo se mueve mientras suena (`animate: isPlaying`),
   da 3 vueltas y se queda quieto con "…", y no se mueve con la app oculta o minimizada.
 
-**Falta probarlo en dispositivo** (el motor no corre bajo `flutter test`): que la extracción y la
-búsqueda por letra sigan funcionando, y comparar la CPU en reposo antes y después.
+**Verificado contra el motor real** antes de publicar la 1.0.2: 3 extracciones (621/143/136 ms), la
+búsqueda de YouTube Music (20 resultados) y otra extracción tras unos segundos en reposo, todas
+bien. Falta comparar la CPU en reposo en dispositivo.
+
+**Cómo correr el motor real bajo `flutter test` en Windows** (contradice lo que dice la cabecera de
+`multi_song_extraction_test.dart`): compilar una vez (`flutter build windows --release
+--no-tree-shake-icons`) y poner la carpeta del build en el `PATH`, donde está
+`quickjs_c_bridge.dll`:
+`PATH="$PWD/build/windows/x64/runner/Release:$PATH" flutter test <archivo>` (Git Bash). Así se
+probó con un test temporal que usa `ExtractionServiceReal`.
 
