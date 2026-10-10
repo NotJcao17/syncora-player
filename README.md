@@ -14,7 +14,6 @@
 
 <sub>Android 7.0 or newer · Windows 10/11 (64-bit) · <a href="https://github.com/NotJcao17/syncora-player/releases">All releases</a></sub>
 
-<br><br>
 
 [![Latest release](https://img.shields.io/github/v/release/NotJcao17/syncora-player?label=release&color=6366F1)](https://github.com/NotJcao17/syncora-player/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/NotJcao17/syncora-player/total?color=6366F1)](https://github.com/NotJcao17/syncora-player/releases)
@@ -24,10 +23,10 @@
 
 <br>
 
-<img src="docs/screenshots/reproductor.webp" width="200" alt="Now playing">&nbsp;
-<img src="docs/screenshots/inicio.webp" width="200" alt="Home">&nbsp;
-<img src="docs/screenshots/ia-resultado.webp" width="200" alt="Playlist created with AI">&nbsp;
-<img src="docs/screenshots/wrapped-resumen.webp" width="200" alt="Wrapped summary card">
+<img src="docs/screenshots/reproductor.webp" height="440" alt="Now playing">&nbsp;
+<img src="docs/screenshots/inicio.webp" height="440" alt="Home">&nbsp;
+<img src="docs/screenshots/ia-resultado.webp" height="440" alt="Playlist created with AI">&nbsp;
+<img src="docs/screenshots/wrapped-resumen.webp" height="440" alt="Wrapped summary card">
 
 </div>
 
@@ -54,10 +53,10 @@ The core philosophy: **privacy-first, open source, polished design, zero cost to
 
 <div align="center">
 
-<img src="docs/screenshots/playlist.webp" width="200" alt="A downloaded playlist">&nbsp;
-<img src="docs/screenshots/cola.webp" width="200" alt="Queue with Improve queue">&nbsp;
-<img src="docs/screenshots/descubrir.webp" width="200" alt="Discover: 30-second previews">&nbsp;
-<img src="docs/screenshots/estadisticas.webp" width="200" alt="Listening stats">
+<img src="docs/screenshots/playlist.webp" height="440" alt="A downloaded playlist">&nbsp;
+<img src="docs/screenshots/cola.webp" height="440" alt="Queue with Improve queue">&nbsp;
+<img src="docs/screenshots/descubrir.webp" height="440" alt="Discover: 30-second previews">&nbsp;
+<img src="docs/screenshots/estadisticas.webp" height="440" alt="Listening stats">
 
 <br><br>
 
