@@ -123,3 +123,21 @@ compila: perderla obligaba a todos a desinstalar (y perder descargas) para actua
 - [ ] Lo mismo en Windows con la app cerrada y con la app abierta.
 - [ ] Sin cuenta: abrir un enlace y guardar crea una copia editable.
 - [ ] "Guardar una copia" y "Quitar de tu biblioteca" desde una guardada.
+
+## 1.0.1 (2026-10-10)
+
+- **Importar una playlist larga en un dispositivo la llenaba de duplicados en el otro (H-L2).** Mientras
+  la importación subía bloques, el otro dispositivo sincronizaba la misma playlist por dos caminos a
+  la vez (`syncLibrary` y `syncPlaylistDetail`); los dos calculaban qué faltaba antes de que el otro
+  insertara y los dos lo insertaban. Reproducido en un test: con el código anterior, 3 syncs
+  simultáneos de 700 canciones dejaban 2100. Ahora las dos rutas usan `_reconcileTracks`, serializada
+  por playlist, que además **quita duplicados locales** (antes ni recargando se iban) y agrega lo que
+  falta en un solo lote (`appendTracksBatch`).
+- **Límite de 1000 filas de Supabase (H-L3).** `fetchPlaylistTracks` pedía todo en una consulta y
+  `max_rows` corta en 1000: una playlist o "Tus me gusta" con más canciones llegaba recortada al otro
+  dispositivo y el sync **borraba** allí el resto. Ahora se pide por páginas
+  (`SupabasePlaylistRepository.fetchAllPages`, orden total con `id`). Lo mismo con los álbumes
+  guardados. El historial de escucha se baja con un tope deliberado de 1000 (solo inserta, no poda).
+- "Compartir enlace" ya no muestra el subtítulo "Se volverá pública" (la advertencia sigue en el
+  diálogo de confirmación).
+

@@ -80,9 +80,6 @@ List<Widget> playlistShareMenuItems({
     ListTile(
       leading: Icon(AppIcons.broken(SolarIcons.Share), color: AppTheme.primary),
       title: const Text('Compartir enlace', style: style),
-      subtitle: playlist.isPublic
-          ? null
-          : const Text('Se volverá pública', style: TextStyle(color: AppTheme.secondary, fontSize: 12)),
       onTap: () {
         Navigator.pop(menuContext);
         sharePlaylistLink(context, ref, playlist);

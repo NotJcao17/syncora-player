@@ -185,37 +185,7 @@ class SyncService {
       final localPlaylist = await _playlistDao.getPlaylistByRemoteId(playlistRemoteId);
 
       if (localPlaylist != null) {
-        final localTracks = await _playlistDao.getTracksOrdered(localPlaylist.id);
-        final localTrackIds = localTracks.map((t) => t.trackId).toSet();
-        final remoteTrackIds = remoteTracks.map((t) => (t['track_id'] as num).toInt()).toSet();
-
-        // Pruning local tracks not in remote
-        for (final localTrack in localTracks) {
-          if (!remoteTrackIds.contains(localTrack.trackId)) {
-            await _playlistDao.removeTrackFromPlaylist(localPlaylist.id, localTrack.trackId);
-          }
-        }
-
-        // Adding remote tracks not in local
-        for (final trackMap in remoteTracks) {
-          final trackId = (trackMap['track_id'] as num).toInt();
-
-          if (!localTrackIds.contains(trackId)) {
-            await _playlistDao.addTrackToPlaylist(
-              playlistId: localPlaylist.id,
-              trackId: trackId,
-              artistId: (trackMap['artist_id'] as num?)?.toInt() ?? 0,
-              albumId: (trackMap['album_id'] as num?)?.toInt() ?? 0,
-              title: trackMap['title'] as String? ?? '',
-              artistName: trackMap['artist_name'] as String? ?? '',
-              albumName: trackMap['album_name'] as String? ?? '',
-              coverUrl: trackMap['cover_url'] as String? ?? '',
-              durationMs: (trackMap['duration_ms'] as num?)?.toInt() ?? 0,
-              genre: trackMap['genre'] as String?,
-              contributorsJson: trackMap['contributors_json'] as String?,
-            );
-          }
-        }
+        await _reconcileTracks(localPlaylist.id, remoteTracks);
       }
       _cacheManager.markSynced(cacheKey);
     } catch (_) {
@@ -271,6 +241,62 @@ class SyncService {
     }
     _cacheManager.markSynced('listening_history_push');
     await syncListeningHistory();
+  }
+
+  /// Reconciliaciones de pistas en curso, por playlist local.
+  ///
+  /// Bug real (2026-10-09, importación de 700 canciones en otro dispositivo):
+  /// el sync de la biblioteca y el de la playlist abierta corrían a la vez
+  /// sobre la misma playlist. Los dos calculaban qué faltaba antes de que el
+  /// otro insertara, y los dos insertaban lo mismo: desde cierta canción en
+  /// adelante, todo duplicado. Ahora la segunda espera a la primera y parte de
+  /// lo que esta ya dejó.
+  final Map<int, Future<void>> _tracksTail = {};
+
+  Future<void> _reconcileTracks(int localPlaylistId, List<Map<String, dynamic>> remoteRows) {
+    final previous = _tracksTail[localPlaylistId] ?? Future<void>.value();
+    final run = previous.then((_) => _reconcileTracksNow(localPlaylistId, _dedupeRemoteTracks(remoteRows)));
+    final tail = run.then((_) {}, onError: (_) {});
+    _tracksTail[localPlaylistId] = tail;
+    tail.whenComplete(() {
+      if (identical(_tracksTail[localPlaylistId], tail)) _tracksTail.remove(localPlaylistId);
+    });
+    return run;
+  }
+
+  /// Deja las pistas locales iguales a las remotas (como conjunto): quita las
+  /// que ya no están, quita duplicados locales (la nube manda y ahí no los
+  /// hay; antes un duplicado local no se iba nunca, ni recargando) y agrega
+  /// las que faltan en un solo lote.
+  Future<void> _reconcileTracksNow(int localPlaylistId, List<Map<String, dynamic>> remoteTracks) async {
+    final remoteTrackIds = remoteTracks.map((t) => (t['track_id'] as num).toInt()).toSet();
+    final localTracks = await _playlistDao.getTracksOrdered(localPlaylistId);
+
+    final kept = <int>{};
+    for (final localTrack in localTracks) {
+      if (!remoteTrackIds.contains(localTrack.trackId) || !kept.add(localTrack.trackId)) {
+        await _playlistDao.removeTrackEntry(localTrack.id);
+      }
+    }
+
+    final missing = [
+      for (final t in remoteTracks)
+        if (!kept.contains((t['track_id'] as num).toInt()))
+          PlaylistTracksCompanion.insert(
+            playlistId: localPlaylistId,
+            trackId: (t['track_id'] as num).toInt(),
+            artistId: (t['artist_id'] as num?)?.toInt() ?? 0,
+            albumId: (t['album_id'] as num?)?.toInt() ?? 0,
+            title: t['title'] as String? ?? '',
+            artistName: t['artist_name'] as String? ?? '',
+            albumName: t['album_name'] as String? ?? '',
+            coverUrl: t['cover_url'] as String? ?? '',
+            durationMs: (t['duration_ms'] as num?)?.toInt() ?? 0,
+            genre: Value(t['genre'] as String?),
+            contributorsJson: Value(t['contributors_json'] as String?),
+          ),
+    ];
+    await _playlistDao.appendTracksBatch(localPlaylistId, missing);
   }
 
   /// Quita pistas repetidas (mismo `track_id`) de lo que llega del servidor.
@@ -424,41 +450,7 @@ class SyncService {
         }
       }
 
-      final remoteTracks = _dedupeRemoteTracks(
-        await _playlistRepo.fetchPlaylistTracks(remoteId),
-      );
-      final localTracks =
-          await _playlistDao.getTracksOrdered(localPlaylistId);
-      final localTrackIds = localTracks.map((t) => t.trackId).toSet();
-      final remoteTrackIds = remoteTracks.map((t) => (t['track_id'] as num).toInt()).toSet();
-
-      // Pruning local tracks not in remote
-      for (final localTrack in localTracks) {
-        if (!remoteTrackIds.contains(localTrack.trackId)) {
-          await _playlistDao.removeTrackFromPlaylist(localPlaylistId, localTrack.trackId);
-        }
-      }
-
-      // Adding remote tracks not in local
-      for (final trackMap in remoteTracks) {
-        final trackId = (trackMap['track_id'] as num).toInt();
-
-        if (!localTrackIds.contains(trackId)) {
-          await _playlistDao.addTrackToPlaylist(
-            playlistId: localPlaylistId,
-            trackId: trackId,
-            artistId: (trackMap['artist_id'] as num?)?.toInt() ?? 0,
-            albumId: (trackMap['album_id'] as num?)?.toInt() ?? 0,
-            title: trackMap['title'] as String? ?? '',
-            artistName: trackMap['artist_name'] as String? ?? '',
-            albumName: trackMap['album_name'] as String? ?? '',
-            coverUrl: trackMap['cover_url'] as String? ?? '',
-            durationMs: (trackMap['duration_ms'] as num?)?.toInt() ?? 0,
-            genre: trackMap['genre'] as String?,
-            contributorsJson: trackMap['contributors_json'] as String?,
-          );
-        }
-      }
+      await _reconcileTracks(localPlaylistId, await _playlistRepo.fetchPlaylistTracks(remoteId));
     }
 
     for (final localP in localPlaylists) {

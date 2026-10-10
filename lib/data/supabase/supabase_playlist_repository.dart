@@ -96,16 +96,42 @@ class SupabasePlaylistRepository {
         .eq('playlist_id', playlistId);
   }
 
+  /// Todas las pistas de la playlist, en orden.
+  ///
+  /// Supabase devuelve como mucho 1000 filas por consulta (`max_rows`). Antes
+  /// se pedía todo de una vez: una playlist (o "Tus me gusta") de más de 1000
+  /// canciones llegaba recortada a otro dispositivo, y el sync borraba allí
+  /// las que "faltaban". Se pide por páginas, con un orden total (`id`
+  /// desempata) para que ninguna fila se repita ni se salte entre páginas.
   Future<List<Map<String, dynamic>>> fetchPlaylistTracks(String playlistId) async {
     final client = _client;
     if (client == null) return [];
-    final response = await client
-        .from('playlist_tracks')
-        .select()
-        .eq('playlist_id', playlistId)
-        .order('order_index', ascending: true);
+    return fetchAllPages((from, to) async {
+      final response = await client
+          .from('playlist_tracks')
+          .select()
+          .eq('playlist_id', playlistId)
+          .order('order_index', ascending: true)
+          .order('id', ascending: true)
+          .range(from, to);
+      return List<Map<String, dynamic>>.from(response);
+    });
+  }
 
-    return List<Map<String, dynamic>>.from(response);
+  /// Filas por página: el `max_rows` por defecto de Supabase.
+  static const int pageSize = 1000;
+
+  /// Junta páginas de [pageSize] filas hasta que una venga incompleta.
+  /// [fetchPage] recibe el rango inclusivo `[from, to]`, como `range()`.
+  static Future<List<Map<String, dynamic>>> fetchAllPages(
+    Future<List<Map<String, dynamic>>> Function(int from, int to) fetchPage,
+  ) async {
+    final rows = <Map<String, dynamic>>[];
+    for (var from = 0;; from += pageSize) {
+      final page = await fetchPage(from, from + pageSize - 1);
+      rows.addAll(page);
+      if (page.length < pageSize) return rows;
+    }
   }
 
   Future<Map<String, dynamic>> createPlaylist({

@@ -488,6 +488,86 @@ void main() {
     expect((await db.playlistDao.getPlaylistById(id))!.remoteId, 'remote-new');
   });
 
+  group('Pistas de playlists largas (bug de importación, 2026-10-09)', () {
+    late SyncoraDatabase db;
+    late MockSupabasePlaylistRepository repo;
+    late SyncService sync;
+
+    Map<String, dynamic> track(int id) => {'track_id': id, 'title': 'T$id', 'artist_name': 'A'};
+
+    setUp(() {
+      db = SyncoraDatabase(NativeDatabase.memory());
+      repo = MockSupabasePlaylistRepository();
+      sync = SyncService(
+        playlistRepo: repo,
+        albumRepo: SupabaseAlbumRepository(),
+        historyRepo: SupabaseHistoryRepository(),
+        playlistDao: db.playlistDao,
+        savedAlbumDao: db.savedAlbumDao,
+        listeningHistoryDao: db.listeningHistoryDao,
+        cacheManager: SyncCacheManager(),
+      );
+    });
+
+    tearDown(() async => db.close());
+
+    test('el sync de la biblioteca y el de la playlist a la vez no duplican pistas', () async {
+      final localId = await db.playlistDao.createPlaylist(title: 'Larga', remoteId: 'remote-long');
+      repo.userPlaylists = [
+        {'id': 'remote-long', 'title': 'Larga'},
+      ];
+      repo.playlistTracksMap['remote-long'] = [for (var i = 1; i <= 700; i++) track(i)];
+      repo.fetchDelay = const Duration(milliseconds: 5);
+
+      await Future.wait([
+        sync.syncLibrary(force: true),
+        sync.syncPlaylistDetail('remote-long', force: true),
+        sync.syncPlaylistDetail('remote-long', force: true),
+      ]);
+
+      final ids = (await db.playlistDao.getTracksOrdered(localId)).map((t) => t.trackId).toList();
+      expect(ids.length, 700);
+      expect(ids.toSet().length, 700);
+    });
+
+    test('un duplicado local que ya existía se limpia en el siguiente sync', () async {
+      final localId = await db.playlistDao.createPlaylist(title: 'Sucia', remoteId: 'remote-dirty');
+      for (final id in [1, 2, 2, 3, 3, 3]) {
+        await db.playlistDao.addTrackToPlaylist(
+          playlistId: localId, trackId: id, artistId: 0, albumId: 0,
+          title: 'T$id', artistName: 'A', albumName: '', coverUrl: '', durationMs: 0,
+        );
+      }
+      repo.userPlaylists = [
+        {'id': 'remote-dirty', 'title': 'Sucia'},
+      ];
+      repo.playlistTracksMap['remote-dirty'] = [track(1), track(2), track(3)];
+
+      await sync.syncPlaylistDetail('remote-dirty', force: true);
+
+      final ids = (await db.playlistDao.getTracksOrdered(localId)).map((t) => t.trackId).toList();
+      expect(ids, [1, 2, 3]);
+    });
+
+    test('fetchAllPages junta todas las páginas de 1000 (max_rows de Supabase)', () async {
+      final all = [for (var i = 0; i < 2500; i++) {'track_id': i}];
+      final ranges = <String>[];
+      final rows = await SupabasePlaylistRepository.fetchAllPages((from, to) async {
+        ranges.add('$from-$to');
+        return all.sublist(from, to + 1 > all.length ? all.length : to + 1);
+      });
+      expect(rows.length, 2500);
+      expect(ranges, ['0-999', '1000-1999', '2000-2999']);
+
+      // Justo 2000: pide una página más y llega vacía.
+      final exact = [for (var i = 0; i < 2000; i++) {'track_id': i}];
+      final rows2 = await SupabasePlaylistRepository.fetchAllPages(
+        (from, to) async => from >= exact.length ? [] : exact.sublist(from, to + 1),
+      );
+      expect(rows2.length, 2000);
+    });
+  });
+
   group('Playlists guardadas de otros usuarios', () {
     late SyncoraDatabase db;
     late MockSupabasePlaylistRepository repo;
@@ -632,6 +712,7 @@ class MockSupabasePlaylistRepository extends SupabasePlaylistRepository {
   @override
   Future<List<Map<String, dynamic>>> fetchPlaylistTracks(String playlistId) async {
     fetchPlaylistTracksCalls++;
+    if (fetchDelay > Duration.zero) await Future<void>.delayed(fetchDelay);
     return playlistTracksMap[playlistId] ?? [];
   }
 

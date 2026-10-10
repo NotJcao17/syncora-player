@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'supabase_playlist_repository.dart';
+
 class SupabaseAlbumRepository {
   bool get _isTestEnv => Platform.environment.containsKey('FLUTTER_TEST');
 
@@ -19,13 +21,18 @@ class SupabaseAlbumRepository {
     final userId = client.auth.currentUser?.id;
     if (userId == null) return [];
 
-    final response = await client
-        .from('saved_albums')
-        .select()
-        .eq('user_id', userId)
-        .order('added_at', ascending: false);
-
-    return List<Map<String, dynamic>>.from(response);
+    // Por páginas, como las pistas de una playlist: con más de 1000 álbumes
+    // (`max_rows` de Supabase) el sync podaba en local los que no llegaban.
+    return SupabasePlaylistRepository.fetchAllPages((from, to) async {
+      final response = await client
+          .from('saved_albums')
+          .select()
+          .eq('user_id', userId)
+          .order('added_at', ascending: false)
+          .order('id', ascending: true)
+          .range(from, to);
+      return List<Map<String, dynamic>>.from(response);
+    });
   }
 
   Future<void> saveAlbum(Map<String, dynamic> albumData) async {
