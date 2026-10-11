@@ -59,6 +59,13 @@ class YtSearchMatcher {
     'made famous',
     'as performed by',
     'in the style',
+    // Ronda 8 (H-R8-5): "Skyfall (Originally Perfomed By Adele)", con la
+    // errata, era el karaoke que sonaba en vez de la canción.
+    'originally perfomed',
+    'perfomed by',
+    'performed by',
+    'originally by',
+    'made popular',
     // Uploads que son la base sin voz. No siempre lo dicen en el título
     // (ver el caso "Ladders"), pero cuando lo dicen hay que descartarlos.
     'backing track',
@@ -222,6 +229,20 @@ class YtSearchMatcher {
     return 100 * matched / expectedTokens.length;
   }
 
+  static const _titleNoise = {
+    'official', 'oficial', 'audio', 'video', 'videoclip', 'clip', 'lyric', 'lyrics', 'letra', 'hd', 'hq',
+    '4k', 'visualizer', 'visualiser', 'music', 'musica', 'mv', 'm', 'v', 'version', 'original', 'full',
+    'from', 'soundtrack', 'ost',
+  };
+
+  /// Títulos de una palabra: ¿el candidato tiene palabras de más que no son
+  /// ruido típico de YouTube? Ver la regla en `_rankCandidates`.
+  static bool _hasExtraWordsForShortTitle(String expectedTitle, String candidateTitleNorm) {
+    final expected = _tokens(norm(_coreTitle(expectedTitle))).toSet();
+    if (expected.length != 1) return false;
+    return _tokens(candidateTitleNorm).any((t) => !expected.contains(t) && !_titleNoise.contains(t));
+  }
+
   /// C3: coincidencia por artista INDIVIDUAL, no por la cadena completa de
   /// colaboradores unida con comas (`DeezerTrack.artistName` la une así, y esa
   /// cadena completa no existe tal cual en ningún canal ni título real). Basta
@@ -292,6 +313,19 @@ class YtSearchMatcher {
       final artistConfirmed = fromYtMusic && !authorUnknown
           ? authorIsArtist
           : _artistConfirmed(artist, normAuthor, normTitle);
+
+      // Ronda 8 (H-R8-5): en YouTube Music otro autor conocido es otro
+      // intérprete (un cover, "SALMOS 23" de un coro, "2002" de Grace
+      // Watson). En la ronda 5 solo dejaba de confirmar al artista y con la
+      // duración en rango seguía entrando; si el master fallaba, sonaba eso.
+      // Si este catálogo no trae al artista, la búsqueda de videos sigue.
+      if (fromYtMusic && !authorUnknown && !authorIsArtist && artist.trim().isNotEmpty) continue;
+
+      // Ronda 8: con un título de una sola palabra ("23", "2002", "Maps") el
+      // solapamiento siempre es total. Sin el artista confirmado, solo vale
+      // un título que no agregue nada más que ruido ("Official Audio"):
+      // "SALMOS 23" o "Randy 23 (Video Oficial)" son otras canciones.
+      if (!artistConfirmed && _hasExtraWordsForShortTitle(title, normTitle)) continue;
 
       int score = (titleOverlap * 0.6).round();
 

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:syncora_player/core/extraction/yt_search_matcher.dart';
 
@@ -1029,5 +1032,45 @@ void main() {
       expect(top.map((c) => c.videoId), ['AQ69W-1Jb0M'],
           reason: 'un video de 33 minutos del artista no es la canción de 2:42');
     });
+    // Ronda 8 (H-R8-5): candidatos reales de YouTube Music y de videos
+  // capturados el 2026-10-11 con el motor (test/fixtures/yt_versions).
+  group('Ronda 8: versiones equivocadas con candidatos reales', () {
+    final data = jsonDecode(File('test/fixtures/yt_versions/r8_candidates.json').readAsStringSync())
+        as Map<String, dynamic>;
+    List<Map<String, dynamic>> cands(String q, String key) =>
+        (data[q][key] as List).cast<Map<String, dynamic>>();
+
+    test('Skyfall: un karaoke con "Perfomed" mal escrito no pasa; gana el master', () {
+      final top = YtSearchMatcher.pickTopCandidates(cands('Adele Skyfall', 'WEB_music'),
+          artist: 'Adele', title: 'Skyfall', durationSec: 286);
+      expect(top.map((c) => c.videoId), isNot(contains('ryDo6_kojS4')));
+      expect(top.map((c) => c.videoId), isNot(contains('ZNidK4geGjc')),
+          reason: 'en YouTube Music otro autor es otro intérprete');
+      expect(top.first.videoId, '4XWZT0bXudc');
+    });
+
+    test('23: si el master falla, no queda ningún candidato de otro artista', () {
+      final pool = [...cands('Morat 23', 'WEB_music'), ...cands('Morat 23', 'WEB_video')];
+      final top = YtSearchMatcher.pickTopCandidates(pool, artist: 'Morat', title: '23', durationSec: 187, topN: 20);
+      expect(top.first.videoId, 'P2INIp4Ic1Q');
+      expect(top.where((c) => !c.artistConfirmed).map((c) => c.title), isEmpty);
+    });
+
+    test('2002: sin covers de otros intérpretes entre los candidatos', () {
+      final pool = [...cands('Anne-Marie 2002', 'WEB_music'), ...cands('Anne-Marie 2002', 'WEB_video')];
+      final top = YtSearchMatcher.pickTopCandidates(pool,
+          artist: 'Anne-Marie', title: '2002', durationSec: 187, topN: 20);
+      expect(top.first.videoId, 'ee2mcqcGL_c');
+      expect(top.where((c) => !c.artistConfirmed).map((c) => c.title), isEmpty);
+    });
+
+    test('un título de una palabra sigue aceptando un upload exacto sin artista', () {
+      final top = YtSearchMatcher.pickTopCandidates([
+        {'videoId': 'aaaaaaaaaaa', 'title': 'Borderline (Official Audio)', 'author': 'Some Uploads', 'durationSec': 238},
+        {'videoId': 'bbbbbbbbbbb', 'title': 'Pedro Borderline', 'author': 'Other', 'durationSec': 237},
+      ], artist: 'Tame Impala', title: 'Borderline', durationSec: 237);
+      expect(top.map((c) => c.videoId), ['aaaaaaaaaaa']);
+    });
   });
+});
 }
