@@ -13,9 +13,32 @@ import '../../../data/local_db/syncora_database.dart';
 import '../../../data/models/deezer/deezer_track.dart';
 import '../../player/player_providers.dart';
 
+/// Ronda 8 (H-R8-10): la escucha en curso se vuelca a la base cada 15 s (su
+/// duración), y cada volcado emitía la lista entera otra vez: la pantalla
+/// volvía a resolver las 100 canciones en Deezer y mostraba el esqueleto, así
+/// que no dejaba leer. Aquí solo cuenta lo que se ve: qué fila, qué canción y
+/// cuándo.
 final recentListeningHistoryProvider = StreamProvider<List<ListeningHistoryData>>((ref) {
   final dao = ref.watch(listeningHistoryDaoProvider);
-  return dao.watchRecentHistory(limit: 100);
+  return dao.watchRecentHistory(limit: 100).distinct(sameVisibleHistory);
+});
+
+bool sameVisibleHistory(List<ListeningHistoryData> a, List<ListeningHistoryData> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i].id != b[i].id || a[i].trackId != b[i].trackId || a[i].listenedAt != b[i].listenedAt) return false;
+  }
+  return true;
+}
+
+/// Metadatos de una canción del historial, pedidos una sola vez por sesión
+/// (el caché de `DeezerApi` guarda solo 30 y el historial muestra 100).
+final historyTrackProvider = FutureProvider.family<DeezerTrack?, int>((ref, trackId) async {
+  try {
+    return await ref.watch(deezerApiProvider).getTrack(trackId);
+  } catch (_) {
+    return null;
+  }
 });
 
 class ResolvedHistoryItem {
@@ -30,15 +53,12 @@ final resolvedListeningHistoryProvider = FutureProvider<List<ResolvedHistoryItem
   final entries = historyAsync.value ?? [];
   if (entries.isEmpty) return const [];
 
-  final deezerApi = ref.watch(deezerApiProvider);
   final uniqueTrackIds = entries.map((e) => e.trackId).where((id) => id > 0).toSet();
 
   final trackMap = <int, DeezerTrack>{};
   await Future.wait(uniqueTrackIds.map((trackId) async {
-    try {
-      final track = await deezerApi.getTrack(trackId);
-      trackMap[trackId] = track;
-    } catch (_) {}
+    final track = await ref.watch(historyTrackProvider(trackId).future);
+    if (track != null) trackMap[trackId] = track;
   }));
 
   return entries.map((e) => ResolvedHistoryItem(data: e, track: trackMap[e.trackId])).toList();
@@ -138,6 +158,9 @@ class ListeningHistoryScreen extends ConsumerWidget {
         ],
       ),
       body: historyAsync.when(
+        // Al llegar una escucha nueva se sigue viendo la lista anterior
+        // mientras se resuelve, en vez de volver al esqueleto.
+        skipLoadingOnReload: true,
         data: (items) {
           if (items.isEmpty) {
             return const Center(
