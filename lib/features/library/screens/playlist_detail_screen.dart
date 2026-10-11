@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:isolate';
 import 'dart:io';
 import 'dart:math' as math;
@@ -19,6 +20,7 @@ import '../../../core/utils/connectivity_service.dart';
 import '../../../core/utils/contributor_resolver.dart';
 import '../widgets/playlist_share_menu_items.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/settings/app_settings_store.dart';
 import '../../../core/widgets/fast_scrollbar.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_cover_widget.dart';
@@ -49,12 +51,11 @@ import '../services/playlist_cover_service.dart';
 import '../services/folder_service.dart';
 import '../services/playlist_pin_service.dart';
 import '../widgets/edit_playlist_dialog.dart';
+import '../playlist_track_sort.dart';
 import '../widgets/folder_widgets.dart';
 import '../../../core/limits/app_limits.dart';
 import '../../../data/local_db/playlist_track_mapper.dart';
 
-enum PlaylistSortColumn { original, title, album, date, duration }
-enum PlaylistSortDirection { asc, desc, none }
 
 /// Pantalla de Detalle de Playlist (`/playlist/:id`) conectada a la base de datos Drift.
 class PlaylistDetailScreen extends ConsumerStatefulWidget {
@@ -140,14 +141,20 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   Color? _dominantColor;
   String? _extractedCoverUrl;
 
-  // Ordenamiento de canciones en playlist
-  PlaylistSortColumn _sortColumn = PlaylistSortColumn.original;
-  PlaylistSortDirection _sortDirection = PlaylistSortDirection.none;
+  // Ordenamiento de canciones en playlist. Ronda 8: se guarda por playlist.
+  late PlaylistSort _sort;
 
   @override
   void initState() {
     super.initState();
+    _sort = loadPlaylistSort(ref.read(appSettingsStoreProvider), widget.playlistId);
     _loadPlaylistHeader();
+  }
+
+  void _setSort(PlaylistSort sort) {
+    if (sort == _sort) return;
+    setState(() => _sort = sort);
+    unawaited(savePlaylistSort(ref.read(appSettingsStoreProvider), widget.playlistId, sort));
   }
 
   @override
@@ -423,52 +430,26 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     }
   }
 
-  void _cycleColumnSort(PlaylistSortColumn column) {
-    setState(() {
-      if (_sortColumn != column) {
-        _sortColumn = column;
-        _sortDirection = PlaylistSortDirection.asc;
-      } else if (_sortDirection == PlaylistSortDirection.asc) {
-        _sortDirection = PlaylistSortDirection.desc;
-      } else {
-        _sortColumn = PlaylistSortColumn.original;
-        _sortDirection = PlaylistSortDirection.none;
-      }
-    });
-  }
+  void _cycleColumnSort(PlaylistSortColumn column) => _setSort(_sort.tap(column));
 
-  List<_TrackPair> _sortTrackPairs(List<_TrackPair> pairs) {
-    if (_sortDirection == PlaylistSortDirection.none || _sortColumn == PlaylistSortColumn.original) {
-      return pairs;
+  /// Menú de móvil: elegir de nuevo el orden activo invierte la dirección.
+  void _selectMobileSort(PlaylistSort choice) {
+    if (choice.column != PlaylistSortColumn.original && _sort.isSortedBy(choice.column)) {
+      _setSort(_sort.tap(choice.column));
+    } else {
+      _setSort(choice);
     }
-
-    final sorted = List<_TrackPair>.from(pairs);
-    sorted.sort((a, b) {
-      int cmp = 0;
-      switch (_sortColumn) {
-        case PlaylistSortColumn.title:
-          cmp = a.syncoraTrack.title.toLowerCase().compareTo(b.syncoraTrack.title.toLowerCase());
-          break;
-        case PlaylistSortColumn.album:
-          cmp = (a.syncoraTrack.album ?? '').toLowerCase().compareTo((b.syncoraTrack.album ?? '').toLowerCase());
-          break;
-        case PlaylistSortColumn.date:
-          cmp = a.playlistTrack.addedAt.compareTo(b.playlistTrack.addedAt);
-          break;
-        case PlaylistSortColumn.duration:
-          final dA = a.syncoraTrack.duration ?? Duration.zero;
-          final dB = b.syncoraTrack.duration ?? Duration.zero;
-          cmp = dA.compareTo(dB);
-          break;
-        case PlaylistSortColumn.original:
-          cmp = 0;
-          break;
-      }
-      return _sortDirection == PlaylistSortDirection.asc ? cmp : -cmp;
-    });
-
-    return sorted;
   }
+
+  List<_TrackPair> _sortTrackPairs(List<_TrackPair> pairs) => sortPlaylistItems(
+        pairs,
+        _sort,
+        title: (p) => p.syncoraTrack.title,
+        artist: (p) => p.syncoraTrack.artist,
+        album: (p) => p.syncoraTrack.album ?? '',
+        addedAt: (p) => p.playlistTrack.addedAt,
+        duration: (p) => p.syncoraTrack.duration ?? Duration.zero,
+      );
 
   void _showAddAllToOtherPlaylistDialog(BuildContext context, List<PlaylistTrack> currentTracks) async {
     final dao = ref.read(playlistDaoProvider);
@@ -920,7 +901,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   /// Ordena, filtra y extrae las listas que usa la pantalla solo cuando
   /// cambian las pistas, el orden o el filtro.
   void _updateDerived(List<_TrackPair> rawPairs) {
-    final key = '${_sortColumn.name}|${_sortDirection.name}|$_trackFilterQuery';
+    final key = '${_sort.encode()}|$_trackFilterQuery';
     if (identical(rawPairs, _derivedFrom) && key == _derivedKey) return;
     _derivedFrom = rawPairs;
     _derivedKey = key;
@@ -1313,18 +1294,28 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
                                           // Ordenamiento en Móvil
                                           if (!isDesktop && sortedSyncoraTracks.isNotEmpty) ...[
-                                            PopupMenuButton<PlaylistSortColumn>(
+                                            PopupMenuButton<PlaylistSort>(
                                               useRootNavigator: true,
                                               icon: Icon(AppIcons.broken(SolarIcons.SortVertical), color: AppTheme.secondary, size: 22),
                                               tooltip: 'Ordenar canciones',
                                               color: const Color(0xFF1E1E1E),
                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0xFF2A2A2A))),
-                                              onSelected: (col) => _cycleColumnSort(col),
+                                              onSelected: _selectMobileSort,
                                               itemBuilder: (c) => [
-                                                const PopupMenuItem(value: PlaylistSortColumn.original, child: Text('Orden original', style: TextStyle(color: AppTheme.primary, fontSize: 13))),
-                                                const PopupMenuItem(value: PlaylistSortColumn.title, child: Text('Título', style: TextStyle(color: AppTheme.primary, fontSize: 13))),
-                                                const PopupMenuItem(value: PlaylistSortColumn.album, child: Text('Álbum', style: TextStyle(color: AppTheme.primary, fontSize: 13))),
-                                                const PopupMenuItem(value: PlaylistSortColumn.duration, child: Text('Duración', style: TextStyle(color: AppTheme.primary, fontSize: 13))),
+                                                _sortMenuItem('Orden original', PlaylistSort.original, _sort.isOriginal),
+                                                _sortMenuItem('Agregadas recientemente', PlaylistSort.recentlyAdded, _sort.isRecentlyAdded),
+                                                for (final (label, column) in const [
+                                                  ('Título', PlaylistSortColumn.title),
+                                                  ('Artista', PlaylistSortColumn.artist),
+                                                  ('Álbum', PlaylistSortColumn.album),
+                                                  ('Duración', PlaylistSortColumn.duration),
+                                                ])
+                                                  _sortMenuItem(
+                                                    label,
+                                                    PlaylistSort(column, PlaylistSortDirection.asc),
+                                                    _sort.isSortedBy(column),
+                                                    descending: _sort.isSortedBy(column) && _sort.direction == PlaylistSortDirection.desc,
+                                                  ),
                                               ],
                                             ),
                                             const SizedBox(width: 8),
@@ -1561,9 +1552,21 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                                 flex: 3,
                                                 child: Padding(
                                                   padding: const EdgeInsets.only(left: 60),
-                                                  child: _buildDesktopColumnHeader(
-                                                    label: 'TÍTULO',
-                                                    column: PlaylistSortColumn.title,
+                                                  child: Row(
+                                                    children: [
+                                                      _buildDesktopColumnHeader(
+                                                        label: 'TÍTULO',
+                                                        column: PlaylistSortColumn.title,
+                                                      ),
+                                                      const Padding(
+                                                        padding: EdgeInsets.symmetric(horizontal: 6),
+                                                        child: Text('·', style: TextStyle(color: AppTheme.muted, fontSize: 11)),
+                                                      ),
+                                                      _buildDesktopColumnHeader(
+                                                        label: 'ARTISTA',
+                                                        column: PlaylistSortColumn.artist,
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
                                               ),
@@ -1810,6 +1813,34 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     );
   }
 
+  PopupMenuItem<PlaylistSort> _sortMenuItem(String label, PlaylistSort value, bool selected, {bool descending = false}) {
+    return PopupMenuItem<PlaylistSort>(
+      value: value,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: AppTheme.primary,
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+              ),
+            ),
+          ),
+          if (selected)
+            Icon(
+              value.column == PlaylistSortColumn.original
+                  ? AppIcons.bold(SolarIcons.CheckCircle)
+                  : (descending ? AppIcons.broken(SolarIcons.AltArrowDown) : AppIcons.broken(SolarIcons.AltArrowUp)),
+              color: AppTheme.primary,
+              size: 16,
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDesktopColumnHeader({
     required String label,
     required PlaylistSortColumn column,
@@ -1817,8 +1848,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     double? width,
     Alignment alignment = Alignment.centerLeft,
   }) {
-    final isSorted = _sortColumn == column && _sortDirection != PlaylistSortDirection.none;
-    final sortIcon = _sortDirection == PlaylistSortDirection.asc
+    // En "#" la flecha marca "Agregadas recientemente" (el orden al revés).
+    final isSorted = column == PlaylistSortColumn.original ? _sort.isRecentlyAdded : _sort.isSortedBy(column);
+    final sortIcon = _sort.direction == PlaylistSortDirection.asc
         ? AppIcons.broken(SolarIcons.AltArrowUp)
         : AppIcons.broken(SolarIcons.AltArrowDown);
 
