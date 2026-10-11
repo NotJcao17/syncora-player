@@ -19,6 +19,7 @@ import '../../../core/utils/connectivity_service.dart';
 import '../../../core/utils/contributor_resolver.dart';
 import '../widgets/playlist_share_menu_items.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/fast_scrollbar.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/playlist_cover_widget.dart';
 import '../../../core/widgets/track_cover_image.dart';
@@ -1027,7 +1028,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         // Ronda 5: barra arrastrable para bajar rápido en
                         // playlists largas en móvil (en escritorio ya hay
                         // barra de desplazamiento por defecto).
-                        child: _FastScrollbar(
+                        child: FastScrollbar(
                           controller: _listScrollController,
                           enabled: !isDesktop && tracks.length > 40,
                           child: CustomScrollView(
@@ -1862,36 +1863,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
     return Align(
       alignment: alignment,
-      child: child,
-    );
-  }
-}
-
-/// Barra de desplazamiento arrastrable para listas largas en móvil (ronda 5).
-///
-/// Aparece al desplazarse y se puede agarrar para saltar a cualquier punto.
-/// La zona táctil del pulgar llega a 48 dp aunque se dibuje fino.
-class _FastScrollbar extends StatelessWidget {
-  const _FastScrollbar({required this.controller, required this.enabled, required this.child});
-
-  final ScrollController controller;
-  final bool enabled;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!enabled) return child;
-    return RawScrollbar(
-      controller: controller,
-      interactive: true,
-      thickness: 6,
-      radius: const Radius.circular(3),
-      minThumbLength: 56,
-      thumbColor: AppTheme.primary.withValues(alpha: 0.55),
-      crossAxisMargin: 3,
-      padding: EdgeInsets.only(top: MediaQuery.viewPaddingOf(context).top + 64, bottom: 16),
-      fadeDuration: const Duration(milliseconds: 250),
-      timeToFade: const Duration(milliseconds: 1200),
       child: child,
     );
   }

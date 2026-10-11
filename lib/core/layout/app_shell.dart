@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:audio_service/audio_service.dart' show AudioService;
 import 'package:go_router/go_router.dart';
 import '../navigation/shared_playlist_links.dart';
 import '../navigation/app_router.dart';
@@ -31,6 +32,7 @@ import '../../features/library/services/folder_service.dart';
 import '../../features/library/widgets/folder_widgets.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
+import '../navigation/safe_navigation.dart' show isOnFullscreenPlayer;
 import '../../features/player/syncora_player_controller.dart';
 import '../../features/player/widgets/desktop_lyrics_view.dart';
 import '../../features/player/widgets/mini_player.dart';
@@ -80,6 +82,19 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (gate != null) unawaited(gate());
   }
 
+  /// Ronda 8: tocar el reproductor de la notificación o de la pantalla de
+  /// bloqueo abre el reproductor a pantalla completa (antes solo abría la app
+  /// donde estuviera).
+  StreamSubscription<bool>? _notificationClickSub;
+
+  void _openPlayerFromNotification() {
+    if (!mounted) return;
+    if (ref.read(currentTrackProvider) == null) return;
+    final router = GoRouter.of(context);
+    if (isOnFullscreenPlayer(router)) return;
+    router.push('/player');
+  }
+
   void _openPendingSharedPlaylist() {
     final id = pendingSharedPlaylist.value;
     if (id == null || !mounted) return;
@@ -95,6 +110,11 @@ class _AppShellState extends ConsumerState<AppShell> {
     // que llegó antes de que existiera el shell y los que lleguen después.
     pendingSharedPlaylist.addListener(_openPendingSharedPlaylist);
     WidgetsBinding.instance.addPostFrameCallback((_) => _openPendingSharedPlaylist());
+    if (!kIsWeb && Platform.isAndroid) {
+      _notificationClickSub = AudioService.notificationClicked
+          .where((clicked) => clicked)
+          .listen((_) => WidgetsBinding.instance.addPostFrameCallback((_) => _openPlayerFromNotification()));
+    }
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.addHandler(_handleDesktopKeyEvent);
     }
@@ -187,6 +207,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   void dispose() {
     pendingSharedPlaylist.removeListener(_openPendingSharedPlaylist);
+    _notificationClickSub?.cancel();
     _lifecycle?.dispose();
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.removeHandler(_handleDesktopKeyEvent);

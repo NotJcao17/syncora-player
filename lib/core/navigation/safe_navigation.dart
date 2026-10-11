@@ -43,6 +43,8 @@ Future<void> navigateSafely(BuildContext context, String location) async {
 /// `push('/player')`, la `uri` sigue siendo la de la pantalla base ('/'), y
 /// por eso la primera versión de este helper nunca cerraba el reproductor y
 /// seguía apilando el shell encima de él (verificado con el test).
+bool isOnFullscreenPlayer(GoRouter router) => _isOnFullscreenPlayer(router);
+
 bool _isOnFullscreenPlayer(GoRouter router) {
   final matches = router.routerDelegate.currentConfiguration.matches;
   return matches.isNotEmpty && matches.last.matchedLocation == '/player';

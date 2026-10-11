@@ -27,6 +27,7 @@ import '../../features/settings/screens/legal_screen.dart';
 import '../../features/settings/screens/listening_history_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/stats/screens/stats_screen.dart';
+import 'player_dismiss_shield.dart';
 import '../layout/app_shell.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -168,9 +169,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {
-          return AppShell(
-            location: state.uri.toString(),
-            child: child,
+          return PlayerDismissShield(
+            child: AppShell(
+              location: state.uri.toString(),
+              child: child,
+            ),
           );
         },
         routes: [
@@ -368,14 +371,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const PlayerFullscreenScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return SlideTransition(
-              position: animation.drive(
-                Tween<Offset>(
-                  begin: const Offset(0, 1),
-                  end: Offset.zero,
-                ).chain(CurveTween(curve: Curves.easeOutCubic)),
+            return PlayerDismissShieldWatcher(
+              animation: animation,
+              child: SlideTransition(
+                position: animation.drive(
+                  Tween<Offset>(
+                    begin: const Offset(0, 1),
+                    end: Offset.zero,
+                  ).chain(CurveTween(curve: Curves.easeOutCubic)),
+                ),
+                child: child,
               ),
-              child: child,
             );
           },
         ),
