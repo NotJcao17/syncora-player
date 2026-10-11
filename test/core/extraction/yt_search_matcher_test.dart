@@ -1064,6 +1064,20 @@ void main() {
       expect(top.where((c) => !c.artistConfirmed).map((c) => c.title), isEmpty);
     });
 
+    test('con el motor de fábrica la duración llega leída del título: el master gana igual', () {
+      List<Map<String, dynamic>> broken(String q, String id, int wrong) => [
+            for (final c in cands(q, 'WEB_music'))
+              c['videoId'] == id ? {...c, 'durationSec': wrong} : c,
+          ];
+      final morat = YtSearchMatcher.pickTopCandidates(broken('Morat 23', 'P2INIp4Ic1Q', 23),
+          artist: 'Morat', title: '23', durationSec: 187);
+      expect(morat.first.videoId, 'P2INIp4Ic1Q');
+      expect(morat.map((c) => c.title), isNot(contains('SALMOS 23')));
+      final anne = YtSearchMatcher.pickTopCandidates(broken('Anne-Marie 2002', 'ee2mcqcGL_c', 2002),
+          artist: 'Anne-Marie', title: '2002', durationSec: 187);
+      expect(anne.first.videoId, 'ee2mcqcGL_c');
+    });
+
     test('un título de una palabra sigue aceptando un upload exacto sin artista', () {
       final top = YtSearchMatcher.pickTopCandidates([
         {'videoId': 'aaaaaaaaaaa', 'title': 'Borderline (Official Audio)', 'author': 'Some Uploads', 'durationSec': 238},

@@ -292,9 +292,17 @@ class YtSearchMatcher {
       final rawAuthor = (raw['author'] as String?) ?? '';
       // C7: cast inseguro — el motor JS puede entregar el número como double
       // y `as int?` lanza en vez de devolver null, rompiendo el bucle.
-      final candidateDuration = (raw['durationSec'] as num?)?.toInt();
-
       final normTitle = norm(rawTitle);
+
+      // Ronda 8 (H-R8-5): el motor de fábrica (youtubei.js 17) lee el título
+      // numérico como duración en YouTube Music ("23" de Morat llegaba con
+      // 23 s, "2002" con 2002 s). Con eso el master se descartaba por duración
+      // absurda y ganaba "SALMOS 23". Una duración igual a un número del
+      // título no es dato: se toma como desconocida.
+      var candidateDuration = (raw['durationSec'] as num?)?.toInt();
+      if (candidateDuration != null && _tokens(normTitle).contains('$candidateDuration')) {
+        candidateDuration = null;
+      }
       final normAuthor = norm(rawAuthor);
 
       // C1: requisito de aceptación, no un simple sumando.
