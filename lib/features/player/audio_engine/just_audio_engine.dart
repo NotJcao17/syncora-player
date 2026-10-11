@@ -153,9 +153,13 @@ class JustAudioEngine implements AudioEngine {
   // --- Transformadores de eventos nativos -> [AudioEngineState] -----------
 
   void _onPlayerState(PlayerState s) {
-    // notificación de completado.
     if (s.processingState == ProcessingState.completed) {
-      _completionController.add(null);
+      // Ronda 8 (H-R8-1): solo al ENTRAR en `completed`. `playerStateStream`
+      // vuelve a emitir con el mismo estado cuando cambia `playing` (el
+      // `stop()` antes de cargar la siguiente lo pone en `false`), y avisar
+      // otra vez hacía avanzar dos canciones.
+      final enteredCompleted = _state.processingState != AudioProcessingState.completed;
+      if (enteredCompleted) _completionController.add(null);
       // ExoPlayer se queda en `completed`; el controlador decidirá el siguiente
       // paso (siguiente pista / repeat one / pausa).
       _emit(_state.copyWith(

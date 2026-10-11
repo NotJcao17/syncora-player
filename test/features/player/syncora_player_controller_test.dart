@@ -61,6 +61,21 @@ class FakeAudioEngine implements AudioEngine {
     _completionController.add(null);
   }
 
+  /// Ronda 8 (H-R8-1): imita a `just_audio`, cuyo `stop()` publica
+  /// `playing: false` con el estado todavía en `completed` y eso volvía a
+  /// disparar el aviso de fin de pista.
+  bool reemitCompletionOnStop = false;
+
+  /// Fin natural de la pista tal como lo publican los motores reales.
+  void completeNaturally() {
+    emitState(_state.copyWith(
+      playing: false,
+      processingState: AudioProcessingState.completed,
+      position: _state.duration,
+    ));
+    triggerCompletion();
+  }
+
   String? lastUrl;
   Duration? lastInitialPosition;
   int setUrlCallCount = 0;
@@ -140,6 +155,9 @@ class FakeAudioEngine implements AudioEngine {
   @override
   Future<void> stop() async {
     stopCallCount++;
+    if (reemitCompletionOnStop && _state.processingState == AudioProcessingState.completed) {
+      triggerCompletion();
+    }
     emitState(_state.copyWith(
       playing: false,
       processingState: AudioProcessingState.idle,
@@ -529,6 +547,46 @@ void main() {
 
       expect(controller.state.currentTrack?.id, 'track1');
       expect(controller.state.engine.playing, isTrue);
+    });
+
+    test('7b. H-R8-1: un fin de pista repetido al cargar la siguiente no salta otra canción', () async {
+      engine.reemitCompletionOnStop = true;
+      final four = [...testTracks, const SyncoraTrack(id: 'track4', title: 'Track 4')];
+      await controller.setQueue(four, autoplay: true);
+      expect(controller.state.currentTrack?.id, 'track1');
+
+      engine.completeNaturally();
+      await pumpEventQueue();
+      expect(controller.state.currentTrack?.id, 'track2');
+      expect(controller.state.autoQueue.map((t) => t.id), ['track3', 'track4']);
+
+      engine.completeNaturally();
+      await pumpEventQueue();
+      expect(controller.state.currentTrack?.id, 'track3');
+    });
+
+    test('7c. H-R8-2: pausar y luego elegir otra canción no deja su final trabado', () async {
+      await controller.setQueue(testTracks, autoplay: true);
+      await controller.pause();
+
+      // Sin pulsar play: el usuario elige otra canción (o pulsa "siguiente").
+      await controller.skipToNext();
+      expect(controller.state.currentTrack?.id, 'track2');
+      expect(controller.state.engine.playing, isTrue);
+
+      engine.completeNaturally();
+      await pumpEventQueue();
+      expect(controller.state.currentTrack?.id, 'track3');
+    });
+
+    test('7d. H-R8-2: lo mismo al poner una lista nueva tras pausar', () async {
+      await controller.setQueue(testTracks, autoplay: true);
+      await controller.pause();
+      await controller.setQueue(testTracks, startIndex: 1, autoplay: true);
+
+      engine.completeNaturally();
+      await pumpEventQueue();
+      expect(controller.state.currentTrack?.id, 'track3');
     });
 
     test(

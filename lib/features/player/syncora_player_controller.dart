@@ -2379,6 +2379,11 @@ bool get _isTestEnv {
 
   Future<void> _playCurrentInternal(SyncoraTrack track, {bool allowCrossfade = false}) async {
     final myGeneration = ++_playGeneration;
+    // Ronda 8 (H-R8-2): arrancar una pista es volver a reproducir. Antes solo
+    // `play()` limpiaba la pausa del usuario; tras pausar y elegir otra
+    // canción (o "siguiente"), su fin se tomaba por la completion espuria de
+    // `_onComplete` y la reproducción se quedaba al final de esa canción.
+    _lastPauseWasUserInitiated = false;
     // H-R3-2: la ventana se abre ANTES del `stop()` del motor, que es
     // exactamente el punto donde se emitía `idle` y `audio_service` soltaba
     // el foreground service. Ver [_preparingPlaybackGeneration].
@@ -2980,6 +2985,15 @@ bool get _isTestEnv {
   }
 
   Future<void> _onComplete() async {
+    // Ronda 8 (H-R8-1): con una pista cargándose, el motor viene de un
+    // `stop()` y no hay ninguna canción que pueda haber terminado. `just_audio`
+    // repetía el aviso de fin de la anterior justo en ese `stop()` y, desde
+    // que el guard de "siguiente" ya no cubre la carga (H-R5-2), ese segundo
+    // aviso avanzaba otra vez: se saltaba una canción de cada dos.
+    if (_preparingPlaybackGeneration != null) {
+      _log('[Play] Fin de pista ignorado: se está cargando la siguiente.');
+      return;
+    }
     // Guard contra "estaba en pausa y de repente se puso a sonar sola"
     // (reportado en Windows). `media_kit` puede emitir una completion espuria
     // con el motor parado; atenderla dispara `skipToNext()`, que reproduce.
