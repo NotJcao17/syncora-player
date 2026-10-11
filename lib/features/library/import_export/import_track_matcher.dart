@@ -120,7 +120,9 @@ class ImportTrackMatcher {
       final alt = _best(mixed, raw);
       if (alt != null && (fromSearch == null || alt.score > fromSearch.score)) fromSearch = alt;
     }
-    if (fromSearch != null && fromSearch.albumMatches && fromSearch.exactTitle) return fromSearch.track;
+    if (fromSearch != null && fromSearch.albumMatches && fromSearch.exactTitle && fromSearch.sameDuration) {
+      return fromSearch.track;
+    }
 
     final album = raw.album?.trim() ?? '';
     List<DeezerAlbum> albums = const [];
@@ -198,7 +200,9 @@ class ImportTrackMatcher {
       final best = _best(tracks, raw, albumOverride: a.title);
       // Dentro de un álbum solo vale el título exacto: una edición deluxe
       // puede traer además regrabaciones con sufijo ("(The Warner Sound)").
-      if (best != null && best.exactTitle) return best.track;
+      // Ronda 8: y la misma duración, si la fila la trae (otra grabación con
+      // el mismo título, como la de Alicia Keys en la edición aniversario).
+      if (best != null && best.exactTitle && best.sameDuration) return best.track;
     }
     return null;
   }
@@ -295,13 +299,28 @@ class ImportTrackMatcher {
     final exactTitle = candTitle.split(' ').every(rawTokens.contains);
     if (!exactTitle) score -= 0.4;
 
+    // Ronda 8 (H-R8-6): un invitado que la fila no trae es otra versión
+    // ("Ojos Marrones (Con Sebastián Yatra)" para una fila de solo Lasso).
+    // `normalizeTitle` quita el "feat." para comparar títulos, así que sin
+    // esto las dos versiones empataban y decidía la popularidad.
+    if (_hasExtraArtists(c, raw, artists)) score -= 0.5;
+    // Y al revés: la fila pide "(Con X)" y el candidato no trae a X.
+    if (_missesRowGuests(c, raw)) score -= 0.3;
+
+    // La misma grabación dura lo mismo en cualquier lanzamiento (±2 s). Ronda
+    // 8: antes 19 s de diferencia apenas restaban y el álbum coincidente
+    // ganaba ("I'm Not The Only One" con Alicia Keys, 220 s contra 239 s).
+    var sameDuration = true;
     final expectedMs = raw.durationMs;
     if (expectedMs != null && expectedMs > 0 && c.durationSec > 0) {
       final diff = (c.durationSec - expectedMs / 1000).abs();
+      sameDuration = diff <= 5;
       if (diff > 30) {
         score -= 0.6;
+      } else if (diff > 5) {
+        score -= 0.3;
       } else {
-        score += (1 - diff / 30) * 0.3;
+        score += (1 - diff / 5) * 0.3;
       }
     }
 
@@ -317,7 +336,38 @@ class ImportTrackMatcher {
 
     // Desempate por popularidad: a igualdad, la versión más escuchada.
     score += ((c.rank ?? 0) / 1000000).clamp(0, 1) * 0.05;
-    return ScoredCandidate(c, score, albumMatches, exactTitle);
+    return ScoredCandidate(c, score, albumMatches, exactTitle, sameDuration: sameDuration);
+  }
+
+  static final _featNames = RegExp(r'[\(\[]\s*(?:feat\.?|ft\.?|featuring|with|con)\s([^\)\]]*)[\)\]]');
+
+  static bool _missesRowGuests(DeezerTrack c, RawImportTrack raw) {
+    final candidateText = ' ${_words(_fold([c.title, c.artistName, for (final a in c.contributorsList) a.name].join(' ')))} ';
+    for (final m in _featNames.allMatches(_fold(raw.title))) {
+      for (final part in (m.group(1) ?? '').split(_artistSplit)) {
+        final n = normalizeName(part);
+        if (n.isNotEmpty && !candidateText.contains(' $n ')) return true;
+      }
+    }
+    return false;
+  }
+
+  /// ¿El candidato trae artistas (en "(feat. X)" / "(Con X)" o en sus
+  /// colaboradores) que la fila no menciona ni en el artista ni en el título?
+  static bool _hasExtraArtists(DeezerTrack c, RawImportTrack raw, Set<String> rowArtists) {
+    if (rowArtists.isEmpty) return false;
+    final rowTitle = ' ${_words(_fold(raw.title))} ';
+    bool isExtra(String name) {
+      final n = normalizeName(name);
+      return n.isNotEmpty && !rowArtists.contains(n) && !rowTitle.contains(' $n ');
+    }
+
+    for (final m in _featNames.allMatches(_fold(c.title))) {
+      for (final part in (m.group(1) ?? '').split(_artistSplit)) {
+        if (isExtra(part)) return true;
+      }
+    }
+    return c.contributorsList.any((a) => isExtra(a.name));
   }
 
   // ---------------------------------------------------------------------
@@ -426,11 +476,14 @@ class ImportTrackMatcher {
 
 /// Candidato puntuado por [ImportTrackMatcher.scoreCandidate].
 class ScoredCandidate {
-  const ScoredCandidate(this.track, this.score, this.albumMatches, this.exactTitle);
+  const ScoredCandidate(this.track, this.score, this.albumMatches, this.exactTitle, {this.sameDuration = true});
   final DeezerTrack track;
   final double score;
   final bool albumMatches;
 
   /// El título del candidato no añade palabras al de la fila.
   final bool exactTitle;
+
+  /// Dura lo mismo que la fila (±5 s), o la fila no trae duración.
+  final bool sameDuration;
 }

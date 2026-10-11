@@ -188,4 +188,52 @@ void main() {
     expect(ImportTrackMatcher.normalizeName('The Weeknd'), ImportTrackMatcher.normalizeName('Weeknd'));
     expect(ImportTrackMatcher.normalizeAlbum('Youngblood (Deluxe)'), ImportTrackMatcher.normalizeAlbum('Youngblood'));
   });
+  // Ronda 8 (H-R8-6): filas reales de la playlist "2026" (Exportify), datos de
+  // Deezer consultados el 2026-10-11.
+  test('una versión con invitado que la fila no trae no le gana a la del solista', () async {
+    api.trackSearch['Lasso Ojos Marrones'] = [
+      _t(1768273097, 'Ojos Marrones', 'Lasso', 'Ojos Marrones', 198, rank: 537158),
+      _t(1874481627, 'Ojos Marrones (Con Sebastián Yatra)', 'Lasso', 'Ojos Marrones (Con Sebastián Yatra)', 198,
+          rank: 482170),
+    ];
+    api.albumSearch['Lasso Eva'] = [_album(415977697, 'Eva', 'Lasso', 1, const [])];
+    api.albums[415977697] = _album(415977697, 'Eva', 'Lasso', 1, [
+      _t(2184981287, 'Ojos Marrones', 'Lasso', 'Eva', 198, rank: 300000),
+      _t(2184981377, 'Ojos Marrones (Con Sebastián Yatra)', 'Lasso', 'Eva', 198, rank: 600000),
+    ]);
+    final m = await matcher.match(const RawImportTrack(
+        title: 'Ojos Marrones', artist: 'Lasso', album: 'Eva', durationMs: 198106, isrc: 'MXUM72200528'));
+    expect(m?.id, 2184981287);
+  });
+
+  test('la edición aniversario con otra grabación (otra duración) no gana por el álbum', () async {
+    api.trackSearch["Sam Smith I'm Not The Only One"] = [
+      _t(111780380, "I'm Not The Only One", 'Sam Smith', 'In The Lonely Hour (Drowning Shadows Edition)', 239,
+          rank: 891200),
+      _t(2913253671, "I'm Not The Only One", 'Sam Smith', 'In The Lonely Hour (10th Anniversary Edition)', 220,
+          rank: 610405),
+    ];
+    api.albumSearch['Sam Smith In The Lonely Hour'] = [
+      _album(7784775, 'In The Lonely Hour', 'Sam Smith', 1, const []),
+    ];
+    api.albums[7784775] = _album(7784775, 'In The Lonely Hour', 'Sam Smith', 1, [
+      _t(78282333, "I'm Not The Only One", 'Sam Smith', 'In The Lonely Hour', 239),
+    ]);
+    final m = await matcher.match(const RawImportTrack(
+        title: "I'm Not The Only One", artist: 'Sam Smith', album: 'In The Lonely Hour', durationMs: 239316,
+        isrc: 'GBUM71308836'));
+    expect(m?.id, 78282333);
+  });
+
+  test('si la fila sí trae al invitado, se elige la versión con invitado', () async {
+    api.trackSearch['Lasso Ojos Marrones (Con Sebastián Yatra)'] = [
+      _t(1768273097, 'Ojos Marrones', 'Lasso', 'Ojos Marrones', 198, rank: 537158),
+      _t(1874481627, 'Ojos Marrones (Con Sebastián Yatra)', 'Lasso', 'Ojos Marrones (Con Sebastián Yatra)', 198,
+          rank: 482170),
+    ];
+    final m = await matcher.match(const RawImportTrack(
+        title: 'Ojos Marrones (Con Sebastián Yatra)', artist: 'Lasso;Sebastián Yatra',
+        album: 'Ojos Marrones (Con Sebastián Yatra)', durationMs: 198000));
+    expect(m?.id, 1874481627);
+  });
 }
