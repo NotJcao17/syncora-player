@@ -21,6 +21,12 @@ de verdad de arquitectura, stack, metodología de trabajo y reglas del proyecto.
   `android/app/src/main/res/raw/keep.xml`; si no, el reductor de recursos lo borra en release y la
   notificación y el reproductor de la pantalla de bloqueo desaparecen **solo en release**. Detalle en
   el Pitfall #32 de `docs/investigacion_y_pitfalls.md`.
+- **Probar en dispositivo:** en Android, solo `flutter run --release` o instalar el APK de release
+  con `adb install -r`. **Nunca en debug**: se firma con otra llave que la app instalada y Flutter
+  ofrece desinstalarla, lo que borra los datos y las descargas del usuario. Nunca desinstalar la app
+  ni borrar datos sin preguntar. En Windows, `flutter run` comparte los datos con la app instalada
+  (`%LOCALAPPDATA%\com.syncora`) y, si esa está abierta, le cede el control y se cierra: cerrarla
+  antes.
 
 ## Lanzar una versión nueva
 
