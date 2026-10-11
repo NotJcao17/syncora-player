@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'desktop_auth_pages.dart';
+
 /// Servicio de autenticación OAuth para Windows Desktop.
 ///
 /// Usa un servidor HTTP loopback local en un PUERTO FIJO
@@ -72,7 +74,7 @@ class DesktopAuthService {
       debugPrint('📥 Callback recibido: ${uri.toString()}');
 
       if (error != null) {
-        await _respondWithHtml(request, _buildErrorHtml(error, errorDescription));
+        await _respondWithHtml(request, desktopAuthErrorPage(error, errorDescription));
         throw AuthException(
           'El proveedor OAuth devolvió un error: $errorDescription',
         );
@@ -81,7 +83,7 @@ class DesktopAuthService {
       if (code == null || code.isEmpty) {
         await _respondWithHtml(
           request,
-          _buildErrorHtml(
+          desktopAuthErrorPage(
             'no_code',
             'No se recibió un código de autorización en el callback.',
           ),
@@ -92,7 +94,7 @@ class DesktopAuthService {
       }
 
       // 5. Responder al browser con página de éxito
-      await _respondWithHtml(request, _buildSuccessHtml());
+      await _respondWithHtml(request, desktopAuthSuccessPage());
       debugPrint('✅ Respuesta HTML enviada al browser');
 
       // 6. Cerrar el servidor (ya no necesitamos más requests)
@@ -117,147 +119,6 @@ class DesktopAuthService {
     );
     request.response.write(html);
     await request.response.close();
-  }
-
-  /// Construye la página HTML de éxito que se muestra en el browser.
-  String _buildSuccessHtml() {
-    return '''<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Syncora Player &mdash; Autenticación Exitosa</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0f1117;
-      color: #e2e8f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 24px;
-    }
-    .card {
-      background: #1a1d2e;
-      border: 1px solid rgba(123, 92, 250, 0.3);
-      border-radius: 20px;
-      padding: 48px 40px;
-      max-width: 420px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 60px rgba(123, 92, 250, 0.1);
-    }
-    .icon {
-      width: 72px;
-      height: 72px;
-      background: linear-gradient(135deg, #7b5cfa, #a78bfa);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 24px;
-      font-size: 36px;
-      box-shadow: 0 8px 32px rgba(123, 92, 250, 0.4);
-    }
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      color: #f1f5f9;
-      margin-bottom: 12px;
-      letter-spacing: -0.3px;
-    }
-    p { font-size: 15px; color: #94a3b8; line-height: 1.6; margin-bottom: 8px; }
-    .hint { font-size: 13px; color: #64748b; margin-top: 20px; }
-    .pulse {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      background: #22c55e;
-      border-radius: 50%;
-      margin-right: 6px;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.8); }
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="icon">&#10003;</div>
-    <h1>&#161;Autenticaci&#243;n Exitosa!</h1>
-    <p><span class="pulse"></span>Has iniciado sesi&#243;n en <strong>Syncora Player</strong>.</p>
-    <p>Regresa a la aplicaci&#243;n para continuar.</p>
-    <p class="hint">Puedes cerrar esta pesta&#241;a.</p>
-  </div>
-  <script>
-    try { window.close(); } catch(e) {}
-    setTimeout(function() { try { window.close(); } catch(e) {} }, 500);
-  </script>
-</body>
-</html>''';
-  }
-
-  /// Construye la página HTML de error.
-  String _buildErrorHtml(String error, String? description) {
-    final safeDesc = description ?? 'Error desconocido en la autenticación.';
-    return '''<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Syncora Player &mdash; Error de Autenticaci&#243;n</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0f1117;
-      color: #e2e8f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 24px;
-    }
-    .card {
-      background: #1a1d2e;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 20px;
-      padding: 48px 40px;
-      max-width: 420px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-    }
-    .icon {
-      width: 72px;
-      height: 72px;
-      background: linear-gradient(135deg, #ef4444, #f87171);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 24px;
-      font-size: 36px;
-      box-shadow: 0 8px 32px rgba(239, 68, 68, 0.3);
-    }
-    h1 { font-size: 22px; font-weight: 700; color: #f1f5f9; margin-bottom: 12px; }
-    p { font-size: 15px; color: #94a3b8; line-height: 1.6; margin-bottom: 8px; }
-    .code { font-size: 12px; color: #ef4444; font-family: monospace; margin-top: 16px; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="icon">&#10007;</div>
-    <h1>Error de Autenticaci&#243;n</h1>
-    <p>$safeDesc</p>
-    <p class="code">$error</p>
-  </div>
-</body>
-</html>''';
   }
 }
 
