@@ -565,6 +565,43 @@ void main() {
       expect(controller.state.currentTrack?.id, 'track3');
     });
 
+    test('7e. H-R8-3: la siguiente se precarga al final y se reproduce sin otra extracción', () async {
+      await controller.setQueue(testTracks, autoplay: true);
+      final before = extractionService.extractCount;
+
+      // A mitad de canción no se precarga nada.
+      engine.emitState(engine.currentState.copyWith(position: const Duration(seconds: 60)));
+      await pumpEventQueue();
+      expect(extractionService.extractCount, before);
+
+      // En los últimos 30 s, una sola precarga aunque lleguen varios ticks.
+      engine.emitState(engine.currentState.copyWith(position: const Duration(seconds: 160)));
+      engine.emitState(engine.currentState.copyWith(position: const Duration(seconds: 161)));
+      await pumpEventQueue();
+      expect(extractionService.extractCount, before + 1);
+
+      engine.completeNaturally();
+      await pumpEventQueue();
+      expect(controller.state.currentTrack?.id, 'track2');
+      expect(controller.state.engine.playing, isTrue);
+      expect(extractionService.extractCount, before + 1);
+    });
+
+    test('7f. H-R8-3: una precarga fallida no cambia nada, se extrae de nuevo', () async {
+      await controller.setQueue(testTracks, autoplay: true);
+      extractionService.forcedError = ExtractionError.networkError;
+      engine.emitState(engine.currentState.copyWith(position: const Duration(seconds: 170)));
+      await pumpEventQueue();
+      extractionService.forcedError = null;
+      final before = extractionService.extractCount;
+
+      engine.completeNaturally();
+      await pumpEventQueue();
+      expect(controller.state.currentTrack?.id, 'track2');
+      expect(controller.state.engine.playing, isTrue);
+      expect(extractionService.extractCount, before + 1);
+    });
+
     test('7c. H-R8-2: pausar y luego elegir otra canción no deja su final trabado', () async {
       await controller.setQueue(testTracks, autoplay: true);
       await controller.pause();

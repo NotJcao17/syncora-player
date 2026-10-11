@@ -2061,6 +2061,79 @@ bool get _isTestEnv {
   }
 
   // ----------------------------------------------------------------------
+  // Precarga de la siguiente pista (ronda 8, H-R8-3)
+  // ----------------------------------------------------------------------
+  //
+  // Sin esto, cada cambio de pista por streaming hacía la búsqueda y la
+  // extracción completas (2-3 s, más en datos móviles) con el reproductor en
+  // silencio. Se lanza solo en los últimos [_prefetchLeadTime] de la pista:
+  // el isolate atiende de una en una, así que precargar antes haría esperar a
+  // un "siguiente" del usuario detrás de una extracción que quizá no se use.
+  // Va por el mismo carril de streaming, así que una petición real nunca
+  // queda detrás de más de una precarga.
+
+  static const Duration _prefetchLeadTime = Duration(seconds: 30);
+
+  /// Las URLs de YouTube caducan en horas y van atadas a la IP; con media
+  /// hora de margen se evita reusar una de otra red.
+  static const Duration _prefetchMaxAge = Duration(minutes: 30);
+
+  ({String trackId, Future<ExtractionResult> result, DateTime startedAt})? _prefetch;
+
+  void _maybePrefetchNext(AudioEngineState engineState) {
+    if (!engineState.playing || engineState.duration <= Duration.zero) return;
+    if (_state.repeatMode == SyncoraRepeatMode.one) return;
+    final remaining = engineState.duration - engineState.position;
+    if (remaining > _prefetchLeadTime || remaining <= Duration.zero) return;
+    final next = _peekNext()?.$1;
+    if (next == null) return;
+    final existing = _prefetch;
+    if (existing != null && existing.trackId == next.id) return;
+    if (_isConnectedGetter?.call() == false) return;
+    if (_state.unavailableTrackIds.contains(next.id)) return;
+
+    _prefetch = (trackId: next.id, result: _prefetchTrack(next), startedAt: DateTime.now());
+  }
+
+  Future<ExtractionResult> _prefetchTrack(SyncoraTrack track) async {
+    final requestId = 'prefetch_${track.id}';
+    final trackDeezerId = int.tryParse(track.id) ?? track.id.hashCode.abs();
+    if (_downloadedTrackDao != null && trackDeezerId > 0) {
+      try {
+        final downloaded = await _downloadedTrackDao.getByTrackId(trackDeezerId);
+        if (downloaded != null && downloaded.downloadState == 2) {
+          return ExtractionFailure(requestId: requestId, error: ExtractionError.cancelled);
+        }
+      } catch (_) {}
+    }
+    _log('[Prefetch] Precargando la siguiente: ${track.title}');
+    try {
+      return await _extractionService.extractUrl(
+        _extractionTargetId(track),
+        trackTitle: track.title,
+        trackArtist: track.artist,
+        durationSeconds: track.duration?.inSeconds,
+        priority: ExtractionPriority.streaming,
+      );
+    } catch (e) {
+      return ExtractionFailure(requestId: requestId, error: ExtractionError.unknownError, message: '$e');
+    }
+  }
+
+  /// La precarga de [track], si la hay y no caducó. Se consume: una URL se
+  /// usa una sola vez.
+  Future<ExtractionResult>? _takePrefetch(SyncoraTrack track) {
+    final p = _prefetch;
+    if (p == null || p.trackId != track.id) return null;
+    _prefetch = null;
+    if (DateTime.now().difference(p.startedAt) > _prefetchMaxAge) return null;
+    return p.result;
+  }
+
+  String _extractionTargetId(SyncoraTrack track) =>
+      (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty) ? track.youtubeVideoId! : track.id;
+
+  // ----------------------------------------------------------------------
   // Radio / cola infinita (Fase 7.B, D-10 — sin IA, solo Deezer)
   // ----------------------------------------------------------------------
 
@@ -2624,18 +2697,28 @@ bool get _isTestEnv {
     }
 
     // 4. Flujo normal de extracción de YouTube
-    String targetId = (track.youtubeVideoId != null && track.youtubeVideoId!.isNotEmpty)
-        ? track.youtubeVideoId!
-        : track.id;
+    final targetId = _extractionTargetId(track);
 
-    _log('[Play] Resolviendo extracción de YouTube para ${track.title} ($targetId)');
-    final result = await _extractionService.extractUrl(
-      targetId,
-      trackTitle: track.title,
-      trackArtist: track.artist,
-      durationSeconds: track.duration?.inSeconds,
-      priority: ExtractionPriority.streaming,
-    );
+    // H-R8-3: la precarga (aunque siga en curso) ahorra la espera. Si falló,
+    // se extrae de nuevo como siempre: así los errores siguen el camino de
+    // siempre (reintentos, auto-skip, avisos).
+    final prefetched = _takePrefetch(track);
+    final prefetchedResult = prefetched == null ? null : await prefetched;
+    if (isStale()) return;
+    final ExtractionResult result;
+    if (prefetchedResult is ExtractionSuccess) {
+      _log('[Play] Usando la extracción precargada para ${track.title}');
+      result = prefetchedResult;
+    } else {
+      _log('[Play] Resolviendo extracción de YouTube para ${track.title} ($targetId)');
+      result = await _extractionService.extractUrl(
+        targetId,
+        trackTitle: track.title,
+        trackArtist: track.artist,
+        durationSeconds: track.duration?.inSeconds,
+        priority: ExtractionPriority.streaming,
+      );
+    }
 
     if (isStale()) {
       _log('[Play] Resultado de extracción descartado (ya no es la pista activa): ${track.title}');
@@ -2866,6 +2949,7 @@ bool get _isTestEnv {
     // crossfade preventivo antes de que la pista actual llegue a su fin
     // natural — ver docstring de `_maybeCrossfadeProactively`.
     _maybeCrossfadeProactively(engineState);
+    _maybePrefetchNext(engineState);
 
     // El motor nativo puede reportar un error de reproducción sin pasar por
     // ExtractionFailure (ej. MediaKitEngine detecta un EOF sin haber sonado
