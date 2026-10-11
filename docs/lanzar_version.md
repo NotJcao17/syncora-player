@@ -67,6 +67,13 @@ versión siguió diciendo "v1.0.0".
    "pre-release" sin marcar.
 6. **Verificar**: en la web, el botón descarga la versión nueva y el texto muestra el número
    nuevo (la web guarda en caché la respuesta de GitHub 30 minutos por pestaña).
+7. **Versión de respaldo de la web**: en `syncora-web`, poner el número nuevo en
+   `FALLBACK_VERSION` de `src/data/site.ts`, comitear y hacer push (Cloudflare la publica sola). Solo
+   se muestra si la consulta a la API de GitHub falla, pero no debe quedarse atrás.
+
+El badge de versión del README (`img.shields.io/github/v/release/...`) y el de descargas se
+actualizan solos; no se tocan. Si GitHub sigue mostrando la versión anterior, es la caché de
+imágenes de GitHub (camo), que se refresca sola en unas horas.
 
 ## Si algo sale mal
 
