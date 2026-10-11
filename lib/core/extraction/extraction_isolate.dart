@@ -735,6 +735,8 @@ class ExtractionIsolate {
         // apenas se elegía el candidato y nunca se invalidaba, así que un
         // match equivocado quedaba fijado el resto de la sesión.
         ExtractionFailure? lastCandidateFailure;
+        // Ronda 8 (H-R8-4): primer "no eres un bot" de esta pista. Ver abajo.
+        ExtractionFailure? ipBlockFailure;
         while (true) {
         // Ronda 5: si el mejor candidato confirma al artista, solo se prueban
         // los que también lo confirman. Antes, si el master fallaba, se
@@ -768,6 +770,15 @@ class ExtractionIsolate {
             return result;
           }
           if (result is ExtractionFailure && result.error != ExtractionError.notFound) {
+            // Ronda 8 (H-R8-4): "no eres un bot" puede ser de la IP (entonces
+            // falla todo) o de un solo video. Se prueba UN candidato más antes
+            // de pausar; si también lo pide, es la red.
+            if (ipBlockFailure == null && _isIpBlockError(result.message)) {
+              ipBlockFailure = result;
+              failedIds.add(candidate.videoId);
+              sendLog('[IsolateJS] ${candidate.videoId} pide verificar que no es un bot; se prueba otro candidato.');
+              continue;
+            }
             // Error distinto a "no encontrado" (red/rate-limit/desconocido):
             // no tiene sentido seguir probando otros candidatos ahora mismo.
             return result;
@@ -818,6 +829,10 @@ class ExtractionIsolate {
         await searchUntilCandidates();
         if (topCandidates.isEmpty) break;
         }
+
+        // H-R8-4: si un video pidió verificar "no eres un bot" y ningún otro
+        // se pudo extraer, se pausa como bloqueo (Pitfall #14), no se salta.
+        if (ipBlockFailure != null) return ipBlockFailure;
 
         // Había candidatos pero ninguno se pudo extraer, y por algo que apunta
         // al motor (no a vídeos privados o borrados).
@@ -915,7 +930,9 @@ class ExtractionIsolate {
     // desconocidos fallan de inmediato (fail fast / auto-skip).
     if (errorType == ExtractionError.rateLimited ||
         errorType == ExtractionError.networkError) {
-      if (retryPolicy.canRetry(request.videoId, errorType)) {
+      // H-R8-4: repetir el mismo video tras "no eres un bot" no cambia nada;
+      // el siguiente intento útil es otro candidato (ver arriba).
+      if (!_isIpBlockError(lastJsError) && retryPolicy.canRetry(request.videoId, errorType)) {
         sendLog('[IsolateJS] Guard 403: Reintentando extracción (1 reintento permitido)...');
         await Future.delayed(const Duration(seconds: 2));
         return _processExtraction(
@@ -995,6 +1012,14 @@ class ExtractionIsolate {
   /// - [rateLimited]: errores 403 / Forbidden / baneo de BotGuard.
   /// - [networkError]: problemas de red (timeout, SocketException).
   /// - [unknownError]: cualquier otra causa.
+  /// YouTube pide verificar que no es un bot ("Sign in to confirm you're not
+  /// a bot"): normalmente por la IP o la red, a veces por un video concreto.
+  static bool _isIpBlockError(String? errorText) {
+    if (errorText == null) return false;
+    final e = errorText.toLowerCase();
+    return e.contains('not a bot') || e.contains('unusual traffic');
+  }
+
   static ExtractionError _classifyExtractionError(String errorText) {
     final e = errorText.toLowerCase();
 
@@ -1003,10 +1028,7 @@ class ExtractionIsolate {
     // available": no es la canción, así que saltar vaciaría la cola entera
     // (Pitfall #14). Pausa como un 403. Ojo: "confirm your age" (restricción
     // de edad) sí es de la canción y sigue siendo notFound.
-    const ipBlockMarkers = ['not a bot', 'unusual traffic'];
-    for (final marker in ipBlockMarkers) {
-      if (e.contains(marker)) return ExtractionError.rateLimited;
-    }
+    if (_isIpBlockError(e)) return ExtractionError.rateLimited;
 
     // Errores lógicos: la canción existe pero no hay streaming utilizable,
     // o el video no existe / es privado. Reintentar no sirve de nada.

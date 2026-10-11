@@ -511,6 +511,20 @@ void main() {
       expect(controller.state.engine.playing, isFalse);
     });
 
+    test('4b. Ronda 8: el aviso de pausa por bloqueo es legible, sin el error técnico', () {
+      final bot = SyncoraPlayerController.friendlyPauseMessage(
+        ExtractionError.rateLimited,
+        "No se pudo extraer la URL con clientes ([ANDROID, ANDROID_VR, WEB]). Detalle: Error: "
+        "Streaming data not available (LOGIN_REQUIRED: Sign in to confirm you're not a bot)",
+      );
+      expect(bot, contains('otra red'));
+      expect(bot, isNot(contains('ANDROID')));
+      expect(
+        SyncoraPlayerController.friendlyPauseMessage(ExtractionError.networkError, 'SocketException'),
+        contains('Revisa tu conexión'),
+      );
+    });
+
     test('5. Error notFound -> auto-skip inmediato (sin reintento)', () async {
       final queueWithBadTrack = [
         const SyncoraTrack(id: 'not_found_track', title: 'Bad Track'),

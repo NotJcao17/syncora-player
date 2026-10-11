@@ -2849,10 +2849,13 @@ bool get _isTestEnv {
 
     _log('[Play] Pausa inmediata por $error persistente (guard 403).');
     await _engine.pause();
-    final resolvedMessage = message ?? 'Reproducción pausada por error persistente.';
+    // Ronda 8: el aviso llevaba el error técnico tal cual ("No se pudo extraer
+    // la URL con clientes ([ANDROID, ...]). Detalle: ..."). El detalle sigue en
+    // `lastErrorMessage` y en el log.
+    final resolvedMessage = friendlyPauseMessage(error, message);
     _state = _state.copyWith(
       lastError: error,
-      lastErrorMessage: resolvedMessage,
+      lastErrorMessage: message ?? resolvedMessage,
       // H-6: la pausa por 403/red persistente ya funcionaba desde la Fase 1,
       // pero el aviso visual que la acompaña nunca llegó a conectarse a
       // ningún widget — cablear el mismo mecanismo de `notice` que 7.C usa
@@ -2865,6 +2868,21 @@ bool get _isTestEnv {
     );
     _notify();
     _saveSession();
+  }
+
+  /// Texto del aviso cuando la reproducción se pausa por un error de red o de
+  /// bloqueo de YouTube (ronda 8).
+  @visibleForTesting
+  static String friendlyPauseMessage(ExtractionError error, String? raw) {
+    final text = raw?.toLowerCase() ?? '';
+    if (text.contains('not a bot') || text.contains('unusual traffic')) {
+      return 'YouTube pidió verificar esta conexión. Prueba con otra red (Wi-Fi o datos) '
+          'y toca reproducir.';
+    }
+    if (error == ExtractionError.networkError) {
+      return 'No se pudo conectar con YouTube. Revisa tu conexión y toca reproducir.';
+    }
+    return 'YouTube rechazó la reproducción. Espera un momento y toca reproducir.';
   }
 
   /// Fase 8.A: el motor de extracción está roto, no la canción. Se pausa sin
