@@ -287,3 +287,14 @@ Este documento recopila las trampas técnicas más comunes y destructivas al des
     `llvm-symbolizer --obj=<libapp.so> --functions=short` (NDK en
     `C:\Android\ndk\<versión>\toolchains\llvm\prebuilt\*\bin`). Así se encontró el #34 en minutos,
     después de una primera hipótesis equivocada (la decodificación de la imagen).
+
+## 36. `just_audio` repite `completed` cuando cambia `playing`
+
+*   **Síntoma (ronda 8, solo Android):** se saltaba una canción de cada dos.
+*   **Causa:** `playerStateStream` emite `(playing, processingState)` cada vez que cambia
+    cualquiera de los dos. Al terminar, `playing` sigue en `true` con `completed`; el `stop()` previo a
+    cargar la siguiente lo pone en `false` y llega otro `PlayerState` con `completed`. Quien avise
+    "fin de pista" en cada emisión con `completed` avisa dos veces.
+*   **Regla:** un aviso de fin se dispara solo en la **transición** a `completed`, y el controlador
+    ignora fines mientras está cargando una pista. Un fake de motor que no repita ese aviso no puede
+    ver el fallo (Pitfall #27): el de la suite tiene `reemitCompletionOnStop`.

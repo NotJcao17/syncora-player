@@ -84,6 +84,18 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-10-11)
+
+**Octava ronda de correcciones: implementada y pusheada; faltan las pruebas en dispositivo.** Detalle
+en `docs/fases/correcciones_r8.md` — **leerlo antes de tocar el fin de pista del controlador, la
+precarga, `YtSearchMatcher`, `ImportTrackMatcher`, el orden de playlists o el historial**. Lo que no
+conviene revertir: un fin de pista se ignora mientras se carga otra (`just_audio` lo repetía en el
+`stop()` y se saltaba una canción de cada dos; Pitfall #36); arrancar una pista limpia la pausa del
+usuario; la precarga de la siguiente va por el carril de streaming y solo en los últimos 30 s; en
+YouTube Music otro autor conocido se descarta y una duración igual a un número del título se toma
+como desconocida; en la importación, más de 5 s de diferencia es otra grabación. El motor de fábrica
+pasó a youtubei.js 18.1.0 (el 17.2.0 leía "23" como 23 s): no volver a uno viejo.
+
 ### Estado actual (última actualización: 2026-10-09)
 
 **Preparación del lanzamiento 1.0.** Detalle en `docs/fases/lanzamiento_v1.md` — **leerlo antes de
