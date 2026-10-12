@@ -86,7 +86,7 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 
 ### Estado actual (última actualización: 2026-10-11)
 
-**Octava ronda de correcciones: implementada y pusheada; faltan las pruebas en dispositivo.** Detalle
+**Octava ronda de correcciones: probada en dispositivo y publicada como 1.1.0 (2026-10-11); migración 25 aplicada.** Detalle
 en `docs/fases/correcciones_r8.md` — **leerlo antes de tocar el fin de pista del controlador, la
 precarga, `YtSearchMatcher`, `ImportTrackMatcher`, el orden de playlists o el historial**. Lo que no
 conviene revertir: un fin de pista se ignora mientras se carga otra (`just_audio` lo repetía en el
