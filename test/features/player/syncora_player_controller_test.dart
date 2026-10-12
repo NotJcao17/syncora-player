@@ -616,6 +616,28 @@ void main() {
       expect(extractionService.extractCount, before + 1);
     });
 
+    test('7g. H-R8-13: los ticks de solo posición se publican a la UI como mucho 4 veces por segundo', () async {
+      await controller.setQueue(testTracks, autoplay: true);
+      await pumpEventQueue();
+      var notifications = 0;
+      controller.addListener(() => notifications++);
+
+      for (var i = 1; i <= 15; i++) {
+        engine.emitState(engine.currentState.copyWith(position: Duration(milliseconds: 1000 + i * 66)));
+      }
+      await pumpEventQueue();
+      expect(notifications, lessThanOrEqualTo(1));
+      // El estado sí está al día aunque no se haya notificado.
+      expect(controller.state.engine.position, const Duration(milliseconds: 1990));
+
+      // Pausa y salto (seek) se publican siempre al instante.
+      notifications = 0;
+      engine.emitState(engine.currentState.copyWith(position: const Duration(seconds: 90)));
+      engine.emitState(engine.currentState.copyWith(playing: false));
+      await pumpEventQueue();
+      expect(notifications, 2);
+    });
+
     test('7c. H-R8-2: pausar y luego elegir otra canción no deja su final trabado', () async {
       await controller.setQueue(testTracks, autoplay: true);
       await controller.pause();

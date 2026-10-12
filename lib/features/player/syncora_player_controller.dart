@@ -2958,8 +2958,9 @@ bool get _isTestEnv {
 
     _trackListenProgress(engineState);
 
+    final previousEngine = _state.engine;
     _state = _state.copyWith(engine: _withRestoredPosition(engineState));
-    _notify();
+    _notifyEngineTick(previousEngine, _state.engine);
 
     _maybeSavePositionPeriodically();
 
@@ -3014,6 +3015,33 @@ bool get _isTestEnv {
       // _handleExtractionError.
       _advanceAndPlay();
     }
+  }
+
+  /// Ronda 8 (H-R8-13): `media_kit` emite el estado unas 15 veces por
+  /// segundo mientras suena (casi todas solo con la posición nueva), y cada
+  /// emisión notificaba a la UI: la barra de progreso y los tiempos se
+  /// repintaban a 15 fps, 4-10 % de una GPU integrada con la app quieta. A la
+  /// UI le basta la posición unas 4 veces por segundo (una barra de una
+  /// canción de 3 minutos avanza menos de un píxel cada medio segundo).
+  ///
+  /// Solo se espacian los ticks que cambian la posición y nada más; play,
+  /// pausa, carga, duración o un salto (seek) se publican al instante. La
+  /// lógica interna (escuchas, crossfade, precarga) sigue viendo cada tick.
+  static const Duration _positionNotifyInterval = Duration(milliseconds: 250);
+  DateTime? _lastPositionNotifyAt;
+
+  void _notifyEngineTick(AudioEngineState previous, AudioEngineState next) {
+    final positionOnly = previous.playing == next.playing &&
+        previous.processingState == next.processingState &&
+        previous.duration == next.duration &&
+        previous.speed == next.speed &&
+        previous.volume == next.volume;
+    final jump = (next.position - previous.position).abs() > const Duration(seconds: 1);
+    final now = DateTime.now();
+    final last = _lastPositionNotifyAt;
+    if (positionOnly && !jump && last != null && now.difference(last) < _positionNotifyInterval) return;
+    _lastPositionNotifyAt = now;
+    _notify();
   }
 
   /// Mantiene la posición restaurada visible en la barra hasta que la
