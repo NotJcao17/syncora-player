@@ -103,3 +103,40 @@ Android (streaming y descargadas), pausar y elegir otra canción, el cambio de p
 el reproductor y tocar enseguida, el gesto de atrás sobre la barra de una playlist larga, la
 notificación, el orden de playlist tras reiniciar, el historial con una canción sonando, "23",
 "2002" y "Skyfall", reimportar el CSV de "2026", y el login en Windows.
+
+## Segunda tanda (tras la primera prueba en dispositivo)
+
+Resultado de la prueba: todo bien salvo Skyfall y el historial; además apareció el orden perdido al
+volver a iniciar sesión.
+
+- **Skyfall seguía sonando como cover.** Con el motor nuevo ganaba "Skyfall (From "Skyfall")", que
+  YouTube Music devuelve sin autor y es de "Release - Topic" (un sello de recopilaciones). Un
+  resultado sin autor se llevaba el bono de fuente oficial. El master de Adele no aparece en esa
+  búsqueda y el video oficial (AdeleVEVO) está en la de videos, que no llegaba a correr. Arreglos:
+  sin autor no hay bono; el canal con el nombre **exacto** del artista suma `officialChannelBonus`
+  (60), porque los videos de letra a 1 s de la duración le ganaban al oficial a 4 s; y si YouTube
+  Music no trae ningún candidato del artista confirmado, se hace también la búsqueda de videos antes
+  de elegir. Sobre las 40 canciones medidas cambia solo "Take a Hint" (de "Release - Topic" a un
+  video de letra de la misma canción). Con el motor real: Skyfall → AdeleVEVO; 23, 2002, Von dutch y
+  Midnight City siguen igual.
+- **H-R8-10 (historial), segunda versión.** El historial mostraba la mitad como "Desconocida /
+  Artista Desconocido". Deezer responde 200 con `{"error": ...}` cuando se agota la cuota (pedir 100
+  canciones de golpe la agota), y `DeezerApi.getTrack` lo convertía en una pista "Desconocida" y la
+  cacheaba. Ahora `getTrack` lanza ante esa respuesta. Además, el historial se arma **una vez al
+  entrar** (sin escuchar la tabla en vivo, propuesta del usuario): título, artista y portada salen de
+  las playlists locales (`PlaylistDao.findTracksByTrackIds`) y a Deezer solo se le pide lo que falte,
+  de una en una. Las estadísticas también guardaban esas pistas "Desconocida" en su caché persistente;
+  ahora esas entradas se vuelven a pedir.
+- **H-R8-12. Tras cerrar e iniciar sesión, la playlist salía en otro orden** (igual en PC y móvil).
+  Verificado con la base local de la PC: la playlist "2026" tenía las últimas ~138 canciones
+  revueltas al principio y el resto en orden. Solo la importación mandaba `order_index` a la nube;
+  "Agregar a playlist", "Me gusta", guardar una colección y subir una playlist local quedaban con el
+  `DEFAULT 0` de la columna, y al bajar la playlist esas filas salían primero, desempatadas por un
+  uuid aleatorio. En Syncora no hay reordenar a mano: el orden es el de inserción. Arreglos:
+  - `SupabasePlaylistRepository.addTrack(s)ToPlaylist` numera tras la última de la nube toda fila
+    que no traiga `order_index`.
+  - **Migración 25** (`20250001000025_playlist_track_order_repair.sql`): renumera solo las playlists
+    con `order_index` repetidos, por `added_at`, luego `order_index`, luego `ctid`. Los dispositivos
+    no reordenan su copia local solos (el sync no reordena); se ve al volver a bajar la playlist
+    (cerrar e iniciar sesión). Las colecciones guardadas en un solo INSERT sin `order_index`
+    dependen de `ctid`, que normalmente conserva el orden de envío.
