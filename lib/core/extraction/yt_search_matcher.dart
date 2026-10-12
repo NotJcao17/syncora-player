@@ -120,6 +120,11 @@ class YtSearchMatcher {
   /// como desempate menor, no como evidencia fuerte.
   static const int maxTitleQualityBonus = 30;
 
+  /// Canal con el nombre exacto del artista, fuera de YouTube Music / VEVO /
+  /// "- Topic" (ronda 8). Menos que [channelAuthorityBonus]: no garantiza un
+  /// master, pero sí que lo subió el artista.
+  static const int officialChannelBonus = 60;
+
   /// C1: mínimo de solapamiento de tokens entre el título esperado (Deezer) y
   /// el título del candidato para que este ni siquiera entre a puntuarse.
   /// Antes `title` se recibía como parámetro pero no se usaba en ninguna
@@ -254,6 +259,16 @@ class YtSearchMatcher {
       final normName = norm(rawName);
       if (normName.isEmpty) continue;
       if (_containsPhrase(normTitle, normName)) return true;
+    }
+    return false;
+  }
+
+  static bool _authorIsExactlyArtist(String artistField, String normAuthor) {
+    if (normAuthor.isEmpty) return false;
+    final author = normAuthor.replaceAll(' ', '');
+    for (final rawName in artistField.split(',')) {
+      final name = norm(rawName).replaceAll(' ', '');
+      if (name.isNotEmpty && author == name) return true;
     }
     return false;
   }
@@ -419,9 +434,20 @@ class YtSearchMatcher {
       // QUIÉN: con el bono para cualquiera, el master de un cover le ganaba al
       // video oficial del artista cuando el master original no se podía
       // reproducir.
-      final authoritative = (authorIsArtist || (fromYtMusic && authorUnknown)) &&
+      // Ronda 8 (H-R8-5): sin autor tampoco hay bono. "Skyfall (From
+      // "Skyfall")" llegaba sin autor y era de "Release - Topic", un sello de
+      // recopilaciones: con el bono le ganaba al video oficial de AdeleVEVO.
+      final authoritative = authorIsArtist &&
           (fromYtMusic || _normGoodChannelTerms.any((good) => _containsPhrase(normAuthor, good)));
-      if (authoritative) score += channelAuthorityBonus;
+      if (authoritative) {
+        score += channelAuthorityBonus;
+      } else if (_authorIsExactlyArtist(artist, normAuthor)) {
+        // Ronda 8: el canal oficial del artista ("Adele") en la búsqueda de
+        // videos. Sin esto, re-subidas de letra a 1 s de la duración le
+        // ganaban al video oficial a 4 s. Exacto a propósito: "ADELE FANPAGE
+        // MX" también contiene al artista.
+        score += officialChannelBonus;
+      }
 
       // 4. Coincidencia de artista confirmada (ver arriba).
       if (artistConfirmed) score += 50;

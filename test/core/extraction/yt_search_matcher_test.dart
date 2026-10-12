@@ -237,9 +237,12 @@ void main() {
       // el grupo de regresión más abajo). No es un test viejo que se relajó:
       // es la misma invariante ("el sufijo -Topic vale exactamente el bonus
       // de canal") con el peso recalibrado.
+      // Ronda 8: el canal con el nombre exacto del artista ya suma
+      // `officialChannelBonus`; el "- Topic" vale la diferencia hasta el bono
+      // de canal completo.
       expect(
         withTopic!.score - withoutTopic!.score,
-        equals(YtSearchMatcher.channelAuthorityBonus),
+        equals(YtSearchMatcher.channelAuthorityBonus - YtSearchMatcher.officialChannelBonus),
       );
     });
   });
@@ -481,7 +484,9 @@ void main() {
     // de solape de un único token -> 60) + artistConfirmed (+50) + bonus de
     // posición en índice 0 (+10) = 120. Si el viejo bug (-50 a todos cuando
     // durationSec era 0) siguiera presente, el score sería 70.
-    const expectedScoreNoDurationBlock = 120;
+    // Ronda 8: + el bono de canal oficial, porque el autor es exactamente el
+    // artista.
+    const expectedScoreNoDurationBlock = 120 + YtSearchMatcher.officialChannelBonus;
 
     test('durationSec esperado null no aplica penalización -50 ni cuenta como "en rango"', () {
       final candidates = [
@@ -735,8 +740,9 @@ void main() {
       expect(noBonusNoPenalty, isNotNull);
       // title(60) + artistConfirmed(50) + posición(10) = 120 de base en ambos;
       // el de diff=40 resta 50 adicionales por la penalización.
-      expect(noBonusNoPenalty!.score, equals(120));
-      expect(penalized!.score, equals(70));
+      // Ronda 8: los dos con el bono de canal oficial (autor = artista).
+      expect(noBonusNoPenalty!.score, equals(120 + YtSearchMatcher.officialChannelBonus));
+      expect(penalized!.score, equals(70 + YtSearchMatcher.officialChannelBonus));
     });
   });
 
@@ -1047,6 +1053,13 @@ void main() {
       expect(top.map((c) => c.videoId), isNot(contains('ZNidK4geGjc')),
           reason: 'en YouTube Music otro autor es otro intérprete');
       expect(top.first.videoId, '4XWZT0bXudc');
+    });
+
+    test('Skyfall: un resultado sin autor (sello de recopilaciones) no le gana al video oficial', () {
+      final pool = [...cands('Adele Skyfall', 'WEB_music'), ...cands('Adele Skyfall', 'WEB_video')];
+      final top = YtSearchMatcher.pickTopCandidates(pool, artist: 'Adele', title: 'Skyfall', durationSec: 286);
+      expect(top.first.videoId, 'DeumyOzKqgI', reason: 'Adele - Skyfall (Official Lyric Video), AdeleVEVO');
+      expect(top.first.artistConfirmed, isTrue);
     });
 
     test('23: si el master falla, no queda ningún candidato de otro artista', () {

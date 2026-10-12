@@ -680,7 +680,19 @@ class ExtractionIsolate {
             title: rawTitle,
             durationSec: request.durationSeconds,
           );
-          if (topCandidates.isNotEmpty) return;
+          // Ronda 8 (H-R8-5): de YouTube Music solo se acepta sin más búsquedas
+          // un candidato del artista confirmado. "Skyfall" traía solo
+          // recopilaciones de otros sellos y el video oficial de Adele estaba
+          // en la búsqueda de videos, que no llegaba a correr. Desde la
+          // segunda búsqueda vale cualquier candidato aceptado (el pool ya
+          // tiene las dos).
+          if (topCandidates.any((c) => c.artistConfirmed) || (topCandidates.isNotEmpty && nextAttempt >= 2)) {
+            return;
+          }
+          if (topCandidates.isNotEmpty) {
+            sendLog('[IsolateJS] Sin candidato del artista confirmado en $sourceLabel; se busca también en videos.');
+            continue;
+          }
           sendLog(
             '[IsolateJS] Ningún candidato superó el umbral de scoring (${pool.length} acumulados).',
           );
