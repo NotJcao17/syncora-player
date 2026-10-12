@@ -263,8 +263,9 @@ class SupabasePlaylistRepository {
     final userId = client.auth.currentUser?.id;
     if (userId == null) return;
 
+    final ordered = await _withAppendOrder(client, playlistId, [trackData]);
     final payload = {
-      ...trackData,
+      ...ordered.single,
       'playlist_id': playlistId,
       'user_id': userId,
     };
@@ -286,11 +287,46 @@ class SupabasePlaylistRepository {
     final userId = client.auth.currentUser?.id;
     if (userId == null) return;
 
-    final payload = tracksData
+    final ordered = await _withAppendOrder(client, playlistId, tracksData);
+    final payload = ordered
         .map((t) => {...t, 'playlist_id': playlistId, 'user_id': userId})
         .toList();
 
     await client.from('playlist_tracks').insert(payload);
+  }
+
+  /// Ronda 8 (H-R8-12): solo la importación mandaba `order_index`. Todo lo
+  /// demás ("Agregar a playlist", "Me gusta", guardar una colección, subir una
+  /// playlist local...) quedaba con el `DEFAULT 0` de la columna, y al bajar la
+  /// playlist en otro dispositivo (o tras cerrar e iniciar sesión) esas
+  /// canciones salían al principio, desempatadas por un uuid aleatorio. En la
+  /// app el orden local era correcto, así que no se notaba hasta re-sincronizar.
+  ///
+  /// Las filas que ya traen `order_index` (la importación) se respetan; las
+  /// demás van detrás de la última de la playlist en la nube.
+  Future<List<Map<String, dynamic>>> _withAppendOrder(
+    SupabaseClient client,
+    String playlistId,
+    List<Map<String, dynamic>> rows,
+  ) async {
+    if (rows.every((r) => r['order_index'] != null)) return rows;
+    final last = await client
+        .from('playlist_tracks')
+        .select('order_index')
+        .eq('playlist_id', playlistId)
+        .order('order_index', ascending: false, nullsFirst: false)
+        .limit(1);
+    final currentMax = last.isEmpty ? -1 : ((last.first['order_index'] as num?)?.toInt() ?? -1);
+    return assignAppendOrder(rows, currentMax);
+  }
+
+  /// Numera tras [currentMax] las filas que no traen `order_index`, en el
+  /// orden de la lista.
+  static List<Map<String, dynamic>> assignAppendOrder(List<Map<String, dynamic>> rows, int currentMax) {
+    var next = currentMax + 1;
+    return [
+      for (final r in rows) r['order_index'] != null ? r : {...r, 'order_index': next++},
+    ];
   }
 
   /// Sustituye una portada caída en todas las filas del usuario (ronda 4).

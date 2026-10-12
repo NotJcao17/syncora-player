@@ -39,5 +39,15 @@ void main() {
         returnsNormally,
       );
     });
+  
+  test('H-R8-12: las canciones sin order_index van detrás de la última de la playlist', () {
+    final rows = SupabasePlaylistRepository.assignAppendOrder([
+      {'track_id': 1},
+      {'track_id': 2, 'order_index': 7},
+      {'track_id': 3},
+    ], 41);
+    expect(rows.map((r) => r['order_index']), [42, 7, 43]);
+    expect(SupabasePlaylistRepository.assignAppendOrder([{'track_id': 1}], -1).single['order_index'], 0);
   });
+});
 }
