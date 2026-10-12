@@ -38,6 +38,11 @@ id de la cuenta, o `local` en modo sin cuenta.
 | Sin dueño anotado (instalaciones anteriores) | Se adopta sin borrar: no hay forma de saber de quién son. |
 | Modo local → cuenta (`auth_screen.dart`) | Sin cambios: migra o descarta como antes y después anota la cuenta como dueña. Si la app se cerró a mitad de esa migración, el arranque adopta lo que quedó en vez de borrarlo. |
 
+**Ronda 8 (H-R8-14):** el borrado de la biblioteca es una sola transacción con borrados en bloque
+(antes, una sentencia por canción: tardaba y la UI se vaciaba a la vista), y `claimFor` espera a que
+termine cualquier borrado en curso. Sin eso, cerrar sesión y volver a entrar enseguida dejaba la
+biblioteca vacía: el sync reutilizaba las playlists que el borrado todavía no alcanzaba.
+
 Qué se borra (`wipeAccountDataAtRest` + `AccountDataGuard.wipeNow`): playlists y sus
 pistas ("Tus me gusta" queda vacía), **carpetas** (antes `wipeLocalLibrary` no las
 tocaba, tampoco al eliminar la cuenta), álbumes guardados, historial, imágenes propias,

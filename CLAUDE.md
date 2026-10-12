@@ -98,7 +98,10 @@ pasó a youtubei.js 18.1.0 (el 17.2.0 leía "23" como 23 s): no volver a uno vie
 se sube a la nube lleva `order_index` (antes solo la importación: el resto quedaba en 0 y al volver a
 bajar la playlist salía revuelto); la migración 25 repara el orden en la nube. El historial de
 reproducción se arma una vez al entrar, con metadatos locales primero; `DeezerApi.getTrack` lanza
-ante `{"error": ...}` en vez de devolver una pista "Desconocida".
+ante `{"error": ...}` en vez de devolver una pista "Desconocida". El borrado al cerrar sesión es una
+sola transacción y volver a entrar espera a que termine (si no, la biblioteca quedaba vacía). Nada
+visible en una lista debe animarse a 60 fps sin parar (el indicador de "sonando" lo hacía: 20-30 % de
+GPU integrada); la posición se publica a la UI 4 veces por segundo.
 
 ### Estado actual (última actualización: 2026-10-09)
 

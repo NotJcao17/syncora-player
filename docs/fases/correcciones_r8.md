@@ -158,3 +158,20 @@ volver a iniciar sesión.
   (escuchas, crossfade, precarga) sigue viendo cada tick. El 20-30 % al desplazar una playlist es lo
   esperable en Flutter con GPU integrada (se dibuja un frame completo por cada refresco de pantalla
   mientras la lista se mueve); no se cambió.
+
+## Cuarta tanda
+
+- **H-R8-14. Cerrar sesión y volver a entrar dejaba la biblioteca vacía hasta "Recargar".**
+  `AccountDataGuard.signOut` cierra la sesión de Supabase **antes** de borrar lo local (para subir
+  el historial con JWT), así que la pantalla de inicio aparecía mientras el borrado seguía, y ese
+  borrado iba una sentencia por canción (miles con una biblioteca importada: segundos, y la UI se
+  vaciaba a la vista). Si el usuario volvía a entrar antes de que terminara, el sync reutilizaba las
+  playlists que el borrado aún no alcanzaba (las empareja por `remoteId`) y el borrado se las
+  llevaba con las canciones recién bajadas. Reproducido en un test. Arreglos: `wipeLocalLibrary` es
+  una transacción con borrados en bloque (cualquier otra escritura espera a que termine) y
+  `claimFor` espera a que termine el borrado en curso (`waitForPendingWipe`) antes del sync.
+- **H-R8-15. GPU al 20-30 % con el buscador o una playlist quietos.** La fila de la canción que
+  suena mostraba `LoadingAnimationWidget.staggeredDotsWave`, una animación a 60 fps que no se detenía
+  nunca: con esa fila visible, la app dibujaba 60 frames por segundo. Ahora `PlayingIndicator`:
+  tres barras que cambian 5 veces por segundo, sin ticker, y se detienen con la app oculta o
+  minimizada. El 20-30 % al desplazar una lista sigue siendo lo esperable.
