@@ -10,58 +10,46 @@ import '../../../core/widgets/track_tile.dart';
 import '../../../data/apis/deezer_provider.dart';
 import '../../../data/local_db/database_provider.dart';
 import '../../../data/local_db/syncora_database.dart';
-import '../../../data/models/deezer/deezer_track.dart';
+import '../../../data/local_db/playlist_track_mapper.dart';
+import '../../player/player_models.dart';
 import '../../player/player_providers.dart';
-
-/// Ronda 8 (H-R8-10): la escucha en curso se vuelca a la base cada 15 s (su
-/// duración), y cada volcado emitía la lista entera otra vez: la pantalla
-/// volvía a resolver las 100 canciones en Deezer y mostraba el esqueleto, así
-/// que no dejaba leer. Aquí solo cuenta lo que se ve: qué fila, qué canción y
-/// cuándo.
-final recentListeningHistoryProvider = StreamProvider<List<ListeningHistoryData>>((ref) {
-  final dao = ref.watch(listeningHistoryDaoProvider);
-  return dao.watchRecentHistory(limit: 100).distinct(sameVisibleHistory);
-});
-
-bool sameVisibleHistory(List<ListeningHistoryData> a, List<ListeningHistoryData> b) {
-  if (a.length != b.length) return false;
-  for (var i = 0; i < a.length; i++) {
-    if (a[i].id != b[i].id || a[i].trackId != b[i].trackId || a[i].listenedAt != b[i].listenedAt) return false;
-  }
-  return true;
-}
-
-/// Metadatos de una canción del historial, pedidos una sola vez por sesión
-/// (el caché de `DeezerApi` guarda solo 30 y el historial muestra 100).
-final historyTrackProvider = FutureProvider.family<DeezerTrack?, int>((ref, trackId) async {
-  try {
-    return await ref.watch(deezerApiProvider).getTrack(trackId);
-  } catch (_) {
-    return null;
-  }
-});
 
 class ResolvedHistoryItem {
   final ListeningHistoryData data;
-  final DeezerTrack? track;
+  final SyncoraTrack? track;
 
   const ResolvedHistoryItem({required this.data, this.track});
 }
 
-final resolvedListeningHistoryProvider = FutureProvider<List<ResolvedHistoryItem>>((ref) async {
-  final historyAsync = ref.watch(recentListeningHistoryProvider);
-  final entries = historyAsync.value ?? [];
+/// Ronda 8 (H-R8-10): el historial se arma **una vez al entrar** a la pantalla
+/// y no se vuelve a actualizar mientras está abierta (al salir y volver sí).
+///
+/// Antes escuchaba la tabla en vivo: la escucha en curso se vuelca cada 15 s,
+/// y cada volcado volvía a pedir las 100 canciones a Deezer con el esqueleto
+/// en pantalla. Pedir 100 de golpe además agotaba la cuota de Deezer, que
+/// responde `{"error": ...}`, y eso salía como "Desconocida".
+///
+/// Título, artista y portada salen primero de las playlists locales; a Deezer
+/// solo se le pide lo que falte, de una en una.
+final resolvedListeningHistoryProvider = FutureProvider.autoDispose<List<ResolvedHistoryItem>>((ref) async {
+  final entries = await ref.read(listeningHistoryDaoProvider).getRecentHistory(limit: 100);
   if (entries.isEmpty) return const [];
 
-  final uniqueTrackIds = entries.map((e) => e.trackId).where((id) => id > 0).toSet();
+  final ids = entries.map((e) => e.trackId).where((id) => id > 0).toSet();
+  final tracks = <int, SyncoraTrack>{};
+  final local = await ref.read(playlistDaoProvider).findTracksByTrackIds(ids);
+  local.forEach((id, row) => tracks[id] = playlistTrackToSyncora(row));
 
-  final trackMap = <int, DeezerTrack>{};
-  await Future.wait(uniqueTrackIds.map((trackId) async {
-    final track = await ref.watch(historyTrackProvider(trackId).future);
-    if (track != null) trackMap[trackId] = track;
-  }));
+  final api = ref.read(deezerApiProvider);
+  for (final id in ids.where((id) => !tracks.containsKey(id))) {
+    try {
+      tracks[id] = (await api.getTrack(id)).toSyncoraTrack();
+    } catch (_) {
+      // Sin red, cuota agotada o retirada del catálogo: fila sin metadatos.
+    }
+  }
 
-  return entries.map((e) => ResolvedHistoryItem(data: e, track: trackMap[e.trackId])).toList();
+  return [for (final e in entries) ResolvedHistoryItem(data: e, track: tracks[e.trackId])];
 });
 
 class ListeningHistoryScreen extends ConsumerWidget {
@@ -158,9 +146,6 @@ class ListeningHistoryScreen extends ConsumerWidget {
         ],
       ),
       body: historyAsync.when(
-        // Al llegar una escucha nueva se sigue viendo la lista anterior
-        // mientras se resuelve, en vez de volver al esqueleto.
-        skipLoadingOnReload: true,
         data: (items) {
           if (items.isEmpty) {
             return const Center(
@@ -220,7 +205,7 @@ class ListeningHistoryScreen extends ConsumerWidget {
                 );
               }
 
-              final syncoraTrack = track.toSyncoraTrack();
+              final syncoraTrack = track;
               return TrackTile(
                 track: syncoraTrack,
                 showAlbum: true,
@@ -228,7 +213,7 @@ class ListeningHistoryScreen extends ConsumerWidget {
                   final controller = ref.read(syncoraPlayerControllerProvider.notifier);
                   final allTracks = items
                       .where((it) => it.track != null)
-                      .map((it) => it.track!.toSyncoraTrack())
+                      .map((it) => it.track!)
                       .toList();
                   final idx = allTracks.indexWhere((t) => t.id == syncoraTrack.id);
                   controller.setQueue(allTracks, startIndex: idx >= 0 ? idx : 0, activeContextId: 'listening_history');

@@ -9,15 +9,17 @@ import 'package:syncora_player/data/local_db/syncora_database.dart';
 import 'package:syncora_player/data/models/deezer/deezer_track.dart';
 import 'package:syncora_player/features/settings/screens/listening_history_screen.dart';
 
-class _CountingApi extends DeezerApi {
-  int calls = 0;
+class _FakeApi extends DeezerApi {
+  final List<int> asked = [];
+  final Set<int> quotaErrors = {};
 
   @override
   Future<DeezerTrack> getTrack(int id) async {
-    calls++;
+    asked.add(id);
+    if (quotaErrors.contains(id)) throw StateError('Deezer /track/$id: {code: 4}');
     return DeezerTrack(
       id: id,
-      title: 'Canción $id',
+      title: 'Deezer $id',
       artistName: 'Artista',
       artistId: 1,
       albumTitle: 'Álbum',
@@ -29,46 +31,73 @@ class _CountingApi extends DeezerApi {
 }
 
 void main() {
-  test('H-R8-10: el volcado de duración de la escucha en curso no vuelve a cargar el historial', () async {
-    final db = SyncoraDatabase(DatabaseConnection(NativeDatabase.memory(), closeStreamsSynchronously: true));
-    final api = _CountingApi();
-    final container = ProviderContainer(overrides: [
+  late SyncoraDatabase db;
+  late _FakeApi api;
+  late ProviderContainer container;
+
+  setUp(() {
+    db = SyncoraDatabase(DatabaseConnection(NativeDatabase.memory(), closeStreamsSynchronously: true));
+    api = _FakeApi();
+    container = ProviderContainer(overrides: [
       syncoraDatabaseProvider.overrideWithValue(db),
       deezerApiProvider.overrideWithValue(api),
     ]);
-    addTearDown(() async {
-      container.dispose();
-      await db.close();
-    });
+  });
 
+  tearDown(() async {
+    container.dispose();
+    await db.close();
+  });
+
+  Future<List<ResolvedHistoryItem>> load() {
+    final sub = container.listen(resolvedListeningHistoryProvider, (_, _) {});
+    addTearDown(sub.close);
+    return container.read(resolvedListeningHistoryProvider.future);
+  }
+
+  test('H-R8-10: los metadatos salen de las playlists locales y solo lo que falta va a Deezer', () async {
+    final playlistId = await db.playlistDao.createPlaylist(title: 'Mía');
+    await db.playlistDao.addTrackToPlaylist(
+      playlistId: playlistId,
+      trackId: 10,
+      artistId: 1,
+      albumId: 1,
+      title: 'Local 10',
+      artistName: 'Morat',
+      albumName: '23',
+      coverUrl: '',
+      durationMs: 187000,
+    );
     final dao = db.listeningHistoryDao;
     await dao.recordEntry(trackId: 10, artistId: 1, albumId: 1, durationListenedMs: 30000);
-    final current = await dao.recordEntry(trackId: 11, artistId: 1, albumId: 1, durationListenedMs: 30000);
+    await dao.recordEntry(trackId: 11, artistId: 1, albumId: 1, durationListenedMs: 30000);
 
+    final items = await load();
+    expect(items.map((i) => i.track?.title), containsAll(['Local 10', 'Deezer 11']));
+    expect(api.asked, [11]);
+  });
+
+  test('H-R8-10: un error de Deezer deja la fila sin metadatos, nunca "Desconocida"', () async {
+    api.quotaErrors.add(12);
+    await db.listeningHistoryDao.recordEntry(trackId: 12, artistId: 1, albumId: 1, durationListenedMs: 30000);
+    final items = await load();
+    expect(items.single.track, isNull);
+  });
+
+  test('H-R8-10: mientras la pantalla está abierta no se vuelve a cargar', () async {
+    final dao = db.listeningHistoryDao;
+    final current = await dao.recordEntry(trackId: 20, artistId: 1, albumId: 1, durationListenedMs: 30000);
     final states = <AsyncValue<List<ResolvedHistoryItem>>>[];
     container.listen(resolvedListeningHistoryProvider, (_, next) => states.add(next), fireImmediately: true);
-    await _settle(container);
-    expect(container.read(resolvedListeningHistoryProvider).value?.length, 2);
-    final callsAfterLoad = api.calls;
+    await container.read(resolvedListeningHistoryProvider.future);
     states.clear();
 
-    // Volcado periódico de la escucha en curso: solo cambia la duración.
-    await dao.updateListenedDuration(current, 45000);
     await dao.updateListenedDuration(current, 60000);
-    await _settle(container);
-    expect(states, isEmpty, reason: 'la lista visible no cambió');
-    expect(api.calls, callsAfterLoad);
-
-    // Una escucha nueva solo pide la canción nueva y no vuelve al esqueleto.
-    await dao.recordEntry(trackId: 12, artistId: 1, albumId: 1, durationListenedMs: 30000);
-    await _settle(container);
-    expect(api.calls, callsAfterLoad + 1);
-    expect(container.read(resolvedListeningHistoryProvider).value?.length, 3);
+    await dao.recordEntry(trackId: 21, artistId: 1, albumId: 1, durationListenedMs: 30000);
+    for (var i = 0; i < 10; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(states, isEmpty);
+    expect(api.asked, [20]);
   });
-}
-
-Future<void> _settle(ProviderContainer container) async {
-  for (var i = 0; i < 20; i++) {
-    await Future<void>.delayed(const Duration(milliseconds: 10));
-  }
 }

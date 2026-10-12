@@ -374,7 +374,17 @@ class DeezerApi {
 
     return _rateLimiter.run(() async {
       final response = await _dio.get('/track/$id');
-      final track = DeezerTrack.fromJson(Map<String, dynamic>.from(response.data as Map));
+      final data = Map<String, dynamic>.from(response.data as Map);
+      // Ronda 8 (H-R8-10): Deezer responde 200 con `{"error": ...}` (pista
+      // retirada, código 800; cuota excedida, código 4). Parsearlo daba una
+      // pista "Desconocida / Artista Desconocido" que además se cacheaba: el
+      // historial y las estadísticas la guardaban así.
+      final error = data['error'];
+      if (error != null) {
+        if (error is Map && error['code'] == 800) throw DeezerNotFoundException('/track/$id');
+        throw StateError('Deezer /track/$id: $error');
+      }
+      final track = DeezerTrack.fromJson(data);
       _trackCache.put(id, track);
       return track;
     });

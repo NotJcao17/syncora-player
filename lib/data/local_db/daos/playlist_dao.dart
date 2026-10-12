@@ -207,6 +207,23 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
       (delete(playlists)..where((t) => t.id.equals(id))).go();
 
   // Tracks in Playlists
+
+  /// Una fila cualquiera de las playlists locales por cada `trackId` pedido
+  /// (ronda 8): el historial de reproducción saca de aquí título, artista y
+  /// portada sin pedírselos a Deezer.
+  Future<Map<int, PlaylistTrack>> findTracksByTrackIds(Iterable<int> trackIds) async {
+    final ids = trackIds.toSet().toList();
+    final result = <int, PlaylistTrack>{};
+    for (var i = 0; i < ids.length; i += 500) {
+      final chunk = ids.sublist(i, i + 500 > ids.length ? ids.length : i + 500);
+      final rows = await (select(playlistTracks)..where((t) => t.trackId.isIn(chunk))).get();
+      for (final row in rows) {
+        result.putIfAbsent(row.trackId, () => row);
+      }
+    }
+    return result;
+  }
+
   Future<List<PlaylistTrack>> getTracksOrdered(int playlistId) =>
       (select(playlistTracks)
             ..where((t) => t.playlistId.equals(playlistId))
