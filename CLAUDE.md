@@ -94,7 +94,11 @@ conviene revertir: un fin de pista se ignora mientras se carga otra (`just_audio
 usuario; la precarga de la siguiente va por el carril de streaming y solo en los últimos 30 s; en
 YouTube Music otro autor conocido se descarta y una duración igual a un número del título se toma
 como desconocida; en la importación, más de 5 s de diferencia es otra grabación. El motor de fábrica
-pasó a youtubei.js 18.1.0 (el 17.2.0 leía "23" como 23 s): no volver a uno viejo.
+pasó a youtubei.js 18.1.0 (el 17.2.0 leía "23" como 23 s): no volver a uno viejo. Toda canción que
+se sube a la nube lleva `order_index` (antes solo la importación: el resto quedaba en 0 y al volver a
+bajar la playlist salía revuelto); la migración 25 repara el orden en la nube. El historial de
+reproducción se arma una vez al entrar, con metadatos locales primero; `DeezerApi.getTrack` lanza
+ante `{"error": ...}` en vez de devolver una pista "Desconocida".
 
 ### Estado actual (última actualización: 2026-10-09)
 
