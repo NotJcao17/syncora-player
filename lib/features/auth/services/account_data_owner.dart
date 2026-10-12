@@ -110,6 +110,9 @@ class AccountDataGuard {
   /// Deja los datos locales listos para [newOwner]: los borra si eran de otro
   /// y lo anota como dueño. Devuelve si hubo borrado.
   Future<bool> claimFor(String newOwner) async {
+    // H-R8-14: si el borrado del cierre de sesión sigue en curso, el sync que
+    // viene después de esto no puede empezar hasta que termine.
+    await waitForPendingWipe();
     final wipe = shouldWipeLocalData(storedOwner: owner, newOwner: newOwner);
     if (wipe) await wipeNow();
     await setOwner(newOwner);
@@ -236,8 +239,32 @@ class AccountDataGuard {
     }
   }
 
+  Future<void>? _pendingWipe;
+
+  /// Espera a que termine el borrado en curso, si lo hay (ronda 8, H-R8-14).
+  /// Al cerrar sesión la pantalla de inicio aparece antes de que el borrado
+  /// acabe, y quien vuelve a entrar enseguida no debe sincronizar encima.
+  Future<void> waitForPendingWipe() async {
+    final pending = _pendingWipe;
+    if (pending == null) return;
+    try {
+      await pending;
+    } catch (_) {}
+  }
+
   /// Borrado completo, con el reproductor vivo y la UI montada.
-  Future<void> wipeNow({bool playerAlreadyReset = false}) async {
+  Future<void> wipeNow({bool playerAlreadyReset = false}) {
+    final future = _wipeNow(playerAlreadyReset: playerAlreadyReset);
+    _pendingWipe = future;
+    // Cuerpo de bloque a propósito: un `whenComplete` con cuerpo de flecha que
+    // devuelve el propio future se espera a sí mismo (ver `inicio_y_explorar.md`).
+    future.whenComplete(() {
+      if (identical(_pendingWipe, future)) _pendingWipe = null;
+    });
+    return future;
+  }
+
+  Future<void> _wipeNow({required bool playerAlreadyReset}) async {
     final playerAlive = _ref.exists(syncoraPlayerControllerProvider);
     if (!playerAlreadyReset) await _resetPlayerIfAlive();
 
