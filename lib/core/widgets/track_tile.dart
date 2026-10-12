@@ -3,7 +3,6 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
@@ -27,6 +26,7 @@ import 'error_state.dart';
 import 'playlist_picker_dialog.dart';
 import 'swipe_action_tile.dart';
 import '../../features/library/services/like_track_service.dart';
+import 'playing_indicator.dart';
 import 'track_cover_image.dart';
 import '../limits/app_limits.dart';
 
@@ -862,7 +862,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                           color: activeColor,
                           size: 18,
                         )
-                      : LoadingAnimationWidget.staggeredDotsWave(
+                      : PlayingIndicator(
                           color: activeColor,
                           size: 18,
                         ))
@@ -960,7 +960,7 @@ class _TrackTileState extends ConsumerState<TrackTile> {
                                           color: activeColor,
                                           size: 18,
                                         )
-                                      : LoadingAnimationWidget.staggeredDotsWave(
+                                      : PlayingIndicator(
                                           color: activeColor,
                                           size: 18,
                                         ))
