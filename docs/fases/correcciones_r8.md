@@ -140,3 +140,21 @@ volver a iniciar sesión.
     no reordenan su copia local solos (el sync no reordena); se ve al volver a bajar la playlist
     (cerrar e iniciar sesión). Las colecciones guardadas en un solo INSERT sin `order_index`
     dependen de `ctid`, que normalmente conserva el orden de envío.
+
+## Tercera tanda
+
+- **Migración 25 aplicada** (2026-10-11, con permiso del usuario). Antes se midió: 24 playlists con
+  `order_index` repetidos (2714 filas). La simulación sobre "2026" pasó de 196 tramos revueltos a 72
+  (los cortes que quedan son títulos que Deezer escribe distinto o repetidos en el CSV). Después de
+  aplicarla, 0 playlists con repetidos.
+- **"Die Young" de Kesha sonaba de otro artista.** En YouTube Music el master viene con autor
+  "Ke$ha"; `norm` convertía el `$` en espacio ("ke ha" ≠ "kesha"), así que el master contaba como de
+  otro intérprete y podía ganar un cover ("Betty .C.", 214 s). Ahora `$` cuenta como "s" (Ke$ha,
+  A$AP Rocky). Con el motor real elige el master `Bgy3NB4c4ms`.
+- **H-R8-13. GPU en Windows (4-10 % con la app quieta sonando).** `media_kit` emite el estado ~15
+  veces por segundo (medido: 14.5/s) y cada emisión notificaba a la UI: barra de progreso y tiempos
+  repintados a 15 fps. Ahora los ticks que solo cambian la posición se publican como mucho cada
+  250 ms; play, pausa, carga, duración y saltos (seek) siguen al instante, y la lógica interna
+  (escuchas, crossfade, precarga) sigue viendo cada tick. El 20-30 % al desplazar una playlist es lo
+  esperable en Flutter con GPU integrada (se dibuja un frame completo por cada refresco de pantalla
+  mientras la lista se mueve); no se cambió.
