@@ -183,6 +183,9 @@ class YtSearchMatcher {
   static String norm(String s) {
     var str = s.toLowerCase();
     str = str.replaceAll('ß', 'ss').replaceAll('œ', 'oe').replaceAll('æ', 'ae');
+    // Ronda 8: "Ke$ha", "A$AP Rocky". Sin esto el `$` se volvía un espacio y
+    // el master de "Die Young" (autor "Ke$ha") no contaba como de Kesha.
+    str = str.replaceAll(r'$', 's');
 
     final buffer = StringBuffer();
     for (final rune in str.runes) {

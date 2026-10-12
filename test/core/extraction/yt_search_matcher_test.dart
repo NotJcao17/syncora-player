@@ -1091,6 +1091,18 @@ void main() {
       expect(anne.first.videoId, 'ee2mcqcGL_c');
     });
 
+    test('Die Young: el master de "Ke\$ha" cuenta como de Kesha y le gana a los covers', () {
+      final top = YtSearchMatcher.pickTopCandidates([
+        {'videoId': 'Bgy3NB4c4ms', 'title': 'Die Young', 'author': 'Ke\$ha', 'durationSec': 212, 'source': 'ytmusic'},
+        {'videoId': '5GcVGyqc8jg', 'title': 'Die Young', 'author': 'Betty .C.', 'durationSec': 214, 'source': 'ytmusic'},
+        {'videoId': 'gOu3DHjPmgk', 'title': 'Die Young', 'author': '', 'durationSec': 213, 'source': 'ytmusic'},
+        {'videoId': 'fAJ97djw6mY', 'title': 'Die Young', 'author': 'FTW Von', 'durationSec': 194, 'source': 'ytmusic'},
+      ], artist: 'Kesha', title: 'Die Young', durationSec: 211);
+      expect(top.first.videoId, 'Bgy3NB4c4ms');
+      expect(top.first.artistConfirmed, isTrue);
+      expect(top.map((c) => c.videoId), isNot(contains('5GcVGyqc8jg')));
+    });
+
     test('un título de una palabra sigue aceptando un upload exacto sin artista', () {
       final top = YtSearchMatcher.pickTopCandidates([
         {'videoId': 'aaaaaaaaaaa', 'title': 'Borderline (Official Audio)', 'author': 'Some Uploads', 'durationSec': 238},
