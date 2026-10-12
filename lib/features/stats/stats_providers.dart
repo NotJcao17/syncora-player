@@ -224,7 +224,9 @@ final trackMetaProvider =
 
   final results = await Future.wait(ids.map((id) async {
     final hit = cached[id];
-    if (hit != null) {
+    // Ronda 8: hasta la 1.0.2 una cuota agotada de Deezer se guardaba aquí como
+    // "Desconocida"; esas entradas se vuelven a pedir.
+    if (hit != null && hit.primaryName != 'Desconocida') {
       return MapEntry(
         id,
         DeezerTrack(
