@@ -58,3 +58,7 @@ supabase/.temp/
 /engine/node_modules/
 /engine/dist/
 /engine/*.pem
+
+# Exportaciones personales para probar la importación (no van al repositorio)
+docs/*.csv
+!docs/test.csv
