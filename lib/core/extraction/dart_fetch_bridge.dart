@@ -120,4 +120,7 @@ class DartFetchBridge {
     }
   }
 
+  /// Olvida las cookies de YouTube (ronda 9: parte de renovar la sesión ante
+  /// "no eres un bot", ver `YoutubeSessionRefresher`).
+  void clearCookies() => _cookies.clear();
 }

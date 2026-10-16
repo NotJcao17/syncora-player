@@ -15,15 +15,16 @@ completa en verde, commit y push.
   429/503 se reintenta hasta 4 veces esperando `Retry-After` (mínimo 1, 2, 3 s); y las peticiones
   llevan `User-Agent`, como pide LRCLib. La letra solo se pide con la vista de letra abierta (hoja en
   móvil, panel en PC) o en la búsqueda por letra; no en cada cambio de canción.
-
-## Pendiente (diagnosticado, sin cambios aún)
-
-- **"YouTube pidió verificar esta conexión" en todas las canciones con datos móviles, hasta
+- **H-R9-2. "YouTube pidió verificar esta conexión" en todas las canciones con datos móviles, hasta
   reiniciar el teléfono.** El motor crea una instancia de Innertube por cliente
-  (`globalThis._ytInstances` en `engine/src/glue.js`) con su `visitorData`, y la reutiliza mientras
-  viva el proceso: nada llama a `resetEngine()` y el isolate solo se recrea al morir o al cambiar de
-  motor. Reiniciar cambió a la vez la sesión (nuevo `visitorData`) y probablemente la IP de la red
-  móvil, así que no se sabe cuál de las dos lo arregló. Arreglo propuesto: ante "not a bot",
-  reiniciar las instancias de Innertube y reintentar una vez antes de pausar. Para distinguir la
-  causa la próxima vez: primero cerrar la app (si se arregla, era la sesión); si no, modo avión unos
-  segundos (IP nueva).
+  (`globalThis._ytInstances` en `engine/src/glue.js`) con su `visitorData`, y `DartFetchBridge`
+  guarda las cookies de YouTube (`VISITOR_INFO1_LIVE`, etc.); las dos duraban lo que el proceso:
+  nada llamaba a `resetEngine()` y el isolate solo se recrea al morir o al cambiar de motor.
+  Reiniciar cambió a la vez la sesión y probablemente la IP de la red móvil, así que no se sabe cuál
+  de las dos lo arregló. Arreglo: ante "not a bot", `YoutubeSessionRefresher` borra las instancias de
+  Innertube y las cookies y se reintenta el mismo video una vez antes de pausar. Tiene un
+  enfriamiento de 1 min: si la sesión recién renovada también lo pide, es la IP, y renovar en cada
+  canción solo sumaría peticiones mientras siga bloqueada (después sigue lo de H-R8-4: un candidato
+  más y pausa). Los tests cubren el enfriamiento y el borrado de cookies; el camino completo necesita
+  QuickJS y se prueba en el dispositivo. Si vuelve a pasar con datos y el reintento no lo arregla, es
+  la IP: modo avión unos segundos le da una nueva.

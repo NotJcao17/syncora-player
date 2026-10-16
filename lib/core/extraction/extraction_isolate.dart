@@ -11,6 +11,7 @@ import 'engine/engine_bundle.dart';
 import 'models/extraction_request.dart';
 import 'models/extraction_result.dart';
 import 'retry_policy.dart';
+import 'youtube_session_refresher.dart';
 import 'yt_search_matcher.dart';
 
 class _IsolateInitMessage {
@@ -279,6 +280,11 @@ class ExtractionIsolate {
 
     JavascriptRuntime? jsRuntime;
     Timer? pendingJobTimer;
+    final sessionRefresher = YoutubeSessionRefresher(reset: () {
+      jsRuntime?.evaluate('if (typeof globalThis.resetJsEngine === "function") globalThis.resetJsEngine();');
+      jsRuntime?.executePendingJob();
+      fetchBridge.clearCookies();
+    });
     var loadReport = const EngineLoadReport(ok: false, error: 'El motor no cargó');
 
     try {
@@ -455,6 +461,7 @@ class ExtractionIsolate {
                 retryPolicy: retryPolicy,
                 sendLog: sendLog,
                 clients: loadReport.clients,
+                sessionRefresher: sessionRefresher,
               ));
         }
         initMessage.mainSendPort.send(result);
@@ -495,6 +502,7 @@ class ExtractionIsolate {
     required RetryPolicy retryPolicy,
     required void Function(String) sendLog,
     List<String> clients = kDefaultEngineClients,
+    YoutubeSessionRefresher? sessionRefresher,
   }) async {
     final videoId = request.videoId.trim();
 
@@ -533,6 +541,7 @@ class ExtractionIsolate {
           retryPolicy: retryPolicy,
           sendLog: sendLog,
           clients: clients,
+          sessionRefresher: sessionRefresher,
         );
       }
 
@@ -776,6 +785,7 @@ class ExtractionIsolate {
             retryPolicy: retryPolicy,
             sendLog: sendLog,
             clients: clients,
+            sessionRefresher: sessionRefresher,
           );
           if (result is ExtractionSuccess) {
             _resolvedMatchCache[videoId] = candidate.videoId;
@@ -825,6 +835,7 @@ class ExtractionIsolate {
               retryPolicy: retryPolicy,
               sendLog: sendLog,
               clients: clients,
+              sessionRefresher: sessionRefresher,
             );
             if (result is ExtractionSuccess) {
               _resolvedMatchCache[videoId] = candidate.videoId;
@@ -938,6 +949,21 @@ class ExtractionIsolate {
     // provocaba que errores lógicos (metadata ausente) se reintentaran.
     final errorType = _classifyExtractionError(lastJsError);
 
+    // Ronda 9 (H-R9-2): la sesión pudo quedar marcada (no la IP). Se renueva
+    // (Innertube + cookies) y se reintenta el mismo video una vez; el
+    // enfriamiento del refresher impide que esto se repita.
+    if (_isIpBlockError(lastJsError) && (sessionRefresher?.refreshIfAllowed() ?? false)) {
+      sendLog('[IsolateJS] YouTube pidió verificar: se renueva la sesión y se reintenta ${request.videoId}.');
+      return _processExtraction(
+        request: request,
+        jsRuntime: jsRuntime,
+        retryPolicy: retryPolicy,
+        sendLog: sendLog,
+        clients: clients,
+        sessionRefresher: sessionRefresher,
+      );
+    }
+
     // Solo 403/red pueden reintentarse (máx. 1 vez). Los errores lógicos y
     // desconocidos fallan de inmediato (fail fast / auto-skip).
     if (errorType == ExtractionError.rateLimited ||
@@ -953,6 +979,7 @@ class ExtractionIsolate {
           retryPolicy: retryPolicy,
           sendLog: sendLog,
           clients: clients,
+          sessionRefresher: sessionRefresher,
         );
       }
       sendLog('[IsolateJS] Guard 403: Pausando reproductor. No se pudo extraer la URL.');
