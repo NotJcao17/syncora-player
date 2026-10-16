@@ -86,7 +86,8 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 
 ### Estado actual (última actualización: 2026-10-15)
 
-**Novena ronda de correcciones: en curso.** Detalle en `docs/fases/correcciones_r9.md` — **leerlo
+**Novena ronda de correcciones: en `master`, sin publicar (entra en la próxima versión); faltan las
+pruebas en dispositivo.** Detalle en `docs/fases/correcciones_r9.md` — **leerlo
 antes de tocar `LRCLibApi` o el manejo de "not a bot" del motor**. Lo que no conviene revertir:
 `LRCLibApi` nunca cachea un fallo temporal (429, timeout, sin red), solo una respuesta definitiva, y
 reintenta los 429 respetando `Retry-After` (LRCLib los está dando a casi todo); y ante "not a bot" la

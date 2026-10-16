@@ -1,7 +1,11 @@
 # Novena ronda de correcciones (2026-10-15)
 
 Primera ronda tras publicar la 1.1.0. Cada bundle cierra con `flutter analyze` limpio, la suite
-completa en verde, commit y push.
+completa en verde (852 tests), commit y push. Sin migraciones ni cambios en Supabase.
+
+**Estado: en `master`, sin publicar.** Entra en la próxima versión (`docs/lanzar_version.md`); las
+notas del release salen de los commits `fix:` desde `v1.1.0`. Faltan las pruebas en dispositivo de
+abajo.
 
 ## Hallazgos verificados
 
@@ -28,3 +32,13 @@ completa en verde, commit y push.
   más y pausa). Los tests cubren el enfriamiento y el borrado de cookies; el camino completo necesita
   QuickJS y se prueba en el dispositivo. Si vuelve a pasar con datos y el reintento no lo arregla, es
   la IP: modo avión unos segundos le da una nueva.
+
+## Pruebas en dispositivo pendientes
+
+- **Letras:** abrir la letra de "Don't Stop Me Now" (Queen) y "I Just Might" (Bruno Mars). Si
+  LRCLib sigue limitando, puede tardar unos segundos; si sale "sin letra", cerrar y volver a abrir
+  la hoja debe volver a pedirla (antes quedaba sin letra hasta reiniciar la app).
+- **"No eres un bot":** si vuelve a aparecer con datos móviles, el registro de `/debug` debe mostrar
+  "se renueva la sesión y se reintenta". Si después de eso sigue pausando, es la IP (modo avión unos
+  segundos). Comprobar que no se renueva en bucle: como mucho una vez por minuto.
+
