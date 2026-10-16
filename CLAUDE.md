@@ -84,6 +84,13 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-10-15)
+
+**Novena ronda de correcciones: en curso.** Detalle en `docs/fases/correcciones_r9.md` — **leerlo
+antes de tocar `LRCLibApi` o el manejo de "not a bot" del motor**. Lo que no conviene revertir:
+`LRCLibApi` nunca cachea un fallo temporal (429, timeout, sin red), solo una respuesta definitiva, y
+reintenta los 429 respetando `Retry-After` (LRCLib los está dando a casi todo).
+
 ### Estado actual (última actualización: 2026-10-11)
 
 **Octava ronda de correcciones: probada en dispositivo y publicada como 1.1.0 (2026-10-11); migración 25 aplicada.** Detalle
