@@ -36,7 +36,7 @@ var YouTubeJS = (() => {
     }
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/platform/web.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/platform/web.js
   var web_exports = {};
   __export(web_exports, {
     Actions: () => Actions,
@@ -87,7 +87,7 @@ var YouTubeJS = (() => {
     default: () => web_default
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/Utils.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/Utils.js
   var Utils_exports = {};
   __export(Utils_exports, {
     ChannelError: () => ChannelError,
@@ -117,7 +117,7 @@ var YouTubeJS = (() => {
     u8ToBase64: () => u8ToBase64
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/helpers.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/helpers.js
   var helpers_exports = {};
   __export(helpers_exports, {
     Maybe: () => Maybe,
@@ -127,7 +127,7 @@ var YouTubeJS = (() => {
     observe: () => observe
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/Log.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/Log.js
   var Log_exports = {};
   __export(Log_exports, {
     Level: () => Level,
@@ -178,7 +178,7 @@ var YouTubeJS = (() => {
   }
   __name(setLevel, "setLevel");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/helpers.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/helpers.js
   var isObserved = /* @__PURE__ */ Symbol("ObservedArray.isObserved");
   var _YTNode = class _YTNode {
     constructor() {
@@ -545,7 +545,7 @@ var YouTubeJS = (() => {
   __name(_Memo, "Memo");
   var Memo = _Memo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/misc.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/misc.js
   var misc_exports = {};
   __export(misc_exports, {
     AccessibilityContext: () => AccessibilityContext,
@@ -566,7 +566,7 @@ var YouTubeJS = (() => {
     VideoDetails: () => VideoDetails
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/AccessibilityContext.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/AccessibilityContext.js
   var _AccessibilityContext = class _AccessibilityContext {
     constructor(data) {
       __publicField(this, "label");
@@ -576,7 +576,7 @@ var YouTubeJS = (() => {
   __name(_AccessibilityContext, "AccessibilityContext");
   var AccessibilityContext = _AccessibilityContext;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/AccessibilityData.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/AccessibilityData.js
   var _AccessibilityData = class _AccessibilityData {
     constructor(data) {
       __publicField(this, "accessibility_identifier");
@@ -598,7 +598,7 @@ var YouTubeJS = (() => {
   __name(_AccessibilityData, "AccessibilityData");
   var AccessibilityData = _AccessibilityData;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/parser.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/parser.js
   var parser_exports = {};
   __export(parser_exports, {
     addRuntimeParser: () => addRuntimeParser,
@@ -623,7 +623,7 @@ var YouTubeJS = (() => {
     shouldIgnore: () => shouldIgnore
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/nodes.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/nodes.js
   var nodes_exports = {};
   __export(nodes_exports, {
     AboutChannel: () => AboutChannel,
@@ -709,6 +709,7 @@ var YouTubeJS = (() => {
     CommandExecutorCommand: () => CommandExecutorCommand,
     CommentActionButtons: () => CommentActionButtons,
     CommentDialog: () => CommentDialog,
+    CommentImageAttachmentView: () => CommentImageAttachmentView,
     CommentReplies: () => CommentReplies,
     CommentReplyDialog: () => CommentReplyDialog,
     CommentSimplebox: () => CommentSimplebox,
@@ -719,6 +720,7 @@ var YouTubeJS = (() => {
     CommentsHeader: () => CommentsHeader,
     CommentsSimplebox: () => CommentsSimplebox,
     CompactChannel: () => CompactChannel,
+    CompactInfocard: () => CompactInfocard,
     CompactLink: () => CompactLink,
     CompactMix: () => CompactMix,
     CompactMovie: () => CompactMovie,
@@ -727,6 +729,7 @@ var YouTubeJS = (() => {
     CompactVideo: () => CompactVideo,
     CompositeVideoPrimaryInfo: () => CompositeVideoPrimaryInfo,
     ConfirmDialog: () => ConfirmDialog,
+    ConfirmDialogEndpoint: () => ConfirmDialogEndpoint,
     ContentListItemView: () => ContentListItemView,
     ContentMetadataView: () => ContentMetadataView,
     ContentPreviewImageView: () => ContentPreviewImageView,
@@ -735,6 +738,7 @@ var YouTubeJS = (() => {
     ContinuationItemView: () => ContinuationItemView,
     ConversationBar: () => ConversationBar,
     CopyLink: () => CopyLink,
+    CourseProgressView: () => CourseProgressView,
     CreateCommentEndpoint: () => CreateCommentEndpoint,
     CreatePlaylistDialog: () => CreatePlaylistDialog,
     CreatePlaylistDialogFormView: () => CreatePlaylistDialogFormView,
@@ -827,6 +831,7 @@ var YouTubeJS = (() => {
     InfoPanelContent: () => InfoPanelContent,
     InfoRow: () => InfoRow,
     InteractiveTabbedHeader: () => InteractiveTabbedHeader,
+    InterstitialView: () => InterstitialView,
     ItemSection: () => ItemSection,
     ItemSectionHeader: () => ItemSectionHeader,
     ItemSectionTab: () => ItemSectionTab,
@@ -839,6 +844,7 @@ var YouTubeJS = (() => {
     LikeButton: () => LikeButton,
     LikeButtonView: () => LikeButtonView,
     LikeEndpoint: () => LikeEndpoint,
+    LinearLayoutView: () => LinearLayoutView,
     ListItemView: () => ListItemView,
     ListView: () => ListView,
     LiveChat: () => LiveChat,
@@ -883,7 +889,9 @@ var YouTubeJS = (() => {
     MacroMarkersListItem: () => MacroMarkersListItem,
     MarkChatItemAsDeletedAction: () => MarkChatItemAsDeletedAction,
     MarkChatItemsByAuthorAsDeletedAction: () => MarkChatItemsByAuthorAsDeletedAction,
+    MediaLockup: () => MediaLockup,
     Menu: () => Menu,
+    MenuCustomIconItem: () => MenuCustomIconItem,
     MenuFlexibleItem: () => MenuFlexibleItem,
     MenuNavigationItem: () => MenuNavigationItem,
     MenuPopup: () => MenuPopup,
@@ -965,6 +973,7 @@ var YouTubeJS = (() => {
     PlayerCaptionsTracklist: () => PlayerCaptionsTracklist,
     PlayerControlsOverlay: () => PlayerControlsOverlay,
     PlayerErrorMessage: () => PlayerErrorMessage,
+    PlayerInterstitial: () => PlayerInterstitial,
     PlayerLegacyDesktopYpcOffer: () => PlayerLegacyDesktopYpcOffer,
     PlayerLegacyDesktopYpcTrailer: () => PlayerLegacyDesktopYpcTrailer,
     PlayerLiveStoryboardSpec: () => PlayerLiveStoryboardSpec,
@@ -1084,6 +1093,7 @@ var YouTubeJS = (() => {
     StartAt: () => StartAt,
     StructuredDescriptionContent: () => StructuredDescriptionContent,
     StructuredDescriptionPlaylistLockup: () => StructuredDescriptionPlaylistLockup,
+    StructuredDescriptionVideoLockup: () => StructuredDescriptionVideoLockup,
     SubFeedOption: () => SubFeedOption,
     SubFeedSelector: () => SubFeedSelector,
     SubscribeButton: () => SubscribeButton,
@@ -1127,6 +1137,7 @@ var YouTubeJS = (() => {
     ToggleButtonView: () => ToggleButtonView,
     ToggleFormField: () => ToggleFormField,
     ToggleMenuServiceItem: () => ToggleMenuServiceItem,
+    ToggleableListItemView: () => ToggleableListItemView,
     Tooltip: () => Tooltip,
     TopbarMenuButton: () => TopbarMenuButton,
     TopicChannelDetails: () => TopicChannelDetails,
@@ -1162,6 +1173,7 @@ var YouTubeJS = (() => {
     VideoAttributesSectionView: () => VideoAttributesSectionView,
     VideoCard: () => VideoCard,
     VideoDescriptionCourseSection: () => VideoDescriptionCourseSection,
+    VideoDescriptionGamingSection: () => VideoDescriptionGamingSection,
     VideoDescriptionHeader: () => VideoDescriptionHeader,
     VideoDescriptionInfocardsSection: () => VideoDescriptionInfocardsSection,
     VideoDescriptionMusicSection: () => VideoDescriptionMusicSection,
@@ -1189,7 +1201,7 @@ var YouTubeJS = (() => {
     YpcTrailer: () => YpcTrailer
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/Cache.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/Cache.js
   var _cache;
   var _UniversalCache = class _UniversalCache {
     constructor(persistent, persistent_directory) {
@@ -1213,7 +1225,7 @@ var YouTubeJS = (() => {
   __name(_UniversalCache, "UniversalCache");
   var UniversalCache = _UniversalCache;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/Constants.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/Constants.js
   var Constants_exports = {};
   __export(Constants_exports, {
     CLIENTS: () => CLIENTS,
@@ -1366,7 +1378,7 @@ var YouTubeJS = (() => {
   };
   var SUPPORTED_CLIENTS = ["IOS", "WEB", "MWEB", "YTKIDS", "YTMUSIC", "ANDROID", "ANDROID_VR", "VISIONOS", "YTSTUDIO_ANDROID", "YTMUSIC_ANDROID", "TV", "TV_SIMPLY", "TV_EMBEDDED", "WEB_EMBEDDED", "WEB_CREATOR"];
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/EventEmitterLike.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/EventEmitterLike.js
   var _EventEmitterLike = class _EventEmitterLike {
     constructor() {
       __publicField(this, "listeners", /* @__PURE__ */ new Map());
@@ -1436,7 +1448,7 @@ var YouTubeJS = (() => {
   __name(_EventEmitterLike, "EventEmitterLike");
   var EventEmitterLike = _EventEmitterLike;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/FormatUtils.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/FormatUtils.js
   var FormatUtils_exports = {};
   __export(FormatUtils_exports, {
     chooseFormat: () => chooseFormat,
@@ -1444,7 +1456,7 @@ var YouTubeJS = (() => {
     toDash: () => toDash
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/DashUtils.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/DashUtils.js
   var XML_CHARACTER_MAP = {
     "&": "&amp;",
     '"': "&quot;",
@@ -1507,15 +1519,19 @@ var YouTubeJS = (() => {
   }
   __name(Fragment, "Fragment");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerStoryboardSpec.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerStoryboardSpec.js
   var _PlayerStoryboardSpec = class _PlayerStoryboardSpec extends YTNode {
     constructor(data) {
+      var _a2;
       super();
-      __publicField(this, "boards");
-      const parts = data.spec.split("|");
-      const url = new URL(parts.shift());
-      this.boards = parts.map((part, i2) => {
-        const [thumbnail_width, thumbnail_height, thumbnail_count, columns, rows, interval, name, sigh] = part.split("#");
+      __publicField(this, "boards", []);
+      const parts = (_a2 = data.spec) == null ? void 0 : _a2.split("|");
+      const part = parts == null ? void 0 : parts.shift();
+      if (!part || !part.startsWith("http"))
+        return;
+      const url = new URL(part);
+      this.boards = (parts == null ? void 0 : parts.map((part2, i2) => {
+        const [thumbnail_width, thumbnail_height, thumbnail_count, columns, rows, interval, name, sigh] = part2.split("#");
         url.searchParams.set("sigh", sigh);
         const storyboard_count = Math.ceil(parseInt(thumbnail_count, 10) / (parseInt(columns, 10) * parseInt(rows, 10)));
         return {
@@ -1529,17 +1545,17 @@ var YouTubeJS = (() => {
           rows: parseInt(rows, 10),
           storyboard_count
         };
-      });
+      })) || [];
     }
   };
   __name(_PlayerStoryboardSpec, "PlayerStoryboardSpec");
   __publicField(_PlayerStoryboardSpec, "type", "PlayerStoryboardSpec");
   var PlayerStoryboardSpec = _PlayerStoryboardSpec;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/package.json
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/package.json
   var package_default = {
     name: "youtubei.js",
-    version: "18.1.0",
+    version: "18.2.0",
     description: "A JavaScript client for YouTube's private API, known as InnerTube.",
     type: "module",
     types: "./dist/src/platform/lib.d.ts",
@@ -1652,7 +1668,7 @@ var YouTubeJS = (() => {
       esbuild: "^0.28.0",
       eslint: "^10.8.0",
       globals: "^17.0.0",
-      replace: "^0.2.2",
+      replace: "^1.2.2",
       rimraf: "^6.0.1",
       "ts-patch": "^3.0.2",
       "ts-proto": "^2.2.0",
@@ -1660,7 +1676,7 @@ var YouTubeJS = (() => {
       "typedoc-plugin-markdown": "^4.9.0",
       typescript: "^6.0.3",
       "typescript-eslint": "^8.46.0",
-      vitest: "^4.1.10"
+      vitest: "^5.0.1"
     },
     bugs: {
       url: "https://github.com/LuanRT/YouTube.js/issues"
@@ -1679,7 +1695,7 @@ var YouTubeJS = (() => {
     ]
   };
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/StreamingInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/StreamingInfo.js
   var TAG_ = "StreamingInfo";
   function getFormatGroupings(formats, is_post_live_dvr) {
     var _a2, _b2, _c;
@@ -2218,7 +2234,7 @@ format:`, anonymisedFormat);
   }
   __name(getStreamingInfo, "getStreamingInfo");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/DashManifest.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/DashManifest.js
   async function OTFPostLiveDvrSegmentInfo({ info: info2 }) {
     if (!info2.is_oft && !info2.is_post_live_dvr)
       return null;
@@ -2324,7 +2340,7 @@ format:`, anonymisedFormat);
   }
   __name(toDash, "toDash");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/FormatUtils.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/FormatUtils.js
   async function download(options, actions, playability_status, streaming_data, player, cpn) {
     if ((playability_status == null ? void 0 : playability_status.status) === "UNPLAYABLE")
       throw new InnertubeError("Video is unplayable", { error_type: "UNPLAYABLE" });
@@ -2475,7 +2491,7 @@ format:`, anonymisedFormat);
   }
   __name(chooseFormat, "chooseFormat");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/HTTPClient.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/HTTPClient.js
   var _session, _cookie, _fetch, _HTTPClient_instances, processJsonPayload_fn, setupCommonHeaders_fn, adjustContext_fn;
   var _HTTPClient = class _HTTPClient {
     constructor(session, cookie, fetch) {
@@ -2750,7 +2766,7 @@ format:`, anonymisedFormat);
   __name(_HTTPClient, "HTTPClient");
   var HTTPClient = _HTTPClient;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/BinarySerializer.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/BinarySerializer.js
   var BinarySerializer_exports = {};
   __export(BinarySerializer_exports, {
     MAGIC_HEADER: () => MAGIC_HEADER,
@@ -2759,7 +2775,7 @@ format:`, anonymisedFormat);
     serialize: () => serialize
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/fflate/esm/browser.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/fflate/esm/browser.js
   var u8 = Uint8Array;
   var u16 = Uint16Array;
   var i32 = Int32Array;
@@ -3511,7 +3527,7 @@ format:`, anonymisedFormat);
   } catch (e) {
   }
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/BinarySerializer.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/BinarySerializer.js
   var MAGIC_HEADER = 5849684;
   var VERSION = 2;
   function serialize(data) {
@@ -3551,7 +3567,7 @@ format:`, anonymisedFormat);
   }
   __name(deserialize, "deserialize");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/ProtoUtils.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/ProtoUtils.js
   var ProtoUtils_exports = {};
   __export(ProtoUtils_exports, {
     decodeVisitorData: () => decodeVisitorData,
@@ -3560,7 +3576,7 @@ format:`, anonymisedFormat);
     encodeVisitorData: () => encodeVisitorData
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/@bufbuild/protobuf/dist/esm/wire/varint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/@bufbuild/protobuf/dist/esm/wire/varint.js
   function varint64read() {
     const buf = this.buf;
     let pos = this.pos;
@@ -3718,7 +3734,7 @@ format:`, anonymisedFormat);
   }
   __name(varint32read, "varint32read");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/@bufbuild/protobuf/dist/esm/proto-int64.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/@bufbuild/protobuf/dist/esm/proto-int64.js
   var protoInt64 = /* @__PURE__ */ makeInt64Support();
   function makeInt64Support() {
     const dv = new DataView(new ArrayBuffer(8));
@@ -3824,7 +3840,7 @@ format:`, anonymisedFormat);
   }
   __name(assertUInt64String, "assertUInt64String");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/@bufbuild/protobuf/dist/esm/wire/text-encoding.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/@bufbuild/protobuf/dist/esm/wire/text-encoding.js
   var te;
   function configureTextEncoding(textEncoding) {
     var _a2;
@@ -3887,7 +3903,7 @@ format:`, anonymisedFormat);
   }
   __name(emulateEncodeInto, "emulateEncodeInto");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/@bufbuild/protobuf/dist/esm/wire/binary-encoding.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/@bufbuild/protobuf/dist/esm/wire/binary-encoding.js
   var WireType;
   (function(WireType2) {
     WireType2[WireType2["Varint"] = 0] = "Varint";
@@ -4467,7 +4483,7 @@ format:`, anonymisedFormat);
   }
   __name(assertFloat32, "assertFloat32");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/misc/params.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/protos/generated/misc/params.js
   var SearchFilter_Prioritize = {
     RELEVANCE: 0,
     0: "RELEVANCE",
@@ -6304,7 +6320,7 @@ format:`, anonymisedFormat);
     }
   };
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/ProtoUtils.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/ProtoUtils.js
   function encodeVisitorData(id, timestamp) {
     const writer = VisitorData.encode({ id, timestamp });
     return encodeURIComponent(u8ToBase64(writer.finish()).replace(/\+/g, "-").replace(/\//g, "_"));
@@ -6347,7 +6363,7 @@ format:`, anonymisedFormat);
   }
   __name(encodeNextParams, "encodeNextParams");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/javascript/helpers.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/javascript/helpers.js
   var helpers_exports2 = {};
   __export(helpers_exports2, {
     WALK_STOP: () => WALK_STOP,
@@ -6657,7 +6673,7 @@ format:`, anonymisedFormat);
   }
   __name(parseFunctionArguments, "parseFunctionArguments");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/javascript/matchers.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/javascript/matchers.js
   var matchers_exports = {};
   __export(matchers_exports, {
     nsigMatcher: () => nsigMatcher,
@@ -6723,8 +6739,8 @@ format:`, anonymisedFormat);
   }
   __name(timestampMatcher, "timestampMatcher");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/meriyah/dist/meriyah.mjs
-  var version$1 = "7.3.3";
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/meriyah/dist/meriyah.mjs
+  var version$1 = "7.4.0";
   var packageJson = {
     version: version$1
   };
@@ -6732,7 +6748,7 @@ format:`, anonymisedFormat);
     const result = new Uint32Array(69632);
     let index = 0;
     let subIndex = 0;
-    while (index < 2597) {
+    while (index < 2661) {
       const inst = compressed[index++];
       if (inst < 0) {
         subIndex -= inst;
@@ -6748,7 +6764,7 @@ format:`, anonymisedFormat);
       }
     }
     return result;
-  })([-1, 2, 26, 2, 27, 2, 5, -1, 0, 77595648, 3, 44, 2, 3, 0, 14, 2, 61, 2, 62, 3, 0, 3, 0, 3168796671, 0, 4294956992, 2, 1, 2, 0, 2, 41, 3, 0, 4, 0, 4294966523, 3, 0, 4, 2, 16, 2, 63, 2, 0, 0, 4294836735, 0, 3221225471, 0, 4294901942, 2, 64, 0, 134152192, 3, 0, 2, 0, 4294951935, 3, 0, 2, 0, 2683305983, 0, 2684354047, 2, 17, 2, 0, 0, 4294961151, 3, 0, 2, 2, 19, 2, 0, 0, 608174079, 2, 0, 2, 58, 2, 7, 2, 6, 0, 4286643967, 3, 0, 2, 2, 1, 3, 0, 3, 0, 4294901711, 2, 40, 0, 4089839103, 0, 2961209759, 0, 1342439375, 0, 4294543342, 0, 3547201023, 0, 1577204103, 0, 4194240, 0, 4294688750, 2, 2, 0, 80831, 0, 4261478351, 0, 4294549486, 2, 2, 0, 2967484831, 0, 196559, 0, 3594373100, 0, 3288319768, 0, 8469959, 0, 65472, 2, 3, 0, 4093640191, 0, 929054175, 0, 65487, 0, 4294828015, 0, 4092591615, 0, 1885355487, 0, 982991, 2, 3, 2, 0, 0, 2163244511, 0, 4227923919, 0, 4236247022, 2, 69, 0, 4284449919, 0, 851904, 2, 4, 2, 12, 0, 67076095, -1, 2, 70, 0, 1073741743, 0, 4093607775, -1, 0, 50331649, 0, 3265266687, 2, 33, 0, 4294844415, 0, 4278190047, 2, 20, 2, 137, -1, 3, 0, 2, 2, 23, 2, 0, 2, 9, 2, 0, 2, 15, 2, 22, 3, 0, 10, 2, 72, 2, 0, 2, 73, 2, 74, 2, 75, 2, 0, 2, 76, 2, 0, 2, 11, 0, 261632, 2, 25, 3, 0, 2, 2, 13, 2, 4, 3, 0, 18, 2, 77, 2, 5, 3, 0, 2, 2, 78, 0, 2151677951, 2, 29, 2, 10, 0, 909311, 3, 0, 2, 0, 814743551, 2, 48, 0, 67090432, 3, 0, 2, 2, 42, 2, 0, 2, 6, 2, 0, 2, 30, 2, 8, 0, 268374015, 2, 108, 2, 51, 2, 0, 2, 79, 0, 134153215, -1, 2, 7, 2, 0, 2, 8, 0, 2684354559, 0, 67044351, 0, 3221160064, 2, 9, 2, 18, 3, 0, 2, 2, 53, 0, 1046528, 3, 0, 3, 2, 10, 2, 0, 2, 127, 0, 4294960127, 2, 9, 2, 6, 2, 11, 0, 4294377472, 2, 12, 3, 0, 16, 2, 13, 2, 0, 2, 80, 2, 9, 2, 0, 2, 81, 2, 82, 2, 83, 0, 12288, 2, 54, 0, 1048577, 2, 84, 2, 14, -1, 2, 14, 0, 131042, 2, 85, 2, 86, 2, 87, 2, 0, 2, 34, -83, 3, 0, 7, 0, 1046559, 2, 0, 2, 15, 2, 0, 0, 2147516671, 2, 21, 3, 88, 2, 2, 0, -16, 2, 89, 0, 524222462, 2, 4, 2, 0, 0, 4269801471, 2, 4, 3, 0, 2, 2, 28, 2, 16, 3, 0, 2, 2, 49, 2, 0, -1, 2, 17, -16, 3, 0, 206, -2, 3, 0, 692, 2, 71, -1, 2, 17, 2, 9, 3, 0, 8, 2, 91, 2, 18, 2, 0, 0, 3220242431, 3, 0, 3, 2, 19, 2, 92, 2, 93, 3, 0, 2, 2, 94, 2, 0, 2, 20, 2, 95, 2, 0, 0, 4351, 2, 0, 2, 10, 3, 0, 2, 0, 67043391, 0, 3909091327, 2, 0, 2, 24, 2, 10, 2, 20, 3, 0, 2, 0, 67076097, 2, 8, 2, 0, 2, 21, 0, 67059711, 0, 4236247039, 3, 0, 2, 0, 939524103, 0, 8191999, 2, 99, 2, 100, 2, 22, 2, 23, 3, 0, 3, 0, 67057663, 3, 0, 349, 2, 101, 2, 102, 2, 7, -264, 3, 0, 11, 2, 24, 3, 0, 2, 2, 32, -1, 0, 3774349439, 2, 103, 2, 104, 3, 0, 2, 2, 19, 2, 105, 3, 0, 10, 2, 9, 2, 17, 2, 0, 2, 46, 2, 0, 2, 31, 2, 106, 2, 25, 0, 1638399, 0, 57344, 2, 107, 3, 0, 3, 2, 20, 2, 26, 2, 27, 2, 5, 2, 28, 2, 0, 2, 8, 2, 109, -1, 2, 110, 2, 111, 2, 112, -1, 3, 0, 3, 2, 12, -2, 2, 0, 2, 29, -3, 0, 536870912, -4, 2, 20, 2, 0, 2, 36, 0, 1, 2, 0, 2, 65, 2, 6, 2, 12, 2, 9, 2, 0, 2, 113, -1, 3, 0, 4, 2, 9, 2, 23, 2, 114, 2, 7, 2, 0, 2, 115, 2, 0, 2, 116, 2, 117, 2, 118, 2, 0, 2, 10, 3, 0, 9, 2, 21, 2, 30, 2, 31, 2, 119, 2, 120, -2, 2, 121, 2, 122, 2, 30, 2, 21, 2, 8, -2, 2, 123, 2, 30, 3, 32, 2, -1, 2, 0, 2, 39, -2, 0, 4277137519, 0, 2269118463, -1, 3, 20, 2, -1, 2, 33, 2, 38, 2, 0, 3, 30, 2, 2, 35, 2, 19, -3, 3, 0, 2, 2, 34, -1, 2, 0, 2, 35, 2, 0, 2, 35, 2, 0, 2, 47, 2, 0, 0, 4294950463, 2, 37, -7, 2, 0, 0, 203775, 2, 125, 0, 4227858432, 2, 20, 2, 43, 2, 36, 2, 17, 2, 37, 2, 17, 2, 124, 2, 21, 3, 0, 2, 2, 38, 0, 2151677888, 2, 0, 2, 12, 0, 4294901764, 2, 145, 2, 0, 2, 56, 2, 55, 0, 5242879, 3, 0, 2, 0, 402644511, -1, 2, 128, 2, 39, 0, 3, -1, 2, 129, 2, 130, 2, 0, 0, 67045375, 2, 40, 0, 4226678271, 0, 3766565279, 0, 2039759, 2, 132, 2, 41, 0, 1046437, 0, 6, 3, 0, 2, 0, 3288270847, 0, 3, 3, 0, 2, 0, 67043519, -5, 2, 0, 0, 4282384383, 0, 1056964609, -1, 3, 0, 2, 0, 67043345, -1, 2, 0, 2, 42, 2, 23, 2, 50, 2, 11, 2, 59, 2, 38, -5, 2, 0, 2, 12, -3, 3, 0, 2, 0, 2147484671, 2, 133, 0, 4190109695, 2, 52, -2, 2, 134, 0, 4244635647, 0, 27, 2, 0, 2, 8, 2, 43, 2, 0, 2, 66, 2, 17, 2, 0, 2, 42, -3, 2, 31, -2, 2, 0, 2, 45, 2, 57, 2, 44, 2, 45, 2, 135, 2, 46, 0, 8388351, -2, 2, 136, 0, 3028287487, 2, 47, 2, 138, 0, 33259519, 2, 23, 2, 7, 2, 48, -7, 2, 21, 0, 4294836223, 0, 3355443199, 0, 134152199, -2, 2, 67, -2, 3, 0, 28, 2, 32, -3, 3, 0, 3, 2, 49, 3, 0, 6, 2, 50, -81, 2, 17, 3, 0, 2, 2, 36, 3, 0, 33, 2, 25, 2, 30, 3, 0, 124, 2, 12, 3, 0, 18, 2, 38, -213, 2, 0, 2, 32, -54, 3, 0, 17, 2, 42, 2, 8, 2, 23, 2, 0, 2, 8, 2, 23, 2, 51, 2, 0, 2, 21, 2, 52, 2, 139, 2, 25, -13, 2, 0, 2, 53, -6, 3, 0, 2, -1, 2, 140, 2, 10, -1, 3, 0, 2, 0, 4294936575, 2, 0, 0, 4294934783, -2, 0, 8323099, 3, 0, 230, 2, 30, 2, 54, 2, 8, -3, 3, 0, 3, 2, 35, -271, 2, 141, 3, 0, 9, 2, 142, 2, 143, 2, 55, 3, 0, 11, 2, 7, -72, 3, 0, 3, 2, 144, 0, 1677656575, -130, 2, 26, -16, 2, 0, 2, 24, 2, 38, -16, 0, 4161266656, 0, 4071, 0, 15360, -4, 0, 28, -13, 3, 0, 2, 2, 56, 2, 0, 2, 146, 2, 147, 2, 60, 2, 0, 2, 148, 2, 149, 2, 150, 3, 0, 10, 2, 151, 2, 152, 2, 22, 3, 56, 2, 3, 153, 2, 3, 57, 2, 0, 4294954999, 2, 0, -16, 2, 0, 2, 90, 2, 0, 0, 2105343, 0, 4160749584, 0, 65534, -34, 2, 8, 2, 155, -6, 0, 4194303871, 0, 4294903771, 2, 0, 2, 58, 2, 98, -3, 2, 0, 0, 1073684479, 0, 17407, -9, 2, 17, 2, 49, 2, 0, 2, 32, -14, 2, 17, 2, 32, -6, 2, 17, 2, 12, -6, 2, 8, 0, 3225419775, -7, 2, 156, 3, 0, 6, 0, 8323103, -1, 3, 0, 2, 2, 59, -37, 2, 60, 2, 157, 2, 158, 2, 159, 2, 160, 2, 161, -105, 2, 26, -32, 3, 0, 1335, -1, 3, 0, 136, 2, 9, 3, 0, 180, 2, 24, 3, 0, 233, 2, 162, 3, 0, 18, 2, 9, -77, 3, 0, 16, 2, 9, -47, 3, 0, 154, 2, 6, 3, 0, 264, 2, 32, -22116, 3, 0, 7, 2, 25, -6130, 3, 5, 2, -1, 0, 69207040, 3, 44, 2, 3, 0, 14, 2, 61, 2, 62, -3, 0, 3168731136, 0, 4294956864, 2, 1, 2, 0, 2, 41, 3, 0, 4, 0, 4294966275, 3, 0, 4, 2, 16, 2, 63, 2, 0, 2, 34, -1, 2, 17, 2, 64, -1, 2, 0, 0, 2047, 0, 4294885376, 3, 0, 2, 0, 3145727, 0, 2617294944, 0, 4294770688, 2, 25, 2, 65, 3, 0, 2, 0, 131135, 2, 96, 0, 70256639, 0, 71303167, 0, 272, 2, 42, 2, 6, 0, 65279, 2, 0, 2, 48, -1, 2, 97, 2, 66, 0, 4278255616, 0, 4294836227, 0, 4294549473, 0, 600178175, 0, 2952806400, 0, 268632067, 0, 4294543328, 0, 57540095, 0, 1577058304, 0, 1835008, 0, 4294688736, 2, 68, 2, 67, 0, 33554435, 2, 131, 2, 68, 0, 2952790016, 0, 131075, 0, 3594373096, 0, 67094296, 2, 67, -1, 0, 4294828e3, 0, 603979263, 0, 922746880, 0, 3, 0, 4294828001, 0, 602930687, 0, 1879048192, 0, 393219, 0, 4294828016, 0, 671088639, 0, 2154840064, 0, 4227858435, 0, 4236247008, 2, 69, 2, 38, -1, 2, 4, 0, 917503, 2, 38, -1, 2, 70, 0, 537788335, 0, 4026531935, -1, 0, 1, -1, 2, 33, 2, 71, 0, 7936, -3, 2, 0, 0, 2147485695, 0, 1010761728, 0, 4292984930, 0, 16387, 2, 0, 2, 15, 2, 22, 3, 0, 10, 2, 72, 2, 0, 2, 73, 2, 74, 2, 75, 2, 0, 2, 76, 2, 0, 2, 12, -1, 2, 25, 3, 0, 2, 2, 13, 2, 4, 3, 0, 18, 2, 77, 2, 5, 3, 0, 2, 2, 78, 0, 2147745791, 3, 19, 2, 0, 122879, 2, 0, 2, 10, 0, 276824064, -2, 3, 0, 2, 2, 42, 2, 0, 0, 4294903295, 2, 0, 2, 30, 2, 8, -1, 2, 17, 2, 51, 2, 0, 2, 79, 2, 48, -1, 2, 21, 2, 0, 2, 29, -2, 0, 128, -2, 2, 28, 2, 10, 0, 8160, -1, 2, 126, 0, 4227907585, 2, 0, 2, 37, 2, 0, 2, 50, 0, 4227915776, 2, 9, 2, 6, 2, 11, -1, 0, 74440192, 3, 0, 6, -2, 3, 0, 8, 2, 13, 2, 0, 2, 80, 2, 9, 2, 0, 2, 81, 2, 82, 2, 83, -3, 2, 84, 2, 14, -3, 2, 85, 2, 86, 2, 87, 2, 0, 2, 34, -83, 3, 0, 7, 0, 817183, 2, 0, 2, 15, 2, 0, 0, 33023, 2, 21, 3, 88, 2, -17, 2, 89, 0, 524157950, 2, 4, 2, 0, 2, 90, 2, 4, 2, 0, 2, 22, 2, 28, 2, 16, 3, 0, 2, 2, 49, 2, 0, -1, 2, 17, -16, 3, 0, 206, -2, 3, 0, 692, 2, 71, -1, 2, 17, 2, 9, 3, 0, 8, 2, 91, 0, 3072, 2, 0, 0, 2147516415, 2, 9, 3, 0, 2, 2, 25, 2, 92, 2, 93, 3, 0, 2, 2, 94, 2, 0, 2, 20, 2, 95, 0, 4294965179, 0, 7, 2, 0, 2, 10, 2, 93, 2, 10, -1, 0, 1761345536, 2, 96, 0, 4294901823, 2, 38, 2, 20, 2, 97, 2, 35, 2, 98, 0, 2080440287, 2, 0, 2, 34, 2, 154, 0, 3296722943, 2, 0, 0, 1046675455, 0, 939524101, 0, 1837055, 2, 99, 2, 100, 2, 22, 2, 23, 3, 0, 3, 0, 7, 3, 0, 349, 2, 101, 2, 102, 2, 7, -264, 3, 0, 11, 2, 24, 3, 0, 2, 2, 32, -1, 0, 2700607615, 2, 103, 2, 104, 3, 0, 2, 2, 19, 2, 105, 3, 0, 10, 2, 9, 2, 17, 2, 0, 2, 46, 2, 0, 2, 31, 2, 106, -3, 2, 107, 3, 0, 3, 2, 20, -1, 3, 5, 2, 2, 108, 2, 0, 2, 8, 2, 109, -1, 2, 110, 2, 111, 2, 112, -1, 3, 0, 3, 2, 12, -2, 2, 0, 2, 29, -8, 2, 20, 2, 0, 2, 36, -1, 2, 0, 2, 65, 2, 6, 2, 30, 2, 9, 2, 0, 2, 113, -1, 3, 0, 4, 2, 9, 2, 17, 2, 114, 2, 7, 2, 0, 2, 115, 2, 0, 2, 116, 2, 117, 2, 118, 2, 0, 2, 10, 3, 0, 9, 2, 21, 2, 30, 2, 31, 2, 119, 2, 120, -2, 2, 121, 2, 122, 2, 30, 2, 21, 2, 8, -2, 2, 123, 2, 30, 3, 32, 2, -1, 2, 0, 2, 39, -2, 0, 4277075969, 2, 30, -1, 3, 20, 2, -1, 2, 33, 2, 124, 2, 0, 3, 30, 2, 2, 35, 2, 19, -3, 3, 0, 2, 2, 34, -1, 2, 0, 2, 35, 2, 0, 2, 35, 2, 0, 2, 50, 2, 96, 0, 4294934591, 2, 37, -7, 2, 0, 0, 197631, 2, 125, -1, 2, 20, 2, 43, 2, 37, 2, 17, 0, 3, 2, 17, 2, 124, 2, 21, 2, 126, 2, 127, -1, 0, 2490368, 2, 126, 2, 25, 2, 17, 2, 34, 2, 126, 2, 38, 0, 4294901904, 0, 4718591, 2, 126, 2, 35, 0, 335544350, -1, 2, 128, 0, 2147487743, 0, 1, -1, 2, 129, 2, 130, 2, 8, -1, 2, 131, 2, 68, 0, 3758161920, 0, 3, 2, 132, 0, 12582911, 0, 655360, -1, 2, 0, 2, 29, 0, 2147485568, 0, 3, 2, 0, 2, 25, 0, 176, -5, 2, 0, 2, 49, 0, 251658240, -1, 2, 0, 2, 25, 0, 16, -1, 2, 0, 0, 16779263, -2, 2, 12, -1, 2, 38, -5, 2, 0, 2, 18, -3, 3, 0, 2, 2, 54, 2, 133, 0, 2147549183, 0, 2, -2, 2, 134, 2, 36, 0, 10, 0, 4294965249, 0, 67633151, 0, 4026597376, 2, 0, 0, 536871935, 2, 17, 2, 0, 2, 42, -6, 2, 0, 0, 1, 2, 57, 2, 49, 0, 1, 2, 135, 2, 25, -3, 2, 136, 2, 36, 2, 137, 2, 138, 0, 16778239, 2, 17, 2, 7, -8, 2, 35, 0, 4294836212, 2, 10, -3, 2, 67, -2, 3, 0, 28, 2, 32, -3, 3, 0, 3, 2, 49, 3, 0, 6, 2, 50, -81, 2, 17, 3, 0, 2, 2, 36, 3, 0, 33, 2, 25, 0, 126, 3, 0, 124, 2, 12, 3, 0, 18, 2, 38, -213, 2, 9, -55, 3, 0, 17, 2, 42, 2, 8, 2, 17, 2, 0, 2, 8, 2, 17, 2, 58, 2, 0, 2, 25, 2, 50, 2, 139, 2, 25, -13, 2, 0, 2, 71, -6, 3, 0, 2, -1, 2, 140, 2, 10, -1, 3, 0, 2, 0, 67583, -1, 2, 105, -2, 0, 8126475, 3, 0, 230, 2, 30, 2, 54, 2, 8, -3, 3, 0, 3, 2, 35, -271, 2, 141, 3, 0, 9, 2, 142, 2, 143, 2, 55, 3, 0, 11, 2, 7, -72, 3, 0, 3, 2, 144, 2, 145, -187, 3, 0, 2, 2, 56, 2, 0, 2, 146, 2, 147, 2, 60, 2, 0, 2, 148, 2, 149, 2, 150, 3, 0, 10, 2, 151, 2, 152, 2, 22, 3, 56, 2, 3, 153, 2, 3, 57, 2, 2, 154, -57, 2, 8, 2, 155, -7, 2, 17, 2, 0, 2, 58, -4, 2, 0, 0, 1065361407, 0, 16384, -9, 2, 17, 2, 58, 2, 0, 2, 18, -14, 2, 17, 2, 18, -6, 2, 17, 0, 81919, -6, 2, 8, 0, 3223273399, -7, 2, 156, 3, 0, 6, 2, 124, -1, 3, 0, 2, 0, 2063, -37, 2, 60, 2, 157, 2, 158, 2, 159, 2, 160, 2, 161, -138, 3, 0, 1335, -1, 3, 0, 136, 2, 9, 3, 0, 180, 2, 24, 3, 0, 233, 2, 162, 3, 0, 18, 2, 9, -77, 3, 0, 16, 2, 9, -47, 3, 0, 154, 2, 6, 3, 0, 264, 2, 32, -28252], [4294967295, 4294967291, 4092460543, 4294828031, 4294967294, 134217726, 4294903807, 268435455, 2147483647, 1073741823, 1048575, 3892314111, 134217727, 1061158911, 536805376, 4294910143, 4294901759, 4294901760, 4095, 262143, 536870911, 8388607, 4160749567, 4294902783, 4294918143, 65535, 67043328, 2281701374, 4294967264, 2097151, 4194303, 255, 67108863, 4294967039, 511, 524287, 131071, 63, 127, 3238002687, 4294549487, 4290772991, 33554431, 4294901888, 4286578687, 67043329, 4294770687, 67043583, 1023, 32767, 15, 2047999, 67043343, 67051519, 2147483648, 4294902e3, 4292870143, 4294966783, 16383, 67047423, 4294967279, 262083, 20511, 41943039, 493567, 4294959104, 603979775, 65536, 602799615, 805044223, 4294965206, 8191, 1031749119, 4294917631, 2134769663, 4286578493, 4282253311, 4294942719, 33540095, 4294905855, 2868854591, 1608515583, 265232348, 534519807, 2147614720, 1060109444, 4093640016, 17376, 2139062143, 224, 4169138175, 4294909951, 4286578688, 4294967292, 4294965759, 4294836224, 4294966272, 4294967280, 32768, 8289918, 4294934399, 4294901775, 4294965375, 1602223615, 4294967259, 4294443008, 268369920, 4292804608, 4294967232, 486341884, 4294963199, 3087007615, 1073692671, 4128527, 4279238655, 4294902015, 4160684047, 4290246655, 469499899, 4294967231, 134086655, 4294966591, 2445279231, 3670015, 31, 252, 4294967288, 16777215, 4294705151, 3221208447, 4294902271, 4294549472, 4294921215, 4285526655, 4294966527, 4294705152, 4294966143, 64, 4294966719, 3774873592, 4194303999, 1877934080, 262151, 2555904, 536807423, 67043839, 3758096383, 3959414372, 3755993023, 2080374783, 4294835295, 4294967103, 4160749565, 4294934527, 4087, 2016, 2147446655, 184024726, 2862017156, 1593309078, 268434431, 268434414, 4294901761]);
+  })([-1, 2, 23, 2, 24, 2, 5, -1, 0, 77595648, 3, 42, 2, 3, 0, 14, 2, 60, 2, 61, 3, 0, 3, 0, 3168796671, 0, 4294956992, 2, 1, 2, 0, 2, 39, 3, 0, 4, 0, 4294966523, 3, 0, 4, 2, 15, 2, 62, 2, 0, 0, 4294842879, 0, 3221225471, 0, 4294902710, 2, 63, 0, 134152192, 3, 0, 2, 0, 4294951935, 3, 0, 2, 0, 2683305983, 0, 2684354047, 2, 16, 2, 0, 0, 4294961151, 3, 0, 2, 2, 17, 2, 0, 0, 608174079, 2, 0, 2, 56, 2, 7, 2, 6, 0, 4286643967, 3, 0, 2, 2, 1, 3, 0, 3, 0, 4294901711, 2, 38, 0, 4089839103, 0, 2961209759, 0, 1342439375, 0, 4294543342, 0, 3547201023, 0, 1577204103, 0, 4194240, 0, 4294688750, 2, 2, 0, 80831, 0, 4261478351, 0, 4294549486, 2, 2, 0, 2969057695, 0, 196559, 0, 3594373100, 0, 3288319768, 0, 8469959, 0, 65472, 2, 3, 0, 4093640191, 0, 929054175, 0, 65487, 0, 4294828015, 0, 4092591615, 0, 1885355487, 0, 982991, 2, 3, 2, 0, 0, 2163244511, 0, 4227923919, 0, 4236247022, 2, 68, 0, 4284449919, 0, 851904, 2, 4, 2, 12, 0, 67076095, -1, 2, 69, 0, 1073741743, 0, 4093607775, -1, 0, 50331649, 0, 3265266687, 2, 32, 0, 4294844415, 0, 4278190047, 2, 18, 2, 139, -1, 3, 0, 2, 2, 28, 2, 0, 2, 10, 2, 0, 2, 14, 2, 20, 3, 0, 10, 2, 71, 2, 0, 2, 72, 2, 73, 2, 74, 2, 0, 2, 75, 2, 0, 2, 11, 0, 261632, 2, 22, 3, 0, 2, 2, 13, 2, 4, 3, 0, 18, 2, 76, 2, 5, 3, 0, 2, 2, 77, 0, 2151677951, 2, 26, 2, 9, 0, 909311, 3, 0, 2, 0, 814743551, 2, 64, 0, 67090432, 3, 0, 2, 2, 40, 2, 0, 2, 6, 2, 0, 2, 29, 2, 8, 0, 268374015, 2, 109, 2, 48, 2, 0, 2, 78, 0, 134153215, -1, 2, 7, 2, 0, 2, 8, 0, 2684354559, 0, 67044351, 0, 3221160064, 2, 0, 2, 27, 3, 0, 2, 2, 50, 0, 1046528, 3, 0, 3, 2, 9, 2, 0, 2, 127, 0, 4294960127, 2, 10, 2, 6, 2, 11, 0, 4294377472, 2, 12, 3, 0, 16, 2, 13, 2, 0, 2, 80, 2, 10, 2, 0, 2, 81, 2, 82, 2, 83, 0, 12288, 2, 51, 0, 1048577, 2, 84, 2, 85, -1, 0, 536805376, 0, 131042, 2, 86, 2, 87, 2, 88, 2, 0, 2, 33, -83, 3, 0, 7, 0, 1046559, 2, 0, 2, 14, 2, 0, 0, 2147516671, 2, 19, 3, 89, 2, 2, 0, -16, 2, 90, 0, 524222462, 2, 4, 2, 0, 0, 4269801471, 2, 4, 3, 0, 2, 2, 25, 2, 15, 3, 0, 2, 2, 57, 2, 0, -1, 2, 16, -16, 3, 0, 206, -2, 3, 0, 692, 2, 70, -1, 2, 16, 2, 10, 3, 0, 8, 2, 92, 2, 133, 2, 0, 0, 3220242431, 3, 0, 3, 2, 17, 2, 93, 2, 94, 3, 0, 2, 2, 95, 2, 0, 2, 10, 2, 96, 2, 0, 0, 4351, 2, 0, 2, 9, 3, 0, 2, 0, 67043391, 0, 3909091327, 2, 0, 2, 21, 2, 9, 2, 18, 3, 0, 2, 0, 67076097, 2, 8, 2, 0, 2, 19, 0, 67059711, 0, 4236247039, 3, 0, 2, 0, 939524103, 0, 8191999, 2, 100, 2, 101, 2, 20, 2, 102, 3, 0, 3, 0, 67057663, 3, 0, 349, 2, 47, 2, 103, 2, 7, -264, 3, 0, 11, 2, 21, 3, 0, 2, 2, 31, -1, 0, 3774349439, 2, 104, 2, 105, 3, 0, 2, 2, 17, 2, 106, 3, 0, 10, 2, 10, 2, 16, 2, 0, 2, 44, 2, 0, 2, 30, 2, 107, 2, 22, 0, 1638399, 0, 57344, 2, 108, 3, 0, 3, 2, 18, 2, 23, 2, 24, 2, 5, 2, 25, 2, 0, 2, 8, 2, 110, -1, 2, 111, 2, 112, 2, 113, -1, 3, 0, 3, 2, 12, -2, 2, 0, 2, 26, -3, 0, 536870912, -4, 2, 18, 2, 0, 2, 27, 0, 1, 2, 0, 2, 55, 2, 6, 2, 12, 2, 10, 2, 0, 2, 114, -1, 3, 0, 4, 2, 10, 2, 28, 2, 115, 2, 7, 2, 0, 2, 116, 2, 0, 2, 117, 2, 118, 2, 119, 2, 0, 2, 9, 3, 0, 9, 2, 19, 2, 29, 2, 30, 2, 120, 2, 46, -2, 2, 121, 2, 122, 2, 29, 2, 19, 2, 8, -2, 2, 123, 2, 29, 3, 31, 2, -1, 2, 0, 2, 37, -2, 0, 4277137519, 0, 2269118463, -1, 3, 18, 2, -1, 2, 32, 2, 36, 2, 0, 3, 29, 2, 2, 34, 2, 17, -3, 3, 0, 2, 2, 33, -1, 2, 0, 2, 34, 2, 0, 2, 34, 2, 0, 2, 45, 2, 0, 0, 4294950463, 2, 35, -7, 2, 0, 0, 203775, 0, 4261476604, 2, 53, 2, 18, 2, 41, 2, 27, 2, 16, 2, 35, 2, 16, 2, 124, 2, 19, 3, 0, 2, 2, 36, 0, 2151677888, 2, 0, 2, 12, 0, 4294901764, 2, 149, 2, 0, 2, 52, 0, 4294902e3, 0, 5242879, 3, 0, 2, 0, 402644511, -1, 2, 128, 2, 37, 0, 3, -1, 2, 129, 2, 130, 2, 0, 0, 67045375, 2, 38, 0, 4226678271, 0, 3766565279, 0, 2039759, 2, 132, 2, 39, 0, 1046437, 0, 6, 3, 0, 2, 0, 3288270847, 0, 3, 3, 0, 2, 0, 67043519, -5, 2, 0, 0, 4282384383, 0, 1056964609, -1, 3, 0, 2, 0, 67043345, -1, 2, 0, 2, 40, 2, 28, 2, 79, 2, 11, 2, 58, 2, 36, -5, 2, 0, 2, 12, -3, 3, 0, 2, 0, 2147484671, 2, 134, 0, 4190109695, 2, 49, -2, 2, 135, 0, 4244635647, 0, 27, 2, 0, 2, 8, 2, 41, 2, 0, 2, 65, 2, 16, 2, 0, 2, 40, 2, 136, -2, 2, 30, -2, 2, 0, 2, 43, 2, 54, 2, 42, 2, 43, 2, 137, 2, 44, 0, 8388351, -2, 2, 138, 0, 3028287487, 2, 45, 2, 140, 0, 33259519, 2, 28, 2, 7, 2, 125, -7, 2, 19, 2, 46, 0, 3355443199, 0, 134152199, -2, 2, 66, -2, 3, 0, 28, 2, 31, -3, 3, 0, 3, 2, 141, 3, 0, 6, 2, 47, 3, 0, 9, 2, 36, -71, 2, 16, 3, 0, 2, 2, 27, 3, 0, 33, 2, 22, 2, 29, 3, 0, 124, 2, 12, 3, 0, 18, 2, 36, -213, 2, 0, 2, 31, -54, 3, 0, 17, 2, 40, 2, 8, 2, 28, 2, 0, 2, 8, 2, 28, 2, 48, 2, 0, 2, 19, 2, 49, 2, 142, 2, 22, -13, 2, 0, 2, 50, -6, 3, 0, 2, -1, 2, 143, 2, 9, -1, 3, 0, 2, 0, 4294936575, 2, 0, 0, 4294934783, -2, 0, 8323099, 3, 0, 230, 2, 12, 2, 51, 2, 0, 0, 1, -2, 3, 0, 3, 2, 34, 3, 0, 28, 2, 17, 2, 0, 2, 34, -240, 2, 144, 3, 0, 9, 2, 145, 2, 146, 2, 147, 3, 0, 11, 2, 7, -72, 3, 0, 3, 2, 148, 0, 1677656575, -130, 2, 23, -16, 2, 0, 2, 21, 2, 36, -14, 0, 384, -1, 0, 4161266656, 0, 4071, 0, 15360, -4, 0, 2550595612, -1, 0, 3, -11, 3, 0, 2, 2, 52, 2, 0, 2, 150, 2, 151, 2, 59, 2, 0, 2, 152, 2, 153, 2, 154, 3, 0, 10, 2, 155, 2, 156, 2, 20, 3, 52, 2, 3, 53, 2, 3, 54, 2, 0, 4294954999, 2, 0, -16, 2, 0, 2, 91, 2, 0, 0, 2105343, 0, 4160749584, 0, 65534, -34, 3, 0, 4, 2, 158, -1, 2, 55, 2, 0, 0, 4194303871, 0, 4294903771, 2, 0, 2, 56, 2, 99, -3, 2, 0, 0, 1073684479, 0, 17407, -9, 2, 16, 2, 57, 2, 0, 2, 31, -14, 2, 16, 2, 31, -6, 2, 16, 2, 12, -6, 2, 8, 0, 3225419775, -7, 2, 159, 3, 0, 6, 0, 8323103, -1, 3, 0, 2, 2, 58, -37, 2, 59, 2, 160, 2, 161, 2, 162, 2, 163, 2, 164, -105, 2, 23, -32, 3, 0, 1335, -1, 3, 0, 136, 2, 8, 3, 0, 180, 2, 21, 3, 0, 233, 2, 165, 3, 0, 18, 2, 10, -77, 3, 0, 16, 2, 10, -47, 3, 0, 154, 2, 6, 3, 0, 264, 2, 31, -1244, 3, 0, 354, -20518, 3, 0, 7, 2, 22, -6130, 3, 5, 2, -1, 0, 69207040, 3, 42, 2, 3, 0, 14, 2, 60, 2, 61, -3, 0, 3168731136, 0, 4294956864, 2, 1, 2, 0, 2, 39, 3, 0, 4, 0, 4294966275, 3, 0, 4, 2, 15, 2, 62, 2, 0, 0, 6655, -1, 2, 16, 2, 63, -1, 2, 0, 0, 2047, 0, 4294885376, 3, 0, 2, 0, 3145727, 0, 2617294944, 0, 4294770688, 2, 22, 2, 55, 3, 0, 2, 0, 131135, 2, 97, 0, 70256639, 0, 71303167, 0, 272, 2, 40, 2, 6, 0, 65279, 2, 0, 2, 64, -1, 2, 98, 2, 65, 0, 4278255616, 0, 4294836227, 0, 4294549473, 0, 600178175, 0, 2952806400, 0, 268632067, 0, 4294543328, 0, 57540095, 0, 1577058304, 0, 1835008, 0, 4294688736, 2, 67, 2, 66, 0, 33554435, 2, 131, 2, 67, 0, 2952790016, 0, 131075, 0, 3594373096, 0, 67094296, 2, 66, -1, 0, 4294828e3, 0, 603979263, 0, 922746880, 0, 3, 0, 4294828001, 0, 602930687, 0, 1879048192, 0, 393219, 0, 4294828016, 0, 671088639, 0, 2154840064, 0, 4227858435, 0, 4236247008, 2, 68, 2, 36, -1, 2, 4, 0, 917503, 2, 36, -1, 2, 69, 0, 537788335, 0, 4026531935, -1, 0, 1, -1, 2, 32, 2, 70, 0, 7936, -3, 2, 0, 0, 2147485695, 0, 1010761728, 0, 4292984930, 0, 16387, 2, 0, 2, 14, 2, 20, 3, 0, 10, 2, 71, 2, 0, 2, 72, 2, 73, 2, 74, 2, 0, 2, 75, 2, 0, 2, 12, -1, 2, 22, 3, 0, 2, 2, 13, 2, 4, 3, 0, 18, 2, 76, 2, 5, 3, 0, 2, 2, 77, 0, 2147745791, 3, 17, 2, 0, 122879, 2, 0, 2, 9, 0, 276824064, -2, 3, 0, 2, 2, 40, 2, 0, 0, 4294903295, 2, 0, 2, 29, 2, 8, -1, 2, 16, 2, 48, 2, 0, 2, 78, 2, 64, -1, 2, 19, 2, 0, 2, 26, -2, 0, 128, -2, 2, 25, 2, 9, 0, 8160, -1, 2, 126, 0, 4227907585, 2, 0, 2, 35, 2, 0, 2, 79, 0, 4227915776, 2, 10, 2, 6, 2, 11, -1, 0, 74440192, 3, 0, 6, -2, 3, 0, 8, 2, 13, 2, 0, 2, 80, 2, 10, 2, 0, 2, 81, 2, 82, 2, 83, -3, 2, 84, 2, 85, -3, 2, 86, 2, 87, 2, 88, 2, 0, 2, 33, -83, 3, 0, 7, 0, 817183, 2, 0, 2, 14, 2, 0, 0, 33023, 2, 19, 3, 89, 2, -17, 2, 90, 0, 524157950, 2, 4, 2, 0, 2, 91, 2, 4, 2, 0, 2, 20, 2, 25, 2, 15, 3, 0, 2, 2, 57, 2, 0, -1, 2, 16, -16, 3, 0, 206, -2, 3, 0, 692, 2, 70, -1, 2, 16, 2, 10, 3, 0, 8, 2, 92, 0, 3072, 2, 0, 0, 2147516415, 2, 10, 3, 0, 2, 2, 22, 2, 93, 2, 94, 3, 0, 2, 2, 95, 2, 0, 2, 10, 2, 96, 0, 4294965179, 0, 7, 2, 0, 2, 9, 2, 94, 2, 9, -1, 0, 1761345536, 2, 97, 0, 4294901823, 2, 36, 2, 18, 2, 98, 2, 34, 2, 99, 0, 2080440287, 2, 0, 2, 33, 2, 157, 0, 3296722943, 2, 0, 0, 1046675455, 0, 939524101, 0, 1837055, 2, 100, 2, 101, 2, 20, 2, 102, 3, 0, 3, 0, 7, 3, 0, 349, 2, 47, 2, 103, 2, 7, -264, 3, 0, 11, 2, 21, 3, 0, 2, 2, 31, -1, 0, 2700607615, 2, 104, 2, 105, 3, 0, 2, 2, 17, 2, 106, 3, 0, 10, 2, 10, 2, 16, 2, 0, 2, 44, 2, 0, 2, 30, 2, 107, -3, 2, 108, 3, 0, 3, 2, 18, -1, 3, 5, 2, 2, 109, 2, 0, 2, 8, 2, 110, -1, 2, 111, 2, 112, 2, 113, -1, 3, 0, 3, 2, 12, -2, 2, 0, 2, 26, -8, 2, 18, 2, 0, 2, 27, -1, 2, 0, 2, 55, 2, 6, 2, 29, 2, 10, 2, 0, 2, 114, -1, 3, 0, 4, 2, 10, 2, 16, 2, 115, 2, 7, 2, 0, 2, 116, 2, 0, 2, 117, 2, 118, 2, 119, 2, 0, 2, 9, 3, 0, 9, 2, 19, 2, 29, 2, 30, 2, 120, 2, 46, -2, 2, 121, 2, 122, 2, 29, 2, 19, 2, 8, -2, 2, 123, 2, 29, 3, 31, 2, -1, 2, 0, 2, 37, -2, 0, 4277075969, 2, 29, -1, 3, 18, 2, -1, 2, 32, 2, 124, 2, 0, 3, 29, 2, 2, 34, 2, 17, -3, 3, 0, 2, 2, 33, -1, 2, 0, 2, 34, 2, 0, 2, 34, 2, 0, 2, 79, 2, 97, 0, 4294934591, 2, 35, -7, 2, 0, 2, 125, 0, 4261413116, 2, 57, 2, 18, 2, 41, 2, 35, 2, 16, 0, 3, 2, 16, 2, 124, 2, 19, 2, 126, 2, 127, -1, 0, 2490368, 2, 126, 2, 22, 2, 16, 2, 33, 2, 126, 2, 36, 0, 4294901904, 0, 4718591, 2, 126, 2, 34, 0, 335544350, -1, 2, 128, 0, 2147487743, 0, 1, -1, 2, 129, 2, 130, 2, 8, -1, 2, 131, 2, 67, 0, 3758161920, 0, 3, 2, 132, 0, 12582911, 0, 655360, -1, 2, 0, 2, 26, 0, 2147485568, 0, 3, 2, 0, 2, 22, 0, 176, -5, 2, 0, 2, 57, 0, 251658240, -1, 2, 0, 2, 22, 0, 16, -1, 2, 0, 0, 16779263, -2, 2, 12, -1, 2, 36, -5, 2, 0, 2, 133, -3, 3, 0, 2, 2, 51, 2, 134, 0, 2147549183, 0, 2, -2, 2, 135, 2, 27, 0, 10, 0, 4294965249, 0, 67633151, 0, 4026597376, 2, 0, 0, 536871935, 2, 16, 2, 0, 2, 40, 2, 136, -5, 2, 0, 0, 1, 2, 54, 2, 57, 0, 1, 2, 137, 2, 22, -3, 2, 138, 2, 27, 2, 139, 2, 140, 0, 16778239, 2, 16, 2, 7, 0, 131072, -7, 2, 34, 0, 4294836212, 2, 9, -3, 2, 66, -2, 3, 0, 28, 2, 31, -3, 3, 0, 3, 2, 141, 3, 0, 6, 2, 47, 3, 0, 9, 2, 36, -71, 2, 16, 3, 0, 2, 2, 27, 3, 0, 33, 2, 22, 0, 126, 3, 0, 124, 2, 12, 3, 0, 18, 2, 36, -213, 2, 10, -55, 3, 0, 17, 2, 40, 2, 8, 2, 16, 2, 0, 2, 8, 2, 16, 2, 56, 2, 0, 2, 22, 2, 79, 2, 142, 2, 22, -13, 2, 0, 2, 70, -6, 3, 0, 2, -1, 2, 143, 2, 9, -1, 3, 0, 2, 0, 67583, -1, 2, 106, -2, 0, 8126475, 3, 0, 230, 2, 12, 2, 51, 2, 0, 0, 1, -2, 3, 0, 3, 2, 34, 3, 0, 28, 2, 17, 2, 0, 2, 34, -240, 2, 144, 3, 0, 9, 2, 145, 2, 146, 2, 147, 3, 0, 11, 2, 7, -72, 3, 0, 3, 2, 148, 2, 149, -187, 3, 0, 2, 2, 52, 2, 0, 2, 150, 2, 151, 2, 59, 2, 0, 2, 152, 2, 153, 2, 154, 3, 0, 10, 2, 155, 2, 156, 2, 20, 3, 52, 2, 3, 53, 2, 3, 54, 2, 2, 157, -57, 3, 0, 4, 2, 158, -1, 2, 55, 2, 0, -1, 2, 16, 2, 0, 2, 56, -4, 2, 0, 0, 1065361407, 0, 16384, -9, 2, 16, 2, 56, 2, 0, 2, 133, -14, 2, 16, 2, 133, -6, 2, 16, 0, 81919, -6, 2, 8, 0, 3223273399, -7, 2, 159, 3, 0, 6, 2, 124, -1, 3, 0, 2, 0, 2063, -37, 2, 59, 2, 160, 2, 161, 2, 162, 2, 163, 2, 164, -138, 3, 0, 1335, -1, 3, 0, 136, 2, 8, 3, 0, 180, 2, 21, 3, 0, 233, 2, 165, 3, 0, 18, 2, 10, -77, 3, 0, 16, 2, 10, -47, 3, 0, 154, 2, 6, 3, 0, 264, 2, 31, -1244, 3, 0, 354, -26654], [4294967295, 4294967291, 4092460543, 4294828031, 4294967294, 134217726, 4294903807, 268435455, 2147483647, 1048575, 1073741823, 3892314111, 134217727, 1061158911, 4294910143, 4294901759, 4294901760, 262143, 536870911, 8388607, 4160749567, 4294918143, 65535, 67043328, 2281701374, 4294967264, 2097151, 131071, 4294902783, 4194303, 255, 67108863, 4294967039, 511, 524287, 63, 127, 3238002687, 4294549487, 4290772991, 33554431, 4294901888, 4286578687, 67043329, 4294770687, 67043583, 4294836223, 4294901775, 2047999, 67043343, 67051519, 2147483648, 4292870143, 4294934527, 4294966783, 4294959104, 16383, 32767, 67047423, 4294967279, 262083, 20511, 58720255, 493567, 1023, 603979775, 65536, 602799615, 805044223, 4294965206, 8191, 1031749119, 4294917631, 2134769663, 4286578493, 4282253311, 4294942719, 33540095, 4294905855, 15, 2868854591, 1608515583, 265232348, 534519807, 2147614720, 4294934528, 1060109444, 4093640016, 17376, 2139062143, 224, 4169138175, 4294909951, 4286578688, 4294967292, 4294965759, 4294836228, 4294966272, 4294967280, 32768, 8289918, 4294934399, 4294915071, 4294965375, 1602223615, 4294967259, 4294443008, 268369920, 4292804608, 4294967232, 486341884, 4294963199, 3087007615, 1073692671, 4128527, 4279238655, 4294902015, 4160684047, 4290246655, 469499899, 4294967231, 4294966591, 2445279231, 3670015, 31, 197631, 4294967288, 16777215, 4294705151, 3221208447, 4294902271, 4294549472, 4294921215, 4095, 4285526655, 4294966527, 1024, 4294705152, 4294966143, 64, 4294966719, 4292935679, 3774873592, 4194303999, 1877934080, 262655, 2555904, 4294902256, 536807423, 67043839, 3758096383, 3959414372, 3755993023, 2080374783, 4294835295, 4294967167, 4160749565, 4087, 8323075, 2147446655, 184024726, 2862017156, 1593309078, 268434431, 268434414, 4294901761]);
   var isIDContinue = /* @__PURE__ */ __name((code) => (unicodeLookup[(code >>> 5) + 0] >>> code & 31 & 1) !== 0, "isIDContinue");
   var isIDStart = /* @__PURE__ */ __name((code) => (unicodeLookup[(code >>> 5) + 34816] >>> code & 31 & 1) !== 0, "isIDStart");
   var CharTypes = [
@@ -7463,7 +7479,7 @@ format:`, anonymisedFormat);
     [135]: "Unexpected character after object literal property name",
     [137]: "Invalid key token",
     [138]: "Label '%0' has already been declared",
-    [139]: "continue statement must be nested within an iteration statement",
+    [139]: "Label '%0' does not denote an iteration statement",
     [140]: "Undefined label '%0'",
     [141]: "Trailing comma is disallowed inside import(...) arguments",
     [142]: "Invalid binding in JSON import",
@@ -8410,7 +8426,7 @@ format:`, anonymisedFormat);
         char = advanceChar(parser);
         if (char === 13)
           hasCarriageReturn = true;
-        if (char > 126) {
+        if (char > 126 && char !== 8232 && char !== 8233) {
           ret += String.fromCodePoint(char);
         } else {
           const { index, line, column } = parser;
@@ -8978,9 +8994,10 @@ format:`, anonymisedFormat);
   }
   __name(consume, "consume");
   function reinterpretToPattern(parser, node) {
+    const rewritten = node;
     switch (node.type) {
       case "ArrayExpression": {
-        node.type = "ArrayPattern";
+        rewritten.type = "ArrayPattern";
         const { elements } = node;
         for (let i2 = 0, n = elements.length; i2 < n; ++i2) {
           const element = elements[i2];
@@ -8990,7 +9007,7 @@ format:`, anonymisedFormat);
         return;
       }
       case "ObjectExpression": {
-        node.type = "ObjectPattern";
+        rewritten.type = "ObjectPattern";
         const { properties } = node;
         for (let i2 = 0, n = properties.length; i2 < n; ++i2) {
           reinterpretToPattern(parser, properties[i2]);
@@ -8998,17 +9015,17 @@ format:`, anonymisedFormat);
         return;
       }
       case "AssignmentExpression":
-        node.type = "AssignmentPattern";
+        rewritten.type = "AssignmentPattern";
         if (node.operator !== "=")
           parser.report(71);
-        delete node.operator;
+        delete rewritten.operator;
         reinterpretToPattern(parser, node.left);
         return;
       case "Property":
         reinterpretToPattern(parser, node.value);
         return;
       case "SpreadElement":
-        node.type = "RestElement";
+        rewritten.type = "RestElement";
         reinterpretToPattern(parser, node.argument);
     }
   }
@@ -9064,7 +9081,7 @@ format:`, anonymisedFormat);
   __name(validateFunctionName, "validateFunctionName");
   function isStrictReservedWord(parser, context, t) {
     var _a2;
-    if (t === 209006) {
+    if ((t & 255) === (209006 & 255)) {
       if (context & (2048 | 2))
         parser.report(112);
       if ((parser.destructible & 128) === 0) {
@@ -9078,31 +9095,33 @@ format:`, anonymisedFormat);
   }
   __name(isStrictReservedWord, "isStrictReservedWord");
   function isPropertyWithPrivateFieldKey(expr) {
-    return !expr.property ? false : expr.property.type === "PrivateIdentifier";
+    return expr.type === "MemberExpression" && expr.property.type === "PrivateIdentifier";
   }
   __name(isPropertyWithPrivateFieldKey, "isPropertyWithPrivateFieldKey");
   function isValidLabel(parser, labels, name, isIterationStatement) {
+    var _a2;
+    let isIterationLabelSet = 0;
     while (labels) {
-      if (labels["$" + name]) {
-        if (isIterationStatement)
-          parser.report(139);
+      if ((_a2 = labels.names) == null ? void 0 : _a2.has(name)) {
+        if (isIterationStatement && !isIterationLabelSet)
+          parser.report(139, name);
         return 1;
       }
-      if (isIterationStatement && labels.loop)
-        isIterationStatement = 0;
-      labels = labels["$"];
+      isIterationLabelSet = labels.loop ? 1 : 0;
+      labels = labels.parent;
     }
     return 0;
   }
   __name(isValidLabel, "isValidLabel");
   function validateAndDeclareLabel(parser, labels, name) {
+    var _a2, _b2;
     let set = labels;
     while (set) {
-      if (set["$" + name])
+      if ((_a2 = set.names) == null ? void 0 : _a2.has(name))
         parser.report(138, name);
-      set = set["$"];
+      set = set.parent;
     }
-    labels["$" + name] = 1;
+    ((_b2 = labels.names) != null ? _b2 : labels.names = /* @__PURE__ */ new Set()).add(name);
   }
   __name(validateAndDeclareLabel, "validateAndDeclareLabel");
   function isEqualTagName(elementName) {
@@ -9110,7 +9129,7 @@ format:`, anonymisedFormat);
       case "JSXIdentifier":
         return elementName.name;
       case "JSXNamespacedName":
-        return elementName.namespace + ":" + elementName.name;
+        return isEqualTagName(elementName.namespace) + ":" + elementName.name.name;
       case "JSXMemberExpression":
         return isEqualTagName(elementName.object) + "." + isEqualTagName(elementName.property);
     }
@@ -9721,6 +9740,7 @@ format:`, anonymisedFormat);
       __publicField(this, "destructible", 0);
       __publicField(this, "strictReservedRange", null);
       __publicField(this, "firstAwaitLocation", null);
+      __publicField(this, "firstYieldLocation", null);
       __publicField(this, "leadingDecorators", { decorators: [] });
       this.source = source;
       this.end = source.length;
@@ -10105,7 +10125,7 @@ format:`, anonymisedFormat);
     const body = [];
     consume(parser, context | 32, 2162700);
     while (parser.getToken() !== 1074790415) {
-      body.push(parseStatementListItem(parser, context, scope, privateScope, { $: labels }));
+      body.push(parseStatementListItem(parser, context, scope, privateScope, { parent: labels }));
     }
     consume(parser, context | 32, 1074790415);
     return parser.finishNode({
@@ -10256,7 +10276,7 @@ format:`, anonymisedFormat);
   __name(parseIfStatement, "parseIfStatement");
   function parseConsequentOrAlternative(parser, context, scope, privateScope, labels) {
     const { tokenStart } = parser;
-    return context & 1 || !parser.options.webcompat || parser.getToken() !== 86104 ? parseStatement(parser, context, scope, privateScope, { $: labels }, 0) : parseFunctionDeclaration(parser, context, scope == null ? void 0 : scope.createChildScope(), privateScope, 0, 0, 0, tokenStart);
+    return context & 1 || !parser.options.webcompat || parser.getToken() !== 86104 ? parseStatement(parser, context, scope, privateScope, { parent: labels }, 0) : parseFunctionDeclaration(parser, context, scope == null ? void 0 : scope.createChildScope(), privateScope, 0, 0, 0, tokenStart);
   }
   __name(parseConsequentOrAlternative, "parseConsequentOrAlternative");
   function parseSwitchStatement(parser, context, scope, privateScope, labels) {
@@ -10284,7 +10304,7 @@ format:`, anonymisedFormat);
       consume(parser, context | 32, 21);
       while (parser.getToken() !== 20556 && parser.getToken() !== 1074790415 && parser.getToken() !== 20561) {
         const statement = parseStatementListItem(parser, context | 4, scope, privateScope, {
-          $: labels
+          parent: labels
         });
         if (statement.type === "VariableDeclaration" && (statement.kind === "using" || statement.kind === "await using")) {
           parser.report(30, statement.kind);
@@ -10320,7 +10340,7 @@ format:`, anonymisedFormat);
   }
   __name(parseWhileStatement, "parseWhileStatement");
   function parseIterationStatementBody(parser, context, scope, privateScope, labels) {
-    return parseStatement(parser, (context | 131072) ^ 131072 | 128, scope, privateScope, { loop: 1, $: labels }, 0);
+    return parseStatement(parser, (context | 131072) ^ 131072 | 128, scope, privateScope, { loop: 1, parent: labels }, 0);
   }
   __name(parseIterationStatementBody, "parseIterationStatementBody");
   function parseContinueStatement(parser, context, labels) {
@@ -10331,9 +10351,9 @@ format:`, anonymisedFormat);
     let label = null;
     if ((parser.flags & 1) === 0 && parser.getToken() & 143360) {
       const { tokenValue } = parser;
-      label = parseIdentifier(parser, context | 32);
       if (!isValidLabel(parser, labels, tokenValue, 1))
         parser.report(140, tokenValue);
+      label = parseIdentifier(parser, context | 32);
     }
     matchOrInsertSemicolon(parser, context | 32);
     return parser.finishNode({
@@ -10348,9 +10368,9 @@ format:`, anonymisedFormat);
     let label = null;
     if ((parser.flags & 1) === 0 && parser.getToken() & 143360) {
       const { tokenValue } = parser;
-      label = parseIdentifier(parser, context | 32);
       if (!isValidLabel(parser, labels, tokenValue, 0))
         parser.report(140, tokenValue);
+      label = parseIdentifier(parser, context | 32);
     } else if ((context & (4 | 128)) === 0) {
       parser.report(69);
     }
@@ -10390,14 +10410,14 @@ format:`, anonymisedFormat);
     const start = parser.tokenStart;
     nextToken(parser, context | 32);
     const firstScope = scope == null ? void 0 : scope.createChildScope(16);
-    const block = parseBlock(parser, context, firstScope, privateScope, { $: labels });
+    const block = parseBlock(parser, context, firstScope, privateScope, { parent: labels });
     const { tokenStart } = parser;
     const handler = consumeOpt(parser, context | 32, 20557) ? parseCatchBlock(parser, context, scope, privateScope, labels, tokenStart) : null;
     let finalizer = null;
     if (parser.getToken() === 20566) {
       nextToken(parser, context | 32);
       const finalizerScope = scope == null ? void 0 : scope.createChildScope(4);
-      const block2 = parseBlock(parser, context, finalizerScope, privateScope, { $: labels });
+      const block2 = parseBlock(parser, context, finalizerScope, privateScope, { parent: labels });
       finalizer = block2;
     }
     if (!handler && !finalizer) {
@@ -10424,7 +10444,7 @@ format:`, anonymisedFormat);
       consume(parser, context | 32, 16);
     }
     const additionalScope = scope == null ? void 0 : scope.createChildScope(32);
-    const body = parseBlock(parser, context, additionalScope, privateScope, { $: labels });
+    const body = parseBlock(parser, context, additionalScope, privateScope, { parent: labels });
     return parser.finishNode({
       type: "CatchClause",
       param,
@@ -11452,12 +11472,17 @@ format:`, anonymisedFormat);
   }
   __name(parseAsyncExpression, "parseAsyncExpression");
   function parseYieldExpressionOrIdentifier(parser, context, privateScope, inGroup, canAssign, start) {
-    if (inGroup)
+    var _a2;
+    if (inGroup) {
+      if ((parser.destructible & 256) === 0) {
+        (_a2 = parser.firstYieldLocation) != null ? _a2 : parser.firstYieldLocation = { start, end: parser.currentLocation };
+      }
       parser.destructible |= 256;
+    }
     if (context & 1024) {
       nextToken(parser, context | 32);
       if (context & 8192)
-        parser.report(32);
+        throw new ParseError(start, parser.startPosition, 32);
       if (!canAssign)
         parser.report(26);
       if (parser.getToken() === 22)
@@ -11494,8 +11519,10 @@ format:`, anonymisedFormat);
     }
     if (context & 524288)
       parser.report(179);
-    const possibleIdentifierOrArrowFunc = parseIdentifierOrArrow(parser, context, privateScope);
-    const isIdentifier = possibleIdentifierOrArrowFunc.type === "ArrowFunctionExpression" || (parser.getToken() & 65536) === 0;
+    const isEscaped = (parser.getToken() & -2147483648) !== 0;
+    const allowRegExp = !isEscaped && context & (2048 | 2) ? 1 : 0;
+    const possibleIdentifierOrArrowFunc = parseIdentifierOrArrow(parser, context, privateScope, allowRegExp);
+    const isIdentifier = isEscaped || possibleIdentifierOrArrowFunc.type === "ArrowFunctionExpression" || (parser.getToken() & 65536) === 0;
     if (isIdentifier) {
       if (context & 2048)
         throw new ParseError(start, parser.startPosition, 178);
@@ -11505,7 +11532,7 @@ format:`, anonymisedFormat);
         throw new ParseError(start, parser.startPosition, 112);
       return possibleIdentifierOrArrowFunc;
     }
-    if (context & 8192) {
+    if (context & 8192 && (context & (2048 | 2) || parser.getToken() & 143360)) {
       throw new ParseError(start, parser.startPosition, 31);
     }
     if (context & 2048 || context & 2 && context & 8) {
@@ -11818,6 +11845,7 @@ format:`, anonymisedFormat);
     if ((parser.getToken() & 143360) === 143360) {
       switch (parser.getToken()) {
         case 209006:
+        case 209006 | -2147483648:
           return parseAwaitExpressionOrIdentifier(parser, context, privateScope, inNew, inGroup, start);
         case 241771:
           return parseYieldExpressionOrIdentifier(parser, context, privateScope, inGroup, canAssign, start);
@@ -12165,10 +12193,9 @@ format:`, anonymisedFormat);
     return args;
   }
   __name(parseArguments, "parseArguments");
-  function parseIdentifier(parser, context) {
+  function parseIdentifier(parser, context, allowRegExp = 0) {
     const { tokenValue, tokenStart } = parser;
-    const allowRegex = tokenValue === "await" && (parser.getToken() & -2147483648) === 0;
-    nextToken(parser, context | (allowRegex ? 32 : 0));
+    nextToken(parser, context | (allowRegExp ? 32 : 0));
     return parser.finishNode({
       type: "Identifier",
       name: tokenValue
@@ -12606,7 +12633,7 @@ format:`, anonymisedFormat);
                 right
               }, tokenStart);
             } else {
-              destructible |= (token === 209006 ? 128 : 0) | (token === -2147483527 ? 16 : 0);
+              destructible |= ((token & 255) === (209006 & 255) ? 128 : 0) | (token === -2147483527 ? 16 : 0);
               value = parser.cloneIdentifier(key);
             }
           } else if (consumeOpt(parser, context | 32, 21)) {
@@ -12972,6 +12999,7 @@ format:`, anonymisedFormat);
     parser.flags = (parser.flags | 128) ^ 128;
     parser.strictReservedRange = null;
     parser.firstAwaitLocation = null;
+    parser.firstYieldLocation = null;
     if (parser.getToken() === 16) {
       if (kind & 512) {
         parser.report(37, "Setter", "one", "");
@@ -13064,6 +13092,8 @@ format:`, anonymisedFormat);
     parser.destructible &= -385;
     const previousFirstAwaitLocation = parser.firstAwaitLocation;
     parser.firstAwaitLocation = null;
+    const previousFirstYieldLocation = parser.firstYieldLocation;
+    parser.firstYieldLocation = null;
     let expr;
     let expressions = [];
     let isSequence = 0;
@@ -13149,6 +13179,9 @@ format:`, anonymisedFormat);
         if (previousFirstAwaitLocation) {
           parser.firstAwaitLocation = previousFirstAwaitLocation;
         }
+        if (previousFirstYieldLocation) {
+          parser.firstYieldLocation = previousFirstYieldLocation;
+        }
         return parser.options.preserveParens ? parser.finishNode({
           type: "ParenthesizedExpression",
           expression: expr
@@ -13189,6 +13222,9 @@ format:`, anonymisedFormat);
         parser.report(31);
       }
       if (context & (1 | 1024) && destructible & 256) {
+        const loc = parser.firstYieldLocation;
+        if (loc)
+          throw new ParseError(loc.start, loc.end, 32);
         parser.report(32);
       }
       if (isNonSimpleParameterList)
@@ -13198,6 +13234,9 @@ format:`, anonymisedFormat);
       parser.destructible |= previousAwaitYield;
       if (previousFirstAwaitLocation) {
         parser.firstAwaitLocation = previousFirstAwaitLocation;
+      }
+      if (previousFirstYieldLocation) {
+        parser.firstYieldLocation = previousFirstYieldLocation;
       }
       return parseParenthesizedArrow(parser, context, scope, privateScope, isSequence ? expressions : [expr], canAssign, 0, start, origin);
     }
@@ -13211,13 +13250,16 @@ format:`, anonymisedFormat);
     if (previousFirstAwaitLocation) {
       parser.firstAwaitLocation = previousFirstAwaitLocation;
     }
+    if (previousFirstYieldLocation) {
+      parser.firstYieldLocation = previousFirstYieldLocation;
+    }
     return parser.options.preserveParens ? parser.finishNode({
       type: "ParenthesizedExpression",
       expression: expr
     }, parenthesesStart) : expr;
   }
   __name(parseParenthesizedExpression, "parseParenthesizedExpression");
-  function parseIdentifierOrArrow(parser, context, privateScope) {
+  function parseIdentifierOrArrow(parser, context, privateScope, allowRegExp = 0) {
     const { tokenValue, tokenStart, currentLocation } = parser;
     let isNonSimpleParameterList = 0;
     let hasStrictReserved = 0;
@@ -13226,7 +13268,7 @@ format:`, anonymisedFormat);
     } else if ((parser.getToken() & 36864) === 36864) {
       hasStrictReserved = 1;
     }
-    const expr = parseIdentifier(parser, context);
+    const expr = parseIdentifier(parser, context, allowRegExp);
     parser.assignable = 1;
     if (parser.getToken() === 10) {
       const scope = parser.options.lexical ? createArrowHeadParsingScope(parser, context, tokenValue, tokenStart, currentLocation) : void 0;
@@ -13316,6 +13358,7 @@ format:`, anonymisedFormat);
     parser.flags = (parser.flags | 128) ^ 128;
     parser.strictReservedRange = null;
     parser.firstAwaitLocation = null;
+    parser.firstYieldLocation = null;
     const params = [];
     if (consumeOpt(parser, context, 16))
       return params;
@@ -13454,7 +13497,7 @@ format:`, anonymisedFormat);
   }
   __name(parseMetaProperty, "parseMetaProperty");
   function parseAsyncArrowAfterIdent(parser, context, privateScope, canAssign, start) {
-    if (parser.getToken() === 209006)
+    if ((parser.getToken() & 255) === (209006 & 255))
       parser.report(31);
     if (context & (1 | 1024) && parser.getToken() === 241771) {
       parser.report(32);
@@ -13472,6 +13515,8 @@ format:`, anonymisedFormat);
     const scope = (_a2 = parser.createScopeIfLexical()) == null ? void 0 : _a2.createChildScope(512);
     const previousFirstAwaitLocation = parser.firstAwaitLocation;
     parser.firstAwaitLocation = null;
+    const previousFirstYieldLocation = parser.firstYieldLocation;
+    parser.firstYieldLocation = null;
     context = (context | 131072) ^ 131072;
     if (consumeOpt(parser, context, 16)) {
       if (parser.getToken() === 10) {
@@ -13486,6 +13531,8 @@ format:`, anonymisedFormat);
       }
       if (previousFirstAwaitLocation)
         parser.firstAwaitLocation = previousFirstAwaitLocation;
+      if (previousFirstYieldLocation)
+        parser.firstYieldLocation = previousFirstYieldLocation;
       return parser.finishNode({
         type: "CallExpression",
         callee,
@@ -13562,6 +13609,8 @@ format:`, anonymisedFormat);
         }
         if (previousFirstAwaitLocation)
           parser.firstAwaitLocation = previousFirstAwaitLocation;
+        if (previousFirstYieldLocation)
+          parser.firstYieldLocation = previousFirstYieldLocation;
         return parser.finishNode({
           type: "CallExpression",
           callee,
@@ -13586,8 +13635,12 @@ format:`, anonymisedFormat);
           throw new ParseError(loc.start, loc.end, 31);
         parser.report(31);
       }
-      if (context & (1 | 1024) && destructible & 256)
+      if (context & (1 | 1024) && destructible & 256) {
+        const loc = parser.firstYieldLocation;
+        if (loc)
+          throw new ParseError(loc.start, loc.end, 32);
         parser.report(32);
+      }
       if (isNonSimpleParameterList)
         parser.flags |= 128;
       return parseParenthesizedArrow(parser, context | 2048, scope, privateScope, params, canAssign, 1, start);
@@ -13605,6 +13658,8 @@ format:`, anonymisedFormat);
     }
     if (previousFirstAwaitLocation)
       parser.firstAwaitLocation = previousFirstAwaitLocation;
+    if (previousFirstYieldLocation)
+      parser.firstYieldLocation = previousFirstYieldLocation;
     return parser.finishNode({
       type: "CallExpression",
       callee,
@@ -13956,7 +14011,7 @@ format:`, anonymisedFormat);
       const { tokenStart } = parser;
       if (parser.getToken() === 537079928)
         parser.report(121);
-      const modifierFlags = 1024 | 2048 | 8192 | ((state & 64) === 0 ? 512 | 16384 : 0);
+      const modifierFlags = 1024 | 2048 | 8 | 8192 | ((state & 64) === 0 ? 512 | 16384 : 0);
       context = (context | modifierFlags) ^ modifierFlags | (state & 8 ? 1024 : 0) | (state & 16 ? 2048 : 0) | (state & 64 ? 16384 : 0) | 256 | 65536;
       value = parsePrimaryExpression(parser, context | 16, privateScope, 2, 0, 1, 0, 1, tokenStart, 0, 1);
       if ((parser.getToken() & 1073741824) !== 1073741824 || (parser.getToken() & 4194304) === 4194304) {
@@ -14337,7 +14392,7 @@ format:`, anonymisedFormat);
   }
   __name(parseScript, "parseScript");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/javascript/JsAnalyzer.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/javascript/JsAnalyzer.js
   var _JsAnalyzer = class _JsAnalyzer {
     /**
      * Creates a new instance over the provided source.
@@ -14836,7 +14891,7 @@ format:`, anonymisedFormat);
   __name(_JsAnalyzer, "JsAnalyzer");
   var JsAnalyzer = _JsAnalyzer;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/javascript/JsExtractor.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/javascript/JsExtractor.js
   var _JsExtractor = class _JsExtractor {
     constructor(analyzer) {
       __publicField(this, "analyzer");
@@ -15199,7 +15254,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_JsExtractor, "JsExtractor");
   var JsExtractor = _JsExtractor;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/OpenPopupAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/actions/OpenPopupAction.js
   var _OpenPopupAction = class _OpenPopupAction extends YTNode {
     constructor(data) {
       super();
@@ -15213,7 +15268,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_OpenPopupAction, "type", "OpenPopupAction");
   var OpenPopupAction = _OpenPopupAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Button.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Button.js
   var _Button = class _Button extends YTNode {
     constructor(data) {
       super();
@@ -15256,7 +15311,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Button, "type", "Button");
   var Button = _Button;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DropdownItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DropdownItem.js
   var _DropdownItem = class _DropdownItem extends YTNode {
     constructor(data) {
       var _a2;
@@ -15289,7 +15344,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DropdownItem, "type", "DropdownItem");
   var DropdownItem = _DropdownItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Dropdown.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Dropdown.js
   var _Dropdown = class _Dropdown extends YTNode {
     constructor(data) {
       super();
@@ -15303,7 +15358,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Dropdown, "type", "Dropdown");
   var Dropdown = _Dropdown;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CreatePlaylistDialog.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CreatePlaylistDialog.js
   var _CreatePlaylistDialog = class _CreatePlaylistDialog extends YTNode {
     constructor(data) {
       super();
@@ -15323,7 +15378,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CreatePlaylistDialog, "type", "CreatePlaylistDialog");
   var CreatePlaylistDialog = _CreatePlaylistDialog;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/CommandExecutorCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/commands/CommandExecutorCommand.js
   var _CommandExecutorCommand = class _CommandExecutorCommand extends YTNode {
     constructor(data) {
       super();
@@ -15335,7 +15390,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommandExecutorCommand, "type", "CommandExecutorCommand");
   var CommandExecutorCommand = _CommandExecutorCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/NavigationEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/NavigationEndpoint.js
   var _NavigationEndpoint = class _NavigationEndpoint extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f, _g, _h;
@@ -15441,15 +15496,23 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_NavigationEndpoint, "type", "NavigationEndpoint");
   var NavigationEndpoint = _NavigationEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/Thumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/Thumbnail.js
   var _Thumbnail = class _Thumbnail {
     constructor(data) {
       __publicField(this, "url");
       __publicField(this, "width");
       __publicField(this, "height");
+      __publicField(this, "client_resource");
       this.url = data.url;
       this.width = data.width;
       this.height = data.height;
+      if ("clientResource" in data) {
+        this.client_resource = {
+          image_name: data.clientResource.imageName,
+          image_color: data.clientResource.imageColor,
+          bundle_id: data.clientResource.bundleId
+        };
+      }
     }
     /**
      * Get thumbnails from response object.
@@ -15472,7 +15535,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_Thumbnail, "Thumbnail");
   var Thumbnail = _Thumbnail;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/EmojiRun.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/EmojiRun.js
   var _EmojiRun = class _EmojiRun {
     constructor(data) {
       __publicField(this, "text");
@@ -15498,7 +15561,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_EmojiRun, "EmojiRun");
   var EmojiRun = _EmojiRun;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/TextRun.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/TextRun.js
   var _TextRun = class _TextRun {
     constructor(data) {
       __publicField(this, "text");
@@ -15584,7 +15647,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_TextRun, "TextRun");
   var TextRun = _TextRun;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/Text.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/Text.js
   function escape(text) {
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
@@ -15824,7 +15887,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   }
   __name(insertSubRun, "insertSubRun");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelExternalLinkView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelExternalLinkView.js
   var _ChannelExternalLinkView = class _ChannelExternalLinkView extends YTNode {
     constructor(data) {
       super();
@@ -15840,7 +15903,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelExternalLinkView, "type", "ChannelExternalLinkView");
   var ChannelExternalLinkView = _ChannelExternalLinkView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AboutChannelView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AboutChannelView.js
   var _AboutChannelView = class _AboutChannelView extends YTNode {
     constructor(data) {
       super();
@@ -15908,7 +15971,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AboutChannelView, "type", "AboutChannelView");
   var AboutChannelView = _AboutChannelView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AboutChannel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AboutChannel.js
   var _AboutChannel = class _AboutChannel extends YTNode {
     constructor(data) {
       super();
@@ -15922,7 +15985,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AboutChannel, "type", "AboutChannel");
   var AboutChannel = _AboutChannel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AccountChannel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AccountChannel.js
   var _AccountChannel = class _AccountChannel extends YTNode {
     constructor(data) {
       super();
@@ -15936,7 +15999,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AccountChannel, "type", "AccountChannel");
   var AccountChannel = _AccountChannel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AccountItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AccountItem.js
   var _AccountItem = class _AccountItem extends YTNode {
     constructor(data) {
       super();
@@ -15962,7 +16025,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AccountItem, "type", "AccountItem");
   var AccountItem = _AccountItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AccountItemSectionHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AccountItemSectionHeader.js
   var _AccountItemSectionHeader = class _AccountItemSectionHeader extends YTNode {
     constructor(data) {
       super();
@@ -15974,7 +16037,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AccountItemSectionHeader, "type", "AccountItemSectionHeader");
   var AccountItemSectionHeader = _AccountItemSectionHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactLink.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CompactLink.js
   var _CompactLink = class _CompactLink extends YTNode {
     constructor(data) {
       super();
@@ -15999,7 +16062,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompactLink, "type", "CompactLink");
   var CompactLink = _CompactLink;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AccountItemSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AccountItemSection.js
   var _AccountItemSection = class _AccountItemSection extends YTNode {
     constructor(data) {
       super();
@@ -16013,7 +16076,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AccountItemSection, "type", "AccountItemSection");
   var AccountItemSection = _AccountItemSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AccountSectionList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AccountSectionList.js
   var _AccountSectionList = class _AccountSectionList extends YTNode {
     constructor(data) {
       super();
@@ -16027,7 +16090,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AccountSectionList, "type", "AccountSectionList");
   var AccountSectionList = _AccountSectionList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/AppendContinuationItemsAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/actions/AppendContinuationItemsAction.js
   var _AppendContinuationItemsAction = class _AppendContinuationItemsAction extends YTNode {
     constructor(data) {
       super();
@@ -16041,7 +16104,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AppendContinuationItemsAction, "type", "AppendContinuationItemsAction");
   var AppendContinuationItemsAction = _AppendContinuationItemsAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/ChangeEngagementPanelVisibilityAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/actions/ChangeEngagementPanelVisibilityAction.js
   var _ChangeEngagementPanelVisibilityAction = class _ChangeEngagementPanelVisibilityAction extends YTNode {
     constructor(data) {
       super();
@@ -16055,7 +16118,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChangeEngagementPanelVisibilityAction, "type", "ChangeEngagementPanelVisibilityAction");
   var ChangeEngagementPanelVisibilityAction = _ChangeEngagementPanelVisibilityAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MultiPageMenu.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/menus/MultiPageMenu.js
   var _MultiPageMenu = class _MultiPageMenu extends YTNode {
     constructor(data) {
       super();
@@ -16071,7 +16134,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MultiPageMenu, "type", "MultiPageMenu");
   var MultiPageMenu = _MultiPageMenu;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/GetMultiPageMenuAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/actions/GetMultiPageMenuAction.js
   var _GetMultiPageMenuAction = class _GetMultiPageMenuAction extends YTNode {
     constructor(data) {
       super();
@@ -16083,7 +16146,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GetMultiPageMenuAction, "type", "GetMultiPageMenuAction");
   var GetMultiPageMenuAction = _GetMultiPageMenuAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/SendFeedbackAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/actions/SendFeedbackAction.js
   var _SendFeedbackAction = class _SendFeedbackAction extends YTNode {
     constructor(data) {
       super();
@@ -16095,7 +16158,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SendFeedbackAction, "type", "SendFeedbackAction");
   var SendFeedbackAction = _SendFeedbackAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/SignalAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/actions/SignalAction.js
   var _SignalAction = class _SignalAction extends YTNode {
     constructor(data) {
       super();
@@ -16107,7 +16170,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SignalAction, "type", "SignalAction");
   var SignalAction = _SignalAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelSwitcherPage.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelSwitcherPage.js
   var _ChannelSwitcherPage = class _ChannelSwitcherPage extends YTNode {
     constructor(data) {
       super();
@@ -16121,7 +16184,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelSwitcherPage, "type", "ChannelSwitcherPage");
   var ChannelSwitcherPage = _ChannelSwitcherPage;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/UpdateChannelSwitcherPageAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/actions/UpdateChannelSwitcherPageAction.js
   var _UpdateChannelSwitcherPageAction = class _UpdateChannelSwitcherPageAction extends YTNode {
     constructor(data) {
       super();
@@ -16138,7 +16201,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateChannelSwitcherPageAction, "type", "UpdateChannelSwitcherPageAction");
   var UpdateChannelSwitcherPageAction = _UpdateChannelSwitcherPageAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SortFilterSubMenu.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SortFilterSubMenu.js
   var _SortFilterSubMenu = class _SortFilterSubMenu extends YTNode {
     constructor(data) {
       super();
@@ -16183,7 +16246,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SortFilterSubMenu, "type", "SortFilterSubMenu");
   var SortFilterSubMenu = _SortFilterSubMenu;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TranscriptFooter.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TranscriptFooter.js
   var _TranscriptFooter = class _TranscriptFooter extends YTNode {
     constructor(data) {
       super();
@@ -16195,7 +16258,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TranscriptFooter, "type", "TranscriptFooter");
   var TranscriptFooter = _TranscriptFooter;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSearchBox.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSearchBox.js
   var _TranscriptSearchBox = class _TranscriptSearchBox extends YTNode {
     constructor(data) {
       super();
@@ -16213,7 +16276,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TranscriptSearchBox, "type", "TranscriptSearchBox");
   var TranscriptSearchBox = _TranscriptSearchBox;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSectionHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSectionHeader.js
   var _TranscriptSectionHeader = class _TranscriptSectionHeader extends YTNode {
     constructor(data) {
       super();
@@ -16229,7 +16292,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TranscriptSectionHeader, "type", "TranscriptSectionHeader");
   var TranscriptSectionHeader = _TranscriptSectionHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSegment.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSegment.js
   var _TranscriptSegment = class _TranscriptSegment extends YTNode {
     constructor(data) {
       super();
@@ -16249,7 +16312,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TranscriptSegment, "type", "TranscriptSegment");
   var TranscriptSegment = _TranscriptSegment;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSegmentList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSegmentList.js
   var _TranscriptSegmentList = class _TranscriptSegmentList extends YTNode {
     constructor(data) {
       super();
@@ -16267,7 +16330,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TranscriptSegmentList, "type", "TranscriptSegmentList");
   var TranscriptSegmentList = _TranscriptSegmentList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSearchPanel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TranscriptSearchPanel.js
   var _TranscriptSearchPanel = class _TranscriptSearchPanel extends YTNode {
     constructor(data) {
       super();
@@ -16285,7 +16348,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TranscriptSearchPanel, "type", "TranscriptSearchPanel");
   var TranscriptSearchPanel = _TranscriptSearchPanel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Transcript.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Transcript.js
   var _Transcript = class _Transcript extends YTNode {
     constructor(data) {
       super();
@@ -16297,7 +16360,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Transcript, "type", "Transcript");
   var Transcript = _Transcript;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/UpdateEngagementPanelAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/actions/UpdateEngagementPanelAction.js
   var _UpdateEngagementPanelAction = class _UpdateEngagementPanelAction extends YTNode {
     constructor(data) {
       super();
@@ -16311,7 +16374,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateEngagementPanelAction, "type", "UpdateEngagementPanelAction");
   var UpdateEngagementPanelAction = _UpdateEngagementPanelAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/actions/UpdateSubscribeButtonAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/actions/UpdateSubscribeButtonAction.js
   var _UpdateSubscribeButtonAction = class _UpdateSubscribeButtonAction extends YTNode {
     constructor(data) {
       super();
@@ -16325,7 +16388,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateSubscribeButtonAction, "type", "UpdateSubscribeButtonAction");
   var UpdateSubscribeButtonAction = _UpdateSubscribeButtonAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ActiveAccountHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ActiveAccountHeader.js
   var _ActiveAccountHeader = class _ActiveAccountHeader extends YTNode {
     constructor(data) {
       super();
@@ -16345,7 +16408,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ActiveAccountHeader, "type", "ActiveAccountHeader");
   var ActiveAccountHeader = _ActiveAccountHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MenuTitle.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MenuTitle.js
   var _MenuTitle = class _MenuTitle extends YTNode {
     constructor(data) {
       super();
@@ -16357,7 +16420,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MenuTitle, "type", "MenuTitle");
   var MenuTitle = _MenuTitle;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistAddToOption.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistAddToOption.js
   var _PlaylistAddToOption = class _PlaylistAddToOption extends YTNode {
     constructor(data) {
       var _a2;
@@ -16382,7 +16445,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistAddToOption, "type", "PlaylistAddToOption");
   var PlaylistAddToOption = _PlaylistAddToOption;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AddToPlaylist.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AddToPlaylist.js
   var _AddToPlaylist = class _AddToPlaylist extends YTNode {
     constructor(data) {
       super();
@@ -16396,7 +16459,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddToPlaylist, "type", "AddToPlaylist");
   var AddToPlaylist = _AddToPlaylist;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Alert.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Alert.js
   var _Alert = class _Alert extends YTNode {
     constructor(data) {
       super();
@@ -16410,7 +16473,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Alert, "type", "Alert");
   var Alert = _Alert;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AlertWithButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AlertWithButton.js
   var _AlertWithButton = class _AlertWithButton extends YTNode {
     constructor(data) {
       super();
@@ -16426,7 +16489,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AlertWithButton, "type", "AlertWithButton");
   var AlertWithButton = _AlertWithButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AnimatedThumbnailOverlayView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AnimatedThumbnailOverlayView.js
   var _AnimatedThumbnailOverlayView = class _AnimatedThumbnailOverlayView extends YTNode {
     constructor(data) {
       super();
@@ -16438,7 +16501,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AnimatedThumbnailOverlayView, "type", "AnimatedThumbnailOverlayView");
   var AnimatedThumbnailOverlayView = _AnimatedThumbnailOverlayView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AttributionView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AttributionView.js
   var _AttributionView = class _AttributionView extends YTNode {
     constructor(data) {
       super();
@@ -16452,7 +16515,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AttributionView, "type", "AttributionView");
   var AttributionView = _AttributionView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AudioOnlyPlayability.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AudioOnlyPlayability.js
   var _AudioOnlyPlayability = class _AudioOnlyPlayability extends YTNode {
     constructor(data) {
       super();
@@ -16464,7 +16527,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AudioOnlyPlayability, "type", "AudioOnlyPlayability");
   var AudioOnlyPlayability = _AudioOnlyPlayability;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AutomixPreviewVideo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AutomixPreviewVideo.js
   var _AutomixPreviewVideo = class _AutomixPreviewVideo extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -16481,7 +16544,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AutomixPreviewVideo, "type", "AutomixPreviewVideo");
   var AutomixPreviewVideo = _AutomixPreviewVideo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AvatarView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AvatarView.js
   var _AvatarView = class _AvatarView extends YTNode {
     constructor(data) {
       super();
@@ -16503,7 +16566,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AvatarView, "type", "AvatarView");
   var AvatarView = _AvatarView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/CommandContext.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/CommandContext.js
   var _CommandContext = class _CommandContext {
     constructor(data) {
       __publicField(this, "on_focus");
@@ -16541,7 +16604,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_CommandContext, "CommandContext");
   var CommandContext = _CommandContext;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/RendererContext.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/RendererContext.js
   var _RendererContext = class _RendererContext {
     constructor(data) {
       __publicField(this, "command_context");
@@ -16559,7 +16622,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_RendererContext, "RendererContext");
   var RendererContext = _RendererContext;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/AvatarStackView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/AvatarStackView.js
   var _AvatarStackView = class _AvatarStackView extends YTNode {
     constructor(data) {
       super();
@@ -16585,7 +16648,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AvatarStackView, "type", "AvatarStackView");
   var AvatarStackView = _AvatarStackView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ButtonView.js
   var _ButtonView = class _ButtonView extends YTNode {
     constructor(data) {
       super();
@@ -16679,7 +16742,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ButtonView, "type", "ButtonView");
   var ButtonView = _ButtonView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BackgroundPromo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/BackgroundPromo.js
   var _BackgroundPromo = class _BackgroundPromo extends YTNode {
     constructor(data) {
       super();
@@ -16698,7 +16761,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BackgroundPromo, "type", "BackgroundPromo");
   var BackgroundPromo = _BackgroundPromo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BackstageImage.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/BackstageImage.js
   var _BackstageImage = class _BackstageImage extends YTNode {
     constructor(data) {
       super();
@@ -16712,7 +16775,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BackstageImage, "type", "BackstageImage");
   var BackstageImage = _BackstageImage;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ToggleButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ToggleButton.js
   var _ToggleButton = class _ToggleButton extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f, _g, _h, _i;
@@ -16756,7 +16819,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ToggleButton, "type", "ToggleButton");
   var ToggleButton = _ToggleButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CreatorHeart.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CreatorHeart.js
   var _CreatorHeart = class _CreatorHeart extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -16787,7 +16850,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CreatorHeart, "type", "CreatorHeart");
   var CreatorHeart = _CreatorHeart;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentActionButtons.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentActionButtons.js
   var _CommentActionButtons = class _CommentActionButtons extends YTNode {
     constructor(data) {
       super();
@@ -16805,7 +16868,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentActionButtons, "type", "CommentActionButtons");
   var CommentActionButtons = _CommentActionButtons;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ToggleButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ToggleButtonView.js
   var _ToggleButtonView = class _ToggleButtonView extends YTNode {
     constructor(data) {
       super();
@@ -16827,7 +16890,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ToggleButtonView, "type", "ToggleButtonView");
   var ToggleButtonView = _ToggleButtonView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LikeButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LikeButtonView.js
   var _LikeButtonView = class _LikeButtonView extends YTNode {
     constructor(data) {
       super();
@@ -16846,7 +16909,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LikeButtonView, "type", "LikeButtonView");
   var LikeButtonView = _LikeButtonView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DislikeButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DislikeButtonView.js
   var _DislikeButtonView = class _DislikeButtonView extends YTNode {
     constructor(data) {
       super();
@@ -16860,7 +16923,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DislikeButtonView, "type", "DislikeButtonView");
   var DislikeButtonView = _DislikeButtonView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SegmentedLikeDislikeButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SegmentedLikeDislikeButtonView.js
   var _SegmentedLikeDislikeButtonView = class _SegmentedLikeDislikeButtonView extends YTNode {
     constructor(data) {
       super();
@@ -16901,7 +16964,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SegmentedLikeDislikeButtonView, "type", "SegmentedLikeDislikeButtonView");
   var SegmentedLikeDislikeButtonView = _SegmentedLikeDislikeButtonView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuServiceItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuServiceItem.js
   var _MenuServiceItem = class _MenuServiceItem extends Button {
     constructor(data) {
       super(data);
@@ -16911,7 +16974,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MenuServiceItem, "type", "MenuServiceItem");
   var MenuServiceItem = _MenuServiceItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DownloadButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DownloadButton.js
   var _DownloadButton = class _DownloadButton extends YTNode {
     constructor(data) {
       super();
@@ -16930,7 +16993,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DownloadButton, "type", "DownloadButton");
   var DownloadButton = _DownloadButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuServiceItemDownload.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuServiceItemDownload.js
   var _MenuServiceItemDownload = class _MenuServiceItemDownload extends YTNode {
     constructor(data) {
       super();
@@ -16944,7 +17007,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MenuServiceItemDownload, "type", "MenuServiceItemDownload");
   var MenuServiceItemDownload = _MenuServiceItemDownload;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SubscribeButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SubscribeButtonView.js
   var _SubscribeButtonView_instances, parseButtonContent_fn;
   var _SubscribeButtonView = class _SubscribeButtonView extends YTNode {
     constructor(data) {
@@ -17003,7 +17066,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SubscribeButtonView, "type", "SubscribeButtonView");
   var SubscribeButtonView = _SubscribeButtonView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ListItemView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ListItemView.js
   var _ListItemView = class _ListItemView extends YTNode {
     constructor(data) {
       var _a2;
@@ -17014,43 +17077,39 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
       __publicField(this, "selection_style");
       __publicField(this, "background_color");
       __publicField(this, "leading_accessory");
+      __publicField(this, "leading_image");
       __publicField(this, "trailing_button");
       __publicField(this, "trailing_buttons");
       __publicField(this, "is_disabled");
       __publicField(this, "is_selected");
       __publicField(this, "has_divider_below");
       __publicField(this, "renderer_context");
-      if ("title" in data) {
+      if ("title" in data)
         this.title = Text2.fromAttributed(data.title);
-      }
-      if ("subtitle" in data) {
+      if ("subtitle" in data)
         this.subtitle = Text2.fromAttributed(data.subtitle);
-      }
-      if ("selectionText" in data) {
+      if ("selectionText" in data)
         this.selection_text = Text2.fromAttributed(data.selectionText);
-      }
-      if ("selectionStyle" in data) {
+      if ("selectionStyle" in data)
         this.selection_style = data.selectionStyle;
-      }
-      if ("backgroundColor" in data) {
+      if ("backgroundColor" in data)
         this.background_color = parseInt(data.backgroundColor, 16);
-      }
+      this.leading_image = Thumbnail.fromResponse(data.leadingImage);
       this.leading_accessory = parser_exports.parseItem(data.leadingAccessory, AvatarView);
       this.trailing_buttons = parser_exports.parseArray((_a2 = data.trailingButtons) == null ? void 0 : _a2.buttons, SubscribeButtonView);
       this.trailing_button = parser_exports.parseItem(data.trailingButton);
       this.is_disabled = !!data.isDisabled;
       this.is_selected = !!data.isSelected;
       this.has_divider_below = !!data.hasDividerBelow;
-      if ("rendererContext" in data) {
+      if ("rendererContext" in data)
         this.renderer_context = new RendererContext(data.rendererContext);
-      }
     }
   };
   __name(_ListItemView, "ListItemView");
   __publicField(_ListItemView, "type", "ListItemView");
   var ListItemView = _ListItemView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuFlexibleItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuFlexibleItem.js
   var _MenuFlexibleItem = class _MenuFlexibleItem extends YTNode {
     constructor(data) {
       super();
@@ -17064,7 +17123,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MenuFlexibleItem, "type", "MenuFlexibleItem");
   var MenuFlexibleItem = _MenuFlexibleItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LikeButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LikeButton.js
   var _LikeButton = class _LikeButton extends YTNode {
     constructor(data) {
       super();
@@ -17086,7 +17145,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LikeButton, "type", "LikeButton");
   var LikeButton = _LikeButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FlexibleActionsView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/FlexibleActionsView.js
   var _FlexibleActionsView = class _FlexibleActionsView extends YTNode {
     constructor(data) {
       super();
@@ -17102,7 +17161,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FlexibleActionsView, "type", "FlexibleActionsView");
   var FlexibleActionsView = _FlexibleActionsView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/Menu.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/menus/Menu.js
   var _Menu = class _Menu extends YTNode {
     constructor(data) {
       super();
@@ -17132,7 +17191,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Menu, "type", "Menu");
   var Menu = _Menu;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BackstagePost.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/BackstagePost.js
   var _BackstagePost = class _BackstagePost extends YTNode {
     constructor(data) {
       super();
@@ -17187,7 +17246,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BackstagePost, "type", "BackstagePost");
   var BackstagePost = _BackstagePost;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BackstagePostThread.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/BackstagePostThread.js
   var _BackstagePostThread = class _BackstagePostThread extends YTNode {
     constructor(data) {
       super();
@@ -17199,7 +17258,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BackstagePostThread, "type", "BackstagePostThread");
   var BackstagePostThread = _BackstagePostThread;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BadgeView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/BadgeView.js
   var _BadgeView = class _BadgeView extends YTNode {
     constructor(data) {
       super();
@@ -17214,7 +17273,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_BadgeView, "BadgeView");
   var BadgeView = _BadgeView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SubFeedOption.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SubFeedOption.js
   var _SubFeedOption = class _SubFeedOption extends YTNode {
     constructor(data) {
       super();
@@ -17230,7 +17289,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SubFeedOption, "type", "SubFeedOption");
   var SubFeedOption = _SubFeedOption;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SubFeedSelector.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SubFeedSelector.js
   var _SubFeedSelector = class _SubFeedSelector extends YTNode {
     constructor(data) {
       super();
@@ -17244,7 +17303,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SubFeedSelector, "type", "SubFeedSelector");
   var SubFeedSelector = _SubFeedSelector;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EomSettingsDisclaimer.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/EomSettingsDisclaimer.js
   var _EomSettingsDisclaimer = class _EomSettingsDisclaimer extends YTNode {
     constructor(data) {
       super();
@@ -17262,7 +17321,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EomSettingsDisclaimer, "type", "EomSettingsDisclaimer");
   var EomSettingsDisclaimer = _EomSettingsDisclaimer;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchBox.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SearchBox.js
   var _SearchBox = class _SearchBox extends YTNode {
     constructor(data) {
       super();
@@ -17280,7 +17339,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchBox, "type", "SearchBox");
   var SearchBox = _SearchBox;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BrowseFeedActions.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/BrowseFeedActions.js
   var _BrowseFeedActions = class _BrowseFeedActions extends YTNode {
     constructor(data) {
       super();
@@ -17292,7 +17351,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BrowseFeedActions, "type", "BrowseFeedActions");
   var BrowseFeedActions = _BrowseFeedActions;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/BrowserMediaSession.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/BrowserMediaSession.js
   var _BrowserMediaSession = class _BrowserMediaSession extends YTNode {
     constructor(data) {
       super();
@@ -17306,7 +17365,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BrowserMediaSession, "type", "BrowserMediaSession");
   var BrowserMediaSession = _BrowserMediaSession;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ButtonCardView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ButtonCardView.js
   var _ButtonCardView = class _ButtonCardView extends YTNode {
     constructor(data) {
       super();
@@ -17322,7 +17381,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ButtonCardView, "type", "ButtonCardView");
   var ButtonCardView = _ButtonCardView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelHeaderLinks.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelHeaderLinks.js
   var _HeaderLink = class _HeaderLink extends YTNode {
     constructor(data) {
       super();
@@ -17351,7 +17410,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelHeaderLinks, "type", "ChannelHeaderLinks");
   var ChannelHeaderLinks = _ChannelHeaderLinks;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelHeaderLinksView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelHeaderLinksView.js
   var _ChannelHeaderLinksView = class _ChannelHeaderLinksView extends YTNode {
     constructor(data) {
       super();
@@ -17369,7 +17428,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChannelHeaderLinksView, "type", "ChannelHeaderLinksView");
   var ChannelHeaderLinksView = _ChannelHeaderLinksView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ClipCreationTextInput.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ClipCreationTextInput.js
   var _ClipCreationTextInput = class _ClipCreationTextInput extends YTNode {
     constructor(data) {
       super();
@@ -17383,7 +17442,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ClipCreationTextInput, "type", "ClipCreationTextInput");
   var ClipCreationTextInput = _ClipCreationTextInput;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ClipCreationScrubber.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ClipCreationScrubber.js
   var _ClipCreationScrubber = class _ClipCreationScrubber extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f;
@@ -17410,7 +17469,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ClipCreationScrubber, "type", "ClipCreationScrubber");
   var ClipCreationScrubber = _ClipCreationScrubber;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ClipAdState.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ClipAdState.js
   var _ClipAdState = class _ClipAdState extends YTNode {
     constructor(data) {
       super();
@@ -17424,7 +17483,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ClipAdState, "type", "ClipAdState");
   var ClipAdState = _ClipAdState;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ClipCreation.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ClipCreation.js
   var _ClipCreation = class _ClipCreation extends YTNode {
     constructor(data) {
       super();
@@ -17454,7 +17513,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ClipCreation, "type", "ClipCreation");
   var ClipCreation = _ClipCreation;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ClipSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ClipSection.js
   var _ClipSection = class _ClipSection extends YTNode {
     constructor(data) {
       super();
@@ -17466,7 +17525,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ClipSection, "type", "ClipSection");
   var ClipSection = _ClipSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ContinuationItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ContinuationItem.js
   var _ContinuationItem = class _ContinuationItem extends YTNode {
     constructor(data) {
       super();
@@ -17484,7 +17543,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ContinuationItem, "type", "ContinuationItem");
   var ContinuationItem = _ContinuationItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EngagementPanelTitleHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/EngagementPanelTitleHeader.js
   var _EngagementPanelTitleHeader = class _EngagementPanelTitleHeader extends YTNode {
     constructor(data) {
       super();
@@ -17502,7 +17561,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EngagementPanelTitleHeader, "type", "EngagementPanelTitleHeader");
   var EngagementPanelTitleHeader = _EngagementPanelTitleHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MacroMarkersInfoItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MacroMarkersInfoItem.js
   var _MacroMarkersInfoItem = class _MacroMarkersInfoItem extends YTNode {
     constructor(data) {
       super();
@@ -17516,7 +17575,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MacroMarkersInfoItem, "type", "MacroMarkersInfoItem");
   var MacroMarkersInfoItem = _MacroMarkersInfoItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MacroMarkersListItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MacroMarkersListItem.js
   var _MacroMarkersListItem = class _MacroMarkersListItem extends YTNode {
     constructor(data) {
       super();
@@ -17538,7 +17597,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MacroMarkersListItem, "type", "MacroMarkersListItem");
   var MacroMarkersListItem = _MacroMarkersListItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MacroMarkersList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MacroMarkersList.js
   var _MacroMarkersList = class _MacroMarkersList extends YTNode {
     constructor(data) {
       super();
@@ -17552,7 +17611,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MacroMarkersList, "type", "MacroMarkersList");
   var MacroMarkersList = _MacroMarkersList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ContentListItemView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ContentListItemView.js
   var _ContentListItemView = class _ContentListItemView extends YTNode {
     constructor(data) {
       super();
@@ -17576,7 +17635,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ContentListItemView, "type", "ContentListItemView");
   var ContentListItemView = _ContentListItemView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/PlaylistCollaborationFormSchema.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/PlaylistCollaborationFormSchema.js
   var _PlaylistCollaborationFormSchema = class _PlaylistCollaborationFormSchema {
     constructor(data) {
       __publicField(this, "id");
@@ -17596,7 +17655,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_PlaylistCollaborationFormSchema, "PlaylistCollaborationFormSchema");
   var PlaylistCollaborationFormSchema = _PlaylistCollaborationFormSchema;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/PlaylistCollaborationViewModelPlaylistCollaboratorData.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/PlaylistCollaborationViewModelPlaylistCollaboratorData.js
   var _PlaylistCollaborationViewModelPlaylistCollaboratorData = class _PlaylistCollaborationViewModelPlaylistCollaboratorData {
     constructor(data) {
       __publicField(this, "remove_collaborator_confirmation_dialog");
@@ -17610,7 +17669,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_PlaylistCollaborationViewModelPlaylistCollaboratorData, "PlaylistCollaborationViewModelPlaylistCollaboratorData");
   var PlaylistCollaborationViewModelPlaylistCollaboratorData = _PlaylistCollaborationViewModelPlaylistCollaboratorData;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistCollaborationView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistCollaborationView.js
   var _PlaylistCollaborationView = class _PlaylistCollaborationView extends YTNode {
     constructor(data) {
       super();
@@ -17648,7 +17707,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistCollaborationView, "type", "PlaylistCollaborationView");
   var PlaylistCollaborationView = _PlaylistCollaborationView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProductList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ProductList.js
   var _ProductList = class _ProductList extends YTNode {
     constructor(data) {
       super();
@@ -17660,7 +17719,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProductList, "type", "ProductList");
   var ProductList = _ProductList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SectionList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SectionList.js
   var _SectionList = class _SectionList extends YTNode {
     constructor(data) {
       super();
@@ -17692,7 +17751,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SectionList, "type", "SectionList");
   var SectionList = _SectionList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ExpandableVideoDescriptionBody.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ExpandableVideoDescriptionBody.js
   var _ExpandableVideoDescriptionBody = class _ExpandableVideoDescriptionBody extends YTNode {
     constructor(data) {
       super();
@@ -17710,7 +17769,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ExpandableVideoDescriptionBody, "type", "ExpandableVideoDescriptionBody");
   var ExpandableVideoDescriptionBody = _ExpandableVideoDescriptionBody;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchRefinementCard.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SearchRefinementCard.js
   var _SearchRefinementCard = class _SearchRefinementCard extends YTNode {
     constructor(data) {
       super();
@@ -17726,7 +17785,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchRefinementCard, "type", "SearchRefinementCard");
   var SearchRefinementCard = _SearchRefinementCard;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GameCard.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GameCard.js
   var _GameCard = class _GameCard extends YTNode {
     constructor(data) {
       super();
@@ -17738,7 +17797,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GameCard, "type", "GameCard");
   var GameCard = _GameCard;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HorizontalList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/HorizontalList.js
   var _HorizontalList = class _HorizontalList extends YTNode {
     constructor(data) {
       super();
@@ -17756,7 +17815,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HorizontalList, "type", "HorizontalList");
   var HorizontalList = _HorizontalList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoSummaryParagraphView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoSummaryParagraphView.js
   var _VideoSummaryParagraphView = class _VideoSummaryParagraphView extends YTNode {
     constructor(data) {
       super();
@@ -17768,7 +17827,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoSummaryParagraphView, "type", "VideoSummaryParagraphView");
   var VideoSummaryParagraphView = _VideoSummaryParagraphView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoSummaryContentView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoSummaryContentView.js
   var _VideoSummaryContentView = class _VideoSummaryContentView extends YTNode {
     constructor(data) {
       super();
@@ -17788,7 +17847,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoSummaryContentView, "type", "VideoSummaryContentView");
   var VideoSummaryContentView = _VideoSummaryContentView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ExpandableMetadata.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ExpandableMetadata.js
   var _ExpandableMetadata = class _ExpandableMetadata extends YTNode {
     constructor(data) {
       super();
@@ -17813,7 +17872,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ExpandableMetadata, "type", "ExpandableMetadata");
   var ExpandableMetadata = _ExpandableMetadata;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MetadataBadge.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MetadataBadge.js
   var _MetadataBadge = class _MetadataBadge extends YTNode {
     constructor(data) {
       super();
@@ -17839,7 +17898,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MetadataBadge, "type", "MetadataBadge");
   var MetadataBadge = _MetadataBadge;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayTimeStatus.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayTimeStatus.js
   var _ThumbnailOverlayTimeStatus = class _ThumbnailOverlayTimeStatus extends YTNode {
     constructor(data) {
       super();
@@ -17853,7 +17912,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayTimeStatus, "type", "ThumbnailOverlayTimeStatus");
   var ThumbnailOverlayTimeStatus = _ThumbnailOverlayTimeStatus;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Video.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Video.js
   var _Video = class _Video extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -17944,11 +18003,13 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
       return ((_a2 = this.description_snippet) == null ? void 0 : _a2.toString()) || "";
     }
     get is_live() {
-      var _a2;
+      const overlay_time_status = this.thumbnail_overlays.firstOfType(ThumbnailOverlayTimeStatus);
+      if (!overlay_time_status)
+        return true;
       return this.badges.some((badge) => {
         if (badge.style === "BADGE_STYLE_TYPE_LIVE_NOW" || badge.label === "LIVE")
           return true;
-      }) || ((_a2 = this.thumbnail_overlays.firstOfType(ThumbnailOverlayTimeStatus)) == null ? void 0 : _a2.style) === "LIVE";
+      }) || overlay_time_status.style === "LIVE";
     }
     get is_upcoming() {
       return this.upcoming && this.upcoming > /* @__PURE__ */ new Date();
@@ -17979,7 +18040,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Video, "type", "Video");
   var Video = _Video;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoCard.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoCard.js
   var _VideoCard = class _VideoCard extends Video {
     constructor(data) {
       var _a2, _b2, _c, _d;
@@ -18001,7 +18062,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoCard, "type", "VideoCard");
   var VideoCard = _VideoCard;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ContentPreviewImageView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ContentPreviewImageView.js
   var _ContentPreviewImageView = class _ContentPreviewImageView extends YTNode {
     constructor(data) {
       super();
@@ -18015,7 +18076,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ContentPreviewImageView, "type", "ContentPreviewImageView");
   var ContentPreviewImageView = _ContentPreviewImageView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoAttributeView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoAttributeView.js
   var _VideoAttributeView = class _VideoAttributeView extends YTNode {
     constructor(data) {
       var _a2;
@@ -18052,7 +18113,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoAttributeView, "type", "VideoAttributeView");
   var VideoAttributeView = _VideoAttributeView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HorizontalCardList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/HorizontalCardList.js
   var _HorizontalCardList = class _HorizontalCardList extends YTNode {
     constructor(data) {
       super();
@@ -18070,7 +18131,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HorizontalCardList, "type", "HorizontalCardList");
   var HorizontalCardList = _HorizontalCardList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Factoid.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Factoid.js
   var _Factoid = class _Factoid extends YTNode {
     constructor(data) {
       super();
@@ -18086,7 +18147,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Factoid, "type", "Factoid");
   var Factoid = _Factoid;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/UploadTimeFactoid.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/UploadTimeFactoid.js
   var _UploadTimeFactoid = class _UploadTimeFactoid extends YTNode {
     constructor(data) {
       super();
@@ -18098,7 +18159,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UploadTimeFactoid, "type", "UploadTimeFactoid");
   var UploadTimeFactoid = _UploadTimeFactoid;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ViewCountFactoid.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ViewCountFactoid.js
   var _ViewCountFactoid = class _ViewCountFactoid extends YTNode {
     constructor(data) {
       super();
@@ -18114,7 +18175,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ViewCountFactoid, "type", "ViewCountFactoid");
   var ViewCountFactoid = _ViewCountFactoid;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HypePointsFactoid.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/HypePointsFactoid.js
   var _HypePointsFactoid = class _HypePointsFactoid extends YTNode {
     constructor(data) {
       super();
@@ -18126,7 +18187,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HypePointsFactoid, "type", "HypePointsFactoid");
   var HypePointsFactoid = _HypePointsFactoid;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionHeader.js
   var _VideoDescriptionHeader = class _VideoDescriptionHeader extends YTNode {
     constructor(data) {
       super();
@@ -18150,29 +18211,33 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoDescriptionHeader, "type", "VideoDescriptionHeader");
   var VideoDescriptionHeader = _VideoDescriptionHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionInfocardsSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionInfocardsSection.js
   var _VideoDescriptionInfocardsSection = class _VideoDescriptionInfocardsSection extends YTNode {
     constructor(data) {
       super();
       __publicField(this, "section_title");
       __publicField(this, "creator_videos_button");
       __publicField(this, "creator_about_button");
+      __publicField(this, "creator_custom_url_buttons");
       __publicField(this, "section_subtitle");
       __publicField(this, "channel_avatar");
       __publicField(this, "channel_endpoint");
+      __publicField(this, "infocards");
       this.section_title = new Text2(data.sectionTitle);
       this.creator_videos_button = parser_exports.parseItem(data.creatorVideosButton, Button);
       this.creator_about_button = parser_exports.parseItem(data.creatorAboutButton, Button);
       this.section_subtitle = new Text2(data.sectionSubtitle);
+      this.creator_custom_url_buttons = parser_exports.parseArray(data.creatorCustomUrlButtons, ButtonView);
       this.channel_avatar = Thumbnail.fromResponse(data.channelAvatar);
       this.channel_endpoint = new NavigationEndpoint(data.channelEndpoint);
+      this.infocards = parser_exports.parseArray(data.infocards);
     }
   };
   __name(_VideoDescriptionInfocardsSection, "VideoDescriptionInfocardsSection");
   __publicField(_VideoDescriptionInfocardsSection, "type", "VideoDescriptionInfocardsSection");
   var VideoDescriptionInfocardsSection = _VideoDescriptionInfocardsSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/InfoRow.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/InfoRow.js
   var _InfoRow = class _InfoRow extends YTNode {
     constructor(data) {
       super();
@@ -18196,7 +18261,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_InfoRow, "type", "InfoRow");
   var InfoRow = _InfoRow;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactVideo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CompactVideo.js
   var _CompactVideo = class _CompactVideo extends YTNode {
     constructor(data) {
       super();
@@ -18288,7 +18353,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompactVideo, "type", "CompactVideo");
   var CompactVideo = _CompactVideo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CarouselLockup.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CarouselLockup.js
   var _CarouselLockup = class _CarouselLockup extends YTNode {
     constructor(data) {
       super();
@@ -18302,7 +18367,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CarouselLockup, "type", "CarouselLockup");
   var CarouselLockup = _CarouselLockup;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionMusicSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionMusicSection.js
   var _VideoDescriptionMusicSection = class _VideoDescriptionMusicSection extends YTNode {
     constructor(data) {
       super();
@@ -18316,7 +18381,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoDescriptionMusicSection, "type", "VideoDescriptionMusicSection");
   var VideoDescriptionMusicSection = _VideoDescriptionMusicSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionTranscriptSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionTranscriptSection.js
   var _VideoDescriptionTranscriptSection = class _VideoDescriptionTranscriptSection extends YTNode {
     constructor(data) {
       super();
@@ -18332,7 +18397,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoDescriptionTranscriptSection, "type", "VideoDescriptionTranscriptSection");
   var VideoDescriptionTranscriptSection = _VideoDescriptionTranscriptSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/StructuredDescriptionPlaylistLockup.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/StructuredDescriptionPlaylistLockup.js
   var _StructuredDescriptionPlaylistLockup = class _StructuredDescriptionPlaylistLockup extends YTNode {
     constructor(data) {
       super();
@@ -18362,7 +18427,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_StructuredDescriptionPlaylistLockup, "type", "StructuredDescriptionPlaylistLockup");
   var StructuredDescriptionPlaylistLockup = _StructuredDescriptionPlaylistLockup;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionCourseSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionCourseSection.js
   var _VideoDescriptionCourseSection = class _VideoDescriptionCourseSection extends YTNode {
     constructor(data) {
       super();
@@ -18376,7 +18441,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoDescriptionCourseSection, "type", "VideoDescriptionCourseSection");
   var VideoDescriptionCourseSection = _VideoDescriptionCourseSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoAttributesSectionView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoAttributesSectionView.js
   var _VideoAttributesSectionView = class _VideoAttributesSectionView extends YTNode {
     constructor(data) {
       super();
@@ -18396,7 +18461,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoAttributesSectionView, "type", "VideoAttributesSectionView");
   var VideoAttributesSectionView = _VideoAttributesSectionView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HowThisWasMadeSectionView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/HowThisWasMadeSectionView.js
   var _HowThisWasMadeSectionView = class _HowThisWasMadeSectionView extends YTNode {
     constructor(data) {
       super();
@@ -18418,7 +18483,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HowThisWasMadeSectionView, "type", "HowThisWasMadeSectionView");
   var HowThisWasMadeSectionView = _HowThisWasMadeSectionView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ReelShelf.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ReelShelf.js
   var _ReelShelf = class _ReelShelf extends YTNode {
     constructor(data) {
       super();
@@ -18440,7 +18505,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReelShelf, "type", "ReelShelf");
   var ReelShelf = _ReelShelf;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MerchandiseShelf.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MerchandiseShelf.js
   var _MerchandiseShelf = class _MerchandiseShelf extends YTNode {
     constructor(data) {
       super();
@@ -18460,7 +18525,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MerchandiseShelf, "type", "MerchandiseShelf");
   var MerchandiseShelf = _MerchandiseShelf;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SectionHeaderView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SectionHeaderView.js
   var _SectionHeaderView = class _SectionHeaderView extends YTNode {
     constructor(data) {
       super();
@@ -18472,7 +18537,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SectionHeaderView, "type", "SectionHeaderView");
   var SectionHeaderView = _SectionHeaderView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HypeFanCreditsSectionView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/HypeFanCreditsSectionView.js
   var _HypeFanCreditsSectionView = class _HypeFanCreditsSectionView extends YTNode {
     constructor(data) {
       super();
@@ -18484,7 +18549,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HypeFanCreditsSectionView, "type", "HypeFanCreditsSectionView");
   var HypeFanCreditsSectionView = _HypeFanCreditsSectionView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionYouchatSectionView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionYouchatSectionView.js
   var _VideoDescriptionYouchatSectionView = class _VideoDescriptionYouchatSectionView extends YTNode {
     constructor(data) {
       super();
@@ -18504,684 +18569,125 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoDescriptionYouchatSectionView, "type", "VideoDescriptionYouchatSectionView");
   var VideoDescriptionYouchatSectionView = _VideoDescriptionYouchatSectionView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/StructuredDescriptionContent.js
-  var _StructuredDescriptionContent = class _StructuredDescriptionContent extends YTNode {
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ItemSectionHeader.js
+  var _ItemSectionHeader = class _ItemSectionHeader extends YTNode {
     constructor(data) {
       super();
-      __publicField(this, "items");
-      this.items = parser_exports.parseArray(data.items, [
-        VideoDescriptionHeader,
-        ExpandableVideoDescriptionBody,
-        VideoDescriptionMusicSection,
-        VideoDescriptionInfocardsSection,
-        VideoDescriptionCourseSection,
-        VideoDescriptionTranscriptSection,
-        VideoDescriptionYouchatSectionView,
-        HorizontalCardList,
-        ReelShelf,
-        VideoAttributesSectionView,
-        HowThisWasMadeSectionView,
-        ExpandableMetadata,
-        MerchandiseShelf,
-        HypeFanCreditsSectionView
-      ]);
+      __publicField(this, "title");
+      this.title = new Text2(data.title);
     }
   };
-  __name(_StructuredDescriptionContent, "StructuredDescriptionContent");
-  __publicField(_StructuredDescriptionContent, "type", "StructuredDescriptionContent");
-  var StructuredDescriptionContent = _StructuredDescriptionContent;
+  __name(_ItemSectionHeader, "ItemSectionHeader");
+  __publicField(_ItemSectionHeader, "type", "ItemSectionHeader");
+  var ItemSectionHeader = _ItemSectionHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EngagementPanelSectionList.js
-  var _EngagementPanelSectionList = class _EngagementPanelSectionList extends YTNode {
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ItemSectionTab.js
+  var _ItemSectionTab = class _ItemSectionTab extends YTNode {
     constructor(data) {
       super();
-      __publicField(this, "header");
-      __publicField(this, "content");
-      __publicField(this, "target_id");
-      __publicField(this, "panel_identifier");
-      __publicField(this, "identifier");
-      __publicField(this, "visibility");
-      this.header = parser_exports.parseItem(data.header, EngagementPanelTitleHeader);
-      this.content = parser_exports.parseItem(data.content, [
-        PlaylistCollaborationView,
-        VideoAttributeView,
-        SectionList,
-        ContinuationItem,
-        ClipSection,
-        StructuredDescriptionContent,
-        MacroMarkersList,
-        ProductList
-      ]);
-      this.panel_identifier = data.panelIdentifier;
-      if ("identifier" in data) {
-        this.identifier = {
-          surface: data.identifier.surface,
-          tag: data.identifier.tag
-        };
-      }
-      this.target_id = data.targetId;
-      this.visibility = data.visibility;
+      __publicField(this, "title");
+      __publicField(this, "selected");
+      __publicField(this, "endpoint");
+      this.title = new Text2(data.title);
+      this.selected = !!data.selected;
+      this.endpoint = new NavigationEndpoint(data.endpoint);
     }
   };
-  __name(_EngagementPanelSectionList, "EngagementPanelSectionList");
-  __publicField(_EngagementPanelSectionList, "type", "EngagementPanelSectionList");
-  var EngagementPanelSectionList = _EngagementPanelSectionList;
+  __name(_ItemSectionTab, "ItemSectionTab");
+  __publicField(_ItemSectionTab, "type", "Tab");
+  var ItemSectionTab = _ItemSectionTab;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelTagline.js
-  var _ChannelTagline = class _ChannelTagline extends YTNode {
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ItemSectionTabbedHeader.js
+  var _ItemSectionTabbedHeader = class _ItemSectionTabbedHeader extends YTNode {
     constructor(data) {
       super();
-      __publicField(this, "content");
-      __publicField(this, "max_lines");
-      __publicField(this, "more_endpoint");
-      __publicField(this, "more_icon_type");
-      __publicField(this, "more_label");
-      __publicField(this, "target_id");
-      this.content = data.content;
-      this.max_lines = data.maxLines;
-      this.more_endpoint = data.moreEndpoint.showEngagementPanelEndpoint ? {
-        show_engagement_panel_endpoint: {
-          engagement_panel: parser_exports.parseItem(data.moreEndpoint.showEngagementPanelEndpoint.engagementPanel, EngagementPanelSectionList),
-          engagement_panel_popup_type: data.moreEndpoint.showEngagementPanelEndpoint.engagementPanelPresentationConfigs.engagementPanelPopupPresentationConfig.popupType,
-          identifier: {
-            surface: data.moreEndpoint.showEngagementPanelEndpoint.identifier.surface,
-            tag: data.moreEndpoint.showEngagementPanelEndpoint.identifier.tag
-          }
-        }
-      } : new NavigationEndpoint(data.moreEndpoint);
-      this.more_icon_type = data.moreIcon.iconType;
-      this.more_label = data.moreLabel;
-      this.target_id = data.targetId;
-    }
-  };
-  __name(_ChannelTagline, "ChannelTagline");
-  __publicField(_ChannelTagline, "type", "ChannelTagline");
-  var ChannelTagline = _ChannelTagline;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SubscriptionNotificationToggleButton.js
-  var _SubscriptionNotificationToggleButton = class _SubscriptionNotificationToggleButton extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "states");
-      __publicField(this, "current_state_id");
-      __publicField(this, "target_id");
-      this.states = data.states.map((data2) => ({
-        id: data2.stateId,
-        next_id: data2.nextStateId,
-        state: parser_exports.parse(data2.state)
-      }));
-      this.current_state_id = data.currentStateId;
-      this.target_id = data.targetId;
-    }
-  };
-  __name(_SubscriptionNotificationToggleButton, "SubscriptionNotificationToggleButton");
-  __publicField(_SubscriptionNotificationToggleButton, "type", "SubscriptionNotificationToggleButton");
-  var SubscriptionNotificationToggleButton = _SubscriptionNotificationToggleButton;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SubscribeButton.js
-  var _SubscribeButton = class _SubscribeButton extends YTNode {
-    constructor(data) {
-      var _a2, _b2;
-      super();
-      __publicField(this, "button_text");
-      __publicField(this, "subscribed");
-      __publicField(this, "enabled");
-      __publicField(this, "item_type");
-      __publicField(this, "channel_id");
-      __publicField(this, "show_preferences");
-      __publicField(this, "subscribed_text");
-      __publicField(this, "unsubscribed_text");
-      __publicField(this, "unsubscribe_text");
-      __publicField(this, "notification_preference_button");
-      __publicField(this, "service_endpoints");
-      __publicField(this, "on_subscribe_endpoints");
-      __publicField(this, "on_unsubscribe_endpoints");
-      __publicField(this, "subscribed_entity_key");
-      __publicField(this, "target_id");
-      __publicField(this, "subscribe_accessibility_label");
-      __publicField(this, "unsubscribe_accessibility_label");
-      this.button_text = new Text2(data.buttonText);
-      this.subscribed = data.subscribed;
-      this.enabled = data.enabled;
-      this.item_type = data.type;
-      this.channel_id = data.channelId;
-      this.show_preferences = data.showPreferences;
-      if (Reflect.has(data, "subscribedButtonText"))
-        this.subscribed_text = new Text2(data.subscribedButtonText);
-      if (Reflect.has(data, "unsubscribedButtonText"))
-        this.unsubscribed_text = new Text2(data.unsubscribedButtonText);
-      if (Reflect.has(data, "unsubscribeButtonText"))
-        this.unsubscribe_text = new Text2(data.unsubscribeButtonText);
-      this.notification_preference_button = parser_exports.parseItem(data.notificationPreferenceButton, SubscriptionNotificationToggleButton);
-      if (Reflect.has(data, "serviceEndpoints"))
-        this.service_endpoints = data.serviceEndpoints.map((endpoint) => new NavigationEndpoint(endpoint));
-      if (Reflect.has(data, "onSubscribeEndpoints"))
-        this.on_subscribe_endpoints = data.onSubscribeEndpoints.map((endpoint) => new NavigationEndpoint(endpoint));
-      if (Reflect.has(data, "onUnsubscribeEndpoints"))
-        this.on_unsubscribe_endpoints = data.onUnsubscribeEndpoints.map((endpoint) => new NavigationEndpoint(endpoint));
-      if (Reflect.has(data, "subscribedEntityKey"))
-        this.subscribed_entity_key = data.subscribedEntityKey;
-      if (Reflect.has(data, "targetId"))
-        this.target_id = data.targetId;
-      if (Reflect.has(data, "subscribeAccessibility"))
-        this.subscribe_accessibility_label = (_a2 = data.subscribeAccessibility.accessibilityData) == null ? void 0 : _a2.label;
-      if (Reflect.has(data, "unsubscribeAccessibility"))
-        this.unsubscribe_accessibility_label = (_b2 = data.unsubscribeAccessibility.accessibilityData) == null ? void 0 : _b2.label;
-    }
-  };
-  __name(_SubscribeButton, "SubscribeButton");
-  __publicField(_SubscribeButton, "type", "SubscribeButton");
-  var SubscribeButton = _SubscribeButton;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/C4TabbedHeader.js
-  var _C4TabbedHeader = class _C4TabbedHeader extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "author");
-      __publicField(this, "banner");
-      __publicField(this, "tv_banner");
-      __publicField(this, "mobile_banner");
-      __publicField(this, "subscribers");
-      __publicField(this, "videos_count");
-      __publicField(this, "sponsor_button");
-      __publicField(this, "subscribe_button");
-      __publicField(this, "header_links");
-      __publicField(this, "channel_handle");
-      __publicField(this, "channel_id");
-      __publicField(this, "tagline");
-      this.author = new Author({
-        simpleText: data.title,
-        navigationEndpoint: data.navigationEndpoint
-      }, data.badges, data.avatar);
-      if (Reflect.has(data, "banner")) {
-        this.banner = Thumbnail.fromResponse(data.banner);
-      }
-      if (Reflect.has(data, "tv_banner")) {
-        this.tv_banner = Thumbnail.fromResponse(data.tvBanner);
-      }
-      if (Reflect.has(data, "mobile_banner")) {
-        this.mobile_banner = Thumbnail.fromResponse(data.mobileBanner);
-      }
-      if (Reflect.has(data, "subscriberCountText")) {
-        this.subscribers = new Text2(data.subscriberCountText);
-      }
-      if (Reflect.has(data, "videosCountText")) {
-        this.videos_count = new Text2(data.videosCountText);
-      }
-      if (Reflect.has(data, "sponsorButton")) {
-        this.sponsor_button = parser_exports.parseItem(data.sponsorButton, Button);
-      }
-      if (Reflect.has(data, "subscribeButton")) {
-        this.subscribe_button = parser_exports.parseItem(data.subscribeButton, [SubscribeButton, Button]);
-      }
-      if (Reflect.has(data, "headerLinks")) {
-        this.header_links = parser_exports.parseItem(data.headerLinks, [ChannelHeaderLinks, ChannelHeaderLinksView]);
-      }
-      if (Reflect.has(data, "channelHandleText")) {
-        this.channel_handle = new Text2(data.channelHandleText);
-      }
-      if (Reflect.has(data, "channelId")) {
-        this.channel_id = data.channelId;
-      }
-      if (Reflect.has(data, "tagline")) {
-        this.tagline = parser_exports.parseItem(data.tagline, ChannelTagline);
+      __publicField(this, "title");
+      __publicField(this, "tabs");
+      __publicField(this, "end_items");
+      this.title = new Text2(data.title);
+      this.tabs = parser_exports.parseArray(data.tabs, ItemSectionTab);
+      if (Reflect.has(data, "endItems")) {
+        this.end_items = parser_exports.parseArray(data.endItems);
       }
     }
   };
-  __name(_C4TabbedHeader, "C4TabbedHeader");
-  __publicField(_C4TabbedHeader, "type", "C4TabbedHeader");
-  var C4TabbedHeader = _C4TabbedHeader;
+  __name(_ItemSectionTabbedHeader, "ItemSectionTabbedHeader");
+  __publicField(_ItemSectionTabbedHeader, "type", "ItemSectionTabbedHeader");
+  var ItemSectionTabbedHeader = _ItemSectionTabbedHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CallToActionButton.js
-  var _CallToActionButton = class _CallToActionButton extends YTNode {
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentsHeader.js
+  var _CommentsHeader = class _CommentsHeader extends YTNode {
     constructor(data) {
       super();
-      __publicField(this, "label");
-      __publicField(this, "icon_type");
-      __publicField(this, "style");
-      this.label = new Text2(data.label);
-      this.icon_type = data.icon.iconType;
-      this.style = data.style;
-    }
-  };
-  __name(_CallToActionButton, "CallToActionButton");
-  __publicField(_CallToActionButton, "type", "CallToActionButton");
-  var CallToActionButton = _CallToActionButton;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Card.js
-  var _Card = class _Card extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "teaser");
-      __publicField(this, "content");
-      __publicField(this, "card_id");
-      __publicField(this, "feature");
-      __publicField(this, "cue_ranges");
-      this.teaser = parser_exports.parseItem(data.teaser);
-      this.content = parser_exports.parseItem(data.content);
-      if (Reflect.has(data, "cardId")) {
-        this.card_id = data.cardId;
+      __publicField(this, "title");
+      __publicField(this, "count");
+      __publicField(this, "comments_count");
+      __publicField(this, "create_renderer");
+      __publicField(this, "sort_menu");
+      __publicField(this, "custom_emojis");
+      this.title = new Text2(data.titleText);
+      this.count = new Text2(data.countText);
+      this.comments_count = new Text2(data.commentsCount);
+      this.create_renderer = parser_exports.parseItem(data.createRenderer);
+      this.sort_menu = parser_exports.parseItem(data.sortMenu, SortFilterSubMenu);
+      if (Reflect.has(data, "customEmojis")) {
+        this.custom_emojis = data.customEmojis.map((emoji) => ({
+          emoji_id: emoji.emojiId,
+          shortcuts: emoji.shortcuts,
+          search_terms: emoji.searchTerms,
+          image: Thumbnail.fromResponse(emoji.image),
+          is_custom_emoji: emoji.isCustomEmoji
+        }));
       }
-      if (Reflect.has(data, "feature")) {
-        this.feature = data.feature;
-      }
-      this.cue_ranges = data.cueRanges.map((cr) => ({
-        start_card_active_ms: cr.startCardActiveMs,
-        end_card_active_ms: cr.endCardActiveMs,
-        teaser_duration_ms: cr.teaserDurationMs,
-        icon_after_teaser_ms: cr.iconAfterTeaserMs
-      }));
     }
   };
-  __name(_Card, "Card");
-  __publicField(_Card, "type", "Card");
-  var Card = _Card;
+  __name(_CommentsHeader, "CommentsHeader");
+  __publicField(_CommentsHeader, "type", "CommentsHeader");
+  var CommentsHeader = _CommentsHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CardCollection.js
-  var _CardCollection = class _CardCollection extends YTNode {
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SortFilterHeader.js
+  var _SortFilterHeader = class _SortFilterHeader extends YTNode {
     constructor(data) {
       super();
-      __publicField(this, "cards");
-      __publicField(this, "header");
-      __publicField(this, "allow_teaser_dismiss");
-      this.cards = parser_exports.parseArray(data.cards);
-      this.header = new Text2(data.headerText);
-      this.allow_teaser_dismiss = data.allowTeaserDismiss;
+      __publicField(this, "filter_menu");
+      this.filter_menu = parser_exports.parseItem(data.filterMenu, nodes_exports.SortFilterSubMenu);
     }
   };
-  __name(_CardCollection, "CardCollection");
-  __publicField(_CardCollection, "type", "CardCollection");
-  var CardCollection = _CardCollection;
+  __name(_SortFilterHeader, "SortFilterHeader");
+  __publicField(_SortFilterHeader, "type", "SortFilterHeader");
+  var SortFilterHeader = _SortFilterHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CarouselHeader.js
-  var _CarouselHeader = class _CarouselHeader extends YTNode {
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChipCloudChip.js
+  var _ChipCloudChip = class _ChipCloudChip extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "is_selected");
+      __publicField(this, "endpoint");
+      __publicField(this, "text");
+      this.is_selected = data.isSelected;
+      if (Reflect.has(data, "navigationEndpoint")) {
+        this.endpoint = new NavigationEndpoint(data.navigationEndpoint);
+      }
+      this.text = new Text2(data.text).toString();
+    }
+  };
+  __name(_ChipCloudChip, "ChipCloudChip");
+  __publicField(_ChipCloudChip, "type", "ChipCloudChip");
+  var ChipCloudChip = _ChipCloudChip;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/FeedFilterChipBar.js
+  var _FeedFilterChipBar = class _FeedFilterChipBar extends YTNode {
     constructor(data) {
       super();
       __publicField(this, "contents");
-      this.contents = parser_exports.parseArray(data.contents);
+      this.contents = parser_exports.parseArray(data.contents, ChipCloudChip);
     }
   };
-  __name(_CarouselHeader, "CarouselHeader");
-  __publicField(_CarouselHeader, "type", "CarouselHeader");
-  var CarouselHeader = _CarouselHeader;
+  __name(_FeedFilterChipBar, "FeedFilterChipBar");
+  __publicField(_FeedFilterChipBar, "type", "FeedFilterChipBar");
+  var FeedFilterChipBar = _FeedFilterChipBar;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CarouselItem.js
-  var _CarouselItem = class _CarouselItem extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "items");
-      __publicField(this, "background_color");
-      __publicField(this, "layout_style");
-      __publicField(this, "pagination_thumbnails");
-      __publicField(this, "paginator_alignment");
-      this.items = parser_exports.parseArray(data.carouselItems);
-      this.background_color = data.backgroundColor;
-      this.layout_style = data.layoutStyle;
-      this.pagination_thumbnails = Thumbnail.fromResponse(data.paginationThumbnails);
-      this.paginator_alignment = data.paginatorAlignment;
-    }
-    // XXX: For consistency.
-    get contents() {
-      return this.items;
-    }
-  };
-  __name(_CarouselItem, "CarouselItem");
-  __publicField(_CarouselItem, "type", "CarouselItem");
-  var CarouselItem = _CarouselItem;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TextCarouselItemView.js
-  var _TextCarouselItemView = class _TextCarouselItemView extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "icon_name");
-      __publicField(this, "text");
-      __publicField(this, "on_tap_endpoint");
-      __publicField(this, "button");
-      this.icon_name = data.iconName;
-      this.text = Text2.fromAttributed(data.text);
-      this.on_tap_endpoint = new NavigationEndpoint(data.onTap);
-      this.button = parser_exports.parseItem(data.button, ButtonView);
-    }
-  };
-  __name(_TextCarouselItemView, "TextCarouselItemView");
-  __publicField(_TextCarouselItemView, "type", "TextCarouselItemView");
-  var TextCarouselItemView = _TextCarouselItemView;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CarouselItemView.js
-  var _CarouselItemView = class _CarouselItemView extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "item_type");
-      __publicField(this, "carousel_item");
-      this.item_type = data.itemType;
-      this.carousel_item = parser_exports.parseItem(data.carouselItem, TextCarouselItemView);
-    }
-  };
-  __name(_CarouselItemView, "CarouselItemView");
-  __publicField(_CarouselItemView, "type", "CarouselItemView");
-  var CarouselItemView = _CarouselItemView;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CarouselTitleView.js
-  var _CarouselTitleView = class _CarouselTitleView extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "title");
-      __publicField(this, "previous_button");
-      __publicField(this, "next_button");
-      this.title = data.title;
-      this.previous_button = parser_exports.parseItem(data.previousButton, ButtonView);
-      this.next_button = parser_exports.parseItem(data.nextButton, ButtonView);
-    }
-  };
-  __name(_CarouselTitleView, "CarouselTitleView");
-  __publicField(_CarouselTitleView, "type", "CarouselTitleView");
-  var CarouselTitleView = _CarouselTitleView;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Channel.js
-  var _Channel = class _Channel extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "id");
-      __publicField(this, "author");
-      __publicField(this, "subscriber_count");
-      __publicField(this, "video_count");
-      __publicField(this, "long_byline");
-      __publicField(this, "short_byline");
-      __publicField(this, "endpoint");
-      __publicField(this, "subscribe_button");
-      __publicField(this, "description_snippet");
-      this.id = data.channelId;
-      this.author = new Author({
-        ...data.title,
-        navigationEndpoint: data.navigationEndpoint
-      }, data.ownerBadges, data.thumbnail);
-      this.subscriber_count = new Text2(data.subscriberCountText);
-      this.video_count = new Text2(data.videoCountText);
-      this.long_byline = new Text2(data.longBylineText);
-      this.short_byline = new Text2(data.shortBylineText);
-      this.endpoint = new NavigationEndpoint(data.navigationEndpoint);
-      this.subscribe_button = parser_exports.parseItem(data.subscribeButton, [SubscribeButton, Button]);
-      this.description_snippet = new Text2(data.descriptionSnippet);
-    }
-  };
-  __name(_Channel, "Channel");
-  __publicField(_Channel, "type", "Channel");
-  var Channel = _Channel;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelAboutFullMetadata.js
-  var _ChannelAboutFullMetadata = class _ChannelAboutFullMetadata extends YTNode {
-    constructor(data) {
-      var _a2, _b2;
-      super();
-      __publicField(this, "id");
-      __publicField(this, "name");
-      __publicField(this, "avatar");
-      __publicField(this, "canonical_channel_url");
-      __publicField(this, "primary_links");
-      __publicField(this, "view_count");
-      __publicField(this, "joined_date");
-      __publicField(this, "description");
-      __publicField(this, "email_reveal");
-      __publicField(this, "can_reveal_email");
-      __publicField(this, "country");
-      __publicField(this, "buttons");
-      this.id = data.channelId;
-      this.name = new Text2(data.title);
-      this.avatar = Thumbnail.fromResponse(data.avatar);
-      this.canonical_channel_url = data.canonicalChannelUrl;
-      this.primary_links = (_b2 = (_a2 = data.primaryLinks) == null ? void 0 : _a2.map((link) => ({
-        endpoint: new NavigationEndpoint(link.navigationEndpoint),
-        icon: Thumbnail.fromResponse(link.icon),
-        title: new Text2(link.title)
-      }))) != null ? _b2 : [];
-      this.view_count = new Text2(data.viewCountText);
-      this.joined_date = new Text2(data.joinedDateText);
-      this.description = new Text2(data.description);
-      this.email_reveal = new NavigationEndpoint(data.onBusinessEmailRevealClickCommand);
-      this.can_reveal_email = !data.signInForBusinessEmail;
-      this.country = new Text2(data.country);
-      this.buttons = parser_exports.parseArray(data.actionButtons, Button);
-    }
-  };
-  __name(_ChannelAboutFullMetadata, "ChannelAboutFullMetadata");
-  __publicField(_ChannelAboutFullMetadata, "type", "ChannelAboutFullMetadata");
-  var ChannelAboutFullMetadata = _ChannelAboutFullMetadata;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelAgeGate.js
-  var _ChannelAgeGate = class _ChannelAgeGate extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "channel_title");
-      __publicField(this, "avatar");
-      __publicField(this, "header");
-      __publicField(this, "main_text");
-      __publicField(this, "sign_in_button");
-      __publicField(this, "secondary_text");
-      this.channel_title = data.channelTitle;
-      this.avatar = Thumbnail.fromResponse(data.avatar);
-      this.header = new Text2(data.header);
-      this.main_text = new Text2(data.mainText);
-      this.sign_in_button = parser_exports.parseItem(data.signInButton, Button);
-      this.secondary_text = new Text2(data.secondaryText);
-    }
-  };
-  __name(_ChannelAgeGate, "ChannelAgeGate");
-  __publicField(_ChannelAgeGate, "type", "ChannelAgeGate");
-  var ChannelAgeGate = _ChannelAgeGate;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelFeaturedContent.js
-  var _ChannelFeaturedContent = class _ChannelFeaturedContent extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "title");
-      __publicField(this, "items");
-      this.title = new Text2(data.title);
-      this.items = parser_exports.parseArray(data.items);
-    }
-  };
-  __name(_ChannelFeaturedContent, "ChannelFeaturedContent");
-  __publicField(_ChannelFeaturedContent, "type", "ChannelFeaturedContent");
-  var ChannelFeaturedContent = _ChannelFeaturedContent;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelMetadata.js
-  var _ChannelMetadata = class _ChannelMetadata extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "title");
-      __publicField(this, "description");
-      __publicField(this, "url");
-      __publicField(this, "rss_url");
-      __publicField(this, "vanity_channel_url");
-      __publicField(this, "external_id");
-      __publicField(this, "is_family_safe");
-      __publicField(this, "keywords");
-      __publicField(this, "avatar");
-      __publicField(this, "music_artist_name");
-      __publicField(this, "available_countries");
-      __publicField(this, "android_deep_link");
-      __publicField(this, "android_appindexing_link");
-      __publicField(this, "ios_appindexing_link");
-      this.title = data.title;
-      this.description = data.description;
-      this.url = data.channelUrl;
-      this.rss_url = data.rssUrl;
-      this.vanity_channel_url = data.vanityChannelUrl;
-      this.external_id = data.externalId;
-      this.is_family_safe = data.isFamilySafe;
-      this.keywords = data.keywords;
-      this.avatar = Thumbnail.fromResponse(data.avatar);
-      this.music_artist_name = typeof data.musicArtistName === "string" && data.musicArtistName.length > 0 ? data.musicArtistName : void 0;
-      this.available_countries = data.availableCountryCodes;
-      this.android_deep_link = data.androidDeepLink;
-      this.android_appindexing_link = data.androidAppindexingLink;
-      this.ios_appindexing_link = data.iosAppindexingLink;
-    }
-  };
-  __name(_ChannelMetadata, "ChannelMetadata");
-  __publicField(_ChannelMetadata, "type", "ChannelMetadata");
-  var ChannelMetadata = _ChannelMetadata;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelMobileHeader.js
-  var _ChannelMobileHeader = class _ChannelMobileHeader extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "title");
-      this.title = new Text2(data.title);
-    }
-  };
-  __name(_ChannelMobileHeader, "ChannelMobileHeader");
-  __publicField(_ChannelMobileHeader, "type", "ChannelMobileHeader");
-  var ChannelMobileHeader = _ChannelMobileHeader;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelOptions.js
-  var _ChannelOptions = class _ChannelOptions extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "avatar");
-      __publicField(this, "endpoint");
-      __publicField(this, "name");
-      __publicField(this, "links");
-      this.avatar = Thumbnail.fromResponse(data.avatar);
-      this.endpoint = new NavigationEndpoint(data.avatarEndpoint);
-      this.name = data.name;
-      this.links = data.links.map((link) => new Text2(link));
-    }
-  };
-  __name(_ChannelOptions, "ChannelOptions");
-  __publicField(_ChannelOptions, "type", "ChannelOptions");
-  var ChannelOptions = _ChannelOptions;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelOwnerEmptyState.js
-  var _ChannelOwnerEmptyState = class _ChannelOwnerEmptyState extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "illustration");
-      __publicField(this, "description");
-      this.illustration = Thumbnail.fromResponse(data.illustration);
-      this.description = new Text2(data.description);
-    }
-  };
-  __name(_ChannelOwnerEmptyState, "ChannelOwnerEmptyState");
-  __publicField(_ChannelOwnerEmptyState, "type", "ChannelOwnerEmptyState");
-  var ChannelOwnerEmptyState = _ChannelOwnerEmptyState;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelSubMenu.js
-  var _ChannelSubMenu = class _ChannelSubMenu extends YTNode {
-    constructor(data) {
-      var _a2, _b2, _c;
-      super();
-      __publicField(this, "content_type_sub_menu_items");
-      __publicField(this, "sort_setting");
-      this.content_type_sub_menu_items = ((_c = (_b2 = (_a2 = data.sortSetting) == null ? void 0 : _a2.sortFilterSubMenuRenderer) == null ? void 0 : _b2.subMenuItems) == null ? void 0 : _c.map((item) => ({
-        endpoint: new NavigationEndpoint(item.navigationEndpoint || item.endpoint),
-        selected: item.selected,
-        title: item.title
-      }))) || [];
-      this.sort_setting = parser_exports.parseItem(data.sortSetting);
-    }
-  };
-  __name(_ChannelSubMenu, "ChannelSubMenu");
-  __publicField(_ChannelSubMenu, "type", "ChannelSubMenu");
-  var ChannelSubMenu = _ChannelSubMenu;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelSwitcherHeader.js
-  var _ChannelSwitcherHeader = class _ChannelSwitcherHeader extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "title");
-      __publicField(this, "button");
-      this.title = new Text2(data.title).toString();
-      if (Reflect.has(data, "button")) {
-        this.button = parser_exports.parseItem(data.button, Button);
-      }
-    }
-  };
-  __name(_ChannelSwitcherHeader, "ChannelSwitcherHeader");
-  __publicField(_ChannelSwitcherHeader, "type", "ChannelSwitcherHeader");
-  var ChannelSwitcherHeader = _ChannelSwitcherHeader;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelThumbnailWithLink.js
-  var _ChannelThumbnailWithLink = class _ChannelThumbnailWithLink extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "thumbnails");
-      __publicField(this, "endpoint");
-      __publicField(this, "accessibility");
-      this.thumbnails = Thumbnail.fromResponse(data.thumbnail);
-      this.endpoint = new NavigationEndpoint(data.navigationEndpoint);
-      if ("accessibility" in data && "accessibilityData" in data.accessibility) {
-        this.accessibility = {
-          accessibility_data: new AccessibilityData(data.accessibility.accessibilityData)
-        };
-      }
-    }
-    get label() {
-      var _a2, _b2;
-      return (_b2 = (_a2 = this.accessibility) == null ? void 0 : _a2.accessibility_data) == null ? void 0 : _b2.label;
-    }
-  };
-  __name(_ChannelThumbnailWithLink, "ChannelThumbnailWithLink");
-  __publicField(_ChannelThumbnailWithLink, "type", "ChannelThumbnailWithLink");
-  var ChannelThumbnailWithLink = _ChannelThumbnailWithLink;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChannelVideoPlayer.js
-  var _ChannelVideoPlayer = class _ChannelVideoPlayer extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "id");
-      __publicField(this, "title");
-      __publicField(this, "description");
-      __publicField(this, "view_count");
-      __publicField(this, "published_time");
-      this.id = data.videoId;
-      this.title = new Text2(data.title);
-      this.description = new Text2(data.description);
-      this.view_count = new Text2(data.viewCountText);
-      this.published_time = new Text2(data.publishedTimeText);
-    }
-  };
-  __name(_ChannelVideoPlayer, "ChannelVideoPlayer");
-  __publicField(_ChannelVideoPlayer, "type", "ChannelVideoPlayer");
-  var ChannelVideoPlayer = _ChannelVideoPlayer;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Chapter.js
-  var _Chapter = class _Chapter extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "title");
-      __publicField(this, "time_range_start_millis");
-      __publicField(this, "thumbnail");
-      this.title = new Text2(data.title);
-      this.time_range_start_millis = data.timeRangeStartMillis;
-      this.thumbnail = Thumbnail.fromResponse(data.thumbnail);
-    }
-  };
-  __name(_Chapter, "Chapter");
-  __publicField(_Chapter, "type", "Chapter");
-  var Chapter = _Chapter;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChildVideo.js
-  var _ChildVideo = class _ChildVideo extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "id");
-      __publicField(this, "title");
-      __publicField(this, "duration");
-      __publicField(this, "endpoint");
-      this.id = data.videoId;
-      this.title = new Text2(data.title);
-      this.duration = {
-        text: data.lengthText.simpleText,
-        seconds: timeToSeconds(data.lengthText.simpleText)
-      };
-      this.endpoint = new NavigationEndpoint(data.navigationEndpoint);
-    }
-  };
-  __name(_ChildVideo, "ChildVideo");
-  __publicField(_ChildVideo, "type", "ChildVideo");
-  var ChildVideo = _ChildVideo;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChipView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChipView.js
   var _ChipView = class _ChipView extends YTNode {
     constructor(data) {
       super();
@@ -19240,7 +18746,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChipView, "type", "ChipView");
   var ChipView = _ChipView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChipBarView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChipBarView.js
   var _ChipBarView = class _ChipBarView extends YTNode {
     constructor(data) {
       super();
@@ -19258,25 +18764,779 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChipBarView, "type", "ChipBarView");
   var ChipBarView = _ChipBarView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChipCloudChip.js
-  var _ChipCloudChip = class _ChipCloudChip extends YTNode {
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/RelatedChipCloud.js
+  var _RelatedChipCloud = class _RelatedChipCloud extends YTNode {
     constructor(data) {
       super();
-      __publicField(this, "is_selected");
-      __publicField(this, "endpoint");
-      __publicField(this, "text");
-      this.is_selected = data.isSelected;
-      if (Reflect.has(data, "navigationEndpoint")) {
-        this.endpoint = new NavigationEndpoint(data.navigationEndpoint);
-      }
-      this.text = new Text2(data.text).toString();
+      __publicField(this, "content");
+      __publicField(this, "show_prominent_chips");
+      this.content = parser_exports.parseItem(data.content);
+      this.show_prominent_chips = Boolean(data.showProminentChips);
     }
   };
-  __name(_ChipCloudChip, "ChipCloudChip");
-  __publicField(_ChipCloudChip, "type", "ChipCloudChip");
-  var ChipCloudChip = _ChipCloudChip;
+  __name(_RelatedChipCloud, "RelatedChipCloud");
+  __publicField(_RelatedChipCloud, "type", "RelatedChipCloud");
+  var RelatedChipCloud = _RelatedChipCloud;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ChipCloud.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ItemSection.js
+  var _ItemSection = class _ItemSection extends YTNode {
+    constructor(data) {
+      var _a2, _b2, _c;
+      super();
+      __publicField(this, "header");
+      __publicField(this, "contents");
+      __publicField(this, "target_id");
+      __publicField(this, "continuation");
+      this.header = parser_exports.parseItem(data.header, [CommentsHeader, ItemSectionHeader, ItemSectionTabbedHeader, SortFilterHeader, FeedFilterChipBar, ChipBarView, RelatedChipCloud]);
+      this.contents = parser_exports.parseArray(data.contents);
+      if (data.targetId || data.sectionIdentifier) {
+        this.target_id = data.targetId || data.sectionIdentifier;
+      }
+      if (data.continuations) {
+        this.continuation = (_c = (_b2 = (_a2 = data.continuations) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.nextContinuationData) == null ? void 0 : _c.continuation;
+      }
+    }
+  };
+  __name(_ItemSection, "ItemSection");
+  __publicField(_ItemSection, "type", "ItemSection");
+  var ItemSection = _ItemSection;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoTitleHeaderView.js
+  var _VideoTitleHeaderView = class _VideoTitleHeaderView extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "video_title");
+      __publicField(this, "header_button");
+      __publicField(this, "renderer_context");
+      this.video_title = Text2.fromAttributed(data.videoTitle);
+      this.header_button = parser_exports.parseItem(data.headerButton, ButtonView);
+      if ("rendererContext" in data) {
+        this.renderer_context = new RendererContext(data.rendererContext);
+      }
+    }
+  };
+  __name(_VideoTitleHeaderView, "VideoTitleHeaderView");
+  __publicField(_VideoTitleHeaderView, "type", "VideoTitleHeaderView");
+  var VideoTitleHeaderView = _VideoTitleHeaderView;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoDescriptionGamingSection.js
+  var _VideoDescriptionGamingSection = class _VideoDescriptionGamingSection extends YTNode {
+    // @TODO: Find out what type this is.
+    constructor(data) {
+      super();
+      __publicField(this, "media_lockups");
+      __publicField(this, "section_title");
+      __publicField(this, "topic_link");
+      this.media_lockups = parser_exports.parseArray(data.mediaLockups);
+      this.section_title = new Text2(data.sectionTitle);
+      this.topic_link = parser_exports.parseItem(data.topicLink);
+    }
+  };
+  __name(_VideoDescriptionGamingSection, "VideoDescriptionGamingSection");
+  __publicField(_VideoDescriptionGamingSection, "type", "VideoDescriptionGamingSection");
+  var VideoDescriptionGamingSection = _VideoDescriptionGamingSection;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CourseProgressView.js
+  var _CourseProgressView = class _CourseProgressView extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "title");
+      __publicField(this, "progress_summary");
+      __publicField(this, "progress_percentage");
+      __publicField(this, "renderer_context");
+      this.title = Text2.fromAttributed(data.title);
+      this.progress_summary = Text2.fromAttributed(data.progressSummary);
+      this.progress_percentage = data.progressPercentage;
+      if ("rendererContext" in data)
+        this.renderer_context = new RendererContext(data.rendererContext);
+    }
+  };
+  __name(_CourseProgressView, "CourseProgressView");
+  __publicField(_CourseProgressView, "type", "CourseProgressView");
+  var CourseProgressView = _CourseProgressView;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/StructuredDescriptionContent.js
+  var _StructuredDescriptionContent = class _StructuredDescriptionContent extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "items");
+      this.items = parser_exports.parseArray(data.items, [
+        VideoTitleHeaderView,
+        VideoDescriptionHeader,
+        VideoDescriptionGamingSection,
+        ExpandableVideoDescriptionBody,
+        VideoDescriptionMusicSection,
+        VideoDescriptionInfocardsSection,
+        VideoDescriptionCourseSection,
+        VideoDescriptionTranscriptSection,
+        VideoDescriptionYouchatSectionView,
+        HorizontalCardList,
+        ReelShelf,
+        VideoAttributesSectionView,
+        HowThisWasMadeSectionView,
+        ExpandableMetadata,
+        MerchandiseShelf,
+        HypeFanCreditsSectionView,
+        ItemSection,
+        CourseProgressView
+      ]);
+    }
+  };
+  __name(_StructuredDescriptionContent, "StructuredDescriptionContent");
+  __publicField(_StructuredDescriptionContent, "type", "StructuredDescriptionContent");
+  var StructuredDescriptionContent = _StructuredDescriptionContent;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/EngagementPanelSectionList.js
+  var _EngagementPanelSectionList = class _EngagementPanelSectionList extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "header");
+      __publicField(this, "content");
+      __publicField(this, "target_id");
+      __publicField(this, "panel_identifier");
+      __publicField(this, "identifier");
+      __publicField(this, "visibility");
+      this.header = parser_exports.parseItem(data.header, EngagementPanelTitleHeader);
+      this.content = parser_exports.parseItem(data.content, [
+        PlaylistCollaborationView,
+        VideoAttributeView,
+        SectionList,
+        ContinuationItem,
+        ClipSection,
+        StructuredDescriptionContent,
+        MacroMarkersList,
+        ProductList
+      ]);
+      this.panel_identifier = data.panelIdentifier;
+      if ("identifier" in data) {
+        this.identifier = {
+          surface: data.identifier.surface,
+          tag: data.identifier.tag
+        };
+      }
+      this.target_id = data.targetId;
+      this.visibility = data.visibility;
+    }
+  };
+  __name(_EngagementPanelSectionList, "EngagementPanelSectionList");
+  __publicField(_EngagementPanelSectionList, "type", "EngagementPanelSectionList");
+  var EngagementPanelSectionList = _EngagementPanelSectionList;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelTagline.js
+  var _ChannelTagline = class _ChannelTagline extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "content");
+      __publicField(this, "max_lines");
+      __publicField(this, "more_endpoint");
+      __publicField(this, "more_icon_type");
+      __publicField(this, "more_label");
+      __publicField(this, "target_id");
+      this.content = data.content;
+      this.max_lines = data.maxLines;
+      this.more_endpoint = data.moreEndpoint.showEngagementPanelEndpoint ? {
+        show_engagement_panel_endpoint: {
+          engagement_panel: parser_exports.parseItem(data.moreEndpoint.showEngagementPanelEndpoint.engagementPanel, EngagementPanelSectionList),
+          engagement_panel_popup_type: data.moreEndpoint.showEngagementPanelEndpoint.engagementPanelPresentationConfigs.engagementPanelPopupPresentationConfig.popupType,
+          identifier: {
+            surface: data.moreEndpoint.showEngagementPanelEndpoint.identifier.surface,
+            tag: data.moreEndpoint.showEngagementPanelEndpoint.identifier.tag
+          }
+        }
+      } : new NavigationEndpoint(data.moreEndpoint);
+      this.more_icon_type = data.moreIcon.iconType;
+      this.more_label = data.moreLabel;
+      this.target_id = data.targetId;
+    }
+  };
+  __name(_ChannelTagline, "ChannelTagline");
+  __publicField(_ChannelTagline, "type", "ChannelTagline");
+  var ChannelTagline = _ChannelTagline;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SubscriptionNotificationToggleButton.js
+  var _SubscriptionNotificationToggleButton = class _SubscriptionNotificationToggleButton extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "states");
+      __publicField(this, "current_state_id");
+      __publicField(this, "target_id");
+      this.states = data.states.map((data2) => ({
+        id: data2.stateId,
+        next_id: data2.nextStateId,
+        state: parser_exports.parse(data2.state)
+      }));
+      this.current_state_id = data.currentStateId;
+      this.target_id = data.targetId;
+    }
+  };
+  __name(_SubscriptionNotificationToggleButton, "SubscriptionNotificationToggleButton");
+  __publicField(_SubscriptionNotificationToggleButton, "type", "SubscriptionNotificationToggleButton");
+  var SubscriptionNotificationToggleButton = _SubscriptionNotificationToggleButton;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SubscribeButton.js
+  var _SubscribeButton = class _SubscribeButton extends YTNode {
+    constructor(data) {
+      var _a2, _b2;
+      super();
+      __publicField(this, "button_text");
+      __publicField(this, "subscribed");
+      __publicField(this, "enabled");
+      __publicField(this, "item_type");
+      __publicField(this, "channel_id");
+      __publicField(this, "show_preferences");
+      __publicField(this, "subscribed_text");
+      __publicField(this, "unsubscribed_text");
+      __publicField(this, "unsubscribe_text");
+      __publicField(this, "notification_preference_button");
+      __publicField(this, "service_endpoints");
+      __publicField(this, "on_subscribe_endpoints");
+      __publicField(this, "on_unsubscribe_endpoints");
+      __publicField(this, "subscribed_entity_key");
+      __publicField(this, "target_id");
+      __publicField(this, "subscribe_accessibility_label");
+      __publicField(this, "unsubscribe_accessibility_label");
+      this.button_text = new Text2(data.buttonText);
+      this.subscribed = data.subscribed;
+      this.enabled = data.enabled;
+      this.item_type = data.type;
+      this.channel_id = data.channelId;
+      this.show_preferences = data.showPreferences;
+      if (Reflect.has(data, "subscribedButtonText"))
+        this.subscribed_text = new Text2(data.subscribedButtonText);
+      if (Reflect.has(data, "unsubscribedButtonText"))
+        this.unsubscribed_text = new Text2(data.unsubscribedButtonText);
+      if (Reflect.has(data, "unsubscribeButtonText"))
+        this.unsubscribe_text = new Text2(data.unsubscribeButtonText);
+      this.notification_preference_button = parser_exports.parseItem(data.notificationPreferenceButton, SubscriptionNotificationToggleButton);
+      if (Reflect.has(data, "serviceEndpoints"))
+        this.service_endpoints = data.serviceEndpoints.map((endpoint) => new NavigationEndpoint(endpoint));
+      if (Reflect.has(data, "onSubscribeEndpoints"))
+        this.on_subscribe_endpoints = data.onSubscribeEndpoints.map((endpoint) => new NavigationEndpoint(endpoint));
+      if (Reflect.has(data, "onUnsubscribeEndpoints"))
+        this.on_unsubscribe_endpoints = data.onUnsubscribeEndpoints.map((endpoint) => new NavigationEndpoint(endpoint));
+      if (Reflect.has(data, "subscribedEntityKey"))
+        this.subscribed_entity_key = data.subscribedEntityKey;
+      if (Reflect.has(data, "targetId"))
+        this.target_id = data.targetId;
+      if (Reflect.has(data, "subscribeAccessibility"))
+        this.subscribe_accessibility_label = (_a2 = data.subscribeAccessibility.accessibilityData) == null ? void 0 : _a2.label;
+      if (Reflect.has(data, "unsubscribeAccessibility"))
+        this.unsubscribe_accessibility_label = (_b2 = data.unsubscribeAccessibility.accessibilityData) == null ? void 0 : _b2.label;
+    }
+  };
+  __name(_SubscribeButton, "SubscribeButton");
+  __publicField(_SubscribeButton, "type", "SubscribeButton");
+  var SubscribeButton = _SubscribeButton;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/C4TabbedHeader.js
+  var _C4TabbedHeader = class _C4TabbedHeader extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "author");
+      __publicField(this, "banner");
+      __publicField(this, "tv_banner");
+      __publicField(this, "mobile_banner");
+      __publicField(this, "subscribers");
+      __publicField(this, "videos_count");
+      __publicField(this, "sponsor_button");
+      __publicField(this, "subscribe_button");
+      __publicField(this, "header_links");
+      __publicField(this, "channel_handle");
+      __publicField(this, "channel_id");
+      __publicField(this, "tagline");
+      this.author = new Author({
+        simpleText: data.title,
+        navigationEndpoint: data.navigationEndpoint
+      }, data.badges, data.avatar);
+      if (Reflect.has(data, "banner")) {
+        this.banner = Thumbnail.fromResponse(data.banner);
+      }
+      if (Reflect.has(data, "tv_banner")) {
+        this.tv_banner = Thumbnail.fromResponse(data.tvBanner);
+      }
+      if (Reflect.has(data, "mobile_banner")) {
+        this.mobile_banner = Thumbnail.fromResponse(data.mobileBanner);
+      }
+      if (Reflect.has(data, "subscriberCountText")) {
+        this.subscribers = new Text2(data.subscriberCountText);
+      }
+      if (Reflect.has(data, "videosCountText")) {
+        this.videos_count = new Text2(data.videosCountText);
+      }
+      if (Reflect.has(data, "sponsorButton")) {
+        this.sponsor_button = parser_exports.parseItem(data.sponsorButton, Button);
+      }
+      if (Reflect.has(data, "subscribeButton")) {
+        this.subscribe_button = parser_exports.parseItem(data.subscribeButton, [SubscribeButton, Button]);
+      }
+      if (Reflect.has(data, "headerLinks")) {
+        this.header_links = parser_exports.parseItem(data.headerLinks, [ChannelHeaderLinks, ChannelHeaderLinksView]);
+      }
+      if (Reflect.has(data, "channelHandleText")) {
+        this.channel_handle = new Text2(data.channelHandleText);
+      }
+      if (Reflect.has(data, "channelId")) {
+        this.channel_id = data.channelId;
+      }
+      if (Reflect.has(data, "tagline")) {
+        this.tagline = parser_exports.parseItem(data.tagline, ChannelTagline);
+      }
+    }
+  };
+  __name(_C4TabbedHeader, "C4TabbedHeader");
+  __publicField(_C4TabbedHeader, "type", "C4TabbedHeader");
+  var C4TabbedHeader = _C4TabbedHeader;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CallToActionButton.js
+  var _CallToActionButton = class _CallToActionButton extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "label");
+      __publicField(this, "icon_type");
+      __publicField(this, "style");
+      this.label = new Text2(data.label);
+      this.icon_type = data.icon.iconType;
+      this.style = data.style;
+    }
+  };
+  __name(_CallToActionButton, "CallToActionButton");
+  __publicField(_CallToActionButton, "type", "CallToActionButton");
+  var CallToActionButton = _CallToActionButton;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Card.js
+  var _Card = class _Card extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "teaser");
+      __publicField(this, "content");
+      __publicField(this, "card_id");
+      __publicField(this, "feature");
+      __publicField(this, "cue_ranges");
+      this.teaser = parser_exports.parseItem(data.teaser);
+      this.content = parser_exports.parseItem(data.content);
+      if (Reflect.has(data, "cardId")) {
+        this.card_id = data.cardId;
+      }
+      if (Reflect.has(data, "feature")) {
+        this.feature = data.feature;
+      }
+      this.cue_ranges = data.cueRanges.map((cr) => ({
+        start_card_active_ms: cr.startCardActiveMs,
+        end_card_active_ms: cr.endCardActiveMs,
+        teaser_duration_ms: cr.teaserDurationMs,
+        icon_after_teaser_ms: cr.iconAfterTeaserMs
+      }));
+    }
+  };
+  __name(_Card, "Card");
+  __publicField(_Card, "type", "Card");
+  var Card = _Card;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CardCollection.js
+  var _CardCollection = class _CardCollection extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "cards");
+      __publicField(this, "header");
+      __publicField(this, "allow_teaser_dismiss");
+      this.cards = parser_exports.parseArray(data.cards);
+      this.header = new Text2(data.headerText);
+      this.allow_teaser_dismiss = data.allowTeaserDismiss;
+    }
+  };
+  __name(_CardCollection, "CardCollection");
+  __publicField(_CardCollection, "type", "CardCollection");
+  var CardCollection = _CardCollection;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CarouselHeader.js
+  var _CarouselHeader = class _CarouselHeader extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "contents");
+      this.contents = parser_exports.parseArray(data.contents);
+    }
+  };
+  __name(_CarouselHeader, "CarouselHeader");
+  __publicField(_CarouselHeader, "type", "CarouselHeader");
+  var CarouselHeader = _CarouselHeader;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CarouselItem.js
+  var _CarouselItem = class _CarouselItem extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "items");
+      __publicField(this, "background_color");
+      __publicField(this, "layout_style");
+      __publicField(this, "pagination_thumbnails");
+      __publicField(this, "paginator_alignment");
+      this.items = parser_exports.parseArray(data.carouselItems);
+      this.background_color = data.backgroundColor;
+      this.layout_style = data.layoutStyle;
+      this.pagination_thumbnails = Thumbnail.fromResponse(data.paginationThumbnails);
+      this.paginator_alignment = data.paginatorAlignment;
+    }
+    // XXX: For consistency.
+    get contents() {
+      return this.items;
+    }
+  };
+  __name(_CarouselItem, "CarouselItem");
+  __publicField(_CarouselItem, "type", "CarouselItem");
+  var CarouselItem = _CarouselItem;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TextCarouselItemView.js
+  var _TextCarouselItemView = class _TextCarouselItemView extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "icon_name");
+      __publicField(this, "text");
+      __publicField(this, "on_tap_endpoint");
+      __publicField(this, "button");
+      this.icon_name = data.iconName;
+      this.text = Text2.fromAttributed(data.text);
+      this.on_tap_endpoint = new NavigationEndpoint(data.onTap);
+      this.button = parser_exports.parseItem(data.button, ButtonView);
+    }
+  };
+  __name(_TextCarouselItemView, "TextCarouselItemView");
+  __publicField(_TextCarouselItemView, "type", "TextCarouselItemView");
+  var TextCarouselItemView = _TextCarouselItemView;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CarouselItemView.js
+  var _CarouselItemView = class _CarouselItemView extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "item_type");
+      __publicField(this, "carousel_item");
+      this.item_type = data.itemType;
+      this.carousel_item = parser_exports.parseItem(data.carouselItem, TextCarouselItemView);
+    }
+  };
+  __name(_CarouselItemView, "CarouselItemView");
+  __publicField(_CarouselItemView, "type", "CarouselItemView");
+  var CarouselItemView = _CarouselItemView;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CarouselTitleView.js
+  var _CarouselTitleView = class _CarouselTitleView extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "title");
+      __publicField(this, "previous_button");
+      __publicField(this, "next_button");
+      this.title = data.title;
+      this.previous_button = parser_exports.parseItem(data.previousButton, ButtonView);
+      this.next_button = parser_exports.parseItem(data.nextButton, ButtonView);
+    }
+  };
+  __name(_CarouselTitleView, "CarouselTitleView");
+  __publicField(_CarouselTitleView, "type", "CarouselTitleView");
+  var CarouselTitleView = _CarouselTitleView;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Channel.js
+  var _Channel = class _Channel extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "id");
+      __publicField(this, "author");
+      __publicField(this, "subscriber_count");
+      __publicField(this, "video_count");
+      __publicField(this, "long_byline");
+      __publicField(this, "short_byline");
+      __publicField(this, "endpoint");
+      __publicField(this, "subscribe_button");
+      __publicField(this, "description_snippet");
+      this.id = data.channelId;
+      this.author = new Author({
+        ...data.title,
+        navigationEndpoint: data.navigationEndpoint
+      }, data.ownerBadges, data.thumbnail);
+      this.subscriber_count = new Text2(data.subscriberCountText);
+      this.video_count = new Text2(data.videoCountText);
+      this.long_byline = new Text2(data.longBylineText);
+      this.short_byline = new Text2(data.shortBylineText);
+      this.endpoint = new NavigationEndpoint(data.navigationEndpoint);
+      this.subscribe_button = parser_exports.parseItem(data.subscribeButton, [SubscribeButton, Button]);
+      this.description_snippet = new Text2(data.descriptionSnippet);
+    }
+  };
+  __name(_Channel, "Channel");
+  __publicField(_Channel, "type", "Channel");
+  var Channel = _Channel;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelAboutFullMetadata.js
+  var _ChannelAboutFullMetadata = class _ChannelAboutFullMetadata extends YTNode {
+    constructor(data) {
+      var _a2, _b2;
+      super();
+      __publicField(this, "id");
+      __publicField(this, "name");
+      __publicField(this, "avatar");
+      __publicField(this, "canonical_channel_url");
+      __publicField(this, "primary_links");
+      __publicField(this, "view_count");
+      __publicField(this, "joined_date");
+      __publicField(this, "description");
+      __publicField(this, "email_reveal");
+      __publicField(this, "can_reveal_email");
+      __publicField(this, "country");
+      __publicField(this, "buttons");
+      this.id = data.channelId;
+      this.name = new Text2(data.title);
+      this.avatar = Thumbnail.fromResponse(data.avatar);
+      this.canonical_channel_url = data.canonicalChannelUrl;
+      this.primary_links = (_b2 = (_a2 = data.primaryLinks) == null ? void 0 : _a2.map((link) => ({
+        endpoint: new NavigationEndpoint(link.navigationEndpoint),
+        icon: Thumbnail.fromResponse(link.icon),
+        title: new Text2(link.title)
+      }))) != null ? _b2 : [];
+      this.view_count = new Text2(data.viewCountText);
+      this.joined_date = new Text2(data.joinedDateText);
+      this.description = new Text2(data.description);
+      this.email_reveal = new NavigationEndpoint(data.onBusinessEmailRevealClickCommand);
+      this.can_reveal_email = !data.signInForBusinessEmail;
+      this.country = new Text2(data.country);
+      this.buttons = parser_exports.parseArray(data.actionButtons, Button);
+    }
+  };
+  __name(_ChannelAboutFullMetadata, "ChannelAboutFullMetadata");
+  __publicField(_ChannelAboutFullMetadata, "type", "ChannelAboutFullMetadata");
+  var ChannelAboutFullMetadata = _ChannelAboutFullMetadata;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelAgeGate.js
+  var _ChannelAgeGate = class _ChannelAgeGate extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "channel_title");
+      __publicField(this, "avatar");
+      __publicField(this, "header");
+      __publicField(this, "main_text");
+      __publicField(this, "sign_in_button");
+      __publicField(this, "secondary_text");
+      this.channel_title = data.channelTitle;
+      this.avatar = Thumbnail.fromResponse(data.avatar);
+      this.header = new Text2(data.header);
+      this.main_text = new Text2(data.mainText);
+      this.sign_in_button = parser_exports.parseItem(data.signInButton, Button);
+      this.secondary_text = new Text2(data.secondaryText);
+    }
+  };
+  __name(_ChannelAgeGate, "ChannelAgeGate");
+  __publicField(_ChannelAgeGate, "type", "ChannelAgeGate");
+  var ChannelAgeGate = _ChannelAgeGate;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelFeaturedContent.js
+  var _ChannelFeaturedContent = class _ChannelFeaturedContent extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "title");
+      __publicField(this, "items");
+      this.title = new Text2(data.title);
+      this.items = parser_exports.parseArray(data.items);
+    }
+  };
+  __name(_ChannelFeaturedContent, "ChannelFeaturedContent");
+  __publicField(_ChannelFeaturedContent, "type", "ChannelFeaturedContent");
+  var ChannelFeaturedContent = _ChannelFeaturedContent;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelMetadata.js
+  var _ChannelMetadata = class _ChannelMetadata extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "title");
+      __publicField(this, "description");
+      __publicField(this, "url");
+      __publicField(this, "rss_url");
+      __publicField(this, "vanity_channel_url");
+      __publicField(this, "external_id");
+      __publicField(this, "is_family_safe");
+      __publicField(this, "keywords");
+      __publicField(this, "avatar");
+      __publicField(this, "music_artist_name");
+      __publicField(this, "available_countries");
+      __publicField(this, "android_deep_link");
+      __publicField(this, "android_appindexing_link");
+      __publicField(this, "ios_appindexing_link");
+      this.title = data.title;
+      this.description = data.description;
+      this.url = data.channelUrl;
+      this.rss_url = data.rssUrl;
+      this.vanity_channel_url = data.vanityChannelUrl;
+      this.external_id = data.externalId;
+      this.is_family_safe = data.isFamilySafe;
+      this.keywords = data.keywords;
+      this.avatar = Thumbnail.fromResponse(data.avatar);
+      this.music_artist_name = typeof data.musicArtistName === "string" && data.musicArtistName.length > 0 ? data.musicArtistName : void 0;
+      this.available_countries = data.availableCountryCodes;
+      this.android_deep_link = data.androidDeepLink;
+      this.android_appindexing_link = data.androidAppindexingLink;
+      this.ios_appindexing_link = data.iosAppindexingLink;
+    }
+  };
+  __name(_ChannelMetadata, "ChannelMetadata");
+  __publicField(_ChannelMetadata, "type", "ChannelMetadata");
+  var ChannelMetadata = _ChannelMetadata;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelMobileHeader.js
+  var _ChannelMobileHeader = class _ChannelMobileHeader extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "title");
+      this.title = new Text2(data.title);
+    }
+  };
+  __name(_ChannelMobileHeader, "ChannelMobileHeader");
+  __publicField(_ChannelMobileHeader, "type", "ChannelMobileHeader");
+  var ChannelMobileHeader = _ChannelMobileHeader;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelOptions.js
+  var _ChannelOptions = class _ChannelOptions extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "avatar");
+      __publicField(this, "endpoint");
+      __publicField(this, "name");
+      __publicField(this, "links");
+      this.avatar = Thumbnail.fromResponse(data.avatar);
+      this.endpoint = new NavigationEndpoint(data.avatarEndpoint);
+      this.name = data.name;
+      this.links = data.links.map((link) => new Text2(link));
+    }
+  };
+  __name(_ChannelOptions, "ChannelOptions");
+  __publicField(_ChannelOptions, "type", "ChannelOptions");
+  var ChannelOptions = _ChannelOptions;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelOwnerEmptyState.js
+  var _ChannelOwnerEmptyState = class _ChannelOwnerEmptyState extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "illustration");
+      __publicField(this, "description");
+      this.illustration = Thumbnail.fromResponse(data.illustration);
+      this.description = new Text2(data.description);
+    }
+  };
+  __name(_ChannelOwnerEmptyState, "ChannelOwnerEmptyState");
+  __publicField(_ChannelOwnerEmptyState, "type", "ChannelOwnerEmptyState");
+  var ChannelOwnerEmptyState = _ChannelOwnerEmptyState;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelSubMenu.js
+  var _ChannelSubMenu = class _ChannelSubMenu extends YTNode {
+    constructor(data) {
+      var _a2, _b2, _c;
+      super();
+      __publicField(this, "content_type_sub_menu_items");
+      __publicField(this, "sort_setting");
+      this.content_type_sub_menu_items = ((_c = (_b2 = (_a2 = data.sortSetting) == null ? void 0 : _a2.sortFilterSubMenuRenderer) == null ? void 0 : _b2.subMenuItems) == null ? void 0 : _c.map((item) => ({
+        endpoint: new NavigationEndpoint(item.navigationEndpoint || item.endpoint),
+        selected: item.selected,
+        title: item.title
+      }))) || [];
+      this.sort_setting = parser_exports.parseItem(data.sortSetting);
+    }
+  };
+  __name(_ChannelSubMenu, "ChannelSubMenu");
+  __publicField(_ChannelSubMenu, "type", "ChannelSubMenu");
+  var ChannelSubMenu = _ChannelSubMenu;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelSwitcherHeader.js
+  var _ChannelSwitcherHeader = class _ChannelSwitcherHeader extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "title");
+      __publicField(this, "button");
+      this.title = new Text2(data.title).toString();
+      if (Reflect.has(data, "button")) {
+        this.button = parser_exports.parseItem(data.button, Button);
+      }
+    }
+  };
+  __name(_ChannelSwitcherHeader, "ChannelSwitcherHeader");
+  __publicField(_ChannelSwitcherHeader, "type", "ChannelSwitcherHeader");
+  var ChannelSwitcherHeader = _ChannelSwitcherHeader;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelThumbnailWithLink.js
+  var _ChannelThumbnailWithLink = class _ChannelThumbnailWithLink extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "thumbnails");
+      __publicField(this, "endpoint");
+      __publicField(this, "accessibility");
+      this.thumbnails = Thumbnail.fromResponse(data.thumbnail);
+      this.endpoint = new NavigationEndpoint(data.navigationEndpoint);
+      if ("accessibility" in data && "accessibilityData" in data.accessibility) {
+        this.accessibility = {
+          accessibility_data: new AccessibilityData(data.accessibility.accessibilityData)
+        };
+      }
+    }
+    get label() {
+      var _a2, _b2;
+      return (_b2 = (_a2 = this.accessibility) == null ? void 0 : _a2.accessibility_data) == null ? void 0 : _b2.label;
+    }
+  };
+  __name(_ChannelThumbnailWithLink, "ChannelThumbnailWithLink");
+  __publicField(_ChannelThumbnailWithLink, "type", "ChannelThumbnailWithLink");
+  var ChannelThumbnailWithLink = _ChannelThumbnailWithLink;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChannelVideoPlayer.js
+  var _ChannelVideoPlayer = class _ChannelVideoPlayer extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "id");
+      __publicField(this, "title");
+      __publicField(this, "description");
+      __publicField(this, "view_count");
+      __publicField(this, "published_time");
+      this.id = data.videoId;
+      this.title = new Text2(data.title);
+      this.description = new Text2(data.description);
+      this.view_count = new Text2(data.viewCountText);
+      this.published_time = new Text2(data.publishedTimeText);
+    }
+  };
+  __name(_ChannelVideoPlayer, "ChannelVideoPlayer");
+  __publicField(_ChannelVideoPlayer, "type", "ChannelVideoPlayer");
+  var ChannelVideoPlayer = _ChannelVideoPlayer;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Chapter.js
+  var _Chapter = class _Chapter extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "title");
+      __publicField(this, "time_range_start_millis");
+      __publicField(this, "thumbnail");
+      this.title = new Text2(data.title);
+      this.time_range_start_millis = data.timeRangeStartMillis;
+      this.thumbnail = Thumbnail.fromResponse(data.thumbnail);
+    }
+  };
+  __name(_Chapter, "Chapter");
+  __publicField(_Chapter, "type", "Chapter");
+  var Chapter = _Chapter;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChildVideo.js
+  var _ChildVideo = class _ChildVideo extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "id");
+      __publicField(this, "title");
+      __publicField(this, "duration");
+      __publicField(this, "endpoint");
+      this.id = data.videoId;
+      this.title = new Text2(data.title);
+      this.duration = {
+        text: data.lengthText.simpleText,
+        seconds: timeToSeconds(data.lengthText.simpleText)
+      };
+      this.endpoint = new NavigationEndpoint(data.navigationEndpoint);
+    }
+  };
+  __name(_ChildVideo, "ChildVideo");
+  __publicField(_ChildVideo, "type", "ChildVideo");
+  var ChildVideo = _ChildVideo;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ChipCloud.js
   var _ChipCloud = class _ChipCloud extends YTNode {
     constructor(data) {
       super();
@@ -19294,7 +19554,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChipCloud, "type", "ChipCloud");
   var ChipCloud = _ChipCloud;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ClientSideToggleMenuItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ClientSideToggleMenuItem.js
   var _ClientSideToggleMenuItem = class _ClientSideToggleMenuItem extends YTNode {
     constructor(data) {
       super();
@@ -19329,7 +19589,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ClientSideToggleMenuItem, "type", "ClientSideToggleMenuItem");
   var ClientSideToggleMenuItem = _ClientSideToggleMenuItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CollaboratorInfoCardContent.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CollaboratorInfoCardContent.js
   var _CollaboratorInfoCardContent = class _CollaboratorInfoCardContent extends YTNode {
     constructor(data) {
       super();
@@ -19349,7 +19609,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CollaboratorInfoCardContent, "type", "CollaboratorInfoCardContent");
   var CollaboratorInfoCardContent = _CollaboratorInfoCardContent;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CollageHeroImage.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CollageHeroImage.js
   var _CollageHeroImage = class _CollageHeroImage extends YTNode {
     constructor(data) {
       super();
@@ -19367,7 +19627,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CollageHeroImage, "type", "CollageHeroImage");
   var CollageHeroImage = _CollageHeroImage;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailHoverOverlayView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailHoverOverlayView.js
   var _ThumbnailHoverOverlayView = class _ThumbnailHoverOverlayView extends YTNode {
     constructor(data) {
       super();
@@ -19383,7 +19643,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailHoverOverlayView, "type", "ThumbnailHoverOverlayView");
   var ThumbnailHoverOverlayView = _ThumbnailHoverOverlayView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailBadgeView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailBadgeView.js
   var _ThumbnailBadgeView = class _ThumbnailBadgeView extends YTNode {
     constructor(data) {
       super();
@@ -19408,7 +19668,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailBadgeView, "type", "ThumbnailBadgeView");
   var ThumbnailBadgeView = _ThumbnailBadgeView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayBadgeView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayBadgeView.js
   var _ThumbnailOverlayBadgeView = class _ThumbnailOverlayBadgeView extends YTNode {
     constructor(data) {
       super();
@@ -19422,7 +19682,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayBadgeView, "type", "ThumbnailOverlayBadgeView");
   var ThumbnailOverlayBadgeView = _ThumbnailOverlayBadgeView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailHoverOverlayToggleActionsView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailHoverOverlayToggleActionsView.js
   var _ThumbnailHoverOverlayToggleActionsView = class _ThumbnailHoverOverlayToggleActionsView extends YTNode {
     constructor(data) {
       super();
@@ -19434,7 +19694,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailHoverOverlayToggleActionsView, "type", "ThumbnailHoverOverlayToggleActionsView");
   var ThumbnailHoverOverlayToggleActionsView = _ThumbnailHoverOverlayToggleActionsView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayProgressBarView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayProgressBarView.js
   var _ThumbnailOverlayProgressBarView = class _ThumbnailOverlayProgressBarView extends YTNode {
     constructor(data) {
       super();
@@ -19446,7 +19706,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayProgressBarView, "type", "ThumbnailOverlayProgressBarView");
   var ThumbnailOverlayProgressBarView = _ThumbnailOverlayProgressBarView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailBottomOverlayView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailBottomOverlayView.js
   var _ThumbnailBottomOverlayView = class _ThumbnailBottomOverlayView extends YTNode {
     constructor(data) {
       super();
@@ -19460,7 +19720,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailBottomOverlayView, "type", "ThumbnailBottomOverlayView");
   var ThumbnailBottomOverlayView = _ThumbnailBottomOverlayView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailView.js
   var _ThumbnailView = class _ThumbnailView extends YTNode {
     constructor(data) {
       super();
@@ -19487,7 +19747,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailView, "type", "ThumbnailView");
   var ThumbnailView = _ThumbnailView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CollectionThumbnailView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CollectionThumbnailView.js
   var _CollectionThumbnailView = class _CollectionThumbnailView extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -19507,7 +19767,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CollectionThumbnailView, "type", "CollectionThumbnailView");
   var CollectionThumbnailView = _CollectionThumbnailView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/AddToPlaylistCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/commands/AddToPlaylistCommand.js
   var _AddToPlaylistCommand = class _AddToPlaylistCommand extends YTNode {
     constructor(data) {
       super();
@@ -19527,7 +19787,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddToPlaylistCommand, "type", "AddToPlaylistCommand");
   var AddToPlaylistCommand = _AddToPlaylistCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/ContinuationCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/commands/ContinuationCommand.js
   var _data;
   var _ContinuationCommand = class _ContinuationCommand extends YTNode {
     constructor(data) {
@@ -19580,7 +19840,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ContinuationCommand, "type", "ContinuationCommand");
   var ContinuationCommand = _ContinuationCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/GetKidsBlocklistPickerCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/commands/GetKidsBlocklistPickerCommand.js
   var API_PATH = "kids/get_kids_blocklist_picker";
   var _data2;
   var _GetKidsBlocklistPickerCommand = class _GetKidsBlocklistPickerCommand extends YTNode {
@@ -19604,7 +19864,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GetKidsBlocklistPickerCommand, "type", "GetKidsBlocklistPickerCommand");
   var GetKidsBlocklistPickerCommand = _GetKidsBlocklistPickerCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/RunAttestationCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/commands/RunAttestationCommand.js
   var _RunAttestationCommand = class _RunAttestationCommand extends YTNode {
     constructor(data) {
       super();
@@ -19629,7 +19889,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RunAttestationCommand, "type", "RunAttestationCommand");
   var RunAttestationCommand = _RunAttestationCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/ShowDialogCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/commands/ShowDialogCommand.js
   var _ShowDialogCommand = class _ShowDialogCommand extends YTNode {
     constructor(data) {
       var _a2;
@@ -19644,7 +19904,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowDialogCommand, "type", "ShowDialogCommand");
   var ShowDialogCommand = _ShowDialogCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/ShowSheetCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/commands/ShowSheetCommand.js
   var _ShowSheetCommand = class _ShowSheetCommand extends YTNode {
     constructor(data) {
       var _a2;
@@ -19659,7 +19919,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowSheetCommand, "type", "ShowSheetCommand");
   var ShowSheetCommand = _ShowSheetCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/commands/UpdateEngagementPanelContentCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/commands/UpdateEngagementPanelContentCommand.js
   var _UpdateEngagementPanelContentCommand = class _UpdateEngagementPanelContentCommand extends YTNode {
     constructor(data) {
       super();
@@ -19673,7 +19933,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateEngagementPanelContentCommand, "type", "UpdateEngagementPanelContentCommand");
   var UpdateEngagementPanelContentCommand = _UpdateEngagementPanelContentCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/AuthorCommentBadge.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/AuthorCommentBadge.js
   var _data3;
   var _AuthorCommentBadge = class _AuthorCommentBadge extends YTNode {
     constructor(data) {
@@ -19701,7 +19961,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AuthorCommentBadge, "type", "AuthorCommentBadge");
   var AuthorCommentBadge = _AuthorCommentBadge;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/EmojiPicker.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/EmojiPicker.js
   var _EmojiPicker = class _EmojiPicker extends YTNode {
     constructor(data) {
       super();
@@ -19737,7 +19997,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EmojiPicker, "type", "EmojiPicker");
   var EmojiPicker = _EmojiPicker;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentDialog.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentDialog.js
   var _CommentDialog = class _CommentDialog extends YTNode {
     constructor(data) {
       super();
@@ -19761,7 +20021,48 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentDialog, "type", "CommentDialog");
   var CommentDialog = _CommentDialog;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentReplyDialog.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentImageAttachmentView.js
+  var _CommentImageAttachmentView = class _CommentImageAttachmentView extends YTNode {
+    constructor(data) {
+      var _a2, _b2;
+      super();
+      __publicField(this, "width");
+      __publicField(this, "height");
+      __publicField(this, "aspect_ratio");
+      __publicField(this, "image");
+      __publicField(this, "image_content_mode");
+      __publicField(this, "processor");
+      __publicField(this, "image_format_hint");
+      __publicField(this, "external_image_id");
+      __publicField(this, "unavailable_text");
+      __publicField(this, "unsupported_text");
+      __publicField(this, "renderer_context");
+      this.width = data.width;
+      this.height = data.height;
+      this.aspect_ratio = data.aspectRatio;
+      this.image = Thumbnail.fromResponse(data.image);
+      this.external_image_id = data.externalImageId;
+      this.unavailable_text = data.unavailableText;
+      this.unsupported_text = data.unsupportedText;
+      this.renderer_context = new RendererContext(data.rendererContext);
+      if (typeof data.image === "object") {
+        this.image_content_mode = data.image.contentMode;
+        this.image_format_hint = data.image.imageFormatHint;
+        if ((_b2 = (_a2 = data.image.processor) == null ? void 0 : _a2.borderImageProcessor) == null ? void 0 : _b2.cornerRadius) {
+          this.processor = {
+            border_image_processor: {
+              corner_radius: data.image.processor.borderImageProcessor.cornerRadius
+            }
+          };
+        }
+      }
+    }
+  };
+  __name(_CommentImageAttachmentView, "CommentImageAttachmentView");
+  __publicField(_CommentImageAttachmentView, "type", "CommentImageAttachmentView");
+  var CommentImageAttachmentView = _CommentImageAttachmentView;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentReplyDialog.js
   var _CommentReplyDialog = class _CommentReplyDialog extends YTNode {
     constructor(data) {
       super();
@@ -19781,7 +20082,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentReplyDialog, "type", "CommentReplyDialog");
   var CommentReplyDialog = _CommentReplyDialog;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/VoiceReplyContainerView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/VoiceReplyContainerView.js
   var _VoiceReplyContainerView = class _VoiceReplyContainerView extends YTNode {
     constructor(data) {
       super();
@@ -19795,7 +20096,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VoiceReplyContainerView, "type", "VoiceReplyContainerView");
   var VoiceReplyContainerView = _VoiceReplyContainerView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentView.js
   var _actions;
   var _CommentView = class _CommentView extends YTNode {
     constructor(data) {
@@ -19811,6 +20112,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
       __publicField(this, "is_pinned");
       __publicField(this, "keys");
       __publicField(this, "content");
+      __publicField(this, "image_attachment");
       __publicField(this, "published_time");
       __publicField(this, "author_is_channel_owner");
       __publicField(this, "author_button_a11y");
@@ -19900,6 +20202,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
         if ("voiceReplyContainerViewModel" in comment_surface) {
           this.voice_reply_container = parser_exports.parseItem(comment_surface.voiceReplyContainerViewModel, VoiceReplyContainerView);
         }
+        this.image_attachment = parser_exports.parseItem(comment_surface.imageAttachmentViewModel, CommentImageAttachmentView);
       }
     }
     /**
@@ -20009,7 +20312,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentView, "type", "CommentView");
   var CommentView = _CommentView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/CommentsContinuation.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/CommentsContinuation.js
   var _actions2, _nextContinuationItem;
   var _CommentsContinuation = class _CommentsContinuation {
     constructor(actions, data) {
@@ -20057,7 +20360,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __name(_CommentsContinuation, "CommentsContinuation");
   var CommentsContinuation = _CommentsContinuation;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentThread.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentThread.js
   var _actions3, _continuation, _CommentThread_instances, processList_fn;
   var _CommentThread = class _CommentThread extends YTNode {
     constructor(data) {
@@ -20170,7 +20473,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentThread, "type", "CommentThread");
   var CommentThread = _CommentThread;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentReplies.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentReplies.js
   var _CommentReplies = class _CommentReplies extends YTNode {
     constructor(data) {
       super();
@@ -20192,7 +20495,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentReplies, "type", "CommentReplies");
   var CommentReplies = _CommentReplies;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentsSimplebox.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentsSimplebox.js
   var _CommentsSimplebox = class _CommentsSimplebox extends YTNode {
     constructor(data) {
       super();
@@ -20206,7 +20509,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentsSimplebox, "type", "CommentsSimplebox");
   var CommentsSimplebox = _CommentsSimplebox;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentsEntryPointTeaser.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentsEntryPointTeaser.js
   var _CommentsEntryPointTeaser = class _CommentsEntryPointTeaser extends YTNode {
     constructor(data) {
       super();
@@ -20224,7 +20527,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentsEntryPointTeaser, "type", "CommentsEntryPointTeaser");
   var CommentsEntryPointTeaser = _CommentsEntryPointTeaser;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentsEntryPointHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentsEntryPointHeader.js
   var _CommentsEntryPointHeader = class _CommentsEntryPointHeader extends YTNode {
     constructor(data) {
       super();
@@ -20258,37 +20561,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentsEntryPointHeader, "type", "CommentsEntryPointHeader");
   var CommentsEntryPointHeader = _CommentsEntryPointHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentsHeader.js
-  var _CommentsHeader = class _CommentsHeader extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "title");
-      __publicField(this, "count");
-      __publicField(this, "comments_count");
-      __publicField(this, "create_renderer");
-      __publicField(this, "sort_menu");
-      __publicField(this, "custom_emojis");
-      this.title = new Text2(data.titleText);
-      this.count = new Text2(data.countText);
-      this.comments_count = new Text2(data.commentsCount);
-      this.create_renderer = parser_exports.parseItem(data.createRenderer);
-      this.sort_menu = parser_exports.parseItem(data.sortMenu, SortFilterSubMenu);
-      if (Reflect.has(data, "customEmojis")) {
-        this.custom_emojis = data.customEmojis.map((emoji) => ({
-          emoji_id: emoji.emojiId,
-          shortcuts: emoji.shortcuts,
-          search_terms: emoji.searchTerms,
-          image: Thumbnail.fromResponse(emoji.image),
-          is_custom_emoji: emoji.isCustomEmoji
-        }));
-      }
-    }
-  };
-  __name(_CommentsHeader, "CommentsHeader");
-  __publicField(_CommentsHeader, "type", "CommentsHeader");
-  var CommentsHeader = _CommentsHeader;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentSimplebox.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/CommentSimplebox.js
   var _CommentSimplebox = class _CommentSimplebox extends YTNode {
     constructor(data) {
       super();
@@ -20308,7 +20581,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CommentSimplebox, "type", "CommentSimplebox");
   var CommentSimplebox = _CommentSimplebox;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/PdgCommentChip.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/PdgCommentChip.js
   var _PdgCommentChip = class _PdgCommentChip extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -20330,7 +20603,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PdgCommentChip, "type", "PdgCommentChip");
   var PdgCommentChip = _PdgCommentChip;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/comments/SponsorCommentBadge.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/comments/SponsorCommentBadge.js
   var _SponsorCommentBadge = class _SponsorCommentBadge extends YTNode {
     constructor(data) {
       super();
@@ -20344,7 +20617,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SponsorCommentBadge, "type", "SponsorCommentBadge");
   var SponsorCommentBadge = _SponsorCommentBadge;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactChannel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CompactChannel.js
   var _CompactChannel = class _CompactChannel extends YTNode {
     constructor(data) {
       super();
@@ -20372,7 +20645,19 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompactChannel, "type", "CompactChannel");
   var CompactChannel = _CompactChannel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistCustomThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CompactInfocard.js
+  var _CompactInfocard = class _CompactInfocard extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "content");
+      this.content = parser_exports.parseItem(data.content);
+    }
+  };
+  __name(_CompactInfocard, "CompactInfocard");
+  __publicField(_CompactInfocard, "type", "CompactInfocard");
+  var CompactInfocard = _CompactInfocard;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistCustomThumbnail.js
   var _PlaylistCustomThumbnail = class _PlaylistCustomThumbnail extends YTNode {
     constructor(data) {
       super();
@@ -20384,7 +20669,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistCustomThumbnail, "type", "PlaylistCustomThumbnail");
   var PlaylistCustomThumbnail = _PlaylistCustomThumbnail;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistVideoThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistVideoThumbnail.js
   var _PlaylistVideoThumbnail = class _PlaylistVideoThumbnail extends YTNode {
     constructor(data) {
       super();
@@ -20396,7 +20681,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistVideoThumbnail, "type", "PlaylistVideoThumbnail");
   var PlaylistVideoThumbnail = _PlaylistVideoThumbnail;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Playlist.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Playlist.js
   var _Playlist = class _Playlist extends YTNode {
     constructor(data) {
       var _a2;
@@ -20439,7 +20724,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Playlist, "type", "Playlist");
   var Playlist = _Playlist;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactMix.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CompactMix.js
   var _CompactMix = class _CompactMix extends Playlist {
     constructor(data) {
       super(data);
@@ -20449,7 +20734,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompactMix, "type", "CompactMix");
   var CompactMix = _CompactMix;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactMovie.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CompactMovie.js
   var _CompactMovie = class _CompactMovie extends YTNode {
     constructor(data) {
       var _a2;
@@ -20487,7 +20772,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompactMovie, "type", "CompactMovie");
   var CompactMovie = _CompactMovie;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactPlaylist.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CompactPlaylist.js
   var _CompactPlaylist = class _CompactPlaylist extends Playlist {
     constructor(data) {
       super(data);
@@ -20498,7 +20783,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   var CompactPlaylist = _CompactPlaylist;
   var CompactPlaylist_default = CompactPlaylist;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompactStation.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CompactStation.js
   var _CompactStation = class _CompactStation extends YTNode {
     constructor(data) {
       super();
@@ -20518,35 +20803,42 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CompactStation, "type", "CompactStation");
   var CompactStation = _CompactStation;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CompositeVideoPrimaryInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CompositeVideoPrimaryInfo.js
   var _CompositeVideoPrimaryInfo = class _CompositeVideoPrimaryInfo extends YTNode {
-    constructor(_data24) {
+    constructor(data) {
       super();
+      __publicField(this, "composite_source_video_primary_info_renderers");
+      this.composite_source_video_primary_info_renderers = parser_exports.parseArray(data.compositeSourceVideoPrimaryInfoRenderers);
     }
   };
   __name(_CompositeVideoPrimaryInfo, "CompositeVideoPrimaryInfo");
   __publicField(_CompositeVideoPrimaryInfo, "type", "CompositeVideoPrimaryInfo");
   var CompositeVideoPrimaryInfo = _CompositeVideoPrimaryInfo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ConfirmDialog.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ConfirmDialog.js
   var _ConfirmDialog = class _ConfirmDialog extends YTNode {
     constructor(data) {
       super();
       __publicField(this, "title");
+      __publicField(this, "confirm_endpoint");
       __publicField(this, "confirm_button");
       __publicField(this, "cancel_button");
       __publicField(this, "dialog_messages");
+      __publicField(this, "primary_is_cancel");
       this.title = new Text2(data.title);
+      if ("confirmEndpoint" in data)
+        this.confirm_endpoint = new NavigationEndpoint(data.confirmEndpoint);
       this.confirm_button = parser_exports.parseItem(data.confirmButton, Button);
       this.cancel_button = parser_exports.parseItem(data.cancelButton, Button);
       this.dialog_messages = data.dialogMessages.map((txt) => new Text2(txt));
+      this.primary_is_cancel = !!data.primaryIsCancel;
     }
   };
   __name(_ConfirmDialog, "ConfirmDialog");
   __publicField(_ConfirmDialog, "type", "ConfirmDialog");
   var ConfirmDialog = _ConfirmDialog;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ContentMetadataView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ContentMetadataView.js
   var _ContentMetadataView = class _ContentMetadataView extends YTNode {
     constructor(data) {
       var _a2;
@@ -20571,7 +20863,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ContentMetadataView, "type", "ContentMetadataView");
   var ContentMetadataView = _ContentMetadataView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ContinuationItemView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ContinuationItemView.js
   var _ContinuationItemView = class _ContinuationItemView extends YTNode {
     constructor(data) {
       super();
@@ -20585,7 +20877,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ContinuationItemView, "type", "ContinuationItemView");
   var ContinuationItemView = _ContinuationItemView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Message.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Message.js
   var _Message = class _Message extends YTNode {
     constructor(data) {
       super();
@@ -20597,7 +20889,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Message, "type", "Message");
   var Message = _Message;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ConversationBar.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ConversationBar.js
   var _ConversationBar = class _ConversationBar extends YTNode {
     constructor(data) {
       super();
@@ -20609,7 +20901,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ConversationBar, "type", "ConversationBar");
   var ConversationBar = _ConversationBar;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CopyLink.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CopyLink.js
   var _CopyLink = class _CopyLink extends YTNode {
     constructor(data) {
       super();
@@ -20625,7 +20917,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CopyLink, "type", "CopyLink");
   var CopyLink = _CopyLink;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DropdownView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DropdownView.js
   var _DropdownView = class _DropdownView extends YTNode {
     constructor(data) {
       super();
@@ -20659,7 +20951,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DropdownView, "type", "DropdownView");
   var DropdownView = _DropdownView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TextFieldView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TextFieldView.js
   var _TextFieldView = class _TextFieldView extends YTNode {
     constructor(data) {
       super();
@@ -20697,7 +20989,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TextFieldView, "type", "TextFieldView");
   var TextFieldView = _TextFieldView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/CreatePlaylistDialogFormView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/CreatePlaylistDialogFormView.js
   var _CreatePlaylistDialogFormView = class _CreatePlaylistDialogFormView extends YTNode {
     constructor(data) {
       super();
@@ -20719,7 +21011,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CreatePlaylistDialogFormView, "type", "CreatePlaylistDialogFormView");
   var CreatePlaylistDialogFormView = _CreatePlaylistDialogFormView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DecoratedAvatarView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DecoratedAvatarView.js
   var _DecoratedAvatarView = class _DecoratedAvatarView extends YTNode {
     constructor(data) {
       super();
@@ -20735,7 +21027,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DecoratedAvatarView, "type", "DecoratedAvatarView");
   var DecoratedAvatarView = _DecoratedAvatarView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HeatMarker.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/HeatMarker.js
   var _HeatMarker = class _HeatMarker extends YTNode {
     constructor(data) {
       super();
@@ -20751,7 +21043,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HeatMarker, "type", "HeatMarker");
   var HeatMarker = _HeatMarker;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TimedMarkerDecoration.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TimedMarkerDecoration.js
   var _TimedMarkerDecoration = class _TimedMarkerDecoration extends YTNode {
     constructor(data) {
       super();
@@ -20771,7 +21063,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TimedMarkerDecoration, "type", "TimedMarkerDecoration");
   var TimedMarkerDecoration = _TimedMarkerDecoration;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Heatmap.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Heatmap.js
   var _Heatmap = class _Heatmap extends YTNode {
     constructor(data) {
       super();
@@ -20791,7 +21083,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Heatmap, "type", "Heatmap");
   var Heatmap = _Heatmap;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MultiMarkersPlayerBar.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MultiMarkersPlayerBar.js
   var _Marker = class _Marker extends YTNode {
     constructor(data) {
       super();
@@ -20824,7 +21116,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MultiMarkersPlayerBar, "type", "MultiMarkersPlayerBar");
   var MultiMarkersPlayerBar = _MultiMarkersPlayerBar;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DecoratedPlayerBar.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DecoratedPlayerBar.js
   var _DecoratedPlayerBar = class _DecoratedPlayerBar extends YTNode {
     constructor(data) {
       super();
@@ -20838,7 +21130,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DecoratedPlayerBar, "type", "DecoratedPlayerBar");
   var DecoratedPlayerBar = _DecoratedPlayerBar;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DefaultPromoPanel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DefaultPromoPanel.js
   var _DefaultPromoPanel = class _DefaultPromoPanel extends YTNode {
     constructor(data) {
       super();
@@ -20870,7 +21162,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DefaultPromoPanel, "type", "DefaultPromoPanel");
   var DefaultPromoPanel = _DefaultPromoPanel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DescriptionPreviewView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DescriptionPreviewView.js
   var _DescriptionPreviewView = class _DescriptionPreviewView extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f;
@@ -20908,7 +21200,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DescriptionPreviewView, "type", "DescriptionPreviewView");
   var DescriptionPreviewView = _DescriptionPreviewView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DialogHeaderView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DialogHeaderView.js
   var _DialogHeaderView = class _DialogHeaderView extends YTNode {
     constructor(data) {
       super();
@@ -20920,7 +21212,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DialogHeaderView, "type", "DialogHeaderView");
   var DialogHeaderView = _DialogHeaderView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PanelFooterView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PanelFooterView.js
   var _PanelFooterView = class _PanelFooterView extends YTNode {
     constructor(data) {
       super();
@@ -20936,7 +21228,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PanelFooterView, "type", "PanelFooterView");
   var PanelFooterView = _PanelFooterView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FormFooterView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/FormFooterView.js
   var _FormFooterView = class _FormFooterView extends YTNode {
     constructor(data) {
       super();
@@ -20952,7 +21244,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FormFooterView, "type", "FormFooterView");
   var FormFooterView = _FormFooterView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DownloadListItemView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DownloadListItemView.js
   var _DownloadListItemView = class _DownloadListItemView extends YTNode {
     constructor(data) {
       super();
@@ -20966,13 +21258,45 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DownloadListItemView, "type", "DownloadListItemView");
   var DownloadListItemView = _DownloadListItemView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ListView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ToggleableListItemView.js
+  var _ToggleableListItemView = class _ToggleableListItemView extends YTNode {
+    constructor(data) {
+      var _a2;
+      super();
+      __publicField(this, "default_list_item");
+      __publicField(this, "toggled_list_item");
+      __publicField(this, "initial_state");
+      __publicField(this, "entity_key");
+      __publicField(this, "entity_selector_type");
+      this.default_list_item = parser_exports.parseItem(data.defaultListItem, ListItemView);
+      this.toggled_list_item = parser_exports.parseItem(data.toggledListItem, ListItemView);
+      this.initial_state = {
+        is_toggled: !!((_a2 = data.initialState) == null ? void 0 : _a2.isToggled)
+      };
+      this.entity_key = data.entityKey;
+      this.entity_selector_type = data.entitySelectorType;
+    }
+    /**
+     * The list item matching the current toggle state.
+     */
+    get list_item() {
+      return this.initial_state.is_toggled ? this.toggled_list_item : this.default_list_item;
+    }
+    get is_toggled() {
+      return this.initial_state.is_toggled;
+    }
+  };
+  __name(_ToggleableListItemView, "ToggleableListItemView");
+  __publicField(_ToggleableListItemView, "type", "ToggleableListItemView");
+  var ToggleableListItemView = _ToggleableListItemView;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ListView.js
   var _ListView = class _ListView extends YTNode {
     constructor(data) {
       super();
       __publicField(this, "items");
       __publicField(this, "renderer_context");
-      this.items = parser_exports.parseArray(data.listItems, [ListItemView, DownloadListItemView]);
+      this.items = parser_exports.parseArray(data.listItems, [ListItemView, DownloadListItemView, ToggleableListItemView]);
       if ("rendererContext" in data) {
         this.renderer_context = new RendererContext(data.rendererContext);
       }
@@ -20982,7 +21306,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ListView, "type", "ListView");
   var ListView = _ListView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DialogView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DialogView.js
   var _DialogView = class _DialogView extends YTNode {
     constructor(data) {
       super();
@@ -20998,7 +21322,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DialogView, "type", "DialogView");
   var DialogView = _DialogView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DidYouMean.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DidYouMean.js
   var _DidYouMean = class _DidYouMean extends YTNode {
     constructor(data) {
       super();
@@ -21014,7 +21338,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DidYouMean, "type", "DidYouMean");
   var DidYouMean = _DidYouMean;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DismissableDialogContentSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DismissableDialogContentSection.js
   var _DismissableDialogContentSection = class _DismissableDialogContentSection extends YTNode {
     constructor(data) {
       super();
@@ -21028,7 +21352,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DismissableDialogContentSection, "type", "DismissableDialogContentSection");
   var DismissableDialogContentSection = _DismissableDialogContentSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DismissableDialog.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DismissableDialog.js
   var _DismissableDialog = class _DismissableDialog extends YTNode {
     constructor(data) {
       super();
@@ -21046,7 +21370,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DismissableDialog, "type", "DismissableDialog");
   var DismissableDialog = _DismissableDialog;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/DynamicTextView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/DynamicTextView.js
   var _DynamicTextView = class _DynamicTextView extends YTNode {
     constructor(data) {
       super();
@@ -21060,7 +21384,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DynamicTextView, "type", "DynamicTextView");
   var DynamicTextView = _DynamicTextView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/ChildElement.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/ChildElement.js
   var _ChildElement = class _ChildElement extends YTNode {
     constructor(data) {
       var _a2;
@@ -21081,7 +21405,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ChildElement, "type", "ChildElement");
   var ChildElement = _ChildElement;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Element.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Element.js
   var _Element = class _Element extends YTNode {
     constructor(data) {
       var _a2;
@@ -21102,7 +21426,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Element, "type", "Element");
   var Element = _Element;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EmergencyOnebox.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/EmergencyOnebox.js
   var _EmergencyOnebox = class _EmergencyOnebox extends YTNode {
     constructor(data) {
       super();
@@ -21118,7 +21442,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EmergencyOnebox, "type", "EmergencyOnebox");
   var EmergencyOnebox = _EmergencyOnebox;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EmojiPickerCategory.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/EmojiPickerCategory.js
   var _EmojiPickerCategory = class _EmojiPickerCategory extends YTNode {
     constructor(data) {
       super();
@@ -21138,7 +21462,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EmojiPickerCategory, "type", "EmojiPickerCategory");
   var EmojiPickerCategory = _EmojiPickerCategory;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EmojiPickerCategoryButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/EmojiPickerCategoryButton.js
   var _EmojiPickerCategoryButton = class _EmojiPickerCategoryButton extends YTNode {
     constructor(data) {
       var _a2;
@@ -21157,7 +21481,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EmojiPickerCategoryButton, "type", "EmojiPickerCategoryButton");
   var EmojiPickerCategoryButton = _EmojiPickerCategoryButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EmojiPickerUpsellCategory.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/EmojiPickerUpsellCategory.js
   var _EmojiPickerUpsellCategory = class _EmojiPickerUpsellCategory extends YTNode {
     constructor(data) {
       super();
@@ -21179,7 +21503,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EmojiPickerUpsellCategory, "type", "EmojiPickerUpsellCategory");
   var EmojiPickerUpsellCategory = _EmojiPickerUpsellCategory;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/AddToPlaylistServiceEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/AddToPlaylistServiceEndpoint.js
   var API_PATH2 = "playlist/get_add_to_playlist";
   var _data4;
   var _AddToPlaylistServiceEndpoint = class _AddToPlaylistServiceEndpoint extends YTNode {
@@ -21207,7 +21531,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddToPlaylistServiceEndpoint, "type", "AddToPlaylistServiceEndpoint");
   var AddToPlaylistServiceEndpoint = _AddToPlaylistServiceEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/AddToPlaylistEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/AddToPlaylistEndpoint.js
   var _AddToPlaylistEndpoint = class _AddToPlaylistEndpoint extends AddToPlaylistServiceEndpoint {
     constructor(data) {
       super(data);
@@ -21217,7 +21541,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddToPlaylistEndpoint, "type", "AddToPlaylistEndpoint");
   var AddToPlaylistEndpoint = _AddToPlaylistEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/BrowseEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/BrowseEndpoint.js
   var API_PATH3 = "browse";
   var _data5;
   var _BrowseEndpoint = class _BrowseEndpoint extends YTNode {
@@ -21264,7 +21588,19 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BrowseEndpoint, "type", "BrowseEndpoint");
   var BrowseEndpoint = _BrowseEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/CreateCommentEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ConfirmDialogEndpoint.js
+  var _ConfirmDialogEndpoint = class _ConfirmDialogEndpoint extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "content");
+      this.content = parser_exports.parseItem(data.content, ConfirmDialog);
+    }
+  };
+  __name(_ConfirmDialogEndpoint, "ConfirmDialogEndpoint");
+  __publicField(_ConfirmDialogEndpoint, "type", "ConfirmDialogEndpoint");
+  var ConfirmDialogEndpoint = _ConfirmDialogEndpoint;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/CreateCommentEndpoint.js
   var API_PATH4 = "comment/create_comment";
   var _data6;
   var _CreateCommentEndpoint = class _CreateCommentEndpoint extends YTNode {
@@ -21304,7 +21640,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CreateCommentEndpoint, "type", "CreateCommentEndpoint");
   var CreateCommentEndpoint = _CreateCommentEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/CreatePlaylistServiceEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/CreatePlaylistServiceEndpoint.js
   var API_PATH5 = "playlist/create";
   var _data7;
   var _CreatePlaylistServiceEndpoint = class _CreatePlaylistServiceEndpoint extends YTNode {
@@ -21338,7 +21674,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CreatePlaylistServiceEndpoint, "type", "CreatePlaylistServiceEndpoint");
   var CreatePlaylistServiceEndpoint = _CreatePlaylistServiceEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/DeletePlaylistEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/DeletePlaylistEndpoint.js
   var API_PATH6 = "playlist/delete";
   var _data8;
   var _DeletePlaylistEndpoint = class _DeletePlaylistEndpoint extends YTNode {
@@ -21362,7 +21698,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DeletePlaylistEndpoint, "type", "DeletePlaylistEndpoint");
   var DeletePlaylistEndpoint = _DeletePlaylistEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/FeedbackEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/FeedbackEndpoint.js
   var API_PATH7 = "feedback";
   var _data9;
   var _FeedbackEndpoint = class _FeedbackEndpoint extends YTNode {
@@ -21376,12 +21712,17 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
     }
     buildRequest() {
       const request = {};
+      request.feedbackTokens = [];
       if (__privateGet(this, _data9).feedbackToken)
-        request.feedbackTokens = [__privateGet(this, _data9).feedbackToken];
+        request.feedbackTokens.push(__privateGet(this, _data9).feedbackToken);
       if (__privateGet(this, _data9).cpn)
         request.feedbackContext = { cpn: __privateGet(this, _data9).cpn };
-      request.isFeedbackTokenUnencrypted = !!__privateGet(this, _data9).isFeedbackTokenUnencrypted;
       request.shouldMerge = !!__privateGet(this, _data9).shouldMerge;
+      request.isFeedbackTokenUnencrypted = !!__privateGet(this, _data9).isFeedbackTokenUnencrypted;
+      if (__privateGet(this, _data9).extraFeedbackTokens) {
+        request.shouldMerge = true;
+        request.feedbackTokens.push(...__privateGet(this, _data9).extraFeedbackTokens);
+      }
       return request;
     }
   };
@@ -21390,7 +21731,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FeedbackEndpoint, "type", "FeedbackEndpoint");
   var FeedbackEndpoint = _FeedbackEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/GetAccountsListInnertubeEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/GetAccountsListInnertubeEndpoint.js
   var API_PATH8 = "account/accounts_list";
   var _data10;
   var _GetAccountsListInnertubeEndpoint = class _GetAccountsListInnertubeEndpoint extends YTNode {
@@ -21435,7 +21776,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GetAccountsListInnertubeEndpoint, "type", "GetAccountsListInnertubeEndpoint");
   var GetAccountsListInnertubeEndpoint = _GetAccountsListInnertubeEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/HideEngagementPanelEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/HideEngagementPanelEndpoint.js
   var _HideEngagementPanelEndpoint = class _HideEngagementPanelEndpoint extends YTNode {
     constructor(data) {
       super();
@@ -21447,7 +21788,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HideEngagementPanelEndpoint, "type", "HideEngagementPanelEndpoint");
   var HideEngagementPanelEndpoint = _HideEngagementPanelEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/LikeEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/LikeEndpoint.js
   var LIKE_API_PATH = "like/like";
   var DISLIKE_API_PATH = "like/dislike";
   var REMOVE_LIKE_API_PATH = "like/removelike";
@@ -21488,7 +21829,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LikeEndpoint, "type", "LikeEndpoint");
   var LikeEndpoint = _LikeEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/LiveChatItemContextMenuEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/LiveChatItemContextMenuEndpoint.js
   var API_PATH9 = "live_chat/get_item_context_menu";
   var _data12;
   var _LiveChatItemContextMenuEndpoint = class _LiveChatItemContextMenuEndpoint extends YTNode {
@@ -21512,7 +21853,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatItemContextMenuEndpoint, "type", "LiveChatItemContextMenuEndpoint");
   var LiveChatItemContextMenuEndpoint = _LiveChatItemContextMenuEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ModifyChannelNotificationPreferenceEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ModifyChannelNotificationPreferenceEndpoint.js
   var API_PATH10 = "notification/modify_channel_preference";
   var _data13;
   var _ModifyChannelNotificationPreferenceEndpoint = class _ModifyChannelNotificationPreferenceEndpoint extends YTNode {
@@ -21538,7 +21879,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ModifyChannelNotificationPreferenceEndpoint, "type", "ModifyChannelNotificationPreferenceEndpoint");
   var ModifyChannelNotificationPreferenceEndpoint = _ModifyChannelNotificationPreferenceEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/PerformCommentActionEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/PerformCommentActionEndpoint.js
   var API_PATH11 = "comment/perform_comment_action";
   var _data14;
   var _PerformCommentActionEndpoint = class _PerformCommentActionEndpoint extends YTNode {
@@ -21564,7 +21905,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PerformCommentActionEndpoint, "type", "PerformCommentActionEndpoint");
   var PerformCommentActionEndpoint = _PerformCommentActionEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/PlaylistEditEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/PlaylistEditEndpoint.js
   var API_PATH12 = "browse/edit_playlist";
   var _data15;
   var _PlaylistEditEndpoint = class _PlaylistEditEndpoint extends YTNode {
@@ -21592,7 +21933,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistEditEndpoint, "type", "PlaylistEditEndpoint");
   var PlaylistEditEndpoint = _PlaylistEditEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/WatchEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/WatchEndpoint.js
   var API_PATH13 = "player";
   var _data16;
   var _WatchEndpoint = class _WatchEndpoint extends YTNode {
@@ -21628,7 +21969,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchEndpoint, "type", "WatchEndpoint");
   var WatchEndpoint = _WatchEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/PrefetchWatchCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/PrefetchWatchCommand.js
   var _PrefetchWatchCommand = class _PrefetchWatchCommand extends WatchEndpoint {
     constructor(data) {
       super(data);
@@ -21638,7 +21979,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PrefetchWatchCommand, "type", "PrefetchWatchCommand");
   var PrefetchWatchCommand = _PrefetchWatchCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ReelWatchEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ReelWatchEndpoint.js
   var API_PATH14 = "reel/reel_item_watch";
   var _data17;
   var _ReelWatchEndpoint = class _ReelWatchEndpoint extends YTNode {
@@ -21678,7 +22019,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReelWatchEndpoint, "type", "ReelWatchEndpoint");
   var ReelWatchEndpoint = _ReelWatchEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/SearchEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/SearchEndpoint.js
   var API_PATH15 = "search";
   var _data18;
   var _SearchEndpoint = class _SearchEndpoint extends YTNode {
@@ -21708,7 +22049,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchEndpoint, "type", "SearchEndpoint");
   var SearchEndpoint = _SearchEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ShareEntityServiceEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ShareEntityServiceEndpoint.js
   var API_PATH16 = "share/get_share_panel";
   var _data19;
   var _ShareEntityServiceEndpoint = class _ShareEntityServiceEndpoint extends YTNode {
@@ -21734,7 +22075,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShareEntityServiceEndpoint, "type", "ShareEntityServiceEndpoint");
   var ShareEntityServiceEndpoint = _ShareEntityServiceEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ShareEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ShareEndpoint.js
   var _ShareEndpoint = class _ShareEndpoint extends ShareEntityServiceEndpoint {
     constructor(data) {
       super(data);
@@ -21744,7 +22085,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShareEndpoint, "type", "ShareEndpoint");
   var ShareEndpoint = _ShareEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ShareEntityEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ShareEntityEndpoint.js
   var _ShareEntityEndpoint = class _ShareEntityEndpoint extends ShareEntityServiceEndpoint {
     constructor(data) {
       super(data);
@@ -21754,7 +22095,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShareEntityEndpoint, "type", "ShareEntityEndpoint");
   var ShareEntityEndpoint = _ShareEntityEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ShowEngagementPanelEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/ShowEngagementPanelEndpoint.js
   var API_PATH17 = "get_panel";
   var _data20;
   var _ShowEngagementPanelEndpoint = class _ShowEngagementPanelEndpoint extends YTNode {
@@ -21786,7 +22127,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowEngagementPanelEndpoint, "type", "ShowEngagementPanelEndpoint");
   var ShowEngagementPanelEndpoint = _ShowEngagementPanelEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/SignalServiceEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/SignalServiceEndpoint.js
   var _SignalServiceEndpoint = class _SignalServiceEndpoint extends YTNode {
     constructor(data) {
       super();
@@ -21805,7 +22146,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SignalServiceEndpoint, "type", "SignalServiceEndpoint");
   var SignalServiceEndpoint = _SignalServiceEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/SubscribeEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/SubscribeEndpoint.js
   var API_PATH18 = "subscription/subscribe";
   var _data21;
   var _SubscribeEndpoint = class _SubscribeEndpoint extends YTNode {
@@ -21837,7 +22178,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SubscribeEndpoint, "type", "SubscribeEndpoint");
   var SubscribeEndpoint = _SubscribeEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/UnsubscribeEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/UnsubscribeEndpoint.js
   var API_PATH19 = "subscription/unsubscribe";
   var _data22;
   var _UnsubscribeEndpoint = class _UnsubscribeEndpoint extends YTNode {
@@ -21865,7 +22206,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UnsubscribeEndpoint, "type", "UnsubscribeEndpoint");
   var UnsubscribeEndpoint = _UnsubscribeEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/endpoints/WatchNextEndpoint.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/endpoints/WatchNextEndpoint.js
   var API_PATH20 = "next";
   var _data23;
   var _WatchNextEndpoint = class _WatchNextEndpoint extends YTNode {
@@ -21897,7 +22238,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchNextEndpoint, "type", "WatchNextEndpoint");
   var WatchNextEndpoint = _WatchNextEndpoint;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Endscreen.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Endscreen.js
   var _Endscreen = class _Endscreen extends YTNode {
     constructor(data) {
       super();
@@ -21911,7 +22252,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Endscreen, "type", "Endscreen");
   var Endscreen = _Endscreen;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EndscreenElement.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/EndscreenElement.js
   var _EndscreenElement = class _EndscreenElement extends YTNode {
     constructor(data) {
       super();
@@ -21973,7 +22314,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EndscreenElement, "type", "EndscreenElement");
   var EndscreenElement = _EndscreenElement;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EndScreenPlaylist.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/EndScreenPlaylist.js
   var _EndScreenPlaylist = class _EndScreenPlaylist extends YTNode {
     constructor(data) {
       super();
@@ -21995,7 +22336,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EndScreenPlaylist, "type", "EndScreenPlaylist");
   var EndScreenPlaylist = _EndScreenPlaylist;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/EndScreenVideo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/EndScreenVideo.js
   var _EndScreenVideo = class _EndScreenVideo extends YTNode {
     constructor(data) {
       super();
@@ -22026,7 +22367,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_EndScreenVideo, "type", "EndScreenVideo");
   var EndScreenVideo = _EndScreenVideo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ExpandableTab.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ExpandableTab.js
   var _ExpandableTab = class _ExpandableTab extends YTNode {
     constructor(data) {
       super();
@@ -22044,7 +22385,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ExpandableTab, "type", "ExpandableTab");
   var ExpandableTab = _ExpandableTab;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ExpandedShelfContents.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ExpandedShelfContents.js
   var _ExpandedShelfContents = class _ExpandedShelfContents extends YTNode {
     constructor(data) {
       super();
@@ -22060,7 +22401,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ExpandedShelfContents, "type", "ExpandedShelfContents");
   var ExpandedShelfContents = _ExpandedShelfContents;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FancyDismissibleDialog.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/FancyDismissibleDialog.js
   var _FancyDismissibleDialog = class _FancyDismissibleDialog extends YTNode {
     constructor(data) {
       super();
@@ -22074,19 +22415,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FancyDismissibleDialog, "type", "FancyDismissibleDialog");
   var FancyDismissibleDialog = _FancyDismissibleDialog;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FeedFilterChipBar.js
-  var _FeedFilterChipBar = class _FeedFilterChipBar extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "contents");
-      this.contents = parser_exports.parseArray(data.contents, ChipCloudChip);
-    }
-  };
-  __name(_FeedFilterChipBar, "FeedFilterChipBar");
-  __publicField(_FeedFilterChipBar, "type", "FeedFilterChipBar");
-  var FeedFilterChipBar = _FeedFilterChipBar;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FeedNudge.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/FeedNudge.js
   var _FeedNudge = class _FeedNudge extends YTNode {
     constructor(data) {
       super();
@@ -22108,7 +22437,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FeedNudge, "type", "FeedNudge");
   var FeedNudge = _FeedNudge;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FeedTabbedHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/FeedTabbedHeader.js
   var _FeedTabbedHeader = class _FeedTabbedHeader extends YTNode {
     constructor(data) {
       super();
@@ -22120,7 +22449,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FeedTabbedHeader, "type", "FeedTabbedHeader");
   var FeedTabbedHeader = _FeedTabbedHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ToggleFormField.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ToggleFormField.js
   var _ToggleFormField = class _ToggleFormField extends YTNode {
     constructor(data) {
       super();
@@ -22128,7 +22457,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
       __publicField(this, "toggled");
       __publicField(this, "toggle_on_action");
       __publicField(this, "toggle_off_action");
-      this.label = new Text(data.label);
+      this.label = new Text2(data.label);
       this.toggled = data.toggled;
       if ("toggleOnAction" in data)
         this.toggle_on_action = new NavigationEndpoint(data.toggleOnAction);
@@ -22140,7 +22469,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ToggleFormField, "type", "ToggleFormField");
   var ToggleFormField = _ToggleFormField;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Form.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Form.js
   var _Form = class _Form extends YTNode {
     constructor(data) {
       super();
@@ -22152,7 +22481,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Form, "type", "Form");
   var Form = _Form;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/FormPopup.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/FormPopup.js
   var _FormPopup = class _FormPopup extends YTNode {
     constructor(data) {
       super();
@@ -22168,7 +22497,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_FormPopup, "type", "FormPopup");
   var FormPopup = _FormPopup;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GameDetails.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GameDetails.js
   var _GameDetails = class _GameDetails extends YTNode {
     constructor(data) {
       super();
@@ -22188,7 +22517,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GameDetails, "type", "GameDetails");
   var GameDetails = _GameDetails;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Grid.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Grid.js
   var _Grid = class _Grid extends YTNode {
     constructor(data) {
       var _a2, _b2, _c;
@@ -22223,7 +22552,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Grid, "type", "Grid");
   var Grid = _Grid;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridChannel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GridChannel.js
   var _GridChannel = class _GridChannel extends YTNode {
     constructor(data) {
       super();
@@ -22248,7 +22577,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridChannel, "type", "GridChannel");
   var GridChannel = _GridChannel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GridHeader.js
   var _GridHeader = class _GridHeader extends YTNode {
     constructor(data) {
       super();
@@ -22260,7 +22589,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridHeader, "type", "GridHeader");
   var GridHeader = _GridHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridMix.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GridMix.js
   var _GridMix = class _GridMix extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -22289,7 +22618,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridMix, "type", "GridMix");
   var GridMix = _GridMix;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridMovie.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GridMovie.js
   var _GridMovie = class _GridMovie extends YTNode {
     constructor(data) {
       var _a2;
@@ -22317,7 +22646,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridMovie, "type", "GridMovie");
   var GridMovie = _GridMovie;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridPlaylist.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GridPlaylist.js
   var _GridPlaylist = class _GridPlaylist extends YTNode {
     constructor(data) {
       var _a2;
@@ -22354,7 +22683,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridPlaylist, "type", "GridPlaylist");
   var GridPlaylist = _GridPlaylist;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridShelfView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GridShelfView.js
   var _GridShelfView = class _GridShelfView extends YTNode {
     constructor(data) {
       super();
@@ -22378,7 +22707,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridShelfView, "type", "GridShelfView");
   var GridShelfView = _GridShelfView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ShowCustomThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ShowCustomThumbnail.js
   var _ShowCustomThumbnail = class _ShowCustomThumbnail extends YTNode {
     constructor(data) {
       super();
@@ -22390,7 +22719,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowCustomThumbnail, "type", "ShowCustomThumbnail");
   var ShowCustomThumbnail = _ShowCustomThumbnail;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayBottomPanel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayBottomPanel.js
   var _ThumbnailOverlayBottomPanel = class _ThumbnailOverlayBottomPanel extends YTNode {
     constructor(data) {
       super();
@@ -22408,7 +22737,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayBottomPanel, "type", "ThumbnailOverlayBottomPanel");
   var ThumbnailOverlayBottomPanel = _ThumbnailOverlayBottomPanel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridShow.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GridShow.js
   var _GridShow = class _GridShow extends YTNode {
     constructor(data) {
       super();
@@ -22430,7 +22759,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridShow, "type", "GridShow");
   var GridShow = _GridShow;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GridVideo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GridVideo.js
   var _GridVideo = class _GridVideo extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -22487,7 +22816,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GridVideo, "type", "GridVideo");
   var GridVideo = _GridVideo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GuideEntry.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GuideEntry.js
   var _GuideEntry = class _GuideEntry extends YTNode {
     constructor(data) {
       super();
@@ -22515,7 +22844,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GuideEntry, "type", "GuideEntry");
   var GuideEntry = _GuideEntry;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GuideCollapsibleEntry.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GuideCollapsibleEntry.js
   var _GuideCollapsibleEntry = class _GuideCollapsibleEntry extends YTNode {
     constructor(data) {
       super();
@@ -22531,7 +22860,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GuideCollapsibleEntry, "type", "GuideCollapsibleEntry");
   var GuideCollapsibleEntry = _GuideCollapsibleEntry;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GuideCollapsibleSectionEntry.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GuideCollapsibleSectionEntry.js
   var _GuideCollapsibleSectionEntry = class _GuideCollapsibleSectionEntry extends YTNode {
     constructor(data) {
       super();
@@ -22549,7 +22878,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GuideCollapsibleSectionEntry, "type", "GuideCollapsibleSectionEntry");
   var GuideCollapsibleSectionEntry = _GuideCollapsibleSectionEntry;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GuideDownloadsEntry.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GuideDownloadsEntry.js
   var _GuideDownloadsEntry = class _GuideDownloadsEntry extends GuideEntry {
     constructor(data) {
       super(data.entryRenderer.guideEntryRenderer);
@@ -22561,7 +22890,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GuideDownloadsEntry, "type", "GuideDownloadsEntry");
   var GuideDownloadsEntry = _GuideDownloadsEntry;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GuideSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GuideSection.js
   var _GuideSection = class _GuideSection extends YTNode {
     constructor(data) {
       super();
@@ -22577,14 +22906,14 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_GuideSection, "type", "GuideSection");
   var GuideSection = _GuideSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/GuideSubscriptionsSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/GuideSubscriptionsSection.js
   var _GuideSubscriptionsSection = class _GuideSubscriptionsSection extends GuideSection {
   };
   __name(_GuideSubscriptionsSection, "GuideSubscriptionsSection");
   __publicField(_GuideSubscriptionsSection, "type", "GuideSubscriptionsSection");
   var GuideSubscriptionsSection = _GuideSubscriptionsSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HashtagHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/HashtagHeader.js
   var _HashtagHeader = class _HashtagHeader extends YTNode {
     constructor(data) {
       super();
@@ -22598,7 +22927,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HashtagHeader, "type", "HashtagHeader");
   var HashtagHeader = _HashtagHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HashtagTile.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/HashtagTile.js
   var _HashtagTile = class _HashtagTile extends YTNode {
     constructor(data) {
       super();
@@ -22622,7 +22951,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HashtagTile, "type", "HashtagTile");
   var HashtagTile = _HashtagTile;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HeroPlaylistThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/HeroPlaylistThumbnail.js
   var _HeroPlaylistThumbnail = class _HeroPlaylistThumbnail extends YTNode {
     constructor(data) {
       super();
@@ -22636,7 +22965,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HeroPlaylistThumbnail, "type", "HeroPlaylistThumbnail");
   var HeroPlaylistThumbnail = _HeroPlaylistThumbnail;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HighlightsCarousel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/HighlightsCarousel.js
   var _Panel = class _Panel extends YTNode {
     constructor(data) {
       super();
@@ -22687,7 +23016,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HighlightsCarousel, "type", "HighlightsCarousel");
   var HighlightsCarousel = _HighlightsCarousel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchSuggestion.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SearchSuggestion.js
   var _SearchSuggestion = class _SearchSuggestion extends YTNode {
     constructor(data) {
       super();
@@ -22709,7 +23038,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchSuggestion, "type", "SearchSuggestion");
   var SearchSuggestion = _SearchSuggestion;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HistorySuggestion.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/HistorySuggestion.js
   var _HistorySuggestion = class _HistorySuggestion extends SearchSuggestion {
     constructor(data) {
       super(data);
@@ -22719,7 +23048,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HistorySuggestion, "type", "HistorySuggestion");
   var HistorySuggestion = _HistorySuggestion;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/HorizontalMovieList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/HorizontalMovieList.js
   var _HorizontalMovieList = class _HorizontalMovieList extends YTNode {
     constructor(data) {
       super();
@@ -22739,7 +23068,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_HorizontalMovieList, "type", "HorizontalMovieList");
   var HorizontalMovieList = _HorizontalMovieList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/IconLink.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/IconLink.js
   var _IconLink = class _IconLink extends YTNode {
     constructor(data) {
       var _a2;
@@ -22758,7 +23087,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_IconLink, "type", "IconLink");
   var IconLink = _IconLink;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ImageBannerView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ImageBannerView.js
   var _ImageBannerView = class _ImageBannerView extends YTNode {
     constructor(data) {
       super();
@@ -22772,7 +23101,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ImageBannerView, "type", "ImageBannerView");
   var ImageBannerView = _ImageBannerView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/IncludingResultsFor.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/IncludingResultsFor.js
   var _IncludingResultsFor = class _IncludingResultsFor extends YTNode {
     constructor(data) {
       super();
@@ -22794,7 +23123,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_IncludingResultsFor, "type", "IncludingResultsFor");
   var IncludingResultsFor = _IncludingResultsFor;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/InfoPanelContent.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/InfoPanelContent.js
   var _InfoPanelContent = class _InfoPanelContent extends YTNode {
     constructor(data) {
       super();
@@ -22826,7 +23155,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_InfoPanelContent, "type", "InfoPanelContent");
   var InfoPanelContent = _InfoPanelContent;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/InfoPanelContainer.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/InfoPanelContainer.js
   var _InfoPanelContainer = class _InfoPanelContainer extends YTNode {
     constructor(data) {
       var _a2;
@@ -22854,7 +23183,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_InfoPanelContainer, "type", "InfoPanelContainer");
   var InfoPanelContainer = _InfoPanelContainer;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/InteractiveTabbedHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/InteractiveTabbedHeader.js
   var _InteractiveTabbedHeader = class _InteractiveTabbedHeader extends YTNode {
     constructor(data) {
       super();
@@ -22882,102 +23211,42 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_InteractiveTabbedHeader, "type", "InteractiveTabbedHeader");
   var InteractiveTabbedHeader = _InteractiveTabbedHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ItemSectionHeader.js
-  var _ItemSectionHeader = class _ItemSectionHeader extends YTNode {
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/InterstitialView.js
+  var _InterstitialView = class _InterstitialView extends YTNode {
     constructor(data) {
       super();
       __publicField(this, "title");
-      this.title = new Text2(data.title);
-    }
-  };
-  __name(_ItemSectionHeader, "ItemSectionHeader");
-  __publicField(_ItemSectionHeader, "type", "ItemSectionHeader");
-  var ItemSectionHeader = _ItemSectionHeader;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ItemSectionTab.js
-  var _ItemSectionTab = class _ItemSectionTab extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "title");
-      __publicField(this, "selected");
-      __publicField(this, "endpoint");
-      this.title = new Text2(data.title);
-      this.selected = !!data.selected;
-      this.endpoint = new NavigationEndpoint(data.endpoint);
-    }
-  };
-  __name(_ItemSectionTab, "ItemSectionTab");
-  __publicField(_ItemSectionTab, "type", "Tab");
-  var ItemSectionTab = _ItemSectionTab;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ItemSectionTabbedHeader.js
-  var _ItemSectionTabbedHeader = class _ItemSectionTabbedHeader extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "title");
-      __publicField(this, "tabs");
-      __publicField(this, "end_items");
-      this.title = new Text2(data.title);
-      this.tabs = parser_exports.parseArray(data.tabs, ItemSectionTab);
-      if (Reflect.has(data, "endItems")) {
-        this.end_items = parser_exports.parseArray(data.endItems);
+      __publicField(this, "description");
+      __publicField(this, "icon");
+      __publicField(this, "primary_button");
+      this.title = Text2.fromAttributed(data.title);
+      this.description = Text2.fromAttributed(data.description);
+      if ("icon" in data) {
+        this.icon = Thumbnail.fromResponse(data.icon);
       }
+      this.primary_button = parser_exports.parseItem(data.primaryButton, ButtonView);
     }
   };
-  __name(_ItemSectionTabbedHeader, "ItemSectionTabbedHeader");
-  __publicField(_ItemSectionTabbedHeader, "type", "ItemSectionTabbedHeader");
-  var ItemSectionTabbedHeader = _ItemSectionTabbedHeader;
+  __name(_InterstitialView, "InterstitialView");
+  __publicField(_InterstitialView, "type", "InterstitialView");
+  var InterstitialView = _InterstitialView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SortFilterHeader.js
-  var _SortFilterHeader = class _SortFilterHeader extends YTNode {
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LinearLayoutView.js
+  var _LinearLayoutView = class _LinearLayoutView extends YTNode {
     constructor(data) {
       super();
-      __publicField(this, "filter_menu");
-      this.filter_menu = parser_exports.parseItem(data.filterMenu, nodes_exports.SortFilterSubMenu);
+      __publicField(this, "items");
+      __publicField(this, "renderer_context");
+      this.items = parser_exports.parseArray(data.items);
+      if ("rendererContext" in data)
+        this.renderer_context = new RendererContext(data.rendererContext);
     }
   };
-  __name(_SortFilterHeader, "SortFilterHeader");
-  __publicField(_SortFilterHeader, "type", "SortFilterHeader");
-  var SortFilterHeader = _SortFilterHeader;
+  __name(_LinearLayoutView, "LinearLayoutView");
+  __publicField(_LinearLayoutView, "type", "LinearLayoutView");
+  var LinearLayoutView = _LinearLayoutView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RelatedChipCloud.js
-  var _RelatedChipCloud = class _RelatedChipCloud extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "content");
-      __publicField(this, "show_prominent_chips");
-      this.content = parser_exports.parseItem(data.content);
-      this.show_prominent_chips = Boolean(data.showProminentChips);
-    }
-  };
-  __name(_RelatedChipCloud, "RelatedChipCloud");
-  __publicField(_RelatedChipCloud, "type", "RelatedChipCloud");
-  var RelatedChipCloud = _RelatedChipCloud;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ItemSection.js
-  var _ItemSection = class _ItemSection extends YTNode {
-    constructor(data) {
-      var _a2, _b2, _c;
-      super();
-      __publicField(this, "header");
-      __publicField(this, "contents");
-      __publicField(this, "target_id");
-      __publicField(this, "continuation");
-      this.header = parser_exports.parseItem(data.header, [CommentsHeader, ItemSectionHeader, ItemSectionTabbedHeader, SortFilterHeader, FeedFilterChipBar, ChipBarView, RelatedChipCloud]);
-      this.contents = parser_exports.parseArray(data.contents);
-      if (data.targetId || data.sectionIdentifier) {
-        this.target_id = data.targetId || data.sectionIdentifier;
-      }
-      if (data.continuations) {
-        this.continuation = (_c = (_b2 = (_a2 = data.continuations) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.nextContinuationData) == null ? void 0 : _c.continuation;
-      }
-    }
-  };
-  __name(_ItemSection, "ItemSection");
-  __publicField(_ItemSection, "type", "ItemSection");
-  var ItemSection = _ItemSection;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChat.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LiveChat.js
   var _LiveChat = class _LiveChat extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -23004,7 +23273,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChat, "type", "LiveChat");
   var LiveChat = _LiveChat;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBannerHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBannerHeader.js
   var _LiveChatBannerHeader = class _LiveChatBannerHeader extends YTNode {
     constructor(data) {
       super();
@@ -23022,7 +23291,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatBannerHeader, "type", "LiveChatBannerHeader");
   var LiveChatBannerHeader = _LiveChatBannerHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBanner.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBanner.js
   var _LiveChatBanner = class _LiveChatBanner extends YTNode {
     constructor(data) {
       super();
@@ -23060,7 +23329,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatBanner, "type", "LiveChatBanner");
   var LiveChatBanner = _LiveChatBanner;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/AddBannerToLiveChatCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/AddBannerToLiveChatCommand.js
   var _AddBannerToLiveChatCommand = class _AddBannerToLiveChatCommand extends YTNode {
     constructor(data) {
       super();
@@ -23072,7 +23341,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddBannerToLiveChatCommand, "type", "AddBannerToLiveChatCommand");
   var AddBannerToLiveChatCommand = _AddBannerToLiveChatCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/AddChatItemAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/AddChatItemAction.js
   var _AddChatItemAction = class _AddChatItemAction extends YTNode {
     constructor(data) {
       super();
@@ -23088,7 +23357,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddChatItemAction, "type", "AddChatItemAction");
   var AddChatItemAction = _AddChatItemAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/AddLiveChatTickerItemAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/AddLiveChatTickerItemAction.js
   var _AddLiveChatTickerItemAction = class _AddLiveChatTickerItemAction extends YTNode {
     // TODO: check this assumption.
     constructor(data) {
@@ -23103,7 +23372,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AddLiveChatTickerItemAction, "type", "AddLiveChatTickerItemAction");
   var AddLiveChatTickerItemAction = _AddLiveChatTickerItemAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/DimChatItemAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/DimChatItemAction.js
   var _DimChatItemAction = class _DimChatItemAction extends YTNode {
     constructor(data) {
       super();
@@ -23115,7 +23384,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_DimChatItemAction, "type", "DimChatItemAction");
   var DimChatItemAction = _DimChatItemAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/BumperUserEduContentView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/BumperUserEduContentView.js
   var _BumperUserEduContentView = class _BumperUserEduContentView extends YTNode {
     constructor(data) {
       super();
@@ -23131,7 +23400,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_BumperUserEduContentView, "type", "BumperUserEduContentView");
   var BumperUserEduContentView = _BumperUserEduContentView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/CreatorHeartView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/CreatorHeartView.js
   var _CreatorHeartView = class _CreatorHeartView extends YTNode {
     constructor(data) {
       super();
@@ -23163,7 +23432,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_CreatorHeartView, "type", "CreatorHeartView");
   var CreatorHeartView = _CreatorHeartView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatAutoModMessage.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatAutoModMessage.js
   var _LiveChatAutoModMessage = class _LiveChatAutoModMessage extends YTNode {
     constructor(data) {
       super();
@@ -23185,7 +23454,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatAutoModMessage, "type", "LiveChatAutoModMessage");
   var LiveChatAutoModMessage = _LiveChatAutoModMessage;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBannerChatSummary.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBannerChatSummary.js
   var _LiveChatBannerChatSummary = class _LiveChatBannerChatSummary extends YTNode {
     constructor(data) {
       super();
@@ -23205,7 +23474,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatBannerChatSummary, "type", "LiveChatBannerChatSummary");
   var LiveChatBannerChatSummary = _LiveChatBannerChatSummary;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBannerPoll.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBannerPoll.js
   var _LiveChatBannerPoll = class _LiveChatBannerPoll extends YTNode {
     constructor(data) {
       super();
@@ -23231,7 +23500,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatBannerPoll, "type", "LiveChatBannerPoll");
   var LiveChatBannerPoll = _LiveChatBannerPoll;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBannerRedirect.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatBannerRedirect.js
   var _LiveChatBannerRedirect = class _LiveChatBannerRedirect extends YTNode {
     constructor(data) {
       super();
@@ -23249,7 +23518,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatBannerRedirect, "type", "LiveChatBannerRedirect");
   var LiveChatBannerRedirect = _LiveChatBannerRedirect;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatItemBumperView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatItemBumperView.js
   var _LiveChatItemBumperView = class _LiveChatItemBumperView extends YTNode {
     constructor(data) {
       super();
@@ -23261,7 +23530,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatItemBumperView, "type", "LiveChatItemBumperView");
   var LiveChatItemBumperView = _LiveChatItemBumperView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatMembershipItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatMembershipItem.js
   var _LiveChatMembershipItem = class _LiveChatMembershipItem extends YTNode {
     constructor(data) {
       super();
@@ -23297,7 +23566,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatMembershipItem, "type", "LiveChatMembershipItem");
   var LiveChatMembershipItem = _LiveChatMembershipItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatModeChangeMessage.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatModeChangeMessage.js
   var _LiveChatModeChangeMessage = class _LiveChatModeChangeMessage extends YTNode {
     constructor(data) {
       super();
@@ -23321,7 +23590,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatModeChangeMessage, "type", "LiveChatModeChangeMessage");
   var LiveChatModeChangeMessage = _LiveChatModeChangeMessage;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/PdgReplyButtonView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/PdgReplyButtonView.js
   var _PdgReplyButtonView = class _PdgReplyButtonView extends YTNode {
     constructor(data) {
       super();
@@ -23337,7 +23606,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PdgReplyButtonView, "type", "PdgReplyButtonView");
   var PdgReplyButtonView = _PdgReplyButtonView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatPaidMessage.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatPaidMessage.js
   var _LiveChatPaidMessage = class _LiveChatPaidMessage extends YTNode {
     constructor(data) {
       super();
@@ -23393,7 +23662,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatPaidMessage, "type", "LiveChatPaidMessage");
   var LiveChatPaidMessage = _LiveChatPaidMessage;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatPaidSticker.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatPaidSticker.js
   var _LiveChatPaidSticker = class _LiveChatPaidSticker extends YTNode {
     constructor(data) {
       super();
@@ -23437,7 +23706,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatPaidSticker, "type", "LiveChatPaidSticker");
   var LiveChatPaidSticker = _LiveChatPaidSticker;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatPlaceholderItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatPlaceholderItem.js
   var _LiveChatPlaceholderItem = class _LiveChatPlaceholderItem extends YTNode {
     constructor(data) {
       super();
@@ -23451,7 +23720,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatPlaceholderItem, "type", "LiveChatPlaceholderItem");
   var LiveChatPlaceholderItem = _LiveChatPlaceholderItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatProductItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatProductItem.js
   var _LiveChatProductItem = class _LiveChatProductItem extends YTNode {
     constructor(data) {
       super();
@@ -23489,7 +23758,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatProductItem, "type", "LiveChatProductItem");
   var LiveChatProductItem = _LiveChatProductItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatRestrictedParticipation.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatRestrictedParticipation.js
   var _LiveChatRestrictedParticipation = class _LiveChatRestrictedParticipation extends YTNode {
     constructor(data) {
       super();
@@ -23505,7 +23774,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatRestrictedParticipation, "type", "LiveChatRestrictedParticipation");
   var LiveChatRestrictedParticipation = _LiveChatRestrictedParticipation;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatAuthorBadge.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LiveChatAuthorBadge.js
   var _LiveChatAuthorBadge = class _LiveChatAuthorBadge extends MetadataBadge {
     constructor(data) {
       super(data);
@@ -23517,7 +23786,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatAuthorBadge, "type", "LiveChatAuthorBadge");
   var LiveChatAuthorBadge = _LiveChatAuthorBadge;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatSponsorshipsHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatSponsorshipsHeader.js
   var _LiveChatSponsorshipsHeader = class _LiveChatSponsorshipsHeader extends YTNode {
     constructor(data) {
       super();
@@ -23541,7 +23810,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatSponsorshipsHeader, "type", "LiveChatSponsorshipsHeader");
   var LiveChatSponsorshipsHeader = _LiveChatSponsorshipsHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatSponsorshipsGiftPurchaseAnnouncement.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatSponsorshipsGiftPurchaseAnnouncement.js
   var _LiveChatSponsorshipsGiftPurchaseAnnouncement = class _LiveChatSponsorshipsGiftPurchaseAnnouncement extends YTNode {
     constructor(data) {
       super();
@@ -23559,7 +23828,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatSponsorshipsGiftPurchaseAnnouncement, "type", "LiveChatSponsorshipsGiftPurchaseAnnouncement");
   var LiveChatSponsorshipsGiftPurchaseAnnouncement = _LiveChatSponsorshipsGiftPurchaseAnnouncement;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatSponsorshipsGiftRedemptionAnnouncement.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatSponsorshipsGiftRedemptionAnnouncement.js
   var _LiveChatSponsorshipsGiftRedemptionAnnouncement = class _LiveChatSponsorshipsGiftRedemptionAnnouncement extends YTNode {
     constructor(data) {
       super();
@@ -23583,7 +23852,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatSponsorshipsGiftRedemptionAnnouncement, "type", "LiveChatSponsorshipsGiftRedemptionAnnouncement");
   var LiveChatSponsorshipsGiftRedemptionAnnouncement = _LiveChatSponsorshipsGiftRedemptionAnnouncement;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatTextMessage.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatTextMessage.js
   var _LiveChatTextMessage = class _LiveChatTextMessage extends YTNode {
     constructor(data) {
       super();
@@ -23619,7 +23888,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatTextMessage, "type", "LiveChatTextMessage");
   var LiveChatTextMessage = _LiveChatTextMessage;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatTickerPaidMessageItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatTickerPaidMessageItem.js
   var _LiveChatTickerPaidMessageItem = class _LiveChatTickerPaidMessageItem extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -23656,7 +23925,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatTickerPaidMessageItem, "type", "LiveChatTickerPaidMessageItem");
   var LiveChatTickerPaidMessageItem = _LiveChatTickerPaidMessageItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatTickerPaidStickerItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatTickerPaidStickerItem.js
   var _LiveChatTickerPaidStickerItem = class _LiveChatTickerPaidStickerItem extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -23693,7 +23962,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatTickerPaidStickerItem, "type", "LiveChatTickerPaidStickerItem");
   var LiveChatTickerPaidStickerItem = _LiveChatTickerPaidStickerItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatTickerSponsorItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatTickerSponsorItem.js
   var _LiveChatTickerSponsorItem = class _LiveChatTickerSponsorItem extends YTNode {
     constructor(data) {
       super();
@@ -23711,7 +23980,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatTickerSponsorItem, "type", "LiveChatTickerSponsorItem");
   var LiveChatTickerSponsorItem = _LiveChatTickerSponsorItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatViewerEngagementMessage.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/LiveChatViewerEngagementMessage.js
   var _LiveChatViewerEngagementMessage = class _LiveChatViewerEngagementMessage extends YTNode {
     constructor(data) {
       super();
@@ -23745,7 +24014,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatViewerEngagementMessage, "type", "LiveChatViewerEngagementMessage");
   var LiveChatViewerEngagementMessage = _LiveChatViewerEngagementMessage;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/PollHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/items/PollHeader.js
   var _PollHeader = class _PollHeader extends YTNode {
     constructor(data) {
       super();
@@ -23765,7 +24034,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PollHeader, "type", "PollHeader");
   var PollHeader = _PollHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/LiveChatActionPanel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/LiveChatActionPanel.js
   var _LiveChatActionPanel = class _LiveChatActionPanel extends YTNode {
     constructor(data) {
       super();
@@ -23781,7 +24050,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatActionPanel, "type", "LiveChatActionPanel");
   var LiveChatActionPanel = _LiveChatActionPanel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/MarkChatItemAsDeletedAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/MarkChatItemAsDeletedAction.js
   var _MarkChatItemAsDeletedAction = class _MarkChatItemAsDeletedAction extends YTNode {
     constructor(data) {
       super();
@@ -23795,7 +24064,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MarkChatItemAsDeletedAction, "type", "MarkChatItemAsDeletedAction");
   var MarkChatItemAsDeletedAction = _MarkChatItemAsDeletedAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/MarkChatItemsByAuthorAsDeletedAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/MarkChatItemsByAuthorAsDeletedAction.js
   var _MarkChatItemsByAuthorAsDeletedAction = class _MarkChatItemsByAuthorAsDeletedAction extends YTNode {
     constructor(data) {
       super();
@@ -23809,7 +24078,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MarkChatItemsByAuthorAsDeletedAction, "type", "MarkChatItemsByAuthorAsDeletedAction");
   var MarkChatItemsByAuthorAsDeletedAction = _MarkChatItemsByAuthorAsDeletedAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/RemoveBannerForLiveChatCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/RemoveBannerForLiveChatCommand.js
   var _RemoveBannerForLiveChatCommand = class _RemoveBannerForLiveChatCommand extends YTNode {
     constructor(data) {
       super();
@@ -23821,7 +24090,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RemoveBannerForLiveChatCommand, "type", "RemoveBannerForLiveChatCommand");
   var RemoveBannerForLiveChatCommand = _RemoveBannerForLiveChatCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/RemoveChatItemAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/RemoveChatItemAction.js
   var _RemoveChatItemAction = class _RemoveChatItemAction extends YTNode {
     constructor(data) {
       super();
@@ -23833,7 +24102,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RemoveChatItemAction, "type", "RemoveChatItemAction");
   var RemoveChatItemAction = _RemoveChatItemAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/RemoveChatItemByAuthorAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/RemoveChatItemByAuthorAction.js
   var _RemoveChatItemByAuthorAction = class _RemoveChatItemByAuthorAction extends YTNode {
     constructor(data) {
       super();
@@ -23845,7 +24114,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RemoveChatItemByAuthorAction, "type", "RemoveChatItemByAuthorAction");
   var RemoveChatItemByAuthorAction = _RemoveChatItemByAuthorAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/ReplaceChatItemAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/ReplaceChatItemAction.js
   var _ReplaceChatItemAction = class _ReplaceChatItemAction extends YTNode {
     constructor(data) {
       super();
@@ -23859,7 +24128,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReplaceChatItemAction, "type", "ReplaceChatItemAction");
   var ReplaceChatItemAction = _ReplaceChatItemAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/ReplaceLiveChatAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/ReplaceLiveChatAction.js
   var _ReplaceLiveChatAction = class _ReplaceLiveChatAction extends YTNode {
     constructor(data) {
       super();
@@ -23873,7 +24142,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReplaceLiveChatAction, "type", "ReplaceLiveChatAction");
   var ReplaceLiveChatAction = _ReplaceLiveChatAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/ReplayChatItemAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/ReplayChatItemAction.js
   var _ReplayChatItemAction = class _ReplayChatItemAction extends YTNode {
     constructor(data) {
       var _a2;
@@ -23891,7 +24160,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReplayChatItemAction, "type", "ReplayChatItemAction");
   var ReplayChatItemAction = _ReplayChatItemAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/ShowLiveChatActionPanelAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/ShowLiveChatActionPanelAction.js
   var _ShowLiveChatActionPanelAction = class _ShowLiveChatActionPanelAction extends YTNode {
     constructor(data) {
       super();
@@ -23903,7 +24172,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowLiveChatActionPanelAction, "type", "ShowLiveChatActionPanelAction");
   var ShowLiveChatActionPanelAction = _ShowLiveChatActionPanelAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/ShowLiveChatDialogAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/ShowLiveChatDialogAction.js
   var _ShowLiveChatDialogAction = class _ShowLiveChatDialogAction extends YTNode {
     constructor(data) {
       super();
@@ -23915,7 +24184,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowLiveChatDialogAction, "type", "ShowLiveChatDialogAction");
   var ShowLiveChatDialogAction = _ShowLiveChatDialogAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/ShowLiveChatTooltipCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/ShowLiveChatTooltipCommand.js
   var _ShowLiveChatTooltipCommand = class _ShowLiveChatTooltipCommand extends YTNode {
     constructor(data) {
       super();
@@ -23927,7 +24196,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowLiveChatTooltipCommand, "type", "ShowLiveChatTooltipCommand");
   var ShowLiveChatTooltipCommand = _ShowLiveChatTooltipCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateDateTextAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateDateTextAction.js
   var _UpdateDateTextAction = class _UpdateDateTextAction extends YTNode {
     constructor(data) {
       super();
@@ -23939,7 +24208,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateDateTextAction, "type", "UpdateDateTextAction");
   var UpdateDateTextAction = _UpdateDateTextAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateDescriptionAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateDescriptionAction.js
   var _UpdateDescriptionAction = class _UpdateDescriptionAction extends YTNode {
     constructor(data) {
       super();
@@ -23951,7 +24220,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateDescriptionAction, "type", "UpdateDescriptionAction");
   var UpdateDescriptionAction = _UpdateDescriptionAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateLiveChatPollAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateLiveChatPollAction.js
   var _UpdateLiveChatPollAction = class _UpdateLiveChatPollAction extends YTNode {
     constructor(data) {
       super();
@@ -23963,7 +24232,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateLiveChatPollAction, "type", "UpdateLiveChatPollAction");
   var UpdateLiveChatPollAction = _UpdateLiveChatPollAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateTitleAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateTitleAction.js
   var _UpdateTitleAction = class _UpdateTitleAction extends YTNode {
     constructor(data) {
       super();
@@ -23975,7 +24244,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateTitleAction, "type", "UpdateTitleAction");
   var UpdateTitleAction = _UpdateTitleAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateToggleButtonTextAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateToggleButtonTextAction.js
   var _UpdateToggleButtonTextAction = class _UpdateToggleButtonTextAction extends YTNode {
     constructor(data) {
       super();
@@ -23991,7 +24260,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateToggleButtonTextAction, "type", "UpdateToggleButtonTextAction");
   var UpdateToggleButtonTextAction = _UpdateToggleButtonTextAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoViewCount.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoViewCount.js
   var _VideoViewCount = class _VideoViewCount extends YTNode {
     constructor(data) {
       super();
@@ -24023,7 +24292,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoViewCount, "type", "VideoViewCount");
   var VideoViewCount = _VideoViewCount;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateViewershipAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/livechat/UpdateViewershipAction.js
   var _UpdateViewershipAction = class _UpdateViewershipAction extends YTNode {
     constructor(data) {
       super();
@@ -24077,7 +24346,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpdateViewershipAction, "type", "UpdateViewershipAction");
   var UpdateViewershipAction = _UpdateViewershipAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatDialog.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LiveChatDialog.js
   var _LiveChatDialog = class _LiveChatDialog extends YTNode {
     constructor(data) {
       super();
@@ -24091,7 +24360,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatDialog, "type", "LiveChatDialog");
   var LiveChatDialog = _LiveChatDialog;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LiveChatHeader.js
   var _LiveChatHeader = class _LiveChatHeader extends YTNode {
     constructor(data) {
       super();
@@ -24107,7 +24376,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatHeader, "type", "LiveChatHeader");
   var LiveChatHeader = _LiveChatHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatItemList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LiveChatItemList.js
   var _LiveChatItemList = class _LiveChatItemList extends YTNode {
     constructor(data) {
       super();
@@ -24121,7 +24390,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatItemList, "type", "LiveChatItemList");
   var LiveChatItemList = _LiveChatItemList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatMessageInput.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LiveChatMessageInput.js
   var _LiveChatMessageInput = class _LiveChatMessageInput extends YTNode {
     constructor(data) {
       super();
@@ -24139,7 +24408,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatMessageInput, "type", "LiveChatMessageInput");
   var LiveChatMessageInput = _LiveChatMessageInput;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatParticipant.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LiveChatParticipant.js
   var _LiveChatParticipant = class _LiveChatParticipant extends YTNode {
     constructor(data) {
       super();
@@ -24155,7 +24424,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatParticipant, "type", "LiveChatParticipant");
   var LiveChatParticipant = _LiveChatParticipant;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveChatParticipantsList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LiveChatParticipantsList.js
   var _LiveChatParticipantsList = class _LiveChatParticipantsList extends YTNode {
     constructor(data) {
       super();
@@ -24169,7 +24438,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveChatParticipantsList, "type", "LiveChatParticipantsList");
   var LiveChatParticipantsList = _LiveChatParticipantsList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveStreamOfflineSlate.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LiveStreamOfflineSlate.js
   var _LiveStreamOfflineSlate = class _LiveStreamOfflineSlate extends YTNode {
     constructor(data) {
       super();
@@ -24187,7 +24456,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveStreamOfflineSlate, "type", "LiveStreamOfflineSlate");
   var LiveStreamOfflineSlate = _LiveStreamOfflineSlate;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LiveStreamability.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LiveStreamability.js
   var _LiveStreamability = class _LiveStreamability extends YTNode {
     constructor(data) {
       var _a2;
@@ -24232,7 +24501,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LiveStreamability, "type", "LiveStreamability");
   var LiveStreamability = _LiveStreamability;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LockupMetadataView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LockupMetadataView.js
   var _LockupMetadataView = class _LockupMetadataView extends YTNode {
     constructor(data) {
       super();
@@ -24240,7 +24509,9 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
       __publicField(this, "metadata");
       __publicField(this, "image");
       __publicField(this, "menu_button");
-      this.title = Text2.fromAttributed(data.title);
+      if ("title" in data) {
+        this.title = Text2.fromAttributed(data.title);
+      }
       this.metadata = parser_exports.parseItem(data.metadata, ContentMetadataView);
       this.image = parser_exports.parseItem(data.image, [DecoratedAvatarView, AvatarStackView]);
       this.menu_button = parser_exports.parseItem(data.menuButton, ButtonView);
@@ -24250,27 +24521,53 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_LockupMetadataView, "type", "LockupMetadataView");
   var LockupMetadataView = _LockupMetadataView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/LockupView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/LockupView.js
   var _LockupView = class _LockupView extends YTNode {
     constructor(data) {
+      var _a2, _b2, _c, _d;
       super();
       __publicField(this, "content_image");
       __publicField(this, "metadata");
       __publicField(this, "content_id");
       __publicField(this, "content_type");
+      __publicField(this, "styling");
       __publicField(this, "renderer_context");
       this.content_image = parser_exports.parseItem(data.contentImage, [CollectionThumbnailView, ThumbnailView]);
       this.metadata = parser_exports.parseItem(data.metadata, LockupMetadataView);
       this.content_id = data.contentId;
-      this.content_type = data.contentType.replace("LOCKUP_CONTENT_TYPE_", "");
+      this.content_type = (_b2 = (_a2 = data.contentType) == null ? void 0 : _a2.replace("LOCKUP_CONTENT_TYPE_", "")) != null ? _b2 : "UNSPECIFIED";
+      if (Reflect.has(data, "styling")) {
+        this.styling = {
+          layout: (_c = data.styling.layout) == null ? void 0 : _c.replace("LOCKUP_LAYOUT_", ""),
+          content_image_aspect_ratio: (_d = data.styling.contentImageAspectRatio) == null ? void 0 : _d.replace("LOCKUP_CONTENT_IMAGE_ASPECT_RATIO_", "")
+        };
+      }
       this.renderer_context = new RendererContext(data.rendererContext);
+    }
+    /**
+     * The video's duration, parsed from its thumbnail overlay badge (e.g. "16:09").
+     * Returns an empty duration for lockups without one (playlists, channels, live videos, etc.).
+     */
+    get duration() {
+      var _a2;
+      const thumbnail = this.content_image instanceof CollectionThumbnailView ? this.content_image.primary_thumbnail : this.content_image;
+      for (const overlay of (_a2 = thumbnail == null ? void 0 : thumbnail.overlays) != null ? _a2 : []) {
+        if (!overlay.is(ThumbnailBottomOverlayView, ThumbnailOverlayBadgeView))
+          continue;
+        for (const badge of overlay.badges) {
+          if (!/^\d{1,3}(?:,\d{3})*:\d{2}(?::\d{2})?$/.test(badge.text))
+            continue;
+          return { text: badge.text, seconds: timeToSeconds(badge.text) };
+        }
+      }
+      return { text: "", seconds: 0 };
     }
   };
   __name(_LockupView, "LockupView");
   __publicField(_LockupView, "type", "LockupView");
   var LockupView = _LockupView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MacroMarkersListEntity.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MacroMarkersListEntity.js
   var _MacroMarkersListEntity = class _MacroMarkersListEntity extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f;
@@ -24331,7 +24628,55 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MacroMarkersListEntity, "type", "MacroMarkersListEntity");
   var MacroMarkersListEntity = _MacroMarkersListEntity;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuNavigationItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MediaLockup.js
+  var _MediaLockup = class _MediaLockup extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "title");
+      __publicField(this, "subtitle");
+      __publicField(this, "thumbnail_details");
+      __publicField(this, "endpoint");
+      __publicField(this, "enable_subtitle_launch_icon");
+      __publicField(this, "ui_tweaks");
+      __publicField(this, "max_lines_title");
+      __publicField(this, "max_lines_subtitle");
+      __publicField(this, "disable_endpoint");
+      this.title = new Text2(data.title);
+      this.subtitle = new Text2(data.subtitle);
+      this.thumbnail_details = Thumbnail.fromResponse(data.thumbnailDetails);
+      this.endpoint = new NavigationEndpoint(data.endpoint);
+      this.enable_subtitle_launch_icon = !!data.enableSubtitleLaunchIcon;
+      if ("uiTweaks" in data)
+        this.ui_tweaks = {
+          use_zero_padding: data.uiTweaks.useZeroPadding,
+          thumbnail_width: data.uiTweaks.thumbnailWidth,
+          thumbnail_height: data.uiTweaks.thumbnailHeight
+        };
+      this.max_lines_title = data.maxLinesTitle;
+      this.max_lines_subtitle = data.maxLinesSubtitle;
+      this.disable_endpoint = !!data.disableEndpoint;
+    }
+  };
+  __name(_MediaLockup, "MediaLockup");
+  __publicField(_MediaLockup, "type", "MediaLockup");
+  var MediaLockup = _MediaLockup;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MenuCustomIconItem.js
+  var _MenuCustomIconItem = class _MenuCustomIconItem extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "action_text");
+      __publicField(this, "command");
+      this.action_text = new Text(data.actionText);
+      if ("command" in data)
+        this.command = new NavigationEndpoint(data.command);
+    }
+  };
+  __name(_MenuCustomIconItem, "MenuCustomIconItem");
+  __publicField(_MenuCustomIconItem, "type", "MenuCustomIconItem");
+  var MenuCustomIconItem = _MenuCustomIconItem;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuNavigationItem.js
   var _MenuNavigationItem = class _MenuNavigationItem extends Button {
     constructor(data) {
       super(data);
@@ -24341,19 +24686,19 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MenuNavigationItem, "type", "MenuNavigationItem");
   var MenuNavigationItem = _MenuNavigationItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuPopup.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/menus/MenuPopup.js
   var _MenuPopup = class _MenuPopup extends YTNode {
     constructor(data) {
       super();
       __publicField(this, "items");
-      this.items = parser_exports.parseArray(data.items, [MenuNavigationItem, MenuServiceItem]);
+      this.items = parser_exports.parseArray(data.items, [MenuNavigationItem, MenuServiceItem, MenuCustomIconItem]);
     }
   };
   __name(_MenuPopup, "MenuPopup");
   __publicField(_MenuPopup, "type", "MenuPopup");
   var MenuPopup = _MenuPopup;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Notification.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Notification.js
   var _Notification = class _Notification extends YTNode {
     constructor(data) {
       super();
@@ -24381,7 +24726,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Notification, "type", "Notification");
   var Notification = _Notification;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MultiPageMenuNotificationSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/menus/MultiPageMenuNotificationSection.js
   var _MultiPageMenuNotificationSection = class _MultiPageMenuNotificationSection extends YTNode {
     constructor(data) {
       super();
@@ -24401,7 +24746,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MultiPageMenuNotificationSection, "type", "MultiPageMenuNotificationSection");
   var MultiPageMenuNotificationSection = _MultiPageMenuNotificationSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MusicMenuItemDivider.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/menus/MusicMenuItemDivider.js
   var _MusicMenuItemDivider = class _MusicMenuItemDivider extends YTNode {
     constructor(_data24) {
       super();
@@ -24411,7 +24756,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicMenuItemDivider, "type", "MusicMenuItemDivider");
   var MusicMenuItemDivider = _MusicMenuItemDivider;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MusicMultiSelectMenuItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/menus/MusicMultiSelectMenuItem.js
   var _MusicMultiSelectMenuItem = class _MusicMultiSelectMenuItem extends YTNode {
     constructor(data) {
       super();
@@ -24435,7 +24780,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicMultiSelectMenuItem, "type", "MusicMultiSelectMenuItem");
   var MusicMultiSelectMenuItem = _MusicMultiSelectMenuItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/MusicMultiSelectMenu.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/menus/MusicMultiSelectMenu.js
   var _MusicMultiSelectMenu = class _MusicMultiSelectMenu extends YTNode {
     constructor(data) {
       var _a2;
@@ -24452,7 +24797,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicMultiSelectMenu, "type", "MusicMultiSelectMenu");
   var MusicMultiSelectMenu = _MusicMultiSelectMenu;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/menus/SimpleMenuHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/menus/SimpleMenuHeader.js
   var _SimpleMenuHeader = class _SimpleMenuHeader extends YTNode {
     constructor(data) {
       super();
@@ -24466,7 +24811,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SimpleMenuHeader, "type", "SimpleMenuHeader");
   var SimpleMenuHeader = _SimpleMenuHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MerchandiseItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MerchandiseItem.js
   var _MerchandiseItem = class _MerchandiseItem extends YTNode {
     constructor(data) {
       super();
@@ -24498,7 +24843,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MerchandiseItem, "type", "MerchandiseItem");
   var MerchandiseItem = _MerchandiseItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MetadataRow.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MetadataRow.js
   var _MetadataRow = class _MetadataRow extends YTNode {
     constructor(data) {
       super();
@@ -24512,7 +24857,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MetadataRow, "type", "MetadataRow");
   var MetadataRow = _MetadataRow;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MetadataRowContainer.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MetadataRowContainer.js
   var _MetadataRowContainer = class _MetadataRowContainer extends YTNode {
     constructor(data) {
       super();
@@ -24526,7 +24871,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MetadataRowContainer, "type", "MetadataRowContainer");
   var MetadataRowContainer = _MetadataRowContainer;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MetadataRowHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MetadataRowHeader.js
   var _MetadataRowHeader = class _MetadataRowHeader extends YTNode {
     constructor(data) {
       super();
@@ -24540,7 +24885,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MetadataRowHeader, "type", "MetadataRowHeader");
   var MetadataRowHeader = _MetadataRowHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MetadataScreen.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MetadataScreen.js
   var _MetadataScreen = class _MetadataScreen extends YTNode {
     constructor(data) {
       super();
@@ -24552,7 +24897,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MetadataScreen, "type", "MetadataScreen");
   var MetadataScreen = _MetadataScreen;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MicroformatData.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MicroformatData.js
   var _MicroformatData = class _MicroformatData extends YTNode {
     constructor(data) {
       super();
@@ -24608,7 +24953,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MicroformatData, "type", "MicroformatData");
   var MicroformatData = _MicroformatData;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Mix.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Mix.js
   var _Mix = class _Mix extends Playlist {
     constructor(data) {
       super(data);
@@ -24618,7 +24963,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Mix, "type", "Mix");
   var Mix = _Mix;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ModalWithTitleAndButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ModalWithTitleAndButton.js
   var _ModalWithTitleAndButton = class _ModalWithTitleAndButton extends YTNode {
     constructor(data) {
       super();
@@ -24634,7 +24979,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ModalWithTitleAndButton, "type", "ModalWithTitleAndButton");
   var ModalWithTitleAndButton = _ModalWithTitleAndButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Movie.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Movie.js
   var _Movie = class _Movie extends YTNode {
     constructor(data) {
       var _a2, _b2, _c;
@@ -24677,7 +25022,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Movie, "type", "Movie");
   var Movie = _Movie;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MovingThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MovingThumbnail.js
   var _MovingThumbnail = class _MovingThumbnail extends YTNode {
     constructor(data) {
       var _a2;
@@ -24689,7 +25034,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MovingThumbnail, "type", "MovingThumbnail");
   var MovingThumbnail = _MovingThumbnail;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicCardShelfHeaderBasic.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicCardShelfHeaderBasic.js
   var _MusicCardShelfHeaderBasic = class _MusicCardShelfHeaderBasic extends YTNode {
     constructor(data) {
       super();
@@ -24701,7 +25046,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicCardShelfHeaderBasic, "type", "MusicCardShelfHeaderBasic");
   var MusicCardShelfHeaderBasic = _MusicCardShelfHeaderBasic;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicInlineBadge.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicInlineBadge.js
   var _MusicInlineBadge = class _MusicInlineBadge extends YTNode {
     constructor(data) {
       super();
@@ -24723,7 +25068,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicInlineBadge, "type", "MusicInlineBadge");
   var MusicInlineBadge = _MusicInlineBadge;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicPlayButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicPlayButton.js
   var _MusicPlayButton = class _MusicPlayButton extends YTNode {
     constructor(data) {
       super();
@@ -24761,7 +25106,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicPlayButton, "type", "MusicPlayButton");
   var MusicPlayButton = _MusicPlayButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicItemThumbnailOverlay.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicItemThumbnailOverlay.js
   var _MusicItemThumbnailOverlay = class _MusicItemThumbnailOverlay extends YTNode {
     constructor(data) {
       super();
@@ -24777,7 +25122,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicItemThumbnailOverlay, "type", "MusicItemThumbnailOverlay");
   var MusicItemThumbnailOverlay = _MusicItemThumbnailOverlay;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicThumbnail.js
   var _MusicThumbnail = class _MusicThumbnail extends YTNode {
     constructor(data) {
       super();
@@ -24789,7 +25134,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicThumbnail, "type", "MusicThumbnail");
   var MusicThumbnail = _MusicThumbnail;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicCardShelf.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicCardShelf.js
   var _MusicCardShelf = class _MusicCardShelf extends YTNode {
     constructor(data) {
       super();
@@ -24825,7 +25170,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicCardShelf, "type", "MusicCardShelf");
   var MusicCardShelf = _MusicCardShelf;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicCarouselShelfBasicHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicCarouselShelfBasicHeader.js
   var _MusicCarouselShelfBasicHeader = class _MusicCarouselShelfBasicHeader extends YTNode {
     constructor(data) {
       super();
@@ -24853,7 +25198,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicCarouselShelfBasicHeader, "type", "MusicCarouselShelfBasicHeader");
   var MusicCarouselShelfBasicHeader = _MusicCarouselShelfBasicHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicMultiRowListItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicMultiRowListItem.js
   var _MusicMultiRowListItem = class _MusicMultiRowListItem extends YTNode {
     constructor(data) {
       super();
@@ -24887,7 +25232,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicMultiRowListItem, "type", "MusicMultiRowListItem");
   var MusicMultiRowListItem = _MusicMultiRowListItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicNavigationButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicNavigationButton.js
   var _MusicNavigationButton = class _MusicNavigationButton extends YTNode {
     constructor(data) {
       super();
@@ -24901,7 +25246,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicNavigationButton, "type", "MusicNavigationButton");
   var MusicNavigationButton = _MusicNavigationButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicResponsiveListItemFixedColumn.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicResponsiveListItemFixedColumn.js
   var _MusicResponsiveListItemFixedColumn = class _MusicResponsiveListItemFixedColumn extends YTNode {
     constructor(data) {
       super();
@@ -24915,7 +25260,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicResponsiveListItemFixedColumn, "type", "musicResponsiveListItemFlexColumnRenderer");
   var MusicResponsiveListItemFixedColumn = _MusicResponsiveListItemFixedColumn;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicResponsiveListItemFlexColumn.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicResponsiveListItemFlexColumn.js
   var _MusicResponsiveListItemFlexColumn = class _MusicResponsiveListItemFlexColumn extends YTNode {
     constructor(data) {
       super();
@@ -24929,7 +25274,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicResponsiveListItemFlexColumn, "type", "MusicResponsiveListItemFlexColumn");
   var MusicResponsiveListItemFlexColumn = _MusicResponsiveListItemFlexColumn;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicResponsiveListItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicResponsiveListItem.js
   var DURATION_TEXT = /^\d+(?::[0-5]\d)+$/;
   function findDurationText(runs) {
     var _a2;
@@ -25176,7 +25521,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicResponsiveListItem, "type", "MusicResponsiveListItem");
   var MusicResponsiveListItem = _MusicResponsiveListItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicTwoRowItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicTwoRowItem.js
   var _MusicTwoRowItem = class _MusicTwoRowItem extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
@@ -25289,7 +25634,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicTwoRowItem, "type", "MusicTwoRowItem");
   var MusicTwoRowItem = _MusicTwoRowItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicCarouselShelf.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicCarouselShelf.js
   var _MusicCarouselShelf = class _MusicCarouselShelf extends YTNode {
     constructor(data) {
       super();
@@ -25307,7 +25652,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicCarouselShelf, "type", "MusicCarouselShelf");
   var MusicCarouselShelf = _MusicCarouselShelf;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicDescriptionShelf.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicDescriptionShelf.js
   var _MusicDescriptionShelf = class _MusicDescriptionShelf extends YTNode {
     constructor(data) {
       super();
@@ -25329,7 +25674,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicDescriptionShelf, "type", "MusicDescriptionShelf");
   var MusicDescriptionShelf = _MusicDescriptionShelf;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicDetailHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicDetailHeader.js
   var _MusicDetailHeader = class _MusicDetailHeader extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f, _g, _h, _i;
@@ -25372,7 +25717,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicDetailHeader, "type", "MusicDetailHeader");
   var MusicDetailHeader = _MusicDetailHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicDownloadStateBadge.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicDownloadStateBadge.js
   var _MusicDownloadStateBadge = class _MusicDownloadStateBadge extends YTNode {
     constructor(data) {
       super();
@@ -25386,7 +25731,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicDownloadStateBadge, "type", "MusicDownloadStateBadge");
   var MusicDownloadStateBadge = _MusicDownloadStateBadge;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicEditablePlaylistDetailHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicEditablePlaylistDetailHeader.js
   var _MusicEditablePlaylistDetailHeader = class _MusicEditablePlaylistDetailHeader extends YTNode {
     constructor(data) {
       super();
@@ -25402,7 +25747,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicEditablePlaylistDetailHeader, "type", "MusicEditablePlaylistDetailHeader");
   var MusicEditablePlaylistDetailHeader = _MusicEditablePlaylistDetailHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicElementHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicElementHeader.js
   var _MusicElementHeader = class _MusicElementHeader extends YTNode {
     constructor(data) {
       super();
@@ -25414,7 +25759,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicElementHeader, "type", "MusicElementHeader");
   var MusicElementHeader = _MusicElementHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicHeader.js
   var _MusicHeader = class _MusicHeader extends YTNode {
     constructor(data) {
       super();
@@ -25432,7 +25777,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicHeader, "type", "MusicHeader");
   var MusicHeader = _MusicHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicImmersiveHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicImmersiveHeader.js
   var _MusicImmersiveHeader = class _MusicImmersiveHeader extends YTNode {
     constructor(data) {
       super();
@@ -25461,7 +25806,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicImmersiveHeader, "type", "MusicImmersiveHeader");
   var MusicImmersiveHeader = _MusicImmersiveHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicLargeCardItemCarousel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicLargeCardItemCarousel.js
   var _ActionButton = class _ActionButton {
     constructor(data) {
       __publicField(this, "icon_name");
@@ -25509,7 +25854,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicLargeCardItemCarousel, "type", "MusicLargeCardItemCarousel");
   var MusicLargeCardItemCarousel = _MusicLargeCardItemCarousel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicPlaylistEditHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicPlaylistEditHeader.js
   var _MusicPlaylistEditHeader = class _MusicPlaylistEditHeader extends YTNode {
     constructor(data) {
       super();
@@ -25533,7 +25878,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicPlaylistEditHeader, "type", "MusicPlaylistEditHeader");
   var MusicPlaylistEditHeader = _MusicPlaylistEditHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicPlaylistShelf.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicPlaylistShelf.js
   var _MusicPlaylistShelf = class _MusicPlaylistShelf extends YTNode {
     constructor(data) {
       var _a2, _b2, _c;
@@ -25552,7 +25897,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicPlaylistShelf, "type", "MusicPlaylistShelf");
   var MusicPlaylistShelf = _MusicPlaylistShelf;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistPanelVideo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistPanelVideo.js
   var _PlaylistPanelVideo = class _PlaylistPanelVideo extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e;
@@ -25614,7 +25959,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistPanelVideo, "type", "PlaylistPanelVideo");
   var PlaylistPanelVideo = _PlaylistPanelVideo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistPanelVideoWrapper.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistPanelVideoWrapper.js
   var _PlaylistPanelVideoWrapper = class _PlaylistPanelVideoWrapper extends YTNode {
     constructor(data) {
       super();
@@ -25630,7 +25975,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistPanelVideoWrapper, "type", "PlaylistPanelVideoWrapper");
   var PlaylistPanelVideoWrapper = _PlaylistPanelVideoWrapper;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistPanel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistPanel.js
   var _PlaylistPanel = class _PlaylistPanel extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d, _e, _f;
@@ -25659,7 +26004,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistPanel, "type", "PlaylistPanel");
   var PlaylistPanel = _PlaylistPanel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicQueue.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicQueue.js
   var _MusicQueue = class _MusicQueue extends YTNode {
     constructor(data) {
       super();
@@ -25671,7 +26016,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicQueue, "type", "MusicQueue");
   var MusicQueue = _MusicQueue;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicResponsiveHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicResponsiveHeader.js
   var _MusicResponsiveHeader = class _MusicResponsiveHeader extends YTNode {
     constructor(data) {
       super();
@@ -25703,7 +26048,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicResponsiveHeader, "type", "MusicResponsiveHeader");
   var MusicResponsiveHeader = _MusicResponsiveHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicShelf.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicShelf.js
   var _MusicShelf = class _MusicShelf extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d;
@@ -25738,7 +26083,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicShelf, "type", "MusicShelf");
   var MusicShelf = _MusicShelf;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicSideAlignedItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicSideAlignedItem.js
   var _MusicSideAlignedItem = class _MusicSideAlignedItem extends YTNode {
     constructor(data) {
       super();
@@ -25756,7 +26101,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicSideAlignedItem, "type", "MusicSideAlignedItem");
   var MusicSideAlignedItem = _MusicSideAlignedItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicSortFilterButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicSortFilterButton.js
   var _MusicSortFilterButton = class _MusicSortFilterButton extends YTNode {
     constructor(data) {
       super();
@@ -25774,7 +26119,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicSortFilterButton, "type", "MusicSortFilterButton");
   var MusicSortFilterButton = _MusicSortFilterButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicTastebuilderShelfThumbnail.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicTastebuilderShelfThumbnail.js
   var _MusicTastebuilderShelfThumbnail = class _MusicTastebuilderShelfThumbnail extends YTNode {
     constructor(data) {
       super();
@@ -25786,7 +26131,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicTastebuilderShelfThumbnail, "type", "MusicTastebuilderShelfThumbnail");
   var MusicTastebuilderShelfThumbnail = _MusicTastebuilderShelfThumbnail;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicTastebuilderShelf.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicTastebuilderShelf.js
   var _MusicTasteBuilderShelf = class _MusicTasteBuilderShelf extends YTNode {
     constructor(data) {
       super();
@@ -25806,7 +26151,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicTasteBuilderShelf, "type", "MusicTasteBuilderShelf");
   var MusicTasteBuilderShelf = _MusicTasteBuilderShelf;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/MusicVisualHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/MusicVisualHeader.js
   var _MusicVisualHeader = class _MusicVisualHeader extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -25825,7 +26170,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MusicVisualHeader, "type", "MusicVisualHeader");
   var MusicVisualHeader = _MusicVisualHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/mweb/MobileTopbar.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/mweb/MobileTopbar.js
   var _MobileTopbar = class _MobileTopbar extends YTNode {
     constructor(data) {
       super();
@@ -25842,7 +26187,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MobileTopbar, "type", "MobileTopbar");
   var MobileTopbar = _MobileTopbar;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/mweb/MultiPageMenuSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/mweb/MultiPageMenuSection.js
   var _MultiPageMenuSection = class _MultiPageMenuSection extends YTNode {
     constructor(data) {
       super();
@@ -25854,7 +26199,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_MultiPageMenuSection, "type", "MultiPageMenuSection");
   var MultiPageMenuSection = _MultiPageMenuSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/mweb/PivotBar.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/mweb/PivotBar.js
   var _PivotBar = class _PivotBar extends YTNode {
     constructor(data) {
       super();
@@ -25866,7 +26211,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PivotBar, "type", "PivotBar");
   var PivotBar = _PivotBar;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/mweb/PivotBarItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/mweb/PivotBarItem.js
   var _PivotBarItem = class _PivotBarItem extends YTNode {
     constructor(data) {
       super();
@@ -25896,7 +26241,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PivotBarItem, "type", "PivotBarItem");
   var PivotBarItem = _PivotBarItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/mweb/TopbarMenuButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/mweb/TopbarMenuButton.js
   var _TopbarMenuButton = class _TopbarMenuButton extends YTNode {
     constructor(data) {
       super();
@@ -25913,7 +26258,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TopbarMenuButton, "type", "TopbarMenuButton");
   var TopbarMenuButton = _TopbarMenuButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/NotificationAction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/NotificationAction.js
   var _NotificationAction = class _NotificationAction extends YTNode {
     constructor(data) {
       super();
@@ -25925,7 +26270,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_NotificationAction, "type", "NotificationAction");
   var NotificationAction = _NotificationAction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/OpenOnePickAddVideoModalCommand.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/OpenOnePickAddVideoModalCommand.js
   var _OpenOnePickAddVideoModalCommand = class _OpenOnePickAddVideoModalCommand extends YTNode {
     constructor(data) {
       super();
@@ -25941,7 +26286,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_OpenOnePickAddVideoModalCommand, "type", "OpenOnePickAddVideoModalCommand");
   var OpenOnePickAddVideoModalCommand = _OpenOnePickAddVideoModalCommand;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PageHeaderView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PageHeaderView.js
   var _PageHeaderView = class _PageHeaderView extends YTNode {
     constructor(data) {
       super();
@@ -25969,7 +26314,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PageHeaderView, "type", "PageHeaderView");
   var PageHeaderView = _PageHeaderView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PageHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PageHeader.js
   var _PageHeader = class _PageHeader extends YTNode {
     constructor(data) {
       super();
@@ -25983,7 +26328,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PageHeader, "type", "PageHeader");
   var PageHeader = _PageHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PageIndicatorView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PageIndicatorView.js
   var _PageIndicatorView = class _PageIndicatorView extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -25998,7 +26343,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PageIndicatorView, "type", "PageIndicatorView");
   var PageIndicatorView = _PageIndicatorView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PageIntroduction.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PageIntroduction.js
   var _PageIntroduction = class _PageIntroduction extends YTNode {
     constructor(data) {
       super();
@@ -26016,7 +26361,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PageIntroduction, "type", "PageIntroduction");
   var PageIntroduction = _PageIntroduction;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PivotButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PivotButton.js
   var _PivotButton = class _PivotButton extends YTNode {
     constructor(data) {
       super();
@@ -26040,7 +26385,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PivotButton, "type", "PivotButton");
   var PivotButton = _PivotButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerAnnotationsExpanded.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerAnnotationsExpanded.js
   var _PlayerAnnotationsExpanded = class _PlayerAnnotationsExpanded extends YTNode {
     constructor(data) {
       super();
@@ -26065,7 +26410,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerAnnotationsExpanded, "type", "PlayerAnnotationsExpanded");
   var PlayerAnnotationsExpanded = _PlayerAnnotationsExpanded;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerCaptchaView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerCaptchaView.js
   var _PlayerCaptchaView = class _PlayerCaptchaView extends YTNode {
     constructor(data) {
       super();
@@ -26095,7 +26440,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerCaptchaView, "type", "PlayerCaptchaView");
   var PlayerCaptchaView = _PlayerCaptchaView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerCaptionsTracklist.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerCaptionsTracklist.js
   var _PlayerCaptionsTracklist = class _PlayerCaptionsTracklist extends YTNode {
     constructor(data) {
       super();
@@ -26138,7 +26483,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerCaptionsTracklist, "type", "PlayerCaptionsTracklist");
   var PlayerCaptionsTracklist = _PlayerCaptionsTracklist;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerOverflow.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerOverflow.js
   var _PlayerOverflow = class _PlayerOverflow extends YTNode {
     constructor(data) {
       super();
@@ -26152,7 +26497,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerOverflow, "type", "PlayerOverflow");
   var PlayerOverflow = _PlayerOverflow;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerControlsOverlay.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerControlsOverlay.js
   var _PlayerControlsOverlay = class _PlayerControlsOverlay extends YTNode {
     constructor(data) {
       super();
@@ -26164,7 +26509,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerControlsOverlay, "type", "PlayerControlsOverlay");
   var PlayerControlsOverlay = _PlayerControlsOverlay;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerErrorMessage.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerErrorMessage.js
   var _PlayerErrorMessage = class _PlayerErrorMessage extends YTNode {
     constructor(data) {
       super();
@@ -26186,7 +26531,23 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerErrorMessage, "type", "PlayerErrorMessage");
   var PlayerErrorMessage = _PlayerErrorMessage;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerLegacyDesktopYpcOffer.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerInterstitial.js
+  var _PlayerInterstitial = class _PlayerInterstitial extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "content");
+      __publicField(this, "state_entity_store_key");
+      this.content = parser_exports.parseItem(data.content, InterstitialView);
+      if ("stateEntityStoreKey" in data) {
+        this.state_entity_store_key = data.stateEntityStoreKey;
+      }
+    }
+  };
+  __name(_PlayerInterstitial, "PlayerInterstitial");
+  __publicField(_PlayerInterstitial, "type", "PlayerInterstitial");
+  var PlayerInterstitial = _PlayerInterstitial;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerLegacyDesktopYpcOffer.js
   var _PlayerLegacyDesktopYpcOffer = class _PlayerLegacyDesktopYpcOffer extends YTNode {
     constructor(data) {
       super();
@@ -26204,7 +26565,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerLegacyDesktopYpcOffer, "type", "PlayerLegacyDesktopYpcOffer");
   var PlayerLegacyDesktopYpcOffer = _PlayerLegacyDesktopYpcOffer;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/YpcTrailer.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/YpcTrailer.js
   var _YpcTrailer = class _YpcTrailer extends YTNode {
     constructor(data) {
       super();
@@ -26218,7 +26579,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_YpcTrailer, "type", "YpcTrailer");
   var YpcTrailer = _YpcTrailer;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerLegacyDesktopYpcTrailer.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerLegacyDesktopYpcTrailer.js
   var _PlayerLegacyDesktopYpcTrailer = class _PlayerLegacyDesktopYpcTrailer extends YTNode {
     constructor(data) {
       super();
@@ -26246,7 +26607,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerLegacyDesktopYpcTrailer, "type", "PlayerLegacyDesktopYpcTrailer");
   var PlayerLegacyDesktopYpcTrailer = _PlayerLegacyDesktopYpcTrailer;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerLiveStoryboardSpec.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerLiveStoryboardSpec.js
   var _PlayerLiveStoryboardSpec = class _PlayerLiveStoryboardSpec extends YTNode {
     constructor(data) {
       super();
@@ -26266,7 +26627,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerLiveStoryboardSpec, "type", "PlayerLiveStoryboardSpec");
   var PlayerLiveStoryboardSpec = _PlayerLiveStoryboardSpec;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerMicroformat.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerMicroformat.js
   var _PlayerMicroformat = class _PlayerMicroformat extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -26321,7 +26682,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerMicroformat, "type", "PlayerMicroformat");
   var PlayerMicroformat = _PlayerMicroformat;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerOverlayAutoplay.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerOverlayAutoplay.js
   var _PlayerOverlayAutoplay = class _PlayerOverlayAutoplay extends YTNode {
     constructor(data) {
       super();
@@ -26358,7 +26719,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerOverlayAutoplay, "type", "PlayerOverlayAutoplay");
   var PlayerOverlayAutoplay = _PlayerOverlayAutoplay;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerOverlayVideoDetails.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerOverlayVideoDetails.js
   var _PlayerOverlayVideoDetails = class _PlayerOverlayVideoDetails extends YTNode {
     constructor(data) {
       super();
@@ -26372,7 +26733,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerOverlayVideoDetails, "type", "PlayerOverlayVideoDetails");
   var PlayerOverlayVideoDetails = _PlayerOverlayVideoDetails;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/WatchNextEndScreen.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/WatchNextEndScreen.js
   var _WatchNextEndScreen = class _WatchNextEndScreen extends YTNode {
     constructor(data) {
       super();
@@ -26386,7 +26747,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchNextEndScreen, "type", "WatchNextEndScreen");
   var WatchNextEndScreen = _WatchNextEndScreen;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlayerOverlay.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlayerOverlay.js
   var _PlayerOverlay = class _PlayerOverlay extends YTNode {
     constructor(data) {
       super();
@@ -26414,7 +26775,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlayerOverlay, "type", "PlayerOverlay");
   var PlayerOverlay = _PlayerOverlay;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistHeader.js
   var _PlaylistHeader = class _PlaylistHeader extends YTNode {
     constructor(data) {
       super();
@@ -26458,7 +26819,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistHeader, "type", "PlaylistHeader");
   var PlaylistHeader = _PlaylistHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistInfoCardContent.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistInfoCardContent.js
   var _PlaylistInfoCardContent = class _PlaylistInfoCardContent extends YTNode {
     constructor(data) {
       super();
@@ -26478,7 +26839,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistInfoCardContent, "type", "PlaylistInfoCardContent");
   var PlaylistInfoCardContent = _PlaylistInfoCardContent;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistMetadata.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistMetadata.js
   var _PlaylistMetadata = class _PlaylistMetadata extends YTNode {
     constructor(data) {
       super();
@@ -26492,7 +26853,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistMetadata, "type", "PlaylistMetadata");
   var PlaylistMetadata = _PlaylistMetadata;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistSidebar.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistSidebar.js
   var _PlaylistSidebar = class _PlaylistSidebar extends YTNode {
     constructor(data) {
       super();
@@ -26508,7 +26869,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistSidebar, "type", "PlaylistSidebar");
   var PlaylistSidebar = _PlaylistSidebar;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistSidebarPrimaryInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistSidebarPrimaryInfo.js
   var _PlaylistSidebarPrimaryInfo = class _PlaylistSidebarPrimaryInfo extends YTNode {
     constructor(data) {
       super();
@@ -26530,7 +26891,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistSidebarPrimaryInfo, "type", "PlaylistSidebarPrimaryInfo");
   var PlaylistSidebarPrimaryInfo = _PlaylistSidebarPrimaryInfo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistSidebarSecondaryInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistSidebarSecondaryInfo.js
   var _PlaylistSidebarSecondaryInfo = class _PlaylistSidebarSecondaryInfo extends YTNode {
     constructor(data) {
       super();
@@ -26544,7 +26905,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistSidebarSecondaryInfo, "type", "PlaylistSidebarSecondaryInfo");
   var PlaylistSidebarSecondaryInfo = _PlaylistSidebarSecondaryInfo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistThumbnailOverlay.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistThumbnailOverlay.js
   var _PlaylistThumbnailOverlay = class _PlaylistThumbnailOverlay extends YTNode {
     constructor(data) {
       super();
@@ -26559,7 +26920,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistThumbnailOverlay, "type", "PlaylistThumbnailOverlay");
   var PlaylistThumbnailOverlay = _PlaylistThumbnailOverlay;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistVideo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistVideo.js
   var _PlaylistVideo = class _PlaylistVideo extends YTNode {
     constructor(data) {
       super();
@@ -26615,7 +26976,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistVideo, "type", "PlaylistVideo");
   var PlaylistVideo = _PlaylistVideo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PlaylistVideoList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PlaylistVideoList.js
   var _PlaylistVideoList = class _PlaylistVideoList extends YTNode {
     constructor(data) {
       super();
@@ -26633,7 +26994,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PlaylistVideoList, "type", "PlaylistVideoList");
   var PlaylistVideoList = _PlaylistVideoList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Poll.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Poll.js
   var _Poll = class _Poll extends YTNode {
     constructor(data) {
       super();
@@ -26663,7 +27024,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Poll, "type", "Poll");
   var Poll = _Poll;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Post.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Post.js
   var _Post = class _Post extends BackstagePost {
     constructor(data) {
       super(data);
@@ -26673,7 +27034,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Post, "type", "Post");
   var Post = _Post;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PostMultiImage.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PostMultiImage.js
   var _PostMultiImage = class _PostMultiImage extends YTNode {
     constructor(data) {
       super();
@@ -26685,7 +27046,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PostMultiImage, "type", "PostMultiImage");
   var PostMultiImage = _PostMultiImage;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/PremiereTrailerBadge.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/PremiereTrailerBadge.js
   var _PremiereTrailerBadge = class _PremiereTrailerBadge extends YTNode {
     constructor(data) {
       super();
@@ -26697,7 +27058,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_PremiereTrailerBadge, "type", "PremiereTrailerBadge");
   var PremiereTrailerBadge = _PremiereTrailerBadge;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProductListHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ProductListHeader.js
   var _ProductListHeader = class _ProductListHeader extends YTNode {
     constructor(data) {
       super();
@@ -26711,7 +27072,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProductListHeader, "type", "ProductListHeader");
   var ProductListHeader = _ProductListHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProductListItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ProductListItem.js
   var _ProductListItem = class _ProductListItem extends YTNode {
     constructor(data) {
       super();
@@ -26737,7 +27098,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProductListItem, "type", "ProductListItem");
   var ProductListItem = _ProductListItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProfileColumn.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ProfileColumn.js
   var _ProfileColumn = class _ProfileColumn extends YTNode {
     constructor(data) {
       super();
@@ -26753,7 +27114,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProfileColumn, "type", "ProfileColumn");
   var ProfileColumn = _ProfileColumn;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProfileColumnStats.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ProfileColumnStats.js
   var _ProfileColumnStats = class _ProfileColumnStats extends YTNode {
     constructor(data) {
       super();
@@ -26769,7 +27130,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProfileColumnStats, "type", "ProfileColumnStats");
   var ProfileColumnStats = _ProfileColumnStats;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProfileColumnStatsEntry.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ProfileColumnStatsEntry.js
   var _ProfileColumnStatsEntry = class _ProfileColumnStatsEntry extends YTNode {
     constructor(data) {
       super();
@@ -26783,7 +27144,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProfileColumnStatsEntry, "type", "ProfileColumnStatsEntry");
   var ProfileColumnStatsEntry = _ProfileColumnStatsEntry;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ProfileColumnUserInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ProfileColumnUserInfo.js
   var _ProfileColumnUserInfo = class _ProfileColumnUserInfo extends YTNode {
     constructor(data) {
       super();
@@ -26797,7 +27158,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ProfileColumnUserInfo, "type", "ProfileColumnUserInfo");
   var ProfileColumnUserInfo = _ProfileColumnUserInfo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Quiz.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Quiz.js
   var _Quiz = class _Quiz extends YTNode {
     constructor(data) {
       super();
@@ -26814,7 +27175,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Quiz, "type", "Quiz");
   var Quiz = _Quiz;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RecognitionShelf.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/RecognitionShelf.js
   var _RecognitionShelf = class _RecognitionShelf extends YTNode {
     constructor(data) {
       super();
@@ -26834,7 +27195,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RecognitionShelf, "type", "RecognitionShelf");
   var RecognitionShelf = _RecognitionShelf;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ReelItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ReelItem.js
   var _ReelItem = class _ReelItem extends YTNode {
     constructor(data) {
       super();
@@ -26864,7 +27225,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReelItem, "type", "ReelItem");
   var ReelItem = _ReelItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ReelPlayerHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ReelPlayerHeader.js
   var _ReelPlayerHeader = class _ReelPlayerHeader extends YTNode {
     constructor(data) {
       super();
@@ -26884,7 +27245,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReelPlayerHeader, "type", "ReelPlayerHeader");
   var ReelPlayerHeader = _ReelPlayerHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ReelPlayerOverlay.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ReelPlayerOverlay.js
   var _ReelPlayerOverlay = class _ReelPlayerOverlay extends YTNode {
     constructor(data) {
       super();
@@ -26916,7 +27277,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ReelPlayerOverlay, "type", "ReelPlayerOverlay");
   var ReelPlayerOverlay = _ReelPlayerOverlay;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichGrid.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/RichGrid.js
   var _RichGrid = class _RichGrid extends YTNode {
     constructor(data) {
       super();
@@ -26933,7 +27294,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichGrid, "type", "RichGrid");
   var RichGrid = _RichGrid;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/RichItem.js
   var _RichItem = class _RichItem extends YTNode {
     constructor(data) {
       super();
@@ -26945,7 +27306,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichItem, "type", "RichItem");
   var RichItem = _RichItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichListHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/RichListHeader.js
   var _RichListHeader = class _RichListHeader extends YTNode {
     constructor(data) {
       super();
@@ -26967,7 +27328,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichListHeader, "type", "RichListHeader");
   var RichListHeader = _RichListHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichMetadata.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/RichMetadata.js
   var _RichMetadata = class _RichMetadata extends YTNode {
     constructor(data) {
       super();
@@ -26991,7 +27352,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichMetadata, "type", "RichMetadata");
   var RichMetadata = _RichMetadata;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichMetadataRow.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/RichMetadataRow.js
   var _RichMetadataRow = class _RichMetadataRow extends YTNode {
     constructor(data) {
       super();
@@ -27003,7 +27364,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichMetadataRow, "type", "RichMetadataRow");
   var RichMetadataRow = _RichMetadataRow;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/RichSection.js
   var _RichSection = class _RichSection extends YTNode {
     constructor(data) {
       super();
@@ -27021,7 +27382,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichSection, "type", "RichSection");
   var RichSection = _RichSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/RichShelf.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/RichShelf.js
   var _RichShelf = class _RichShelf extends YTNode {
     constructor(data) {
       super();
@@ -27063,7 +27424,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_RichShelf, "type", "RichShelf");
   var RichShelf = _RichShelf;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchFilter.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SearchFilter.js
   var _SearchFilter = class _SearchFilter extends YTNode {
     constructor(data) {
       super();
@@ -27089,7 +27450,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchFilter, "type", "SearchFilter");
   var SearchFilter2 = _SearchFilter;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchFilterGroup.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SearchFilterGroup.js
   var _SearchFilterGroup = class _SearchFilterGroup extends YTNode {
     constructor(data) {
       super();
@@ -27103,7 +27464,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchFilterGroup, "type", "SearchFilterGroup");
   var SearchFilterGroup = _SearchFilterGroup;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchFilterOptionsDialog.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SearchFilterOptionsDialog.js
   var _SearchFilterOptionsDialog = class _SearchFilterOptionsDialog extends YTNode {
     constructor(data) {
       super();
@@ -27117,7 +27478,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchFilterOptionsDialog, "type", "SearchFilterOptionsDialog");
   var SearchFilterOptionsDialog = _SearchFilterOptionsDialog;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SearchHeader.js
   var _SearchHeader = class _SearchHeader extends YTNode {
     constructor(data) {
       super();
@@ -27131,7 +27492,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchHeader, "type", "SearchHeader");
   var SearchHeader = _SearchHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchSubMenu.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SearchSubMenu.js
   var _SearchSubMenu = class _SearchSubMenu extends YTNode {
     constructor(data) {
       super();
@@ -27150,7 +27511,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchSubMenu, "type", "SearchSubMenu");
   var SearchSubMenu = _SearchSubMenu;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SearchSuggestionsSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SearchSuggestionsSection.js
   var _SearchSuggestionsSection = class _SearchSuggestionsSection extends YTNode {
     constructor(data) {
       super();
@@ -27162,7 +27523,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SearchSuggestionsSection, "type", "SearchSuggestionsSection");
   var SearchSuggestionsSection = _SearchSuggestionsSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/UniversalWatchCard.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/UniversalWatchCard.js
   var _UniversalWatchCard = class _UniversalWatchCard extends YTNode {
     constructor(data) {
       super();
@@ -27182,7 +27543,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UniversalWatchCard, "type", "UniversalWatchCard");
   var UniversalWatchCard = _UniversalWatchCard;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SecondarySearchContainer.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SecondarySearchContainer.js
   var _SecondarySearchContainer = class _SecondarySearchContainer extends YTNode {
     constructor(data) {
       super();
@@ -27195,7 +27556,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SecondarySearchContainer, "type", "SecondarySearchContainer");
   var SecondarySearchContainer = _SecondarySearchContainer;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SegmentedLikeDislikeButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SegmentedLikeDislikeButton.js
   var _SegmentedLikeDislikeButton = class _SegmentedLikeDislikeButton extends YTNode {
     constructor(data) {
       super();
@@ -27209,7 +27570,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SegmentedLikeDislikeButton, "type", "SegmentedLikeDislikeButton");
   var SegmentedLikeDislikeButton = _SegmentedLikeDislikeButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SettingBoolean.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SettingBoolean.js
   var _SettingBoolean = class _SettingBoolean extends YTNode {
     constructor(data) {
       super();
@@ -27237,7 +27598,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SettingBoolean, "type", "SettingBoolean");
   var SettingBoolean = _SettingBoolean;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SettingsCheckbox.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SettingsCheckbox.js
   var _SettingsCheckbox = class _SettingsCheckbox extends YTNode {
     constructor(data) {
       super();
@@ -27257,7 +27618,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SettingsCheckbox, "type", "SettingsCheckbox");
   var SettingsCheckbox = _SettingsCheckbox;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SettingsSwitch.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SettingsSwitch.js
   var _SettingsSwitch = class _SettingsSwitch extends YTNode {
     constructor(data) {
       super();
@@ -27277,7 +27638,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SettingsSwitch, "type", "SettingsSwitch");
   var SettingsSwitch = _SettingsSwitch;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SettingsOptions.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SettingsOptions.js
   var _SettingsOptions = class _SettingsOptions extends YTNode {
     constructor(data) {
       super();
@@ -27303,7 +27664,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SettingsOptions, "type", "SettingsOptions");
   var SettingsOptions = _SettingsOptions;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SettingsSidebar.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SettingsSidebar.js
   var _SettingsSidebar = class _SettingsSidebar extends YTNode {
     constructor(data) {
       super();
@@ -27321,7 +27682,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SettingsSidebar, "type", "SettingsSidebar");
   var SettingsSidebar = _SettingsSidebar;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SharedPost.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SharedPost.js
   var _SharedPost = class _SharedPost extends YTNode {
     constructor(data) {
       super();
@@ -27349,7 +27710,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SharedPost, "type", "SharedPost");
   var SharedPost = _SharedPost;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SharePanelHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SharePanelHeader.js
   var _SharePanelHeader = class _SharePanelHeader extends YTNode {
     constructor(data) {
       super();
@@ -27361,7 +27722,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SharePanelHeader, "type", "SharePanelHeader");
   var SharePanelHeader = _SharePanelHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SharePanelTitleV15.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SharePanelTitleV15.js
   var _SharePanelTitleV15 = class _SharePanelTitleV15 extends YTNode {
     constructor(data) {
       super();
@@ -27373,7 +27734,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SharePanelTitleV15, "type", "SharePanelTitleV15");
   var SharePanelTitleV15 = _SharePanelTitleV15;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ShareTarget.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ShareTarget.js
   var _ShareTarget = class _ShareTarget extends YTNode {
     constructor(data) {
       super();
@@ -27394,7 +27755,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShareTarget, "type", "ShareTarget");
   var ShareTarget = _ShareTarget;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SheetView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SheetView.js
   var _SheetView = class _SheetView extends YTNode {
     constructor(data) {
       super();
@@ -27414,7 +27775,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SheetView, "type", "SheetView");
   var SheetView = _SheetView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Shelf.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Shelf.js
   var _Shelf = class _Shelf extends YTNode {
     constructor(data) {
       super();
@@ -27448,7 +27809,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Shelf, "type", "Shelf");
   var Shelf = _Shelf;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ShortsLockupView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ShortsLockupView.js
   var _ShortsLockupView = class _ShortsLockupView extends YTNode {
     constructor(data) {
       var _a2;
@@ -27456,6 +27817,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
       __publicField(this, "entity_id");
       __publicField(this, "accessibility_text");
       __publicField(this, "thumbnail");
+      __publicField(this, "thumbnail_view_model");
       __publicField(this, "on_tap_endpoint");
       __publicField(this, "menu_on_tap");
       __publicField(this, "index_in_collection");
@@ -27466,6 +27828,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
       this.entity_id = data.entityId;
       this.accessibility_text = data.accessibilityText;
       this.thumbnail = Thumbnail.fromResponse(data.thumbnail);
+      this.thumbnail_view_model = parser_exports.parseItem(data.thumbnailViewModel, ThumbnailView);
       this.on_tap_endpoint = new NavigationEndpoint(data.onTap);
       this.menu_on_tap = new NavigationEndpoint(data.menuOnTap);
       this.index_in_collection = data.indexInCollection;
@@ -27486,7 +27849,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShortsLockupView, "type", "ShortsLockupView");
   var ShortsLockupView = _ShortsLockupView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ShowingResultsFor.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ShowingResultsFor.js
   var _ShowingResultsFor = class _ShowingResultsFor extends YTNode {
     constructor(data) {
       super();
@@ -27508,7 +27871,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ShowingResultsFor, "type", "ShowingResultsFor");
   var ShowingResultsFor = _ShowingResultsFor;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SimpleCardContent.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SimpleCardContent.js
   var _SimpleCardContent = class _SimpleCardContent extends YTNode {
     constructor(data) {
       super();
@@ -27530,7 +27893,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SimpleCardContent, "type", "SimpleCardContent");
   var SimpleCardContent = _SimpleCardContent;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SimpleCardTeaser.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SimpleCardTeaser.js
   var _SimpleCardTeaser = class _SimpleCardTeaser extends YTNode {
     // @TODO: or string?
     constructor(data) {
@@ -27545,7 +27908,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SimpleCardTeaser, "type", "SimpleCardTeaser");
   var SimpleCardTeaser = _SimpleCardTeaser;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SimpleTextSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SimpleTextSection.js
   var _SimpleTextSection = class _SimpleTextSection extends YTNode {
     constructor(data) {
       super();
@@ -27559,7 +27922,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SimpleTextSection, "type", "SimpleTextSection");
   var SimpleTextSection = _SimpleTextSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SingleActionEmergencySupport.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SingleActionEmergencySupport.js
   var _SingleActionEmergencySupport = class _SingleActionEmergencySupport extends YTNode {
     constructor(data) {
       super();
@@ -27579,7 +27942,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SingleActionEmergencySupport, "type", "SingleActionEmergencySupport");
   var SingleActionEmergencySupport = _SingleActionEmergencySupport;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Tab.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Tab.js
   var _Tab = class _Tab extends YTNode {
     constructor(data) {
       super();
@@ -27590,14 +27953,14 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
       this.title = data.title || "N/A";
       this.selected = !!data.selected;
       this.endpoint = new NavigationEndpoint(data.endpoint);
-      this.content = parser_exports.parseItem(data.content, [SectionList, MusicQueue, RichGrid]);
+      this.content = parser_exports.parseItem(data.content, [SectionList, MusicQueue, RichGrid, Message]);
     }
   };
   __name(_Tab, "Tab");
   __publicField(_Tab, "type", "Tab");
   var Tab = _Tab;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SingleColumnBrowseResults.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SingleColumnBrowseResults.js
   var _SingleColumnBrowseResults = class _SingleColumnBrowseResults extends YTNode {
     constructor(data) {
       super();
@@ -27609,7 +27972,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SingleColumnBrowseResults, "type", "SingleColumnBrowseResults");
   var SingleColumnBrowseResults = _SingleColumnBrowseResults;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SingleColumnMusicWatchNextResults.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SingleColumnMusicWatchNextResults.js
   var _SingleColumnMusicWatchNextResults = class _SingleColumnMusicWatchNextResults extends YTNode {
     constructor(data) {
       super();
@@ -27621,7 +27984,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SingleColumnMusicWatchNextResults, "type", "SingleColumnMusicWatchNextResults");
   var SingleColumnMusicWatchNextResults = _SingleColumnMusicWatchNextResults;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SingleHeroImage.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SingleHeroImage.js
   var _SingleHeroImage = class _SingleHeroImage extends YTNode {
     constructor(data) {
       super();
@@ -27635,7 +27998,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SingleHeroImage, "type", "SingleHeroImage");
   var SingleHeroImage = _SingleHeroImage;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SlimOwner.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SlimOwner.js
   var _SlimOwner = class _SlimOwner extends YTNode {
     constructor(data) {
       super();
@@ -27653,7 +28016,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SlimOwner, "type", "SlimOwner");
   var SlimOwner = _SlimOwner;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/SlimVideoMetadata.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/SlimVideoMetadata.js
   var _SlimVideoMetadata = class _SlimVideoMetadata extends YTNode {
     constructor(data) {
       super();
@@ -27677,7 +28040,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SlimVideoMetadata, "type", "SlimVideoMetadata");
   var SlimVideoMetadata = _SlimVideoMetadata;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/StartAt.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/StartAt.js
   var _StartAt = class _StartAt extends YTNode {
     constructor(data) {
       super();
@@ -27689,7 +28052,48 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_StartAt, "type", "StartAt");
   var StartAt = _StartAt;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Tabbed.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/StructuredDescriptionVideoLockup.js
+  var _StructuredDescriptionVideoLockup = class _StructuredDescriptionVideoLockup extends YTNode {
+    constructor(data) {
+      super();
+      __publicField(this, "thumbnail");
+      __publicField(this, "title");
+      __publicField(this, "short_byline_text");
+      __publicField(this, "metadata_details");
+      __publicField(this, "endpoint");
+      __publicField(this, "length_text");
+      __publicField(this, "is_live_video");
+      __publicField(this, "disable_navigation_endpoint");
+      __publicField(this, "max_lines_title");
+      __publicField(this, "max_lines_short_byline_text");
+      __publicField(this, "max_lines_metadata_details");
+      __publicField(this, "thumbnail_width");
+      __publicField(this, "aspect_ratio");
+      __publicField(this, "thumbnail_overlays");
+      this.title = new Text2(data.title);
+      if ("shortBylineText" in data)
+        this.short_byline_text = new Text2(data.shortBylineText);
+      if ("metadataDetails" in data)
+        this.metadata_details = new Text2(data.metadataDetails);
+      this.endpoint = new NavigationEndpoint(data.navigationEndpoint);
+      if ("lengthText" in data)
+        this.length_text = new Text2(data.lengthText);
+      this.thumbnail = Thumbnail.fromResponse(data.thumbnail);
+      this.is_live_video = !!data.isLiveVideo;
+      this.disable_navigation_endpoint = !!data.disableNavigationEndpoint;
+      this.max_lines_title = data.maxLinesTitle;
+      this.max_lines_short_byline_text = data.maxLinesShortBylineText;
+      this.max_lines_metadata_details = data.maxLinesMetadataDetails;
+      this.thumbnail_width = data.thumbnailWidth;
+      this.aspect_ratio = data.aspectRatio;
+      this.thumbnail_overlays = parser_exports.parseArray(data.thumbnailOverlays);
+    }
+  };
+  __name(_StructuredDescriptionVideoLockup, "StructuredDescriptionVideoLockup");
+  __publicField(_StructuredDescriptionVideoLockup, "type", "StructuredDescriptionVideoLockup");
+  var StructuredDescriptionVideoLockup = _StructuredDescriptionVideoLockup;
+
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Tabbed.js
   var _Tabbed = class _Tabbed extends YTNode {
     constructor(data) {
       super();
@@ -27701,7 +28105,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Tabbed, "type", "Tabbed");
   var Tabbed = _Tabbed;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TabbedSearchResults.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TabbedSearchResults.js
   var _TabbedSearchResults = class _TabbedSearchResults extends YTNode {
     constructor(data) {
       super();
@@ -27713,7 +28117,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TabbedSearchResults, "type", "TabbedSearchResults");
   var TabbedSearchResults = _TabbedSearchResults;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TextHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TextHeader.js
   var _TextHeader = class _TextHeader extends YTNode {
     constructor(data) {
       super();
@@ -27727,7 +28131,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TextHeader, "type", "TextHeader");
   var TextHeader = _TextHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThirdPartyShareTargetSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThirdPartyShareTargetSection.js
   var _ThirdPartyShareTargetSection = class _ThirdPartyShareTargetSection extends YTNode {
     constructor(data) {
       super();
@@ -27739,7 +28143,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThirdPartyShareTargetSection, "type", "ThirdPartyShareTargetSection");
   var ThirdPartyShareTargetSection = _ThirdPartyShareTargetSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailLandscapePortrait.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailLandscapePortrait.js
   var _ThumbnailLandscapePortrait = class _ThumbnailLandscapePortrait extends YTNode {
     constructor(data) {
       super();
@@ -27753,7 +28157,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailLandscapePortrait, "type", "ThumbnailLandscapePortrait");
   var ThumbnailLandscapePortrait = _ThumbnailLandscapePortrait;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayAvatarStackView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayAvatarStackView.js
   var _ThumbnailOverlayAvatarStackView = class _ThumbnailOverlayAvatarStackView extends YTNode {
     constructor(data) {
       super();
@@ -27765,7 +28169,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayAvatarStackView, "type", "ThumbnailOverlayAvatarStackView");
   var ThumbnailOverlayAvatarStackView = _ThumbnailOverlayAvatarStackView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayEndorsement.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayEndorsement.js
   var _ThumbnailOverlayEndorsement = class _ThumbnailOverlayEndorsement extends YTNode {
     constructor(data) {
       super();
@@ -27777,7 +28181,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayEndorsement, "type", "ThumbnailOverlayEndorsement");
   var ThumbnailOverlayEndorsement = _ThumbnailOverlayEndorsement;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayHoverText.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayHoverText.js
   var _ThumbnailOverlayHoverText = class _ThumbnailOverlayHoverText extends YTNode {
     constructor(data) {
       super();
@@ -27791,7 +28195,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayHoverText, "type", "ThumbnailOverlayHoverText");
   var ThumbnailOverlayHoverText = _ThumbnailOverlayHoverText;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayInlineUnplayable.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayInlineUnplayable.js
   var _ThumbnailOverlayInlineUnplayable = class _ThumbnailOverlayInlineUnplayable extends YTNode {
     constructor(data) {
       super();
@@ -27805,7 +28209,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayInlineUnplayable, "type", "ThumbnailOverlayInlineUnplayable");
   var ThumbnailOverlayInlineUnplayable = _ThumbnailOverlayInlineUnplayable;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayLoadingPreview.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayLoadingPreview.js
   var _ThumbnailOverlayLoadingPreview = class _ThumbnailOverlayLoadingPreview extends YTNode {
     constructor(data) {
       super();
@@ -27817,7 +28221,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayLoadingPreview, "type", "ThumbnailOverlayLoadingPreview");
   var ThumbnailOverlayLoadingPreview = _ThumbnailOverlayLoadingPreview;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayNowPlaying.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayNowPlaying.js
   var _ThumbnailOverlayNowPlaying = class _ThumbnailOverlayNowPlaying extends YTNode {
     constructor(data) {
       super();
@@ -27829,7 +28233,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayNowPlaying, "type", "ThumbnailOverlayNowPlaying");
   var ThumbnailOverlayNowPlaying = _ThumbnailOverlayNowPlaying;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayPinking.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayPinking.js
   var _ThumbnailOverlayPinking = class _ThumbnailOverlayPinking extends YTNode {
     constructor(data) {
       super();
@@ -27841,7 +28245,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayPinking, "type", "ThumbnailOverlayPinking");
   var ThumbnailOverlayPinking = _ThumbnailOverlayPinking;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayPlaybackStatus.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayPlaybackStatus.js
   var _ThumbnailOverlayPlaybackStatus = class _ThumbnailOverlayPlaybackStatus extends YTNode {
     constructor(data) {
       super();
@@ -27853,7 +28257,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayPlaybackStatus, "type", "ThumbnailOverlayPlaybackStatus");
   var ThumbnailOverlayPlaybackStatus = _ThumbnailOverlayPlaybackStatus;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayResumePlayback.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayResumePlayback.js
   var _ThumbnailOverlayResumePlayback = class _ThumbnailOverlayResumePlayback extends YTNode {
     constructor(data) {
       super();
@@ -27865,7 +28269,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayResumePlayback, "type", "ThumbnailOverlayResumePlayback");
   var ThumbnailOverlayResumePlayback = _ThumbnailOverlayResumePlayback;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlaySidePanel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlaySidePanel.js
   var _ThumbnailOverlaySidePanel = class _ThumbnailOverlaySidePanel extends YTNode {
     constructor(data) {
       super();
@@ -27879,7 +28283,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlaySidePanel, "type", "ThumbnailOverlaySidePanel");
   var ThumbnailOverlaySidePanel = _ThumbnailOverlaySidePanel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayTitleView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayTitleView.js
   var _ThumbnailOverlayTitleView = class _ThumbnailOverlayTitleView extends YTNode {
     constructor(data) {
       var _a2, _b2, _c, _d;
@@ -27894,7 +28298,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayTitleView, "type", "ThumbnailOverlayTitleView");
   var ThumbnailOverlayTitleView = _ThumbnailOverlayTitleView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayToggleButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ThumbnailOverlayToggleButton.js
   var _ThumbnailOverlayToggleButton = class _ThumbnailOverlayToggleButton extends YTNode {
     constructor(data) {
       super();
@@ -27924,7 +28328,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ThumbnailOverlayToggleButton, "type", "ThumbnailOverlayToggleButton");
   var ThumbnailOverlayToggleButton = _ThumbnailOverlayToggleButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TicketEvent.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TicketEvent.js
   var _TicketEvent = class _TicketEvent extends YTNode {
     constructor(data) {
       super();
@@ -27960,7 +28364,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TicketEvent, "type", "TicketEvent");
   var TicketEvent = _TicketEvent;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TicketShelf.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TicketShelf.js
   var _TicketShelf = class _TicketShelf extends YTNode {
     constructor(data) {
       super();
@@ -27978,7 +28382,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TicketShelf, "type", "TicketShelf");
   var TicketShelf = _TicketShelf;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TitleAndButtonListHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TitleAndButtonListHeader.js
   var _TitleAndButtonListHeader = class _TitleAndButtonListHeader extends YTNode {
     constructor(data) {
       super();
@@ -27990,7 +28394,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TitleAndButtonListHeader, "type", "TitleAndButtonListHeader");
   var TitleAndButtonListHeader = _TitleAndButtonListHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ToggleMenuServiceItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ToggleMenuServiceItem.js
   var _ToggleMenuServiceItem = class _ToggleMenuServiceItem extends YTNode {
     constructor(data) {
       super();
@@ -28012,7 +28416,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_ToggleMenuServiceItem, "type", "ToggleMenuServiceItem");
   var ToggleMenuServiceItem = _ToggleMenuServiceItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/Tooltip.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/Tooltip.js
   var _Tooltip = class _Tooltip extends YTNode {
     constructor(data) {
       super();
@@ -28039,7 +28443,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_Tooltip, "type", "Tooltip");
   var Tooltip = _Tooltip;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TopicChannelDetails.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TopicChannelDetails.js
   var _TopicChannelDetails = class _TopicChannelDetails extends YTNode {
     constructor(data) {
       var _a2;
@@ -28060,7 +28464,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TopicChannelDetails, "type", "TopicChannelDetails");
   var TopicChannelDetails = _TopicChannelDetails;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TwoColumnBrowseResults.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TwoColumnBrowseResults.js
   var _TwoColumnBrowseResults = class _TwoColumnBrowseResults extends YTNode {
     constructor(data) {
       super();
@@ -28074,7 +28478,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TwoColumnBrowseResults, "type", "TwoColumnBrowseResults");
   var TwoColumnBrowseResults = _TwoColumnBrowseResults;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TwoColumnSearchResults.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TwoColumnSearchResults.js
   var _TwoColumnSearchResults = class _TwoColumnSearchResults extends YTNode {
     constructor(data) {
       super();
@@ -28094,7 +28498,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TwoColumnSearchResults, "type", "TwoColumnSearchResults");
   var TwoColumnSearchResults = _TwoColumnSearchResults;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/TwoColumnWatchNextResults.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/TwoColumnWatchNextResults.js
   var _TwoColumnWatchNextResults_instances, parseAutoplaySet_fn;
   var _TwoColumnWatchNextResults = class _TwoColumnWatchNextResults extends YTNode {
     constructor(data) {
@@ -28149,7 +28553,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_TwoColumnWatchNextResults, "type", "TwoColumnWatchNextResults");
   var TwoColumnWatchNextResults = _TwoColumnWatchNextResults;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/UnifiedSharePanel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/UnifiedSharePanel.js
   var _UnifiedSharePanel = class _UnifiedSharePanel extends YTNode {
     constructor(data) {
       super();
@@ -28177,7 +28581,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UnifiedSharePanel, "type", "UnifiedSharePanel");
   var UnifiedSharePanel = _UnifiedSharePanel;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/UpsellDialog.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/UpsellDialog.js
   var _UpsellDialog = class _UpsellDialog extends YTNode {
     constructor(data) {
       super();
@@ -28197,7 +28601,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_UpsellDialog, "type", "UpsellDialog");
   var UpsellDialog = _UpsellDialog;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VerticalList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VerticalList.js
   var _VerticalList = class _VerticalList extends YTNode {
     constructor(data) {
       super();
@@ -28218,7 +28622,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VerticalList, "type", "VerticalList");
   var VerticalList = _VerticalList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VerticalWatchCardList.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VerticalWatchCardList.js
   var _VerticalWatchCardList = class _VerticalWatchCardList extends YTNode {
     constructor(data) {
       super();
@@ -28238,7 +28642,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VerticalWatchCardList, "type", "VerticalWatchCardList");
   var VerticalWatchCardList = _VerticalWatchCardList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoInfoCardContent.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoInfoCardContent.js
   var _VideoInfoCardContent = class _VideoInfoCardContent extends YTNode {
     constructor(data) {
       super();
@@ -28260,7 +28664,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoInfoCardContent, "type", "VideoInfoCardContent");
   var VideoInfoCardContent = _VideoInfoCardContent;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoMetadataCarouselView.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoMetadataCarouselView.js
   var _VideoMetadataCarouselView = class _VideoMetadataCarouselView extends YTNode {
     constructor(data) {
       super();
@@ -28274,7 +28678,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoMetadataCarouselView, "type", "VideoMetadataCarouselView");
   var VideoMetadataCarouselView = _VideoMetadataCarouselView;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/SubscriptionButton.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/SubscriptionButton.js
   var _SubscriptionButton = class _SubscriptionButton {
     constructor(data) {
       __publicField(this, "text");
@@ -28295,7 +28699,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_SubscriptionButton, "type", "SubscriptionButton");
   var SubscriptionButton = _SubscriptionButton;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoOwner.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoOwner.js
   var _VideoOwner = class _VideoOwner extends YTNode {
     constructor(data) {
       super();
@@ -28330,7 +28734,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoOwner, "type", "VideoOwner");
   var VideoOwner = _VideoOwner;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoPrimaryInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoPrimaryInfo.js
   var _VideoPrimaryInfo = class _VideoPrimaryInfo extends YTNode {
     constructor(data) {
       super();
@@ -28358,7 +28762,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoPrimaryInfo, "type", "VideoPrimaryInfo");
   var VideoPrimaryInfo = _VideoPrimaryInfo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoSecondaryInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/VideoSecondaryInfo.js
   var _VideoSecondaryInfo = class _VideoSecondaryInfo extends YTNode {
     constructor(data) {
       super();
@@ -28389,25 +28793,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_VideoSecondaryInfo, "type", "VideoSecondaryInfo");
   var VideoSecondaryInfo = _VideoSecondaryInfo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/VideoTitleHeaderView.js
-  var _VideoTitleHeaderView = class _VideoTitleHeaderView extends YTNode {
-    constructor(data) {
-      super();
-      __publicField(this, "video_title");
-      __publicField(this, "header_button");
-      __publicField(this, "renderer_context");
-      this.video_title = Text2.fromAttributed(data.videoTitle);
-      this.header_button = parser_exports.parseItem(data.headerButton, ButtonView);
-      if ("rendererContext" in data) {
-        this.renderer_context = new RendererContext(data.rendererContext);
-      }
-    }
-  };
-  __name(_VideoTitleHeaderView, "VideoTitleHeaderView");
-  __publicField(_VideoTitleHeaderView, "type", "VideoTitleHeaderView");
-  var VideoTitleHeaderView = _VideoTitleHeaderView;
-
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/WatchCardCompactVideo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/WatchCardCompactVideo.js
   var _WatchCardCompactVideo = class _WatchCardCompactVideo extends YTNode {
     constructor(data) {
       super();
@@ -28428,7 +28814,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchCardCompactVideo, "type", "WatchCardCompactVideo");
   var WatchCardCompactVideo = _WatchCardCompactVideo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/WatchCardHeroVideo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/WatchCardHeroVideo.js
   var _WatchCardHeroVideo = class _WatchCardHeroVideo extends YTNode {
     constructor(data) {
       var _a2;
@@ -28447,7 +28833,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchCardHeroVideo, "type", "WatchCardHeroVideo");
   var WatchCardHeroVideo = _WatchCardHeroVideo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/WatchCardRichHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/WatchCardRichHeader.js
   var _WatchCardRichHeader = class _WatchCardRichHeader extends YTNode {
     constructor(data) {
       super();
@@ -28468,7 +28854,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchCardRichHeader, "type", "WatchCardRichHeader");
   var WatchCardRichHeader = _WatchCardRichHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/WatchCardSectionSequence.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/WatchCardSectionSequence.js
   var _WatchCardSectionSequence = class _WatchCardSectionSequence extends YTNode {
     constructor(data) {
       super();
@@ -28480,7 +28866,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchCardSectionSequence, "type", "WatchCardSectionSequence");
   var WatchCardSectionSequence = _WatchCardSectionSequence;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/WatchNextTabbedResults.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/WatchNextTabbedResults.js
   var _WatchNextTabbedResults = class _WatchNextTabbedResults extends TwoColumnBrowseResults {
     constructor(data) {
       super(data);
@@ -28490,7 +28876,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_WatchNextTabbedResults, "type", "WatchNextTabbedResults");
   var WatchNextTabbedResults = _WatchNextTabbedResults;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ytkids/AnchoredSection.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ytkids/AnchoredSection.js
   var _AnchoredSection = class _AnchoredSection extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -28514,7 +28900,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_AnchoredSection, "type", "AnchoredSection");
   var AnchoredSection = _AnchoredSection;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsBlocklistPickerItem.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsBlocklistPickerItem.js
   var _actions4;
   var _KidsBlocklistPickerItem = class _KidsBlocklistPickerItem extends YTNode {
     constructor(data) {
@@ -28551,7 +28937,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_KidsBlocklistPickerItem, "type", "KidsBlocklistPickerItem");
   var KidsBlocklistPickerItem = _KidsBlocklistPickerItem;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsBlocklistPicker.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsBlocklistPicker.js
   var _KidsBlocklistPicker = class _KidsBlocklistPicker extends YTNode {
     constructor(data) {
       super();
@@ -28569,7 +28955,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_KidsBlocklistPicker, "type", "KidsBlocklistPicker");
   var KidsBlocklistPicker = _KidsBlocklistPicker;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsCategoryTab.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsCategoryTab.js
   var _KidsCategoryTab = class _KidsCategoryTab extends YTNode {
     constructor(data) {
       var _a2, _b2;
@@ -28591,7 +28977,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_KidsCategoryTab, "type", "KidsCategoryTab");
   var KidsCategoryTab = _KidsCategoryTab;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsCategoriesHeader.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsCategoriesHeader.js
   var _KidsCategoriesHeader = class _KidsCategoriesHeader extends YTNode {
     constructor(data) {
       super();
@@ -28605,7 +28991,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_KidsCategoriesHeader, "type", "kidsCategoriesHeader");
   var KidsCategoriesHeader = _KidsCategoriesHeader;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsHomeScreen.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/ytkids/KidsHomeScreen.js
   var _KidsHomeScreen = class _KidsHomeScreen extends YTNode {
     constructor(data) {
       super();
@@ -28617,7 +29003,7 @@ ${rawJsonLines.slice(1).map((line) => indent + line).join("\n")}`;
   __publicField(_KidsHomeScreen, "type", "kidsHomeScreen");
   var KidsHomeScreen = _KidsHomeScreen;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/generator.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/generator.js
   var generator_exports = {};
   __export(generator_exports, {
     camelToSnake: () => camelToSnake,
@@ -29401,7 +29787,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
   }
   __name(mergeKeyInfo, "mergeKeyInfo");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/continuations.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/continuations.js
   var _ItemSectionContinuation = class _ItemSectionContinuation extends YTNode {
     constructor(data) {
       var _a2, _b2, _c;
@@ -29598,7 +29984,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
   __publicField(_ContinuationCommand2, "type", "ContinuationCommand");
   var ContinuationCommand2 = _ContinuationCommand2;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/misc/common.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/protos/generated/misc/common.js
   function createBaseKeyValuePair() {
     return { key: void 0, value: void 0 };
   }
@@ -29678,7 +30064,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
     }
   };
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/Format.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/Format.js
   var _this_response_nsig_cache;
   var _Format = class _Format {
     constructor(data, this_response_nsig_cache) {
@@ -29863,7 +30249,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
   __name(_Format, "Format");
   var Format = _Format;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/VideoDetails.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/VideoDetails.js
   var _VideoDetails = class _VideoDetails {
     constructor(data) {
       __publicField(this, "id");
@@ -29911,7 +30297,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
   __name(_VideoDetails, "VideoDetails");
   var VideoDetails = _VideoDetails;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/parser.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/parser.js
   var TAG2 = "Parser";
   var IGNORED_LIST = /* @__PURE__ */ new Set([
     "AdSlot",
@@ -29927,9 +30313,7 @@ ${" ".repeat((indentation + 1) * 2)}}`;
     "GuideSigninPromo",
     "AdsEngagementPanelContent",
     "MiniGameCardView",
-    "GenAiFeedbackFormView",
-    "PlayerInterstitial",
-    "InterstitialView"
+    "GenAiFeedbackFormView"
   ]);
   var RUNTIME_NODES = new Map(Object.entries(nodes_exports));
   var DYNAMIC_NODES = /* @__PURE__ */ new Map();
@@ -30568,7 +30952,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   }
   __name(applyCommentsMutations, "applyCommentsMutations");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/index.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/index.js
   var youtube_exports = {};
   __export(youtube_exports, {
     AccountInfo: () => AccountInfo,
@@ -30592,7 +30976,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     VideoInfo: () => VideoInfo
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/AccountInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/AccountInfo.js
   var _page;
   var _AccountInfo = class _AccountInfo {
     constructor(response) {
@@ -30614,7 +30998,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_AccountInfo, "AccountInfo");
   var AccountInfo = _AccountInfo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/mixins/Feed.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/mixins/Feed.js
   var _page2, _actions5, _memo, _continuation2, _Feed_instances, isParsed_fn, getBodyContinuations_fn;
   var _Feed = class _Feed {
     constructor(actions, response, already_parsed = false) {
@@ -30778,7 +31162,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Feed, "Feed");
   var Feed = _Feed;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/mixins/FilterableFeed.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/mixins/FilterableFeed.js
   var _filter_nodes;
   var _FilterableFeed = class _FilterableFeed extends Feed {
     constructor(actions, data, already_parsed = false) {
@@ -30912,7 +31296,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_FilterableFeed, "FilterableFeed");
   var FilterableFeed = _FilterableFeed;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/mixins/index.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/mixins/index.js
   var mixins_exports = {};
   __export(mixins_exports, {
     Feed: () => Feed,
@@ -30921,7 +31305,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     TabbedFeed: () => TabbedFeed
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/mixins/MediaInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/mixins/MediaInfo.js
   var _page3, _actions6, _cpn, _playback_tracking;
   var _MediaInfo = class _MediaInfo {
     constructor(data, actions, cpn) {
@@ -30938,7 +31322,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
       __publicField(this, "streaming_data");
       __publicField(this, "playability_status");
       __publicField(this, "player_config");
-      var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
+      var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x;
       __privateSet(this, _actions6, actions);
       const info2 = parser_exports.parseResponse(data[0].data.playerResponse ? data[0].data.playerResponse : data[0].data);
       const next = ((_a2 = data[1]) == null ? void 0 : _a2.data) ? parser_exports.parseResponse(data[1].data) : void 0;
@@ -30961,11 +31345,13 @@ ${generateTypescriptClass(classname, context.key_info)}`);
           is_family_safe: (_i = info2.microformat) == null ? void 0 : _i.is_family_safe,
           category: ((_j = info2.microformat) == null ? void 0 : _j.is(PlayerMicroformat)) ? (_k = info2.microformat) == null ? void 0 : _k.category : null,
           has_ypc_metadata: ((_l = info2.microformat) == null ? void 0 : _l.is(PlayerMicroformat)) ? (_m = info2.microformat) == null ? void 0 : _m.has_ypc_metadata : null,
-          start_timestamp: ((_n = info2.microformat) == null ? void 0 : _n.is(PlayerMicroformat)) ? info2.microformat.start_timestamp : null,
-          end_timestamp: ((_o = info2.microformat) == null ? void 0 : _o.is(PlayerMicroformat)) ? info2.microformat.end_timestamp : null,
-          view_count: ((_p = info2.microformat) == null ? void 0 : _p.is(PlayerMicroformat)) && isNaN((_q = info2.video_details) == null ? void 0 : _q.view_count) ? info2.microformat.view_count : (_r = info2.video_details) == null ? void 0 : _r.view_count,
-          url_canonical: ((_s = info2.microformat) == null ? void 0 : _s.is(MicroformatData)) ? (_t = info2.microformat) == null ? void 0 : _t.url_canonical : null,
-          tags: ((_u = info2.microformat) == null ? void 0 : _u.is(MicroformatData)) ? (_v = info2.microformat) == null ? void 0 : _v.tags : null
+          publish_date: ((_n = info2.microformat) == null ? void 0 : _n.is(PlayerMicroformat)) ? info2.microformat.publish_date : null,
+          upload_date: ((_o = info2.microformat) == null ? void 0 : _o.is(PlayerMicroformat)) ? info2.microformat.upload_date : null,
+          start_timestamp: ((_p = info2.microformat) == null ? void 0 : _p.is(PlayerMicroformat)) ? info2.microformat.start_timestamp : null,
+          end_timestamp: ((_q = info2.microformat) == null ? void 0 : _q.is(PlayerMicroformat)) ? info2.microformat.end_timestamp : null,
+          view_count: ((_r = info2.microformat) == null ? void 0 : _r.is(PlayerMicroformat)) && isNaN((_s = info2.video_details) == null ? void 0 : _s.view_count) ? info2.microformat.view_count : (_t = info2.video_details) == null ? void 0 : _t.view_count,
+          url_canonical: ((_u = info2.microformat) == null ? void 0 : _u.is(MicroformatData)) ? (_v = info2.microformat) == null ? void 0 : _v.url_canonical : null,
+          tags: ((_w = info2.microformat) == null ? void 0 : _w.is(MicroformatData)) ? (_x = info2.microformat) == null ? void 0 : _x.tags : null
         },
         like_count: void 0,
         is_liked: void 0,
@@ -31103,7 +31489,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_MediaInfo, "MediaInfo");
   var MediaInfo = _MediaInfo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/mixins/TabbedFeed.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/mixins/TabbedFeed.js
   var _actions7, _tabs;
   var _TabbedFeed = class _TabbedFeed extends Feed {
     constructor(actions, data, already_parsed = false) {
@@ -31158,7 +31544,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_TabbedFeed, "TabbedFeed");
   var TabbedFeed = _TabbedFeed;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Channel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/Channel.js
   var _filter_nodes2;
   var _Channel2 = class _Channel2 extends TabbedFeed {
     constructor(actions, data, already_parsed = false) {
@@ -31554,7 +31940,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_FilteredChannelList, "FilteredChannelList");
   var FilteredChannelList = _FilteredChannelList;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Comments.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/Comments.js
   var _page4, _actions8, _continuation3;
   var _Comments = class _Comments {
     constructor(actions, data, already_parsed = false) {
@@ -31645,7 +32031,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Comments, "Comments");
   var Comments = _Comments;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Guide.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/Guide.js
   var _page5;
   var _Guide = class _Guide {
     constructor(data) {
@@ -31663,7 +32049,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Guide, "Guide");
   var Guide = _Guide;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/History.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/History.js
   var _History = class _History extends Feed {
     constructor(actions, data, already_parsed = false) {
       super(actions, data, already_parsed);
@@ -31682,62 +32068,73 @@ ${generateTypescriptClass(classname, context.key_info)}`);
       return new _History(this.actions, response, true);
     }
     /**
+     * Searches the watch history feed using the feed actions search box.
+     * @param query - The search query.
+     */
+    async search(query) {
+      var _a2;
+      if (!this.actions.session.logged_in)
+        throw new Error("You must be signed in to perform this operation.");
+      const search_box = (_a2 = this.feed_actions) == null ? void 0 : _a2.contents.firstOfType(SearchBox);
+      if (!search_box)
+        throw new InnertubeError("Search box not found in watch history feed actions");
+      const response = await search_box.endpoint.call(this.actions, { query });
+      return new _History(this.actions, response);
+    }
+    /**
      * Removes a video from watch history.
      */
     async removeVideo(video_id, pages_to_load = 1) {
-      var _a2, _b2, _c;
-      let pagesToLoad = pages_to_load;
-      while (pagesToLoad > 0) {
-        let feedbackToken;
-        for (const section of this.sections) {
-          for (const content of section.contents) {
-            if (content.is(Video)) {
-              if (content.video_id === video_id && content.menu) {
-                feedbackToken = content.menu.top_level_buttons[0].as(Button).endpoint.payload.feedbackToken;
-                break;
-              }
-            } else if (content.is(LockupView)) {
-              if (content.content_id === video_id) {
-                const listItems = (_c = (_b2 = (_a2 = content.metadata) == null ? void 0 : _a2.menu_button) == null ? void 0 : _b2.on_tap) == null ? void 0 : _c.payload.panelLoadingStrategy.inlineContent.sheetViewModel.content.listViewModel.listItems;
-                const listItem = listItems.find((video) => {
-                  var _a3;
-                  return ((_a3 = video.listItemViewModel) == null ? void 0 : _a3.title.content) === "Remove from watch history";
-                });
-                feedbackToken = listItem.listItemViewModel.rendererContext.commandContext.onTap.innertubeCommand.feedbackEndpoint.feedbackToken;
-                break;
-              }
-            }
-          }
-          if (feedbackToken) {
-            break;
-          }
+      if (!this.actions.session.logged_in)
+        throw new Error("You must be signed in to perform this operation.");
+      let self = this;
+      for (let remaining = pages_to_load; remaining > 0; remaining--) {
+        const feedbackEndpoint = findRemoveEndpoint(self.sections, video_id);
+        if (feedbackEndpoint) {
+          return feedbackEndpoint.call(this.actions, { parse: false });
         }
-        if (feedbackToken) {
-          const body = { feedbackTokens: [feedbackToken] };
-          const response = await this.actions.execute("/feedback", body);
-          const data = response.data;
-          if (!data.feedbackResponses[0].isProcessed) {
-            throw new Error("Failed to remove video from watch history");
-          }
-          return true;
-        }
-        if (--pagesToLoad > 0) {
-          try {
-            Object.assign(this, await this.getContinuation());
-          } catch {
-            throw new Error("Unable to find video in watch history");
-          }
-        } else {
-          throw new Error("Unable to find video in watch history");
+        if (remaining === 1)
+          break;
+        try {
+          self = await self.getContinuation();
+        } catch {
         }
       }
-      return false;
+      throw new Error(`Video not found in watch history (ID: ${video_id})`);
     }
   };
   __name(_History, "History");
   var History = _History;
+  function findRemoveEndpoint(sections, video_id) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m;
+    for (const section of sections) {
+      for (const content of section.contents) {
+        if (content.is(Video) && content.video_id === video_id && content.menu) {
+          const removeButton = (_a2 = content.menu.items.find((item) => item.is(MenuServiceItem) && item.icon_type === "DELETE")) == null ? void 0 : _a2.as(MenuServiceItem);
+          const endpoint = removeButton == null ? void 0 : removeButton.endpoint;
+          if (endpoint)
+            return endpoint;
+        } else if (content.is(LockupView) && content.content_id === video_id) {
+          const openMenuCommand = (_d = (_c = (_b2 = content.metadata) == null ? void 0 : _b2.menu_button) == null ? void 0 : _c.on_tap) == null ? void 0 : _d.command;
+          if ((openMenuCommand == null ? void 0 : openMenuCommand.is(ShowSheetCommand)) && ((_e = openMenuCommand.inline_content) == null ? void 0 : _e.is(SheetView)) && ((_f = openMenuCommand.inline_content.content) == null ? void 0 : _f.is(ListView))) {
+            const removeButton = (_g = openMenuCommand.inline_content.content.items.find((item) => {
+              var _a3;
+              return item.is(ListItemView) && ((_a3 = item.leading_image[0].client_resource) == null ? void 0 : _a3.image_name) === "DELETE";
+            })) == null ? void 0 : _g.as(ListItemView);
+            const endpoint = (_i = (_h = removeButton == null ? void 0 : removeButton.renderer_context) == null ? void 0 : _h.command_context) == null ? void 0 : _i.on_tap;
+            if ((_j = endpoint == null ? void 0 : endpoint.command) == null ? void 0 : _j.is(FeedbackEndpoint))
+              return endpoint;
+            if (((_k = endpoint == null ? void 0 : endpoint.command) == null ? void 0 : _k.is(ConfirmDialogEndpoint)) && ((_m = (_l = endpoint.command.content) == null ? void 0 : _l.confirm_endpoint) == null ? void 0 : _m.is(FeedbackEndpoint)))
+              return endpoint.command.content.confirm_endpoint;
+          }
+        }
+      }
+    }
+    return void 0;
+  }
+  __name(findRemoveEndpoint, "findRemoveEndpoint");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/HomeFeed.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/HomeFeed.js
   var _HomeFeed = class _HomeFeed extends FilterableFeed {
     constructor(actions, data, already_parsed = false) {
       var _a2;
@@ -31770,7 +32167,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_HomeFeed, "HomeFeed");
   var HomeFeed = _HomeFeed;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/HashtagFeed.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/HashtagFeed.js
   var _HashtagFeed = class _HashtagFeed extends FilterableFeed {
     constructor(actions, response) {
       super(actions, response);
@@ -31798,7 +32195,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_HashtagFeed, "HashtagFeed");
   var HashtagFeed = _HashtagFeed;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/ItemMenu.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/ItemMenu.js
   var _page6, _actions9, _items;
   var _ItemMenu = class _ItemMenu {
     constructor(data, actions) {
@@ -31847,7 +32244,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_ItemMenu, "ItemMenu");
   var ItemMenu = _ItemMenu;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Playlist.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/Playlist.js
   var _Playlist_instances, getStat_fn;
   var _Playlist2 = class _Playlist2 extends Feed {
     constructor(actions, data, already_parsed = false) {
@@ -31935,7 +32332,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Playlist2, "Playlist");
   var Playlist2 = _Playlist2;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Library.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/Library.js
   var _Library_instances, getAll_fn;
   var _Library = class _Library extends Feed {
     constructor(actions, data) {
@@ -31997,7 +32394,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Library, "Library");
   var Library = _Library;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/SmoothedQueue.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/SmoothedQueue.js
   function flattenQueue(queue) {
     const nodes = [];
     for (const group of queue) {
@@ -32131,7 +32528,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_SmoothedQueue, "SmoothedQueue");
   var SmoothedQueue = _SmoothedQueue;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/LiveChat.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/LiveChat.js
   var _actions10, _video_id, _channel_id, _continuation4, _mcontinuation, _retry_count, _LiveChat_instances, pollLivechat_fn, emitSmoothedActions_fn, pollMetadata_fn, wait_fn;
   var _LiveChat2 = class _LiveChat2 extends EventEmitterLike {
     constructor(video_info) {
@@ -32335,7 +32732,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_LiveChat2, "LiveChat");
   var LiveChat2 = _LiveChat2;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/NotificationsMenu.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/NotificationsMenu.js
   var _page7, _actions11;
   var _NotificationsMenu = class _NotificationsMenu {
     constructor(actions, response) {
@@ -32367,7 +32764,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_NotificationsMenu, "NotificationsMenu");
   var NotificationsMenu = _NotificationsMenu;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Search.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/Search.js
   var _Search = class _Search extends Feed {
     constructor(actions, data, already_parsed = false) {
       var _a2, _b2, _c, _d, _e, _f;
@@ -32453,7 +32850,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Search, "Search");
   var Search = _Search;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/Settings.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/Settings.js
   var _page8, _actions12;
   var _Settings = class _Settings {
     constructor(actions, response) {
@@ -32559,7 +32956,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Settings, "Settings");
   var Settings = _Settings;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/VideoInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/VideoInfo.js
   var _watch_next_continuation;
   var _VideoInfo = class _VideoInfo extends MediaInfo {
     constructor(data, actions, cpn) {
@@ -32577,6 +32974,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
       __publicField(this, "livechat");
       __publicField(this, "autoplay");
       __publicField(this, "heat_map");
+      __publicField(this, "engagement_panels");
       __privateAdd(this, _watch_next_continuation);
       const [info2, next] = this.page;
       if (this.streaming_data) {
@@ -32614,6 +33012,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
         this.secondary_info = results.firstOfType(VideoSecondaryInfo);
         this.merchandise = results.firstOfType(MerchandiseShelf);
         this.related_chip_cloud = (_m = secondary_results.firstOfType(RelatedChipCloud)) == null ? void 0 : _m.content.as(ChipCloud);
+        this.engagement_panels = next == null ? void 0 : next.engagement_panels;
         if (two_col == null ? void 0 : two_col.playlist) {
           this.playlist = two_col.playlist;
         }
@@ -32928,7 +33327,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_VideoInfo, "VideoInfo");
   var VideoInfo = _VideoInfo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/youtube/TranscriptInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/youtube/TranscriptInfo.js
   var _page9, _actions13;
   var _TranscriptInfo = class _TranscriptInfo {
     constructor(actions, response) {
@@ -32980,7 +33379,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_TranscriptInfo, "TranscriptInfo");
   var TranscriptInfo = _TranscriptInfo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/index.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytmusic/index.js
   var ytmusic_exports = {};
   __export(ytmusic_exports, {
     Album: () => Album,
@@ -32995,7 +33394,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     TrackInfo: () => TrackInfo_default
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Album.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytmusic/Album.js
   var _page10;
   var _Album = class _Album {
     constructor(response) {
@@ -33023,7 +33422,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Album, "Album");
   var Album = _Album;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Artist.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytmusic/Artist.js
   var _page11, _actions14;
   var _Artist = class _Artist {
     constructor(response, actions) {
@@ -33064,7 +33463,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Artist, "Artist");
   var Artist = _Artist;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Explore.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytmusic/Explore.js
   var _page12;
   var _Explore = class _Explore {
     constructor(response) {
@@ -33090,7 +33489,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Explore, "Explore");
   var Explore = _Explore;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/HomeFeed.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytmusic/HomeFeed.js
   var _page13, _actions15, _continuation5;
   var _HomeFeed2 = class _HomeFeed2 {
     constructor(response, actions) {
@@ -33164,7 +33563,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_HomeFeed2, "HomeFeed");
   var HomeFeed2 = _HomeFeed2;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Library.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytmusic/Library.js
   var _page14, _actions16, _continuation6;
   var _Library2 = class _Library2 {
     constructor(response, actions) {
@@ -33305,7 +33704,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_LibraryContinuation, "LibraryContinuation");
   var LibraryContinuation = _LibraryContinuation;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Playlist.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytmusic/Playlist.js
   var _page16, _actions18, _continuation8, _last_fetched_suggestions, _suggestions_continuation, _Playlist_instances2, fetchSuggestions_fn;
   var _Playlist3 = class _Playlist3 {
     constructor(response, actions) {
@@ -33435,7 +33834,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Playlist3, "Playlist");
   var Playlist3 = _Playlist3;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Recap.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytmusic/Recap.js
   var _page17, _actions19;
   var _Recap = class _Recap {
     constructor(response, actions) {
@@ -33474,7 +33873,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Recap, "Recap");
   var Recap = _Recap;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/Search.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytmusic/Search.js
   var _page18, _actions20, _continuation9;
   var _Search2 = class _Search2 {
     constructor(response, actions, is_filtered) {
@@ -33629,7 +34028,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_SearchContinuation, "SearchContinuation");
   var SearchContinuation = _SearchContinuation;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytmusic/TrackInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytmusic/TrackInfo.js
   var _TrackInfo = class _TrackInfo extends MediaInfo {
     constructor(data, actions, cpn) {
       var _a2, _b2, _c;
@@ -33741,7 +34140,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   var TrackInfo = _TrackInfo;
   var TrackInfo_default = TrackInfo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytkids/index.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytkids/index.js
   var ytkids_exports = {};
   __export(ytkids_exports, {
     Channel: () => Channel3,
@@ -33750,7 +34149,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     VideoInfo: () => VideoInfo2
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytkids/Channel.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytkids/Channel.js
   var _Channel3 = class _Channel3 extends Feed {
     constructor(actions, data, already_parsed = false) {
       var _a2, _b2;
@@ -33783,7 +34182,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Channel3, "Channel");
   var Channel3 = _Channel3;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytkids/HomeFeed.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytkids/HomeFeed.js
   var _HomeFeed3 = class _HomeFeed3 extends Feed {
     constructor(actions, data, already_parsed = false) {
       var _a2, _b2;
@@ -33820,7 +34219,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_HomeFeed3, "HomeFeed");
   var HomeFeed3 = _HomeFeed3;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytkids/Search.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytkids/Search.js
   var _Search3 = class _Search3 extends Feed {
     constructor(actions, data) {
       super(actions, data);
@@ -33836,7 +34235,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Search3, "Search");
   var Search3 = _Search3;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytkids/VideoInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytkids/VideoInfo.js
   var _VideoInfo2 = class _VideoInfo2 extends MediaInfo {
     constructor(data, actions, cpn) {
       var _a2, _b2, _c, _d, _e;
@@ -33860,13 +34259,13 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_VideoInfo2, "VideoInfo");
   var VideoInfo2 = _VideoInfo2;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytshorts/index.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytshorts/index.js
   var ytshorts_exports = {};
   __export(ytshorts_exports, {
     ShortFormVideoInfo: () => ShortFormVideoInfo
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/ytshorts/ShortFormVideoInfo.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/ytshorts/ShortFormVideoInfo.js
   var _watch_next_continuation2;
   var _ShortFormVideoInfo = class _ShortFormVideoInfo extends MediaInfo {
     constructor(data, actions, cpn, reel_watch_sequence_response) {
@@ -33908,7 +34307,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_ShortFormVideoInfo, "ShortFormVideoInfo");
   var ShortFormVideoInfo = _ShortFormVideoInfo;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/parser/classes/misc/Author.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/parser/classes/misc/Author.js
   var _Author = class _Author {
     constructor(item, badges, thumbs, id) {
       __publicField(this, "id");
@@ -33991,7 +34390,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
   __name(_Author, "Author");
   var Author = _Author;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/user-agents.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/user-agents.js
   var user_agents_default = {
     "desktop": [
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0",
@@ -34051,7 +34450,7 @@ ${generateTypescriptClass(classname, context.key_info)}`);
     ]
   };
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/utils/Utils.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/utils/Utils.js
   var TAG_2 = "Utils";
   var shim;
   var _Platform = class _Platform {
@@ -34291,7 +34690,7 @@ return process("${n || ""}", "${sp || ""}", "${s || ""}");`;
   }
   __name(getNsigProcessorFn, "getNsigProcessorFn");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/platform/polyfills/web-crypto.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/platform/polyfills/web-crypto.js
   async function sha1Hash(str) {
     const byteToHex = [
       "00",
@@ -34563,13 +34962,13 @@ return process("${n || ""}", "${sp || ""}", "${s || ""}");`;
   }
   __name(sha1Hash, "sha1Hash");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/platform/jsruntime/default.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/platform/jsruntime/default.js
   function evaluate(_data24, _env) {
     throw new Error("To decipher URLs, you must provide your own JavaScript evaluator. See https://ytjs.dev/guide/getting-started.html#providing-a-custom-javascript-interpreter for more details.");
   }
   __name(evaluate, "evaluate");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/Actions.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/Actions.js
   var _Actions_instances, isBrowse_fn, needsLogin_fn;
   var _Actions = class _Actions {
     constructor(session) {
@@ -34680,7 +35079,7 @@ return process("${n || ""}", "${sp || ""}", "${s || ""}");`;
   __name(_Actions, "Actions");
   var Actions = _Actions;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/OAuth2.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/OAuth2.js
   var TAG3 = "OAuth2";
   var _session2, _OAuth2_instances, loadFromCache_fn, http_get;
   var _OAuth2 = class _OAuth2 {
@@ -34908,7 +35307,7 @@ return process("${n || ""}", "${sp || ""}", "${s || ""}");`;
   __name(_OAuth2, "OAuth2");
   var OAuth2 = _OAuth2;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/Player.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/Player.js
   var TAG4 = "Player";
   var _Player = class _Player {
     constructor(player_id, signature_timestamp, data) {
@@ -35111,7 +35510,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_Player, "Player");
   var Player = _Player;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/Session.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/Session.js
   var ClientType = {
     WEB: "WEB",
     MWEB: "MWEB",
@@ -35387,7 +35786,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     const api_version = CLIENTS.WEB.API_VERSION;
     const [[device_info], api_key] = ytcfg;
     const config_info = device_info[61];
-    const app_install_data = config_info[config_info.length - 1];
+    const app_install_data = config_info == null ? void 0 : config_info[config_info.length - 1];
     const context_info = {
       hl: options.lang || device_info[0],
       gl: options.location || device_info[1],
@@ -35470,7 +35869,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_Session, "Session");
   var Session = _Session;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/clients/index.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/clients/index.js
   var clients_exports = {};
   __export(clients_exports, {
     Kids: () => Kids,
@@ -35478,7 +35877,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     Studio: () => Studio
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/clients/Kids.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/clients/Kids.js
   var _session3;
   var _Kids = class _Kids {
     constructor(session) {
@@ -35571,7 +35970,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_Kids, "Kids");
   var Kids = _Kids;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/clients/Music.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/clients/Music.js
   var _session4, _actions22, _Music_instances, fetchInfoFromVideoId_fn, fetchInfoFromEndpoint_fn;
   var _Music = class _Music {
     constructor(session) {
@@ -35802,7 +36201,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_Music, "Music");
   var Music = _Music;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/capability_info.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/capability_info.js
   function createBaseCapabilityInfo() {
     return { profile: void 0, supportedCapabilities: [], disabledCapabilities: [], snapshot: void 0 };
   }
@@ -35922,7 +36321,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     }
   };
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/client_info.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/client_info.js
   function createBaseClientInfo() {
     return {
       hl: void 0,
@@ -38197,7 +38596,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   }
   __name(longToNumber, "longToNumber");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/attestation_response_data.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/attestation_response_data.js
   function createBaseAttestationResponseData() {
     return {
       challenge: void 0,
@@ -38345,7 +38744,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   }
   __name(longToNumber2, "longToNumber");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/request_info.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/request_info.js
   function createBaseRequestInfo() {
     return {
       thirdPartyDigest: void 0,
@@ -38683,7 +39082,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     }
   };
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/third_party_info.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/third_party_info.js
   function createBaseThirdPartyInfo() {
     return {
       developerKey: void 0,
@@ -38830,7 +39229,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     }
   };
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/user_info.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/user_info.js
   function createBaseUserInfo() {
     return {
       onBehalfOfUser: void 0,
@@ -39052,7 +39451,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     }
   };
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/innertube_context.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/innertube_context.js
   function createBaseInnerTubeContext() {
     return {
       client: void 0,
@@ -39404,7 +39803,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     }
   };
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/metadata_update_request.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/protos/generated/youtube/api/pfiinnertube/metadata_update_request.js
   function createBaseMetadataUpdateRequest() {
     return {
       context: void 0,
@@ -40082,7 +40481,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   }
   __name(longToNumber3, "longToNumber");
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/clients/Studio.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/clients/Studio.js
   var _session5, _Studio_instances, getInitialUploadData_fn, uploadVideo_fn, setVideoMetadata_fn;
   var _Studio = class _Studio {
     constructor(session) {
@@ -40283,7 +40682,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_Studio, "Studio");
   var Studio = _Studio;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/managers/index.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/managers/index.js
   var managers_exports = {};
   __export(managers_exports, {
     AccountManager: () => AccountManager,
@@ -40291,7 +40690,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
     PlaylistManager: () => PlaylistManager
   });
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/managers/AccountManager.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/managers/AccountManager.js
   var _actions23;
   var _AccountManager = class _AccountManager {
     constructor(actions) {
@@ -40330,7 +40729,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_AccountManager, "AccountManager");
   var AccountManager = _AccountManager;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/managers/PlaylistManager.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/managers/PlaylistManager.js
   var _actions24, _PlaylistManager_instances, getPlaylist_fn;
   var _PlaylistManager = class _PlaylistManager {
     constructor(actions) {
@@ -40571,7 +40970,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_PlaylistManager, "PlaylistManager");
   var PlaylistManager = _PlaylistManager;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/core/managers/InteractionManager.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/core/managers/InteractionManager.js
   var _actions25;
   var _InteractionManager = class _InteractionManager {
     constructor(actions) {
@@ -40736,7 +41135,7 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_InteractionManager, "InteractionManager");
   var InteractionManager = _InteractionManager;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/Innertube.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/Innertube.js
   var _session6;
   var _Innertube = class _Innertube {
     constructor(session) {
@@ -41205,10 +41604,10 @@ ${getNsigProcessorFn(eval_args.n, eval_args.sp, eval_args.sig)}`;
   __name(_Innertube, "Innertube");
   var Innertube = _Innertube;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/platform/lib.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/platform/lib.js
   var lib_default = Innertube;
 
-  // ../../../../../../tmp/syncora-ytjs-sh6LNT/node_modules/youtubei.js/dist/src/platform/web.js
+  // ../../../../../../tmp/syncora-ytjs-v8r2VH/node_modules/youtubei.js/dist/src/platform/web.js
   var CACHE_TAG = "Cache";
   var _persistent_directory, _persistent, _Cache_instances, getBrowserDB_fn;
   var _Cache = class _Cache {
