@@ -129,6 +129,11 @@ flutter_launcher_icons:
 
 dependency_overrides:
   flutter_rust_bridge: 2.11.1
+  # Ronda 10: copia de just_audio con un parche de una línea (no decodificar
+  # la pista de video del itag 18 de YouTube). Ver
+  # packages/just_audio/SYNCORA_PATCH.md.
+  just_audio:
+    path: packages/just_audio
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

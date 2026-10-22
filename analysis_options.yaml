@@ -9,6 +9,12 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+# La copia parcheada de just_audio (ver packages/just_audio/SYNCORA_PATCH.md) no
+# se analiza con las reglas de la app.
+analyzer:
+  exclude:
+    - packages/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
