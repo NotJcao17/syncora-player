@@ -9,6 +9,7 @@ import '../../../data/apis/deezer_api.dart';
 import '../../../data/local_db/daos/playlist_dao.dart';
 import '../../../data/supabase/supabase_playlist_repository.dart';
 import '../../library/services/like_track_service.dart';
+import '../player_models.dart';
 import '../syncora_player_controller.dart';
 import '../audio_engine/audio_engine_state.dart' as engine_state;
 
@@ -201,6 +202,10 @@ bool get _isTestEnv {
     }).catchError((_) {});
   }
 
+  PlaybackStatus? _lastStatus;
+  bool _metadataPushed = false;
+  SyncoraTrack? _lastMetadataTrack;
+
   void _onControllerChanged() {
     if (_disposed) return;
     final state = _controller.state;
@@ -213,29 +218,41 @@ bool get _isTestEnv {
       _pushThumbBarState();
     }
 
+    // Ronda 10: estado y metadatos solo cruzan el FFI cuando cambian. Antes
+    // iban en cada tick de posición (4 por segundo), portada incluida.
     // 1. Playback status
+    final PlaybackStatus status;
     if (engineState.playing) {
-      _smtc.setPlaybackStatus(PlaybackStatus.playing);
+      status = PlaybackStatus.playing;
     } else if (engineState.processingState == engine_state.AudioProcessingState.idle ||
         engineState.processingState == engine_state.AudioProcessingState.completed) {
-      _smtc.setPlaybackStatus(PlaybackStatus.stopped);
+      status = PlaybackStatus.stopped;
     } else {
-      _smtc.setPlaybackStatus(PlaybackStatus.paused);
+      status = PlaybackStatus.paused;
+    }
+    if (status != _lastStatus) {
+      _lastStatus = status;
+      _smtc.setPlaybackStatus(status);
     }
 
     // 2. Metadata
-    if (track != null) {
-      final thumb = track.coverUrl.isNotEmpty ? track.coverUrl : track.artUri?.toString();
-      _smtc.updateMetadata(
-        MusicMetadata(
-          title: track.title,
-          artist: track.artist,
-          album: track.album ?? '',
-          thumbnail: thumb != null && thumb.isNotEmpty ? thumb : null,
-        ),
-      );
-    } else {
-      _smtc.clearMetadata();
+    final metadataChanged = !_metadataPushed || !identical(track, _lastMetadataTrack);
+    _metadataPushed = true;
+    _lastMetadataTrack = track;
+    if (metadataChanged) {
+      if (track != null) {
+        final thumb = track.coverUrl.isNotEmpty ? track.coverUrl : track.artUri?.toString();
+        _smtc.updateMetadata(
+          MusicMetadata(
+            title: track.title,
+            artist: track.artist,
+            album: track.album ?? '',
+            thumbnail: thumb != null && thumb.isNotEmpty ? thumb : null,
+          ),
+        );
+      } else {
+        _smtc.clearMetadata();
+      }
     }
 
     // 3. Timeline (throttle: máximo 1 update por segundo para no saturar FFI)

@@ -75,7 +75,7 @@ class _SlowEngine implements AudioEngine {
   @override
   Future<void> pause() async => _emit(_state.copyWith(playing: false));
   @override
-  Future<void> seek(Duration position) async {}
+  Future<void> seek(Duration position) async => _emit(_state.copyWith(position: position));
   @override
   Future<void> setSpeed(double speed) async {}
   @override
@@ -188,6 +188,63 @@ void main() {
     await pumpEventQueue();
 
     expect(handler.playbackState.value.processingState, audio_service.AudioProcessingState.idle);
+    controller.dispose();
+  });
+
+  // Ronda 10 (batería): con la app en segundo plano se republicaba al SO la
+  // sesión entera (pista, cola completa y estado) en cada tick de posición.
+  test('los ticks de posición no se republican al SO; play, pausa y saltos sí', () async {
+    final engine = _SlowEngine();
+    final controller = SyncoraPlayerController(
+      engine: engine,
+      extractionService: _OkExtraction(),
+    );
+    controller.init();
+    await pumpEventQueue();
+    final handler = SyncoraAudioHandler(controller);
+    await controller.setQueue([
+      for (var i = 0; i < 300; i++) SyncoraTrack(id: '$i', title: 'T$i'),
+    ]);
+    await pumpEventQueue();
+
+    var states = 0, queues = 0, items = 0;
+    final subs = [
+      handler.playbackState.skip(1).listen((_) => states++),
+      handler.queue.skip(1).listen((_) => queues++),
+      handler.mediaItem.skip(1).listen((_) => items++),
+    ];
+
+    // Ticks como los del motor real: la posición avanza al ritmo del reloj,
+    // espaciados más que el agrupado de 250 ms del controlador.
+    final clock = Stopwatch()..start();
+    for (var i = 0; i < 8; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 260));
+      engine._emit(engine._state.copyWith(position: clock.elapsed));
+    }
+    await pumpEventQueue();
+    expect(states, 0, reason: 'Android extrapola la posición solo');
+    expect(queues, 0);
+    expect(items, 0);
+
+    await controller.seek(const Duration(seconds: 90));
+    await pumpEventQueue();
+    expect(states, 1, reason: 'un salto sí se publica');
+    expect(handler.playbackState.value.updatePosition, const Duration(seconds: 90));
+
+    await controller.pause();
+    await pumpEventQueue();
+    expect(states, 2);
+    expect(handler.playbackState.value.playing, isFalse);
+
+    await controller.skipToNext();
+    await pumpEventQueue();
+    expect(items, greaterThanOrEqualTo(1));
+    expect(queues, greaterThanOrEqualTo(1));
+    expect(handler.mediaItem.value?.id, '1');
+
+    for (final s in subs) {
+      await s.cancel();
+    }
     controller.dispose();
   });
 }

@@ -15,7 +15,11 @@ import 'audio_engine_state.dart';
 /// spoken-word/podcasts (Pitfall #7). El gapless entre canciones musicales lo
 /// resuelve la Playlist API de ExoPlayer, no este flag.
 class JustAudioEngine implements AudioEngine {
-  final AudioPlayer _player = AudioPlayer();
+  // Ronda 10 (batería): los headers (el User-Agent del cliente, Pitfall #13)
+  // los manda ExoPlayer directamente. Con el proxy por defecto, todo el audio
+  // pasaba por un servidor HTTP en Dart dentro del isolate principal, que se
+  // despertaba con cada trozo durante horas en segundo plano.
+  final AudioPlayer _player = AudioPlayer(useProxyForRequestHeaders: false);
 
   final StreamController<AudioEngineState> _stateController =
       StreamController<AudioEngineState>.broadcast();
@@ -35,6 +39,9 @@ class JustAudioEngine implements AudioEngine {
     _player.durationStream.listen(_onDuration);
     _player.processingStateStream.listen(_onProcessingState);
 
+    // Ronda 10: desde just_audio 0.10 los errores de ExoPlayer ya no llegan
+    // como error del stream (este `onError` nunca se dispara): llegan como un
+    // evento con `errorCode` y el estado en `idle` (ver `_isErrorIdle`).
     _player.playbackEventStream.listen(
       (_) {},
       onError: (Object e, StackTrace st) {
@@ -42,6 +49,25 @@ class JustAudioEngine implements AudioEngine {
         _emit(_state.copyWith(processingState: AudioProcessingState.error));
       },
     );
+  }
+
+  /// `idle` con `errorCode`: ExoPlayer falló (just_audio 0.10 lo publica así).
+  ///
+  /// Ronda 10: tratarlo como un `idle` cualquiera era el bug de "pausé unos
+  /// minutos y al darle play empezó desde 0": en pausa, YouTube corta la
+  /// conexión, ExoPlayer da error y el motor quedaba en `idle` sin que el
+  /// controlador lo viera como error. Su `play()` con el motor en `idle`
+  /// recarga la pista, y como nadie había guardado la posición, desde 0. De
+  /// paso la notificación perdía la barra (`idle` = sin sesión). Como error,
+  /// el controlador guarda el segundo y lo retoma (H-R4-2).
+  bool _isErrorIdle(ProcessingState s) => s == ProcessingState.idle && _player.playbackEvent.errorCode != null;
+
+  void _emitError() {
+    if (_state.processingState != AudioProcessingState.error) {
+      final event = _player.playbackEvent;
+      _logStreamController.add('[JustAudio:error] ${event.errorCode} ${event.errorMessage ?? ''}');
+    }
+    _emit(_state.copyWith(playing: false, processingState: AudioProcessingState.error));
   }
 
   @override
@@ -168,6 +194,10 @@ class JustAudioEngine implements AudioEngine {
       ));
       return;
     }
+    if (_isErrorIdle(s.processingState)) {
+      _emitError();
+      return;
+    }
     _emit(_state.copyWith(
       playing: s.playing,
       processingState: _mapProcessingState(s.processingState),
@@ -176,11 +206,19 @@ class JustAudioEngine implements AudioEngine {
 
   void _onProcessingState(ProcessingState s) {
     if (s == ProcessingState.completed) return; // ya tratado arriba
+    if (_isErrorIdle(s)) {
+      _emitError();
+      return;
+    }
     _emit(_state.copyWith(processingState: _mapProcessingState(s)));
   }
 
-  void _onPosition(Duration p) =>
-      _emit(_state.copyWith(position: p));
+  void _onPosition(Duration p) {
+    // Tras un error la posición que importa es la última que sonó: es la que
+    // el controlador retoma.
+    if (_state.processingState == AudioProcessingState.error) return;
+    _emit(_state.copyWith(position: p));
+  }
 
   void _onBuffered(Duration b) =>
       _emit(_state.copyWith(bufferedPosition: b));

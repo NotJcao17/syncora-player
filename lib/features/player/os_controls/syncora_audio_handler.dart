@@ -110,30 +110,57 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
     _controller.removeListener(_onControllerChanged);
     _controller = newController;
     _controller.addListener(_onControllerChanged);
+    _forceNextPublish = true;
     _onControllerChanged();
   }
 
+  // Ronda 10 (batería): el controlador notifica unas 4 veces por segundo
+  // mientras suena (la posición), y cada vez se le volvía a mandar al SO la
+  // pista, la cola completa (cientos de canciones serializadas por el canal
+  // de plataforma) y el estado. En el teléfono se veía la sesión
+  // republicada cada ~400 ms durante horas en segundo plano. Android calcula
+  // solo la posición a partir de la última publicación (`updateTime` +
+  // velocidad), así que basta publicar cuando algo cambia de verdad.
+  bool _forceNextPublish = true;
+  SyncoraTrack? _publishedTrack;
+  List<SyncoraTrack>? _publishedManualQueue;
+  List<SyncoraTrack>? _publishedAutoQueue;
+  PlaybackState? _lastPublishedState;
+  String? _lastPublishedControlsKey;
+
+  /// Más que esto entre la posición real y la que Android extrapola es un
+  /// salto (seek), y hay que publicarlo.
+  static const Duration _positionDriftTolerance = Duration(seconds: 2);
+
   void _onControllerChanged() {
     final state = _controller.state;
+    final force = _forceNextPublish;
+    _forceNextPublish = false;
 
-    // 1. MediaItem (pista actual)
+    // 1. MediaItem (pista actual). Las listas y pistas del estado son
+    // inmutables y solo se reemplazan al cambiar: comparar identidad basta.
     final track = state.currentTrack;
-    if (track != null) {
-      mediaItem.add(_toMediaItem(track));
-    } else {
-      mediaItem.add(null);
+    final trackChanged = force || !identical(track, _publishedTrack);
+    if (trackChanged) {
+      mediaItem.add(track == null ? null : _toMediaItem(track));
     }
 
     // 2. Queue: vista combinada de solo-lectura para el SO (Fase 7.A —
     // modelo dual). El índice 0 siempre es la pista actual; luego la manual
     // completa, luego la automática.
-    final combinedQueue = <SyncoraTrack>[
-      ?track,
-      ...state.manualQueue,
-      ...state.autoQueue,
-    ];
-    final queueItems = combinedQueue.map(_toMediaItem).toList();
-    queue.add(queueItems);
+    if (trackChanged ||
+        !identical(state.manualQueue, _publishedManualQueue) ||
+        !identical(state.autoQueue, _publishedAutoQueue)) {
+      final combinedQueue = <SyncoraTrack>[
+        ?track,
+        ...state.manualQueue,
+        ...state.autoQueue,
+      ];
+      queue.add(combinedQueue.map(_toMediaItem).toList());
+      _publishedManualQueue = state.manualQueue;
+      _publishedAutoQueue = state.autoQueue;
+    }
+    _publishedTrack = track;
 
     // Ítem 4 (QA): la pista activa cambió -- el flag de "me gusta" quedado
     // de la anterior ya no representa nada real, hay que refrescarlo contra
@@ -145,7 +172,7 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
       _refreshLikedState(track);
     }
 
-    _publishPlaybackState();
+    _publishPlaybackState(force: trackChanged);
   }
 
   /// Publica el `playbackState` completo con los controles vigentes --
@@ -156,7 +183,7 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
   /// gusta" vive en la DB de playlists, no en `SyncoraPlayerState`) -- antes
   /// de este fix, tocar el corazón nunca refrescaba la notificación/
   /// lockscreen con el nuevo estado.
-  void _publishPlaybackState() {
+  void _publishPlaybackState({bool force = false}) {
     final state = _controller.state;
     final engineState = state.engine;
     final track = state.currentTrack;
@@ -169,31 +196,65 @@ class SyncoraAudioHandler extends BaseAudioHandler with SeekHandler {
       _favoriteControl,
     ];
 
-    playbackState.add(
-      PlaybackState(
-        controls: controls,
-        systemActions: const {
-          MediaAction.seek,
-          MediaAction.seekForward,
-          MediaAction.seekBackward,
-          MediaAction.setShuffleMode,
-          MediaAction.setRepeatMode,
-          MediaAction.custom,
-        },
-        androidCompactActionIndices: const [1, 2, 3],
-        shuffleMode: state.isShuffle ? AudioServiceShuffleMode.all : AudioServiceShuffleMode.none,
-        repeatMode: _mapRepeatMode(state.repeatMode),
-        processingState: _mapProcessingState(
-          engineState.processingState,
-          isPreparing: _controller.isPreparingPlayback && track != null,
-        ),
-        playing: isPlaying,
-        updatePosition: engineState.position,
-        bufferedPosition: engineState.bufferedPosition,
-        speed: engineState.speed,
-        queueIndex: track != null ? 0 : null,
-      ),
+    final next = PlaybackState(
+      controls: controls,
+      systemActions: const {
+        MediaAction.seek,
+        MediaAction.seekForward,
+        MediaAction.seekBackward,
+        MediaAction.setShuffleMode,
+        MediaAction.setRepeatMode,
+        MediaAction.custom,
+      },
+      androidCompactActionIndices: const [1, 2, 3],
+      shuffleMode: state.isShuffle ? AudioServiceShuffleMode.all : AudioServiceShuffleMode.none,
+      repeatMode: _mapRepeatMode(state.repeatMode),
+      // Ronda 10: tras un error del motor en pausa la pista sigue en pausa
+      // (play la retoma en el mismo segundo). Publicar `idle`/`error` le
+      // quitaba la barra a la notificación, como si la sesión hubiera
+      // terminado.
+      processingState: _controller.isPausedAfterEngineError
+          ? AudioProcessingState.ready
+          : _mapProcessingState(
+              engineState.processingState,
+              isPreparing: _controller.isPreparingPlayback && track != null,
+            ),
+      playing: isPlaying,
+      updatePosition: engineState.position,
+      bufferedPosition: engineState.bufferedPosition,
+      speed: engineState.speed,
+      queueIndex: track != null ? 0 : null,
     );
+    final controlsKey = '${state.isShuffle}|$_isCurrentTrackLiked';
+    final last = _lastPublishedState;
+    if (!force &&
+        last != null &&
+        controlsKey == _lastPublishedControlsKey &&
+        _sameExceptPosition(last, next) &&
+        !_positionJumped(last, next)) {
+      return;
+    }
+    _lastPublishedState = next;
+    _lastPublishedControlsKey = controlsKey;
+    playbackState.add(next);
+  }
+
+  static bool _sameExceptPosition(PlaybackState a, PlaybackState b) =>
+      a.processingState == b.processingState &&
+      a.playing == b.playing &&
+      a.speed == b.speed &&
+      a.shuffleMode == b.shuffleMode &&
+      a.repeatMode == b.repeatMode &&
+      a.queueIndex == b.queueIndex;
+
+  /// ¿La posición real se apartó de la que Android calcula por su cuenta?
+  static bool _positionJumped(PlaybackState last, PlaybackState next) {
+    var expected = last.updatePosition;
+    if (last.playing) {
+      final elapsed = next.updateTime.difference(last.updateTime);
+      expected += elapsed * last.speed;
+    }
+    return (next.updatePosition - expected).abs() > _positionDriftTolerance;
   }
 
   /// Consulta el estado real de "me gusta" de [track] contra la DB y

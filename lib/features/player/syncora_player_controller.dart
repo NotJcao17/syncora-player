@@ -188,6 +188,8 @@ class SyncoraPlayerController extends ChangeNotifier {
     bool Function()? radioEnabledGetter,
     Duration Function()? crossfadeDurationGetter,
     VoidCallback? onListenRecorded,
+    // Ronda 10: canción que no se pudo reproducir (Configuración la muestra).
+    void Function(SyncoraTrack track, String reason)? onUnplayable,
     // Inyectable solo para tests (ver `syncora_player_controller_test.dart`,
     // grupo "Fase 7.F.2" -- un doble que devuelve una sesión restaurada con
     // `currentTrack: null` y `manualQueue` no vacía, el único camino
@@ -212,6 +214,7 @@ class SyncoraPlayerController extends ChangeNotifier {
         _radioEnabledGetter = radioEnabledGetter, // ignore: prefer_initializing_formals
         _crossfadeDurationGetter = crossfadeDurationGetter, // ignore: prefer_initializing_formals
         _onListenRecorded = onListenRecorded, // ignore: prefer_initializing_formals
+        _onUnplayable = onUnplayable, // ignore: prefer_initializing_formals
         _sessionStorage = sessionStorage ?? PlayerSessionStorage();
 
   final AudioEngine _engine;
@@ -238,6 +241,15 @@ class SyncoraPlayerController extends ChangeNotifier {
   /// Se dispara al registrar una escucha, para subirla a la nube en el momento
   /// (ver `player_providers.dart`).
   final VoidCallback? _onListenRecorded;
+
+  /// Se dispara cada vez que una canción no se pudo reproducir (ronda 10),
+  /// para el registro de Configuración (`UnplayableTrackLog`).
+  final void Function(SyncoraTrack track, String reason)? _onUnplayable;
+
+  void _recordUnplayable(SyncoraTrack track, String reason) {
+    _log('[Play] No se pudo reproducir "${track.title}": $reason');
+    _onUnplayable?.call(track, reason);
+  }
 
   /// ¿La pista que está sonando AHORA MISMO se cargó desde descarga local
   /// (en vez de streaming)? Se actualiza justo después de arrancar
@@ -350,24 +362,46 @@ class SyncoraPlayerController extends ChangeNotifier {
     if (excess > 0) _recentRadioSuggestions.removeRange(0, excess);
   }
 
-  /// Umbral del guard de cascada de auto-skip lógico (7.C.3): al llegar a
-  /// esta cantidad de fallos lógicos SEGUIDOS (sin ningún éxito de
-  /// reproducción entre medio), el auto-skip se detiene en vez de seguir
-  /// saltando solo — evita vaciar una playlist entera en silencio cuando hay
-  /// muchos matches rotos en fila.
-  static const int _cascadeGuardThreshold = 3;
+  /// Saltos automáticos desde la última vez que algo sonó de verdad (ronda
+  /// 10). Reemplaza al umbral de 3 fallos seguidos de 7.C.3: nunca hay dos
+  /// saltos automáticos seguidos, el segundo fallo pausa (pedido del
+  /// usuario). Cuenta cualquier salto automático (sin coincidencia, fallo de
+  /// carga, error del motor al empezar) y solo se repone con reproducción
+  /// real ([_noteRealPlayback]) o con una acción del usuario
+  /// ([_resetAutoSkipBudget]), nunca con una extracción exitosa: una URL que
+  /// el motor no puede abrir también se "extrae bien", y así se saltaba en
+  /// bucle (Pitfall #14).
+  int _autoSkipsWithoutPlayback = 0;
 
-  /// Contador del guard de cascada (7.C.3). Se incrementa en cada fallo
-  /// lógico (notFound/unknownError) que toma la rama de auto-skip dentro de
-  /// `_handleExtractionError`. Se resetea a 0 en el mismo punto donde ya se
-  /// resetea `_retryPolicy` por éxito de extracción (reproducción lograda),
-  /// y también en los puntos de entrada donde el usuario interviene
-  /// manualmente (`skipToNext` público, `playFromQueue`, `setQueue`) para no
-  /// arrastrar un conteo viejo a una sesión de escucha distinta. La cascada
-  /// interna de `_handleExtractionError`/`_advanceAndPlay` NUNCA pasa por
-  /// esos puntos de entrada (ver docstring de `_advanceAndPlay`), así que
-  /// resetear ahí nunca pisa un conteo en curso.
-  int _consecutiveLogicalFailures = 0;
+  /// Pista que ya se recargó una vez tras cortarse a mitad de canción.
+  String? _engineRetryTrackId;
+
+  /// Posición del motor al empezar a sonar sin interrupción (para medir
+  /// reproducción real).
+  Duration? _playbackRunStart;
+
+  /// Lo que hace falta que suene para que cuente como reproducción real.
+  static const Duration _realPlaybackMinimum = Duration(seconds: 3);
+
+  /// Un error del motor pasado este punto es un corte a mitad de canción.
+  static const Duration _midSongErrorThreshold = Duration(seconds: 5);
+
+  void _resetAutoSkipBudget() {
+    _autoSkipsWithoutPlayback = 0;
+    _engineRetryTrackId = null;
+  }
+
+  void _noteRealPlayback(AudioEngineState engineState) {
+    if (!engineState.playing || engineState.processingState != AudioProcessingState.ready) {
+      _playbackRunStart = null;
+      return;
+    }
+    final start = _playbackRunStart ??= engineState.position;
+    if (engineState.position - start >= _realPlaybackMinimum &&
+        (_autoSkipsWithoutPlayback != 0 || _engineRetryTrackId != null)) {
+      _resetAutoSkipBudget();
+    }
+  }
 
   /// Pistas marcadas "no disponibles" durante la racha actual de fallos
   /// lógicos. Si la racha resulta ser un motor roto (Fase 8.A), se les quita
@@ -375,7 +409,6 @@ class SyncoraPlayerController extends ChangeNotifier {
   final List<String> _logicalFailureStreakTrackIds = [];
 
   void _resetLogicalFailureStreak() {
-    _consecutiveLogicalFailures = 0;
     _logicalFailureStreakTrackIds.clear();
   }
 
@@ -559,8 +592,9 @@ class SyncoraPlayerController extends ChangeNotifier {
     _restoredPositionTrackId = null;
     // 7.C.3: setQueue() es una intervención del usuario (nuevo contexto de
     // escucha) — no debe arrastrar un conteo de fallos lógicos de la sesión
-    // de escucha anterior (ver docstring de `_consecutiveLogicalFailures`).
+    // de escucha anterior (ver `_autoSkipsWithoutPlayback`).
     _resetLogicalFailureStreak();
+    _resetAutoSkipBudget();
     // Cada llamada a setQueue() es una sesión de contexto nueva (Fase 7.B,
     // revisión: bug #1) — incrementa en AMBAS ramas (tracks.isEmpty incluida)
     // para que un lote de radio en vuelo, originado antes de este cambio de
@@ -647,6 +681,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     // 7.C.3: elegir una pista de la cola a mano es una intervención del
     // usuario — no debe arrastrar un conteo de fallos lógicos viejo.
     _resetLogicalFailureStreak();
+    _resetAutoSkipBudget();
     try {
       // H-R5-2: el guard cubre la mutación de la cola, no la carga.
       if (!_moveToQueueIndex(origin, index)) return;
@@ -691,12 +726,32 @@ class SyncoraPlayerController extends ChangeNotifier {
     // Suena algo otra vez: la pausa anterior ya no describe ningún estado
     // vigente (ver [pause] / [lastPauseWasUserInitiated]).
     _lastPauseWasUserInitiated = false;
-    if (_state.engine.processingState == AudioProcessingState.idle && _state.currentTrack != null) {
+    if (_nothingLoaded) {
       await playCurrent();
     } else {
       await _engine.play();
     }
   }
+
+  /// Hay pista actual pero el motor no tiene nada que reproducir: recién
+  /// abierta la app (sesión restaurada) o tras un error del motor en pausa.
+  ///
+  /// Ronda 10: antes solo se miraba `idle`. Un error en pausa deja el motor
+  /// en `error` (el controlador lo pasa a `idle`, pero el siguiente tick del
+  /// motor lo vuelve a poner), y `play()` entonces no hacía nada.
+  bool get _nothingLoaded {
+    final ps = _state.engine.processingState;
+    return _state.currentTrack != null &&
+        _preparingPlaybackGeneration == null &&
+        (ps == AudioProcessingState.idle || ps == AudioProcessingState.error);
+  }
+
+  /// La pausa sigue "viva" aunque el motor haya soltado la fuente por un
+  /// error (ronda 10): el SO debe seguir viendo una pista en pausa, con su
+  /// barra y su segundo, y no una sesión terminada. Ver
+  /// `SyncoraAudioHandler._publishPlaybackState`.
+  bool get isPausedAfterEngineError => _pausedAfterEngineError && _nothingLoaded;
+  bool _pausedAfterEngineError = false;
 
   /// Pausa la reproducción.
   ///
@@ -723,11 +778,39 @@ class SyncoraPlayerController extends ChangeNotifier {
   bool _lastPauseWasUserInitiated = false;
 
   Future<void> seek(Duration position) async {
+    // Ronda 10: sin nada cargado (al reabrir la app, en PC) el motor ignora
+    // el salto y la barra volvía a la posición restaurada: no se podía
+    // arrastrar hasta pulsar play. Ahora el segundo elegido pasa a ser la
+    // posición desde la que arranca la pista.
+    final track = _state.currentTrack;
+    if (track != null && _nothingLoaded) {
+      _restoredPositionSeconds = position.inSeconds;
+      _restoredPositionTrackId = track.id;
+      _state = _state.copyWith(engine: _state.engine.copyWith(position: position));
+      _notify();
+      _saveSession();
+      return;
+    }
     await _engine.seek(position);
     _saveSession();
   }
 
+  /// Detiene el motor y suelta la fuente, pero recuerda el segundo: el
+  /// siguiente play retoma ahí.
+  ///
+  /// Ronda 10: tras 10 minutos en pausa, SystemUI de Android da la sesión por
+  /// vencida y le manda `stop` a la app (la notificación pasa a ser el
+  /// reproductor de "reanudar", sin barra). Antes eso perdía la posición y el
+  /// play siguiente empezaba la canción desde 0. Lo mismo al cerrar la app
+  /// desde recientes (`onTaskRemoved`).
   Future<void> stop() async {
+    _pausedAfterEngineError = false;
+    final track = _state.currentTrack;
+    final position = _state.engine.position;
+    if (track != null && position > Duration.zero) {
+      _restoredPositionSeconds = position.inSeconds;
+      _restoredPositionTrackId = track.id;
+    }
     await _microFadeOut();
     await _engine.stop();
     _saveSession();
@@ -754,6 +837,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     // interna nunca pasa por este método público (ver docstring de
     // _advanceAndPlay), así que resetear acá nunca pisa un conteo en curso.
     _resetLogicalFailureStreak();
+    _resetAutoSkipBudget();
     var released = false;
     try {
       final advanced = _advance();
@@ -903,6 +987,7 @@ class SyncoraPlayerController extends ChangeNotifier {
     // no debe arrastrar el conteo de una cadena de auto-skip previa hacia
     // "siguiente".
     _resetLogicalFailureStreak();
+    _resetAutoSkipBudget();
     try {
       final now = DateTime.now();
       final isDoubleTap = _lastPrevTapTime != null && now.difference(_lastPrevTapTime!) < const Duration(milliseconds: 1500);
@@ -1188,6 +1273,7 @@ bool get _isTestEnv {
   /// Drift, para que el cierre de sesión pueda subirla todavía.
   Future<void> resetForAccountChange() async {
     _resetLogicalFailureStreak();
+    _resetAutoSkipBudget();
     _contextGeneration++;
     _finalizeListenEntry();
     _listenTrackedTrack = null;
@@ -2457,6 +2543,7 @@ bool get _isTestEnv {
     // canción (o "siguiente"), su fin se tomaba por la completion espuria de
     // `_onComplete` y la reproducción se quedaba al final de esa canción.
     _lastPauseWasUserInitiated = false;
+    _pausedAfterEngineError = false;
     // H-R3-2: la ventana se abre ANTES del `stop()` del motor, que es
     // exactamente el punto donde se emitía `idle` y `audio_service` soltaba
     // el foreground service. Ver [_preparingPlaybackGeneration].
@@ -2794,19 +2881,22 @@ bool get _isTestEnv {
     }
 
     if (error == ExtractionError.notFound || error == ExtractionError.unknownError) {
-      _consecutiveLogicalFailures++;
       _logicalFailureStreakTrackIds.add(track.id);
       // 7.C.2 (D-21): marcado de sesión, nunca persistido — nueva instancia
       // de Set, nunca mutación in-place (mismo patrón que las colas).
       final updatedUnavailable = Set<String>.from(_state.unavailableTrackIds)..add(track.id);
+      _recordUnplayable(
+        track,
+        error == ExtractionError.notFound ? 'No se encontró en YouTube' : 'No se pudo obtener el audio',
+      );
 
-      if (_consecutiveLogicalFailures >= _cascadeGuardThreshold) {
-        // 7.C.3: guard de cascada — NO se llama a _advanceAndPlay() de
-        // nuevo (eso seguiría saltando pistas rotas en silencio). Se
-        // pausa el motor, igual que el guard 403/red, y se deja un aviso
-        // resumen para que la UI ofrezca continuar o pausar.
-        _log('[Play] Guard de cascada: $_consecutiveLogicalFailures fallos lógicos seguidos '
-            '— deteniendo auto-skip.');
+      if (_autoSkipsWithoutPlayback >= 1) {
+        // 7.C.3 + ronda 10: guard de cascada — NO se llama a
+        // _advanceAndPlay() de nuevo (eso seguiría saltando pistas rotas en
+        // silencio). Antes cortaba al tercer fallo; ahora nunca hay dos
+        // saltos automáticos seguidos. Se pausa el motor, igual que el guard
+        // 403/red, y se deja un aviso para que la UI ofrezca seguir.
+        _log('[Play] Guard de cascada: segundo fallo sin nada sonando entre medio — deteniendo auto-skip.');
         await _engine.pause();
         _state = _state.copyWith(
           lastError: error,
@@ -2814,8 +2904,7 @@ bool get _isTestEnv {
           unavailableTrackIds: Set.unmodifiable(updatedUnavailable),
           notice: _nextNotice(
             kind: PlayerNoticeKind.cascadeGuard,
-            message: 'Varias canciones seguidas no están disponibles. '
-                'Auto-skip detenido.',
+            message: 'Tampoco se pudo reproducir "${track.title}". Reproducción en pausa.',
           ),
         );
         _notify();
@@ -2823,6 +2912,7 @@ bool get _isTestEnv {
         return;
       }
 
+      _autoSkipsWithoutPlayback++;
       _state = _state.copyWith(
         lastError: error,
         lastErrorMessage: message,
@@ -2848,6 +2938,15 @@ bool get _isTestEnv {
     }
 
     _log('[Play] Pausa inmediata por $error persistente (guard 403).');
+    final rawText = message?.toLowerCase() ?? '';
+    _recordUnplayable(
+      track,
+      rawText.contains('not a bot') || rawText.contains('unusual traffic')
+          ? 'YouTube pidió verificar la conexión'
+          : error == ExtractionError.networkError
+              ? 'Sin conexión con YouTube'
+              : 'YouTube rechazó la reproducción',
+    );
     await _engine.pause();
     // Ronda 8: el aviso llevaba el error técnico tal cual ("No se pudo extraer
     // la URL con clientes ([ANDROID, ...]). Detalle: ..."). El detalle sigue en
@@ -2957,6 +3056,7 @@ bool get _isTestEnv {
         _state.currentTrack != null;
 
     _trackListenProgress(engineState);
+    _noteRealPlayback(engineState);
 
     final previousEngine = _state.engine;
     _state = _state.copyWith(engine: _withRestoredPosition(engineState));
@@ -2986,11 +3086,16 @@ bool get _isTestEnv {
       // estando en pausa. Ahora se deja la pista lista para reintentar: el
       // próximo play() rehace la extracción y retoma en el mismo segundo.
       final current = _state.currentTrack!;
-      final position = _state.engine.position;
+      // La mayor de las dos: un tick del motor con la posición en 0 puede
+      // llegar justo antes o justo después del error, y el error nunca hace
+      // avanzar la canción.
+      final previous = _state.engine.position;
+      final position = engineState.position > previous ? engineState.position : previous;
       _log('[Play] Error del motor con la reproducción en pausa: sin auto-skip, '
           'se reintentará al pulsar play (${position.inSeconds}s).');
       _restoredPositionSeconds = position.inSeconds;
       _restoredPositionTrackId = current.id;
+      _pausedAfterEngineError = true;
       _state = _state.copyWith(
         engine: _state.engine.copyWith(
           processingState: AudioProcessingState.idle,
@@ -3002,19 +3107,79 @@ bool get _isTestEnv {
       return;
     }
 
-    if (isNowError && !wasError) {
-      _log('[Play] El motor de audio reportó un error de reproducción — saltando a la siguiente pista.');
+    // Ronda 10: un error durante la carga lo atiende el camino de carga
+    // (reintento con URL nueva, `_failPlaybackLoad`). Desde just_audio 0.10
+    // ese error también llega como estado del motor, y atenderlo aquí además
+    // saltaba de pista en medio del reintento.
+    if (isNowError && !wasError && _preparingPlaybackGeneration == null) {
+      final previous = previousEngine.position;
+      _handlePlaybackEngineError(engineState.position > previous ? engineState.position : previous);
+    }
+  }
+
+  /// Error del motor con la pista sonando (ronda 10).
+  ///
+  /// - **A mitad de canción** (se cayó la conexión): se recarga la misma en
+  ///   el mismo segundo, una vez. Antes se saltaba a la siguiente y se perdía.
+  /// - **Al empezar**, o si la recarga también falla: se salta una vez; si ya
+  ///   hubo un salto automático sin que sonara nada, se pausa (nunca dos
+  ///   saltos seguidos, Pitfall #14). Play retoma ahí.
+  void _handlePlaybackEngineError(Duration position) {
+    final current = _state.currentTrack;
+    if (current == null) return;
+
+    if (position >= _midSongErrorThreshold && _engineRetryTrackId != current.id) {
+      _engineRetryTrackId = current.id;
+      _restoredPositionSeconds = position.inSeconds;
+      _restoredPositionTrackId = current.id;
+      _log('[Play] Se cortó la reproducción en ${position.inSeconds}s: se recarga la misma pista ahí.');
+      // Núcleo sin guard, igual que la cascada de `_handleExtractionError`:
+      // puede llegar con un skipToNext()/playFromQueue() en curso.
+      unawaited(playCurrent());
+      return;
+    }
+
+    final reason = position >= _midSongErrorThreshold ? 'Se cortó la reproducción' : 'El reproductor no pudo reproducir el audio';
+    _recordUnplayable(current, reason);
+
+    if (_autoSkipsWithoutPlayback >= 1 || _engineRetryTrackId == current.id) {
+      _log('[Play] El motor de audio falló otra vez: pausa en vez de saltar.');
+      if (position > Duration.zero) {
+        _restoredPositionSeconds = position.inSeconds;
+        _restoredPositionTrackId = current.id;
+      }
+      // El motor se queda en `error` (sin fuente): play() la recarga
+      // (`_nothingLoaded`) y el SO la sigue viendo en pausa.
+      _pausedAfterEngineError = true;
       _state = _state.copyWith(
         lastError: ExtractionError.unknownError,
         lastErrorMessage: 'El motor de audio no pudo reproducir esta pista.',
+        notice: _nextNotice(
+          kind: PlayerNoticeKind.persistentError,
+          message: 'No se pudo reproducir "${current.title}". Toca reproducir para reintentar.',
+        ),
       );
       _notify();
-      // Puede dispararse mientras un skipToNext()/playFromQueue() guardado
-      // ya está en curso (ej. el motor reporta error justo al cargar la
-      // pista nueva) — usa el núcleo sin guard, igual que en
-      // _handleExtractionError.
-      _advanceAndPlay();
+      _saveSession();
+      return;
     }
+
+    _log('[Play] El motor de audio reportó un error de reproducción — saltando a la siguiente pista.');
+    _autoSkipsWithoutPlayback++;
+    _state = _state.copyWith(
+      lastError: ExtractionError.unknownError,
+      lastErrorMessage: 'El motor de audio no pudo reproducir esta pista.',
+      notice: _nextNotice(
+        kind: PlayerNoticeKind.logicalSkip,
+        message: '${current.title} no se pudo reproducir — saltada',
+        trackTitle: current.title,
+      ),
+    );
+    _notify();
+    // Puede dispararse mientras un skipToNext()/playFromQueue() guardado
+    // ya está en curso — usa el núcleo sin guard, igual que en
+    // _handleExtractionError.
+    unawaited(_advanceAndPlay());
   }
 
   /// Ronda 8 (H-R8-13): `media_kit` emite el estado unas 15 veces por
@@ -3099,6 +3264,28 @@ bool get _isTestEnv {
   /// rehace `playCurrent()` completo.
   void _failPlaybackLoad(SyncoraTrack track, Object error) {
     _log('[Play] Error cargando en motor: $error');
+    _recordUnplayable(track, 'El reproductor no pudo abrir el audio');
+    // Ronda 10: con otra canción en cola se salta una vez, como cuando no hay
+    // coincidencia; nunca dos saltos seguidos (ver
+    // [_autoSkipsWithoutPlayback]). Sin siguiente, o tras otro salto, se
+    // queda en pausa como siempre.
+    final hasNext = _state.manualQueue.isNotEmpty || _state.autoQueue.isNotEmpty;
+    if (hasNext && _autoSkipsWithoutPlayback == 0) {
+      _autoSkipsWithoutPlayback++;
+      _state = _state.copyWith(
+        engine: _state.engine.copyWith(processingState: AudioProcessingState.idle, playing: false),
+        lastError: ExtractionError.unknownError,
+        lastErrorMessage: 'No se pudo iniciar la reproduccion: $error',
+        notice: _nextNotice(
+          kind: PlayerNoticeKind.logicalSkip,
+          message: '${track.title} no se pudo reproducir — saltada',
+          trackTitle: track.title,
+        ),
+      );
+      _notify();
+      unawaited(_advanceAndPlay());
+      return;
+    }
     _state = _state.copyWith(
       engine: _state.engine.copyWith(
         processingState: AudioProcessingState.idle,

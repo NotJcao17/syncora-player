@@ -25,6 +25,7 @@ import '../../features/search/screens/search_screen.dart';
 import '../../features/settings/screens/credits_screen.dart';
 import '../../features/settings/screens/legal_screen.dart';
 import '../../features/settings/screens/listening_history_screen.dart';
+import '../../features/settings/screens/unplayable_tracks_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/stats/screens/stats_screen.dart';
 import 'player_dismiss_shield.dart';
@@ -343,6 +344,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: ListeningHistoryScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/unplayable',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const UnplayableTracksScreen(),
             ),
           ),
           GoRoute(

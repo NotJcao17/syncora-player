@@ -19,6 +19,7 @@ import '../../auth/services/account_data_owner.dart';
 import '../../profile/widgets/user_avatar.dart';
 
 import '../../download/download_provider.dart';
+import '../../player/unplayable_track_log.dart';
 import '../../player/player_providers.dart';
 import '../../player/widgets/sleep_timer_sheet.dart';
 import '../../profile/widgets/avatar_selector_sheet.dart';
@@ -254,6 +255,24 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Historial de reproducción',
                   subtitle: 'Ver canciones escuchadas recientemente',
                   onTap: () => context.push('/history'),
+                ),
+                const Divider(height: 24, color: AppTheme.surfaceHover),
+                // Ronda 10: canciones que se saltaron o pausaron porque no se
+                // pudieron reproducir, con hora y motivo.
+                Consumer(
+                  builder: (context, ref, _) {
+                    final count = ref.watch(unplayableTrackLogProvider).entries.length;
+                    return _buildActionTile(
+                      icon: AppIcons.broken(SolarIcons.DangerCircle),
+                      title: 'No se pudieron reproducir',
+                      subtitle: count == 0
+                          ? 'Ninguna canción ha fallado'
+                          : count == 1
+                              ? '1 canción registrada'
+                              : '$count canciones registradas',
+                      onTap: () => context.push('/unplayable'),
+                    );
+                  },
                 ),
                 const Divider(height: 24, color: AppTheme.surfaceHover),
                 _buildActionTile(

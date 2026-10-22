@@ -336,13 +336,13 @@ class _AppShellState extends ConsumerState<AppShell> {
           AppToast.show(context, message: notice.message);
           break;
         case PlayerNoticeKind.cascadeGuard:
-          // 7.C.3: guard de cascada tras 3 fallos lógicos seguidos. El
-          // motor ya quedó pausado; "Reintentar" resetea el contador y
-          // vuelve a intentar avanzar. No tocar nada equivale a "pausar".
+          // 7.C.3: guard de cascada (ronda 10: al segundo fallo seguido). El
+          // motor ya quedó pausado; "Siguiente" resetea el contador y vuelve a
+          // intentar avanzar. No tocar nada equivale a "pausar".
           AppToast.show(
             context,
             message: notice.message,
-            actionLabel: 'Reintentar',
+            actionLabel: 'Siguiente',
             onAction: () {
               ref.read(syncoraPlayerControllerProvider.notifier).resumeAfterCascadeGuard();
             },

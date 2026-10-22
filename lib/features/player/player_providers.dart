@@ -24,6 +24,7 @@ import 'os_controls/windows_media_controls.dart';
 import 'player_models.dart';
 import 'radio/radio_service.dart';
 import 'syncora_player_controller.dart';
+import 'unplayable_track_log.dart';
 import '../../data/local_db/daos/downloaded_track_dao.dart';
 
 /// Toggle de Configuración para radio/cola infinita (Fase 7.B, D-10):
@@ -91,6 +92,7 @@ final syncoraPlayerControllerProvider =
     radioEnabledGetter: () => ref.read(radioEnabledProvider),
     crossfadeDurationGetter: () => ref.read(crossfadeDurationProvider),
     engineEvents: ref.watch(engineManagerProvider)?.events,
+    onUnplayable: (track, reason) => ref.read(unplayableTrackLogProvider).record(track, reason),
     onListenRecorded: () {
       // Sube la escucha apenas se graba: antes solo se subía en
       // `syncOnStartup()` o al refrescar Estadísticas, por eso lo escuchado en
