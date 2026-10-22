@@ -298,3 +298,33 @@ Este documento recopila las trampas técnicas más comunes y destructivas al des
 *   **Regla:** un aviso de fin se dispara solo en la **transición** a `completed`, y el controlador
     ignora fines mientras está cargando una pista. Un fake de motor que no repita ese aviso no puede
     ver el fallo (Pitfall #27): el de la suite tiene `reemitCompletionOnStop`.
+
+## 37. Android le manda `stop` a una sesión pausada 10 minutos
+
+*   **Síntoma (ronda 10):** pausar unos minutos y darle play desde la notificación empezaba la canción
+    desde 0; la notificación había perdido la barra.
+*   **Causa:** SystemUI vence las sesiones multimedia en pausa a los 10 min (`MediaDataManager ...
+    timedOut: true`) y llama a `stop` en la app; la notificación pasa a ser el reproductor de
+    "reanudar". Es comportamiento del sistema, no un error.
+*   **Regla:** `stop()` no puede olvidar la posición. Para verlo: `adb logcat | findstr
+    "MediaDataManager MediaSessionRecord:stop ExoPlayerImpl"`.
+
+## 38. just_audio 0.10 no reporta los errores como error del stream
+
+*   **Síntoma (ronda 10):** un error de ExoPlayer dejaba el motor en `idle` y el controlador no se
+    enteraba (en pausa, play recargaba desde 0; sonando, se quedaba quieto).
+*   **Causa:** desde la 0.10 el error llega como un `PlaybackEvent` con `errorCode` y `processingState
+    == idle`; el `onError` de `playbackEventStream` ya no se dispara.
+*   **Regla:** `idle` con `playbackEvent.errorCode != null` es un error. Probarlo con una plataforma
+    de just_audio falsa (`just_audio_engine_test.dart`), no con el `FakeAudioEngine`.
+
+## 39. YouTube: solo el itag 18 se puede reproducir sin PoToken
+
+*   **Medido el 2026-10-21:** el cliente ANDROID trae 1 formato con URL de 23 (itag 18, MP4 360p
+    video+audio). Los de solo audio de ANDROID_VR responden al primer MB y luego 403 (PoToken). Así
+    que en Android se decodifica video sin pantalla.
+*   **Ojo:** el itag 18 de algunos videos es una muestra de ~4 kbps sin audio real; el motor la
+    rechaza y se prueba otro candidato.
+*   **Regla:** antes de cambiar clientes o formato, medir con `engine/test/harness.mjs` cuántos
+    formatos traen URL y si la URL responde **más allá del primer MB** (un `Range: bytes=0-1023` que
+    responde 206 no prueba nada).

@@ -84,6 +84,19 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-10-21)
+
+**Décima ronda de correcciones: en `master`, sin publicar; faltan las pruebas en dispositivo.**
+Detalle en `docs/fases/correcciones_r10.md` — **leerlo antes de tocar los errores del motor de
+audio, los saltos automáticos, `stop()` del controlador, lo que se publica al SO, la elección de
+formato del motor o "Escuchado recientemente"**. Lo que no conviene revertir: `stop()` recuerda el
+segundo (Android manda `stop` tras 10 min de pausa, Pitfall #37); en `JustAudioEngine`, `idle` con
+`errorCode` es error (Pitfall #38); nunca dos saltos automáticos seguidos y el contador solo se
+repone con reproducción real (≥3 s) o con una acción del usuario, nunca con una extracción exitosa;
+al SO solo se publica lo que cambia (batería); YouTube solo da el itag 18 (video 360p) y una muestra
+de menos de 32 kbps se rechaza para probar otro candidato (Pitfall #39). Pendiente de decisión del
+usuario: parchear just_audio para no decodificar la pista de video.
+
 ### Estado actual (última actualización: 2026-10-15)
 
 **Novena ronda de correcciones: en `master`, sin publicar (entra en la próxima versión); faltan las
