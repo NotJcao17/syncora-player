@@ -21,8 +21,20 @@ Con el video desactivado ExoPlayer solo selecciona y decodifica el audio.
 
 ## Al actualizar just_audio
 
-1. Copiar la versión nueva de `%LOCALAPPDATA%\Pub\Cache\hosted\pub.dev\just_audio-X.Y.Z`
-   (sin `example/` ni `test/`) sobre esta carpeta.
-2. Volver a agregar la línea de arriba.
-3. Comprobar en el teléfono que no aparece `c2.*.avc.decoder` en logcat al sonar
-   una canción por streaming.
+Con el override, `flutter pub upgrade` y `flutter pub outdated` no tocan esta copia.
+
+1. En `pubspec.yaml`, subir `just_audio:` en `dependencies` a la versión nueva y quitar
+   temporalmente el bloque `just_audio:` de `dependency_overrides`; `flutter pub get` la baja a
+   `%LOCALAPPDATA%\Pub\Cache\hosted\pub.dev\just_audio-X.Y.Z`.
+2. Borrar el contenido de esta carpeta (menos este archivo) y copiar ahí la versión nueva sin
+   `example/` ni `test/`.
+3. Volver a agregar la línea de arriba en `ensurePlayerInitialized()` y reponer el override.
+4. `flutter pub get`, `flutter analyze`, `flutter test`
+   (`test/features/player/audio_engine/just_audio_engine_test.dart` cubre cómo llegan los errores,
+   Pitfall #38).
+5. Compilar el APK de release, instalarlo con `adb install -r` y, con una canción sonando por
+   streaming, comprobar en logcat que solo aparece `c2.*.aac.decoder` y no `c2.*.avc.decoder`:
+   ```bash
+   adb logcat | findstr decoder
+   ```
+6. Actualizar la versión en el título de este archivo.

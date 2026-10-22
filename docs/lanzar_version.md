@@ -75,6 +75,12 @@ El badge de versión del README (`img.shields.io/github/v/release/...`) y el de 
 actualizan solos; no se tocan. Si GitHub sigue mostrando la versión anterior, es la caché de
 imágenes de GitHub (camo), que se refresca sola en unas horas.
 
+## Dependencias parcheadas
+
+`just_audio` es una copia parcheada en `packages/just_audio/` (ver `SYNCORA_PATCH.md` ahí). No hace
+falta nada al lanzar, pero si en la versión se actualizó just_audio, comprobar antes de publicar que
+el parche sigue (paso 5 de ese archivo).
+
 ## Si algo sale mal
 
 - **Se publicó con un error:** no borrar el release a la ligera (la gente ya pudo descargarlo).

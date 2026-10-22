@@ -6,7 +6,7 @@ de audio, los saltos automáticos, `stop()` del controlador, lo que se publica a
 (`SyncoraAudioHandler`, `WindowsMediaControls`), la elección de formato del motor de extracción o
 "Escuchado recientemente".**
 
-**Estado: en `master`, sin publicar.** Faltan las pruebas en dispositivo de abajo.
+**Estado: probada en dispositivo y publicada como 1.2.0 (2026-10-22).**
 
 ## Hallazgos verificados
 

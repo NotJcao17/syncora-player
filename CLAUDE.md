@@ -28,6 +28,18 @@ de verdad de arquitectura, stack, metodología de trabajo y reglas del proyecto.
   (`%LOCALAPPDATA%\com.syncora`) y, si esa está abierta, le cede el control y se cierra: cerrarla
   antes.
 
+## Dependencias parcheadas (obligatorio leer antes de actualizar paquetes)
+
+- **`just_audio` no viene de pub.dev**: es una copia en `packages/just_audio/` (0.10.6) con una
+  línea agregada en `AudioPlayer.java` para que ExoPlayer no decodifique la pista de video del itag
+  18 de YouTube (batería; ronda 10). `pubspec.yaml` la usa con `dependency_overrides`, así que
+  `flutter pub upgrade` **no** la actualiza ni avisa de versiones nuevas.
+- Para actualizar just_audio, o si un cambio de `just_audio_platform_interface`/`audio_session`
+  pide una versión más nueva: seguir `packages/just_audio/SYNCORA_PATCH.md` (copiar la versión
+  nueva, volver a poner la línea y comprobar en el teléfono que no aparece `c2.*.avc.decoder` en
+  logcat). Nunca quitar el override sin reponer el parche: volvería el gasto de batería sin que
+  falle ningún test.
+
 ## Lanzar una versión nueva
 
 Solo cuando el usuario pida **lanzar o publicar una versión** de la app: seguir
@@ -86,7 +98,7 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
 
 ### Estado actual (última actualización: 2026-10-21)
 
-**Décima ronda de correcciones: en `master`, sin publicar; faltan las pruebas en dispositivo.**
+**Décima ronda de correcciones: probada en dispositivo y publicada como 1.2.0 (2026-10-22).**
 Detalle en `docs/fases/correcciones_r10.md` — **leerlo antes de tocar los errores del motor de
 audio, los saltos automáticos, `stop()` del controlador, lo que se publica al SO, la elección de
 formato del motor o "Escuchado recientemente"**. Lo que no conviene revertir: `stop()` recuerda el
@@ -100,8 +112,7 @@ parcheada en `packages/just_audio/`** (no decodifica la pista de video): al actu
 
 ### Estado actual (última actualización: 2026-10-15)
 
-**Novena ronda de correcciones: en `master`, sin publicar (entra en la próxima versión); faltan las
-pruebas en dispositivo.** Detalle en `docs/fases/correcciones_r9.md` — **leerlo
+**Novena ronda de correcciones: publicada en la 1.2.0 (2026-10-22).** Detalle en `docs/fases/correcciones_r9.md` — **leerlo
 antes de tocar `LRCLibApi` o el manejo de "not a bot" del motor**. Lo que no conviene revertir:
 `LRCLibApi` nunca cachea un fallo temporal (429, timeout, sin red), solo una respuesta definitiva, y
 reintenta los 429 respetando `Retry-After` (LRCLib los está dando a casi todo); y ante "not a bot" la

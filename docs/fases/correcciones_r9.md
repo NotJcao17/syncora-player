@@ -3,9 +3,7 @@
 Primera ronda tras publicar la 1.1.0. Cada bundle cierra con `flutter analyze` limpio, la suite
 completa en verde (852 tests), commit y push. Sin migraciones ni cambios en Supabase.
 
-**Estado: en `master`, sin publicar.** Entra en la próxima versión (`docs/lanzar_version.md`); las
-notas del release salen de los commits `fix:` desde `v1.1.0`. Faltan las pruebas en dispositivo de
-abajo.
+**Estado: publicada en la 1.2.0 (2026-10-22).**
 
 ## Hallazgos verificados
 
