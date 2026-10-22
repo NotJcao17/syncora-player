@@ -94,8 +94,9 @@ segundo (Android manda `stop` tras 10 min de pausa, Pitfall #37); en `JustAudioE
 `errorCode` es error (Pitfall #38); nunca dos saltos automáticos seguidos y el contador solo se
 repone con reproducción real (≥3 s) o con una acción del usuario, nunca con una extracción exitosa;
 al SO solo se publica lo que cambia (batería); YouTube solo da el itag 18 (video 360p) y una muestra
-de menos de 32 kbps se rechaza para probar otro candidato (Pitfall #39). Pendiente de decisión del
-usuario: parchear just_audio para no decodificar la pista de video.
+de menos de 32 kbps se rechaza para probar otro candidato (Pitfall #39). **just_audio es una copia
+parcheada en `packages/just_audio/`** (no decodifica la pista de video): al actualizarlo, seguir
+`packages/just_audio/SYNCORA_PATCH.md`.
 
 ### Estado actual (última actualización: 2026-10-15)
 

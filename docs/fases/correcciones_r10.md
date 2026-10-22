@@ -52,9 +52,8 @@ de audio, los saltos automáticos, `stop()` del controlador, lo que se publica a
     controles o un salto de posición). En Windows (SMTC) igual con el estado y los metadatos.
   - Todo el audio pasaba por el proxy HTTP en Dart de just_audio (por los headers). Ahora ExoPlayer
     manda el mismo User-Agent de forma nativa (`useProxyForRequestHeaders: false`).
-  - Pendiente de decisión: ExoPlayer decodifica la pista de video del itag 18 (H-R10-3). Quitarla
-    requiere parchear just_audio (una línea en Java, `setTrackTypeDisabled(C.TRACK_TYPE_VIDEO)`), lo
-    que implica mantener una copia del plugin.
+  - ExoPlayer decodificaba la pista de video del itag 18 (H-R10-3). Resuelto en la segunda tanda
+    con una copia parcheada de just_audio (abajo).
 - **H-R10-8. Borde gris en el lado derecho al entrar a una playlist larga o al girar (móvil).** Era el
   `ErrorWidget` de release. `FastScrollbar` devolvía `child` a secas cuando estaba desactivada y lo
   envolvía al activarse (las canciones llegan después, o cambia el modo al girar): la lista se
@@ -96,6 +95,28 @@ de audio, los saltos automáticos, `stop()` del controlador, lo que se publica a
 - `FastScrollbar` (y cualquier widget que envuelva una lista con controlador) no cambia de estructura
   al activarse.
 - Un itag 18 de menos de 32 kbps es una muestra: siguiente candidato, no siguiente cliente.
+
+## Segunda tanda (tras la primera prueba en dispositivo)
+
+- **H-R10-12. Tocar una búsqueda reciente solo escribía el texto.** Al volver a la pestaña Buscar la
+  pantalla se recrea con el campo vacío, pero `searchProvider` conserva la última consulta; tocar esa
+  misma búsqueda llamaba a `setQuery`, que no hace nada si la consulta no cambió, y sin cambio de
+  estado la pantalla ni se redibujaba. Ahora el chip usa `searchNow`, que busca siempre.
+- **H-R10-13. "End of Beginning" sonaba instrumental.** Tras descartar la muestra del master, el
+  siguiente candidato de YouTube Music era "End of Beginning (By Djo)", **sin autor**: una pista de
+  ZZang KARAOKE (canal "Release - Topic"). El título nombraba a Djo y eso lo daba por "del artista".
+  Ahora en YouTube Music solo el autor confirma al artista, y un resultado sin autor con "by
+  \<artista\>" en el título se descarta como karaoke. Medido sobre 360 canciones de "2026": el primer
+  candidato elegido no cambia en ninguna; solo salen de los respaldos 2.º/3.º karaokes del mismo
+  tipo (Ariana Grande, Avicii, Bruno Mars, Don Omar…). Con el motor real: End of Beginning →
+  `xy3AcmW0lrQ`, "Djo - End Of Beginning (Official Audio)" del canal Djo Music.
+- **H-R10-14. Sin decodificar video en Android.** `packages/just_audio/` es una copia de just_audio
+  0.10.6 con una línea más (`setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, true)`), usada con
+  `dependency_overrides`. Verificado en el teléfono: al sonar por streaming solo aparece
+  `c2.android.aac.decoder`; antes también `c2.mtk.avc.decoder`. Cómo actualizar just_audio sin perder
+  el parche: `packages/just_audio/SYNCORA_PATCH.md`.
+- El OTA siguió funcionando: el push de la primera tanda publicó el motor `202610220518` (prueba
+  obligatoria en QuickJS en verde, firmado en `engine-channel`).
 
 ## Pruebas en dispositivo pendientes
 

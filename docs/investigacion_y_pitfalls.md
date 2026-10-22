@@ -321,8 +321,8 @@ Este documento recopila las trampas técnicas más comunes y destructivas al des
 ## 39. YouTube: solo el itag 18 se puede reproducir sin PoToken
 
 *   **Medido el 2026-10-21:** el cliente ANDROID trae 1 formato con URL de 23 (itag 18, MP4 360p
-    video+audio). Los de solo audio de ANDROID_VR responden al primer MB y luego 403 (PoToken). Así
-    que en Android se decodifica video sin pantalla.
+    video+audio). Los de solo audio de ANDROID_VR responden al primer MB y luego 403 (PoToken). Por
+    eso just_audio va parcheado para no decodificar la pista de video (`packages/just_audio/`).
 *   **Ojo:** el itag 18 de algunos videos es una muestra de ~4 kbps sin audio real; el motor la
     rechaza y se prueba otro candidato.
 *   **Regla:** antes de cambiar clientes o formato, medir con `engine/test/harness.mjs` cuántos
