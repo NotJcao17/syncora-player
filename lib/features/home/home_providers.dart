@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/cache/api_cache.dart';
 import '../../core/utils/connectivity_service.dart';
@@ -5,6 +7,7 @@ import '../../core/utils/startup_retry.dart';
 import '../../data/apis/deezer_catalog_providers.dart';
 import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
+import '../../data/local_db/syncora_database.dart';
 import '../../data/models/deezer/deezer_album.dart';
 import '../../data/models/deezer/deezer_artist.dart';
 import '../../data/models/deezer/deezer_playlist.dart';
@@ -163,13 +166,50 @@ class RecentlyPlayedItem {
 /// Sale entero de Drift: aparece al instante, funciona sin conexión y no
 /// gasta ni una petición. `lastPlayedAt` ya se escribía desde la ronda 3 pero
 /// **nadie lo leía** — esta sección es su primer consumidor real.
-final recentlyPlayedProvider = FutureProvider<List<RecentlyPlayedItem>>((ref) async {
+///
+/// Ronda 10: escucha la base en vez de leerla una vez. Se calculaba una sola
+/// vez y se guardaba en memoria con los ids locales de las playlists; si eso
+/// pasaba con la biblioteca a medio sincronizar (al iniciar sesión, tras el
+/// borrado de un cambio de cuenta o una deduplicación del sync), Inicio se
+/// quedaba con una sola playlist y con ids que ya no existían: al tocarla
+/// salía "Playlist eliminada" (visto en PC).
+final recentlyPlayedProvider = StreamProvider<List<RecentlyPlayedItem>>((ref) {
   final playlistDao = ref.watch(playlistDaoProvider);
   final albumDao = ref.watch(savedAlbumDaoProvider);
+  final controller = StreamController<List<RecentlyPlayedItem>>();
+  List<Playlist>? playlists;
+  List<SavedAlbum>? albums;
+  String? lastKey;
+  void emit() {
+    final p = playlists, a = albums;
+    if (p == null || a == null) return;
+    final items = buildRecentlyPlayed(p, a);
+    // La tabla de playlists cambia mucho durante un sync; solo se reemite si
+    // cambia lo que se ve.
+    final key = [for (final i in items) '${i.route}|${i.title}|${i.coverUrl}|${i.playedAt.millisecondsSinceEpoch}'].join('\n');
+    if (key == lastKey) return;
+    lastKey = key;
+    controller.add(items);
+  }
 
-  final playlists = await playlistDao.getAllPlaylists();
-  final albums = await albumDao.getAllSavedAlbums();
+  final playlistSub = playlistDao.watchAllPlaylists().listen((value) {
+    playlists = value;
+    emit();
+  }, onError: controller.addError);
+  final albumSub = albumDao.watchAllSavedAlbums().listen((value) {
+    albums = value;
+    emit();
+  }, onError: controller.addError);
+  ref.onDispose(() {
+    playlistSub.cancel();
+    albumSub.cancel();
+    controller.close();
+  });
+  return controller.stream;
+});
 
+/// Las [limit] playlists y álbumes reproducidos más recientemente.
+List<RecentlyPlayedItem> buildRecentlyPlayed(List<Playlist> playlists, List<SavedAlbum> albums, {int limit = 10}) {
   final items = <RecentlyPlayedItem>[];
 
   for (final playlist in playlists) {
@@ -200,8 +240,8 @@ final recentlyPlayedProvider = FutureProvider<List<RecentlyPlayedItem>>((ref) as
   }
 
   items.sort((a, b) => b.playedAt.compareTo(a.playedAt));
-  return items.take(10).toList();
-});
+  return items.take(limit).toList();
+}
 
 /// Lanzamientos recientes de los artistas que el usuario más escucha.
 ///
