@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:syncora_player/core/extraction/dart_fetch_bridge.dart';
+import 'package:syncora_player/core/extraction/extraction_isolate.dart';
 import 'package:syncora_player/core/extraction/youtube_session_refresher.dart';
 
 /// Guarda la cabecera `cookie` de cada petición y responde con un `set-cookie`.
@@ -65,5 +66,15 @@ void main() {
     await bridge.fetch(url: 'https://www.youtube.com/sw.js_data');
 
     expect(adapter.sentCookies, [null, 'VISITOR_INFO1_LIVE=marcada', null]);
+  });
+
+  // Ronda 10: ANDROID pedía verificar y WEB (que hoy contesta siempre "Video
+  // unavailable") pisaba ese error: la canción se daba por no encontrada y la
+  // sesión no se renovaba.
+  test('el bloqueo de un cliente manda sobre el error del último', () {
+    const ipBlock = "Streaming data not available (LOGIN_REQUIRED: Sign in to confirm you're not a bot)";
+    const web = 'Streaming data not available (UNPLAYABLE: Video unavailable)';
+    expect(ExtractionIsolate.decisiveClientError(web, ipBlock), ipBlock);
+    expect(ExtractionIsolate.decisiveClientError(web, null), web);
   });
 }

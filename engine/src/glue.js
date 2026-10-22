@@ -89,7 +89,8 @@ globalThis.extractVideo = function(videoId, client, jsRequestId, quality) {
         return f.mimeType && f.mimeType.indexOf('audio') !== -1;
       });
 
-      if (audioFormats.length === 0) {
+      var muxedOnly = audioFormats.length === 0;
+      if (muxedOnly) {
         audioFormats = usableFormats; // Fallback a cualquier formato usable (video+audio)
       }
 
@@ -131,6 +132,21 @@ globalThis.extractVideo = function(videoId, client, jsRequestId, quality) {
 
       if (!selectedFormat) {
         throw new Error('No se encontró ningún formato de audio disponible (intentó ' + client + ')');
+      }
+
+      // Ronda 10: con el cliente ANDROID solo queda el itag 18 (video+audio),
+      // y en algunos videos es una muestra de ~4 kbps (120 KB para 4 min):
+      // no suena nada. "Crazy in Love" y "End of Beginning" no se podían
+      // reproducir. Se rechaza como formato de este video para que la app
+      // pruebe otro candidato (no otro cliente: los formatos de solo audio de
+      // ANDROID_VR mueren al primer MB sin PoToken).
+      if (muxedOnly) {
+        var durSec = Number(selectedFormat.approxDurationMs || 0) / 1000;
+        var clen = Number(selectedFormat.contentLength || 0);
+        var kbps = clen > 0 && durSec > 0 ? (clen * 8) / durSec / 1000 : (selectedFormat.bitrate || 0) / 1000;
+        if (kbps < 32) {
+          throw new Error('No se encontró un formato con audio real: muestra de ' + Math.round(kbps) + ' kbps (itag ' + selectedFormat.itag + ')');
+        }
       }
 
       console.log('[JS] Formato seleccionado itag=' + selectedFormat.itag + ', mimeType=' + selectedFormat.mimeType + ', bitrate=' + selectedFormat.bitrate + ' (calidad ' + quality + ')');

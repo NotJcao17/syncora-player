@@ -910,6 +910,11 @@ class ExtractionIsolate {
     }
 
     String lastJsError = '';
+    // Ronda 10: el "no eres un bot" de un cliente se perdía si el siguiente
+    // fallaba por otra cosa. WEB hoy contesta siempre "Video unavailable", así
+    // que tras el bloqueo de ANDROID el error final era ese: la canción se
+    // daba por no encontrada (salto) y la sesión nunca se renovaba (H-R9-2).
+    String? ipBlockJsError;
 
     for (final client in clients) {
       sendLog('[IsolateJS] Probando cliente Innertube: $client para videoId: ${request.videoId}...');
@@ -935,14 +940,21 @@ class ExtractionIsolate {
             );
           } else if (evalResult['error'] != null) {
             lastJsError = evalResult['error'].toString();
+            if (_isIpBlockError(lastJsError)) ipBlockJsError ??= lastJsError;
             sendLog('[IsolateJS] Cliente $client falló de forma controlada: $lastJsError');
+            // Ronda 10: el video solo trae una muestra sin audio real. Otro
+            // cliente daría una URL de solo audio que YouTube corta al primer
+            // MB (pide PoToken): se pasa al siguiente candidato (notFound).
+            if (_isSampleOnlyError(lastJsError)) break;
           }
         }
       } catch (e) {
         lastJsError = e.toString();
+        if (_isIpBlockError(lastJsError)) ipBlockJsError ??= lastJsError;
         sendLog('[IsolateJS] Excepción en cliente $client: $e');
       }
     }
+    lastJsError = decisiveClientError(lastJsError, ipBlockJsError);
 
     // Clasificar la causa real del fallo para aplicar el guard correctamente
     // (Pitfalls #11 y #14). Antes esto se forzaba a `rateLimited`, lo que
@@ -1043,6 +1055,14 @@ class ExtractionIsolate {
     const contentMarkers = ['private video', 'video unavailable', 'no longer available'];
     return !contentMarkers.any(e.contains);
   }
+
+  /// El error con el que se clasifica un video tras probar todos los
+  /// clientes: el bloqueo de la IP manda sobre el resto (ronda 10).
+  @visibleForTesting
+  static String decisiveClientError(String lastError, String? ipBlockError) => ipBlockError ?? lastError;
+
+  /// El video solo trae una muestra sin audio real (ronda 10, `glue.js`).
+  static bool _isSampleOnlyError(String errorText) => errorText.toLowerCase().contains('audio real: muestra');
 
   /// Clasifica el texto de error devuelto por QuickJS en un [ExtractionError].
   ///

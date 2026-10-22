@@ -367,7 +367,11 @@ class YtSearchMatcher {
         durationOk = diff <= _durationToleranceSec;
         durationWildlyOff = diff > _relaxedMaxDurationDiffSec;
         if (diff <= 3) {
-          score += 100;
+          // Ronda 10: dentro de la franja exacta, un punto menos por segundo.
+          // Dos subidas del mismo artista a 1 y 3 s empataban y decidía el
+          // orden de YouTube: "Julia" de LAGOS sonaba en la versión sin Lasso
+          // (184 s) en vez de la del sencillo (182 s, Deezer 181 s).
+          score += 100 - diff;
         } else if (diff <= 10) {
           score += 40;
         } else if (diff <= 20) {

@@ -1110,6 +1110,18 @@ void main() {
       ], artist: 'Tame Impala', title: 'Borderline', durationSec: 237);
       expect(top.map((c) => c.videoId), ['aaaaaaaaaaa']);
     });
+
+    // Ronda 10: candidatos reales de YouTube Music (2026-10-21). Los dos
+    // están a 3 s o menos y empataban; ganaba el primero, "Julia · LAGOS"
+    // del álbum "Clásicos" (sin Lasso), en vez del sencillo con Lasso.
+    test('Julia: dentro de la franja exacta gana la duración más cercana', () {
+      final top = YtSearchMatcher.pickTopCandidates([
+        {'videoId': 'YVGil3s2MWs', 'title': 'Julia', 'author': 'LAGOS', 'durationSec': 184, 'source': 'ytmusic'},
+        {'videoId': 'P3Cmud4tq38', 'title': 'Julia', 'author': 'LAGOS', 'durationSec': 182, 'source': 'ytmusic'},
+        {'videoId': 'jpUdtGShCt4', 'title': "Agus' Song (Mejor Dejarte Ir)", 'author': 'LAGOS', 'durationSec': 223, 'source': 'ytmusic'},
+      ], artist: 'Lagos', title: 'Julia', durationSec: 181);
+      expect(top.first.videoId, 'P3Cmud4tq38');
+    });
   });
 });
 }
