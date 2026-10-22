@@ -1122,6 +1122,28 @@ void main() {
       ], artist: 'Lagos', title: 'Julia', durationSec: 181);
       expect(top.first.videoId, 'P3Cmud4tq38');
     });
+
+    // Ronda 10: candidatos reales (2026-10-22). El master de Djo trae solo una
+    // muestra sin audio; el siguiente, sin autor y "(By Djo)", es el karaoke
+    // de ZZang KARAOKE. Debe descartarse para que gane el audio oficial de la
+    // búsqueda de videos.
+    test('End of Beginning: el karaoke "(By Djo)" sin autor no entra; gana el audio oficial', () {
+      final top = YtSearchMatcher.pickTopCandidates([
+        {'videoId': 'OjzP82N4DxY', 'title': 'End of Beginning (By Djo)', 'author': '', 'durationSec': 164, 'source': 'ytmusic'},
+        {'videoId': 'xy3AcmW0lrQ', 'title': 'Djo - End Of Beginning (Official Audio)', 'author': 'Djo Music', 'durationSec': 160},
+        {'videoId': 'B3Z4XGAxJB0', 'title': 'Djo - End Of Beginning (Lyrics)', 'author': 'Dan Music', 'durationSec': 160},
+      ], artist: 'Djo', title: 'End of Beginning', durationSec: 159);
+      expect(top.map((c) => c.videoId), isNot(contains('OjzP82N4DxY')));
+      expect(top.first.videoId, 'xy3AcmW0lrQ');
+    });
+
+    test('en YouTube Music, sin autor no se confirma al artista aunque el título lo nombre', () {
+      final top = YtSearchMatcher.pickTopCandidates([
+        {'videoId': 'aaaaaaaaaaa', 'title': 'Song (Djo Cover)', 'author': '', 'durationSec': 160, 'source': 'ytmusic'},
+        {'videoId': 'bbbbbbbbbbb', 'title': 'Song', 'author': '', 'durationSec': 160, 'source': 'ytmusic'},
+      ], artist: 'Djo', title: 'Song', durationSec: 160);
+      expect(top.every((c) => !c.artistConfirmed), isTrue);
+    });
   });
 });
 }

@@ -277,6 +277,16 @@ class YtSearchMatcher {
   }
 
   /// El canal/autor ES el artista (o su canal VEVO / "- Topic").
+  /// ¿El título dice "by (artista)" sin que la canción original lo diga?
+  static bool _creditsArtistInTitle(String artistField, String normTitle, String normExpectedTitle) {
+    if (_containsPhrase(normExpectedTitle, 'by')) return false;
+    for (final rawName in artistField.split(',')) {
+      final name = norm(rawName);
+      if (name.isNotEmpty && _containsPhrase(normTitle, 'by $name')) return true;
+    }
+    return false;
+  }
+
   static bool _authorIsArtist(String artistField, String normAuthor) {
     if (artistField.trim().isEmpty) return false;
     final normAuthorNoSpace = normAuthor.replaceAll(' ', '');
@@ -336,8 +346,13 @@ class YtSearchMatcher {
       final fromYtMusic = (raw['source'] as String?) == 'ytmusic';
       final authorUnknown = normAuthor.isEmpty;
       final authorIsArtist = _authorIsArtist(artist, normAuthor);
-      final artistConfirmed = fromYtMusic && !authorUnknown
-          ? authorIsArtist
+      // Ronda 10: en YouTube Music solo el autor confirma al artista. Un
+      // resultado sin autor es casi siempre una subida de terceros, y que el
+      // título nombre al artista no prueba nada: "End of Beginning (By Djo)",
+      // sin autor, era la versión instrumental y le ganaba al audio oficial
+      // del canal de Djo (que está en la búsqueda de videos).
+      final artistConfirmed = fromYtMusic
+          ? !authorUnknown && authorIsArtist
           : _artistConfirmed(artist, normAuthor, normTitle);
 
       // Ronda 8 (H-R8-5): en YouTube Music otro autor conocido es otro
@@ -346,6 +361,11 @@ class YtSearchMatcher {
       // duración en rango seguía entrando; si el master fallaba, sonaba eso.
       // Si este catálogo no trae al artista, la búsqueda de videos sigue.
       if (fromYtMusic && !authorUnknown && !authorIsArtist && artist.trim().isNotEmpty) continue;
+
+      // Ronda 10: "End of Beginning (By Djo)", "Dangerous Woman (By Ariana
+      // Grande)": en YouTube Music, sin autor y acreditando al artista en el
+      // título, son pistas de karaoke (ZZang KARAOKE, vía "Release - Topic").
+      if (fromYtMusic && authorUnknown && _creditsArtistInTitle(artist, normTitle, normExpectedTitle)) continue;
 
       // Ronda 8: con un título de una sola palabra ("23", "2002", "Maps") el
       // solapamiento siempre es total. Sin el artista confirmado, solo vale
