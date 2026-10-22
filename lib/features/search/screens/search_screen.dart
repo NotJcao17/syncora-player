@@ -494,8 +494,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   },
                   onPressed: () {
                     FocusManager.instance.primaryFocus?.unfocus();
-                    _searchController.text = term;
-                    ref.read(searchProvider.notifier).setQuery(term);
+                    setState(() => _searchController.text = term);
+                    ref.read(searchProvider.notifier).searchNow(term);
                   },
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),

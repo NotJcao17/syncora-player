@@ -87,6 +87,22 @@ class SearchNotifier extends Notifier<SearchState> {
     });
   }
 
+  /// Busca [query] ya, aunque sea la misma consulta que quedó guardada
+  /// (ronda 10). Lo usa tocar una búsqueda reciente: al volver a la pestaña
+  /// Buscar el campo aparece vacío pero este estado conserva la última
+  /// consulta, y con `setQuery` tocar esa misma búsqueda no hacía nada (solo
+  /// escribía el texto en el campo).
+  void searchNow(String query) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
+      setQuery('');
+      return;
+    }
+    _debounceTimer?.cancel();
+    state = state.copyWith(query: query, isLoading: true, clearError: true);
+    _performSearch(trimmed, state.searchType);
+  }
+
   void setSearchType(DeezerSearchType type) {
     if (state.searchType == type) return;
     state = state.copyWith(searchType: type);
