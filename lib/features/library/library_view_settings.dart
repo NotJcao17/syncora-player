@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/settings/app_settings_store.dart';
+import '../../core/utils/alphabetical.dart';
 import '../../data/local_db/syncora_database.dart';
 
 /// Criterios de orden de la biblioteca (ronda 3, D1).
@@ -62,7 +63,7 @@ List<Playlist> sortPlaylists(List<Playlist> input, LibrarySort sort) {
       case LibrarySort.recientesAgregadas:
         return b.createdAt.compareTo(a.createdAt);
       case LibrarySort.alfabetico:
-        return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+        return compareAlphabetical(a.title, b.title);
     }
   });
   return list;

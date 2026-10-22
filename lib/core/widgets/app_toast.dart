@@ -31,8 +31,11 @@ abstract class AppToast {
       final mediaQuery = MediaQuery.of(context);
       final size = mediaQuery.size;
       final isDesktop = size.width >= 768;
-      final keyboardHeight = mediaQuery.viewInsets.bottom;
-      final paddingBottom = mediaQuery.padding.bottom;
+      // Con el teclado abierto `padding.bottom` vale 0 (lo tapa el teclado);
+      // el aviso vuelve a su sitio cuando se cierra, así que ahí cuenta el
+      // área segura real.
+      final paddingBottom =
+          mediaQuery.viewInsets.bottom > 0 ? mediaQuery.viewPadding.bottom : mediaQuery.padding.bottom;
 
       // ¿Se ve el chrome inferior del shell desde donde se disparó el aviso?
       //
@@ -69,11 +72,14 @@ abstract class AppToast {
         chromeHeight = container.read(bottomChromeHeightProvider);
       } catch (_) {}
 
+      // Ronda 10: el margen "en reposo" (sin teclado) se calcula aquí, y el
+      // del teclado se lee en cada frame dentro del aviso. Antes el alto del
+      // teclado se tomaba solo al mostrarlo: al guardar una playlist el
+      // teclado se cerraba justo después y el aviso se quedaba flotando a
+      // media pantalla.
       double bottomMargin = 104.0;
       if (!isDesktop) {
-        if (keyboardHeight > 0) {
-          bottomMargin = keyboardHeight + 16.0;
-        } else if (!hasChrome) {
+        if (!hasChrome) {
           // Ruta a pantalla completa por encima del shell: pegado al borde.
           bottomMargin = 16.0 + paddingBottom;
         } else {
@@ -92,8 +98,13 @@ abstract class AppToast {
       late OverlayEntry entry;
       entry = OverlayEntry(
         builder: (context) {
-          return Positioned(
-            bottom: bottomMargin,
+          // `MediaQuery` del overlay raíz: el alto real del teclado en cada
+          // frame (sin el congelado de `KeyboardInsetFreeze` del shell).
+          final keyboardHeight = isDesktop ? 0.0 : MediaQuery.viewInsetsOf(context).bottom;
+          return AnimatedPositioned(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            bottom: keyboardHeight > 0 ? keyboardHeight + 16.0 : bottomMargin,
             left: 0,
             right: 0,
             child: Center(

@@ -597,7 +597,7 @@ List<WrappedCardData> buildWrappedCards({
       ].take(3).toList(),
       artists: artistItems,
       tracks: trackItems,
-      totalTime: formatListeningTime(s.totalMs),
+      totalTime: formatMinutesCount(s.totalMs),
       facts: [
         (label: 'Artistas', value: '${s.distinctArtists}'),
         (label: 'Canciones', value: '${s.distinctTracks}'),
@@ -792,7 +792,7 @@ class WrappedCard extends StatelessWidget {
         ),
         SizedBox(height: 3 * k),
         Text(
-          'ESCUCHADOS',
+          'MINUTOS ESCUCHADOS',
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.8),
             fontSize: 10.5 * k,

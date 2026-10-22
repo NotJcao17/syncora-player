@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/alphabetical.dart';
 import '../../../core/utils/connectivity_service.dart';
 import '../widgets/playlist_share_menu_items.dart';
 import '../../../core/widgets/app_toast.dart';
@@ -479,7 +480,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         case LibrarySort.recientesAgregadas:
           return b.addedAt.compareTo(a.addedAt);
         case LibrarySort.alfabetico:
-          return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+          return compareAlphabetical(a.title, b.title);
       }
     });
     return list;

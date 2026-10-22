@@ -57,4 +57,18 @@ void main() {
     expect(loadPlaylistSort(store, '8'), PlaylistSort.original);
     expect(PlaylistSort.decode('basura'), PlaylistSort.original);
   });
+
+  // Ronda 10: "Él", "Ángel" o "¿Qué?" quedaban al final, después de la "z".
+  test('por título, los acentos y los signos iniciales no mandan al final', () {
+    const accented = <_T>[
+      (title: 'Zombie', artist: 'a', album: 'a', sec: 1),
+      (title: 'Él', artist: 'a', album: 'a', sec: 1),
+      (title: '¿Qué Más Pues?', artist: 'a', album: 'a', sec: 1),
+      (title: 'Ángel', artist: 'a', album: 'a', sec: 1),
+      (title: 'Bad', artist: 'a', album: 'a', sec: 1),
+      (title: 'eclipse', artist: 'a', album: 'a', sec: 1),
+    ];
+    expect(_sorted(accented, const PlaylistSort(PlaylistSortColumn.title, PlaylistSortDirection.asc)).map((t) => t.title),
+        ['Ángel', 'Bad', 'eclipse', 'Él', '¿Qué Más Pues?', 'Zombie']);
+  });
 }

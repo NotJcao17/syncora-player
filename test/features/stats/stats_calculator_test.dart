@@ -302,5 +302,13 @@ void main() {
       expect(formatListeningTime(3600000), '1 h');
       expect(formatListeningTime(3600000 + 120000), '1 h 2 min');
     });
+
+    test('el Wrapped cuenta minutos con separador de miles', () {
+      expect(formatMinutesCount(0), '0');
+      expect(formatMinutesCount(59 * 60000), '59');
+      expect(formatMinutesCount(999 * 60000), '999');
+      expect(formatMinutesCount(1000 * 60000), '1,000');
+      expect(formatMinutesCount(1234567 * 60000), '1,234,567');
+    });
   });
 }

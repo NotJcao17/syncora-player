@@ -1,4 +1,5 @@
 import '../../core/settings/app_settings_store.dart';
+import '../../core/utils/alphabetical.dart';
 
 enum PlaylistSortColumn { original, title, artist, album, date, duration }
 
@@ -74,12 +75,12 @@ List<T> sortPlaylistItems<T>(
   int compare(T a, T b) {
     switch (sort.column) {
       case PlaylistSortColumn.title:
-        return title(a).toLowerCase().compareTo(title(b).toLowerCase());
+        return compareAlphabetical(title(a), title(b));
       case PlaylistSortColumn.artist:
-        final byArtist = artist(a).toLowerCase().compareTo(artist(b).toLowerCase());
-        return byArtist != 0 ? byArtist : album(a).toLowerCase().compareTo(album(b).toLowerCase());
+        final byArtist = compareAlphabetical(artist(a), artist(b));
+        return byArtist != 0 ? byArtist : compareAlphabetical(album(a), album(b));
       case PlaylistSortColumn.album:
-        return album(a).toLowerCase().compareTo(album(b).toLowerCase());
+        return compareAlphabetical(album(a), album(b));
       case PlaylistSortColumn.date:
         return addedAt(a).compareTo(addedAt(b));
       case PlaylistSortColumn.duration:

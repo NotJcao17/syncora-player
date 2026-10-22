@@ -36,7 +36,7 @@ void main() {
       WrappedItem(title: 'Cuarta'),
       WrappedItem(title: 'Quinta Cancion'),
     ],
-    totalTime: '1234 h 56 min',
+    totalTime: '74,096',
     facts: const [
       (label: 'Artistas', value: '9999'),
       (label: 'Canciones', value: '9999'),
@@ -111,7 +111,7 @@ void main() {
         eyebrow: 'Tu resumen · 7 días',
         colors: const [Color(0xFF6D28D9), Color(0xFF2563EB)],
         layout: WrappedLayout.summary,
-        totalTime: '3 min',
+        totalTime: '3',
         facts: const [(label: 'Artistas', value: '1')],
       ),
       320,

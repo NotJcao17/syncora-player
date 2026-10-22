@@ -60,9 +60,14 @@ class _FastScrollbarState extends State<FastScrollbar> {
     return false;
   }
 
+  // Ronda 10: la estructura es siempre la misma, activada o no (Pitfall #33).
+  // Antes, desactivada devolvía `child` a secas; al activarse (las canciones
+  // llegan después de abrir la playlist, o al girar la pantalla) la lista se
+  // recreaba, por un frame el controlador tenía dos posiciones y
+  // `controller.position` lanzaba: en release eso pinta el ErrorWidget, el
+  // rectángulo gris que se veía en el borde derecho.
   @override
   Widget build(BuildContext context) {
-    if (!widget.enabled) return widget.child;
     final topInset = MediaQuery.viewPaddingOf(context).top + 64;
     const bottomInset = 16.0;
     return NotificationListener<ScrollNotification>(
@@ -78,7 +83,8 @@ class _FastScrollbarState extends State<FastScrollbar> {
             child: LayoutBuilder(
               builder: (context, constraints) => AnimatedBuilder(
                 animation: widget.controller,
-                builder: (context, _) => _buildThumb(constraints.maxHeight),
+                builder: (context, _) =>
+                    widget.enabled ? _buildThumb(constraints.maxHeight) : const SizedBox.shrink(),
               ),
             ),
           ),
@@ -89,10 +95,15 @@ class _FastScrollbarState extends State<FastScrollbar> {
 
   Widget _buildThumb(double trackLength) {
     final controller = widget.controller;
-    if (!controller.hasClients || !controller.position.hasContentDimensions) return const SizedBox.shrink();
+    // Una sola posición: mientras una lista se reemplaza por otra (otro
+    // frame) el controlador puede tener dos, y `position` lanzaría.
+    if (controller.positions.length != 1) return const SizedBox.shrink();
     final position = controller.position;
+    if (!position.hasContentDimensions) return const SizedBox.shrink();
     final maxExtent = position.maxScrollExtent;
-    if (maxExtent <= 0 || trackLength <= 0) return const SizedBox.shrink();
+    // Sin espacio para el pulgar mínimo (al girar la pantalla, una ventana
+    // muy baja) `clamp` lanzaría: mejor no mostrarlo.
+    if (maxExtent <= 0 || trackLength < _minThumbLength) return const SizedBox.shrink();
 
     final viewport = position.viewportDimension;
     final thumbLength = (trackLength * viewport / (viewport + maxExtent)).clamp(_minThumbLength, trackLength);

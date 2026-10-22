@@ -216,6 +216,19 @@ class StatsSnapshot {
 /// Minutos redondeados para mostrar. Único lugar donde se redondea (H-S7).
 int msToMinutes(int ms) => (ms / 60000).round();
 
+/// Minutos enteros con separador de miles: "12,345" (ronda 10, Wrapped).
+/// Spotify y Apple Music dan el total del año en minutos; en horas no se
+/// podía comparar con ellos.
+String formatMinutesCount(int ms) {
+  final digits = msToMinutes(ms).toString();
+  final buffer = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(',');
+    buffer.write(digits[i]);
+  }
+  return buffer.toString();
+}
+
 /// "3 h 42 min", "42 min", "< 1 min".
 String formatListeningTime(int ms) {
   final totalMinutes = msToMinutes(ms);
