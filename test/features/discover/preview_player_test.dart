@@ -32,6 +32,20 @@ void main() {
     expect(engine.setUrlCallCount, 2);
   });
 
+  test('respeta el volumen de la app, antes y durante la preview', () async {
+    final engine = FakeAudioEngine();
+    final player = PreviewPlayer(engineFactory: () => engine);
+    addTearDown(player.dispose);
+
+    await player.setVolume(0.3);
+    expect(await player.play(1, 'https://x/1.mp3'), isTrue);
+    await Future<void>.delayed(Duration.zero);
+    expect(engine.currentState.volume, 0.3);
+
+    await player.setVolume(0.0);
+    expect(engine.currentState.volume, 0.0);
+  });
+
   test('cambiar de tarjeta mientras carga descarta la carga vieja', () async {
     final engine = FakeAudioEngine();
     final player = PreviewPlayer(engineFactory: () => engine);

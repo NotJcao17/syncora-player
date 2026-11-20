@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,8 +22,9 @@ import '../navigation/safe_navigation.dart';
 import 'app_bottom_sheet.dart';
 import 'app_toast.dart';
 import 'error_state.dart';
-import 'playlist_picker_dialog.dart';
+import 'multi_playlist_picker.dart';
 import 'swipe_action_tile.dart';
+import '../../features/library/services/add_to_playlist_service.dart';
 import '../../features/library/services/like_track_service.dart';
 import 'playing_indicator.dart';
 import 'track_cover_image.dart';
@@ -406,165 +406,40 @@ class TrackContextMenu {
 
     if (!context.mounted) return;
 
-    if (playlists.isEmpty) {
-      AppToast.show(context, message: 'No tienes playlists creadas. Crea una en tu biblioteca.');
-      return;
-    }
-
-    // Ronda 4: selector compartido con "Agregar todas a otra playlist".
+    // Las que ya la tienen (mismo id, o mismo título y artista) salen
+    // marcadas y no se pueden elegir: con selección múltiple no hay un paso
+    // de "¿agregarla de todos modos?" por cada una.
     final trackIdInt = int.tryParse(track.id) ?? track.id.hashCode.abs();
-    final containing = await dao.playlistIdsContaining(trackIdInt);
+    final containing = await dao.playlistIdsContainingSong(trackIdInt, title: track.title, artist: track.artist);
     if (!context.mounted) return;
-    final pl = await showPlaylistPickerDialog(
+
+    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
+    final selected = await showMultiPlaylistPicker(
       context,
-      title: 'Agregar a playlist',
       playlists: playlists,
       containingIds: containing,
+      trackTitle: track.artist.isEmpty ? track.title : '${track.title} · ${track.artist}',
+      onCreate: (title) async {
+        // Mismo orden que "Nueva playlist" de Biblioteca: nube y luego local.
+        String? remoteId;
+        try {
+          remoteId = (await supabaseRepo.createPlaylist(title: title))['id']?.toString();
+        } catch (_) {}
+        final id = await dao.createPlaylist(title: title, remoteId: remoteId);
+        return dao.getPlaylistById(id);
+      },
     );
-    if (pl == null || !context.mounted) return;
-
-    // Ronda 5: límite de 10 000 canciones por playlist.
-    if (AppLimits.roomFor(await dao.countTracks(pl.id)) <= 0) {
-      if (context.mounted) AppToast.show(context, message: AppLimits.playlistFullMessage);
-      return;
-    }
-
-    final existingTracks = await dao.getTracksOrdered(pl.id);
-    final isDuplicate = existingTracks.any((t) =>
-        t.trackId == trackIdInt ||
-        (t.title.trim().toLowerCase() == track.title.trim().toLowerCase() &&
-            t.artistName.trim().toLowerCase() == track.artist.trim().toLowerCase()));
-
-    if (isDuplicate) {
-      if (!context.mounted) return;
-      final addAnyway = await showDialog<bool>(
-        context: context,
-        builder: (confirmCtx) => AlertDialog(
-          backgroundColor: AppTheme.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Canción ya agregada', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-          content: Text('Esta canción ya está en "${pl.title}". ¿Deseas agregarla de todos modos?', style: const TextStyle(color: AppTheme.secondary)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(confirmCtx, false),
-              child: const Text('Cancelar', style: TextStyle(color: AppTheme.secondary)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: AppTheme.background,
-              ),
-              onPressed: () => Navigator.pop(confirmCtx, true),
-              child: const Text('Agregar de todos modos', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      );
-
-      if (addAnyway != true) {
-        return;
-      }
-    }
-
-    var remoteId = pl.remoteId;
-    final wasLocalOnly = remoteId == null;
-    final supabaseRepo = ref.read(supabasePlaylistRepositoryProvider);
-    if (remoteId == null) {
-      try {
-        final created = pl.isLiked
-            ? await supabaseRepo.getOrCreateLikedPlaylist()
-            : await supabaseRepo.createPlaylist(
-                title: pl.title,
-                description: pl.description,
-                isPublic: pl.isPublic,
-                isLiked: pl.isLiked,
-              );
-        remoteId = created['id']?.toString();
-      } catch (_) {}
-    }
-
-    var existingTracksUploadOk = true;
-    if (wasLocalOnly && remoteId != null) {
-      try {
-        final currentTracks = await dao.getTracksOrdered(pl.id);
-        if (currentTracks.isNotEmpty) {
-          await supabaseRepo.addTracksToPlaylist(
-            remoteId,
-            currentTracks
-                .map((t) => {
-                      'track_id': t.trackId,
-                      'artist_id': t.artistId,
-                      'album_id': t.albumId,
-                      'title': t.title,
-                      'artist_name': t.artistName,
-                      'album_name': t.albumName,
-                      'cover_url': t.coverUrl,
-                      'duration_ms': t.durationMs,
-                      if (t.genre != null) 'genre': t.genre,
-                      if (t.contributorsJson != null) 'contributors_json': t.contributorsJson,
-                    })
-                .toList(),
-          );
-        }
-      } catch (_) {
-        existingTracksUploadOk = false;
-      }
-    }
+    if (selected == null || selected.isEmpty || !context.mounted) return;
 
     final contributors = await resolveTrackContributors(ref.read(deezerApiProvider), track);
-
-    if (remoteId != null) {
-      try {
-        await supabaseRepo.addTrackToPlaylist(remoteId, {
-          'track_id': trackIdInt,
-          'artist_id': track.artistId ?? 0,
-          'album_id': track.albumId ?? 0,
-          'title': track.title,
-          'artist_name': track.artist,
-          'album_name': track.album ?? '',
-          'cover_url': track.coverUrl,
-          'duration_ms': (track.duration ?? Duration.zero).inMilliseconds,
-          'genre': track.genre,
-          if (contributors.isNotEmpty) 'contributors_json': SyncoraArtistRef.encodeList(contributors),
-        });
-      } catch (e) {
-        // El servidor rechazó por el límite de canciones: la playlist existe,
-        // no hay que tratarla como borrada en la nube.
-        if (AppLimits.isTrackLimitError(e)) {
-          if (context.mounted) AppToast.show(context, message: AppLimits.playlistFullMessage);
-          return;
-        }
-        if (context.mounted) {
-          AppToast.show(context, message: 'La playlist ya no existe en la nube');
-        }
-        if (!pl.isLiked) {
-          await dao.deletePlaylist(pl.id);
-        }
-        return;
-      }
-
-      if (wasLocalOnly && existingTracksUploadOk) {
-        try {
-          await dao.updatePlaylist(pl.copyWith(remoteId: Value(remoteId)));
-        } catch (_) {}
-      }
-    }
-
-    await dao.addTrackToPlaylist(
-      playlistId: pl.id,
-      trackId: trackIdInt,
-      artistId: track.artistId ?? 0,
-      albumId: track.albumId ?? 0,
-      title: track.title,
-      artistName: track.artist,
-      albumName: track.album ?? '',
-      coverUrl: track.coverUrl,
-      durationMs: (track.duration ?? Duration.zero).inMilliseconds,
-      contributorsJson: SyncoraArtistRef.encodeList(contributors),
+    final result = await addTrackToPlaylistsSynced(
+      dao: dao,
+      repo: supabaseRepo,
+      playlists: selected,
+      track: track,
+      contributors: contributors,
     );
-    if (context.mounted) {
-      AppToast.show(context, message: 'Agregada a "${pl.title}"');
-    }
+    if (context.mounted) AppToast.show(context, message: result.message);
   }
 
   static void showOtherVersionsModal(BuildContext context, SyncoraTrack track) {

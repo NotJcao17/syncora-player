@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:smtc_windows/smtc_windows.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/local_db/daos/playlist_dao.dart';
@@ -202,6 +203,23 @@ bool get _isTestEnv {
     }).catchError((_) {});
   }
 
+  /// Título de la ventana: es lo que Windows enseña al pasar el mouse por el
+  /// icono de la barra de tareas (y en Alt+Tab), como hace Spotify. La barra
+  /// de título nativa está oculta, así que dentro de la app no se ve.
+  static String windowTitleFor(SyncoraTrack? track) {
+    if (track == null || track.title.trim().isEmpty) return 'Syncora Player';
+    final artist = track.artist.trim();
+    return artist.isEmpty ? track.title.trim() : '${track.title.trim()} · $artist';
+  }
+
+  String? _lastWindowTitle;
+
+  void _setWindowTitle(String title) {
+    if (title == _lastWindowTitle) return;
+    _lastWindowTitle = title;
+    windowManager.setTitle(title).catchError((_) {});
+  }
+
   PlaybackStatus? _lastStatus;
   bool _metadataPushed = false;
   SyncoraTrack? _lastMetadataTrack;
@@ -253,6 +271,7 @@ bool get _isTestEnv {
       } else {
         _smtc.clearMetadata();
       }
+      _setWindowTitle(windowTitleFor(track));
     }
 
     // 3. Timeline (throttle: máximo 1 update por segundo para no saturar FFI)

@@ -40,6 +40,10 @@ class PreviewPlayer {
   int _generation = 0;
   bool _disposed = false;
 
+  /// Volumen de la app (el slider de la barra de PC). Las previews lo
+  /// respetan igual que el reproductor principal; sin esto sonaban al máximo.
+  double _volume = 1.0;
+
   Stream<AudioEngineState> get stateStream => _state.stream;
   Stream<void> get completionStream => _completed.stream;
   int? get currentTrackId => _currentTrackId;
@@ -57,8 +61,17 @@ class PreviewPlayer {
     _completionSub = engine.completionStream.listen((_) {
       if (!_completed.isClosed) _completed.add(null);
     });
+    unawaited(engine.setVolume(_volume));
     return _engine = engine;
   }
+
+  /// Aplica [volume] (0..1) a la preview actual y a las siguientes.
+  Future<void> setVolume(double volume) async {
+    _volume = volume.clamp(0.0, 1.0);
+    await _engine?.setVolume(_volume);
+  }
+
+  double get volume => _volume;
 
   /// Carga y reproduce la preview de [trackId]. Si llega otra llamada
   /// mientras esta carga, la vieja se descarta. Devuelve `false` si no se

@@ -198,7 +198,12 @@ Future<bool?> _confirm(
       backgroundColor: AppTheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(title, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-      content: Text(body, style: const TextStyle(color: AppTheme.secondary, height: 1.4)),
+      // Sin tope, un AlertDialog con un texto largo se estira a casi todo el
+      // ancho de la ventana en PC (renglones de 150 caracteres).
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Text(body, style: const TextStyle(color: AppTheme.secondary, height: 1.4)),
+      ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancelar')),
         ElevatedButton(onPressed: () => Navigator.pop(dCtx, true), child: Text(action)),

@@ -1307,6 +1307,18 @@ void main() {
           reason: 'manual1 debe volver al frente de su propia cola de origen');
     });
 
+    test('deslizar a "anterior" con más de 3 s sonando va a la pista anterior, no la reinicia', () async {
+      await controller.setQueue(testTracks, autoplay: true);
+      await controller.skipToNext();
+      expect(controller.state.currentTrack?.id, 'track2');
+      engine.emitState(controller.state.engine.copyWith(playing: true, position: const Duration(seconds: 20)));
+      await pumpEventQueue();
+
+      await controller.skipToPrevious(restartIfPlayed: false);
+      expect(controller.state.currentTrack?.id, 'track1');
+      expect(controller.state.autoQueue.map((t) => t.id).toList(), ['track2', 'track3']);
+    });
+
     test('avanzar consume la pista de su cola de origen (se elimina)', () async {
       await controller.setQueue(testTracks, autoplay: true);
       expect(controller.state.autoQueue.map((t) => t.id).toList(), ['track2', 'track3']);

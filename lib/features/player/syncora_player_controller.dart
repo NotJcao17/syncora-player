@@ -977,7 +977,10 @@ class SyncoraPlayerController extends ChangeNotifier {
 
   DateTime? _lastPrevTapTime;
 
-  Future<void> skipToPrevious() async {
+  /// [restartIfPlayed]: con más de 3 s sonando, "anterior" reinicia la pista
+  /// (botón). Deslizar el mini reproductor pasa `false`: el gesto enseña la
+  /// canción anterior entrando, así que siempre va a ella.
+  Future<void> skipToPrevious({bool restartIfPlayed = true}) async {
     if (_isTransitioning) return;
     _isTransitioning = true;
     // 7.C.3: mismo criterio que los demás entry points manuales
@@ -994,7 +997,7 @@ class SyncoraPlayerController extends ChangeNotifier {
       _lastPrevTapTime = now;
 
       // Si llevamos >3s reproduciéndola y NO es doble tap rápido, reiniciar la pista actual.
-      if (!isDoubleTap && _state.engine.position.inSeconds > 3) {
+      if (restartIfPlayed && !isDoubleTap && _state.engine.position.inSeconds > 3) {
         // Reinicio explícito del usuario: es un intento de escucha nuevo,
         // no la continuación del anterior (Fase 7.0 — hallazgo de revisión).
         final current = _state.currentTrack;

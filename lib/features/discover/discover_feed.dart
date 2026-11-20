@@ -104,6 +104,13 @@ class DiscoverFeed extends Notifier<DiscoverState> {
       if (playing && state.playing) _player.pause();
     });
 
+    // Mismo volumen que el reproductor principal (slider y silencio de la
+    // barra de PC), también si se mueve con la preview sonando.
+    _player.setVolume(ref.read(playerStateProvider).engine.volume);
+    ref.listen<double>(playerStateProvider.select((s) => s.engine.volume), (prev, volume) {
+      _player.setVolume(volume);
+    });
+
     ref.onDispose(() {
       _active = false;
       _stateSub?.cancel();

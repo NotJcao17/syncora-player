@@ -309,6 +309,19 @@ class PlaylistDao extends DatabaseAccessor<SyncoraDatabase> with _$PlaylistDaoMi
     return rows.map((r) => r.read(playlistTracks.playlistId)!).toSet();
   }
 
+  /// Playlists que ya tienen la canción: mismo [trackId] o mismo título y
+  /// artista (otra edición de la misma canción), sin distinguir mayúsculas.
+  /// Es el criterio de duplicado de "Agregar a playlist".
+  Future<Set<int>> playlistIdsContainingSong(int trackId, {required String title, required String artist}) async {
+    final rows = await customSelect(
+      'SELECT DISTINCT playlist_id FROM playlist_tracks '
+      'WHERE track_id = ? OR (lower(trim(title)) = lower(?) AND lower(trim(artist_name)) = lower(?))',
+      variables: [Variable.withInt(trackId), Variable.withString(title.trim()), Variable.withString(artist.trim())],
+      readsFrom: {playlistTracks},
+    ).get();
+    return rows.map((r) => r.read<int>('playlist_id')).toSet();
+  }
+
   /// Ids de pista que están en "Tus me gusta" (ronda 4). Reactivo: cualquier
   /// camino que dé "me gusta" (pantalla de bloqueo, barra de tareas, menú)
   /// se refleja en todas las pantallas que lo observan.

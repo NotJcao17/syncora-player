@@ -17,6 +17,7 @@ import '../player_models.dart';
 import '../player_providers.dart';
 import '../sleep_timer.dart';
 import '../syncora_player_controller.dart';
+import 'mini_player_swipe.dart';
 import 'queue_view.dart';
 import 'sleep_timer_sheet.dart';
 import '../../../core/limits/app_limits.dart';
@@ -58,9 +59,20 @@ class MiniPlayer extends ConsumerWidget {
     bool isLoading,
     SyncoraPlayerController controller,
   ) {
-    return GestureDetector(
+    final previousTrack = ref.watch(playerStateProvider.select((s) => s.history.isEmpty ? null : s.history.last.track));
+    final nextTrack = ref.watch(playerStateProvider.select((s) => s.manualQueue.isNotEmpty
+        ? s.manualQueue.first
+        : (s.autoQueue.isNotEmpty ? s.autoQueue.first : null)));
+
+    return MiniPlayerSwipeSkip(
+      current: currentTrack,
+      previous: previousTrack,
+      next: nextTrack,
       onTap: () => context.push('/player'),
-      child: Container(
+      onNext: controller.skipToNext,
+      onPrevious: () => controller.skipToPrevious(restartIfPlayed: false),
+      itemBuilder: (context, track, isCurrent) => _buildMobileTrackInfo(track, isCurrent: isCurrent, isPlaying: isPlaying),
+      layoutBuilder: (context, swipeArea) => Container(
         // Ronda 3 (E1): el padding inferior baja de 12 a 8 para dejar sitio a
         // la barra de progreso sin que el mini reproductor crezca.
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
@@ -73,92 +85,45 @@ class MiniPlayer extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
-          children: [
-            // Portada 48x48 (w-12 h-12 rounded-lg) con Hero tag
-            Hero(
-              tag: 'player_cover_hero',
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: currentTrack.coverUrl.isNotEmpty
-                      ? TrackCoverImage(
-                          coverUrl: currentTrack.coverUrl,
-                          trackId: int.tryParse(currentTrack.id),
-                          memCacheWidth: 180,
-                          placeholder: _buildPlaceholder(),
-                        )
-                      : _buildPlaceholder(),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
+              children: [
+                // Portada y títulos: la parte que se desliza para cambiar de
+                // canción. Corazón y play/pausa se quedan quietos.
+                Expanded(child: swipeArea),
 
-            // Título y Artista truncados (text-background / text-background/70)
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  MarqueeText(
-                    animate: isPlaying,
-                    text: currentTrack.title,
-                    style: const TextStyle(
+                // Heart Icon Button (text-background, w-6 h-6)
+                _MiniPlayerHeartButton(currentTrack: currentTrack, isDesktop: false),
+                const SizedBox(width: 8),
+
+                // Play/Pause circular (bg-background text-primary, w-5 h-5)
+                GestureDetector(
+                  onTap: () {
+                    if (isPlaying) {
+                      controller.pause();
+                    } else {
+                      controller.play();
+                    }
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
                       color: AppTheme.background,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      height: 1.2,
+                    ),
+                    child: Center(
+                      child: isLoading
+                          ? LoadingAnimationWidget.threeArchedCircle(
+                              color: AppTheme.primary,
+                              size: 20,
+                            )
+                          : Icon(
+                              isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
+                              color: AppTheme.primary,
+                              size: 20,
+                            ),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  MarqueeText(
-                    animate: isPlaying,
-                    text: currentTrack.artist,
-                    style: TextStyle(
-                      color: AppTheme.background.withValues(alpha: 0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Heart Icon Button (text-background, w-6 h-6)
-            _MiniPlayerHeartButton(currentTrack: currentTrack, isDesktop: false),
-            const SizedBox(width: 8),
-
-            // Play/Pause circular (bg-background text-primary, w-5 h-5)
-            GestureDetector(
-              onTap: () {
-                if (isPlaying) {
-                  controller.pause();
-                } else {
-                  controller.play();
-                }
-              },
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppTheme.background,
                 ),
-                child: Center(
-                  child: isLoading
-                      ? LoadingAnimationWidget.threeArchedCircle(
-                          color: AppTheme.primary,
-                          size: 20,
-                        )
-                      : Icon(
-                          isPlaying ? AppIcons.broken(SolarIcons.Pause) : AppIcons.broken(SolarIcons.Play),
-                          color: AppTheme.primary,
-                          size: 20,
-                        ),
-                ),
-              ),
-            ),
               ],
             ),
             const SizedBox(height: 8),
@@ -170,6 +135,63 @@ class MiniPlayer extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// Portada y títulos de [track] en el mini reproductor móvil. Las vecinas
+  /// que asoman al deslizar no llevan el Hero (solo puede haber uno).
+  Widget _buildMobileTrackInfo(SyncoraTrack track, {required bool isCurrent, required bool isPlaying}) {
+    final cover = ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: 48,
+        height: 48,
+        child: track.coverUrl.isNotEmpty
+            ? TrackCoverImage(
+                coverUrl: track.coverUrl,
+                trackId: int.tryParse(track.id),
+                memCacheWidth: 180,
+                placeholder: _buildPlaceholder(),
+              )
+            : _buildPlaceholder(),
+      ),
+    );
+    return Row(
+      children: [
+        // Portada 48x48 (w-12 h-12 rounded-lg) con Hero tag
+        isCurrent ? Hero(tag: 'player_cover_hero', child: cover) : cover,
+        const SizedBox(width: 12),
+
+        // Título y Artista truncados (text-background / text-background/70)
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              MarqueeText(
+                animate: isPlaying && isCurrent,
+                text: track.title,
+                style: const TextStyle(
+                  color: AppTheme.background,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              MarqueeText(
+                animate: isPlaying && isCurrent,
+                text: track.artist,
+                style: TextStyle(
+                  color: AppTheme.background.withValues(alpha: 0.7),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

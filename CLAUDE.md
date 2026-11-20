@@ -96,6 +96,18 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-11-20)
+
+**Undécima ronda de correcciones: implementada, faltan las pruebas en dispositivo.** Detalle en
+`docs/fases/correcciones_r11.md` — **leerlo antes de tocar el mini reproductor móvil, "Agregar a
+playlist", las previews de Descubrir, el título de la ventana de Windows o Android Auto**, y antes de
+empezar un "Jam" (la investigación está ahí). Lo que no conviene revertir: las previews siguen el
+volumen del reproductor principal; deslizar el mini reproductor exige distancia (un roce rápido no
+basta) y "anterior" deslizando va siempre a la anterior; agregar a playlist pasa por
+`add_to_playlist_service.dart` (nube primero) y las que ya tienen la canción no se pueden elegir;
+en Android Auto solo se ve la navegación con "Fuentes desconocidas" activado (la app no viene de
+Play Store).
+
 ### Estado actual (última actualización: 2026-10-21)
 
 **Décima ronda de correcciones: probada en dispositivo y publicada como 1.2.0 (2026-10-22).**
