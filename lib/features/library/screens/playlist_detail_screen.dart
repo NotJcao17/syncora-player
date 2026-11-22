@@ -13,6 +13,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/latest_search.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/cover_palette.dart';
@@ -38,6 +39,7 @@ import '../../../data/sync/sync_service.dart';
 import '../../auth/local_mode_provider.dart';
 import '../playlist_permissions.dart';
 import '../../download/widgets/download_header_button.dart';
+import '../../player/widgets/shuffle_toggle_button.dart';
 import '../../player/audio_engine/audio_engine_factory.dart';
 import '../../player/audio_engine/audio_engine_state.dart';
 import '../../player/player_models.dart';
@@ -161,6 +163,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   void dispose() {
     _listScrollController.dispose();
     _addSongsController.dispose();
+    _addSongsSearch.dispose();
     _trackFilterController.dispose();
     super.dispose();
   }
@@ -214,9 +217,15 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     } catch (_) {}
   }
 
-  Future<void> _performAddSongsSearch(String query) async {
+  /// Ronda 12: con espera y solo la última respuesta (ver `LatestSearch`).
+  /// Antes una respuesta vieja y lenta pisaba los resultados unos segundos
+  /// después.
+  final LatestSearch<List<DeezerTrack>> _addSongsSearch = LatestSearch();
+
+  void _performAddSongsSearch(String query) {
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
+      _addSongsSearch.cancel();
       setState(() {
         _searchResults = [];
         _isSearchingSongs = false;
@@ -225,18 +234,21 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     }
 
     setState(() => _isSearchingSongs = true);
-    try {
-      final deezerApi = ref.read(deezerApiProvider);
-      final res = await deezerApi.search(trimmed, type: DeezerSearchType.track);
-      if (mounted) {
+    final deezerApi = ref.read(deezerApiProvider);
+    _addSongsSearch.run(
+      trimmed,
+      (q) async => (await deezerApi.search(q, type: DeezerSearchType.track)).tracks,
+      onResult: (tracks) {
+        if (!mounted) return;
         setState(() {
-          _searchResults = res.tracks.where(SearchRanking.isPopularTrack).toList();
+          _searchResults = tracks.where(SearchRanking.isPopularTrack).toList();
           _isSearchingSongs = false;
         });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _isSearchingSongs = false);
-    }
+      },
+      onError: (_) {
+        if (mounted) setState(() => _isSearchingSongs = false);
+      },
+    );
   }
 
   Future<bool> _executeRemoteMutation(Future<void> Function() remoteTask) async {
@@ -1185,7 +1197,11 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                               // se esté viendo.
                                               tracks: rawSyncoraTracks,
                                             ),
-                                            const SizedBox(width: 12),
+                                            const SizedBox(width: 4),
+                                            // Ronda 12: solo cambia el modo;
+                                            // el play ya lo respeta.
+                                            const ShuffleToggleButton(),
+                                            const SizedBox(width: 8),
                                           ],
 
                                           if (isDesktop && playlist.remoteId != null) ...[
@@ -1267,29 +1283,10 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             const SizedBox(width: 8),
                                             ],
 
-                                            if (canEditPlaylistManually(playlist)) ...[
-                                              Tooltip(
-                                                message: 'Modificar con IA',
-                                                child: Container(
-                                                  decoration: const BoxDecoration(
-                                                    color: AppTheme.surface,
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: IconButton(
-                                                    icon: Icon(AppIcons.broken(SolarIcons.StarsMinimalistic), color: AppTheme.accent, size: 20),
-                                                    onPressed: () {
-                                                      final isConnected = ref.read(isConnectedProvider).value ?? true;
-                                                      if (!isConnected) {
-                                                        AppToast.show(context, message: 'Sin conexión. Las funciones de inteligencia artificial requieren conexión a internet.');
-                                                        return;
-                                                      }
-                                                      showAiModifyPlaylistSheet(context, ref, playlist);
-                                                    },
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                            ],
+                                            // Ronda 12: "Modificar con IA" ya no va
+                                            // en esta fila en móvil (su lugar es
+                                            // del aleatorio); sigue en el menú de
+                                            // 3 puntos.
                                           ],
 
                                           // Ordenamiento en Móvil

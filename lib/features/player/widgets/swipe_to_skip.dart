@@ -8,8 +8,10 @@ import '../player_models.dart';
 /// Qué hace un deslizamiento del mini reproductor al soltarlo.
 enum SwipeSkipAction { none, next, previous }
 
-/// Deslizar el mini reproductor (móvil) hacia los lados cambia de canción,
-/// como en Spotify: a la izquierda la siguiente, a la derecha la anterior.
+/// Deslizar hacia los lados cambia de canción, como en Spotify: a la
+/// izquierda la siguiente, a la derecha la anterior. Lo usan el mini
+/// reproductor móvil (portada y título) y la portada del reproductor a
+/// pantalla completa.
 ///
 /// Para que no salte sin querer:
 /// - el gesto solo gana si el dedo se mueve primero en horizontal (el
@@ -18,8 +20,8 @@ enum SwipeSkipAction { none, next, previous }
 /// - hay que llevar la canción al menos [commitFraction] del ancho, o
 ///   [flingFraction] con un lanzamiento rápido; un roce rápido corto no basta;
 /// - si no hay canción en esa dirección, el contenido se resiste y vuelve.
-class MiniPlayerSwipeSkip extends StatefulWidget {
-  const MiniPlayerSwipeSkip({
+class SwipeToSkip extends StatefulWidget {
+  const SwipeToSkip({
     super.key,
     required this.current,
     required this.previous,
@@ -29,18 +31,24 @@ class MiniPlayerSwipeSkip extends StatefulWidget {
     required this.onPrevious,
     this.onTap,
     required this.layoutBuilder,
+    this.clip = true,
   });
+
+  /// Recortar al área. El reproductor a pantalla completa lo apaga para no
+  /// cortar el brillo de la portada; las vecinas entran desde el borde de la
+  /// pantalla.
+  final bool clip;
 
   final SyncoraTrack current;
   final SyncoraTrack? previous;
   final SyncoraTrack? next;
 
-  /// Dibuja la parte que se desliza (portada + título) de una pista.
+  /// Dibuja la parte que se desliza de una pista (portada, título...).
   /// [isCurrent] es `true` solo para la que está al centro.
   final Widget Function(BuildContext context, SyncoraTrack track, bool isCurrent) itemBuilder;
 
-  /// Arma el mini reproductor completo alrededor de [swipeArea] (la zona que
-  /// se mueve); los botones que quedan fuera no se desplazan.
+  /// Arma lo que rodea a [swipeArea] (la zona que se mueve); lo que quede
+  /// fuera, como los botones, no se desplaza.
   final Widget Function(BuildContext context, Widget swipeArea) layoutBuilder;
 
   final VoidCallback onNext;
@@ -77,10 +85,10 @@ class MiniPlayerSwipeSkip extends StatefulWidget {
   }
 
   @override
-  State<MiniPlayerSwipeSkip> createState() => _MiniPlayerSwipeSkipState();
+  State<SwipeToSkip> createState() => _SwipeToSkipState();
 }
 
-class _MiniPlayerSwipeSkipState extends State<MiniPlayerSwipeSkip> with SingleTickerProviderStateMixin {
+class _SwipeToSkipState extends State<SwipeToSkip> with SingleTickerProviderStateMixin {
   late final AnimationController _anim = AnimationController.unbounded(vsync: this)..addListener(_onTick);
   double _dx = 0;
   double _width = 1;
@@ -94,7 +102,7 @@ class _MiniPlayerSwipeSkipState extends State<MiniPlayerSwipeSkip> with SingleTi
   void _onTick() => setState(() => _dx = _anim.value);
 
   @override
-  void didUpdateWidget(covariant MiniPlayerSwipeSkip oldWidget) {
+  void didUpdateWidget(covariant SwipeToSkip oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_committed != null && widget.current.id != oldWidget.current.id) {
       _committed = null;
@@ -123,13 +131,13 @@ class _MiniPlayerSwipeSkipState extends State<MiniPlayerSwipeSkip> with SingleTi
     if (towardsMissing) delta *= 0.3; // Resistencia: no hay canción de ese lado.
     setState(() => _dx = (_dx + delta).clamp(-_width, _width));
 
-    final past = _dx.abs() / _width >= MiniPlayerSwipeSkip.commitFraction && !towardsMissing;
+    final past = _dx.abs() / _width >= SwipeToSkip.commitFraction && !towardsMissing;
     if (past && !_pastThreshold) HapticFeedback.selectionClick();
     _pastThreshold = past;
   }
 
   Future<void> _onDragEnd(DragEndDetails d) async {
-    final action = MiniPlayerSwipeSkip.decide(
+    final action = SwipeToSkip.decide(
       dx: _dx,
       velocity: d.velocity.pixelsPerSecond.dx,
       width: _width,
@@ -179,33 +187,30 @@ class _MiniPlayerSwipeSkipState extends State<MiniPlayerSwipeSkip> with SingleTi
       builder: (context, constraints) {
         _width = constraints.maxWidth > 0 ? constraints.maxWidth : 1;
         final progress = (_dx.abs() / _width).clamp(0.0, 1.0);
-        return ClipRect(
-          child: Stack(
-            children: [
-              Opacity(
-                opacity: 1 - progress * 0.6,
+        final stack = Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Opacity(
+              opacity: 1 - progress * 0.6,
+              child: Transform.translate(offset: Offset(_dx, 0), child: widget.itemBuilder(context, center, true)),
+            ),
+            if (showNeighbours && _dx > 0 && widget.previous != null)
+              Positioned.fill(
                 child: Transform.translate(
-                  offset: Offset(_dx, 0),
-                  child: widget.itemBuilder(context, center, true),
+                  offset: Offset(_dx - _width, 0),
+                  child: widget.itemBuilder(context, widget.previous!, false),
                 ),
               ),
-              if (showNeighbours && _dx > 0 && widget.previous != null)
-                Positioned.fill(
-                  child: Transform.translate(
-                    offset: Offset(_dx - _width, 0),
-                    child: widget.itemBuilder(context, widget.previous!, false),
-                  ),
+            if (showNeighbours && _dx < 0 && widget.next != null)
+              Positioned.fill(
+                child: Transform.translate(
+                  offset: Offset(_dx + _width, 0),
+                  child: widget.itemBuilder(context, widget.next!, false),
                 ),
-              if (showNeighbours && _dx < 0 && widget.next != null)
-                Positioned.fill(
-                  child: Transform.translate(
-                    offset: Offset(_dx + _width, 0),
-                    child: widget.itemBuilder(context, widget.next!, false),
-                  ),
-                ),
-            ],
-          ),
+              ),
+          ],
         );
+        return widget.clip ? ClipRect(child: stack) : stack;
       },
     );
 

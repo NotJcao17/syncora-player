@@ -96,9 +96,19 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-11-21)
+
+**Duodécima ronda de correcciones: implementada, faltan las pruebas en dispositivo.** Detalle en
+`docs/fases/correcciones_r12.md` — **leerlo antes de tocar el reproductor a pantalla completa, los
+botones de aleatorio de las cabeceras, el buscador "Agregar canciones" de una playlist o widgets
+de Android** (la investigación está ahí). Lo que no conviene revertir: el aleatorio de las cabeceras
+(`ShuffleToggleButton`) solo cambia el modo, nunca reproduce; deslizar la portada usa el mismo
+`SwipeToSkip` que el mini reproductor; y toda búsqueda "mientras escribes" pasa por `LatestSearch`
+(espera + solo la última respuesta), porque las respuestas de Deezer llegan desordenadas.
+
 ### Estado actual (última actualización: 2026-11-20)
 
-**Undécima ronda de correcciones: implementada, faltan las pruebas en dispositivo.** Detalle en
+**Undécima ronda de correcciones: probada en dispositivo (2026-11-21).** Detalle en
 `docs/fases/correcciones_r11.md` — **leerlo antes de tocar el mini reproductor móvil, "Agregar a
 playlist", las previews de Descubrir, el título de la ventana de Windows o Android Auto**, y antes de
 empezar un "Jam" (la investigación está ahí). Lo que no conviene revertir: las previews siguen el

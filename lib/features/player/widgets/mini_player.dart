@@ -17,7 +17,7 @@ import '../player_models.dart';
 import '../player_providers.dart';
 import '../sleep_timer.dart';
 import '../syncora_player_controller.dart';
-import 'mini_player_swipe.dart';
+import 'swipe_to_skip.dart';
 import 'queue_view.dart';
 import 'sleep_timer_sheet.dart';
 import '../../../core/limits/app_limits.dart';
@@ -60,11 +60,9 @@ class MiniPlayer extends ConsumerWidget {
     SyncoraPlayerController controller,
   ) {
     final previousTrack = ref.watch(playerStateProvider.select((s) => s.history.isEmpty ? null : s.history.last.track));
-    final nextTrack = ref.watch(playerStateProvider.select((s) => s.manualQueue.isNotEmpty
-        ? s.manualQueue.first
-        : (s.autoQueue.isNotEmpty ? s.autoQueue.first : null)));
+    final nextTrack = ref.watch(playerStateProvider.select((s) => s.upNext));
 
-    return MiniPlayerSwipeSkip(
+    return SwipeToSkip(
       current: currentTrack,
       previous: previousTrack,
       next: nextTrack,

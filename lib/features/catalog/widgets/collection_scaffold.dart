@@ -11,6 +11,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/cover_palette.dart';
 import '../../../core/widgets/track_tile.dart';
 import '../../download/widgets/download_header_button.dart';
+import '../../player/widgets/shuffle_toggle_button.dart';
 import '../../player/player_models.dart';
 import '../../player/player_providers.dart';
 import '../../player/radio/radio_service.dart';
@@ -372,28 +373,8 @@ class _CollectionScaffoldState extends ConsumerState<CollectionScaffold> {
               onBeforeDownload: widget.onBeforeDownload,
             ),
             const SizedBox(width: 12),
-            Consumer(
-              builder: (context, ref, _) {
-                final isShuffle = ref.watch(playerStateProvider.select((s) => s.isShuffle));
-                return IconButton(
-                  icon: Icon(
-                    isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
-                    color: isShuffle ? Colors.white : AppTheme.secondary,
-                    size: 22,
-                  ),
-                  tooltip: 'Aleatorio',
-                  onPressed: () {
-                    if (isCurrentContext) {
-                      controller.toggleShuffle();
-                    } else {
-                      controller.setQueue(tracks, startIndex: 0, activeContextId: widget.contextId);
-                      if (!isShuffle) controller.toggleShuffle();
-                      controller.play();
-                    }
-                  },
-                );
-              },
-            ),
+            // Ronda 12: solo cambia el modo; el play ya lo respeta.
+            const ShuffleToggleButton(),
             const SizedBox(width: 8),
           ],
           ...widget.actions,

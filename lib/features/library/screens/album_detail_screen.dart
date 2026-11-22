@@ -21,6 +21,7 @@ import '../../../data/models/deezer/deezer_track.dart';
 import '../../../data/sync/sync_service.dart';
 import '../../auth/local_mode_provider.dart';
 import '../../download/widgets/download_header_button.dart';
+import '../../player/widgets/shuffle_toggle_button.dart';
 import '../../player/radio/radio_service.dart';
 
 import '../../player/player_providers.dart';
@@ -398,50 +399,8 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                       tracks: syncoraTracks,
                                     ),
                                     const SizedBox(width: 12),
-                                    Consumer(
-                                      builder: (context, ref, _) {
-                                        final isShuffle = ref.watch(playerStateProvider.select((s) => s.isShuffle));
-
-                                        return IconButton(
-                                          icon: Padding(
-                                            padding: const EdgeInsets.only(top: 2.0),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              mainAxisAlignment: MainAxisAlignment.center,
-                                              children: [
-                                                Icon(
-                                                  isShuffle ? AppIcons.outline(SolarIcons.Shuffle) : AppIcons.broken(SolarIcons.Shuffle),
-                                                  color: isShuffle ? Colors.white : AppTheme.secondary,
-                                                  size: 22,
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Container(
-                                                  width: 4,
-                                                  height: 4,
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: isShuffle ? Colors.white : Colors.transparent,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          onPressed: () {
-                                            if (isCurrentContext) {
-                                              controller.toggleShuffle();
-                                            } else {
-                                              controller.setQueue(syncoraTracks, startIndex: 0, activeContextId: albumContextId);
-                                          ref.read(savedAlbumDaoProvider).touchLastPlayed(album.id);
-                                              if (!isShuffle) {
-                                                controller.toggleShuffle();
-                                              }
-                                              controller.play();
-                                            }
-                                          },
-                                          tooltip: 'Aleatorio',
-                                        );
-                                      },
-                                    ),
+                                    // Ronda 12: solo cambia el modo; el play ya lo respeta.
+                                    const ShuffleToggleButton(),
                                     const SizedBox(width: 16),
                                   ],
                                   if (isDesktop && !isLocalMode) ...[

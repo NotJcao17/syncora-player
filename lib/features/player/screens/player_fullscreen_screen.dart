@@ -19,6 +19,7 @@ import '../../../data/local_db/database_provider.dart';
 import '../player_models.dart';
 import '../player_providers.dart';
 import '../syncora_player_controller.dart';
+import '../widgets/swipe_to_skip.dart';
 import '../widgets/lyrics_sheet.dart';
 import '../widgets/queue_view.dart';
 import '../widgets/sleep_timer_sheet.dart';
@@ -140,6 +141,8 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
     final isShuffle = ref.watch(playerStateProvider.select((s) => s.isShuffle));
     final repeatMode = ref.watch(playerStateProvider.select((s) => s.repeatMode));
     final isLoading = ref.watch(playerStateProvider.select((s) => s.isLoading));
+    final previousTrack = ref.watch(playerStateProvider.select((s) => s.history.isEmpty ? null : s.history.last.track));
+    final nextTrack = ref.watch(playerStateProvider.select((s) => s.upNext));
     final controller = ref.watch(syncoraPlayerControllerProvider.notifier);
     final canEdit = ref.watch(canEditProvider);
     // Ronda 4 (H-R4-4): "me gusta" reactivo sobre Drift. Antes se consultaba
@@ -273,30 +276,44 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
 
                           const Spacer(flex: 1),
 
-                          // Portada Centrada y Escalable
-                          Hero(
-                            tag: 'player_cover_hero',
-                            child: Center(
-                              child: Container(
-                                width: coverSize,
-                                height: coverSize,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(24),
-                                  boxShadow: AppTheme.glowHighShadow,
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(24),
-                                  child: currentTrack.coverUrl.isNotEmpty
-                                      ? TrackCoverImage(
-                                          coverUrl: currentTrack.coverUrl,
-                                          trackId: int.tryParse(currentTrack.id),
-                                          preferredSize: 1000,
-                                          memCacheWidth: 1000,
-                                          placeholder: _buildCoverPlaceholder(),
-                                        )
-                                      : _buildCoverPlaceholder(),
-                                ),
-                              ),
+                          // Portada centrada. Ronda 12: deslizarla hacia los
+                          // lados cambia de canción (mismo gesto y umbrales
+                          // que el mini reproductor, `SwipeToSkip`).
+                          SizedBox(
+                            height: coverSize,
+                            child: SwipeToSkip(
+                              current: currentTrack,
+                              previous: previousTrack,
+                              next: nextTrack,
+                              onNext: controller.skipToNext,
+                              onPrevious: () => controller.skipToPrevious(restartIfPlayed: false),
+                              layoutBuilder: (context, area) => area,
+                              clip: false,
+                              itemBuilder: (context, track, isCurrent) {
+                                final cover = Center(
+                                  child: Container(
+                                    width: coverSize,
+                                    height: coverSize,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(24),
+                                      boxShadow: isCurrent ? AppTheme.glowHighShadow : null,
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(24),
+                                      child: track.coverUrl.isNotEmpty
+                                          ? TrackCoverImage(
+                                              coverUrl: track.coverUrl,
+                                              trackId: int.tryParse(track.id),
+                                              preferredSize: 1000,
+                                              memCacheWidth: 1000,
+                                              placeholder: _buildCoverPlaceholder(),
+                                            )
+                                          : _buildCoverPlaceholder(),
+                                    ),
+                                  ),
+                                );
+                                return isCurrent ? Hero(tag: 'player_cover_hero', child: cover) : cover;
+                              },
                             ),
                           ),
 
@@ -347,6 +364,19 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                         ),
                                       ],
                                     ),
+                                  ),
+                                  // Ronda 12: agregar a playlist con un toque
+                                  // (el mismo selector múltiple del menú).
+                                  IconButton(
+                                    icon: Icon(
+                                      AppIcons.broken(SolarIcons.AddCircle),
+                                      color: canEdit ? AppTheme.secondary : AppTheme.muted,
+                                      size: 28,
+                                    ),
+                                    tooltip: canEdit ? 'Agregar a playlist' : 'Sin conexión',
+                                    onPressed: canEdit
+                                        ? () => TrackContextMenu.showAddToPlaylistDialog(context, ref, currentTrack)
+                                        : null,
                                   ),
                                   IconButton(
                                     icon: Icon(

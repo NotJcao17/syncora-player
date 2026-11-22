@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:syncora_player/features/player/player_models.dart';
-import 'package:syncora_player/features/player/widgets/mini_player_swipe.dart';
+import 'package:syncora_player/features/player/widgets/swipe_to_skip.dart';
 
 void main() {
-  group('MiniPlayerSwipeSkip.decide', () {
+  group('SwipeToSkip.decide', () {
     SwipeSkipAction decide(double dx, {double velocity = 0, bool prev = true, bool next = true}) =>
-        MiniPlayerSwipeSkip.decide(dx: dx, velocity: velocity, width: 300, hasPrevious: prev, hasNext: next);
+        SwipeToSkip.decide(dx: dx, velocity: velocity, width: 300, hasPrevious: prev, hasNext: next);
 
     test('un arrastre corto no cambia de canción', () {
       expect(decide(-60), SwipeSkipAction.none);
@@ -36,7 +36,7 @@ void main() {
     });
   });
 
-  group('MiniPlayerSwipeSkip widget', () {
+  group('SwipeToSkip widget', () {
     const current = SyncoraTrack(id: 'c', title: 'Actual');
     const prev = SyncoraTrack(id: 'p', title: 'Anterior');
     const next = SyncoraTrack(id: 'n', title: 'Siguiente');
@@ -49,7 +49,7 @@ void main() {
             child: SizedBox(
               width: 300,
               height: 64,
-              child: MiniPlayerSwipeSkip(
+              child: SwipeToSkip(
                 current: current,
                 previous: prev,
                 next: next,

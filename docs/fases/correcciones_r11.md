@@ -15,7 +15,7 @@ Después de la 1.2.0. Siete puntos del usuario: cinco arreglos, dos investigacio
    (`playlist_share_service.dart`).
 3. **Deslizar el mini reproductor (móvil) para cambiar de canción**, como Spotify: a la izquierda la
    siguiente, a la derecha la anterior. Se desliza solo la portada con el título (la canción vecina
-   asoma desde el lado); el corazón y el play se quedan quietos. `mini_player_swipe.dart`.
+   asoma desde el lado); el corazón y el play se quedan quietos. `swipe_to_skip.dart`.
    Para que no salte sin querer:
    - el gesto solo empieza si el dedo se mueve primero en horizontal (touch slop); un toque sigue
      abriendo el reproductor y un arrastre vertical no hace nada;
@@ -25,7 +25,7 @@ Después de la 1.2.0. Siete puntos del usuario: cinco arreglos, dos investigacio
    - vibración corta al pasar el umbral.
    "Anterior" deslizando va **siempre** a la canción anterior (`skipToPrevious(restartIfPlayed:
    false)`): el gesto la enseña entrando, así que reiniciar la actual a los 3 s sería un engaño. El
-   botón sigue igual. Tests: `mini_player_swipe_test.dart` y uno nuevo en el controlador.
+   botón sigue igual. Tests: `swipe_to_skip_test.dart` y uno nuevo en el controlador.
 4. **"Agregar a playlist" con selección múltiple** (`multi_playlist_picker.dart`): hoja deslizable en
    móvil y diálogo centrado en PC (`AppBottomSheet.show`), con buscador desde 7 playlists, "Nueva
    playlist" en línea (queda marcada) y un botón "Agregar a N playlists". Las que ya tienen la
