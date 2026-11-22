@@ -25,7 +25,6 @@ import '../widgets/lyrics_sheet.dart';
 import '../widgets/queue_view.dart';
 import '../widgets/sleep_timer_sheet.dart';
 import '../../../core/limits/app_limits.dart';
-import '../../../core/widgets/plain_plus_icon.dart';
 
 /// Reproductor Fullscreen Inmersivo con soporte para Karaoke sincronizado y Me Gusta persistente.
 class PlayerFullscreenScreen extends ConsumerStatefulWidget {
@@ -384,10 +383,9 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                   ),
                                   // Ronda 12: agregar a playlist con un toque
                                   // (el mismo selector múltiple del menú).
-                                  // Ronda 13: un "+" suelto, sin círculo, como
-                                  // el resto de los íconos de la fila.
                                   IconButton(
-                                    icon: PlainPlusIcon(
+                                    icon: Icon(
+                                      AppIcons.broken(SolarIcons.AddCircle),
                                       color: canEdit ? AppTheme.secondary : AppTheme.muted,
                                       size: 28,
                                     ),

@@ -4,9 +4,9 @@ Sigue a la ronda 12 (sus pruebas en dispositivo pasaron). El "Jam" sigue para de
 
 ## Cambios
 
-1. **"+" del reproductor a pantalla completa** sin círculo (`PlainPlusIcon`, dibujado con el trazo
-   de Solar: 1,5 sobre 24 y puntas redondeadas). Solar no trae un "+" suelto, solo `AddCircle` y
-   `AddSquare`; el círculo lo hacía el único ícono de la fila con "fondo".
+1. **"+" de "Agregar canciones" en la fila de la playlist (móvil)** sin el círculo relleno de
+   fondo: ahora es un botón de ícono como el aleatorio y el de ordenar (mismo tamaño y color). El
+   "+" del reproductor a pantalla completa se queda como en la ronda 12.
 2. **Android Auto tipo Spotify** (`os_controls/android_auto_browser.dart`). Antes: cuatro carpetas
    planas sin portadas. Ahora:
    - Tres pestañas (los hijos navegables de la raíz se dibujan como pestañas): **Inicio**
@@ -107,5 +107,5 @@ su layout en el APK de release).
 - Android Auto en el DHU: pestañas, portadas, aleatorio, abrir un álbum guardado, búsqueda.
 - Widget "Reproduciendo": botones con la app abierta, en segundo plano y cerrada; cambiar de tamaño.
 - Widget de colección: ponerlo desde el launcher (elegir), desde el menú de una playlist, tocarlo.
-- El "+" del reproductor y que no vuelva la franja negra abajo.
+- Que no vuelva la franja negra abajo en el reproductor.
 - Repetir lo de cambiarle la playlist a un widget y tocarlo varias veces.

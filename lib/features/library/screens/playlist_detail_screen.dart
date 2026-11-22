@@ -1275,22 +1275,19 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                             ],
                                           ] else ...[
                                             if (canAddTracksToPlaylist(playlist)) ...[
-                                            Tooltip(
-                                              message: _showAddSongsSearch ? 'Cerrar buscador' : 'Agregar canciones',
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: _showAddSongsSearch ? AppTheme.surfaceHover : AppTheme.surface,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: IconButton(
-                                                  icon: Icon(_showAddSongsSearch ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.AddCircle), color: AppTheme.primary, size: 20),
-                                                  onPressed: () {
-                                                    setState(() => _showAddSongsSearch = !_showAddSongsSearch);
-                                                  },
-                                                ),
+                                            // Ronda 13: sin el círculo de fondo, igual
+                                            // que el aleatorio y el de ordenar.
+                                            IconButton(
+                                              tooltip: _showAddSongsSearch ? 'Cerrar buscador' : 'Agregar canciones',
+                                              icon: Icon(
+                                                _showAddSongsSearch ? AppIcons.broken(SolarIcons.CloseCircle) : AppIcons.broken(SolarIcons.AddCircle),
+                                                color: _showAddSongsSearch ? AppTheme.primary : AppTheme.secondary,
+                                                size: 22,
                                               ),
+                                              onPressed: () {
+                                                setState(() => _showAddSongsSearch = !_showAddSongsSearch);
+                                              },
                                             ),
-                                            const SizedBox(width: 8),
                                             ],
 
                                             // Ronda 12: "Modificar con IA" ya no va
