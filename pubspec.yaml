@@ -78,6 +78,10 @@ dependencies:
   loading_animation_widget: ^1.3.0
   flutter_svg: ^2.0.17
   app_links: ^6.3.3
+  # Ronda 13: widgets de la pantalla de inicio y portadas de Android Auto
+  # (código nativo propio, solo Android).
+  syncora_android:
+    path: packages/syncora_android
   google_sign_in: ^6.3.0
   connectivity_plus: ^6.1.4
   url_launcher: ^6.3.2

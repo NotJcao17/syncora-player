@@ -1,0 +1,23 @@
+name: syncora_android
+description: "Partes nativas de Syncora Player en Android: widgets de la pantalla de inicio y portadas para Android Auto."
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.6.0
+  flutter: '>=3.27.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.syncora.syncora_android
+        pluginClass: SyncoraAndroidPlugin

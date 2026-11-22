@@ -369,7 +369,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                   // (el mismo selector múltiple del menú).
                                   IconButton(
                                     icon: Icon(
-                                      AppIcons.broken(SolarIcons.AddCircle),
+                                      AppIcons.linear(SolarIcons.AddCircle),
                                       color: canEdit ? AppTheme.secondary : AppTheme.muted,
                                       size: 28,
                                     ),

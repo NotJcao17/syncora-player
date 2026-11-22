@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audio_service/audio_service.dart' show AudioService;
 import 'package:go_router/go_router.dart';
 import '../navigation/shared_playlist_links.dart';
+import '../navigation/widget_links.dart';
 import '../navigation/app_router.dart';
 import '../theme/app_icons.dart';
 import 'package:window_manager/window_manager.dart';
@@ -32,6 +33,7 @@ import '../../features/library/services/folder_service.dart';
 import '../../features/library/widgets/folder_widgets.dart';
 import '../../features/player/player_models.dart';
 import '../../features/player/player_providers.dart';
+import '../../features/player/os_controls/home_widgets.dart';
 import '../navigation/safe_navigation.dart' show isOnFullscreenPlayer;
 import '../../features/player/syncora_player_controller.dart';
 import '../../features/player/widgets/desktop_lyrics_view.dart';
@@ -95,6 +97,31 @@ class _AppShellState extends ConsumerState<AppShell> {
     router.push('/player');
   }
 
+  /// Ronda 13: toque en un widget de la pantalla de inicio (ver
+  /// `widget_links.dart`).
+  void _openPendingWidgetRoute() {
+    final route = pendingWidgetRoute.value;
+    if (route == null || !mounted) return;
+    pendingWidgetRoute.value = null;
+    if (route == '/player') {
+      unawaited(_openPlayerWhenReady());
+    } else {
+      context.push(route);
+    }
+  }
+
+  /// Con la app recién abierta, la sesión anterior tarda un momento en
+  /// restaurarse: se espera hasta ~4 s a que haya pista antes de abrir el
+  /// reproductor.
+  Future<void> _openPlayerWhenReady() async {
+    for (var i = 0; i < 20 && mounted && ref.read(currentTrackProvider) == null; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+    _openPlayerFromNotification();
+  }
+
+  LibraryWidgetPublisher? _libraryWidgets;
+
   void _openPendingSharedPlaylist() {
     final id = pendingSharedPlaylist.value;
     if (id == null || !mounted) return;
@@ -110,7 +137,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     // que llegó antes de que existiera el shell y los que lleguen después.
     pendingSharedPlaylist.addListener(_openPendingSharedPlaylist);
     WidgetsBinding.instance.addPostFrameCallback((_) => _openPendingSharedPlaylist());
+    pendingWidgetRoute.addListener(_openPendingWidgetRoute);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openPendingWidgetRoute());
     if (!kIsWeb && Platform.isAndroid) {
+      // Ronda 13: lista de la pantalla "¿Qué abre este widget?".
+      _libraryWidgets = LibraryWidgetPublisher(
+        playlistDao: ref.read(playlistDaoProvider),
+        savedAlbumDao: ref.read(savedAlbumDaoProvider),
+      )..start();
       _notificationClickSub = AudioService.notificationClicked
           .where((clicked) => clicked)
           .listen((_) => WidgetsBinding.instance.addPostFrameCallback((_) => _openPlayerFromNotification()));
@@ -207,6 +241,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   void dispose() {
     pendingSharedPlaylist.removeListener(_openPendingSharedPlaylist);
+    pendingWidgetRoute.removeListener(_openPendingWidgetRoute);
+    _libraryWidgets?.dispose();
     _notificationClickSub?.cancel();
     _lifecycle?.dispose();
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {

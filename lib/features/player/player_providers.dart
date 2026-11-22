@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:syncora_android/syncora_android.dart';
 
 import '../../core/extraction/extraction_provider.dart';
 import '../../core/settings/app_settings_store.dart';
@@ -12,13 +13,16 @@ import '../../core/utils/connectivity_service.dart';
 import '../../data/apis/deezer_provider.dart';
 import '../../data/local_db/database_provider.dart';
 import '../../data/apis/deezer_api.dart';
+import '../../data/local_db/daos/folder_dao.dart';
 import '../../data/local_db/daos/playlist_dao.dart';
+import '../../data/local_db/daos/saved_album_dao.dart';
 import '../../data/supabase/supabase_playlist_repository.dart';
 import '../../data/supabase/supabase_providers.dart';
 import '../../data/sync/sync_service.dart';
 import '../auth/local_mode_provider.dart';
 import 'audio_engine/audio_engine_factory.dart';
 import 'audio_focus_service.dart';
+import 'os_controls/home_widgets.dart';
 import 'os_controls/syncora_audio_handler.dart';
 import 'os_controls/windows_media_controls.dart';
 import 'player_models.dart';
@@ -127,6 +131,8 @@ final syncoraPlayerControllerProvider =
         deezerApi,
         () => ref.read(canEditProvider),
         downloadedTrackDao,
+        ref.watch(savedAlbumDaoProvider),
+        ref.watch(folderDaoProvider),
       );
     } catch (e) {
       debugPrint('AndroidAudioService no disponible en este entorno: $e');
@@ -169,6 +175,8 @@ void _initAndroidAudioService(
   DeezerApi? deezerApi,
   bool Function()? canEditGetter,
   DownloadedTrackDao? downloadedTrackDao,
+  SavedAlbumDao? savedAlbumDao,
+  FolderDao? folderDao,
 ]) {
   final currentHandler = _globalAndroidAudioHandler;
   if (currentHandler != null) {
@@ -180,6 +188,8 @@ void _initAndroidAudioService(
         deezerApi: deezerApi,
         canEditGetter: canEditGetter,
         downloadedTrackDao: downloadedTrackDao,
+        savedAlbumDao: savedAlbumDao,
+        folderDao: folderDao,
       );
     }
     return;
@@ -192,13 +202,20 @@ void _initAndroidAudioService(
       deezerApi: deezerApi,
       canEditGetter: canEditGetter,
       downloadedTrackDao: downloadedTrackDao,
+      savedAlbumDao: savedAlbumDao,
+      folderDao: folderDao,
     ),
     config: const AudioServiceConfig(
       // Ronda 5 (Android Auto): las carpetas como cuadrícula y las canciones
-      // como lista.
+      // como lista. Ronda 13: botón de búsqueda (teclado con el auto
+      // detenido, voz siempre). `audio_service` convierte el `true` a
+      // booleano al armar el Bundle (`AudioServiceConfig.getBrowsableRootExtras`
+      // prueba int, luego boolean); la ronda 5 lo había quitado sin haberlo
+      // visto fallar.
       androidBrowsableRootExtras: {
         'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2,
         'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1,
+        'android.media.browse.SEARCH_SUPPORTED': true,
       },
       androidNotificationChannelId: 'com.syncora.player',
       androidNotificationChannelName: 'Syncora Player',
@@ -228,11 +245,34 @@ void _initAndroidAudioService(
   ).then((handler) {
     _globalAndroidAudioHandler = handler;
     debugPrint('[AudioService] Servicio de audio listo (notificación y pantalla de bloqueo).');
+    // Ronda 13: widgets de la pantalla de inicio. Desde aquí sus botones ya
+    // pueden mandar teclas multimedia en vez de abrir la app.
+    unawaited(SyncoraAndroid.playerReady());
+    handler.widgetPublisher = NowPlayingWidgetPublisher(
+      send: (s, coverPath) => SyncoraAndroid.updateNowPlaying(
+        hasTrack: s.hasTrack,
+        title: s.title,
+        artist: s.artist,
+        coverPath: coverPath,
+        playing: s.playing,
+      ),
+      resolveCover: _widgetCoverPath,
+    );
   }).catchError((Object e, StackTrace st) {
     // Sin servicio no hay notificación ni reproductor en la pantalla de
     // bloqueo; antes este fallo no dejaba ningún rastro.
     debugPrint('[AudioService] No se pudo iniciar el servicio de audio: $e. $st');
   });
+}
+
+/// Archivo local de la portada para el widget. Las URLs salen de la misma
+/// caché con la que `audio_service` pinta la notificación (no se baja dos
+/// veces).
+Future<String?> _widgetCoverPath(Uri art) async {
+  if (art.scheme == 'file') return art.toFilePath();
+  if (art.scheme != 'http' && art.scheme != 'https') return null;
+  final file = await AudioService.cacheManager.getSingleFile(art.toString());
+  return file.path;
 }
 
 /// Selector reactivo: ¿se está reproduciendo audio?

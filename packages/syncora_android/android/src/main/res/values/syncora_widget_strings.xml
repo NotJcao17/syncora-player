@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="syncora_widget_now_playing_label">Syncora: reproduciendo</string>
+    <string name="syncora_widget_now_playing_description">Portada y controles de lo que suena</string>
+    <string name="syncora_widget_collection_label">Syncora: playlist o álbum</string>
+    <string name="syncora_widget_collection_description">Abre una playlist o un álbum de tu biblioteca</string>
+    <string name="syncora_widget_idle_title">Syncora Player</string>
+    <string name="syncora_widget_idle_subtitle">Toca para abrir</string>
+    <string name="syncora_widget_pick">Elige una playlist</string>
+    <string name="syncora_widget_pick_title">¿Qué abre este widget?</string>
+    <string name="syncora_widget_pick_empty">Abre Syncora Player una vez para ver aquí tus playlists y álbumes.</string>
+</resources>

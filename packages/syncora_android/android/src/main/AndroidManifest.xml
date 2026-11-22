@@ -1,0 +1,52 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Portadas para Android Auto (solo carga URIs locales). Público porque
+             lo lee el proceso de Android Auto; ArtCache limita qué sirve. -->
+        <provider
+            android:name="com.syncora.syncora_android.CoverArtProvider"
+            android:authorities="${applicationId}.art"
+            android:exported="true" />
+
+        <!-- Widget "Reproduciendo". -->
+        <receiver
+            android:name="com.syncora.syncora_android.NowPlayingWidget"
+            android:label="@string/syncora_widget_now_playing_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/syncora_widget_now_playing_info" />
+        </receiver>
+
+        <!-- Widget de una playlist o álbum. -->
+        <receiver
+            android:name="com.syncora.syncora_android.CollectionWidget"
+            android:label="@string/syncora_widget_collection_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/syncora_widget_collection_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.syncora.syncora_android.WidgetActionReceiver"
+            android:exported="false" />
+
+        <activity
+            android:name="com.syncora.syncora_android.CollectionConfigActivity"
+            android:exported="true"
+            android:label="@string/syncora_widget_pick_title"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Material.NoActionBar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

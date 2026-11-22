@@ -57,6 +57,8 @@ import '../playlist_track_sort.dart';
 import '../widgets/folder_widgets.dart';
 import '../../../core/limits/app_limits.dart';
 import '../../../data/local_db/playlist_track_mapper.dart';
+import '../../../core/widgets/add_to_home_screen_tile.dart';
+import '../../player/os_controls/home_widgets.dart';
 
 
 /// Pantalla de Detalle de Playlist (`/playlist/:id`) conectada a la base de datos Drift.
@@ -761,6 +763,14 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               _deduplicatePlaylistTracks(playlist, tracks);
             },
           ),
+        // Ronda 13: widget que abre esta playlist (solo Android).
+        AddToHomeScreenTile(
+          menuContext: ctx,
+          collection: widgetCollectionForPlaylist(
+            playlist,
+            fallbackCover: tracks.isEmpty ? null : tracks.first.coverUrl,
+          ),
+        ),
         ListTile(
           leading: Icon(AppIcons.broken(SolarIcons.Export), color: AppTheme.primary),
           title: const Text('Exportar playlist (CSV)', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),

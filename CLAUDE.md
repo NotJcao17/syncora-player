@@ -96,9 +96,21 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-11-21, ronda 13)
+
+**Decimotercera ronda: Android Auto tipo Spotify y widgets de Android; implementada, faltan las
+pruebas en dispositivo.** Detalle en `docs/fases/correcciones_r13.md` — **leerlo antes de tocar el
+árbol de Android Auto (`android_auto_browser.dart`), los widgets o `packages/syncora_android`**.
+Lo que no conviene revertir: Android Auto solo dibuja portadas `content://` (las sirve
+`CoverArtProvider`, público pero limitado a hosts de portadas y archivos de la app); las listas de
+Android Auto se cortan en 400 filas (Binder); el widget "Reproduciendo" solo se repinta con cambios
+de pista o play/pausa, nunca la posición; con la app cerrada sus botones abren la app; y lo nativo va
+en el plugin local `syncora_android` porque la actividad de inicio es `AudioServiceActivity` y
+cambiarla borraría el ícono de la pantalla de inicio de los usuarios.
+
 ### Estado actual (última actualización: 2026-11-21)
 
-**Duodécima ronda de correcciones: implementada, faltan las pruebas en dispositivo.** Detalle en
+**Duodécima ronda de correcciones: probada en dispositivo (2026-11-21).** Detalle en
 `docs/fases/correcciones_r12.md` — **leerlo antes de tocar el reproductor a pantalla completa, los
 botones de aleatorio de las cabeceras, el buscador "Agregar canciones" de una playlist o widgets
 de Android** (la investigación está ahí). Lo que no conviene revertir: el aleatorio de las cabeceras

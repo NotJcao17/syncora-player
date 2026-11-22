@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:configure="com.syncora.syncora_android.CollectionConfigActivity"
+    android:description="@string/syncora_widget_collection_description"
+    android:initialLayout="@layout/syncora_widget_collection"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="70dp"
+    android:minResizeHeight="70dp"
+    android:previewLayout="@layout/syncora_widget_collection"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable" />
