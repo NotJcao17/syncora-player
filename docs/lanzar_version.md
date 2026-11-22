@@ -62,7 +62,10 @@ versión siguió diciendo "v1.0.0".
    gh release create v1.2.3 build/release/Syncora.apk build/release/SyncoraSetup.exe --title "Syncora 1.2.3" --generate-notes
    ```
    Crea la etiqueta `v1.2.3` sobre el último commit de `master`, sube los dos archivos y arma las
-   notas con los commits desde la versión anterior. También se puede hacer en GitHub → Releases →
+   notas con los commits desde la versión anterior. Desde la 1.4.0 la app avisa sola de la versión
+   nueva y muestra como novedades lo que se escriba a mano: conviene agregar
+   `--notes "- Novedad 1`n- Novedad 2"` (en lenguaje de usuario; lo automático de
+   `--generate-notes` no se muestra). Ver `docs/fases/actualizador.md`. También se puede hacer en GitHub → Releases →
    "Draft a new release": misma etiqueta, arrastrar los dos archivos, "Set as latest" marcado y
    "pre-release" sin marcar.
 6. **Verificar**: en la web, el botón descarga la versión nueva y el texto muestra el número

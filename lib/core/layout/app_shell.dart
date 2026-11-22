@@ -47,6 +47,8 @@ import '../utils/startup_retry.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/offline_banner.dart';
 import '../widgets/playlist_cover_widget.dart';
+import '../updates/app_update_service.dart';
+import '../updates/app_update_sheet.dart';
 
 /// Layout adaptativo de la aplicación (Móvil vs Desktop calcado de los mockups HTML).
 
@@ -130,6 +132,17 @@ class _AppShellState extends ConsumerState<AppShell> {
   LibraryWidgetPublisher? _libraryWidgets;
   (String, DateTime)? _lastWidgetRoute;
 
+  /// Aviso de versión nueva al abrir la app (como mucho cada 12 h; ver
+  /// `docs/fases/actualizador.md`). Espera unos segundos para no competir con
+  /// la restauración de la sesión y el primer sync.
+  Future<void> _checkForAppUpdate() async {
+    await Future<void>.delayed(const Duration(seconds: 8));
+    if (!mounted) return;
+    final update = await ref.read(appUpdateServiceProvider).checkOnStartup();
+    if (update == null || !mounted) return;
+    await showAppUpdateSheet(context, update, fromStartup: true);
+  }
+
   void _openPendingSharedPlaylist() {
     final id = pendingSharedPlaylist.value;
     if (id == null || !mounted) return;
@@ -160,6 +173,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       HardwareKeyboard.instance.addHandler(_handleDesktopKeyEvent);
     }
+    // Actualizador: solo en release (un build de debug tiene la misma versión
+    // pero otra firma, y en Android no se podría instalar encima).
+    if (kReleaseMode) unawaited(_checkForAppUpdate());
     Future.microtask(() async {
       // Inicializar downloadService y ejecutar limpieza de descargas interrumpidas
       ref.read(downloadServiceProvider);

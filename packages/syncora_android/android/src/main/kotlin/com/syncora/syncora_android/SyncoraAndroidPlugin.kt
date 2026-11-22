@@ -64,6 +64,7 @@ class SyncoraAndroidPlugin : FlutterPlugin, MethodCallHandler {
                 val ref = call.arguments<Map<*, *>>()?.let { CollectionRef.fromMap(it) }
                 result.success(ref != null && pin(ref))
             }
+            "installApk" -> result.success(UpdateInstaller.install(context, call.argument<String>("path")))
             else -> result.notImplemented()
         }
     }

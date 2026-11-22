@@ -96,6 +96,17 @@ ellas más de 550k tokens, sin contar el trabajo del orquestador. Para el resto 
   `build\native_assets\windows\`) — esperar a que una termine antes de lanzar la siguiente, no
   reintentar en un loop.
 
+### Estado actual (última actualización: 2026-11-22, actualizador)
+
+**1.3.0 publicada. Actualizador de la app implementado para la 1.4.0** (avisa de versión nueva y la
+descarga e instala desde `releases/latest` de GitHub). Detalle en `docs/fases/actualizador.md` —
+**leerlo antes de tocar `lib/core/updates/`, `UpdateInstaller.kt`, el `[Run]` de
+`installer/syncora.iss` o los nombres de los archivos del release**. Lo que no conviene revertir:
+consulta al abrir como mucho cada 12 h y solo en release; la descarga se acepta solo con el
+tamaño y el SHA-256 (`digest`) de GitHub; Android usa el instalador del sistema (`ACTION_VIEW` +
+`UpdateFileProvider` privado, `REQUEST_INSTALL_PACKAGES`), no una sesión de `PackageInstaller`;
+y en Windows la app vuelve a abrirse solo si el instalador recibe `/RELAUNCH=1`.
+
 ### Estado actual (última actualización: 2026-11-21, ronda 13)
 
 **Decimotercera ronda: Android Auto tipo Spotify y widgets de Android; implementada, faltan las

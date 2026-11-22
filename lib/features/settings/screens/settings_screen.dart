@@ -24,7 +24,9 @@ import '../../player/player_providers.dart';
 import '../../player/widgets/sleep_timer_sheet.dart';
 import '../../profile/widgets/avatar_selector_sheet.dart';
 import '../widgets/delete_account_flow.dart';
+import '../widgets/check_updates_tile.dart';
 import '../widgets/engine_status_section.dart';
+import '../../../core/updates/app_update_service.dart';
 
 
 /// Pantalla de Configuración (SettingsScreen)
@@ -459,6 +461,10 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
 
+          if (ref.read(appUpdateServiceProvider).platform != null) ...[
+            const SizedBox(height: 8),
+            _buildCard(child: const CheckUpdatesTile()),
+          ],
           const SizedBox(height: 8),
           _buildCard(
             child: _buildActionTile(

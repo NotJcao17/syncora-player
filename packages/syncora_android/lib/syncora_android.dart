@@ -78,6 +78,12 @@ class SyncoraAndroid {
   static Future<bool> pinCollection(WidgetCollection collection) async =>
       await _call<bool>('pinCollection', collection.toMap()) ?? false;
 
+  /// Abre el instalador del sistema con el APK de una actualización. Solo
+  /// acepta archivos de `cache/updates` (es lo único que sirve el proveedor).
+  /// `false` si no se pudo abrir.
+  static Future<bool> installApk(String path) async =>
+      await _call<bool>('installApk', {'path': path}) ?? false;
+
   static Future<T?> _call<T>(String method, [Object? args]) async {
     try {
       return await _channel.invokeMethod<T>(method, args);

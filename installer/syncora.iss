@@ -71,3 +71,12 @@ Root: HKCU; Subkey: "Software\Classes\syncoraplayer\shell\open\command"; ValueTy
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+; Actualizacion desde la app (lib/core/updates): la app corre este instalador
+; en silencio con /RELAUNCH=1 y se cierra; al terminar se vuelve a abrir sola.
+Filename: "{app}\{#MyAppExeName}"; Flags: nowait; Check: RelaunchRequested
+
+[Code]
+function RelaunchRequested: Boolean;
+begin
+  Result := ExpandConstant('{param:relaunch|0}') = '1';
+end;

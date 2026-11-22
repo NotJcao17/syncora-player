@@ -1,5 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Actualizar la app desde la app: sin esto el instalador del sistema
+         rechaza el APK que le pasa Syncora. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <application>
+        <!-- APK de una actualización (cache/updates) para el instalador del
+             sistema. Privado: se lee con el permiso temporal del intent. -->
+        <provider
+            android:name="com.syncora.syncora_android.UpdateFileProvider"
+            android:authorities="${applicationId}.updates"
+            android:exported="false"
+            android:grantUriPermissions="true" />
         <!-- Portadas para Android Auto (solo carga URIs locales). Público porque
              lo lee el proceso de Android Auto; ArtCache limita qué sirve. -->
         <provider
