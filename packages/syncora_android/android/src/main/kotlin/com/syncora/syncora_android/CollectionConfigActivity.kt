@@ -113,7 +113,7 @@ class CollectionConfigActivity : Activity() {
                 val cover = ref.cover
                 if (cover != null) {
                     io.execute {
-                        val bitmap = ArtCache.roundedSquare(ArtCache.fileFor(this@CollectionConfigActivity, cover), dp(52), dp(6).toFloat())
+                        val bitmap = ArtCache.bitmapFor(this@CollectionConfigActivity, cover, dp(52), dp(6).toFloat(), network = true)
                             ?: return@execute
                         thumbs.put(cover, bitmap)
                         main.post { if (image.tag == cover) image.setImageBitmap(bitmap) }
@@ -148,7 +148,7 @@ class CollectionConfigActivity : Activity() {
     }
 
     companion object {
-        private val BG = Color.parseColor("#0A0A0A")
-        private val SECONDARY = Color.parseColor("#A0A0A0")
+        private val BG = Color.parseColor("#181C27")
+        private val SECONDARY = Color.parseColor("#A0A8B8")
     }
 }

@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.widget.RemoteViews
 import java.util.concurrent.Executors
 
@@ -50,21 +51,20 @@ class CollectionWidget : AppWidgetProvider() {
             val manager = AppWidgetManager.getInstance(app)
             for (id in ids) {
                 val ref = WidgetStore.collection(app, id)
-                // Primero lo que ya está en disco, sin red; si falta la
-                // portada, se baja en segundo plano y se vuelve a pintar.
-                manager.updateAppWidget(id, build(app, id, ref, ArtCache.cachedOnly(app, ref?.cover)))
-                if (ref?.cover != null && ArtCache.cachedOnly(app, ref.cover) == null) {
+                // Primero lo que se puede pintar sin red (degradados, íconos y
+                // portadas ya bajadas); si falta la imagen, se baja en segundo
+                // plano y se vuelve a pintar.
+                manager.updateAppWidget(id, build(app, id, ref, network = false))
+                if (ref != null && ArtCache.needsDownload(app, ref.cover)) {
                     io.execute {
-                        val file = ArtCache.fileFor(app, ref.cover)
-                        if (file != null && WidgetStore.collection(app, id) == ref) {
-                            manager.updateAppWidget(id, build(app, id, ref, file))
-                        }
+                        val views = build(app, id, ref, network = true)
+                        if (WidgetStore.collection(app, id) == ref) manager.updateAppWidget(id, views)
                     }
                 }
             }
         }
 
-        private fun build(context: Context, widgetId: Int, ref: CollectionRef?, coverFile: java.io.File?): RemoteViews {
+        private fun build(context: Context, widgetId: Int, ref: CollectionRef?, network: Boolean): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.syncora_widget_collection)
             val density = context.resources.displayMetrics.density
             if (ref == null) {
@@ -85,7 +85,9 @@ class CollectionWidget : AppWidgetProvider() {
             }
             views.setTextViewText(R.id.syncora_col_title, ref.title)
             views.setTextViewText(R.id.syncora_col_subtitle, ref.subtitle)
-            val cover = ArtCache.roundedSquare(coverFile, (160 * density).toInt().coerceAtMost(400), 12 * density)
+            val coverPx = (200 * density).toInt().coerceAtMost(480)
+            val radius = if (Build.VERSION.SDK_INT >= 31) 0f else coverPx * 0.08f
+            val cover = ArtCache.bitmapFor(context, ref.cover, coverPx, radius, network)
             if (cover != null) {
                 views.setImageViewBitmap(R.id.syncora_col_cover, cover)
             } else {

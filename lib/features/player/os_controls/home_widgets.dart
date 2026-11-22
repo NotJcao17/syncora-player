@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:syncora_android/syncora_android.dart';
 
+import '../../../core/widgets/native_cover_spec.dart';
+
 import '../../../data/local_db/daos/playlist_dao.dart';
 import '../../../data/local_db/daos/saved_album_dao.dart';
 import '../../../data/local_db/syncora_database.dart';
@@ -97,16 +99,13 @@ class NowPlayingWidgetPublisher {
 }
 
 /// Entrada del widget de colección para una playlist.
-WidgetCollection widgetCollectionForPlaylist(Playlist p, {String? fallbackCover}) {
-  final own = p.coverUrl;
-  return WidgetCollection(
-    kind: 'playlist',
-    id: '${p.id}',
-    title: p.isLiked ? 'Tus me gusta' : p.title,
-    subtitle: 'Playlist',
-    cover: own != null && own.isNotEmpty ? own : fallbackCover,
-  );
-}
+WidgetCollection widgetCollectionForPlaylist(Playlist p, {String? fallbackCover}) => WidgetCollection(
+      kind: 'playlist',
+      id: '${p.id}',
+      title: p.isLiked ? 'Tus me gusta' : p.title,
+      subtitle: 'Playlist',
+      cover: nativeCoverSpec(p, fallback: fallbackCover),
+    );
 
 WidgetCollection widgetCollectionForAlbum(SavedAlbum a) => WidgetCollection(
       kind: 'album',

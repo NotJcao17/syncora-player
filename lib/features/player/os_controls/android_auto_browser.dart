@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:audio_service/audio_service.dart';
 
+import '../../../core/widgets/native_cover_spec.dart';
 import '../../../data/apis/deezer_api.dart';
 import '../../../data/local_db/daos/downloaded_track_dao.dart';
 import '../../../data/local_db/daos/folder_dao.dart';
@@ -30,6 +31,10 @@ abstract final class AutoArt {
     final String value;
     if (s.startsWith('https://') || s.startsWith('http://')) {
       kind = 'img';
+      value = s;
+    } else if (s.startsWith('paint:')) {
+      // Degradado o color (ver `nativeCoverSpec`): lo dibuja el proveedor.
+      kind = 'paint';
       value = s;
     } else if (s.startsWith('file://')) {
       kind = 'file';
@@ -319,8 +324,7 @@ class AndroidAutoBrowser {
       );
 
   MediaItem _playlistFolder(Playlist p, Map<int, String> covers) {
-    final own = p.coverUrl;
-    final art = AutoArt.of(own != null && own.isNotEmpty ? own : covers[p.id]);
+    final art = AutoArt.of(nativeCoverSpec(p, fallback: covers[p.id]));
     return MediaItem(
       id: '$playlistPrefix${p.id}',
       title: p.isLiked ? 'Tus me gusta' : p.title,

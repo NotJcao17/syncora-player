@@ -10,6 +10,7 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.net.Uri
 import android.util.Base64
+import android.util.Log
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -25,6 +26,7 @@ import java.security.MessageDigest
  */
 object ArtCache {
     private const val MAX_BYTES = 8L * 1024 * 1024
+    private const val TAG = "SyncoraArt"
 
     /** Hosts de los que sale una portada de Syncora. */
     private val allowedHostSuffixes = listOf(
@@ -54,7 +56,10 @@ object ArtCache {
         if (source.isNullOrBlank()) return null
         if (source.startsWith("/")) return localFile(context, source)
         if (source.startsWith("file://")) return Uri.parse(source).path?.let { localFile(context, it) }
-        if (!isAllowedUrl(source)) return null
+        if (!isAllowedUrl(source)) {
+            Log.w(TAG, "Host de portada no permitido: ${Uri.parse(source).host}")
+            return null
+        }
         val target = cachedFile(context, source)
         if (target.exists() && target.length() > 0) return target
         return download(source, target)
@@ -87,15 +92,23 @@ object ArtCache {
 
     private fun download(url: String, target: File): File? {
         var connection: HttpURLConnection? = null
-        val tmp = File(target.parentFile, target.name + ".tmp")
+        // Nombre único: Android Auto pide varias portadas a la vez y dos
+        // descargas de la misma URL se pisaban el temporal.
+        val tmp = File.createTempFile(target.name, ".tmp", target.parentFile)
         return try {
             connection = (URL(url).openConnection() as HttpURLConnection).apply {
                 connectTimeout = 8000
                 readTimeout = 10000
                 instanceFollowRedirects = true
             }
-            if (connection.responseCode !in 200..299) return null
-            if (connection.contentType?.startsWith("image/") == false) return null
+            if (connection.responseCode !in 200..299) {
+                Log.w(TAG, "Portada no disponible (${connection.responseCode}) de ${Uri.parse(url).host}")
+                return null
+            }
+            if (connection.contentType?.startsWith("image/") == false) {
+                Log.w(TAG, "No es una imagen (${connection.contentType}) de ${Uri.parse(url).host}")
+                return null
+            }
             var total = 0L
             connection.inputStream.use { input ->
                 tmp.outputStream().use { out ->
@@ -109,11 +122,46 @@ object ArtCache {
                     }
                 }
             }
-            if (tmp.renameTo(target)) target else null
+            if (tmp.renameTo(target) || (target.exists() && target.length() > 0)) target else null
         } catch (e: Exception) {
+            Log.w(TAG, "Fallo al bajar una portada de ${Uri.parse(url).host}: ${e.javaClass.simpleName}")
             null
         } finally {
             connection?.disconnect()
+            if (tmp.exists()) tmp.delete()
+        }
+    }
+
+    /**
+     * Bitmap de cualquier portada: degradado/color/ícono ([CoverPainter]) o
+     * imagen (URL o ruta). Con [network] en `false` solo usa lo que ya está en
+     * disco (para pintar desde el hilo principal).
+     */
+    fun bitmapFor(context: Context, source: String?, sizePx: Int, radiusPx: Float, network: Boolean): Bitmap? {
+        if (source.isNullOrBlank()) return null
+        if (CoverPainter.isSpec(source)) return CoverPainter.draw(context, source, sizePx, radiusPx)
+        val file = if (network) fileFor(context, source) else cachedOnly(context, source)
+        return roundedSquare(file, sizePx, radiusPx)
+    }
+
+    /** ¿Hace falta red para pintar [source]? */
+    fun needsDownload(context: Context, source: String?): Boolean =
+        !source.isNullOrBlank() && !CoverPainter.isSpec(source) && cachedOnly(context, source) == null
+
+    /** PNG de una portada dibujada, para servirla a Android Auto. */
+    fun paintedFile(context: Context, spec: String): File? {
+        val dir = File(context.cacheDir, "syncora_art").apply { mkdirs() }
+        val digest = MessageDigest.getInstance("SHA-1").digest(spec.toByteArray())
+        val target = File(dir, "paint_" + digest.joinToString("") { "%02x".format(it) } + ".png")
+        if (target.exists() && target.length() > 0) return target
+        val bitmap = CoverPainter.draw(context, spec, 512, 0f) ?: return null
+        val tmp = File.createTempFile(target.name, ".tmp", dir)
+        return try {
+            tmp.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            if (tmp.renameTo(target) || target.exists()) target else null
+        } catch (e: Exception) {
+            null
+        } finally {
             if (tmp.exists()) tmp.delete()
         }
     }

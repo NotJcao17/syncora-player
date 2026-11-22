@@ -112,6 +112,7 @@ void main() {
     expect(decoded, 'https://cdn-images.dzcdn.net/images/cover/0/250x250.jpg', reason: 'sin portada propia, la primera de sus canciones');
     expect(AutoArt.of('/data/user/0/app/cover.jpg')!.pathSegments.first, 'file');
     expect(AutoArt.of('assets/x.png'), isNull);
+    expect(AutoArt.of('paint:FF6366F1,FF9333EA;heart')!.pathSegments.first, 'paint', reason: 'degradados y Tus me gusta los dibuja el proveedor');
   });
 
   test('una playlist abre con "Reproducir en aleatorio" y se corta en 400 filas; tocar usa la lista entera', () async {

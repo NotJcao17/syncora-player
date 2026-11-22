@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Radio del widget y de lo que va dentro (concentrico: exterior - margen). -->
+    <dimen name="syncora_widget_radius">24dp</dimen>
+    <dimen name="syncora_widget_inner_radius">12dp</dimen>
+</resources>

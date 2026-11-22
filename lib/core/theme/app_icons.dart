@@ -27,17 +27,6 @@ abstract class AppIcons {
     );
   }
 
-  /// Mismo trazo que [broken] pero continuo. Ronda 13: el "+" del reproductor
-  /// en versión broken lleva un corte en el círculo que no se parece al resto
-  /// de los íconos de la fila.
-  static IconData linear(SolarIconData icon) {
-    return IconData(
-      icon.codePoint,
-      fontFamily: 'SolarLinear',
-      fontPackage: 'flutty_solar_icons',
-    );
-  }
-
   static IconData outline(SolarIconData icon) {
     return IconData(
       icon.codePoint,

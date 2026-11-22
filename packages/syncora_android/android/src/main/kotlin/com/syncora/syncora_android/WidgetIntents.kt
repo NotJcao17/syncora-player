@@ -18,7 +18,10 @@ object WidgetIntents {
         val intent = (context.packageManager.getLaunchIntentForPackage(context.packageName) ?: Intent())
             .setAction(Intent.ACTION_VIEW)
             .setData(Uri.parse(link))
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            // CLEAR_TOP + SINGLE_TOP: siempre la misma instancia de la
+            // actividad (`onNewIntent`), nunca una segunda pegada al mismo
+            // motor de Flutter, que se queda en blanco.
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         return PendingIntent.getActivity(context, requestCode, intent, FLAGS)
     }
 

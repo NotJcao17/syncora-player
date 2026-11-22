@@ -44,7 +44,11 @@ class NowPlayingWidget : AppWidgetProvider() {
             val np = WidgetStore.nowPlaying(context)
             val density = context.resources.displayMetrics.density
             val coverFile = np.coverPath?.let { File(it) }?.takeIf { np.hasTrack && it.isFile }
-            val cover = ArtCache.roundedSquare(coverFile, (128 * density).toInt().coerceAtMost(320), 10 * density)
+            val coverPx = (160 * density).toInt().coerceAtMost(400)
+            // Android 12+ recorta la portada con su fondo (`clipToOutline`, radio
+            // del launcher); antes se hornean las esquinas en la imagen.
+            val radius = if (Build.VERSION.SDK_INT >= 31) 0f else coverPx * 0.08f
+            val cover = ArtCache.roundedSquare(coverFile, coverPx, radius)
             for (id in ids) {
                 val views = if (Build.VERSION.SDK_INT >= 31) {
                     RemoteViews(

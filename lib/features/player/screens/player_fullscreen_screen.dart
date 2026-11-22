@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -24,6 +25,7 @@ import '../widgets/lyrics_sheet.dart';
 import '../widgets/queue_view.dart';
 import '../widgets/sleep_timer_sheet.dart';
 import '../../../core/limits/app_limits.dart';
+import '../../../core/widgets/plain_plus_icon.dart';
 
 /// Reproductor Fullscreen Inmersivo con soporte para Karaoke sincronizado y Me Gusta persistente.
 class PlayerFullscreenScreen extends ConsumerStatefulWidget {
@@ -175,7 +177,22 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
 
     // Ronda 5 (H-R5-7): el `SafeArea` + `LayoutBuilder` de abajo también
     // seguían al teclado de una hoja encima; congelado, no se mueve nada.
-    return KeyboardInsetFreeze(child: Scaffold(
+    // Ronda 13: a veces quedaba una franja negra en la barra de gestos. Esta
+    // pantalla no tiene AppBar, así que heredaba el estilo de la barra del
+    // sistema que hubiera puesto la última pantalla (y alguna lo dejaba en
+    // negro). Declararlo aquí lo fija: transparente, para que se vea el fondo
+    // del reproductor hasta el borde.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.light,
+        systemNavigationBarContrastEnforced: false,
+      ),
+      child: KeyboardInsetFreeze(child: Scaffold(
       // Ronda 4 (H-R4-7): esta pantalla no tiene campos de texto. Sin esto,
       // abrir el teclado en una hoja encima (p. ej. "Mejorar cola con IA")
       // reconstruía todo el reproductor en cada frame de la animación.
@@ -367,9 +384,10 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
                                   ),
                                   // Ronda 12: agregar a playlist con un toque
                                   // (el mismo selector múltiple del menú).
+                                  // Ronda 13: un "+" suelto, sin círculo, como
+                                  // el resto de los íconos de la fila.
                                   IconButton(
-                                    icon: Icon(
-                                      AppIcons.linear(SolarIcons.AddCircle),
+                                    icon: PlainPlusIcon(
                                       color: canEdit ? AppTheme.secondary : AppTheme.muted,
                                       size: 28,
                                     ),
@@ -552,7 +570,7 @@ class _PlayerFullscreenScreenState extends ConsumerState<PlayerFullscreenScreen>
         ),
         ),
       ),
-    ));
+    )));
   }
 
   Widget _buildCoverPlaceholder() {

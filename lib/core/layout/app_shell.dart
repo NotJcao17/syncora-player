@@ -103,6 +103,13 @@ class _AppShellState extends ConsumerState<AppShell> {
     final route = pendingWidgetRoute.value;
     if (route == null || !mounted) return;
     pendingWidgetRoute.value = null;
+    // En un arranque en frío `app_links` entrega el mismo enlace dos veces
+    // (`getInitialLink` y el stream): sin esto la pantalla quedaba apilada dos
+    // veces y "atrás" parecía no hacer nada.
+    final now = DateTime.now();
+    final last = _lastWidgetRoute;
+    if (last != null && last.$1 == route && now.difference(last.$2) < const Duration(seconds: 2)) return;
+    _lastWidgetRoute = (route, now);
     if (route == '/player') {
       unawaited(_openPlayerWhenReady());
     } else {
@@ -121,6 +128,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   LibraryWidgetPublisher? _libraryWidgets;
+  (String, DateTime)? _lastWidgetRoute;
 
   void _openPendingSharedPlaylist() {
     final id = pendingSharedPlaylist.value;
@@ -442,7 +450,18 @@ class _AppShellState extends ConsumerState<AppShell> {
     final currentTrack = ref.watch(currentTrackProvider);
     final hasTrack = currentTrack != null;
     final paddingBottom = MediaQuery.viewPaddingOf(context).bottom;
-    return Stack(
+    // Ronda 13: el reproductor a pantalla completa declara su propia barra
+    // del sistema (transparente); al volver, el shell repone la suya.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+        systemNavigationBarColor: AppTheme.surface,
+        systemNavigationBarDividerColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+      child: Stack(
 
       children: [
         Scaffold(
@@ -482,7 +501,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         ),
 
       ],
-    );
+    ));
   }
 
 

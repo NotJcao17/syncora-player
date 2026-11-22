@@ -44,7 +44,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
         val launch = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
         launch.setAction(Intent.ACTION_VIEW)
             .setData(Uri.parse("syncoraplayer://widget/player"))
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         try {
             context.startActivity(launch)
         } catch (e: Exception) {

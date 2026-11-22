@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+: los del launcher, para que el widget calce con los demas. -->
+    <dimen name="syncora_widget_radius">@android:dimen/system_app_widget_background_radius</dimen>
+    <dimen name="syncora_widget_inner_radius">@android:dimen/system_app_widget_inner_radius</dimen>
+</resources>

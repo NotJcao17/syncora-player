@@ -8,8 +8,8 @@ import android.os.ParcelFileDescriptor
 import java.io.FileNotFoundException
 
 /**
- * Sirve portadas a Android Auto (`content://<applicationId>.art/img/<url>` o
- * `/file/<ruta>`, codificadas en base64url).
+ * Sirve portadas a Android Auto (`content://<applicationId>.art/img/<url>`,
+ * `/file/<ruta>` o `/paint/<degradado>`, codificadas en base64url).
  *
  * Android Auto no carga portadas de navegación por http: exige una URI local
  * (`content://` o `android.resource://`). Es público porque lo lee el proceso
@@ -28,6 +28,7 @@ class CoverArtProvider : ContentProvider() {
         val file = when (segments[0]) {
             "img" -> if (source.startsWith("http")) ArtCache.fileFor(context, source) else null
             "file" -> if (source.startsWith("/")) ArtCache.fileFor(context, source) else null
+            "paint" -> ArtCache.paintedFile(context, source)
             else -> null
         } ?: throw FileNotFoundException(uri.toString())
         return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)

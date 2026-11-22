@@ -1,41 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- La portada ocupa todo el widget (recortada a sus esquinas) y el nombre va
+     abajo, sobre un velo, con el mismo margen a la izquierda y abajo. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/syncora_col_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/syncora_widget_bg"
-    android:orientation="vertical"
-    android:padding="10dp">
+    android:clipToOutline="true">
 
     <ImageView
         android:id="@+id/syncora_col_cover"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
         android:importantForAccessibility="no"
-        android:scaleType="fitCenter"
+        android:scaleType="centerCrop"
         android:src="@drawable/syncora_widget_cover_placeholder" />
 
-    <TextView
-        android:id="@+id/syncora_col_title"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:ellipsize="end"
-        android:gravity="center_horizontal"
-        android:maxLines="1"
-        android:text="@string/syncora_widget_pick"
-        android:textColor="#FFFFFFFF"
-        android:textSize="13sp"
-        android:textStyle="bold" />
+        android:layout_gravity="bottom"
+        android:background="@drawable/syncora_widget_scrim"
+        android:orientation="vertical"
+        android:paddingStart="12dp"
+        android:paddingTop="28dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="12dp">
 
-    <TextView
-        android:id="@+id/syncora_col_subtitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:gravity="center_horizontal"
-        android:maxLines="1"
-        android:textColor="#FFA0A0A0"
-        android:textSize="11sp" />
-</LinearLayout>
+        <TextView
+            android:id="@+id/syncora_col_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:shadowColor="#80000000"
+            android:shadowRadius="4"
+            android:text="@string/syncora_widget_pick"
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/syncora_col_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:shadowColor="#80000000"
+            android:shadowRadius="4"
+            android:textColor="#FFD0D4DC"
+            android:textSize="12sp" />
+    </LinearLayout>
+</FrameLayout>

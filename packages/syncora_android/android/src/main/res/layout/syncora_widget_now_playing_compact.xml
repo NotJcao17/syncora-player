@@ -1,19 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 4x1: portada chica, texto y controles en una fila. -->
+<!-- 4x1: portada cuadrada del alto del widget (mismo margen arriba, abajo e
+     izquierda), texto y controles centrados en vertical. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/syncora_np_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/syncora_widget_bg"
+    android:clipToOutline="true"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingStart="8dp"
-    android:paddingEnd="6dp">
+    android:padding="8dp">
 
     <ImageView
         android:id="@+id/syncora_np_cover"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:adjustViewBounds="true"
+        android:background="@drawable/syncora_widget_inner_bg"
+        android:clipToOutline="true"
         android:importantForAccessibility="no"
         android:scaleType="fitCenter"
         android:src="@drawable/syncora_widget_cover_placeholder" />
@@ -24,7 +28,7 @@
         android:layout_weight="1"
         android:orientation="vertical"
         android:paddingStart="12dp"
-        android:paddingEnd="4dp">
+        android:paddingEnd="6dp">
 
         <TextView
             android:id="@+id/syncora_np_title"
@@ -44,7 +48,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:text="@string/syncora_widget_idle_subtitle"
-            android:textColor="#FFA0A0A0"
+            android:textColor="#FFA0A8B8"
             android:textSize="12sp" />
     </LinearLayout>
 
@@ -54,7 +58,7 @@
         android:layout_height="40dp"
         android:background="@android:color/transparent"
         android:contentDescription="Anterior"
-        android:padding="8dp"
+        android:padding="9dp"
         android:scaleType="fitCenter"
         android:src="@drawable/syncora_widget_prev" />
 
@@ -62,9 +66,11 @@
         android:id="@+id/syncora_np_play"
         android:layout_width="40dp"
         android:layout_height="40dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginEnd="2dp"
         android:background="@drawable/syncora_widget_play_bg"
         android:contentDescription="Reproducir"
-        android:padding="9dp"
+        android:padding="10dp"
         android:scaleType="fitCenter"
         android:src="@drawable/syncora_widget_play" />
 
@@ -74,7 +80,7 @@
         android:layout_height="40dp"
         android:background="@android:color/transparent"
         android:contentDescription="Siguiente"
-        android:padding="8dp"
+        android:padding="9dp"
         android:scaleType="fitCenter"
         android:src="@drawable/syncora_widget_next" />
 </LinearLayout>
